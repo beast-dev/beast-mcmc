@@ -39,6 +39,7 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // Switching to BEAGLE
 public class EpochTreeBranchSubstitutionModel extends TreeBranchSubstitutionModel {
 
     public static final boolean DEBUG = false;

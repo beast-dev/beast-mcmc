@@ -40,6 +40,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
+@Deprecated // Switching to BEAGLE
 public class HypermutantErrorModel extends TipStatesModel {
 
     public static final String HYPERMUTANT_ERROR_MODEL = "hypermutantErrorModel";

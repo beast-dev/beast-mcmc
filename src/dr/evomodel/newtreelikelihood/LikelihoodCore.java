@@ -35,6 +35,7 @@ import dr.evomodel.sitemodel.SiteModel;
  * @version $Id: LikelihoodCore.java,v 1.15 2006/08/29 18:07:23 rambaut Exp $
  */
 
+@Deprecated // Switching to BEAGLE
 public interface LikelihoodCore {
 
     boolean canHandleTipPartials();

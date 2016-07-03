@@ -70,11 +70,28 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
 
+    /**
+     * A class which handles substitution models including epoch models where multiple
+     * substitution models on a branch are convolved.
+     * @param tree
+     * @param branchModel Describes which substitution models use on each branch
+     */
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, BUFFER_POOL_SIZE_DEFAULT);
+        this(tree, branchModel, 0, BUFFER_POOL_SIZE_DEFAULT);
     }
 
-    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int bufferPoolSize) {
+    /**
+     * A class which handles substitution models including epoch models where multiple
+     * substitution models on a branch are convolved.
+     * @param tree
+     * @param branchModel Describes which substitution models use on each branch
+     * @param partitionNumber which data partition is this (used to offset eigen and matrix buffer numbers)
+     */
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
+        this(tree, branchModel, partitionNumber, BUFFER_POOL_SIZE_DEFAULT);
+    }
+
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, int bufferPoolSize) {
 
         if (MEASURE_RUN_TIME) {
             updateTime = 0;
@@ -91,10 +108,10 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         nodeCount = tree.getNodeCount();
 
         // two eigen buffers for each decomposition for store and restore.
-        eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
+        eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);
 
         // two matrices for each node less the root
-        matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+        matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
 
         this.extraBufferCount = branchModel.requiresMatrixConvolution() ?
                 (bufferPoolSize > 0 ? bufferPoolSize : BUFFER_POOL_SIZE_DEFAULT) : 0;
@@ -203,13 +220,11 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     if (buffer < 0) {
                         // no buffers available
                         throw new RuntimeException("Ran out of buffers for transition matrices - computing current list.");
-
                     }
 
                     int k = order[j];
                     probabilityIndices[k][counts[k]] = buffer;
                     edgeLengths[k][counts[k]] = weights[j] * edgeLength[i] / sum;
-//                    edgeLengths[k][counts[k]] = weights[j] ;
                     counts[k]++;
 
                     bufferIndices.add(buffer);

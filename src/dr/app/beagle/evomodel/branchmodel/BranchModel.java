@@ -77,12 +77,12 @@ public interface BranchModel extends Model  {
      */
     boolean requiresMatrixConvolution();
 
-    public interface Mapping {
+    interface Mapping {
         int[] getOrder();
         double[] getWeights();
     }
 
-    public final static Mapping DEFAULT = new Mapping() {
+    Mapping DEFAULT = new Mapping() {
         public int[] getOrder() {
             return new int[] { 0 };
         }

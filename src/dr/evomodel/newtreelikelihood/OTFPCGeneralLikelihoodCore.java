@@ -31,6 +31,7 @@ import dr.evomodel.sitemodel.SiteModel;
 import java.util.Map;
 import java.util.HashMap;
 
+@Deprecated // Switching to BEAGLE
 public class OTFPCGeneralLikelihoodCore implements LikelihoodCore {
 
     public static final boolean DEBUG = false;

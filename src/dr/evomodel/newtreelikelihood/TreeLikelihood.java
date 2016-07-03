@@ -50,6 +50,7 @@ import java.util.logging.Logger;
  * @version $Id: TreeLikelihood.java,v 1.31 2006/08/30 16:02:42 rambaut Exp $
  */
 
+@Deprecated // Switching to BEAGLE
 public class TreeLikelihood extends AbstractSinglePartitionTreeLikelihood {
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";

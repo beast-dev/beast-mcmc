@@ -30,6 +30,7 @@ import java.util.ArrayList;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // Switching to BEAGLE
 public class GPUInfo {
 	
 //	GPUInfo() {

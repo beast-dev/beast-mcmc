@@ -103,25 +103,29 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         this.dataType = patternLists.get(0).getDataType();
         stateCount = dataType.getStateCount();
 
-        int partitionCount = patternLists.size();
+        partitionCount = patternLists.size();
         patternCounts = new int[partitionCount];
-        totalPatternCount = 0;
+        int total = 0;
         int k = 0;
         for (PatternList patternList : patternLists) {
             assert(patternList.getDataType().equals(this.dataType));
             patternCounts[k] = patternList.getPatternCount();
-            totalPatternCount += patternCounts[k];
+            total += patternCounts[k];
             k++;
         }
+        totalPatternCount = total;
 
-//        assert(branchModels.size() == 1 || branchModels.size() == patternLists.size());
-        assert(branchModels.size() == patternLists.size());
+        // Branch models determine the substitution models per branch. There can be either
+        // one per partition or one shared across all partitions
+        assert(branchModels.size() == 1 || branchModels.size() == patternLists.size());
 
         this.branchModels.addAll(branchModels);
         for (BranchModel branchModel : this.branchModels) {
             addModel(branchModel);
         }
 
+        // SiteRateModels determine the rates per category (for site-heterogeneity models).
+        // There can be either one per partition or one shared across all partitions
         assert(siteRateModels.size() == 1 || siteRateModels.size() == patternLists.size());
         this.siteRateModels.addAll(siteRateModels);
         this.categoryCount = this.siteRateModels.get(0).getCategoryCount();
@@ -160,12 +164,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             int matrixBufferCount = 0;
 
             // create a substitutionModelDelegate for each branchModel
+            int partitionNumber = 0;
             for (BranchModel branchModel : this.branchModels) {
-                SubstitutionModelDelegate substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel, -1);
+                SubstitutionModelDelegate substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel, partitionNumber);
                 substitutionModelDelegates.add(substitutionModelDelegate);
 
                 eigenBufferCount += substitutionModelDelegate.getEigenBufferCount();
                 matrixBufferCount += substitutionModelDelegate.getMatrixBufferCount();
+
+                partitionNumber ++;
             }
 
             // first set the rescaling scheme to use from the parser
@@ -579,7 +586,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         }
 
-        int operationCount = nodeOperations.size();
+        int operationCount = 0;
         k = 0;
         for (NodeOperation op : nodeOperations) {
             int nodeNum = op.getNodeNumber();
@@ -589,44 +596,51 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 partialBufferHelper.flipOffset(nodeNum);
             }
 
-            for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
+            int writeScale, readScale;
 
-                operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+            if (useScaleFactors) {
+                // get the index of this scaling buffer
+                int n = nodeNum - tipCount;
 
-                if (useScaleFactors) {
-                    // get the index of this scaling buffer
-                    int n = nodeNum - tipCount;
+                if (recomputeScaleFactors) {
+                    // flip the indicator: can take either n or (internalNodeCount + 1) - n
+                    scaleBufferHelper.flipOffset(n);
 
-                    if (recomputeScaleFactors) {
-                        // flip the indicator: can take either n or (internalNodeCount + 1) - n
-                        scaleBufferHelper.flipOffset(n);
+                    // store the index
+                    scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
 
-                        // store the index
-                        scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
-
-                        operations[k + 1] = scaleBufferIndices[n]; // Write new scaleFactor
-                        operations[k + 2] = Beagle.NONE;
-
-                    } else {
-                        operations[k + 1] = Beagle.NONE;
-                        operations[k + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
-                    }
+                    writeScale = scaleBufferIndices[n]; // Write new scaleFactor
+                    readScale = Beagle.NONE;
 
                 } else {
-
-                    if (useAutoScaling) {
-                        scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
-                    }
-                    operations[k + 1] = Beagle.NONE; // Not using scaleFactors
-                    operations[k + 2] = Beagle.NONE;
+                    writeScale = Beagle.NONE;
+                    readScale = scaleBufferIndices[n]; // Read existing scaleFactor
                 }
 
+            } else {
+
+                if (useAutoScaling) {
+                    scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
+                }
+                writeScale = Beagle.NONE; // Not using scaleFactors
+                readScale = Beagle.NONE;
+            }
+
+            for (int i = 0; i < partitionCount; i++) {
+                SubstitutionModelDelegate substitutionModelDelegate =
+                        (substitutionModelDelegates.size() == 1 ?
+                                substitutionModelDelegates.get(0) : substitutionModelDelegates.get(i));
+
+                operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+                operations[k + 1] = writeScale;
+                operations[k + 2] = readScale;
                 operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
                 operations[k + 4] = substitutionModelDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
                 operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
                 operations[k + 6] = substitutionModelDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
 
                 k += Beagle.OPERATION_TUPLE_SIZE;
+                operationCount ++;
             }
         }
 
@@ -795,32 +809,34 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the patternLists
      */
-    private DataType dataType = null;
+    private final DataType dataType;
+
+    private final int partitionCount;
 
     /**
      * the pattern weights across all patterns
      */
-    private double[] patternWeights;
+    private final double[] patternWeights;
 
     /**
      * The partition for each pattern
      */
-    private int[] patternPartitions;
+    private final int[] patternPartitions;
 
     /**
      * the number of patterns for each partition
      */
-    private int[] patternCounts;
+    private final int[] patternCounts;
 
     /**
      * total number of patterns across all partitions
      */
-    private int totalPatternCount;
+    private final int totalPatternCount;
 
     /**
      * the number of states in the data
      */
-    private int stateCount;
+    private final int stateCount;
 
     /**
      * the branch-site model for these sites
@@ -845,7 +861,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the number of rate categories
      */
-    private int categoryCount;
+    private final int categoryCount;
 
     /**
      * an array used to transfer tip partials
@@ -860,16 +876,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the BEAGLE library instance
      */
-    private Beagle beagle;
+    private final Beagle beagle;
 
     /**
      * Flag to specify that the substitution model has changed
      */
-    private boolean[] updateSubstitutionModels;
+    private final boolean[] updateSubstitutionModels;
 
     /**
      * Flag to specify that the site model has changed
      */
-    private boolean[] updateSiteRateModels;
+    private final boolean[] updateSiteRateModels;
 
 }

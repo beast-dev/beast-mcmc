@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 
 /**
  */
+@Deprecated // Switching to BEAGLE
 public class SequenceErrorModelParser extends AbstractXMLObjectParser {
 
     public static final String SEQUENCE_ERROR_MODEL = "sequenceErrorModel";

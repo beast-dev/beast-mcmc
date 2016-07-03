@@ -41,6 +41,7 @@ import java.net.URISyntaxException;
  * @author Andrew Rambaut
  */
 
+@Deprecated // Switching to BEAGLE
 public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 
 	/**

@@ -34,6 +34,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  *
  */
+@Deprecated // Switching to BEAGLE
 public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
     /**
      * Constructor

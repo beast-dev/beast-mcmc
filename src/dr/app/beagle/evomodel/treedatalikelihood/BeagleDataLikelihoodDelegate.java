@@ -35,34 +35,18 @@ package dr.app.beagle.evomodel.treedatalikelihood;/**
 
 import beagle.*;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.tools.BeagleSequenceSimulator;
-import dr.app.beagle.tools.Partition;
-import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,12 +98,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         logger.info("Using BEAGLE DataLikelihood Delegate");
 
-        this.patternList = patternList;
         this.dataType = patternList.getDataType();
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
-
-        this.useAmbiguities = useAmbiguities;
 
         patternWeights = patternList.getPatternWeights();
 
@@ -152,12 +133,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
 
             // one partials buffer for each tip and two for each internal node (for store restore)
-            partialBufferHelper = new dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper(nodeCount, tipCount);
+            partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
-            scaleBufferHelper = new dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper(getScaleBufferCount(), 0);
+            scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
-            substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel, -1);
+            substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel);
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
@@ -720,21 +701,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private int nodeCount;
-    private int tipCount;
-    private int internalNodeCount;
+    private final int nodeCount;
+    private final int tipCount;
+    private final int internalNodeCount;
 
-    private int[] branchUpdateIndices;
-    private double[] branchLengths;
+    private final int[] branchUpdateIndices;
+    private final double[] branchLengths;
 
     private int[] scaleBufferIndices;
     private int[] storedScaleBufferIndices;
 
-    private int[] operations;
+    private final int[] operations;
 
     private boolean flip = true;
-    private BufferIndexHelper partialBufferHelper;
-    private BufferIndexHelper scaleBufferHelper;
+    private final BufferIndexHelper partialBufferHelper;
+    private final BufferIndexHelper scaleBufferHelper;
 
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;
@@ -742,6 +723,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private boolean useScaleFactors = false;
     private boolean useAutoScaling = false;
+
     private boolean recomputeScaleFactors = false;
     private boolean everUnderflowed = false;
     private int rescalingCount = 0;
@@ -750,23 +732,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * the patternList
      */
-    private PatternList patternList = null;
-    private DataType dataType = null;
+    private final DataType dataType;
 
     /**
      * the pattern weights
      */
-    private double[] patternWeights;
+    private final double[] patternWeights;
 
     /**
      * the number of patterns
      */
-    private int patternCount;
+    private final int patternCount;
 
     /**
      * the number of states in the data
      */
-    private int stateCount;
+    private final int stateCount;
 
     /**
      * the branch-site model for these sites
@@ -791,7 +772,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * the number of rate categories
      */
-    private int categoryCount;
+    private final int categoryCount;
 
     /**
      * an array used to transfer tip partials
@@ -806,7 +787,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * the BEAGLE library instance
      */
-    private Beagle beagle;
+    private final Beagle beagle;
 
     /**
      * Flag to specify that the substitution model has changed
@@ -817,10 +798,5 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * Flag to specify that the site model has changed
      */
     private boolean updateSiteModel;
-
-    /**
-     * Flag to specify if ambiguity codes are in use
-     */
-    private final boolean useAmbiguities;
 
 }

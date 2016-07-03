@@ -35,6 +35,7 @@ package dr.evomodel.treelikelihood;
  * @author Alexei Drummond
  */
 
+@Deprecated // Switching to BEAGLE
 public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 
 	/**

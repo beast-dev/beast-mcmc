@@ -25,6 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
+@Deprecated // Switching to BEAGLE
 public class NativeGeneralLikelihoodCore extends AbstractLikelihoodCore {
 
 	public NativeGeneralLikelihoodCore(int stateCount) {

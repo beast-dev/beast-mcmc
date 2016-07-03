@@ -33,6 +33,7 @@ package dr.evomodel.treelikelihood;
  * @author Andrew Rambaut
  */
 
+@Deprecated // Switching to BEAGLE
 public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 
 	/**

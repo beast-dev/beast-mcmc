@@ -36,6 +36,7 @@ import java.util.logging.Logger;
  *
  */
 
+@Deprecated // Switching to BEAGLE
 public class GPULikelihoodCore extends NativeLikelihoodCore {
 
 	/**

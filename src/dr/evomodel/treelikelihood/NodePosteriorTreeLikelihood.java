@@ -48,6 +48,7 @@ import dr.xml.*;
  * Date: 01-Aug-2008
  * Time: 10:36:39
  */
+@Deprecated // Switching to BEAGLE
 public class NodePosteriorTreeLikelihood extends TreeLikelihood implements TreeTraitProvider {
 
     protected double[][] nodePosteriors;

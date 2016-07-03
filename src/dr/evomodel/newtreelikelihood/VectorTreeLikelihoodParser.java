@@ -25,6 +25,7 @@
 
 package dr.evomodel.newtreelikelihood;
 
+@Deprecated // Switching to BEAGLE
 public class VectorTreeLikelihoodParser extends TreeLikelihood.TreeLikelihoodParser {
     public static final String VECTOR_TREE_LIKELIHOOD = "vectorTreeLikelihood";
 

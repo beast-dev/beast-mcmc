@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
 
+@Deprecated // Switching to BEAGLE
 public class FloatGeneralLikelihoodCore implements LikelihoodCore {
 
     protected int stateCount;

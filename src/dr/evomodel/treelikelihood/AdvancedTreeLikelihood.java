@@ -55,6 +55,7 @@ import java.util.logging.Logger;
  * @version $Id: AdvancedTreeLikelihood.java,v 1.11 2006/01/10 16:48:27 rambaut Exp $
  */
 
+@Deprecated // Switching to BEAGLE
 public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
     public static final String ADVANCED_TREE_LIKELIHOOD = "advancedTreeLikelihood";

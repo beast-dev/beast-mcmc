@@ -45,6 +45,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  */
 
+@Deprecated // Switching to BEAGLE
 public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 
     public static final String PURIFYING_TREE_LIKELIHOOD = "purifyingTreeLikelihood";

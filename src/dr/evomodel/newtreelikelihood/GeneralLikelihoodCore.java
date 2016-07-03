@@ -28,6 +28,7 @@ package dr.evomodel.newtreelikelihood;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
 
+@Deprecated // Switching to BEAGLE
 public class GeneralLikelihoodCore implements LikelihoodCore {
 
     public static final boolean DEBUG = false;

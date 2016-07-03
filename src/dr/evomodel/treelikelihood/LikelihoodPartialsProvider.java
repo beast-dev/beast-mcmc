@@ -29,6 +29,7 @@ package dr.evomodel.treelikelihood;
  * @author Marc A. Suchard
  */
 
+@Deprecated // Switching to BEAGLE
 public interface LikelihoodPartialsProvider extends LikelihoodScalingProvider {
 
     void getPartials(int nodeNumber, double[] partialsVector);

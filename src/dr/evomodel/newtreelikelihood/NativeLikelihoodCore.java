@@ -38,6 +38,7 @@ import java.util.logging.Logger;
  *
  */
 
+@Deprecated // Switching to BEAGLE
 public class NativeLikelihoodCore implements LikelihoodCore {
 
     public static final String LIBRARY_NAME = "NativeLikelihoodCore";

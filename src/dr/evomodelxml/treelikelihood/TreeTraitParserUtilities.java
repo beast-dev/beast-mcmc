@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // Switching to BEAGLE
 public class TreeTraitParserUtilities {
 
 

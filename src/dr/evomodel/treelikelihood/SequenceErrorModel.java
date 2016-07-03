@@ -42,6 +42,7 @@ import dr.inference.model.Statistic;
  * @author Andrew Rambaut
  * @version $Id$
  */
+@Deprecated // Switching to BEAGLE
 public class SequenceErrorModel extends TipStatesModel {
     public enum ErrorType {
         TYPE_1_TRANSITIONS("type1Transitions"),

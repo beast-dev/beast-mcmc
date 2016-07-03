@@ -35,35 +35,45 @@ import java.io.Serializable;
  * @version $Id$
  */
 public class BufferIndexHelper implements Serializable {
-	
+
     /**
      * @param maxIndexValue the number of possible input values for the index
      * @param minIndexValue the minimum index value to have the mirrored buffers
      */
     public BufferIndexHelper(int maxIndexValue, int minIndexValue) {
+        this(maxIndexValue, minIndexValue, 0);
+    }
+
+    /**
+     * @param maxIndexValue the number of possible input values for the index
+     * @param minIndexValue the minimum index value to have the mirrored buffers
+     * @param bufferSetNumber provides a total offset of bufferSetNumber * bufferCount
+     */
+    public BufferIndexHelper(int maxIndexValue, int minIndexValue, int bufferSetNumber) {
         this.maxIndexValue = maxIndexValue;
         this.minIndexValue = minIndexValue;
+        this.constantOffset = bufferSetNumber * getBufferCount();
 
-        offsetCount = maxIndexValue - minIndexValue;
-        indexOffsets = new int[offsetCount];
-        storedIndexOffsets = new int[offsetCount];
+        doubleBufferCount = maxIndexValue - minIndexValue;
+        indexOffsets = new int[doubleBufferCount];
+        storedIndexOffsets = new int[doubleBufferCount];
     }
 
     public int getBufferCount() {
-        return 2 * offsetCount + minIndexValue;
+        return 2 * doubleBufferCount + minIndexValue;
     }
 
     public void flipOffset(int i) {
         if (i >= minIndexValue) {
-            indexOffsets[i - minIndexValue] = offsetCount - indexOffsets[i - minIndexValue];
+            indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
         } // else do nothing
     }
 
     public int getOffsetIndex(int i) {
         if (i < minIndexValue) {
-            return i;
+            return i + constantOffset;
         }
-        return indexOffsets[i - minIndexValue] + i;
+        return indexOffsets[i - minIndexValue] + i + constantOffset;
     }
 
     public void getIndices(int[] outIndices) {
@@ -85,7 +95,8 @@ public class BufferIndexHelper implements Serializable {
 
     private final int maxIndexValue;
     private final int minIndexValue;
-    private final int offsetCount;
+    private final int constantOffset;
+    private final int doubleBufferCount;
 
     private int[] indexOffsets;
     private int[] storedIndexOffsets;

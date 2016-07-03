@@ -37,6 +37,7 @@ import java.util.List;
  * @author Marc Suchard
  *
  */
+@Deprecated // Switching to BEAGLE
 public class LikelihoodCoreFactory {
 
 	public static final boolean useFloats = false;

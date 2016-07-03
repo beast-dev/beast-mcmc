@@ -70,6 +70,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
+@Deprecated // Switching to TreeDataLikelihood
 public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to

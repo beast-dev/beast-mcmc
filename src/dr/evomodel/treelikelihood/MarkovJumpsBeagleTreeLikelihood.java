@@ -26,7 +26,7 @@
 package dr.evomodel.treelikelihood;
 
 import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.sitemodel.SiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.UniformizedSubstitutionModel;

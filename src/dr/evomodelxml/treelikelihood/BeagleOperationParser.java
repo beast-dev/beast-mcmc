@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.treelikelihood;
 
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.treelikelihood.BeagleOperationReport;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;

@@ -35,7 +35,7 @@ package dr.evomodel.treedatalikelihood;/**
 
 import beagle.*;
 import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.sitemodel.SiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;

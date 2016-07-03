@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evomodel.sitemodel.SiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;

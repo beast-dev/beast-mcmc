@@ -1,7 +1,7 @@
 /*
  * AbstractObservationProcess.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,19 +23,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.oldevomodel.MSSD;
+package dr.evomodel.MSSD;
 
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.MutationDeathType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.oldevomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.LikelihoodCore;
-import dr.evomodel.treelikelihood.LikelihoodPartialsProvider;
-import dr.oldevomodel.treelikelihood.ScaleFactorsHelper;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -138,92 +135,93 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
 
-    private void calculateNodePatternLikelihood(int nodeIndex,
-                                                double[] freqs,
-                                                LikelihoodCore likelihoodCore,
-                                                double averageRate,
-                                                double[] cumLike) {
-        // get partials for node nodeIndex
-        likelihoodCore.getPartials(nodeIndex, nodePartials); // MAS
-            /*
-                multiply the partials by equilibrium probs
-                    this part could be optimized by first summing
-                    and then multiplying by equilibrium probs
-            */
-        double prob = Math.log(getNodeSurvivalProbability(nodeIndex, averageRate));
-
-        for (int j = 0; j < patternCount; ++j) {
-            if (nodePatternInclusion[nodeIndex * patternCount + j]) {
-                cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs) + prob);
-            }
-        }
-    }
-
-    private double accumulateCorrectedLikelihoods(double[] cumLike, double ascertainmentCorrection,
-                                                  double[] patterWeights) {
-        double logL = 0;
-        for (int j = 0; j < patternCount; ++j) {
-            logL += Math.log(cumLike[j] / ascertainmentCorrection) * patternWeights[j];
-        }
-        return logL;
-    }
-
-    public final double nodePatternLikelihood(double[] freqs, LikelihoodPartialsProvider likelihoodCore,
-                                              ScaleFactorsHelper scaleFactorsHelper) {
-        int i, j;
-        double logL = gammaNorm;
-
-        double birthRate = lam.getParameterValue(0);
-        double logProb;
-        if (!nodePatternInclusionKnown)
-            setNodePatternInclusion();
-        if (nodePartials == null) {
-            nodePartials = new double[patternCount * stateCount];
-        }
-
-        double averageRate = getAverageRate();
-
-        for (j = 0; j < patternCount; ++j) cumLike[j] = 0;
-
-        for (i = 0; i < nodeCount; ++i) {
-            // get partials for node i
-            likelihoodCore.getPartials(i, nodePartials);
-            scaleFactorsHelper.rescalePartials(i, nodePartials);
-            /*
-                multiply the partials by equilibrium probs
-                    this part could be optimized by first summing
-                    and then multiplying by equilibrium probs
-            */
-//            likelihoodCore.calculateLogLikelihoods(nodePartials, freqs, nodeLikelihoods);   // MAS Removed
-            logProb = Math.log(getNodeSurvivalProbability(i, averageRate));
-
-            for (j = 0; j < patternCount; ++j) {
-                if (nodePatternInclusion[i * patternCount + j]) {
-//                    cumLike[j] += Math.exp(nodeLikelihoods[j] + logProb);  // MAS Replaced with line below
-                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs)
-                            + logProb);
-                }
-            }
-        }
-
-        double ascertainmentCorrection = getAscertainmentCorrection(cumLike);
-//        System.err.println("AscertainmentCorrection: "+ascertainmentCorrection);
-
-        for (j = 0; j < patternCount; ++j) {
-            logL += Math.log(cumLike[j] / ascertainmentCorrection) * patternWeights[j];
-        }
-
-        double deathRate = mu.getParameterValue(0);
-
-        double logTreeWeight = getLogTreeWeight();
-
-        if (integrateGainRate) {
-            logL -= gammaNorm + logN + Math.log(-logTreeWeight * deathRate / birthRate) * totalPatterns;
-        } else {
-            logL += logTreeWeight + Math.log(birthRate / deathRate) * totalPatterns;
-        }
-        return logL;
-    }
+    // @todo needs updating to use BEAGLE
+//    private void calculateNodePatternLikelihood(int nodeIndex,
+//                                                double[] freqs,
+//                                                LikelihoodCore likelihoodCore,
+//                                                double averageRate,
+//                                                double[] cumLike) {
+//        // get partials for node nodeIndex
+//        likelihoodCore.getPartials(nodeIndex, nodePartials); // MAS
+//            /*
+//                multiply the partials by equilibrium probs
+//                    this part could be optimized by first summing
+//                    and then multiplying by equilibrium probs
+//            */
+//        double prob = Math.log(getNodeSurvivalProbability(nodeIndex, averageRate));
+//
+//        for (int j = 0; j < patternCount; ++j) {
+//            if (nodePatternInclusion[nodeIndex * patternCount + j]) {
+//                cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs) + prob);
+//            }
+//        }
+//    }
+//
+//    private double accumulateCorrectedLikelihoods(double[] cumLike, double ascertainmentCorrection,
+//                                                  double[] patterWeights) {
+//        double logL = 0;
+//        for (int j = 0; j < patternCount; ++j) {
+//            logL += Math.log(cumLike[j] / ascertainmentCorrection) * patternWeights[j];
+//        }
+//        return logL;
+//    }
+//
+//    public final double nodePatternLikelihood(double[] freqs, LikelihoodPartialsProvider likelihoodCore,
+//                                              ScaleFactorsHelper scaleFactorsHelper) {
+//        int i, j;
+//        double logL = gammaNorm;
+//
+//        double birthRate = lam.getParameterValue(0);
+//        double logProb;
+//        if (!nodePatternInclusionKnown)
+//            setNodePatternInclusion();
+//        if (nodePartials == null) {
+//            nodePartials = new double[patternCount * stateCount];
+//        }
+//
+//        double averageRate = getAverageRate();
+//
+//        for (j = 0; j < patternCount; ++j) cumLike[j] = 0;
+//
+//        for (i = 0; i < nodeCount; ++i) {
+//            // get partials for node i
+//            likelihoodCore.getPartials(i, nodePartials);
+//            scaleFactorsHelper.rescalePartials(i, nodePartials);
+//            /*
+//                multiply the partials by equilibrium probs
+//                    this part could be optimized by first summing
+//                    and then multiplying by equilibrium probs
+//            */
+////            likelihoodCore.calculateLogLikelihoods(nodePartials, freqs, nodeLikelihoods);   // MAS Removed
+//            logProb = Math.log(getNodeSurvivalProbability(i, averageRate));
+//
+//            for (j = 0; j < patternCount; ++j) {
+//                if (nodePatternInclusion[i * patternCount + j]) {
+////                    cumLike[j] += Math.exp(nodeLikelihoods[j] + logProb);  // MAS Replaced with line below
+//                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs)
+//                            + logProb);
+//                }
+//            }
+//        }
+//
+//        double ascertainmentCorrection = getAscertainmentCorrection(cumLike);
+////        System.err.println("AscertainmentCorrection: "+ascertainmentCorrection);
+//
+//        for (j = 0; j < patternCount; ++j) {
+//            logL += Math.log(cumLike[j] / ascertainmentCorrection) * patternWeights[j];
+//        }
+//
+//        double deathRate = mu.getParameterValue(0);
+//
+//        double logTreeWeight = getLogTreeWeight();
+//
+//        if (integrateGainRate) {
+//            logL -= gammaNorm + logN + Math.log(-logTreeWeight * deathRate / birthRate) * totalPatterns;
+//        } else {
+//            logL += logTreeWeight + Math.log(birthRate / deathRate) * totalPatterns;
+//        }
+//        return logL;
+//    }
 
     protected double getAscertainmentCorrection(double[] patternProbs) {
         // This function probably belongs better to the AscertainedSitePatterns

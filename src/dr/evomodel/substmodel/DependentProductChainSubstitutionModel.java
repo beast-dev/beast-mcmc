@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodel.sitemodel.SiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.inference.model.Parameter;
 import dr.math.KroneckerOperation;
 

@@ -26,7 +26,7 @@
 package dr.app.beagle.tools.parsers;
 
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.CodonLabeling;
 import dr.app.beagle.tools.CompleteHistorySimulator;
 import dr.evolution.alignment.Alignment;
@@ -150,7 +150,7 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "A SequenceSimulator that generates random sequences for a given tree, sitemodel and branch rate model";
+        return "A SequenceSimulator that generates random sequences for a given tree, siteratemodel and branch rate model";
     }
 
     public Class getReturnType() {

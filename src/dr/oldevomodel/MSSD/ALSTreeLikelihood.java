@@ -29,7 +29,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.LikelihoodScalingProvider;
+import dr.evomodel.treelikelihood.LikelihoodScalingProvider;
 import dr.oldevomodel.treelikelihood.ScaleFactorsHelper;
 import dr.oldevomodel.treelikelihood.TreeLikelihood;
 import dr.inference.model.Model;

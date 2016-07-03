@@ -25,6 +25,8 @@
 
 package dr.oldevomodel.treelikelihood;
 
+import dr.evomodel.treelikelihood.LikelihoodPartialsProvider;
+
 /**
  * LikelihoodCore - An interface describing the core likelihood functions.
  *

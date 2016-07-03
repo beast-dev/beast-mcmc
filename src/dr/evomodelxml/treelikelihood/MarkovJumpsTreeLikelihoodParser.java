@@ -26,7 +26,7 @@
 package dr.evomodelxml.treelikelihood;
 
 import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
@@ -38,8 +38,6 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;

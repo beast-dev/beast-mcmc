@@ -1,6 +1,6 @@
 package test.dr.evomodel.substmodel;
 
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;

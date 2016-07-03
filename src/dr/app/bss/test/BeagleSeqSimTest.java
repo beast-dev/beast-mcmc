@@ -34,7 +34,7 @@ import java.util.Locale;
 
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchmodel.RandomBranchModel;
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.aminoacid.Blosum62;

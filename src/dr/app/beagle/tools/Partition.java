@@ -33,7 +33,7 @@ import org.apache.commons.math.random.MersenneTwister;
 import beagle.Beagle;
 import beagle.BeagleFactory;
 import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evomodel.treelikelihood.SubstitutionModelDelegate;

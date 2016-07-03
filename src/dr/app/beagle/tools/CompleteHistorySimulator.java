@@ -25,7 +25,7 @@
 
 package dr.app.beagle.tools;
 
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;

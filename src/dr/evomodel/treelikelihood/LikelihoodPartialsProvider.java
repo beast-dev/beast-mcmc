@@ -1,7 +1,7 @@
 /*
  * LikelihoodPartialsProvider.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,13 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.oldevomodel.treelikelihood;
+package dr.evomodel.treelikelihood;
 
 /**
  * @author Marc A. Suchard
  */
 
-@Deprecated // Switching to BEAGLE
 public interface LikelihoodPartialsProvider extends LikelihoodScalingProvider {
 
     void getPartials(int nodeNumber, double[] partialsVector);

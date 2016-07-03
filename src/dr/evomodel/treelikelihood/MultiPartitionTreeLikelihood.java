@@ -28,7 +28,7 @@ package dr.evomodel.treelikelihood;
 import beagle.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
-import dr.evomodel.sitemodel.SiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;

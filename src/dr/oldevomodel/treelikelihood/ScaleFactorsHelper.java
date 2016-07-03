@@ -27,6 +27,7 @@ package dr.oldevomodel.treelikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.treelikelihood.LikelihoodScalingProvider;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

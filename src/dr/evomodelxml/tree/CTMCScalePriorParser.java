@@ -1,7 +1,7 @@
 /*
  * CTMCScalePriorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,10 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.oldevomodelxml.MSSD;
+package dr.evomodelxml.tree;
 
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.oldevomodel.MSSD.CTMCScalePrior;
+import dr.evomodel.tree.CTMCScalePrior;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;

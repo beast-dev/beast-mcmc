@@ -11,7 +11,7 @@ import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;

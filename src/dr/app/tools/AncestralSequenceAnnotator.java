@@ -63,7 +63,7 @@ import dr.util.HeapSort;
 import dr.util.Version;
 
 
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 

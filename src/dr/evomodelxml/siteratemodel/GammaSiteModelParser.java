@@ -27,7 +27,7 @@ package dr.evomodelxml.siteratemodel;
 
 import java.util.logging.Logger;
 
-import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.inference.model.Parameter;

@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodel.sitemodel.SiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.evolution.datatype.Codons;

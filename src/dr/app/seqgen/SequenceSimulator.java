@@ -318,7 +318,7 @@ public class SequenceSimulator {
         //************************************************************************
 
         public String getParserDescription() {
-            return "A SequenceSimulator that generates random sequences for a given tree, sitemodel and branch rate model";
+            return "A SequenceSimulator that generates random sequences for a given tree, siteratemodel and branch rate model";
         }
 
         public Class getReturnType() {

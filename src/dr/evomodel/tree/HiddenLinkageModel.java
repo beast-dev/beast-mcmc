@@ -42,7 +42,7 @@ import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
 import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.evomodel.treelikelihood.NativeAminoAcidLikelihoodCore;
 import dr.evomodel.treelikelihood.NativeNucleotideLikelihoodCore;
-import dr.evomodel.treelikelihood.TipStatesModel;
+import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;

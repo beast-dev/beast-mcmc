@@ -1,7 +1,7 @@
 /*
- * VectorTreeLikelihoodParser.java
+ * NucModelType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,14 +23,20 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newtreelikelihood;
+package dr.app.beauti.types;
 
-@Deprecated // Switching to BEAGLE
-public class VectorTreeLikelihoodParser extends TreeLikelihood.TreeLikelihoodParser {
-    public static final String VECTOR_TREE_LIKELIHOOD = "vectorTreeLikelihood";
+/**
+ * @author Alexei Drummond
+ */
+public enum NucModelType {
 
+    JC, HKY, GTR, TN93;
 
-    public VectorTreeLikelihoodParser() {
-        super(VECTOR_TREE_LIKELIHOOD);
+    public final String getXMLName() {
+        return name() + "Model";
+    }
+    
+    public String toString() {
+        return name();
     }
 }

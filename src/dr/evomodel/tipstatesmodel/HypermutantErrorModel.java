@@ -1,7 +1,7 @@
 /*
  * HypermutantErrorModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treelikelihood;
+package dr.evomodel.tipstatesmodel;
 
 import dr.evolution.alignment.HypermutantAlignment;
 import dr.evolution.datatype.Nucleotides;
@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-@Deprecated // Switching to BEAGLE
 public class HypermutantErrorModel extends TipStatesModel {
 
     public static final String HYPERMUTANT_ERROR_MODEL = "hypermutantErrorModel";

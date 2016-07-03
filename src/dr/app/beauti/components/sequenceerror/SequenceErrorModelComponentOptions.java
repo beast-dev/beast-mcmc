@@ -29,7 +29,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.SequenceErrorType;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
 
 import java.util.HashMap;
 import java.util.List;

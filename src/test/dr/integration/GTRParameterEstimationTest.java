@@ -3,7 +3,7 @@ package test.dr.integration;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.util.Utils;
-import dr.evomodel.substmodel.NucModelType;
+import dr.app.beauti.types.NucModelType;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceException;

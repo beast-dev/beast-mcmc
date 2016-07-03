@@ -39,8 +39,8 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
+import dr.app.beauti.types.AminoAcidModelType;
+import dr.app.beauti.types.NucModelType;
 import dr.evoxml.util.DateUnitsType;
 
 import java.io.*;

@@ -27,7 +27,7 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.*;
+import dr.app.beauti.types.AminoAcidModelType;
 import dr.xml.*;
 
 /**

@@ -25,12 +25,12 @@
 
 package dr.app.beastgen;
 
+import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.StartingTreeType;
 import dr.evolution.io.NexusImporter;
-import dr.app.beauti.types.NucModelType;
 
 import java.io.IOException;
 import java.io.Reader;

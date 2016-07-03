@@ -25,10 +25,10 @@
 
 package dr.app.beauti.util;
 
+import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.types.NucModelType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.CharSetAlignment;

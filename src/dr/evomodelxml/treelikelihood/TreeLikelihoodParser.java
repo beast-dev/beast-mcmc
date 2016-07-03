@@ -28,8 +28,8 @@ package dr.evomodelxml.treelikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.xml.*;
 

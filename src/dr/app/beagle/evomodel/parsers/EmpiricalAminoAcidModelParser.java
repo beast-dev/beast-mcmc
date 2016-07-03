@@ -25,9 +25,10 @@
 
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
+import dr.app.beagle.evomodel.substmodel.EmpiricalRateMatrix;
+import dr.app.beagle.evomodel.substmodel.EmpiricalRateMatrixReader;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beauti.types.AminoAcidModelType;
+import dr.app.beagle.evomodel.substmodel.aminoacid.*;
 import dr.xml.*;
 
 /**

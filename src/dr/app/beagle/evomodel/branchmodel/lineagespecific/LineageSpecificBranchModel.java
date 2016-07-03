@@ -31,7 +31,7 @@ import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
+import dr.app.beagle.evomodel.substmodel.codon.MG94CodonModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
@@ -57,7 +57,6 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.util.CommonCitations;
 
 /**
  * @author Filip Bielejec

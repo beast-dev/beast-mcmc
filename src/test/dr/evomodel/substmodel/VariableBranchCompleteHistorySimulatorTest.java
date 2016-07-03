@@ -2,7 +2,7 @@ package test.dr.evomodel.substmodel;
 
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;

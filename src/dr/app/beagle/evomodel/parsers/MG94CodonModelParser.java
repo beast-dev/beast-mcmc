@@ -26,8 +26,8 @@
 package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
-import dr.app.beagle.evomodel.substmodel.MG94HKYCodonModel;
+import dr.app.beagle.evomodel.substmodel.codon.MG94CodonModel;
+import dr.app.beagle.evomodel.substmodel.codon.MG94HKYCodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
 import dr.inference.model.Parameter;

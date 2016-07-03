@@ -26,6 +26,7 @@
 package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.substmodel.*;
+import dr.app.beagle.evomodel.substmodel.codon.MarkovModulatedGY94CodonModel;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneticCode;
 import dr.evolution.datatype.HiddenCodons;

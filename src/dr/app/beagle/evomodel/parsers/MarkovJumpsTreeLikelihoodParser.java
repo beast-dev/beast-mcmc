@@ -215,7 +215,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
     public static XMLSyntaxRule[]  rules =
             new XMLSyntaxRule[] {
-                    AttributeRule.newBooleanRule(OldTreeLikelihoodParser.USE_AMBIGUITIES, true),
+                    AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, true),
                     AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                     AttributeRule.newStringRule(JUMP_TAG_NAME, true),
                     AttributeRule.newBooleanRule(SCALE_REWARDS,true),
@@ -235,7 +235,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     new ElementRule(BranchModel.class, true),
                     new ElementRule(SubstitutionModel.class, true),
                     new ElementRule(BranchRateModel.class, true),
-                    AttributeRule.newStringRule(OldTreeLikelihoodParser.SCALING_SCHEME, true),
+                    AttributeRule.newStringRule(BeagleTreeLikelihoodParser.SCALING_SCHEME, true),
                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE), // For backwards compatibility
                     new ElementRule(COUNTS,
                             new XMLSyntaxRule[] {

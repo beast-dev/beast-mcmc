@@ -1,7 +1,7 @@
 package test.dr.evomodel.substmodel;
 
 import test.dr.math.MathTestCase;
-import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evolution.datatype.Nucleotides;

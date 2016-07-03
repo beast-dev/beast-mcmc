@@ -1,7 +1,7 @@
 /*
  * EmpiricalRateMatrix.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,106 +25,93 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.StringTokenizer;
-import java.util.logging.Logger;
-
+import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
+import dr.util.Citable;
 
 /**
- * Empirical rate matrix
+ * An interface for empirical rate matrices.
  *
- * @author Stefan Zoller
+ * @version $Id: EmpiricalRateMatrix.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
  */
-public class EmpiricalRateMatrix {
-    
-	/**
-     * constructor
-     *
-     * @param name						Name of matrix
-     * @param dataType  				Data type as Codons.UNIVERSAL
-     * @param dir						Directory that contains csv files with matrices
-     * @param fName						Name of frequency csv file
-     * @param mName						Name of initial matrix csv file
-     */
-    public EmpiricalRateMatrix(String name, DataType dataType, String dir, String fName, String mName) {
-		this.name = name;
-		this.dataType = dataType;
-		this.dataDir = dir;
-		this.matName = mName;
-		this.freqName = fName;
-		
-		setupRates();
-		setupFreqs();
-	}
-	
-	public final String getName() { return name; }
-	public final DataType getDataType() { return dataType; }
-	
-	public double[] getRates() { return rates; }
-	public double[] getFrequencies() { return frequencies; }
-	
-	public String getFreqName() { return freqName; }
-	public String getMatName() { return matName; }
-	public String getDirName() { return dataDir; }
-	
-	public void setFrequencies(double[] f) {
-	    this.frequencies = f;
-	}
-	
-	public void setRates(double[] p) {
-	    this.rates = p;
-	}
-	
-	private void setupRates() {
-		this.rates = new double[1830];
-		readFile(this.rates, matName, 1830);
-	}
-	
-	private void setupFreqs() {
-		this.frequencies = new double[61];
-		readFile(this.frequencies, freqName, 61);
-	}
-	
-	// read csv data
-	private void readFile(double[] r, String f, int nr) {
-		File file = new File(dataDir, f);
-	    
-		try {
-            BufferedReader bufRdr  = new BufferedReader(new FileReader(file));
-            String line = null;
-            int col = 0;
+public interface EmpiricalRateMatrix extends Citable {
 
-            while((line = bufRdr.readLine()) != null) {
-        	    StringTokenizer st = new StringTokenizer(line,",");
-        	    while (st.hasMoreTokens()) {
-        		    r[col] = Double.valueOf(st.nextToken()).doubleValue();
-        		    col++;
-        	    }
+	String getName();
+	DataType getDataType();
+	
+	double[] getEmpiricalRates();
+	double[] getEmpiricalFrequencies();
+			
+	public abstract class Abstract implements EmpiricalRateMatrix {
+	
+		public Abstract(String name, DataType dataType) {
+			this.name = name;
+			this.dataType = dataType;
+		}
+		
+		public final String getName() { return name; }
+		
+		public final DataType getDataType() { return dataType; }
+		
+		public final double[] getEmpiricalRates() { return rates; }
+		public final double[] getEmpiricalFrequencies() { return frequencies; }
+			
+		protected double[] rates = null;
+		protected double[] frequencies = null;
+		
+		private String name;
+		protected DataType dataType;
+	}
+
+    public abstract class AbstractAminoAcid extends Abstract {
+	
+		public AbstractAminoAcid(String name) {
+			super(name, AminoAcids.INSTANCE);
+			
+			int n = dataType.getStateCount();
+			rates = new double[(n * (n - 1)) / 2];
+			frequencies = new double[n];
+		}
+		
+		public final void setEmpiricalRates(double[][]matrix, String aminoAcidOrder) {
+			int k = 0;
+			
+			for (int i = 0; i < dataType.getStateCount(); i++) {
+			
+				int u = aminoAcidOrder.indexOf(dataType.getChar(i));
+				
+				for (int j = i + 1; j < dataType.getStateCount(); j++) {
+				
+					int v = aminoAcidOrder.indexOf(dataType.getChar(j));
+					
+					if (u < v) {
+						rates[k] = matrix[u][v];
+					} else {
+						rates[k] = matrix[v][u];
+					}
+					
+					k++;
+				}
+			}
+		}
+		
+		public final void setEmpiricalFrequencies(double[]freqs, String aminoAcidOrder) {
+
+            double sum = 0.0;
+            for (int i = 0; i < dataType.getStateCount(); i++) {
+				int u = aminoAcidOrder.indexOf(dataType.getChar(i));
+				frequencies[i] = freqs[u];
+                sum += frequencies[i];
             }
-            bufRdr.close();
-            if(col != nr) {
-            	Logger.getLogger("dr.evomodel").severe("Matrix does not contain " + nr + " values but " + col);
+
+            // normalize - we should probably detect large discrepancies but the empirical
+            // matrices have numerical rounding that cause small discrepancies.
+            for (int i = 0; i < dataType.getStateCount(); i++) {
+				frequencies[i] /= sum;
             }
-        } catch (FileNotFoundException e) {
-        	Logger.getLogger("dr.evomodel").severe("Caught FileNotFoundException: " + e.getMessage());
-        } catch (IOException e) {
-        	Logger.getLogger("dr.evomodel").severe("Caught IOException: " + e.getMessage());
-        } finally {
         }
 	}
-			
-	protected double[] rates;
-	protected double[] frequencies;
-	
-	private String name;
-	protected String dataDir;
-	protected String matName;
-	protected String freqName;
-	protected DataType dataType;
 }

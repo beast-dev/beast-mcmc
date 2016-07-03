@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import dr.app.beagle.evomodel.parsers.MG94CodonModelParser;
+import dr.app.beagle.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.app.beagle.tools.parsers.PartitionParser;
 import dr.app.beauti.util.XMLWriter;
@@ -41,8 +43,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.app.beauti.types.AminoAcidModelType;
-import dr.app.beauti.types.NucModelType;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
@@ -1357,7 +1357,7 @@ public class XMLGenerator {
 									data.substitutionModelIdref), //
 							new Attribute.Default<String>(
 									EmpiricalAminoAcidModelParser.TYPE,
-									AminoAcidModelType.FLU.getXMLName()) 
+									AminoAcidModelType.FLU.getXMLName())
 									});
 			
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);

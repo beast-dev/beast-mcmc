@@ -25,6 +25,8 @@
 
 package test.dr.app.beauti;
 
+import dr.app.beagle.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
@@ -39,8 +41,6 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
-import dr.app.beauti.types.AminoAcidModelType;
-import dr.app.beauti.types.NucModelType;
 import dr.evoxml.util.DateUnitsType;
 
 import java.io.*;

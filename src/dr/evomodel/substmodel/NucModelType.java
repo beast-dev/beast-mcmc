@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.types;
+package dr.evomodel.substmodel;
 
 /**
  * @author Alexei Drummond

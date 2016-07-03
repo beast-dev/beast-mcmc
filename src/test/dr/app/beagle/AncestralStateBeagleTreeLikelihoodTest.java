@@ -17,7 +17,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Parameter;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;

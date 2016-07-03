@@ -26,7 +26,7 @@
 package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.GTR;
+import dr.app.beagle.evomodel.substmodel.nucleotide.GTR;
 import dr.inference.model.Variable;
 import dr.xml.*;
 

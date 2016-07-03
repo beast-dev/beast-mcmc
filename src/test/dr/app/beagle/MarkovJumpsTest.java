@@ -10,7 +10,7 @@ import dr.inference.markovjumps.MarkovJumpsType;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;

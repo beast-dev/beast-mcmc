@@ -26,6 +26,7 @@
 package test.dr.app.beagle;
 
 import dr.app.beagle.evomodel.substmodel.*;
+import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.TwoStates;
 import dr.inference.markovjumps.MarkovJumpsType;

@@ -347,7 +347,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             beagle.setPatternWeights(patternWeights);
 
-            beagle.setPatternPartitions(partitionCount, patternPartitions);
+            // beagle.setPatternPartitions(partitionCount, patternPartitions);
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&

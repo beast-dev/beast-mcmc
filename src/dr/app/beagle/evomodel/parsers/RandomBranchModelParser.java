@@ -28,7 +28,7 @@ package dr.app.beagle.evomodel.parsers;
 import java.util.logging.Logger;
 
 import dr.app.beagle.evomodel.branchmodel.RandomBranchModel;
-import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
+import dr.app.beagle.evomodel.substmodel.codon.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.AbstractXMLObjectParser;

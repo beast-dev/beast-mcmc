@@ -28,6 +28,7 @@ package dr.app.beagle.evomodel.parsers;
 
 import java.util.logging.Logger;
 
+import dr.app.beagle.evomodel.substmodel.codon.EmpiricalCodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneticCode;
@@ -106,7 +107,7 @@ public class EmpiricalCodonModelParser extends AbstractXMLObjectParser {
         String freqString = xo.getStringAttribute(ECM_FREQ_MATRIX);
         String matString = xo.getStringAttribute(ECM_DATA_MATRIX);
         
-        EmpiricalRateMatrix rateMat = new EmpiricalRateMatrix(EMPIRICAL_RATE_MATRIX, codons, 
+        EmpiricalRateMatrixReader rateMat = new EmpiricalRateMatrixReader(EMPIRICAL_RATE_MATRIX, codons,
         													dirString, freqString, matString);
 
         FrequencyModel freqModel = null;
@@ -120,7 +121,7 @@ public class EmpiricalCodonModelParser extends AbstractXMLObjectParser {
     }
     
     // creates new FrequencyModel from XML frequencies
-    private FrequencyModel createNewFreqModel(DataType codons, EmpiricalRateMatrix type) throws XMLParseException {
+    private FrequencyModel createNewFreqModel(DataType codons, EmpiricalRateMatrixReader type) throws XMLParseException {
     	double[] freqs = type.getFrequencies();
     	double sum = 0;
         for (int j = 0; j < freqs.length; j++) {

@@ -27,7 +27,6 @@ package dr.app.beagle.evomodel.parsers;
 
 import java.util.logging.Logger;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -136,14 +135,9 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
 
-            new XORRule(
-                    new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                            new ElementRule(SubstitutionModel.class)
-                    }),
-                    new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                            new ElementRule(BranchSubstitutionModel.class)
-                    }), true
-            ),
+            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                    new ElementRule(SubstitutionModel.class)
+            }, true),
 
             new XORRule(
                     new XORRule(

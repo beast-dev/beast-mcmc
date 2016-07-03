@@ -1,7 +1,7 @@
 /*
  * GY94CodonModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,8 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beagle.evomodel.substmodel;
+package dr.app.beagle.evomodel.substmodel.codon;
 
+import dr.app.beagle.evomodel.substmodel.DefaultEigenSystem;
+import dr.app.beagle.evomodel.substmodel.EigenSystem;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;

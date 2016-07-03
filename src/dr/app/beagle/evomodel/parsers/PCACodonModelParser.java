@@ -27,6 +27,7 @@ package dr.app.beagle.evomodel.parsers;
 
 import java.util.logging.Logger;
 
+import dr.app.beagle.evomodel.substmodel.codon.PCACodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneticCode;

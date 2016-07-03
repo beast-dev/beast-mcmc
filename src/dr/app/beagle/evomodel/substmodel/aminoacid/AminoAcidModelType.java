@@ -23,8 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.types;
+package dr.app.beagle.evomodel.substmodel.aminoacid;
 
+import dr.app.beagle.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.util.Citation;
 
 /**
@@ -34,12 +35,12 @@ public enum AminoAcidModelType {
 
     BLOSUM_62("Blosum62", "blosum62", Blosum62.INSTANCE),
     DAYHOFF("Dayhoff", "dayhoff", Dayhoff.INSTANCE),
-    JTT("JTT", dr.evomodel.substmodel.JTT.INSTANCE),
+    JTT("JTT", dr.app.beagle.evomodel.substmodel.aminoacid.JTT.INSTANCE),
     MT_REV_24("mtREV", MTREV.INSTANCE),
     CP_REV_45("cpREV", CPREV.INSTANCE),
-    WAG("WAG", dr.evomodel.substmodel.WAG.INSTANCE),
-    LG("LG", dr.evomodel.substmodel.LG.INSTANCE),
-    FLU("FLU", dr.evomodel.substmodel.FLU.INSTANCE);
+    WAG("WAG", dr.app.beagle.evomodel.substmodel.aminoacid.WAG.INSTANCE),
+    LG("LG", dr.app.beagle.evomodel.substmodel.aminoacid.LG.INSTANCE),
+    FLU("FLU", dr.app.beagle.evomodel.substmodel.aminoacid.FLU.INSTANCE);
 
     AminoAcidModelType(String displayName, EmpiricalRateMatrix matrix) {
         this(displayName, displayName, matrix);

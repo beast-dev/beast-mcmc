@@ -28,7 +28,7 @@ package dr.app.beagle.evomodel.parsers;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
 
 import java.util.logging.Logger;
 

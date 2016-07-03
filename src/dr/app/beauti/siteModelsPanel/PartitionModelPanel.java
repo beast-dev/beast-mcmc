@@ -25,6 +25,8 @@
 
 package dr.app.beauti.siteModelsPanel;
 
+import dr.app.beagle.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
@@ -39,8 +41,6 @@ import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
-import dr.app.beauti.types.AminoAcidModelType;
-import dr.app.beauti.types.NucModelType;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;

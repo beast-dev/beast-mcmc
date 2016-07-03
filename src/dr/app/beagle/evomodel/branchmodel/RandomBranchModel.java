@@ -32,7 +32,7 @@ import java.util.List;
 import org.apache.commons.math.random.MersenneTwister;
 
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
+import dr.app.beagle.evomodel.substmodel.codon.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;

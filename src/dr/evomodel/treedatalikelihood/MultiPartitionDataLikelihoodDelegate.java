@@ -593,8 +593,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         }
 
-        // Tmp  - for testing...
-        useScaleFactors = false;
+        if (USE_BEAGLE_3) {
+            // scaling isn't implemented for multipartition BEAGLE yet
+            useScaleFactors = false;
+        }
 
         int operationCount = 0;
         k = 0;

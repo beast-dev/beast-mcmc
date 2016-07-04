@@ -52,11 +52,12 @@ public class BufferIndexHelper implements Serializable {
     public BufferIndexHelper(int maxIndexValue, int minIndexValue, int bufferSetNumber) {
         this.maxIndexValue = maxIndexValue;
         this.minIndexValue = minIndexValue;
-        this.constantOffset = bufferSetNumber * getBufferCount();
 
         doubleBufferCount = maxIndexValue - minIndexValue;
         indexOffsets = new int[doubleBufferCount];
         storedIndexOffsets = new int[doubleBufferCount];
+
+        this.constantOffset = bufferSetNumber * getBufferCount();
     }
 
     public int getBufferCount() {

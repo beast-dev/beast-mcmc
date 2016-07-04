@@ -50,14 +50,20 @@ import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.util.MessageLogHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.*;
 
 public class DataLikelihoodTester {
 
     public static void main(String[] args) {
+
+        // turn off logging to avoid screen noise...
+        Logger logger = Logger.getLogger("dr");
+        logger.setUseParentHandlers(false);
 
         SimpleAlignment alignment = createAlignment(sequences, Nucleotides.INSTANCE);
 
@@ -69,7 +75,7 @@ public class DataLikelihoodTester {
             throw new RuntimeException("Unable to parse Newick tree");
         }
 
-        System.out.print("\nTest BeagleTreeLikelihood: ");
+        System.out.print("\nTest BeagleTreeLikelihood (kappa = 1): ");
 
         //substitutionModel
         Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
@@ -85,12 +91,24 @@ public class DataLikelihoodTester {
         Parameter mu = new Parameter.Default(GammaSiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteRateModel.setMutationRateParameter(mu);
 
+        FrequencyModel f2 = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+        Parameter kappa2 = new Parameter.Default(HKYParser.KAPPA, 10.0, 0, 100);
+        HKY hky2 = new HKY(kappa2, f2);
+
+        GammaSiteRateModel siteRateModel2 = new GammaSiteRateModel("siteRateModel");
+        siteRateModel2.setSubstitutionModel(hky2);
+        siteRateModel2.setMutationRateParameter(mu);
+
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
         BranchModel branchModel = new HomogeneousBranchModel(
                 siteRateModel.getSubstitutionModel(),
                 siteRateModel.getSubstitutionModel().getFrequencyModel());
+
+        BranchModel branchModel2 = new HomogeneousBranchModel(
+                siteRateModel2.getSubstitutionModel(),
+                siteRateModel2.getSubstitutionModel().getFrequencyModel());
 
         BranchRateModel branchRateModel = null;
 
@@ -107,7 +125,7 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
-        System.out.print("\nTest BeagleDataLikelihoodDelegate: ");
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 1): ");
 
         BeagleDataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                 treeModel,
@@ -124,64 +142,81 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 10): ");
+
+        dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                treeModel,
+                branchModel2,
+                patterns,
+                siteRateModel2, false);
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                dataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood);
+
         MultiPartitionDataLikelihoodDelegate multiPartitionDataLikelihoodDelegate;
 
-//        System.out.println("\nTest MultiPartitionDataLikelihoodDelegate 1 partition:");
-//
-//        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-//                treeModel,
-//                Collections.singletonList((PatternList)patterns),
-//                Collections.singletonList((BranchModel)branchModel),
-//                Collections.singletonList((SiteRateModel)siteRateModel),
-//                true);
-//
-//        treeDataLikelihood = new TreeDataLikelihood(
-//                multiPartitionDataLikelihoodDelegate,
-//                treeModel,
-//                branchRateModel);
-//
-//        logLikelihood = treeDataLikelihood.getLogLikelihood();
-//
-//        System.out.println("logLikelihood = " + logLikelihood);
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 1):");
 
-        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 2 partition: ");
+        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                treeModel,
+                Collections.singletonList((PatternList)patterns),
+                Collections.singletonList((BranchModel)branchModel),
+                Collections.singletonList((SiteRateModel)siteRateModel),
+                true);
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                multiPartitionDataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 10):");
+
+        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                treeModel,
+                Collections.singletonList((PatternList)patterns),
+                Collections.singletonList((BranchModel)branchModel2),
+                Collections.singletonList((SiteRateModel)siteRateModel2),
+                true);
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                multiPartitionDataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
 
         List<PatternList> patternLists = new ArrayList<>();
         patternLists.add(patterns);
         patternLists.add(patterns);
 
+        List<SiteRateModel> siteRateModels = new ArrayList<>();
+        siteRateModels.add(siteRateModel);
+        siteRateModels.add(siteRateModel2);
+
+        List<BranchModel> branchModels = new ArrayList<>();
+        branchModels.add(branchModel);
+        branchModels.add(branchModel2);
+
         multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                 treeModel,
                 patternLists,
-                Collections.singletonList(branchModel),
-                Collections.singletonList((SiteRateModel)siteRateModel),
+                branchModels,
+                siteRateModels,
                 true);
-
-//        FrequencyModel f2 = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-//        HKY hky2 = new HKY(kappa, f2);
-//
-//        GammaSiteRateModel siteRateModel2 = new GammaSiteRateModel("siteRateModel");
-//        siteRateModel2.setSubstitutionModel(hky2);
-//        siteRateModel2.setMutationRateParameter(mu);
-//
-//        List<SiteRateModel> siteRateModels = new ArrayList<>();
-//        siteRateModels.add(siteRateModel);
-//        siteRateModels.add(siteRateModel2);
-//
-//        BranchModel branchModel2 = new HomogeneousBranchModel(
-//                siteRateModel2.getSubstitutionModel(),
-//                siteRateModel2.getSubstitutionModel().getFrequencyModel());
-//
-//        List<BranchModel> branchModels = new ArrayList<>();
-//        branchModels.add(branchModel);
-//        branchModels.add(branchModel2);
-//
-//        MultiPartitionDataLikelihoodDelegate multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-//                treeModel,
-//                patternLists,
-//                branchModels,
-//                siteRateModels,
-//                true);
 
         treeDataLikelihood = new TreeDataLikelihood(
                 multiPartitionDataLikelihoodDelegate,

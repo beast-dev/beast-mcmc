@@ -129,9 +129,11 @@ public class DataLikelihoodTester {
 
         BeagleDataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                 treeModel,
-                branchModel,
                 patterns,
-                siteRateModel, false);
+                branchModel,
+                siteRateModel, false,
+                PartialsRescalingScheme.NONE,
+                false);
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -146,9 +148,11 @@ public class DataLikelihoodTester {
 
         dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                 treeModel,
-                branchModel2,
                 patterns,
-                siteRateModel2, false);
+                branchModel2,
+                siteRateModel2, false,
+                PartialsRescalingScheme.NONE,
+                false);
 
         treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,

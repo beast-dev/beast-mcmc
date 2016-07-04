@@ -38,6 +38,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -84,6 +85,15 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are no supported yet with TreeDataLikelihood");
         }
+
+//        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+//                treeModel,
+//                patternLists.get(0),
+//                branchModel,
+//                siteRateModel,
+//                useAmbiguities,
+//                scalingScheme,
+//                delayRescalingUntilUnderflow);
 
         DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                 treeModel,

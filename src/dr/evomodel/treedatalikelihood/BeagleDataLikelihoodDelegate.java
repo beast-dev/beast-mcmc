@@ -92,10 +92,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @param useAmbiguities Whether to respect state ambiguities in data
      */
     public BeagleDataLikelihoodDelegate(Tree tree,
-                                        BranchModel branchModel,
                                         PatternList patternList,
+                                        BranchModel branchModel,
                                         SiteRateModel siteRateModel,
-                                        boolean useAmbiguities) {
+                                        boolean useAmbiguities,
+                                        PartialsRescalingScheme rescalingScheme,
+                                        boolean delayRescalingUntilUnderflow) {
 
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
@@ -144,14 +146,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel);
 
-            // first set the rescaling scheme to use from the parser
-            this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
-            this.delayRescalingUntilUnderflow = false;
-
-            int[] resourceList = null;
-            long preferenceFlags = 0;
-            long requirementFlags = 0;
-
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
                 resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
@@ -168,6 +162,36 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             if (extraBufferOrder == null) {
                 extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
             }
+
+            // first set the rescaling scheme to use from the parser
+            this.rescalingScheme = rescalingScheme;
+            this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
+
+            int[] resourceList = null;
+            long preferenceFlags = 0;
+            long requirementFlags = 0;
+
+            if (scalingOrder.size() > 0) {
+                this.rescalingScheme = PartialsRescalingScheme.parseFromString(
+                        scalingOrder.get(instanceCount % scalingOrder.size()));
+            }
+
+            if (resourceOrder.size() > 0) {
+                // added the zero on the end so that a CPU is selected if requested resource fails
+                resourceList = new int[]{resourceOrder.get(instanceCount % resourceOrder.size()), 0};
+                if (resourceList[0] > 0) {
+                    preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
+                }
+            }
+
+            if (preferredOrder.size() > 0) {
+                preferenceFlags = preferredOrder.get(instanceCount % preferredOrder.size());
+            }
+
+            if (requiredOrder.size() > 0) {
+                requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
+            }
+
 
             // Define default behaviour here
             if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {

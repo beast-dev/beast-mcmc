@@ -455,7 +455,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<>();
-    private List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<>();
+    private List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
+    private List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
 
 }//END: class

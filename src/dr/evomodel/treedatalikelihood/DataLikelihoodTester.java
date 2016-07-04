@@ -168,7 +168,9 @@ public class DataLikelihoodTester {
                 Collections.singletonList((PatternList)patterns),
                 Collections.singletonList((BranchModel)branchModel),
                 Collections.singletonList((SiteRateModel)siteRateModel),
-                true);
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
 
         treeDataLikelihood = new TreeDataLikelihood(
                 multiPartitionDataLikelihoodDelegate,
@@ -186,7 +188,10 @@ public class DataLikelihoodTester {
                 Collections.singletonList((PatternList)patterns),
                 Collections.singletonList((BranchModel)branchModel2),
                 Collections.singletonList((SiteRateModel)siteRateModel2),
-                true);
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
+
 
         treeDataLikelihood = new TreeDataLikelihood(
                 multiPartitionDataLikelihoodDelegate,
@@ -203,11 +208,11 @@ public class DataLikelihoodTester {
         patternLists.add(patterns);
         patternLists.add(patterns);
 
-        List<SiteRateModel> siteRateModels = new ArrayList<>();
+        List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
         siteRateModels.add(siteRateModel);
         siteRateModels.add(siteRateModel2);
 
-        List<BranchModel> branchModels = new ArrayList<>();
+        List<BranchModel> branchModels = new ArrayList<BranchModel>();
         branchModels.add(branchModel);
         branchModels.add(branchModel2);
 
@@ -216,7 +221,9 @@ public class DataLikelihoodTester {
                 patternLists,
                 branchModels,
                 siteRateModels,
-                true);
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
 
         treeDataLikelihood = new TreeDataLikelihood(
                 multiPartitionDataLikelihoodDelegate,

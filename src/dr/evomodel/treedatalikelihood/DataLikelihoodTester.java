@@ -199,7 +199,7 @@ public class DataLikelihoodTester {
 
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
 
-        List<PatternList> patternLists = new ArrayList<>();
+        List<PatternList> patternLists = new ArrayList<PatternList>();
         patternLists.add(patterns);
         patternLists.add(patterns);
 

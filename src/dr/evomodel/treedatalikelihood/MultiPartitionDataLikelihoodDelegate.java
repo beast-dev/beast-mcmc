@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
+    private static final boolean USE_BEAGLE_3 = true;
+
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
@@ -117,7 +119,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         // Branch models determine the substitution models per branch. There can be either
         // one per partition or one shared across all partitions
-        assert(branchModels.size() == 1 || branchModels.size() == patternLists.size());
+        assert(branchModels.size() == 1 || (!USE_BEAGLE_3 && branchModels.size() == patternLists.size()));
 
         this.branchModels.addAll(branchModels);
         for (BranchModel branchModel : this.branchModels) {
@@ -126,7 +128,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         // SiteRateModels determine the rates per category (for site-heterogeneity models).
         // There can be either one per partition or one shared across all partitions
-        assert(siteRateModels.size() == 1 || siteRateModels.size() == patternLists.size());
+        assert(siteRateModels.size() == 1 || (!USE_BEAGLE_3 && siteRateModels.size() == patternLists.size()));
+
         this.siteRateModels.addAll(siteRateModels);
         this.categoryCount = this.siteRateModels.get(0).getCategoryCount();
         for (SiteRateModel siteRateModel : this.siteRateModels) {
@@ -326,6 +329,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     patternWeights[k] = pw[i];
                     k++;
                 }
+                j++;
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
@@ -347,7 +351,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             beagle.setPatternWeights(patternWeights);
 
-            // beagle.setPatternPartitions(partitionCount, patternPartitions);
+            if (USE_BEAGLE_3) {
+                // This call is only available in BEAGLE3
+                beagle.setPatternPartitions(partitionCount, patternPartitions);
+            }
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
@@ -586,6 +593,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         }
 
+        // Tmp  - for testing...
+        useScaleFactors = false;
+
         int operationCount = 0;
         k = 0;
         for (NodeOperation op : nodeOperations) {
@@ -648,19 +658,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
 
-        double[] categoryWeights = this.siteRateModels.get(0).getCategoryProportions();
-
-        // This should probably explicitly be the state frequencies for the root node...
-        double[] frequencies = substitutionModelDelegates.get(0).getRootStateFrequencies();
+        double[] rootPartials = new double[totalPatternCount * stateCount];
+        beagle.getPartials(rootIndex, 0, rootPartials);
 
         int cumulateScaleBufferIndex = Beagle.NONE;
         if (useScaleFactors) {
-
             if (recomputeScaleFactors) {
                 scaleBufferHelper.flipOffset(internalNodeCount);
                 cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
                 beagle.resetScaleFactors(cumulateScaleBufferIndex);
                 beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
+
             } else {
                 cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
             }
@@ -668,9 +676,18 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
 
+        double[] scaleFactors = new double[totalPatternCount];
+        beagle.getLogScaleFactors(cumulateScaleBufferIndex, scaleFactors);
+
         // these could be set only when they change but store/restore would need to be considered
-        beagle.setCategoryWeights(0, categoryWeights);
-        beagle.setStateFrequencies(0, frequencies);
+        for (int i = 0; i < siteRateModels.size(); i++) {
+            double[] categoryWeights = this.siteRateModels.get(i).getCategoryProportions();
+            beagle.setCategoryWeights(i, categoryWeights);
+
+            // This should probably explicitly be the state frequencies for the root node...
+            double[] frequencies = substitutionModelDelegates.get(i).getRootStateFrequencies();
+            beagle.setStateFrequencies(i, frequencies);
+        }
 
         double[] sumLogLikelihoods = new double[1];
 
@@ -678,6 +695,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
 
         double logL = sumLogLikelihoods[0];
+
+        // If these are needed...
+        if (patternLogLikelihoods == null) {
+            patternLogLikelihoods = new double[totalPatternCount];
+        }
+        beagle.getSiteLogLikelihoods(patternLogLikelihoods);
+
 
         if (Double.isNaN(logL) || Double.isInfinite(logL)) {
             everUnderflowed = true;
@@ -691,12 +715,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         updateSubstitutionModels(false);
         updateSiteModels(false);
         //********************************************************************
-
-        // If these are needed...
-        //if (patternLogLikelihoods == null) {
-        //    patternLogLikelihoods = new double[patternCount];
-        //}
-        //beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 
         return logL;
     }

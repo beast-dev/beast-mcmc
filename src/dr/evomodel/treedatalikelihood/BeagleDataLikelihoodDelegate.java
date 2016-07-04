@@ -47,12 +47,16 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
+public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
@@ -695,6 +699,24 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     protected void acceptState() {
+    }
+
+    // **************************************************************
+    // INSTANCE CITABLE
+    // **************************************************************
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Using BEAGLE likelihood calculation library";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
     }
 
     // **************************************************************

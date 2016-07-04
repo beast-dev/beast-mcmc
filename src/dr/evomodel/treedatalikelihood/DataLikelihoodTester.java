@@ -84,9 +84,9 @@ public class DataLikelihoodTester {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-//        double alpha = 0.5;
-//        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
-        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteRateModel");
+        double alpha = 0.5;
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
+//        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteRateModel");
         siteRateModel.setSubstitutionModel(hky);
         Parameter mu = new Parameter.Default(GammaSiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteRateModel.setMutationRateParameter(mu);
@@ -95,7 +95,7 @@ public class DataLikelihoodTester {
         Parameter kappa2 = new Parameter.Default(HKYParser.KAPPA, 10.0, 0, 100);
         HKY hky2 = new HKY(kappa2, f2);
 
-        GammaSiteRateModel siteRateModel2 = new GammaSiteRateModel("siteRateModel");
+        GammaSiteRateModel siteRateModel2 = new GammaSiteRateModel("gammaModel", alpha, 4);
         siteRateModel2.setSubstitutionModel(hky2);
         siteRateModel2.setMutationRateParameter(mu);
 

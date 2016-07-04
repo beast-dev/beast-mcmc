@@ -660,8 +660,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
 
-        double[] rootPartials = new double[totalPatternCount * stateCount];
-        beagle.getPartials(rootIndex, 0, rootPartials);
+//        double[] rootPartials = new double[totalPatternCount * stateCount];
+//        beagle.getPartials(rootIndex, 0, rootPartials);
 
         int cumulateScaleBufferIndex = Beagle.NONE;
         if (useScaleFactors) {
@@ -678,8 +678,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
 
-        double[] scaleFactors = new double[totalPatternCount];
-        beagle.getLogScaleFactors(cumulateScaleBufferIndex, scaleFactors);
+//        double[] scaleFactors = new double[totalPatternCount];
+//        beagle.getLogScaleFactors(cumulateScaleBufferIndex, scaleFactors);
 
         // these could be set only when they change but store/restore would need to be considered
         for (int i = 0; i < siteRateModels.size(); i++) {
@@ -699,10 +699,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         double logL = sumLogLikelihoods[0];
 
         // If these are needed...
-        if (patternLogLikelihoods == null) {
-            patternLogLikelihoods = new double[totalPatternCount];
-        }
-        beagle.getSiteLogLikelihoods(patternLogLikelihoods);
+//        if (patternLogLikelihoods == null) {
+//            patternLogLikelihoods = new double[totalPatternCount];
+//        }
+//        beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 
 
         if (Double.isNaN(logL) || Double.isInfinite(logL)) {

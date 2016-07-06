@@ -427,7 +427,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     private void updateSubstitutionModel(BranchModel branchModel) {
         for (int i = 0; i < substitutionModelDelegates.size(); i++) {
-            if (substitutionModelDelegates.get(i).getBranchModel() == branchModel) {
+            if (branchModels.get(i) == branchModel) {
                 updateSubstitutionModels[i] = true;
             }
         }
@@ -595,7 +595,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
             if (updateSubstitutionModels[k]) {
                 // TODO More efficient to update only the substitution model that changed, instead of all
-                substitutionModelDelegate.updateSubstitutionModels(beagle);
+                substitutionModelDelegate.updateSubstitutionModels(beagle, flip);
 
                 // we are currently assuming a no-category model...
             }
@@ -617,7 +617,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                         beagle,
                         branchUpdateIndices,
                         branchLengths,
-                        branchUpdateCount);
+                        branchUpdateCount,
+                        flip);
             }
         }
 
@@ -772,6 +773,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         } else if (model instanceof BranchModel) {
             updateSubstitutionModel((BranchModel)model);
         }
+        fireModelChanged();
     }
 
     @Override

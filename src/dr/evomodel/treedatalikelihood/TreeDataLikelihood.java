@@ -110,6 +110,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     public final void makeDirty() {
         likelihoodKnown = false;
+        delegate.makeDirty();
         updateAllNodes();
     }
 
@@ -131,8 +132,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     @Override
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
-
-        fireModelChanged();
 
         if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
@@ -181,6 +180,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             totalModelChangedCount++;
 
         likelihoodKnown = false;
+
+        fireModelChanged();
     }
 
     // **************************************************************
@@ -192,7 +193,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         delegate.storeState();
 
-        storedLikelihoodKnown = likelihoodKnown;
+        // the likelihood should always be known at this point in the cycle
+        assert(likelihoodKnown);
+
         storedLogLikelihood = logLikelihood;
 
     }
@@ -202,9 +205,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         delegate.restoreState();
 
-        likelihoodKnown = storedLikelihoodKnown;
+        // restore the likelihood and flag it as known
         logLikelihood = storedLogLikelihood;
-
+        likelihoodKnown = true;
     }
 
     @Override
@@ -230,7 +233,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             nodeOperations.clear();
 
             final NodeRef root = treeModel.getRoot();
-            traverse(treeModel, root, null, true);
+            traverse(treeModel, root);
 
             if (COUNT_TOTAL_OPERATIONS) {
                 totalMatrixUpdateCount += branchOperations.size();
@@ -266,11 +269,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      *
      * @param tree           tree
      * @param node           node
-     * @param operatorNumber operatorNumber
-     * @param flip           flip
      * @return boolean
      */
-    private boolean traverse(Tree tree, NodeRef node, int[] operatorNumber, boolean flip) {
+    private boolean traverse(Tree tree, NodeRef node) {
 
         boolean update = false;
 
@@ -278,12 +279,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         NodeRef parent = tree.getParent(node);
 
-        if (operatorNumber != null) {
-            operatorNumber[0] = -1;
-        }
-
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
+            // @todo - at the moment a matrix is updated even if a branch length doesn't change
 
             final double branchRate;
 
@@ -309,12 +307,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final int[] op1 = {-1};
-            final boolean update1 = traverse(tree, child1, op1, flip);
+            final boolean update1 = traverse(tree, child1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final int[] op2 = {-1};
-            final boolean update2 = traverse(tree, child2, op2, flip);
+            final boolean update2 = traverse(tree, child2);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -438,7 +434,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private double logLikelihood;
     private double storedLogLikelihood;
     protected boolean likelihoodKnown = false;
-    private boolean storedLikelihoodKnown = false;
 
     private boolean hasInitialized = false;
 

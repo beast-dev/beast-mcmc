@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-    private static final boolean USE_BEAGLE_3 = true;
+    private static final boolean USE_BEAGLE_3 = false;
     private static final boolean RESCALING_OFF = true; // a debugging switch
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to

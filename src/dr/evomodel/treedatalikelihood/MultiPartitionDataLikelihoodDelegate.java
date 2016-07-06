@@ -177,8 +177,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             // create a substitutionModelDelegate for each branchModel
             int partitionNumber = 0;
             for (BranchModel branchModel : this.branchModels) {
-                SubstitutionModelDelegate substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel, partitionNumber);
-                substitutionModelDelegates.add(substitutionModelDelegate);
+                HomogenousSubstitutionModelDelegate substitutionModelDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel, partitionNumber);
+                evolutionaryProcessDelegates.add(substitutionModelDelegate);
 
                 eigenBufferCount += substitutionModelDelegate.getEigenBufferCount();
                 matrixBufferCount += substitutionModelDelegate.getMatrixBufferCount();
@@ -302,7 +302,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
             }
 
-            if (substitutionModelDelegates.get(0).canReturnComplexDiagonalization()) {
+            if (evolutionaryProcessDelegates.get(0).canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
@@ -410,7 +410,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 everUnderflowed = false; // If false, BEAST does not rescale until first under-/over-flow.
             }
 
-            updateSubstitutionModels = new boolean[substitutionModelDelegates.size()];
+            updateSubstitutionModels = new boolean[evolutionaryProcessDelegates.size()];
             updateSubstitutionModels();
 
             updateSiteRateModels = new boolean[branchModels.size()];
@@ -422,13 +422,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     private void updateSubstitutionModels(boolean... state) {
-        for (int i = 0; i < substitutionModelDelegates.size(); i++) {
+        for (int i = 0; i < evolutionaryProcessDelegates.size(); i++) {
             updateSubstitutionModels[i] = (state.length < 1 || state[0]);
         }
     }
 
     private void updateSubstitutionModel(BranchModel branchModel) {
-        for (int i = 0; i < substitutionModelDelegates.size(); i++) {
+        for (int i = 0; i < evolutionaryProcessDelegates.size(); i++) {
             if (branchModels.get(i) == branchModel) {
                 updateSubstitutionModels[i] = true;
             }
@@ -582,10 +582,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
 
-        // For the first version just do scaling always
-        useScaleFactors = true;
-        recomputeScaleFactors = true;
-
         if (RESCALING_OFF) { // a debugging switch
             useScaleFactors = false;
             recomputeScaleFactors = false;
@@ -599,10 +595,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         int k = 0;
-        for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
+        for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
             if (updateSubstitutionModels[k]) {
                 // TODO More efficient to update only the substitution model that changed, instead of all
-                substitutionModelDelegate.updateSubstitutionModels(beagle, flip);
+                evolutionaryProcessDelegate.updateSubstitutionModels(beagle, flip);
 
                 // we are currently assuming a no-category model...
             }
@@ -619,8 +615,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         if (branchUpdateCount > 0) {
-            for (SubstitutionModelDelegate substitutionModelDelegate: substitutionModelDelegates) {
-                substitutionModelDelegate.updateTransitionMatrices(
+            for (EvolutionaryProcessDelegate evolutionaryProcessDelegate: evolutionaryProcessDelegates) {
+                evolutionaryProcessDelegate.updateTransitionMatrices(
                         beagle,
                         branchUpdateIndices,
                         branchLengths,
@@ -672,17 +668,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
 
             for (int i = 0; i < partitionCount; i++) {
-                SubstitutionModelDelegate substitutionModelDelegate =
-                        (substitutionModelDelegates.size() == 1 ?
-                                substitutionModelDelegates.get(0) : substitutionModelDelegates.get(i));
+                EvolutionaryProcessDelegate evolutionaryProcessDelegate =
+                        (evolutionaryProcessDelegates.size() == 1 ?
+                                evolutionaryProcessDelegates.get(0) : evolutionaryProcessDelegates.get(i));
 
                 operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
                 operations[k + 1] = writeScale;
                 operations[k + 2] = readScale;
                 operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-                operations[k + 4] = substitutionModelDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+                operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
                 operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
-                operations[k + 6] = substitutionModelDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+                operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
 
                 k += Beagle.OPERATION_TUPLE_SIZE;
                 operationCount ++;
@@ -720,7 +716,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             beagle.setCategoryWeights(i, categoryWeights);
 
             // This should probably explicitly be the state frequencies for the root node...
-            double[] frequencies = substitutionModelDelegates.get(i).getRootStateFrequencies();
+            double[] frequencies = evolutionaryProcessDelegates.get(i).getRootStateFrequencies();
             beagle.setStateFrequencies(i, frequencies);
         }
 
@@ -790,8 +786,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      */
     public void storeState() {
         partialBufferHelper.storeState();
-        for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
-            substitutionModelDelegate.storeState();
+        for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
+            evolutionaryProcessDelegate.storeState();
         }
 
         if (useScaleFactors || useAutoScaling) { // Only store when actually used
@@ -811,8 +807,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         updateSiteModels(); // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
-        for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
-            substitutionModelDelegate.restoreState();
+        for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
+            evolutionaryProcessDelegate.restoreState();
         }
 
         if (useScaleFactors || useAutoScaling) {
@@ -918,7 +914,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * A delegate to handle substitution models on branches
      */
-    private final List<SubstitutionModelDelegate> substitutionModelDelegates = new ArrayList<SubstitutionModelDelegate>();
+    private final List<EvolutionaryProcessDelegate> evolutionaryProcessDelegates = new ArrayList<EvolutionaryProcessDelegate>();
 
     /**
      * the site model for these sites

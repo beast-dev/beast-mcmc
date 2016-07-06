@@ -4,6 +4,7 @@ import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 
 import java.util.List;
 import java.util.Vector;
@@ -62,10 +63,14 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
 //                System.out.println(i + " + " + j + ": " + relationshipList[i][j]);
 //            }
 //        }
-        if(relationshipList.length != storedRelationshipList.length)
-            storedRelationshipList = new double[size][size];
-        for(int i = 0; i < relationshipList.length; i++)
-            storedRelationshipList[i] = relationshipList[i].clone();
+
+
+//        if(relationshipList.length != storedRelationshipList.length)
+//            storedRelationshipList = new double[size][size];
+//        for(int i = 0; i < relationshipList.length; i++)
+//            storedRelationshipList[i] = relationshipList[i].clone();
+
+
 
 //        System.out.println("stored");
 //        for (int i = 0; i < relationshipList.length; i++) {
@@ -86,7 +91,9 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         relationshipList = storedRelationshipList;
         storedRelationshipList = relationshipListTemp;
         size = storedSize;
+        Vector<Integer> changedListTemp = changedList;
         changedList = storedChangedList;
+        storedChangedList = changedListTemp;
     }
 
     @Override
@@ -111,6 +118,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
 
     @Override
     public double getLogLikelihood() {
+        makeDirty();
             if(!likelihoodKnown) {
                 logLikelihood = computeLogLikelihood();
                 likelihoodKnown = true;

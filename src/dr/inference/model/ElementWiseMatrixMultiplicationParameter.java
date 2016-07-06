@@ -20,9 +20,9 @@ public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
 
     @Override
     public double getParameterValue(int dim) {
-        double prod=1;
+        double prod = 1;
         for (int i = 0; i < paramList.length ; i++) {
-            prod=prod* paramList[i].getParameterValue(dim);
+            prod = prod * paramList[i].getParameterValue(dim);
         }
         return prod;
     }
@@ -30,7 +30,7 @@ public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
     public double getParameterValue(int row, int col){
         double prod=1;
         for (int i = 0; i < paramList.length ; i++) {
-            prod=prod* paramList[i].getParameterValue(row,col);
+            prod=prod * paramList[i].getParameterValue(row, col);
         }
         return prod;
     }
@@ -45,6 +45,12 @@ public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
     protected void restoreValues() {
         for (Parameter p : paramList) {
             p.restoreParameterValues();
+        }
+    }
+
+    protected void acceptValues() {
+        for (Parameter p : paramList) {
+            p.acceptParameterValues();
         }
     }
 

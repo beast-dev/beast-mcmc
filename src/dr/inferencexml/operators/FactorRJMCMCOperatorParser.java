@@ -38,7 +38,7 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
         BitFlipOperator sparsityOperator = (BitFlipOperator) xo.getChild(BitFlipOperator.class);
         LoadingsGibbsTruncatedOperator loadingsOperator = (LoadingsGibbsTruncatedOperator) xo.getChild(LoadingsGibbsTruncatedOperator.class);
         FactorTreeGibbsOperator factorOperator = (FactorTreeGibbsOperator) xo.getChild(FactorTreeGibbsOperator.class);
-        double sizeParameter = (Double) xo.getDoubleAttribute(SIZE_PARAMETER);
+        double sizeParameter = xo.getDoubleAttribute(SIZE_PARAMETER);
 
 
 

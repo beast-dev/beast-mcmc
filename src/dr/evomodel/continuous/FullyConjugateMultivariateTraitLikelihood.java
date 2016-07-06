@@ -255,6 +255,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             dim = traitParameter.getParameter(0).getDimension();
             numData = dim / getDimTrait();
             meanCache = new double[dim * treeModel.getNodeCount()];
+            storedMeanCache = new double[meanCache.length];
+            drawnStates = new double[dim * treeModel.getNodeCount()];
         }
         PostPreKnown=false;
         super.handleVariableChangedEvent(variable,index,type);
@@ -316,7 +318,6 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         if(!dimKnown){
             preMeans=new double[treeModel.getNodeCount()][dim];
             storedPreMeans=new double[treeModel.getNodeCount()][dim];
-            System.out.println("this works");
             dimKnown=true;
         }
 

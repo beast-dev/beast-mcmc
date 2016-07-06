@@ -239,7 +239,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
-    protected final void acceptValues() {
+    protected void acceptValues() {
         for (Parameter parameter : uniqueParameters) {
             parameter.acceptParameterValues();
         }

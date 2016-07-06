@@ -607,6 +607,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                     changedValues.add(index);
                 else{
                     totalRecompute = true;
+                    changedValues.clear();
                 }
                 dataKnown = false;
             }
@@ -630,6 +631,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                     }
                 else{
                     totalRecompute = true;
+                    changedValues.clear();
                 }
 
             }
@@ -653,7 +655,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                          changedValues.add(i * data.getRowDimension() + col);
                     }
                 }
-                else{totalRecompute = true;}
+                else{totalRecompute = true;
+                changedValues.clear();}
             }
 //            System.out.println("Loadings Changed");
 //            System.out.println(index);
@@ -720,6 +723,17 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+
+        factorsKnown = false;
+        loadingsKnown = false;
+        residualKnown = false;
+        totalRecompute = true;
+        changedValues.clear();
+        LxFKnown = false;
+        logDetColKnown = false;
+        traceKnown = false;
+        dataKnown = false;
+
     }
 
     private boolean checkLoadings() {

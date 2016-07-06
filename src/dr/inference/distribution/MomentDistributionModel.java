@@ -95,12 +95,13 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
 //                System.out.println(i);
 //                System.out.println(cutoff.getParameterValue(i));
 //                System.out.println(data.getParameterValue(i));
-                return Double.NEGATIVE_INFINITY;                                                                          }
-            else if(data.getParameterValue(i)==0)
-                sum+=-1000-Math.log(precision.getParameterValue(0));
-            else
-                sum+=untruncated.logPdf(data.getParameterValue(i));//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
-        }         }
+                    return Double.NEGATIVE_INFINITY;                                                                          }
+                else if(data.getParameterValue(i)==0)
+                    sum+=-1000-Math.log(precision.getParameterValue(0));
+                else
+                    sum+=untruncated.logPdf(data.getParameterValue(i));//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
+            }
+        }
         else{
             for (int i = 0; i <data.getDimension() ; i++) {
                 sum+= untruncated.logPdf(data.getParameterValue(i)) + 2 * StrictMath.log(data.getParameterValue(i)) + StrictMath.log(precision.getParameterValue(0));

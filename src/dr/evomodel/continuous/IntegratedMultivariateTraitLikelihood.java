@@ -1443,12 +1443,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
 
-    private double[] storedMeanCache;
+    protected double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;
     private double[] storedLowerPrecisionCache;
     private double[] storedLogRemainderDensityCache;
 
-    private double[] drawnStates;
+    protected double[] drawnStates;
 
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     //  protected final boolean integrateRoot = false;

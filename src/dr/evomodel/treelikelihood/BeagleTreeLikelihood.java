@@ -101,6 +101,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
 
+    private static final boolean RESCALING_OFF = true; // a debugging switch
+
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
                                 BranchModel branchModel,
@@ -810,6 +812,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             }
         }
 
+        if (RESCALING_OFF) { // a debugging switch
+            useScaleFactors = false;
+            recomputeScaleFactors = false;
+        }
+
         if (tipStatesModel != null) {
             int tipCount = treeModel.getExternalNodeCount();
             for (int index = 0; index < tipCount; index++) {
@@ -915,6 +922,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                     new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
 
             logL = sumLogLikelihoods[0];
+
+            beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 
             if (ascertainedSitePatterns) {
                 // Need to correct for ascertainedSitePatterns

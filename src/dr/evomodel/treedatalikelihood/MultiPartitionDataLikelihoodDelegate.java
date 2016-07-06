@@ -55,7 +55,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-    private static final boolean USE_BEAGLE_3 = false;
+    private static final boolean USE_BEAGLE_3 = true;
+    private static final boolean RESCALING_OFF = true; // a debugging switch
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -427,7 +428,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     private void updateSubstitutionModel(BranchModel branchModel) {
         for (int i = 0; i < substitutionModelDelegates.size(); i++) {
-            if (substitutionModelDelegates.get(i).getBranchModel() == branchModel) {
+            if (branchModels.get(i) == branchModel) {
                 updateSubstitutionModels[i] = true;
             }
         }
@@ -584,13 +585,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         useScaleFactors = true;
         recomputeScaleFactors = true;
 
+        if (RESCALING_OFF) { // a debugging switch
+            useScaleFactors = false;
+            recomputeScaleFactors = false;
+        }
+
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
-            if (flip) {
-                for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
-                    substitutionModelDelegate.flipMatrixBuffer(op.getBranchNumber());
-                }
-            }
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength();
             branchUpdateCount++;
@@ -600,7 +601,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
             if (updateSubstitutionModels[k]) {
                 // TODO More efficient to update only the substitution model that changed, instead of all
-                substitutionModelDelegate.updateSubstitutionModels(beagle);
+                substitutionModelDelegate.updateSubstitutionModels(beagle, flip);
 
                 // we are currently assuming a no-category model...
             }
@@ -622,24 +623,22 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                         beagle,
                         branchUpdateIndices,
                         branchLengths,
-                        branchUpdateCount);
+                        branchUpdateCount,
+                        flip);
             }
         }
 
-        if (USE_BEAGLE_3) {
-            // scaling isn't implemented for multipartition BEAGLE yet
-            useScaleFactors = false;
+        if (flip) {
+            // Flip all the buffers to be written to first...
+            for (NodeOperation op : nodeOperations) {
+                partialBufferHelper.flipOffset(op.getNodeNumber());
+            }
         }
 
         int operationCount = 0;
         k = 0;
         for (NodeOperation op : nodeOperations) {
             int nodeNum = op.getNodeNumber();
-
-            if (flip) {
-                // first flip the partialBufferHelper
-                partialBufferHelper.flipOffset(nodeNum);
-            }
 
             int writeScale, readScale;
 

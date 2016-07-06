@@ -104,7 +104,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         this.branchModel = branchModel;
 
         eigenCount = substitutionModelList.size();
-        nodeCount = tree.getNodeCount(); // the root doesn't need a matrix
+        nodeCount = tree.getNodeCount() - 1; // the root doesn't need a matrix
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);
@@ -134,6 +134,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 	
     }// END: Constructor
 
+    @Override
     public boolean canReturnComplexDiagonalization() {
         for (SubstitutionModel model : substitutionModelList) {
             if (model.canReturnComplexDiagonalization()) {
@@ -143,26 +144,44 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         return false;
     }
 
+    @Override
     public int getEigenBufferCount() {
         return eigenBufferHelper.getBufferCount();
     }
 
+    @Override
     public int getMatrixBufferCount() {
         // plus one for the reserve buffer
         return matrixBufferHelper.getBufferCount() + extraBufferCount + 1;
     }
 
+    @Override
     public int getSubstitutionModelCount() {
         return substitutionModelList.size();
     }
 
+    @Override
     public SubstitutionModel getSubstitutionModel(int index) {
         return substitutionModelList.get(index);
     }
 
-    public void updateSubstitutionModels(Beagle beagle) {
+    @Override
+    public int getMatrixIndex(int branchIndex) {
+        return matrixBufferHelper.getOffsetIndex(branchIndex);
+    }
+
+    @Override
+    public double[] getRootStateFrequencies() {
+        return branchModel.getRootFrequencyModel().getFrequencies();
+    }// END: getStateFrequencies
+
+
+    @Override
+    public void updateSubstitutionModels(Beagle beagle, boolean flipBuffers) {
         for (int i = 0; i < eigenCount; i++) {
-            eigenBufferHelper.flipOffset(i);
+            if (flipBuffers) {
+                eigenBufferHelper.flipOffset(i);
+            }
 
             EigenDecomposition ed = substitutionModelList.get(i).getEigenDecomposition();
 
@@ -174,7 +193,8 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         }
     }
 
-    public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount) {
+    @Override
+    public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount, boolean flipBuffers) {
 
         int[][] probabilityIndices = new int[eigenCount][updateCount];
         double[][] edgeLengths = new double[eigenCount][updateCount];
@@ -191,6 +211,9 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
             if (order.length == 1) {
                 int k = order[0];
+                if (flipBuffers) {
+                    matrixBufferHelper.flipOffset(branchIndices[i]);
+                }
                 probabilityIndices[k][counts[k]] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
                 edgeLengths[k][counts[k]] = edgeLength[i];
                 counts[k]++;
@@ -202,6 +225,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
                 if (getAvailableBufferCount() < order.length) {
                     // too few buffers available, process what we have and continue...
+                    if (flipBuffers) { throw new UnsupportedOperationException("flipping not implemented for Epoch models"); }
                     computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
                     convolveMatrices(beagle, convolutionList);
 
@@ -444,27 +468,13 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         availableBuffers.push(index);
     }
 
-    public double[] getRootStateFrequencies() {
-        return branchModel.getRootFrequencyModel().getFrequencies();
-    }// END: getStateFrequencies
-
-    public void flipMatrixBuffer(int branchIndex) {
-        matrixBufferHelper.flipOffset(branchIndex);
-    }
-
-    public int getMatrixIndex(int branchIndex) {
-        return matrixBufferHelper.getOffsetIndex(branchIndex);
-    }
-
-    public BranchModel getBranchModel() {
-        return branchModel;
-    }
-
+    @Override
     public void storeState() {
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
     }
 
+    @Override
     public void restoreState() {
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();

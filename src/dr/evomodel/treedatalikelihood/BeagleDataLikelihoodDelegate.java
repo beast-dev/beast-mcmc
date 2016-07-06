@@ -36,7 +36,7 @@ package dr.evomodel.treedatalikelihood;/**
 import beagle.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treelikelihood.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
@@ -82,6 +82,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
+
+    private static final boolean RESCALING_OFF = true; // a debugging switch
 
     /**
      *
@@ -144,7 +146,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
-            substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel);
+            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
@@ -261,7 +263,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
             }
 
-            if (substitutionModelDelegate.canReturnComplexDiagonalization()) {
+            if (evolutionaryProcessDelegate.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
@@ -271,8 +273,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     compactPartialsCount,
                     stateCount,
                     patternCount,
-                    substitutionModelDelegate.getEigenBufferCount(),
-                    substitutionModelDelegate.getMatrixBufferCount(),
+                    evolutionaryProcessDelegate.getEigenBufferCount(),
+                    evolutionaryProcessDelegate.getMatrixBufferCount(),
                     categoryCount,
                     scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
                     resourceList,
@@ -331,11 +333,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
 
             beagle.setPatternWeights(patternWeights);
-
-            // *** Testing new BEAGLE ***
-//            int[] patternPartitions = new int[patternCount];
-//            beagle.setPatternPartitions(1, patternPartitions);
-//            this.rescalingScheme = PartialsRescalingScheme.NONE;
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
@@ -525,22 +522,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
 
-        // For the first version just do scaling always
-        useScaleFactors = false;
-        recomputeScaleFactors = false;
+        if (RESCALING_OFF) { // a debugging switch
+            useScaleFactors = false;
+            recomputeScaleFactors = false;
+        }
 
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
-            if (flip) {
-                substitutionModelDelegate.flipMatrixBuffer(op.getBranchNumber());
-            }
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength();
             branchUpdateCount ++;
         }
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
-            substitutionModelDelegate.updateSubstitutionModels(beagle);
+            evolutionaryProcessDelegate.updateSubstitutionModels(beagle, flip);
 
             // we are currently assuming a no-category model...
         }
@@ -551,22 +546,25 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         }
 
         if (branchUpdateCount > 0) {
-            substitutionModelDelegate.updateTransitionMatrices(
+            evolutionaryProcessDelegate.updateTransitionMatrices(
                     beagle,
                     branchUpdateIndices,
                     branchLengths,
-                    branchUpdateCount);
+                    branchUpdateCount,
+                    flip);
+        }
+
+        if (flip) {
+            // Flip all the buffers to be written to first...
+            for (NodeOperation op : nodeOperations) {
+                partialBufferHelper.flipOffset(op.getNodeNumber());
+            }
         }
 
         int operationCount = nodeOperations.size();
         int k = 0;
         for (NodeOperation op : nodeOperations) {
             int nodeNum = op.getNodeNumber();
-
-            if (flip) {
-                // first flip the partialBufferHelper
-                partialBufferHelper.flipOffset(nodeNum);
-            }
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
@@ -599,9 +597,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
 
             operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-            operations[k + 4] = substitutionModelDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+            operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
             operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
-            operations[k + 6] = substitutionModelDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+            operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
 
             k += Beagle.OPERATION_TUPLE_SIZE;
         }
@@ -613,7 +611,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         double[] categoryWeights = this.siteRateModel.getCategoryProportions();
 
         // This should probably explicitly be the state frequencies for the root node...
-        double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
+        double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
 
         int cumulateScaleBufferIndex = Beagle.NONE;
         if (useScaleFactors) {
@@ -702,7 +700,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public void storeState() {
         partialBufferHelper.storeState();
-        substitutionModelDelegate.storeState();
+        evolutionaryProcessDelegate.storeState();
 
         if (useScaleFactors || useAutoScaling) { // Only store when actually used
             scaleBufferHelper.storeState();
@@ -722,7 +720,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
-        substitutionModelDelegate.restoreState();
+        evolutionaryProcessDelegate.restoreState();
 
         if (useScaleFactors || useAutoScaling) {
             scaleBufferHelper.restoreState();
@@ -817,7 +815,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * A delegate to handle substitution models on branches
      */
-    private final SubstitutionModelDelegate substitutionModelDelegate;
+    private final EvolutionaryProcessDelegate evolutionaryProcessDelegate;
 
     /**
      * the site model for these sites

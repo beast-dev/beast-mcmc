@@ -86,23 +86,23 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Tip State Error models are no supported yet with TreeDataLikelihood");
         }
 
-//        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-//                treeModel,
-//                patternLists.get(0),
-//                branchModel,
-//                siteRateModel,
-//                useAmbiguities,
-//                scalingScheme,
-//                delayRescalingUntilUnderflow);
-
-        DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                 treeModel,
-                patternLists,
-                Collections.singletonList(branchModel),
-                Collections.singletonList(siteRateModel),
+                patternLists.get(0),
+                branchModel,
+                siteRateModel,
                 useAmbiguities,
                 scalingScheme,
                 delayRescalingUntilUnderflow);
+
+//        DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+//                treeModel,
+//                patternLists,
+//                Collections.singletonList(branchModel),
+//                Collections.singletonList(siteRateModel),
+//                useAmbiguities,
+//                scalingScheme,
+//                delayRescalingUntilUnderflow);
 
         return new TreeDataLikelihood(
                 dataLikelihoodDelegate,

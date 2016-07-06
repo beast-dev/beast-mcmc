@@ -674,25 +674,18 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
         } else if (model == branchRateModel) {
             if (index == -1) {
-                if (COUNT_TOTAL_OPERATIONS)
-                    totalRateUpdateAllCount++;
                 updateAllNodes();
             } else {
-                if (COUNT_TOTAL_OPERATIONS)
-                    totalRateUpdateSingleCount++;
                 updateNode(treeModel.getNode(index));
             }
 
         } else if (model == branchModel) {
-//            if (index == -1) {
-//                updateSubstitutionModel = true;
-//                updateAllNodes();
-//            } else {
-//                updateNode(treeModel.getNode(index));
-//            }
-
-            makeDirty();
-
+            if (index == -1) {
+                updateSubstitutionModel = true;
+                updateAllNodes();
+            } else {
+                updateNode(treeModel.getNode(index));
+            }
         } else if (model == siteRateModel) {
 
             updateSiteModel = true;

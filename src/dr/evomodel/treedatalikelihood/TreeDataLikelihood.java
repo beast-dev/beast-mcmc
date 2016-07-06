@@ -80,6 +80,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         }
         addModel(this.branchRateModel);
 
+        hasInitialized = true;
     }
 
     // **************************************************************
@@ -109,6 +110,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     @Override
     public final void makeDirty() {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalMakeDirtyCount++;
+
         likelihoodKnown = false;
         delegate.makeDirty();
         updateAllNodes();
@@ -321,7 +325,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     /**
-     * Set update flag for a node and its children
+     * Set update flag for a node only
      */
     protected void updateNode(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
@@ -384,17 +388,19 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     // Reportable IMPLEMENTATION
     // **************************************************************
 
+    @Override
     public String getReport() {
         if (hasInitialized) {
             String rtnValue =  getClass().getName() + "(" + getLogLikelihood() + ")";
             if (COUNT_TOTAL_OPERATIONS)
-                rtnValue += " total operations = " + totalOperationCount +
-                        " matrix updates = " + totalMatrixUpdateCount + " model changes = " + totalModelChangedCount +
-                        " make dirties = " + totalMakeDirtyCount +
-                        " calculate likelihoods = " + totalCalculateLikelihoodCount +
-                        " get likelihoods = " + totalGetLogLikelihoodCount +
-                        " all rate updates = " + totalRateUpdateAllCount +
-                        " partial rate updates = " + totalRateUpdateSingleCount;
+                rtnValue += "\n  total operations = " + totalOperationCount +
+                        "\n  matrix updates = " + totalMatrixUpdateCount +
+                        "\n  model changes = " + totalModelChangedCount +
+                        "\n  make dirties = " + totalMakeDirtyCount +
+                        "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
+                        "\n  get likelihoods = " + totalGetLogLikelihoodCount +
+                        "\n  all rate updates = " + totalRateUpdateAllCount +
+                        "\n  partial rate updates = " + totalRateUpdateSingleCount;
             return rtnValue;
         } else {
             return getClass().getName() + "(uninitialized)";

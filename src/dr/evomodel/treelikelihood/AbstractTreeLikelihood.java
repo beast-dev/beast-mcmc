@@ -61,13 +61,16 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
         likelihoodKnown = false;
 
+        hasInitialized = true;
     }
 
 
     /**
-     * Set update flag for a node and its children
+     * Set update flag for a node only
      */
     protected void updateNode(NodeRef node) {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateSingleCount++;
 
         updateNode[node.getNumber()] = true;
         likelihoodKnown = false;
@@ -77,9 +80,15 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
      * Set update flag for a node and its direct children
      */
     protected void updateNodeAndChildren(NodeRef node) {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateSingleCount++;
+
         updateNode[node.getNumber()] = true;
 
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
+            if (COUNT_TOTAL_OPERATIONS)
+                totalRateUpdateSingleCount++;
+
             NodeRef child = treeModel.getChild(node, i);
             updateNode[child.getNumber()] = true;
         }
@@ -90,6 +99,9 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
      * Set update flag for a node and all its descendents
      */
     protected void updateNodeAndDescendents(NodeRef node) {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateSingleCount++;
+
         updateNode[node.getNumber()] = true;
 
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
@@ -104,6 +116,9 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
      * Set update flag for all nodes
      */
     protected void updateAllNodes() {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateAllCount++;
+
         for (int i = 0; i < nodeCount; i++) {
             updateNode[i] = true;
         }
@@ -192,13 +207,14 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         if (hasInitialized) {
             String rtnValue =  getClass().getName() + "(" + getLogLikelihood() + ")";
             if (COUNT_TOTAL_OPERATIONS)
-             rtnValue += " total operations = " + totalOperationCount +
-                         " matrix updates = " + totalMatrixUpdateCount + " model changes = " + totalModelChangedCount +
-                         " make dirties = " + totalMakeDirtyCount +
-                         " calculate likelihoods = " + totalCalculateLikelihoodCount +
-                         " get likelihoods = " + totalGetLogLikelihoodCount +
-                         " all rate updates = " + totalRateUpdateAllCount +
-                         " partial rate updates = " + totalRateUpdateSingleCount;
+             rtnValue += "\n  total operations = " + totalOperationCount +
+                         "\n  matrix updates = " + totalMatrixUpdateCount +
+                     "\n  model changes = " + totalModelChangedCount +
+                         "\n  make dirties = " + totalMakeDirtyCount +
+                         "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
+                         "\n  get likelihoods = " + totalGetLogLikelihoodCount +
+                         "\n  all rate updates = " + totalRateUpdateAllCount +
+                         "\n  partial rate updates = " + totalRateUpdateSingleCount;
             return rtnValue;
         } else {
             return getClass().getName() + "(uninitialized)";

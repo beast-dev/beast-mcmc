@@ -684,6 +684,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } else if (model == branchModel) {
             updateSubstitutionModel = true;
         }
+
+        // Tell TreeDataLikelihood to update all nodes
         fireModelChanged();
     }
 
@@ -695,6 +697,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * Stores the additional state other than model components
      */
+    @Override
     public void storeState() {
         partialBufferHelper.storeState();
         evolutionaryProcessDelegate.storeState();
@@ -712,6 +715,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * Restore the additional stored state
      */
+    @Override
     public void restoreState() {
         updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
@@ -746,6 +750,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return "Using BEAGLE likelihood calculation library";
     }
 
+    @Override
     public List<Citation> getCitations() {
         return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
     }

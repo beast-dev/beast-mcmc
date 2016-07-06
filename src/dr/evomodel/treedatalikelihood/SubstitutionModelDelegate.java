@@ -104,7 +104,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         this.branchModel = branchModel;
 
         eigenCount = substitutionModelList.size();
-        nodeCount = tree.getNodeCount();
+        nodeCount = tree.getNodeCount() - 1; // the root doesn't need a matrix
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);

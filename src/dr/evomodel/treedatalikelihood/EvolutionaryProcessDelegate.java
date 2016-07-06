@@ -29,7 +29,12 @@ import beagle.Beagle;
 import dr.evomodel.substmodel.SubstitutionModel;
 
 /**
- * Created by msuchard on 12/23/15.
+ * Implementations of this interface are used to delegate control of substitution
+ * models along branches of a tree.
+ *
+ * @author Marc Suchard
+ * @author Andrew Rambaut
+ * @version $Id$
  */
 public interface EvolutionaryProcessDelegate {
 

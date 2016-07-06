@@ -30,6 +30,7 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.util.Timer;
 
 import java.io.Serializable;

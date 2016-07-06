@@ -1,7 +1,7 @@
 /*
  * BufferIndexHelper.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,8 +27,15 @@ package dr.evomodel.treelikelihood;
 
 import java.io.Serializable;
 
+/**
+ * BufferIndexHelper - helper for double buffering of intermediate computation at nodes.
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @version $Id$
+ */
 public class BufferIndexHelper implements Serializable {
-	
+
     /**
      * @param maxIndexValue the number of possible input values for the index
      * @param minIndexValue the minimum index value to have the mirrored buffers

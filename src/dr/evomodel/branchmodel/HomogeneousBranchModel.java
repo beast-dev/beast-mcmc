@@ -33,6 +33,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Variable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -67,9 +68,7 @@ public class HomogeneousBranchModel extends AbstractModel implements BranchModel
 
 //    @Override // use java 1.5
     public List<SubstitutionModel> getSubstitutionModels() {
-        List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
-        substitutionModels.add(substitutionModel);
-        return substitutionModels;
+        return Collections.singletonList(substitutionModel);
     }
 
 //    @Override

@@ -43,7 +43,7 @@ import dr.xml.Reportable;
 @Deprecated // Switching to TreeDataLikelihood
 public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
-    protected static final boolean COUNT_TOTAL_OPERATIONS = false;
+    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
 
     public AbstractTreeLikelihood(String name, TreeModel treeModel) {
 

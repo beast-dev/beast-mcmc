@@ -52,11 +52,12 @@ public class BufferIndexHelper implements Serializable {
     public BufferIndexHelper(int maxIndexValue, int minIndexValue, int bufferSetNumber) {
         this.maxIndexValue = maxIndexValue;
         this.minIndexValue = minIndexValue;
-        this.constantOffset = bufferSetNumber * getBufferCount();
 
         doubleBufferCount = maxIndexValue - minIndexValue;
         indexOffsets = new int[doubleBufferCount];
         storedIndexOffsets = new int[doubleBufferCount];
+
+        this.constantOffset = bufferSetNumber * getBufferCount();
     }
 
     public int getBufferCount() {
@@ -64,9 +65,9 @@ public class BufferIndexHelper implements Serializable {
     }
 
     public void flipOffset(int i) {
-        if (i >= minIndexValue) {
-            indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
-        } // else do nothing
+        assert(i >= minIndexValue) : "shouldn't be trying to flip the first 'static' indices";
+
+        indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
     }
 
     public int getOffsetIndex(int i) {

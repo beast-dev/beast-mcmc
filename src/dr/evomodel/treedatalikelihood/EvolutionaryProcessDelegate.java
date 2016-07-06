@@ -26,17 +26,30 @@
 package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
+import dr.evomodel.substmodel.SubstitutionModel;
 
 /**
  * Created by msuchard on 12/23/15.
  */
 public interface EvolutionaryProcessDelegate {
 
+    boolean canReturnComplexDiagonalization();
+
+    int getEigenBufferCount();
+
+    int getMatrixBufferCount();
+
+    int getSubstitutionModelCount();
+
+    SubstitutionModel getSubstitutionModel(int index);
+
     int getMatrixIndex(int branchIndex);
 
-    void updateSubstitutionModels(Beagle beagle);
+    double[] getRootStateFrequencies();
 
-    void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount);
+    void updateSubstitutionModels(Beagle beagle, boolean flipBuffers);
+
+    void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flipBuffers);
 
     void storeState();
 

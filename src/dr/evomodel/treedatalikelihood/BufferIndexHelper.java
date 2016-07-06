@@ -65,9 +65,9 @@ public class BufferIndexHelper implements Serializable {
     }
 
     public void flipOffset(int i) {
-        if (i >= minIndexValue) {
-            indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
-        } // else do nothing
+        assert(i >= minIndexValue) : "shouldn't be trying to flip the first 'static' indices";
+
+        indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
     }
 
     public int getOffsetIndex(int i) {

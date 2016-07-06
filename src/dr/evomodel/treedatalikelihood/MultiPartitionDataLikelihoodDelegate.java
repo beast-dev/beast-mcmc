@@ -55,7 +55,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-    private static final boolean USE_BEAGLE_3 = false;
+    private static final boolean USE_BEAGLE_3 = true;
+    private static final boolean RESCALING_OFF = true; // a debugging switch
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -82,6 +83,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
+
 
     /**
      * Construct an instance using a list of PatternLists, one for each partition. The
@@ -584,11 +586,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         useScaleFactors = true;
         recomputeScaleFactors = true;
 
+        if (RESCALING_OFF) { // a debugging switch
+            useScaleFactors = false;
+            recomputeScaleFactors = false;
+        }
+
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength();
-            branchUpdateCount++;
+            branchUpdateCount ++;
         }
 
         int k = 0;
@@ -622,20 +629,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         }
 
-        if (USE_BEAGLE_3) {
-            // scaling isn't implemented for multipartition BEAGLE yet
-            useScaleFactors = false;
+        if (flip) {
+            // Flip all the buffers to be written to first...
+            for (NodeOperation op : nodeOperations) {
+                partialBufferHelper.flipOffset(op.getNodeNumber());
+            }
         }
 
         int operationCount = 0;
         k = 0;
         for (NodeOperation op : nodeOperations) {
             int nodeNum = op.getNodeNumber();
-
-            if (flip) {
-                // first flip the partialBufferHelper
-                partialBufferHelper.flipOffset(nodeNum);
-            }
 
             int writeScale, readScale;
 

@@ -83,6 +83,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
 
+    private static final boolean RESCALING_OFF = true; // a debugging switch
+
     /**
      *
      * @param tree Used for configuration - shouldn't be watched for changes
@@ -520,9 +522,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
 
-        // For the first version just do scaling always
-        useScaleFactors = true;
-        recomputeScaleFactors = true;
+        if (RESCALING_OFF) { // a debugging switch
+            useScaleFactors = false;
+            recomputeScaleFactors = false;
+        }
 
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
@@ -551,15 +554,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     flip);
         }
 
+        if (flip) {
+            // Flip all the buffers to be written to first...
+            for (NodeOperation op : nodeOperations) {
+                partialBufferHelper.flipOffset(op.getNodeNumber());
+            }
+        }
+
         int operationCount = nodeOperations.size();
         int k = 0;
         for (NodeOperation op : nodeOperations) {
             int nodeNum = op.getNodeNumber();
-
-            if (flip) {
-                // first flip the partialBufferHelper
-                partialBufferHelper.flipOffset(nodeNum);
-            }
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 

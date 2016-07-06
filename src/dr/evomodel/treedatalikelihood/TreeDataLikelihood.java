@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements Reportable {
 
-    protected static final boolean COUNT_TOTAL_OPERATIONS = false;
+    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
     public TreeDataLikelihood(DataLikelihoodDelegate delegate,
@@ -191,10 +191,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     protected final void storeState() {
 
-        delegate.storeState();
-
-        // the likelihood should always be known at this point in the cycle
-        assert(likelihoodKnown);
+        assert(likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
 
         storedLogLikelihood = logLikelihood;
 
@@ -202,8 +199,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     @Override
     protected final void restoreState() {
-
-        delegate.restoreState();
 
         // restore the likelihood and flag it as known
         logLikelihood = storedLogLikelihood;
@@ -222,7 +217,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * @return the log likelihood.
      */
     private final double calculateLogLikelihood() {
-
 
         double logL = Double.NEGATIVE_INFINITY;
         boolean done = false;

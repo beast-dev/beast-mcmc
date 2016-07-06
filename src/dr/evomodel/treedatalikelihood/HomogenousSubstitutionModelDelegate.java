@@ -73,9 +73,10 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      */
     public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
 
-        assert(branchModel.getSubstitutionModels().size() == 1);
+        assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
+
 
         nodeCount = tree.getNodeCount();
 

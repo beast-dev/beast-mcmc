@@ -332,6 +332,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             beagle.setPatternWeights(patternWeights);
 
+            // *** Testing new BEAGLE ***
+//            int[] patternPartitions = new int[patternCount];
+//            beagle.setPatternPartitions(1, patternPartitions);
+//            this.rescalingScheme = PartialsRescalingScheme.NONE;
+
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
                     resourceDetails != null &&
@@ -521,11 +526,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
 
         // For the first version just do scaling always
-        useScaleFactors = true;
-        recomputeScaleFactors = true;
+        useScaleFactors = false;
+        recomputeScaleFactors = false;
 
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
+            if (flip) {
+                substitutionModelDelegate.flipMatrixBuffer(op.getBranchNumber());
+            }
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength();
             branchUpdateCount ++;
@@ -678,6 +686,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } else if (model == branchModel) {
             updateSubstitutionModel = true;
         }
+
+        // Tell TreeDataLikelihood to update all nodes
+        fireModelChanged();
     }
 
     @Override
@@ -688,6 +699,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * Stores the additional state other than model components
      */
+    @Override
     public void storeState() {
         partialBufferHelper.storeState();
         substitutionModelDelegate.storeState();
@@ -705,6 +717,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * Restore the additional stored state
      */
+    @Override
     public void restoreState() {
         updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
@@ -739,6 +752,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return "Using BEAGLE likelihood calculation library";
     }
 
+    @Override
     public List<Citation> getCitations() {
         return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
     }

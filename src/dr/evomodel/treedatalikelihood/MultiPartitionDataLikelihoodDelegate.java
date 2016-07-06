@@ -586,6 +586,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
+            if (flip) {
+                for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
+                    substitutionModelDelegate.flipMatrixBuffer(op.getBranchNumber());
+                }
+            }
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength();
             branchUpdateCount++;
@@ -772,6 +777,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         } else if (model instanceof BranchModel) {
             updateSubstitutionModel((BranchModel)model);
         }
+        // Tell TreeDataLikelihood to update all nodes
+        fireModelChanged();
     }
 
     @Override
@@ -782,6 +789,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * Stores the additional state other than model components
      */
+    @Override
     public void storeState() {
         partialBufferHelper.storeState();
         for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
@@ -801,6 +809,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * Restore the additional stored state
      */
+    @Override
     public void restoreState() {
         updateSiteModels(); // this is required to upload the categoryRates to BEAGLE after the restore
 
@@ -837,6 +846,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return "Using BEAGLE likelihood calculation library";
     }
 
+    @Override
     public List<Citation> getCitations() {
         return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
     }

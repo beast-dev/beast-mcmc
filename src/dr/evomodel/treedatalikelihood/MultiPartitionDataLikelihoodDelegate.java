@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-    private static final boolean USE_BEAGLE_3 = false;
+    private static final boolean USE_BEAGLE_3 = true;
     private static final boolean RESCALING_OFF = true; // a debugging switch
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
@@ -409,11 +409,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 everUnderflowed = false; // If false, BEAST does not rescale until first under-/over-flow.
             }
 
-            updateSubstitutionModels = new boolean[evolutionaryProcessDelegates.size()];
+            updateSubstitutionModels = new boolean[branchModels.size()];
             updateSubstitutionModels();
 
-            updateSiteRateModels = new boolean[branchModels.size()];
-            updateSiteModels();
+            updateSiteRateModels = new boolean[siteRateModels.size()];
+            updateSiteRateModels();
 
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
@@ -421,28 +421,28 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     private void updateSubstitutionModels(boolean... state) {
-        for (int i = 0; i < evolutionaryProcessDelegates.size(); i++) {
+        for (int i = 0; i < updateSubstitutionModels.length; i++) {
             updateSubstitutionModels[i] = (state.length < 1 || state[0]);
         }
     }
 
     private void updateSubstitutionModel(BranchModel branchModel) {
-        for (int i = 0; i < evolutionaryProcessDelegates.size(); i++) {
+        for (int i = 0; i < branchModels.size(); i++) {
             if (branchModels.get(i) == branchModel) {
                 updateSubstitutionModels[i] = true;
             }
         }
     }
 
-    private void updateSiteModels(boolean... state) {
-        for (int i = 0; i < branchModels.size(); i++) {
+    private void updateSiteRateModels(boolean... state) {
+        for (int i = 0; i < updateSiteRateModels.length; i++) {
             updateSiteRateModels[i] = (state.length < 1 || state[0]);
         }
     }
 
-    private void updateSiteModel(SiteRateModel siteRateModel) {
+    private void updateSiteRateModel(SiteRateModel siteRateModel) {
         for (int i = 0; i < siteRateModels.size(); i++) {
-            if (siteRateModels.get(i) == siteRateModels) {
+            if (siteRateModels.get(i) == siteRateModel) {
                 updateSiteRateModels[i] = true;
             }
         }
@@ -586,13 +586,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             recomputeScaleFactors = false;
         }
 
-        int branchUpdateCount = 0;
-        for (BranchOperation op : branchOperations) {
-            branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
-            branchLengths[branchUpdateCount] = op.getBranchLength();
-            branchUpdateCount++;
-        }
-
         int k = 0;
         for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
             if (updateSubstitutionModels[k]) {
@@ -611,6 +604,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 beagle.setCategoryRates(categoryRates);
             }
             k++;
+        }
+
+        int branchUpdateCount = 0;
+        for (BranchOperation op : branchOperations) {
+            branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
+            branchLengths[branchUpdateCount] = op.getBranchLength();
+            branchUpdateCount++;
         }
 
         if (branchUpdateCount > 0) {
@@ -667,9 +667,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
 
             for (int i = 0; i < partitionCount; i++) {
-                EvolutionaryProcessDelegate evolutionaryProcessDelegate =
-                        (evolutionaryProcessDelegates.size() == 1 ?
-                                evolutionaryProcessDelegates.get(0) : evolutionaryProcessDelegates.get(i));
+                EvolutionaryProcessDelegate evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i);
 
                 operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
                 operations[k + 1] = writeScale;
@@ -743,7 +741,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         updateSubstitutionModels(false);
-        updateSiteModels(false);
+        updateSiteRateModels(false);
         //********************************************************************
 
         return logL;
@@ -761,14 +759,14 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     public void makeDirty() {
-        updateSiteModels();
+        updateSiteRateModels();
         updateSubstitutionModels();
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model instanceof SiteRateModel) {
-            updateSiteModel((SiteRateModel)model);
+            updateSiteRateModel((SiteRateModel)model);
         } else if (model instanceof BranchModel) {
             updateSubstitutionModel((BranchModel)model);
         }
@@ -806,7 +804,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      */
     @Override
     public void restoreState() {
-        updateSiteModels(); // this is required to upload the categoryRates to BEAGLE after the restore
+        updateSiteRateModels(); // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
         for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {

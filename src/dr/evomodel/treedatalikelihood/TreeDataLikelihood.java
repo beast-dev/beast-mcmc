@@ -96,15 +96,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     public final double getLogLikelihood() {
         if (COUNT_TOTAL_OPERATIONS)
             totalGetLogLikelihoodCount++;
-        if (CompoundLikelihood.DEBUG_PARALLEL_EVALUATION) {
-            System.err.println((likelihoodKnown ? "lazy" : "evaluate"));
-        }
+
         if (!likelihoodKnown) {
             if (COUNT_TOTAL_OPERATIONS)
                 totalCalculateLikelihoodCount++;
+
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
+
         return logLikelihood;
     }
 

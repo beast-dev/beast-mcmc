@@ -34,6 +34,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  */
 public class LocalClockModelParser extends AbstractXMLObjectParser {
@@ -138,7 +140,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        System.out.println("Using local clock branch rate model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing local clock branch rate model.");
 
         return localClockModel;
     }

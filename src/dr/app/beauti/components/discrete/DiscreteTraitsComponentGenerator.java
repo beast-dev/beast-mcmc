@@ -305,10 +305,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-//        writer.writeOpenTag(GammaSiteModelParser.MUTATION_RATE);
-//        writeParameter(model.getParameter("trait.mu"), -1, writer);
-//        writer.writeCloseTag(GammaSiteModelParser.MUTATION_RATE);
-
         writer.writeCloseTag(SiteModel.SITE_MODEL);
     }
 

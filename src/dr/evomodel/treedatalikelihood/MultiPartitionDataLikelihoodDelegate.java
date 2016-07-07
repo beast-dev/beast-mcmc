@@ -55,7 +55,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-    private static final boolean USE_BEAGLE_3 = false;
     private static final boolean RESCALING_OFF = true; // a debugging switch
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
@@ -109,6 +108,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         logger.info("Using Multi-Partition Data Likelihood Delegate");
 
+        boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3"));
+
         this.dataType = patternLists.get(0).getDataType();
         stateCount = dataType.getStateCount();
 
@@ -126,7 +127,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         // Branch models determine the substitution models per branch. There can be either
         // one per partition or one shared across all partitions
-        assert(branchModels.size() == 1 || (!USE_BEAGLE_3 && branchModels.size() == patternLists.size()));
+        assert(branchModels.size() == 1 || (!useBeagle3 && branchModels.size() == patternLists.size()));
 
         this.branchModels.addAll(branchModels);
         for (BranchModel branchModel : this.branchModels) {
@@ -135,7 +136,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         // SiteRateModels determine the rates per category (for site-heterogeneity models).
         // There can be either one per partition or one shared across all partitions
-        assert(siteRateModels.size() == 1 || (!USE_BEAGLE_3 && siteRateModels.size() == patternLists.size()));
+        assert(siteRateModels.size() == 1 || (!useBeagle3 && siteRateModels.size() == patternLists.size()));
 
         this.siteRateModels.addAll(siteRateModels);
         this.categoryCount = this.siteRateModels.get(0).getCategoryCount();
@@ -380,7 +381,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             beagle.setPatternWeights(patternWeights);
 
-            if (USE_BEAGLE_3) {
+            if (useBeagle3) {
                 // This call is only available in BEAGLE3
                 beagle.setPatternPartitions(partitionCount, patternPartitions);
             }

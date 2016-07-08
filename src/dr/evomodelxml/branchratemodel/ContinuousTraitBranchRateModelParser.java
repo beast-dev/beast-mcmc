@@ -58,7 +58,7 @@ public class ContinuousTraitBranchRateModelParser extends AbstractXMLObjectParse
         if (traitLikelihood != null)
             trait = traitLikelihood.getTraitName();
 
-        Logger.getLogger("dr.evomodel").info("Using trait '" + trait + "' as log rate estimates.");
+        Logger.getLogger("dr.evomodel").info("\nUsing trait '" + trait + "' as log rate estimates.");
 
         if (xo.hasChildNamed(RATE)) {
             Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);

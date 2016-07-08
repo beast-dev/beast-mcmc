@@ -47,7 +47,7 @@ public class ExternalInternalBranchModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Logger.getLogger("dr.evomodel").info("Using external-internal branch model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing external-internal branch model.");
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         SubstitutionModel internalSubstitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);

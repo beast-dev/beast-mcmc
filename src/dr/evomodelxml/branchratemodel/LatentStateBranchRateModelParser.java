@@ -57,7 +57,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
             latentStateProportionParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_PROPORTIONS);
         }
 
-        Logger.getLogger("dr.evomodel").info("Creating a latent state branch rate model");
+        Logger.getLogger("dr.evomodel").info("\nCreating a latent state branch rate model");
 
         return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                 tree, nonLatentRateModel,

@@ -771,9 +771,7 @@ public class BeastMain {
 
         MathUtils.setSeed(seed);
 
-        System.out.println();
         System.out.println("Random number seed: " + seed);
-        System.out.println();
 
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);

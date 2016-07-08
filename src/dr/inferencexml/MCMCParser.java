@@ -125,7 +125,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
         loggers.toArray(loggerArray);
 
 
-        java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
+        java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the MCMC chain:" +
                 "\n  chainLength=" + options.getChainLength() +
                 "\n  autoOptimize=" + options.useCoercion() +
                 (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : "") +

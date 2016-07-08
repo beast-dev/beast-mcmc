@@ -177,7 +177,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubstitutionModel.class;
+        return SVSComplexSubstitutionModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

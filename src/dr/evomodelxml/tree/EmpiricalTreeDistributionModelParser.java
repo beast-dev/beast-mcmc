@@ -45,6 +45,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
 
     public static final String RATE_ATTRIBUTE_NAME = "rateAttribute";
     public static final String STARTING_TREE = "startingTree";
+    public static final String ITERATE = "iterate";
 
     public String getParserName() {
         return EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL;
@@ -56,10 +57,13 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         final String fileName = xo.getStringAttribute(FILE_NAME);
-//        int burnin = 0;
-//        if (xo.hasAttribute(BURNIN)) {
-//            burnin = xo.getIntegerAttribute(BURNIN);
-//        }
+
+        int startingTree = xo.getAttribute(STARTING_TREE, -1); // default is random tree
+
+        boolean iterate = xo.getAttribute(ITERATE, false); // default is random draw
+        if (iterate && startingTree < 0) {
+            startingTree = 0;
+        }
 
         Logger.getLogger("dr.evomodel").info("Creating the empirical tree distribution model, '" + xo.getId() + "'");
 
@@ -68,11 +72,13 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
         final File file = FileHelpers.getFile(fileName);
 
         Tree[] trees = null;
+        NexusImporter importer = null;
         try {
             FileReader reader = new FileReader(file);
-            NexusImporter importer = new NexusImporter(reader);
-            trees = importer.importTrees(taxa, true); // Re-order taxon numbers to original TaxonList order
-
+            importer = new NexusImporter(reader);
+            if (!iterate) {
+                trees = importer.importTrees(taxa, true); // Re-order taxon numbers to original TaxonList order
+            }
         } catch (FileNotFoundException e) {
             throw new XMLParseException(e.getMessage());
         } catch (IOException e) {
@@ -83,9 +89,11 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
         
         Logger.getLogger("dr.evomodel").info("    Read " + trees.length + " trees from file, " + fileName);
 
-        int startingTree = xo.getAttribute(STARTING_TREE, -1); // default is random tree
-
-        return new EmpiricalTreeDistributionModel(trees, startingTree);
+        if (iterate) {
+            return new EmpiricalTreeDistributionModel(importer, startingTree);
+        } else {
+            return new EmpiricalTreeDistributionModel(trees, startingTree);
+        }
     }
 
     public static final String FILE_NAME = "fileName";
@@ -94,6 +102,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule(STARTING_TREE, true),
+                AttributeRule.newBooleanRule(ITERATE, true),
                 new StringAttributeRule(FILE_NAME,
                         "The name of a NEXUS tree file"),
 //                AttributeRule.newIntegerRule(BURNIN, true,

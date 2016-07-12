@@ -78,6 +78,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
             importer = new NexusImporter(reader);
             if (!iterate) {
                 trees = importer.importTrees(taxa, true); // Re-order taxon numbers to original TaxonList order
+                reader.close();
             }
         } catch (FileNotFoundException e) {
             throw new XMLParseException(e.getMessage());
@@ -87,11 +88,12 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
             throw new XMLParseException(e.getMessage());
         }
         
-        Logger.getLogger("dr.evomodel").info("    Read " + trees.length + " trees from file, " + fileName);
 
         if (iterate) {
+            Logger.getLogger("dr.evomodel").info("    Iterate over " + trees.length + " trees from file, " + fileName);
             return new EmpiricalTreeDistributionModel(importer, startingTree);
         } else {
+            Logger.getLogger("dr.evomodel").info("    Randomly jump between " + trees.length + " trees from file, " + fileName);
             return new EmpiricalTreeDistributionModel(trees, startingTree);
         }
     }

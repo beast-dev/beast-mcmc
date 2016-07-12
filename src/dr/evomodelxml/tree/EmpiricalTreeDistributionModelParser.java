@@ -90,7 +90,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
         
 
         if (iterate) {
-            Logger.getLogger("dr.evomodel").info("    Iterate over " + trees.length + " trees from file, " + fileName);
+            Logger.getLogger("dr.evomodel").info("    Iterate over each tree from file, " + fileName);
             return new EmpiricalTreeDistributionModel(importer, startingTree);
         } else {
             Logger.getLogger("dr.evomodel").info("    Randomly jump between " + trees.length + " trees from file, " + fileName);

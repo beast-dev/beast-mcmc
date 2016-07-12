@@ -63,7 +63,13 @@ public class AlternatingOperatorSchedule implements OperatorSchedule {
             scheduleCount = 0;
         }
         scheduleCount += 1;
-        return operatorSchedules.get(currentSchedule).getNextOperatorIndex();
+
+        int offset = 0;
+        for (int i = 0; i < currentSchedule; ++i) {
+            offset += operatorSchedules.get(i).getOperatorCount();
+        }
+
+        return offset + operatorSchedules.get(currentSchedule).getNextOperatorIndex();
     }
 
     public void reset() {

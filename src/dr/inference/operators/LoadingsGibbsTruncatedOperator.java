@@ -140,7 +140,9 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         meanMidArray = new double[loadings.getColumnDimension()];
         meanArray = new double[loadings.getColumnDimension()];
         double[][] cholesky = null;
+        NormalDistribution conditioned;
         getPrecision(i, precisionArray);
+//        if(LFM.getLoadings().getParameterValue(i, column) != 0){
         variance = (new SymmetricMatrix(precisionArray)).inverse().toComponents();
 
 
@@ -153,7 +155,10 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         getMean(i, variance, meanMidArray, meanArray);
 
 
-        NormalDistribution conditioned = getConditionalDistribution(meanArray, variance, column, i);
+        conditioned = getConditionalDistribution(meanArray, variance, column, i);
+//        }
+//        else
+//            conditioned = new NormalDistribution(0, Math.sqrt(1 / prior.getScaleMatrix()[0][0]));
 
 
         if(MathUtils.nextDouble() < .5) {
@@ -229,7 +234,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
                 varianceElement -= precStore[i] * variance[i+1][column];
         }
 
-        return new NormalDistribution(mean, varianceElement);
+        return new NormalDistribution(mean, Math.sqrt(varianceElement));
 
 
 

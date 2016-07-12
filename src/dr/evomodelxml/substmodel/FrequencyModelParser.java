@@ -112,7 +112,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
 		}
 
 		StringBuilder sb = new StringBuilder(
-				"Creating state frequencies model '"
+				"\nCreating state frequencies model '"
 						+ freqsParam.getParameterName() + "': ");
 		if (frequencies != null) {
 

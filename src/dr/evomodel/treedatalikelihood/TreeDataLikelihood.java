@@ -57,7 +57,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        logger.info("Using TreeDataLikelihood");
+        logger.info("\nUsing TreeDataLikelihood");
 
         this.delegate = delegate;
         addModel(delegate);

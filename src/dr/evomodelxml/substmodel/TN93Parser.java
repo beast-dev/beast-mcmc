@@ -49,7 +49,7 @@ public class TN93Parser extends AbstractXMLObjectParser {
         Parameter kappa2Param = (Parameter) xo.getElementFirstChild(KAPPA2);
         FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FREQUENCIES);
 
-        Logger.getLogger("dr.evomodel").info("Creating TN93 substitution model. Initial kappa = "
+        Logger.getLogger("dr.evomodel").info("\nCreating TN93 substitution model. Initial kappa = "
                 + kappa1Param.getValue(0) + "," + kappa2Param.getValue(0));
 
         return new TN93(kappa1Param, kappa2Param, freqModel);

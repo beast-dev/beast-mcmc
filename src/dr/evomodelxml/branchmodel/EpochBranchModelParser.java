@@ -57,7 +57,7 @@ public class EpochBranchModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Logger.getLogger("dr.evomodel").info("Using multi-epoch branch model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing multi-epoch branch model.");
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         SubstitutionModel ancestralSubstitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);

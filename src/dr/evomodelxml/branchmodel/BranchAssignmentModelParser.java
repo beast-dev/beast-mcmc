@@ -54,7 +54,7 @@ public class BranchAssignmentModelParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		Logger.getLogger("dr.evomodel").info(
-				"Using branch assignment branch model.");
+				"\nUsing branch assignment branch model.");
 		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 		String annotation = xo.getStringAttribute(ANNOTATION);
 

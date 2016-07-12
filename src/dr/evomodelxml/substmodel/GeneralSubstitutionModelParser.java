@@ -50,15 +50,8 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES = "frequencies";
     public static final String INDICATOR = "rateIndicator";
 
-    public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
-    public static final String SVS_COMPLEX_SUBSTITUTION_MODEL = "svsComplexSubstitutionModel";
-
     public String getParserName() {
         return GENERAL_SUBSTITUTION_MODEL;
-    }
-
-    public String[] getParserNames() {
-        return new String[]{getParserName(), SVS_GENERAL_SUBSTITUTION_MODEL, SVS_COMPLEX_SUBSTITUTION_MODEL};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

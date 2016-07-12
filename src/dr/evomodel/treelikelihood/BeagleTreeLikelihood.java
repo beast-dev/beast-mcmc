@@ -133,7 +133,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");
 
-            logger.info("Using BEAGLE TreeLikelihood");
+            logger.info("\nUsing BEAGLE TreeLikelihood");
 
             this.siteRateModel = siteRateModel;
             addModel(this.siteRateModel);

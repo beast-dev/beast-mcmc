@@ -51,7 +51,7 @@ public class RandomBranchAssignmentModelParser extends AbstractXMLObjectParser {
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Logger.getLogger("dr.evomodel").info("Using random assignment branch model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing random assignment branch model.");
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
 	      XMLObject cxo = xo.getChild(MODELS);

@@ -97,9 +97,9 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         }
 
         if (msg.length() > 0) {
-            Logger.getLogger("dr.evomodel").info("Creating site model: " + msg);
+            Logger.getLogger("dr.evomodel").info("\nCreating site rate model: " + msg);
         } else {
-            Logger.getLogger("dr.evomodel").info("Creating site model.");
+            Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
         }
 
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);

@@ -52,7 +52,7 @@ public class BranchSpecificBranchModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Logger.getLogger("dr.evomodel").info("Using clade-specific branch model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing clade-specific branch model.");
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);

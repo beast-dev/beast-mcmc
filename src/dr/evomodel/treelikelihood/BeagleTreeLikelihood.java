@@ -102,7 +102,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
 
-    private static final boolean RESCALING_OFF = true; // a debugging switch
+    private static final boolean RESCALING_OFF = false; // a debugging switch
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,

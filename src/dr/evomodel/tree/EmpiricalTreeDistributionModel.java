@@ -101,26 +101,26 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     private void drawTreeIndex(int treeNumber) {
 //        System.err.print("Drawing new tree, (old tree = " + currentTreeIndex);
 
-        if (treeNumber == -1) {
-            if (importer != null) {
-                try {
-                    if (importer.hasTree() == false) {
-                        throw new RuntimeException("EmpiricalTreeDistributionModel has run out of trees");
-                    }
-                    currentTree = importer.importNextTree();
-                } catch (IOException e) {
-                    throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
-                } catch (Importer.ImportException e) {
-                    throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
+        if (importer != null) {
+            try {
+                if (importer.hasTree() == false) {
+                    throw new RuntimeException("EmpiricalTreeDistributionModel has run out of trees");
                 }
-                currentTreeIndex += 1;
-            } else {
+                currentTree = importer.importNextTree();
+            } catch (IOException e) {
+                throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
+            } catch (Importer.ImportException e) {
+                throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
+            }
+            currentTreeIndex += 1;
+        } else {
+            if (treeNumber == -1) {
                 currentTreeIndex = MathUtils.nextInt(trees.length);
                 currentTree = trees[currentTreeIndex];
+            } else {
+                currentTreeIndex = treeNumber;
+                currentTree = trees[currentTreeIndex];
             }
-        } else {
-            currentTreeIndex = treeNumber;
-            currentTree = trees[currentTreeIndex];
         }
 
         // Force computation of node heights now rather than later in the evaluation

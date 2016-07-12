@@ -25,14 +25,9 @@
 
 package dr.inferencexml.operators;
 
-import dr.evolution.util.TaxonList;
 import dr.inference.operators.AlternatingOperatorSchedule;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.SimpleOperatorSchedule;
 import dr.xml.*;
-
-import java.util.logging.Logger;
 
 /**
  *
@@ -40,7 +35,7 @@ import java.util.logging.Logger;
 public class AlternatingOperatorScheduleParser extends AbstractXMLObjectParser {
 
     public static final String ALTERNATING_OPERATORS = "alternatingOperators";
-    public static final String OPERATORS = "operators";
+    public static final String SCHEDULE = "schedule";
     public static final String COUNT = "count";
 
     public String getParserName() {
@@ -69,7 +64,7 @@ public class AlternatingOperatorScheduleParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(OPERATORS, new XMLSyntaxRule[] {
+            new ElementRule(SCHEDULE, new XMLSyntaxRule[] {
                     AttributeRule.newLongIntegerRule(COUNT),
                     new ElementRule(OperatorSchedule.class)
             }, 1, Integer.MAX_VALUE)

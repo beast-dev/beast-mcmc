@@ -15,11 +15,27 @@ import java.util.Arrays;
 public class GaussianProcessSkytrackParser {
     private static final int changepointsIndex = 5;
     private static final int GvaluesIndex = 6;
+    private static final int lambdaBoundIndex = 7;
     private static final int precisionIndex = 8;
     private static final int tmrcaIndex = 10;
 
     public static void main(String[] args) {
-        int NGRID = 100;
+//        int [] indices = {0, 5, 9};
+//        int total = 10;
+//        int [] neighbs = neighbors(indices, total);
+//        System.out.println(Arrays.toString(neighbs));
+
+//        double [] oldData = {1.0, 2.0, 3.0};
+//        double [] newData = {1.5, 3.5};
+//
+//        QuadupleGP result = sortUpdate(oldData, newData);
+//
+//        System.out.println("Data: " + Arrays.toString(result.getData()));
+//        System.out.println("Order: " + Arrays.toString(result.getOrder()));
+//        System.out.println("New Positions: " + Arrays.toString(result.getPositionNew()));
+//        System.out.println("Old Positions: " + Arrays.toString(result.getPositionOld()));
+
+        int NGRID = 101;
         String filePathName = "examples/hcvNew2small.log";
         CSVstats stats = parseCSV(filePathName, 3);
         //System.out.println(Arrays.toString(stats.precisions));
@@ -27,15 +43,13 @@ public class GaussianProcessSkytrackParser {
         System.out.println(tmrca);
 
         double[] grid = new double[NGRID];
-        double step = tmrca / NGRID;
+        double step = tmrca / (NGRID-1);
         grid[0] = 0.001;
         for (int i = 1; i < grid.length; i++) {
             grid[i] = grid[i-1] + step;
         }
 
-        double[] result1 = gpPosterior(stats, grid, stats.getSize() - 1);
-
-        double[] result = sigmoidal(result1);
+        double[] result = gpPosterior(stats, grid, stats.getSize() - 1);
 
         System.out.println(Arrays.toString(grid));
         System.out.println(Arrays.toString(result));
@@ -53,6 +67,7 @@ public class GaussianProcessSkytrackParser {
 
             ArrayList<ArrayList<Double>> changepoints = new ArrayList<ArrayList<Double>>();
             ArrayList<ArrayList<Double>> Gvalues = new ArrayList<ArrayList<Double>>();
+            ArrayList<Double> lambdas = new ArrayList<Double>();
             ArrayList<Double> precisions = new ArrayList<Double>();
             ArrayList<Double> tmrcas = new ArrayList<Double>();
 
@@ -62,13 +77,14 @@ public class GaussianProcessSkytrackParser {
 
                     changepoints.add(parseListStr(fieldsArray[changepointsIndex]));
                     Gvalues.add(parseListStr(fieldsArray[GvaluesIndex]));
+                    lambdas.add(new Double(fieldsArray[lambdaBoundIndex]));
                     precisions.add(new Double(fieldsArray[precisionIndex]));
                     tmrcas.add(new Double(fieldsArray[tmrcaIndex]));
                 }
                 lineNum += 1;
             }
 
-            result = new CSVstats(changepoints, Gvalues, precisions, tmrcas);
+            result = new CSVstats(changepoints, Gvalues, lambdas, precisions, tmrcas);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -83,7 +99,12 @@ public class GaussianProcessSkytrackParser {
 
         TripGP res1 = getGPvalues(changePoints, values, grid, precision);
 
-        double[] result = res1.getData();
+        double[] result1 = sigmoidal(res1.getData());
+
+        double[] result = new double[result1.length];
+        for (int i = 0; i < result1.length; i++) {
+            result[i] = result1[i] * stats.lambdas[iter];
+        }
 
         return result;
     }
@@ -224,7 +245,7 @@ public class GaussianProcessSkytrackParser {
     }
 
     //Returns the index (position) of newData + Neighbors in the Ordered List
-    private static int [] neighbors(int [] indexNew, int numberTotalData){
+    /*private static int [] neighbors(int [] indexNew, int numberTotalData){
         int [] Neighbors = new int[numberTotalData];
         int k=0;
 
@@ -266,6 +287,39 @@ public class GaussianProcessSkytrackParser {
         int [] FinalNeighbors = new int[k];
         System.arraycopy(Neighbors,0,FinalNeighbors,0,k);
         return FinalNeighbors;
+    }*/
+
+    private static int [] neighbors(int [] indexNew, int numberTotalData) {
+        int [] ns = new int[numberTotalData];
+        int index, k = 0;
+        int [] result1 = new int[numberTotalData];
+        int [] result;
+
+        for (int i = 0; i < indexNew.length; i++) {
+            index = indexNew[i];
+
+            if (index-1 > 0) {
+                ns[index-1]++;
+            }
+
+            ns[index]++;
+
+            if (index+1 < numberTotalData) {
+                ns[index+1]++;
+            }
+        }
+
+        for (int i = 0; i < numberTotalData; i++) {
+            if (ns[i] > 0) {
+                result1[k] = i;
+                k++;
+            }
+        }
+
+        result = new int[k];
+        System.arraycopy(result1, 0, result, 0, k);
+
+        return result;
     }
 
     // Assumes the input vector x is ordered
@@ -330,26 +384,27 @@ public class GaussianProcessSkytrackParser {
         int k1 = 0;
 
         for (int j = 0; j < newLength; j++){
-            if (index2<newLength) {
+            if (index2<newLength && k1<sortedData.length) {
+                pivot1=sortedData[k1];
+                pivot2=newData[index2-sortedData.length];
+
                 if (pivot1<pivot2) {
                     newList[j]=pivot1;
                     newOrder[j]=k1;
                     indexOld[k1]=j;
                     k1++;
-                    pivot1=sortedData[k1];
                 } else {
                     newList[j]=pivot2;
-
                     newOrder[j]=index2;
-
                     indexNew[index2-sortedData.length]=j;
-
                     index2++;
-                    if (index2<newLength){
-                        pivot2=newData[index2-sortedData.length];
-                    }
                 }
 
+            } else if (index2<newLength) {
+                newList[j]=newData[index2-sortedData.length];
+                newOrder[j]=index2;
+                indexNew[index2-sortedData.length]=j;
+                index2++;
             } else {
                 newList[j]=sortedData[k1];
                 newOrder[j]=k1;
@@ -383,10 +438,11 @@ public class GaussianProcessSkytrackParser {
 
     private static class CSVstats {
         public ArrayList<double[]> changepoints, Gvalues;
-        public double[] precisions, tmrcas;
+        public double[] lambdas, precisions, tmrcas;
 
         public CSVstats(ArrayList<ArrayList<Double>> changepoints,
                         ArrayList<ArrayList<Double>> Gvalues,
+                        ArrayList<Double> lambdas,
                         ArrayList<Double> precisions,
                         ArrayList<Double> tmrcas) {
             this.changepoints = new ArrayList<double[]>();
@@ -405,6 +461,11 @@ public class GaussianProcessSkytrackParser {
                     arr[i] = al.get(i);
                 }
                 this.Gvalues.add(arr);
+            }
+
+            this.lambdas = new double[lambdas.size()];
+            for (int i = 0; i < lambdas.size(); i++) {
+                this.lambdas[i] = lambdas.get(i);
             }
 
             this.precisions = new double[precisions.size()];

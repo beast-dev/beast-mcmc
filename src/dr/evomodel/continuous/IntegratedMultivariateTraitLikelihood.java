@@ -44,6 +44,7 @@ import dr.math.matrixAlgebra.Vector;
 import dr.util.Author;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import java.util.*;
 
@@ -554,6 +555,78 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         final double precision1 = upperPrecisionCache[childNumber1];
         final double totalPrecision = precision0 + precision1;
 
+        final double factorOU0 = cacheHelper.getOUFactor(childNode0);
+        final double factorOU1 = cacheHelper.getOUFactor(childNode1);
+
+        doPeel(thisNumber,
+                meanThisOffset, meanOffset0, meanOffset1,
+                totalPrecision, precision0, precision1,
+                missingTraits,
+                thisNumber,
+                precisionMatrix, logDetPrecisionMatrix,
+                factorOU0, factorOU1,
+                cacheOuterProducts
+                , node, childNode0, childNode1 // TODO arguments to remove
+                , false
+        );
+
+        final boolean DO_CLAMP = true;
+
+        if (DO_CLAMP && nodeToClampMap != null && nodeToClampMap.containsKey(node)) {
+            RestrictedPartials clamp = nodeToClampMap.get(node);
+            final int clampIndex = clamp.getIndex();
+            final int clampOffset = dim * clampIndex;
+
+            // Copy partial into meanCache // TODO Only when value changes
+            for (int i = 0; i < dim; ++i) {
+                meanCache[clampOffset + i] = clamp.getPartial(i);
+            }
+
+            final double precisionThis = lowerPrecisionCache[thisNumber];
+            final double precisionClamp = clamp.getPriorSampleSize();
+            final double precisionNew = precisionThis + precisionClamp;
+
+            final boolean debug = false;
+
+            if (debug) {
+                System.err.println("lowerCache: " + lowerPrecisionCache[thisNumber]);
+                System.err.println("upperCache: " + upperPrecisionCache[thisNumber]);
+                System.err.println("mean      : " + meanCache[meanThisOffset]);
+                System.err.println("remainder : " + logRemainderDensityCache[thisNumber]);
+            }
+
+            doPeel(thisNumber,
+                    meanThisOffset, meanThisOffset, clampOffset,
+                    precisionNew, precisionThis, precisionClamp,
+                    missingTraits,
+                    clampIndex,
+                    precisionMatrix, logDetPrecisionMatrix,
+                    1.0, 1.0,
+                    cacheOuterProducts,
+                    node, null, null
+                    ,false
+            );
+
+            if (debug) {
+                System.err.println("lowerCache: " + lowerPrecisionCache[thisNumber]);
+                System.err.println("upperCache: " + upperPrecisionCache[thisNumber]);
+                System.err.println("mean      : " + meanCache[meanThisOffset]);
+                System.err.println("remainder : " + logRemainderDensityCache[thisNumber]);
+                System.err.println("");
+//                System.exit(-1);
+            }
+        }
+    }
+
+    private void doPeel(int thisNumber,
+                        int meanThisOffset, int meanOffset0, int meanOffset1,
+                        double totalPrecision, double precision0, double precision1,
+                        MissingTraits missingTraits,
+                        int remainderNumber,
+                        double[][] precisionMatrix, double logDetPrecisionMatrix,
+                        double factorOU0, double factorOU1,
+                        boolean cacheOuterProducts,
+                        NodeRef node, NodeRef childNode0, NodeRef childNode1, boolean debug) {
         lowerPrecisionCache[thisNumber] = totalPrecision;
 
         // changeou
@@ -575,37 +648,18 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         // Compute logRemainderDensity
 
-        logRemainderDensityCache[thisNumber] = 0;
+        logRemainderDensityCache[remainderNumber] = 0;
 
         if (precision0 != 0 && precision1 != 0) {
             // changeou
             incrementRemainderDensities(
                     precisionMatrix,
-                    logDetPrecisionMatrix, thisNumber, meanThisOffset,
-                    meanOffset0,
-                    meanOffset1,
-                    precision0,
-                    precision1,
-                    cacheHelper.getOUFactor(childNode0),
-                    cacheHelper.getOUFactor(childNode1),
+                    logDetPrecisionMatrix, remainderNumber, meanThisOffset,
+                    meanOffset0, meanOffset1,
+                    precision0, precision1,
+                    factorOU0, factorOU1,
                     cacheOuterProducts);
         }
-
-        if (nodeToClampMap != null && nodeToClampMap.containsKey(node)) {
-            RestrictedPartials restrictedPartials = nodeToClampMap.get(node);
-
-            // Update lowerPrecisionCache
-
-            // Update meanCache
-
-            // Update upperPrecisionCache
-
-            // Update logRemainderDensityCache
-
-        }
-
-
-
     }
 
     private void incrementRemainderDensities(double[][] precisionMatrix,
@@ -1308,10 +1362,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         //  private double[] meanCache;
         //  private double[] storedMeanCache;
 
-        public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
-                                      double precision0, double precision1, MissingTraits missingTraits) {
-            //To change body of created methods use File | Settings | File Templates.
-        }
+//        public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
+//                                      double precision0, double precision1, MissingTraits missingTraits) {
+//            //To change body of created methods use File | Settings | File Templates.
+//        }
 
         public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
                                       double totalPrecision, double precision0, double precision1, MissingTraits missingTraits,

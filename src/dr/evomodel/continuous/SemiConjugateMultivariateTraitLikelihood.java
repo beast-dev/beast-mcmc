@@ -56,10 +56,11 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
                                                     Model samplingDensity,
                                                     boolean reportAsMultivariate,
                                                     MultivariateNormalDistribution rootPrior,
-                                                    boolean reciprocalRates) {
+                                                    boolean reciprocalRates,
+                                                    List<RestrictedPartials> partials) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, null, null, null, samplingDensity, null, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, null, null, null, samplingDensity, partials, reportAsMultivariate, reciprocalRates);
 
         setRootPrior(rootPrior); // Semi-conjugate multivariate normal with own mean and precision
     }

@@ -61,11 +61,12 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
                                                           Model samplingDensity,
                                                           boolean reportAsMultivariate,
                                                           MultivariateNormalDistribution rootPrior,
-                                                          boolean reciprocalRates) {
+                                                          boolean reciprocalRates,
+                                                          List<RestrictedPartials> partials) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, missingIndices, cacheBranches,
                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                rootPrior, reciprocalRates);
+                rootPrior, reciprocalRates, partials);
     }
 
     protected double[] fillLeafTraits(int datum) {

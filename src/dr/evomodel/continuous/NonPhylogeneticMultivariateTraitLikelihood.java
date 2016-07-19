@@ -67,11 +67,12 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
                                                      boolean reportAsMultivariate,
                                                      double[] rootPriorMean,
                                                      double rootPriorSampleSize,
+                                                      List<RestrictedPartials> partials,
                                                      boolean reciprocalRates,
                                                      boolean exchangeableTips) {
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches,
                 scaleByTime, useTreeLength, rateModel, null, null, null, samplingDensity, reportAsMultivariate, rootPriorMean,
-                rootPriorSampleSize, reciprocalRates);
+                partials, rootPriorSampleSize, reciprocalRates);
         this.exchangeableTips = exchangeableTips;
         this.zeroHeightTip = findZeroHeightTip(treeModel);
         printInformtion2();

@@ -29,7 +29,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -842,6 +842,22 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 Logger.getLogger("dr.evomodel").info(sb.toString());
 
             }
+
+            List<RestrictedPartials> restrictedPartialsList = null;
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                Object cxo = xo.getChild(i);
+
+                if (cxo instanceof RestrictedPartials) {
+                    if (!integrate) {
+                        throw new XMLParseException("Restricted partials are currently only implements" +
+                                "for integrated multivariate trait likelihood models");
+                    }
+                    if (restrictedPartialsList == null) {
+                        restrictedPartialsList = new ArrayList<RestrictedPartials>();
+                    }
+                    restrictedPartialsList.add((RestrictedPartials) cxo);
+                }
+            }
             
             AbstractMultivariateTraitLikelihood like;
 
@@ -860,7 +876,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     like = new SemiConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
                             scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                            rootDistribution, reciprocalRates);
+                            rootDistribution, reciprocalRates, restrictedPartialsList);
 
 //                    like = new DebugableIntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
 //                            traitParameter, missingIndices, cacheBranches,
@@ -892,7 +908,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         like = new NonPhylogeneticMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                 traitParameter, deltaParameter, missingIndices, cacheBranches,
                                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                                mean, pseudoObservations, reciprocalRates, exchangeableTips);
+                                mean, pseudoObservations, restrictedPartialsList, reciprocalRates, exchangeableTips);
                     } else {
                         if (driftModels == null) {
                             if (strengthOfSelection == null) {
@@ -901,14 +917,14 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                         scaleByTime, useTreeLength,
                                         rateModel, null, null, null,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                             } else {
                                 like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                         traitParameter, deltaParameter, missingIndices, cacheBranches,
                                         scaleByTime, useTreeLength,
                                         rateModel, null, optimalValues, strengthOfSelection,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList,pseudoObservations, reciprocalRates);
                             }
                         } else {
                             like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
@@ -916,7 +932,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                     scaleByTime, useTreeLength,
                                     rateModel, driftModels, null, null,
                                     samplingDensity, reportAsMultivariate,
-                                    mean, pseudoObservations, reciprocalRates);
+                                    mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                         }
                     }
                 }
@@ -956,18 +972,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                             " for integrated multivariate trait likelihood models");
                 }
                 like.setAscertainedTaxon(taxon);
-            }
-
-            for (int i = 0; i < xo.getChildCount(); ++i) {
-                Object cxo = xo.getChild(i);
-
-                if (cxo instanceof RestrictedPartials) {
-                    if (!integrate) {
-                        throw new XMLParseException("Restricted partials are currently only implements" +
-                                "for integrated multivariate trait likelihood models");
-                    }
-                    like.addRestrictedPartials((RestrictedPartials) cxo);
-                }
             }
 
             return like;
@@ -1037,7 +1041,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
     };
 
-    public void addRestrictedPartials(RestrictedPartials restrictedPartials) {
+    protected void addRestrictedPartials(RestrictedPartials restrictedPartials) {
         throw new IllegalArgumentException("Not implemented for this model type");
     }
 

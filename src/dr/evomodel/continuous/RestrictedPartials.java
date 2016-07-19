@@ -45,11 +45,20 @@ public class RestrictedPartials extends AbstractModel {
                               TreeModel treeModel,
                               TaxonList taxonList, Parameter meanParameter,
                               Parameter priorSampleSize) throws Tree.MissingTaxonException {
+        this(name, treeModel, taxonList, meanParameter, priorSampleSize, -1);
+    }
+
+    public RestrictedPartials(String name,
+                              TreeModel treeModel,
+                              TaxonList taxonList, Parameter meanParameter,
+                              Parameter priorSampleSize,
+                              int index) throws Tree.MissingTaxonException {
         super(name);
         this.treeModel = treeModel;
         this.taxonList = taxonList;
         this.meanParameter = meanParameter;
         this.priorSampleSize = priorSampleSize;
+        this.index = index;
 
         this.tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
         this.tipBitSet = Tree.Utils.getTipsBitSetForTaxa(treeModel, taxonList);
@@ -65,6 +74,10 @@ public class RestrictedPartials extends AbstractModel {
     final double getPartial(int i) { return meanParameter.getParameterValue(i); }
 
     final double getPriorSampleSize() { return priorSampleSize.getParameterValue(0); }
+
+    final int getIndex() { return index; }
+
+    final void setIndex(int index) { this.index = index; }
 
     // AbstractModel implementation
 
@@ -101,6 +114,8 @@ public class RestrictedPartials extends AbstractModel {
 
     final private Parameter meanParameter;
     final private Parameter priorSampleSize;
+
+    private int index;
 
     public TaxonList getTaxonList() {
         return taxonList;

@@ -44,7 +44,7 @@ import dr.evomodel.coalescent.ExponentialProductSufficientStatisticsLikelihood;
 import dr.evomodel.coalescent.GammaProductLikelihood;
 import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.distribution.ConditionalCladeProbability;
+import dr.evomodel.tree.ConditionalCladeProbability;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.ConstantLikelihood;
 import dr.inference.model.Likelihood;

@@ -25,15 +25,11 @@
 
 package dr.xml;
 
-import com.sun.tools.javac.util.Pair;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inferencexml.loggers.LoggerParser;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.FileHelpers;
-import dr.util.Identifiable;
+import dr.util.*;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -361,40 +357,7 @@ public class XMLParser {
                     }
                 } else if (obj instanceof Runnable && !concurrent) {
 
-                    System.out.println();
-                    System.out.println();
-                    System.out.println("Citations for this analysis: ");
-
-                    Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
-
-                    // force the Framework category to be first...
-                    categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
-
-                    for (Pair<String, String>keyPair : citationStore.keySet()) {
-                        Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.fst);
-                        if (pairSet == null) {
-                            pairSet = new LinkedHashSet<Pair<String, String>>();
-                            categoryMap.put(keyPair.fst, pairSet);
-                        }
-                        pairSet.add(keyPair);
-                    }
-
-                    for (String category : categoryMap.keySet()) {
-                        System.out.println();
-                        System.out.println(category.toUpperCase());
-                        Set<Pair<String, String>> pairSet = categoryMap.get(category);
-
-                        for (Pair<String, String>keyPair : pairSet) {
-                            System.out.println(keyPair.snd + ":");
-
-                            for (Citation citation : citationStore.get(keyPair)) {
-                                System.out.println("\t" + citation.toString());
-                            }
-                        }
-                    }
-
-                    System.out.println();
-                    System.out.println();
+                    executingRunnable();
 
                     if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
                         ((Spawnable) obj).run();
@@ -410,6 +373,14 @@ public class XMLParser {
 
             return xo;
         }
+    }
+
+    protected void executingRunnable() {
+        // do nothing - for overriding by subclasses
+    }
+
+    public Map<Pair<String, String>, List<Citation>> getCitationStore() {
+        return citationStore;
     }
 
     public static FileReader getFileReader(XMLObject xo, String attributeName) throws XMLParseException {
@@ -606,7 +577,8 @@ public class XMLParser {
             }
         }
         if (citationList.size() > 0) {
-            Pair<String, String> pair = new Pair<String, String>(citable.getCategory(), citable.getDescription());
+            Pair<String, String> pair = new Pair<String, String>(citable.getCategory().toString(),
+                    citable.getDescription());
             citationStore.put(pair, citationList);
         }
     }
@@ -657,6 +629,7 @@ public class XMLParser {
             return name1.compareTo(name2);
         }
     }
+
 }
 
 

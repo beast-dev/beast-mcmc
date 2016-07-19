@@ -244,40 +244,39 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     @Override
-    public String getCategory() {
-        return "Trait Model";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override
     public String getDescription() {
-        return "Multivariate diffusion model";
+        return super.getDescription() + " (first citation) with efficiently integrated internal traits (second citation)";
     }
 
     public List<Citation> getCitations() {
-        return Collections.singletonList(
-                new Citation(
-                        new Author[]{
-                                new Author("OG", "Pybus"),
-                                new Author("MA", "Suchard"),
-                                new Author("P", "Lemey"),
-                                new Author("F", "Bernadin"),
-                                new Author("A", "Rambaut"),
-                                new Author("FW", "Crawford"),
-                                new Author("RR", "Gray"),
-                                new Author("N", "Arinaminpathy"),
-                                new Author("S", "Stramer"),
-                                new Author("MP", "Busch"),
-                                new Author("E", "Delwart")
-
-                        },
-                        "Unifying the spatial epidemiology and evolution of emerging epidemics",
-                        2012,
-                        "Proceedings of the National Academy of Sciences",
-                        109,
-                        15066, 15071,
-                        Citation.Status.PUBLISHED
-                )
-        );
+        List<Citation> citationList = new ArrayList<Citation>(super.getCitations());
+        citationList.add(new Citation(
+                new Author[] {
+                        new Author("OG", "Pybus"),
+                        new Author("MA", "Suchard"),
+                        new Author("P", "Lemey"),
+                        new Author("F", "Bernadin"),
+                        new Author("A", "Rambaut"),
+                        new Author("FW", "Crawford"),
+                        new Author("RR", "Gray"),
+                        new Author("N", "Arinaminpathy"),
+                        new Author("S", "Stramer"),
+                        new Author("MP", "Busch"),
+                        new Author("E", "Delwart")
+                },
+                "Unifying the spatial epidemiology and evolution of emerging epidemics",
+                2012,
+                "Proceedings of the National Academy of Sciences",
+                109,
+                15066, 15071,
+                Citation.Status.PUBLISHED
+        ));
+        return citationList;
     }
 
     public double getLogDataLikelihood() {
@@ -652,7 +651,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                             - dimTrait * (Math.log(OUFactor0) + Math.log(OUFactor1));
 
 
-            if (logRemainderDensityCache[thisIndex] > 1E2) {
+            if (DEBUG && logRemainderDensityCache[thisIndex] > 1E2) {
                 System.err.println(thisIndex);
                 System.err.println(logRemainderDensityCache[thisIndex]);
                 System.err.println("rP = " + remainderPrecision);

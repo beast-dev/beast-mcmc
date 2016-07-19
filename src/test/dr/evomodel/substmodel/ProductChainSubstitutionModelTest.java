@@ -1,9 +1,8 @@
 package test.dr.evomodel.substmodel;
 
-import junit.framework.TestCase;
-import dr.app.beagle.evomodel.substmodel.*;
-import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.*;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evolution.datatype.TwoStates;
 import dr.math.matrixAlgebra.Vector;
 import dr.inference.model.Parameter;

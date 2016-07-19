@@ -128,7 +128,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights);
 
-        Logger.getLogger("dr.evomodel").info("Creating the tree model, '" + xo.getId() + "'");
+        Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof XMLObject) {

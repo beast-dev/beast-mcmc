@@ -88,25 +88,32 @@ public class Citation {
         this.status = status;
     }
 
-    public Citation(Author[] authors, String title, int year, String journal, String location) {
-        this(authors, title, year, journal, location, null);
+    public Citation(Author[] authors, String title, int year, String journal, int volume, String location) {
+        this(authors, title, year, journal, volume, location, null);
     }
 
-    public Citation(Author[] authors, String title, int year, String journal, String location,
+    public Citation(Author[] authors, String title, int year, String journal, String location) {
+        this(authors, title, year, journal, -1, location, null);
+    }
+
+    public Citation(Author[] authors, String title, int year, String journal, int volumn, String location,
                     String DOI) {
         this.authors = authors;
         this.title = title;
         this.year = year;
         this.journal = journal;
         this.location = location;
-        this.volume = -1;
+        this.volume = volumn;
         this.startpage = -1;
         this.endpage = -1;
         this.DOI = DOI;
         this.status = Status.PUBLISHED;
     }
 
-
+    public Citation(Author[] authors, String title, int year, String journal, String location,
+                    String DOI) {
+        this(authors, title, year, journal, -1, location, DOI);
+    }
 
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -230,6 +237,26 @@ public class Citation {
         public String getText() {
             return text;
         }
+
+        private final String text;
+    }
+
+    public enum Category {
+        FRAMEWORK("Framework"),
+        SUBSTITUTION_MODELS("Substitution Models"),
+        PRIOR_MODELS("Prior Models"),
+        TRAIT_MODELS("Trait Models"),
+        DATA_MODELS("Data Models"),
+        SPECIES_MODELS("Species Models"),
+        COUNTING_PROCESSES("Counting Processes"), // TODO Decide where MarkovJumpsBTL goes (multiple categories?)
+        TREE_PRIORS("Tree Density Models"),
+        MOLECULAR_CLOCK("Molecular Clock Models"),
+        MISC("Misc"); // Try to avoid this category
+
+
+        Category(String text) { this.text = text; }
+
+        public String toString() { return text; }
 
         private final String text;
     }

@@ -45,7 +45,7 @@ import java.util.Map;
  * @author Marc A. Suchard
  * @author Philippe Lemey
  */
-public class ProgressiveScalarTreeTransform extends TreeTransform implements Citable {
+public class ProgressiveScalarTreeTransform extends TreeTransform {
 
     public ProgressiveScalarTreeTransform(Parameter scale) {
         this(scale, null);
@@ -132,22 +132,4 @@ public class ProgressiveScalarTreeTransform extends TreeTransform implements Cit
         TransformedTreeModel model2 = new TransformedTreeModel("tree2", treeModel, xform2);
         System.err.println(model2.toString());
     }
-
-    @Override
-    public String getCategory() {
-        return "Tree Transform";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Branch-specific phenotypic mixture model";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.SUCHARD_GENERIC);
-    }
-
-
-
 }

@@ -257,8 +257,8 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
     };
 
     @Override
-    public String getCategory() {
-        return "Trait Model";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override
@@ -269,7 +269,7 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
     @Override
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();
-        citations.add(CommonCitations.SUCHARD_2012_LATENT);
+        citations.add(CommonCitations.CYBIS_2015_ASSESSING);
         return citations;
     }
 

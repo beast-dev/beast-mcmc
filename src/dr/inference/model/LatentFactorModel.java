@@ -678,8 +678,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     @Override
-    public String getCategory() {
-        return "Misc";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override
@@ -689,7 +689,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.SUCHARD_GENERIC);
+        return Collections.singletonList(CommonCitations.CYBIS_2015_ASSESSING);
     }
 
     /**

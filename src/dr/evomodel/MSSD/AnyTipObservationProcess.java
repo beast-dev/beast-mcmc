@@ -1,7 +1,7 @@
 /*
  * AnyTipObservationProcess.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,11 +25,11 @@
 
 package dr.evomodel.MSSD;
 
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 

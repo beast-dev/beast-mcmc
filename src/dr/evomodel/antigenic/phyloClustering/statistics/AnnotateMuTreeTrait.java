@@ -1,13 +1,10 @@
 package dr.evomodel.antigenic.phyloClustering.statistics;
 
 
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evolution.tree.TreeTrait.Intent;
-import dr.evolution.tree.TreeTraitProvider.Helper;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;

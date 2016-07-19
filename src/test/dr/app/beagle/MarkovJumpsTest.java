@@ -1,21 +1,19 @@
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.alignment.SitePatterns;
 import dr.inference.model.Parameter;
 import dr.inference.markovjumps.MarkovJumpsType;
-import dr.evomodelxml.substmodel.HKYParser;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
+import dr.oldevomodelxml.substmodel.HKYParser;
+import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.math.MathUtils;
 

@@ -25,22 +25,19 @@
 
 package dr.evomodel.tree;
 
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.Taxon;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.math.MathUtils;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.SimpleMCMCOperator;
+import dr.math.MathUtils;
 import dr.inference.model.Statistic;
-import dr.inference.model.StatisticList;
-import dr.inference.model.AbstractModel;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -48,10 +45,30 @@ import java.util.logging.Logger;
  */
 public class EmpiricalTreeDistributionModel extends TreeModel {
 
+    /**
+     * This constructor takes an array of trees and jumps randomly amongst them.
+     * @param trees
+     * @param startingTree
+     */
     public EmpiricalTreeDistributionModel(final Tree[] trees, int startingTree) {
+        this(trees, null, startingTree);
+    }
+
+    /**
+     * This constructor takes a TreeImporter and reads the trees one by one to the end (and
+     * then starts throwing exceptions).
+     * @param importer
+     * @param startingTree
+     */
+    public EmpiricalTreeDistributionModel(final TreeImporter importer, int startingTree) {
+        this(null, importer, startingTree);
+    }
+
+    private EmpiricalTreeDistributionModel(final Tree[] trees, final TreeImporter importer, int startingTree) {
         super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
 
         this.trees = trees;
+        this.importer = importer;
         drawTreeIndex(startingTree);
 
         addStatistic(new Statistic.Abstract("Current Tree")  {
@@ -67,11 +84,11 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     }
 
     protected void storeState() {
-        storedTreeIndex = currentTreeIndex;
+        storedCurrentTree = currentTree;
     }
 
     protected void restoreState() {
-        currentTreeIndex = storedTreeIndex;
+        currentTree = storedCurrentTree;
     }
 
     protected void acceptState() {
@@ -84,15 +101,31 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     private void drawTreeIndex(int treeNumber) {
 //        System.err.print("Drawing new tree, (old tree = " + currentTreeIndex);
 
-        if (treeNumber == -1) {
-            currentTreeIndex = MathUtils.nextInt(trees.length);
+        if (importer != null) {
+            try {
+                if (importer.hasTree() == false) {
+                    throw new RuntimeException("EmpiricalTreeDistributionModel has run out of trees");
+                }
+                currentTree = importer.importNextTree();
+            } catch (IOException e) {
+                throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
+            } catch (Importer.ImportException e) {
+                throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
+            }
+            currentTreeIndex += 1;
         } else {
-            currentTreeIndex = treeNumber;
+            if (treeNumber == -1) {
+                currentTreeIndex = MathUtils.nextInt(trees.length);
+                currentTree = trees[currentTreeIndex];
+            } else {
+                currentTreeIndex = treeNumber;
+                currentTree = trees[currentTreeIndex];
+            }
         }
 
         // Force computation of node heights now rather than later in the evaluation
         // where multithreading may get conflicts.
-        trees[currentTreeIndex].getNodeHeight(trees[currentTreeIndex].getRoot());
+        currentTree.getNodeHeight(currentTree.getRoot());
 
 //        System.err.println(") new tree = " + currentTreeIndex);
 
@@ -100,31 +133,31 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     }
 
     public NodeRef getRoot() {
-        return trees[currentTreeIndex].getRoot();
+        return currentTree.getRoot();
     }
 
     public int getNodeCount() {
-        return trees[currentTreeIndex].getNodeCount();
+        return currentTree.getNodeCount();
     }
 
     public NodeRef getNode(final int i) {
-        return trees[currentTreeIndex].getNode(i);
+        return currentTree.getNode(i);
     }
 
     public NodeRef getInternalNode(final int i) {
-        return trees[currentTreeIndex].getInternalNode(i);
+        return currentTree.getInternalNode(i);
     }
 
     public NodeRef getExternalNode(final int i) {
-        return trees[currentTreeIndex].getExternalNode(i);
+        return currentTree.getExternalNode(i);
     }
 
     public int getExternalNodeCount() {
-        return trees[currentTreeIndex].getExternalNodeCount();
+        return currentTree.getExternalNodeCount();
     }
 
     public int getInternalNodeCount() {
-        return trees[currentTreeIndex].getInternalNodeCount();
+        return currentTree.getInternalNodeCount();
     }
 
     public Taxon getNodeTaxon(final NodeRef node) {
@@ -132,112 +165,115 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     }
 
     public boolean hasNodeHeights() {
-        return trees[currentTreeIndex].hasNodeHeights();
+        return currentTree.hasNodeHeights();
     }
 
     public double getNodeHeight(final NodeRef node) {
-        return trees[currentTreeIndex].getNodeHeight(node);
+        return currentTree.getNodeHeight(node);
     }
 
     public boolean hasBranchLengths() {
-        return trees[currentTreeIndex].hasBranchLengths();
+        return currentTree.hasBranchLengths();
     }
 
     public double getBranchLength(final NodeRef node) {
-        return trees[currentTreeIndex].getBranchLength(node);
+        return currentTree.getBranchLength(node);
     }
 
     public double getNodeRate(final NodeRef node) {
-        return trees[currentTreeIndex].getNodeRate(node);
+        return currentTree.getNodeRate(node);
     }
 
     public Object getNodeAttribute(final NodeRef node, final String name) {
-        return trees[currentTreeIndex].getNodeAttribute(node, name);
+        return currentTree.getNodeAttribute(node, name);
     }
 
     public Iterator getNodeAttributeNames(final NodeRef node) {
-        return trees[currentTreeIndex].getNodeAttributeNames(node);
+        return currentTree.getNodeAttributeNames(node);
     }
 
     public boolean isExternal(final NodeRef node) {
-        return trees[currentTreeIndex].isExternal(node);
+        return currentTree.isExternal(node);
     }
 
     public boolean isRoot(final NodeRef node) {
-        return trees[currentTreeIndex].isRoot(node);
+        return currentTree.isRoot(node);
     }
 
     public int getChildCount(final NodeRef node) {
-        return trees[currentTreeIndex].getChildCount(node);
+        return currentTree.getChildCount(node);
     }
 
     public NodeRef getChild(final NodeRef node, final int j) {
-        return trees[currentTreeIndex].getChild(node, j);
+        return currentTree.getChild(node, j);
     }
 
     public NodeRef getParent(final NodeRef node) {
-        return trees[currentTreeIndex].getParent(node);
+        return currentTree.getParent(node);
     }
 
     public Tree getCopy() {
-        return trees[currentTreeIndex].getCopy();
+        return currentTree.getCopy();
     }
 
     public int getTaxonCount() {
-        return trees[currentTreeIndex].getTaxonCount();
+        return currentTree.getTaxonCount();
     }
 
     public Taxon getTaxon(final int taxonIndex) {
-        return trees[currentTreeIndex].getTaxon(taxonIndex);
+        return currentTree.getTaxon(taxonIndex);
     }
 
     public String getTaxonId(final int taxonIndex) {
-        return trees[currentTreeIndex].getTaxonId(taxonIndex);
+        return currentTree.getTaxonId(taxonIndex);
     }
 
     public int getTaxonIndex(final String id) {
-        return trees[currentTreeIndex].getTaxonIndex(id);
+        return currentTree.getTaxonIndex(id);
     }
 
     public int getTaxonIndex(final Taxon taxon) {
-        return trees[currentTreeIndex].getTaxonIndex(taxon);
+        return currentTree.getTaxonIndex(taxon);
     }
 
     public List<Taxon> asList() {
-        return trees[currentTreeIndex].asList();
+        return currentTree.asList();
     }
 
     public Object getTaxonAttribute(final int taxonIndex, final String name) {
-        return trees[currentTreeIndex].getTaxonAttribute(taxonIndex, name);
+        return currentTree.getTaxonAttribute(taxonIndex, name);
     }
 
     public Iterator<Taxon> iterator() {
-        return trees[currentTreeIndex].iterator();
+        return currentTree.iterator();
     }
 
     public Type getUnits() {
-        return trees[currentTreeIndex].getUnits();
+        return currentTree.getUnits();
     }
 
     public void setUnits(final Type units) {
-        trees[currentTreeIndex].setUnits(units);
+        currentTree.setUnits(units);
     }
 
     public void setAttribute(final String name, final Object value) {
-        trees[currentTreeIndex].setAttribute(name, value);
+        currentTree.setAttribute(name, value);
     }
 
     public Object getAttribute(final String name) {
-        return trees[currentTreeIndex].getAttribute(name);
+        return currentTree.getAttribute(name);
     }
 
     public Iterator<String> getAttributeNames() {
-        return trees[currentTreeIndex].getAttributeNames();
+        return currentTree.getAttributeNames();
     }
 
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 
     private final Tree[] trees;
+    private final TreeImporter importer;
+    private Tree currentTree;
+    private Tree storedCurrentTree;
+
     private int currentTreeIndex;
-    private int storedTreeIndex;
 }

@@ -30,10 +30,10 @@ import dr.evolution.tree.Tree;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.util.Taxa;
 import dr.evolution.datatype.Microsatellite;
-import dr.evomodel.substmodel.MicrosatelliteModel;
+import dr.oldevomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.app.seqgen.MicrosatelliteSimulator;
 
 /**

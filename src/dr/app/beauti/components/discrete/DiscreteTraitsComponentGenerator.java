@@ -25,7 +25,7 @@
 
 package dr.app.beauti.components.discrete;
 
-import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
+import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.generator.ClockModelGenerator;
@@ -33,15 +33,15 @@ import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.GeneralDataType;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
+import dr.oldevomodel.sitemodel.SiteModel;
+import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import dr.evomodelxml.substmodel.ComplexSubstitutionModelParser;
-import dr.evomodelxml.substmodel.FrequencyModelParser;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
-import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
+import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
+import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
+import dr.oldevomodelxml.substmodel.FrequencyModelParser;
+import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
+import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
+import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AttributePatternsParser;
 import dr.evoxml.GeneralDataTypeParser;
 import dr.evoxml.TaxaParser;
@@ -304,10 +304,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
         writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-
-//        writer.writeOpenTag(GammaSiteModelParser.MUTATION_RATE);
-//        writeParameter(model.getParameter("trait.mu"), -1, writer);
-//        writer.writeCloseTag(GammaSiteModelParser.MUTATION_RATE);
 
         writer.writeCloseTag(SiteModel.SITE_MODEL);
     }

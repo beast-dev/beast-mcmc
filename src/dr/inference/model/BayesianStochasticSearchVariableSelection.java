@@ -27,6 +27,7 @@ package dr.inference.model;
 
 import cern.colt.bitvector.BitVector;
 import dr.math.MathUtils;
+import dr.oldevomodel.substmodel.SubstitutionModel;
 
 /**
  * @author Marc Suchard
@@ -41,7 +42,7 @@ public interface BayesianStochasticSearchVariableSelection {
     public class Utils {
 
         public static boolean connectedAndWellConditioned(double[] probability,
-                                                          dr.app.beagle.evomodel.substmodel.SubstitutionModel substModel) {
+                                                          dr.evomodel.substmodel.SubstitutionModel substModel) {
             if (probability == null) {
                 int stateCount = substModel.getDataType().getStateCount();
                 probability = new double[stateCount*stateCount];
@@ -55,7 +56,7 @@ public interface BayesianStochasticSearchVariableSelection {
         }
 
         public static boolean connectedAndWellConditioned(double[] probability,
-                                                          dr.evomodel.substmodel.SubstitutionModel substModel) {
+                                                          SubstitutionModel substModel) {
             if (probability == null) {
                 int stateCount = substModel.getDataType().getStateCount();
                 probability = new double[stateCount*stateCount];

@@ -55,7 +55,7 @@ public class YuleModelParser extends AbstractXMLObjectParser {
         final boolean conditonalOnRoot =  xo.getAttribute(BirthDeathModelParser.CONDITIONAL_ON_ROOT, false);
         final Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
+        Logger.getLogger("dr.evomodel").info("\nUsing Yule prior on tree");
 
         return new BirthDeathGernhard08Model(xo.getId(), brParameter, null, null,
                 BirthDeathGernhard08Model.TreeType.UNSCALED, units, conditonalOnRoot);

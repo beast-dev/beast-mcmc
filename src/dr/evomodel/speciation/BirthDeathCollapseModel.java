@@ -173,8 +173,8 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     }
 
     @Override
-    public String getCategory() {
-        return "Misc";
+    public Citation.Category getCategory() {
+        return Citation.Category.SPECIES_MODELS;
     }
 
     @Override

@@ -31,7 +31,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import dr.app.beagle.evomodel.parsers.MG94CodonModelParser;
+import dr.evomodelxml.substmodel.MG94CodonModelParser;
+import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.app.beagle.tools.parsers.PartitionParser;
 import dr.app.beauti.util.XMLWriter;
@@ -40,22 +42,20 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
+import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
-import dr.evomodelxml.substmodel.FrequencyModelParser;
-import dr.evomodelxml.substmodel.GTRParser;
-import dr.evomodelxml.substmodel.HKYParser;
-import dr.evomodelxml.substmodel.TN93Parser;
-import dr.evomodelxml.substmodel.YangCodonModelParser;
+import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
+import dr.oldevomodelxml.substmodel.EmpiricalAminoAcidModelParser;
+import dr.oldevomodelxml.substmodel.FrequencyModelParser;
+import dr.oldevomodelxml.substmodel.GTRParser;
+import dr.oldevomodelxml.substmodel.HKYParser;
+import dr.oldevomodelxml.substmodel.TN93Parser;
+import dr.oldevomodelxml.substmodel.YangCodonModelParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.SequenceParser;
@@ -1357,7 +1357,7 @@ public class XMLGenerator {
 									data.substitutionModelIdref), //
 							new Attribute.Default<String>(
 									EmpiricalAminoAcidModelParser.TYPE,
-									AminoAcidModelType.FLU.getXMLName()) 
+									AminoAcidModelType.FLU.getXMLName())
 									});
 			
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);

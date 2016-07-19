@@ -30,7 +30,7 @@ package dr.inference.operators;
  *
  * @author Roald Forsberg
  */
-public interface GibbsOperator extends MCMCOperator {
+public interface GibbsOperator extends MCMCOperator, PathDependentOperator {
 
    /**
 	* @return the number of steps the operator performs in one go.
@@ -40,5 +40,5 @@ public interface GibbsOperator extends MCMCOperator {
     /**
      * Set the path parameter for sampling from power-posterior
      */
-    void setPathParameter(double beta);
+    //void setPathParameter(double beta);
 }

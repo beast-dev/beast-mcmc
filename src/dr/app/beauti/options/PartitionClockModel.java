@@ -201,12 +201,13 @@ public class PartitionClockModel extends PartitionOptions {
                     break;
 
                 case UNCORRELATED:
+                    // add the scale parameter (if needed) for the distribution. The location parameter will be added
+                    // in getClockRateParameter.
                     switch (clockDistributionType) {
                         case LOGNORMAL:
                             params.add(getParameter(ClockType.UCLD_STDEV));
                             break;
                         case GAMMA:
-                            params.add(getParameter(ClockType.UCGD_MEAN));
                             params.add(getParameter(ClockType.UCGD_SHAPE));
                             break;
                         case CAUCHY:

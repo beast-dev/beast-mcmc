@@ -219,8 +219,8 @@ public class MLEGSSDialog {
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
 
-        JTextArea citationText = new JTextArea("Baele G, Lemey P, Suchard MA (2015) Genealogical working " +
-                "distributions for Bayesian \nmodel testing with phylogenetic uncertainty [GSS Paper].");
+        JTextArea citationText = new JTextArea("Baele G, Lemey P, Suchard MA (2016) Genealogical working " +
+                "distributions for Bayesian \nmodel testing with phylogenetic uncertainty. Syst. Biol. 65(2), 250-264 [GSS Paper].");
         citationText.setColumns(45);
         optionsPanel.addComponentWithLabel("Citation:", citationText);
 

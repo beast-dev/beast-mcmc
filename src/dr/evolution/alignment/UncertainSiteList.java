@@ -34,7 +34,7 @@ import dr.util.Citation;
 import java.util.*;
 
 /**
- * Created by msuchard on 5/19/16.
+ * Created by msuchard on 2016-05-19.
  */
 public class UncertainSiteList extends SimpleSiteList implements Citable {
 
@@ -75,8 +75,8 @@ public class UncertainSiteList extends SimpleSiteList implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Data Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.DATA_MODELS;
     }
 
     @Override

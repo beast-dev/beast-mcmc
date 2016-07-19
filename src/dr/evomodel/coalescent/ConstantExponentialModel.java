@@ -29,6 +29,12 @@ import dr.evolution.coalescent.ConstExponential;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evomodelxml.coalescent.ConstantExponentialModelParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Exponential growth from a constant ancestral population size.
@@ -37,7 +43,7 @@ import dr.inference.model.Parameter;
  * @author Andrew Rambaut
  * @version $Id: ConstantExponentialModel.java,v 1.8 2005/10/28 02:49:17 alexei Exp $
  */
-public class ConstantExponentialModel extends DemographicModel {
+public class ConstantExponentialModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -108,4 +114,30 @@ public class ConstantExponentialModel extends DemographicModel {
     Parameter growthRateParameter = null;
     ConstExponential constExponential = null;
     boolean usingGrowthRate = true;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Constant-Exponential Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("OG", "Pybus"),
+                    new Author("A", "Rambaut")
+            },
+            "GENIE: estimating demographic history from molecular phylogenies",
+            2001,
+            "Bioinformatics",
+            18, 1404, 1405
+    );
 }

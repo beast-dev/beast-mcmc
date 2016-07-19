@@ -25,8 +25,8 @@
 
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.substmodel.*;
 import dr.evolution.datatype.GeneralDataType;
+import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
 import test.dr.math.MathTestCase;

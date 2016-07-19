@@ -30,7 +30,12 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,7 +43,7 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  */
-public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
+public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel implements Citable {
 
     // R0
     Variable<Double> R0;
@@ -374,4 +379,29 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
     // if a mask exists then use the mask's parameters instead (except for origin and finalTimeInterval)
     BirthDeathSerialSamplingModel mask = null;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Gernhard 2008 Birth Death Tree Model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(new Citation(
+                new Author[]{
+                        new Author("T", "Gernhard"),
+                },
+                "The conditioned reconstructed process",
+                2008,
+                "Journal of Theoretical Biology",
+                253,
+                769, 778,
+                "10.1016/j.jtbi.2008.04.005"
+        ));
+    }
 }

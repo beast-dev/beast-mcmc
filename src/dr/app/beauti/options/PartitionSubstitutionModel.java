@@ -25,6 +25,8 @@
 
 package dr.app.beauti.options;
 
+import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.types.*;
@@ -32,8 +34,6 @@ import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.datatype.Nucleotides;
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
 
 import java.util.ArrayList;
 import java.util.HashSet;

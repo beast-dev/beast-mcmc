@@ -52,7 +52,7 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.8.4";
+    private static final String VERSION = "1.9.0";
 
     private static final String DATE_STRING = "2002-2016";
 
@@ -60,7 +60,7 @@ public class BeastVersion implements Version, Citable {
 
     // this is now being manually updated since the move to GitHub. Using date in yyyymmdd format (suffix
     // with b,c,d etc if multiple revisions in a day.
-    private static final String REVISION = "GitHub 20160319";
+    private static final String REVISION = "GitHub 20160703";
 
     public String getVersion() {
         return VERSION;
@@ -138,8 +138,8 @@ public class BeastVersion implements Version, Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Framework";
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
     }
 
     @Override

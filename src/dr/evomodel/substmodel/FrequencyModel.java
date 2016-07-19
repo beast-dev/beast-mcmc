@@ -25,8 +25,8 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.DataType;
 import dr.evomodelxml.substmodel.FrequencyModelParser;
+import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -43,14 +43,20 @@ import org.w3c.dom.Element;
  * @version $Id: FrequencyModel.java,v 1.26 2005/05/24 20:25:58 rambaut Exp $
  */
 public class FrequencyModel extends AbstractModel {
+
     /**
      * A constructor which allows a more programmatic approach with
      * fixed frequencies.
-     * @param dataType              DataType
-     * @param frequencyParameter    double[]
+     *
+     * @param dataType
+     * @param frequencyParameter
      */
     public FrequencyModel(DataType dataType, double[] frequencyParameter) {
         this(dataType, new Parameter.Default(frequencyParameter));
+    }
+
+    public FrequencyModel(String name) {
+        super(name);
     }
 
     public FrequencyModel(DataType dataType, Parameter frequencyParameter) {

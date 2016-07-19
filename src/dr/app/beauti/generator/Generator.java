@@ -271,7 +271,9 @@ public abstract class Generator {
      */
     public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
         ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
-        attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
+        if (id != null && id.length() > 0) {
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
+        }
         if (dimension > 1) {
             attributes.add(new Attribute.Default<String>(ParameterParser.DIMENSION, dimension + ""));
         }

@@ -33,8 +33,12 @@ import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Units;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
+import dr.evomodelxml.branchratemodel.ContinuousBranchRatesParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.*;
 import dr.inference.mcmc.MarginalLikelihoodEstimator;
 import dr.inference.model.ParameterParser;
@@ -47,6 +51,7 @@ import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -102,6 +107,18 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             "Estimation settings via the MCMC panel.");
                 }
             }
+
+            // Shouldn't get here as the MLE switch in the MCMC tab already checks.
+            for (AbstractPartitionData partition : options.getDataPartitions()) {
+                if (partition.getDataType().getType() != DataType.NUCLEOTIDES) {
+                    throw new GeneratorException(
+                            "Generalized stepping-stone sampling is not currently\n" +
+                                    "compatible with substitution models other than those\n" +
+                                    "for nucleotide data. \n\n" +
+                                    BeautiFrame.MCMC);
+                }
+            }
+
         }
     }
 
@@ -444,6 +461,14 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                         switch (model.getNucSubstitutionModel()) {
 
+                            case JC:
+
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
+                                }
+                                break;
+
                             case HKY:
                                 if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                                     for (int i = 1; i <= codonPartitionCount; i++) {
@@ -465,6 +490,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa");
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
                                 }
                                 break;
 
@@ -506,6 +535,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa2");
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                 }
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
+                                }
                                 break;
 
                             case GTR:
@@ -533,6 +566,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                     }
+                                }
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
                                 }
                                 break;
 
@@ -565,6 +602,18 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         }
 
                         break;//NUCLEOTIDES
+
+                    case DataType.AMINO_ACIDS:
+
+                    case DataType.TWO_STATES:
+
+                    case DataType.COVARION:
+
+                    case DataType.GENERAL:
+
+                    case DataType.CONTINUOUS:
+
+                    case DataType.MICRO_SAT:
 
                     default:
                         throw new IllegalArgumentException("Unknown data type");
@@ -631,10 +680,37 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
                     case UNCORRELATED:
+
+                        if (model.isContinuousQuantile()) {
+                            writer.writeIDref(ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        } else {
+                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        }
+
                         switch (model.getClockDistributionType()) {
+                            case GAMMA:
+                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                        new Attribute[]{
+                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCGD_MEAN),
+                                                new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
+                                        });
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_MEAN);
+                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                        new Attribute[]{
+                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCGD_SHAPE),
+                                                new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
+                                        });
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SHAPE);
+                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                break;
+
                             case LOGNORMAL:
                                 if (model.getClockRateParameter().isMeanInRealSpace()) {
                                     writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
@@ -908,6 +984,20 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
         }
 
+    }
+
+    private void writeRelativeRates(XMLWriter writer, PartitionSubstitutionModel model, int codonPartitionCount) {
+        for (int i = 1; i <= codonPartitionCount; i++) {
+            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                    new Attribute[]{
+                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "mu"),
+                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10)),
+                            new Attribute.Default<String>("upperLimit", "" + (double)(codonPartitionCount))
+                    });
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
+            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+        }
     }
 
     private void writeCoalescentEventsStatistic(XMLWriter writer) {

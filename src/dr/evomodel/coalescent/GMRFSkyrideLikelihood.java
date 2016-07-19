@@ -34,12 +34,16 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.NotConvergedException;
 import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -51,7 +55,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
-public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider {
+public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable {
 
     // PUBLIC STUFF
 
@@ -536,9 +540,33 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
     }
 
-    // ****************************************************************
-    // Private and protected stuff
-    // ****************************************************************
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Skyride coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("VN", "Minin"),
+                    new Author("EW", "Bloomquist"),
+                    new Author("MA", "Suchard")
+            },
+            "Smooth skyride through a rough skyline: Bayesian coalescent-based inference of population dynamics",
+            2008,
+            "Mol Biol Evol",
+            25, 1459, 1471,
+            "10.1093/molbev/msn090"
+    );
 }
 
 /*

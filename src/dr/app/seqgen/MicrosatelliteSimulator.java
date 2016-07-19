@@ -32,11 +32,10 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxa;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.oldevomodel.sitemodel.SiteModel;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.MicrosatelliteModel;
-import dr.math.MathUtils;
+import dr.oldevomodel.substmodel.MicrosatelliteModel;
 
 /**
  * @author Chieh-Hsi Wu

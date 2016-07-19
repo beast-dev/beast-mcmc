@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.operators;
 
-import dr.evomodel.clock.RateEvolutionLikelihood;
+import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.operators.RateSampleOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;

@@ -35,7 +35,7 @@ import dr.evolution.datatype.DataType;
  */
 public abstract class AbstractPCARateMatrix {
     
-    /**
+	/**
      * constructor
      *
      * @param name      Name of matrix
@@ -74,7 +74,7 @@ public abstract class AbstractPCARateMatrix {
 	}
 	
 	public void setStartFacs(double[] sf) {
-	    this.startFacs = sf;
+		this.startFacs = sf;
 	}
 			
 	protected double[][] pcs;

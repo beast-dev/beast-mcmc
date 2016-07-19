@@ -608,7 +608,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                             - dimTrait * (Math.log(OUFactor0) + Math.log(OUFactor1));
 
 
-            if (logRemainderDensityCache[thisIndex] > 1E2) {
+            if (DEBUG && logRemainderDensityCache[thisIndex] > 1E2) {
                 System.err.println(thisIndex);
                 System.err.println(logRemainderDensityCache[thisIndex]);
                 System.err.println("rP = " + remainderPrecision);

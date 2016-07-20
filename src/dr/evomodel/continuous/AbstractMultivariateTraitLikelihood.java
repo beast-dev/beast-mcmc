@@ -421,6 +421,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         if (!cacheBranches) {
             likelihoodKnown = false;
+            updateRestrictedNodePartials = true;
             if (model == treeModel)
                 recalculateTreeLength();
             return;
@@ -737,7 +738,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
             MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
 
-            boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
+            boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, true);
             boolean integrate = xo.getAttribute(INTEGRATE, false);
             boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
             boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);

@@ -118,6 +118,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 addRestrictedPartials(partials);
                 ++partialsCount;
             }
+            spareOffset = partialsCount;
+            ++partialsCount;
+            setupClamps();
         }
 
         System.err.println("Tree size: " + treeModel.getNodeCount());
@@ -326,7 +329,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
 
             if (clampList.containsKey(tips)) {
-                nodeToClampMap.put(node, clampList.get(tips));
+                RestrictedPartials partials = clampList.get(tips);
+                partials.setNode(node);
+                nodeToClampMap.put(node, partials);
             }
         }
     }
@@ -567,12 +572,13 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 factorOU0, factorOU1,
                 cacheOuterProducts
                 , node, childNode0, childNode1 // TODO arguments to remove
+                , true
                 , false
         );
 
         final boolean DO_CLAMP = true;
 
-        if (DO_CLAMP && nodeToClampMap != null && nodeToClampMap.containsKey(node)) {
+        if (DO_CLAMP && nodeToClampMap != null && nodeToClampMap.containsKey(node)) { // TODO precompute boolean contains for all nodes
             RestrictedPartials clamp = nodeToClampMap.get(node);
             final int clampIndex = clamp.getIndex();
             final int clampOffset = dim * clampIndex;
@@ -581,6 +587,13 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             for (int i = 0; i < dim; ++i) {
                 meanCache[clampOffset + i] = clamp.getPartial(i);
             }
+
+            System.err.println("BEFORE");
+            System.err.println(new Vector(logRemainderDensityCache));
+            System.err.println(new Vector(meanCache));
+            System.err.println(new Vector(lowerPrecisionCache));
+            System.err.println(new Vector(upperPrecisionCache));
+            System.err.println("");
 
             final double precisionThis = lowerPrecisionCache[thisNumber];
             final double precisionClamp = clamp.getPriorSampleSize();
@@ -595,17 +608,26 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 System.err.println("remainder : " + logRemainderDensityCache[thisNumber]);
             }
 
-            doPeel(thisNumber,
-                    meanThisOffset, meanThisOffset, clampOffset,
+            doPeel(spareOffset,
+                    spareOffset, meanThisOffset, clampOffset,
                     precisionNew, precisionThis, precisionClamp,
                     missingTraits,
                     clampIndex,
                     precisionMatrix, logDetPrecisionMatrix,
-                    1.0, 1.0,
+                    1.0, 1.0, // TODO Do yet figured out for OU models
                     cacheOuterProducts,
                     node, null, null
-                    ,false
+                    , true
+                    , false
             );
+
+            // Move values from clampIndex -> thisIndex
+            lowerPrecisionCache[thisNumber] = lowerPrecisionCache[spareOffset];
+            upperPrecisionCache[thisNumber] = upperPrecisionCache[spareOffset];
+
+            for (int i = 0; i < dim; ++i) {
+                meanCache[meanThisOffset + i] = meanCache[spareOffset + i];
+            }
 
             if (debug) {
                 System.err.println("lowerCache: " + lowerPrecisionCache[thisNumber]);
@@ -616,6 +638,13 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //                System.exit(-1);
             }
         }
+
+        System.err.println(thisNumber);
+        System.err.println(new Vector(logRemainderDensityCache));
+        System.err.println(new Vector(meanCache));
+        System.err.println(new Vector(lowerPrecisionCache));
+        System.err.println(new Vector(upperPrecisionCache));
+        System.err.println("");
     }
 
     private void doPeel(int thisNumber,
@@ -626,7 +655,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                         double[][] precisionMatrix, double logDetPrecisionMatrix,
                         double factorOU0, double factorOU1,
                         boolean cacheOuterProducts,
-                        NodeRef node, NodeRef childNode0, NodeRef childNode1, boolean debug) {
+                        NodeRef node, NodeRef childNode0, NodeRef childNode1, boolean integrable, boolean debug) {
         lowerPrecisionCache[thisNumber] = totalPrecision;
 
         // changeou
@@ -638,6 +667,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             //changeou
             //  double thisPrecision = 1.0 / getRescaledBranchLengthForPrecision(node);
             double thisPrecision = cacheHelper.getUpperPrecFactor(node);
+            System.err.println("tP = " + thisPrecision);
             if (Double.isInfinite(thisPrecision)) {
                 // must handle this case for ouprocess
                 upperPrecisionCache[thisNumber] = totalPrecision;
@@ -650,7 +680,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         logRemainderDensityCache[remainderNumber] = 0;
 
-        if (precision0 != 0 && precision1 != 0) {
+        if (precision0 != 0 && precision1 != 0 && integrable) {
             // changeou
             incrementRemainderDensities(
                     precisionMatrix,
@@ -1630,10 +1660,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     protected boolean clampsKnown = false;
 //    private List<NodeClamp> clampList = null;
-    private Map<BitSet, RestrictedPartials> clampList = null;
-    private Map<NodeRef, RestrictedPartials> nodeToClampMap = null;
+    protected Map<BitSet, RestrictedPartials> clampList = null;
+    protected Map<NodeRef, RestrictedPartials> nodeToClampMap = null;
 
     private int partialsCount;
+    private int spareOffset;
 
     protected boolean anyClamps = false;
 

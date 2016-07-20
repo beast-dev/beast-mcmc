@@ -633,6 +633,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //        sb.append(this.g)
 //        System.err.println("Hello");
         sb.append("Tree:\n");
+        sb.append(getId()).append("\t");
         sb.append(treeModel.toString());
         sb.append("\n\n");
 
@@ -709,9 +710,6 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         sb.append("Outer-products (from tree variance:\n");
         sb.append(S);
         sb.append("\n\n");
-
-        System.err.println(sb.toString());
-        System.exit(-1);
 
         return sb.toString();
     }
@@ -817,10 +815,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         int length = tipCount;
 
         boolean DO_CLAMP = true;
-        System.err.println("first");
         if (DO_CLAMP && nodeToClampMap != null) {
-            System.err.println("hello");
-//            System.exit(-1);
             length += nodeToClampMap.size();
         }
 //        System.exit(-1);

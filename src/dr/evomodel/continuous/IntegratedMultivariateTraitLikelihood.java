@@ -123,10 +123,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             setupClamps();
         }
 
-        System.err.println("Tree size: " + treeModel.getNodeCount());
-        System.err.println("Part size: " + partialsCount);
-        System.err.println("");
-
         // Delegate caches to helper
 //        meanCache = new double[dim * treeModel.getNodeCount()];
         if (driftModels != null) {
@@ -301,7 +297,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     private void setupClamps() {
-        System.err.println("Start setupClamps");
         if (nodeToClampMap == null) {
             nodeToClampMap = new HashMap<NodeRef, RestrictedPartials>();
         }
@@ -310,9 +305,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet());
 
         anyClamps = (nodeToClampMap.size() > 0);
-
-        System.err.println("Clamps = " + nodeToClampMap.size());
-        System.err.println("End setupClamps");
     }
 
     private void recursiveSetupClamp(Tree tree, NodeRef node, BitSet tips) {
@@ -577,6 +569,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         );
 
         final boolean DO_CLAMP = true;
+        final boolean debug = false;
 
         if (DO_CLAMP && nodeToClampMap != null && nodeToClampMap.containsKey(node)) { // TODO precompute boolean contains for all nodes
             RestrictedPartials clamp = nodeToClampMap.get(node);
@@ -588,25 +581,18 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 meanCache[clampOffset + i] = clamp.getPartial(i);
             }
 
-            System.err.println("BEFORE");
-            System.err.println(new Vector(logRemainderDensityCache));
-            System.err.println(new Vector(meanCache));
-            System.err.println(new Vector(lowerPrecisionCache));
-            System.err.println(new Vector(upperPrecisionCache));
-            System.err.println("");
+            if (debug) {
+                System.err.println("BEFORE");
+                System.err.println(new Vector(logRemainderDensityCache));
+                System.err.println(new Vector(meanCache));
+                System.err.println(new Vector(lowerPrecisionCache));
+                System.err.println(new Vector(upperPrecisionCache));
+                System.err.println("");
+            }
 
             final double precisionThis = lowerPrecisionCache[thisNumber];
             final double precisionClamp = clamp.getPriorSampleSize();
             final double precisionNew = precisionThis + precisionClamp;
-
-            final boolean debug = false;
-
-            if (debug) {
-                System.err.println("lowerCache: " + lowerPrecisionCache[thisNumber]);
-                System.err.println("upperCache: " + upperPrecisionCache[thisNumber]);
-                System.err.println("mean      : " + meanCache[meanThisOffset]);
-                System.err.println("remainder : " + logRemainderDensityCache[thisNumber]);
-            }
 
             doPeel(spareOffset,
                     spareOffset, meanThisOffset, clampOffset,
@@ -628,23 +614,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             for (int i = 0; i < dim; ++i) {
                 meanCache[meanThisOffset + i] = meanCache[spareOffset + i];
             }
-
-            if (debug) {
-                System.err.println("lowerCache: " + lowerPrecisionCache[thisNumber]);
-                System.err.println("upperCache: " + upperPrecisionCache[thisNumber]);
-                System.err.println("mean      : " + meanCache[meanThisOffset]);
-                System.err.println("remainder : " + logRemainderDensityCache[thisNumber]);
-                System.err.println("");
-//                System.exit(-1);
-            }
         }
 
-        System.err.println(thisNumber);
-        System.err.println(new Vector(logRemainderDensityCache));
-        System.err.println(new Vector(meanCache));
-        System.err.println(new Vector(lowerPrecisionCache));
-        System.err.println(new Vector(upperPrecisionCache));
-        System.err.println("");
+        if (debug) {
+            System.err.println(thisNumber);
+            System.err.println(new Vector(logRemainderDensityCache));
+            System.err.println(new Vector(meanCache));
+            System.err.println(new Vector(lowerPrecisionCache));
+            System.err.println(new Vector(upperPrecisionCache));
+            System.err.println("");
+        }
     }
 
     private void doPeel(int thisNumber,
@@ -667,7 +646,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             //changeou
             //  double thisPrecision = 1.0 / getRescaledBranchLengthForPrecision(node);
             double thisPrecision = cacheHelper.getUpperPrecFactor(node);
-            System.err.println("tP = " + thisPrecision);
             if (Double.isInfinite(thisPrecision)) {
                 // must handle this case for ouprocess
                 upperPrecisionCache[thisNumber] = totalPrecision;
@@ -1334,7 +1312,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] meanCache;
     protected double[] storedMeanCache;
     protected double[] correctedMeanCache;
-
 
     class CacheHelper {
 

@@ -27,6 +27,7 @@ package dr.inference.multidimensionalscaling;
 
 import dr.evomodel.antigenic.MultidimensionalScalingLikelihood;
 import dr.inference.model.*;
+import dr.inference.parallel.ServiceRequest;
 import dr.util.DataTable;
 import dr.xml.*;
 
@@ -34,6 +35,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -98,9 +101,11 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         int rowCount = dataTable.getRowCount();
         locationCount = rowCount;
 
+        boolean allowMissing = true;
+
         int[] permute = null;
         if (reorderData) {
-            permute = getPermutation(rowLabelsOriginal, locationsParameter);
+            permute = getPermutation(rowLabelsOriginal, locationsParameter, allowMissing);
         } else {
             permute = new int[locationCount];
             for (int i = 0; i < locationCount; ++i) {
@@ -156,7 +161,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
 
     public MatrixParameterInterface getMatrixParameter() { return locationsParameter; }
 
-    private int[] getPermutation(String[] source, MatrixParameterInterface destination) {
+    private int[] getPermutation(String[] source, MatrixParameterInterface destination, boolean allowMissing) {
 
         if (source.length != destination.getColumnDimension()) {
             throw new IllegalArgumentException("Dimension mismatch");
@@ -173,9 +178,14 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         for (int i = 0; i < length; ++i) {
             Integer p = map.get(destination.getParameter(i).getParameterName());
             if (p == null) {
-                throw new IllegalArgumentException("Missing label");
+                if (allowMissing) {
+                    Logger.getLogger("dr.app.beagle").info("Missing label!!!");
+                } else {
+                    throw new IllegalArgumentException("Missing label");
+                }
+            } else {
+                permute[i] = p;
             }
-            permute[i] = p;
         }
 
         return permute;
@@ -432,6 +442,10 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
             return MultiDimensionalScalingLikelihood.class;
         }
     };
+
+    public double getMDSPrecision() {
+        return mdsPrecisionParameter.getParameterValue(0);
+    }
 
     private final int mdsDimension;
     private final int locationCount;

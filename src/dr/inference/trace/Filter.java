@@ -31,18 +31,18 @@ package dr.inference.trace;
 public class Filter {
 
 //    public boolean[] selected; // a mark, length = trace.values.size() = valueCount, all must be true initially
-    final protected TraceFactory.TraceType traceType; // for consistency matter
+    final protected TraceType traceType; // for consistency matter
     protected String[] in; // bound of double or integer filter, values of string filter
 
-    public Filter(String[] in, TraceFactory.TraceType traceType) {
-        if (traceType != TraceFactory.TraceType.STRING && in.length != 2)
+    public Filter(String[] in, TraceType traceType) {
+        if (traceType.isNumber() && in.length != 2)
             throw new IllegalArgumentException("Double or integer filter should have 2 bounds ! trace type = " + traceType);
         setIn(in);
         this.traceType = traceType;
     }
 
     public boolean isIn(Object value) {
-        if (traceType == TraceFactory.TraceType.DOUBLE) {
+        if (traceType.isNumber()) {
             // double or integer
             return ( (Double)value >= Double.parseDouble(in[0]) && (Double)value <= Double.parseDouble(in[1]));
          }

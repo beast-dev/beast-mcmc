@@ -30,6 +30,7 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -40,7 +41,7 @@ public class FilterDiscretePanel extends FilterAbstractPanel {
     JList selectedValues;
 //        JButton selectButton;
 
-    FilterDiscretePanel(TreeSet<String> allValuesSet, String[] selectedValuesArray) {
+    FilterDiscretePanel(Set<String> allValuesSet, String[] selectedValuesArray) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
         allValues = new JList(allValuesSet.toArray());

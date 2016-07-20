@@ -165,7 +165,7 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     public List getValues(int index) {
-        return this.getValues(index, getBurninStateCount(), getTrace(index).getValuesSize());
+        return this.getValues(index, getBurninStateCount(), getTrace(index).getValueCount());
     }
 
     public List getBurninValues(int index) {
@@ -296,16 +296,12 @@ public class LogFileTraces extends AbstractTraceList {
     private void addParsedValue(int nTrace, String value) {
         String name = getTraceName(nTrace);
 //        System.out.println(thisTrace.getTraceType() + "   " + value);
-        if (tracesType.get(name) == TraceFactory.TraceType.DOUBLE
-                || tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
+        if (tracesType.get(name).isNumber()) {
             Double v = Double.parseDouble(value);
             getTrace(nTrace).add(v);
 
-        } else if (tracesType.get(name) == TraceFactory.TraceType.STRING) {
+        } else  {
             getTrace(nTrace).add(value);
-
-        } else {
-            throw new RuntimeException("Trace type is not recognized: " + tracesType.get(name));
         }
     }
 
@@ -313,20 +309,23 @@ public class LogFileTraces extends AbstractTraceList {
         //todo
     }
 
+    /**
+     * todo I would have thought this would read the type across the header for each trace
+     * @param firstToken
+     * @param tokens
+     */
     private void readTraceType(String firstToken, StringTokenizer tokens) {
         if (tokens.hasMoreTokens()) {
             String token; //= tokens.nextToken();
-            if (firstToken.contains(TraceFactory.TraceType.INTEGER.toString())
-                    || firstToken.contains(TraceFactory.TraceType.INTEGER.toString().toUpperCase())) {
+            if (firstToken.toLowerCase().contains(TraceType.ORDINAL.toString())) {
                 while (tokens.hasMoreTokens()) {
                     token = tokens.nextToken();
-                    tracesType.put(token, TraceFactory.TraceType.INTEGER);
+                    tracesType.put(token, TraceType.ORDINAL);
                 }
-            } else if (firstToken.contains(TraceFactory.TraceType.STRING.toString())
-                    || firstToken.contains(TraceFactory.TraceType.STRING.toString().toUpperCase())) {
+            } else if (firstToken.toLowerCase().contains(TraceType.CATEGORICAL.toString())) {
                 while (tokens.hasMoreTokens()) {
                     token = tokens.nextToken();
-                    tracesType.put(token, TraceFactory.TraceType.STRING);
+                    tracesType.put(token, TraceType.CATEGORICAL);
                 }
             }
         }
@@ -361,48 +360,40 @@ public class LogFileTraces extends AbstractTraceList {
      * @param name trace name
      */
     private void addTraceAndType(String name) {
-        if (tracesType == null || tracesType.get(name) == null || tracesType.get(name) == TraceFactory.TraceType.DOUBLE) {
-            traces.add(createTrace(name, TraceFactory.TraceType.DOUBLE));
-            tracesType.put(name, TraceFactory.TraceType.DOUBLE);
+        if (tracesType.get(name) == null) {
+            traces.add(createTrace(name, TraceType.REAL));
+            tracesType.put(name, TraceType.REAL);
         } else {
             traces.add(createTrace(name, tracesType.get(name)));
         }
     }
 
-    private Trace createTrace(String name, TraceFactory.TraceType traceType) {
-        // System.out.println("create trace (" + name + ") with type " + traceType);
-        switch (traceType) {
-            case DOUBLE:
-                return new Trace<Double>(name, TraceFactory.TraceType.DOUBLE);
-            case INTEGER:
-                return new Trace<Double>(name, TraceFactory.TraceType.INTEGER); // use Double for legacy issue
-            case STRING:
-                return new Trace<String>(name, TraceFactory.TraceType.STRING);
-            default:
-                throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
+    private Trace createTrace(String name, TraceType traceType) {
+        if (traceType.isNumber()) {
+            return new Trace<Double>(name, traceType);
+        } else {
+            return new Trace<String>(name, TraceType.ORDINAL);
         }
     }
 
     // TODO get rid of generic to make things easy
     // TODO change to String only, and parse to double, int or string in getValues according to trace type
-    public void changeTraceType(int id, TraceFactory.TraceType newType) throws TraceException {
+    public void changeTraceType(int id, TraceType newType) throws TraceException {
         if (id >= getTraceCount() || id < 0) throw new TraceException("trace id is invaild " + id);
         Trace trace = traces.get(id);
         if (trace.getTraceType() != newType) {
             Trace newTrace = null;
             try {
-                if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
-                    if (newType == TraceFactory.TraceType.DOUBLE) {
-                        newTrace = createTrace(trace.getName(), TraceFactory.TraceType.DOUBLE);
-                    } else {
-                        newTrace = createTrace(trace.getName(), TraceFactory.TraceType.INTEGER);
+                if (trace.getTraceType() == TraceType.CATEGORICAL) {
+                    if (newType == TraceType.REAL) {
+                        newTrace = createTrace(trace.getName(), newType);
                     }
-                    for (int i = 0; i < trace.getValuesSize(); i++) { // String => Double
+                    for (int i = 0; i < trace.getValueCount(); i++) { // String => Double
                         newTrace.add(Double.parseDouble(trace.getValue(i).toString()));
                     }
-                } else if (newType == TraceFactory.TraceType.STRING) {
-                    newTrace = createTrace(trace.getName(), TraceFactory.TraceType.STRING);
-                    for (int i = 0; i < trace.getValuesSize(); i++) { // Double => String
+                } else if (newType == TraceType.CATEGORICAL) {
+                    newTrace = createTrace(trace.getName(), TraceType.CATEGORICAL);
+                    for (int i = 0; i < trace.getValueCount(); i++) { // Double => String
                         newTrace.add(trace.getValue(i).toString());
                     }
                 } else {
@@ -413,8 +404,8 @@ public class LogFileTraces extends AbstractTraceList {
                         + " to " + newType + " in trace " + trace.getName());
             }
 
-            if (trace.getTraceType() == TraceFactory.TraceType.STRING || newType == TraceFactory.TraceType.STRING) {
-                if (newTrace.getValuesSize() != trace.getValuesSize())
+            if (trace.getTraceType() == TraceType.CATEGORICAL || newType == TraceType.CATEGORICAL) {
+                if (newTrace.getValueCount() != trace.getValueCount())
                     throw new TraceException("Type change is failed, because values size is different after copy !");
 
                 traces.set(id, newTrace);
@@ -440,8 +431,8 @@ public class LogFileTraces extends AbstractTraceList {
         } else {
             int step = (int) (stateNumber - lastState);
             if (step != stepSize) {
-            	//System.out.println("stateNumber: " + stateNumber + " lastState: " + lastState);
-            	//System.out.println("step: " + step + " != " + stepSize);
+                //System.out.println("stateNumber: " + stateNumber + " lastState: " + lastState);
+                //System.out.println("step: " + step + " != " + stepSize);
                 return false;
             }
         }
@@ -458,11 +449,11 @@ public class LogFileTraces extends AbstractTraceList {
         TraceCustomized tc = new TraceCustomized(newTName);
         tc.addValues(traces.get(i)); // only Double
         traces.add(tc);
-        tracesType.put(newTName, TraceFactory.TraceType.DOUBLE);
+        tracesType.put(newTName, TraceType.REAL);
     }
 
     // tracesType only save INTEGER and STRING, and only use during loading files
-    private TreeMap<String, TraceFactory.TraceType> tracesType = new TreeMap<String, TraceFactory.TraceType>();
+    private TreeMap<String, TraceType> tracesType = new TreeMap<String, TraceType>();
 
     private int burnIn = -1;
     private long firstState = -1;

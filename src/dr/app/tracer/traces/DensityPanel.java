@@ -28,7 +28,7 @@ package dr.app.tracer.traces;
 import dr.app.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import jam.framework.Exportable;
@@ -116,7 +116,7 @@ public class DensityPanel extends JPanel implements Exportable {
     private JButton chartSetupButton = new JButton("Axes...");
     private JLabel messageLabel = new JLabel("No data loaded");
 
-    private TraceFactory.TraceType traceType = null;
+    private TraceType traceType = null;
 
     private final JFrame frame;
 
@@ -368,10 +368,10 @@ public class DensityPanel extends JPanel implements Exportable {
         }
 
         // only enable controls relevent to continuous densities...
-        displayCombo.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
-        relativeDensityCheckBox.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
-        labelBins.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
-        binsCombo.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
+        displayCombo.setEnabled(traceType == TraceType.REAL);
+        relativeDensityCheckBox.setEnabled(traceType == TraceType.REAL);
+        labelBins.setEnabled(traceType == TraceType.REAL);
+        binsCombo.setEnabled(traceType == TraceType.REAL);
 //        kdeCheckBox.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
 //        kdeSetupButton.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
 
@@ -390,9 +390,16 @@ public class DensityPanel extends JPanel implements Exportable {
         return plot;
     }
 
-    protected Plot setupIntegerPlot(TraceList tl, int traceIndex, TraceCorrelation td, int barCount, int barId) {
+    protected Plot setupIntegerPlot(TraceList tl, int traceIndex, TraceType type, TraceCorrelation td, int barCount, int barId) {
         List values = tl.getValues(traceIndex);
-        CategoryDensityPlot plot = new CategoryDensityPlot(values, -1, td, barCount, barId);
+        double minValue = Double.POSITIVE_INFINITY;
+        double maxValue = Double.NEGATIVE_INFINITY;
+
+        if (type.isBinary()) {
+            minValue = 0.0;
+            maxValue = 1.0;
+        }
+        CategoryDensityPlot plot = new CategoryDensityPlot(values, -1, td, minValue, maxValue, barCount, barId);
         return plot;
     }
 
@@ -443,7 +450,7 @@ public class DensityPanel extends JPanel implements Exportable {
                     }
 
                     Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                    if (trace.getTraceType() == TraceType.REAL) {
                         if (currentSettings.showHistogram) {
                             plot = setupDensityPlot(tl, traceIndex, td);
                             ((NumericalDensityPlot)plot).setRelativeDensity(currentSettings.relativeDensity);
@@ -470,12 +477,12 @@ public class DensityPanel extends JPanel implements Exportable {
                             densityChart.addPlot(plot2);
                         }
 
-                    } else if (trace.getTraceType() == TraceFactory.TraceType.INTEGER) {
+                    } else if (trace.getTraceType().isOrdinal()) {
 
-                        plot = setupIntegerPlot(tl, traceIndex, td, currentSettings.barCount, barId);
+                        plot = setupIntegerPlot(tl, traceIndex, trace.getTraceType(), td, currentSettings.barCount, barId);
                         barId++;
 
-                    } else if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
+                    } else if (trace.getTraceType() == TraceType.CATEGORICAL) {
 
                         plot = setupCategoryPlot(tl, traceIndex, td, categoryDataMap, currentSettings.barCount, barId);
                         barId++;
@@ -550,7 +557,7 @@ public class DensityPanel extends JPanel implements Exportable {
             chartPanel.setXAxisTitle("Multiple Traces");
         }
 
-        if (traceType == TraceFactory.TraceType.DOUBLE) {
+        if (traceType == TraceType.REAL) {
             chartPanel.setYAxisTitle("Density");
 //            densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         } else {

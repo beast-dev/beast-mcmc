@@ -39,7 +39,7 @@ import dr.geo.Polygon2D;
 import dr.geo.contouring.*;
 import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.DataTable;
 import dr.util.HeapSort;
@@ -987,7 +987,7 @@ public class TimeSlicer {
                     for (int k = 0; k < y[j].length; k++) {
                         x.add(y[j][k]);
                     }
-                    TraceDistribution trace = new TraceDistribution(x, TraceFactory.TraceType.DOUBLE);
+                    TraceDistribution trace = new TraceDistribution(x, TraceType.REAL);
                     Element statsElement = new Element("stats");
                     addDimInfo(statsElement, j, dim);
                     StringBuffer sb = new StringBuffer();

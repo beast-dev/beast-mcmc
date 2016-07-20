@@ -38,35 +38,25 @@ import java.util.*;
  * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
 public class TraceDistribution<T> {
-    private TraceFactory.TraceType traceType;
+    private TraceType traceType;
 
-    public TraceDistribution(List<T> values, TraceFactory.TraceType traceType) {
+    public TraceDistribution(List<T> values, TraceType traceType) {
         this.traceType = traceType;
         initStatistics(values, 0.95);
     }
 
-    public TraceDistribution(List<T> values, TraceFactory.TraceType traceType, double ESS) {
+    public TraceDistribution(List<T> values, TraceType traceType, double ESS) {
         this(values, traceType);
         this.ESS = ESS;
     }
 
-    public TraceFactory.TraceType getTraceType() {
+    public TraceType getTraceType() {
         return traceType;
     }
 
-    public void setTraceType(TraceFactory.TraceType traceType) {
+    public void setTraceType(TraceType traceType) {
         this.traceType = traceType;
     }
-//    public String getTraceTypeBrief() {
-//        if (traceType == TraceFactory.TraceType.DOUBLE) {
-//            return TraceFactory.TraceType.DOUBLE.getBrief();
-//        } else if (traceType == TraceFactory.TraceType.INTEGER) {
-//            return TraceFactory.TraceType.INTEGER.getBrief();
-//        } else if (traceType == TraceFactory.TraceType.STRING) {
-//            return TraceFactory.TraceType.STRING.getBrief();
-//        }
-//        throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
-//    }
 
     public boolean isValid() {
         return isValid;
@@ -139,10 +129,10 @@ public class TraceDistribution<T> {
             throw new RuntimeException("Trace values not yet set");
         }
 
-        if (traceType == TraceFactory.TraceType.DOUBLE || traceType == TraceFactory.TraceType.INTEGER) {
+        if (traceType.isNumber()) {
             return DiscreteStatistics.meanSquaredError(values, trueValue);
         } else {
-            throw new RuntimeException("Require Number Trace Type in the Trace Distribution: " + this);
+            throw new RuntimeException("Require Real or Ordinal Trace Type in the Trace Distribution: " + this);
         }
     }
 
@@ -222,7 +212,6 @@ public class TraceDistribution<T> {
 
     // <T, frequency> for T = Integer and String
     public Map<T, Integer> valuesMap = new HashMap<T, Integer>();
-    //        public Map<T, Integer> inCredibleSet = new HashMap<T, Integer>();
     public List<T> credibleSet = new ArrayList<T>();
     public List<T> inCredibleSet = new ArrayList<T>();
 
@@ -236,7 +225,7 @@ public class TraceDistribution<T> {
 
         if (values.size() < 1) throw new RuntimeException("There is no value sent to statistics calculation !");
 
-        if (traceType == TraceFactory.TraceType.DOUBLE || traceType == TraceFactory.TraceType.INTEGER) {
+        if (traceType.isNumber()) {
             double[] newValues = new double[values.size()];
             for (int i = 0; i < values.size(); i++) {
                 newValues[i] = ((Number) values.get(i)).doubleValue();
@@ -244,7 +233,7 @@ public class TraceDistribution<T> {
             analyseDistributionContinuous(newValues, proportion);
         }
 
-        if (traceType == TraceFactory.TraceType.STRING || traceType == TraceFactory.TraceType.INTEGER) {
+        if (traceType != TraceType.REAL) {
             for (T value : values) {
                 if (valuesMap.containsKey(value)) {
                     int i = valuesMap.get(value) + 1;
@@ -293,7 +282,7 @@ public class TraceDistribution<T> {
     }
 
     private boolean contains(List<T> list, int valueORIndex) {
-        if (traceType == TraceFactory.TraceType.INTEGER) {
+        if (traceType == TraceType.ORDINAL) {
             return list.contains(valueORIndex);
         } else { // String
             String valueString = null;
@@ -317,7 +306,7 @@ public class TraceDistribution<T> {
     public List<String> getRange() {
         List<String> valuesList = new ArrayList<String>();
         for (T value : new TreeSet<T>(valuesMap.keySet())) {
-            if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+            if (traceType == TraceType.ORDINAL) { // as Integer is stored as Double in Trace
                 if (!valuesList.contains(Integer.toString(((Number) value).intValue())))
                     valuesList.add(Integer.toString(((Number) value).intValue()));
             } else {

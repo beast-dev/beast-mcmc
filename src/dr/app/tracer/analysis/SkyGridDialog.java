@@ -29,7 +29,7 @@ import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import jam.framework.DocumentFrame;
@@ -593,7 +593,7 @@ public class SkyGridDialog {
                     if (height >= plotMin && height <= plotMax) {
 
                         xData.add(height);
-                        TraceDistribution dist = new TraceDistribution(popSizes.get(i), TraceFactory.TraceType.DOUBLE);
+                        TraceDistribution dist = new TraceDistribution(popSizes.get(i), TraceType.REAL);
                         yDataMean.add(transform(dist.getMean()));
                         yDataMedian.add(transform(dist.getMedian()));
                         yDataUpper.add(transform(dist.getUpperHPD()));

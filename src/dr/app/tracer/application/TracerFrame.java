@@ -67,7 +67,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final static boolean CONFIRM_BUTTON_PRESSES = false;
 
     private final String[] columnToolTips = {null, null, null,
-            "Trace Type: real(R), integer(I) or categorical(C)"};
+            "Trace Type: real(R), ordinal(O) or categorical(C), binary(B)"};
 
     private TracePanel tracePanel = null;
 
@@ -93,8 +93,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private boolean homogenousTraceFiles = true;
 
     private JButton realButton;
-    private JButton integerButton;
-    private JButton categoryButton;
+    private JButton ordinalButton;
+    private JButton binaryButton;
+    private JButton categoricalButton;
 
 //    private final List<FilterListPanel> filterListPanelList = new ArrayList<FilterListPanel>();
 
@@ -228,50 +229,63 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        changeTraceTypePanel.add(new JLabel("Data type:"));
+        changeTraceTypePanel.add(new JLabel("Type:"));
 
         realButton = new JButton("(R)eal");
-        realButton.setToolTipText(TraceFactory.TraceType.DOUBLE.toString());
+        realButton.setToolTipText(TraceType.REAL.toString());
         // Only affect Mac OS X - nicer GUI
         realButton.putClientProperty("Quaqua.Button.style", "placard");
         realButton.setFont(UIManager.getFont("SmallSystemFont"));
         realButton.setEnabled(false);
 
-        integerButton = new JButton("(I)nt");
-        integerButton.setToolTipText(TraceFactory.TraceType.INTEGER.toString());
+        ordinalButton = new JButton("(O)rd");
+        ordinalButton.setToolTipText(TraceType.ORDINAL.toString());
         // Only affect Mac OS X - nicer GUI
-        integerButton.putClientProperty("Quaqua.Button.style", "placard");
-        integerButton.setFont(UIManager.getFont("SmallSystemFont"));
-        integerButton.setEnabled(false);
+        ordinalButton.putClientProperty("Quaqua.Button.style", "placard");
+        ordinalButton.setFont(UIManager.getFont("SmallSystemFont"));
+        ordinalButton.setEnabled(false);
 
-        categoryButton = new JButton("(C)at");
-        categoryButton.setToolTipText(TraceFactory.TraceType.STRING.toString());
+        binaryButton = new JButton("(B)in");
+        binaryButton.setToolTipText(TraceType.BINARY.toString());
         // Only affect Mac OS X - nicer GUI
-        categoryButton.putClientProperty("Quaqua.Button.style", "placard");
-        categoryButton.setFont(UIManager.getFont("SmallSystemFont"));
-        categoryButton.setEnabled(false);
+        binaryButton.putClientProperty("Quaqua.Button.style", "placard");
+        binaryButton.setFont(UIManager.getFont("SmallSystemFont"));
+        binaryButton.setEnabled(false);
+
+        categoricalButton = new JButton("(C)at");
+        categoricalButton.setToolTipText(TraceType.CATEGORICAL.toString());
+        // Only affect Mac OS X - nicer GUI
+        categoricalButton.putClientProperty("Quaqua.Button.style", "placard");
+        categoricalButton.setFont(UIManager.getFont("SmallSystemFont"));
+        categoricalButton.setEnabled(false);
 
         realButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.DOUBLE);
+                changeTraceType(TraceType.REAL);
             }
         });
-        integerButton.addActionListener(new ActionListener() {
+        ordinalButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.INTEGER);
+                changeTraceType(TraceType.ORDINAL);
             }
         });
-        categoryButton.addActionListener(new ActionListener() {
+        binaryButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.STRING);
+                changeTraceType(TraceType.BINARY);
+            }
+        });
+        categoricalButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                changeTraceType(TraceType.CATEGORICAL);
             }
         });
 
         changeTraceTypePanel.add(realButton);
-        changeTraceTypePanel.add(integerButton);
-        changeTraceTypePanel.add(categoryButton);
+        changeTraceTypePanel.add(ordinalButton);
+        changeTraceTypePanel.add(binaryButton);
+        changeTraceTypePanel.add(categoricalButton);
         changeTraceTypePanel.setToolTipText("<html> Change the data type of a selected parameter here. <br>" +
-                "Alternatively use key word double, integer, string " +
+                "Alternatively use key word real, ordinal, binary, categorical " +
                 "followed by tab delimited column names <br> in the beginning of the log file, " +
                 "to define the trace type. For example: <br> # integer columnName1 columnName2 ... </html>");
         bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);
@@ -312,7 +326,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     }
 
-    private void changeTraceType(TraceFactory.TraceType newType) {
+    private void changeTraceType(TraceType newType) {
         int[] selectedTraces = traceTable.getSelectedRows();
         int[] selectedStatistics = statisticTable.getSelectedRows();
         String m = "Are you going to change trace type into " + newType.toString() + " for\n";
@@ -765,8 +779,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         realButton.setEnabled(selRows.length > 0);
-        integerButton.setEnabled(selRows.length > 0);
-        categoryButton.setEnabled(selRows.length > 0);
+        ordinalButton.setEnabled(selRows.length > 0);
+        binaryButton.setEnabled(selRows.length > 0);
+        categoricalButton.setEnabled(selRows.length > 0);
     }
 
     public void analyseTraceList(TraceList job) {
@@ -1590,9 +1605,17 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             return string;
         }
 
-        public boolean isCellEditable(int row, int col) {
-            return true;
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            if (columnIndex == 0 && currentTraceLists.size() == 1) {
+                currentTraceLists.get(0).getTrace(rowIndex).setName(aValue.toString());
+                statisticTableModel.fireTableDataChanged();
+            }
+        }
 
+        @Override
+        public boolean isCellEditable(int row, int col) {
+            return col == 0 && currentTraceLists.size() == 1;
         }
 
         public Class getColumnClass(int c) {

@@ -37,24 +37,28 @@ public class CategoryDensityPlot extends FrequencyPlot {
     private int barId;
     // for string[], passing the int[] storing the index of string[]
 
-    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution, int barCount, int barId) {
+    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
+                               int barCount, int barId) {
+        this(data, minimumBinCount, traceDistribution,
+                Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, barCount, barId);
+    }
+
+
+    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
+                               double minValue, double maxValue, int barCount, int barId) {
         super(traceDistribution);
         this.barCount = barCount;
         this.barId = barId;
 
-//        Double[] doubleData = new Double[data.length];
-//        for (int i = 0; i < data.length; i++) {
-//            doubleData[i] = data[i].doubleValue();
-//        }
-        setData(data, minimumBinCount);
+        setData(new Variate.D(data), minimumBinCount, minValue, maxValue);
     }
 
     /**
      * Set data
      */
-    public void setData(Variate data, int minimumBinCount) {
+    public void setData(Variate data, int minimumBinCount, double minValue, double maxValue) {
         raw = data;
-        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
+        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount, minValue, maxValue);
 
         Variate.D xData = new Variate.D();
         Variate.D yData = new Variate.D();
@@ -79,9 +83,9 @@ public class CategoryDensityPlot extends FrequencyPlot {
     /**
      * Get the FrequencyDistribution object
      */
-    protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
-        double min = (Double) data.getMin();
-        double max = (Double) data.getMax();
+    protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount, double minRange, double maxRange) {
+        double min = Math.min((Double) data.getMin(), minRange);
+        double max = Math.max((Double) data.getMax(), maxRange);
 
         if (min == max) {
             if (min == 0) {

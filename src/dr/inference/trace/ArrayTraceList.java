@@ -82,7 +82,7 @@ public class ArrayTraceList extends AbstractTraceList {
      * @return the number of states in the traces (after burnin removed)
      */
     public int getStateCount() {
-        return traces.get(0).getValuesSize();
+        return traces.get(0).getValueCount();
     }
 
     /**

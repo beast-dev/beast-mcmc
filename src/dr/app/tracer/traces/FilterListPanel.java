@@ -29,7 +29,7 @@ import dr.app.gui.util.LongTask;
 import dr.inference.trace.Filter;
 import dr.inference.trace.FilteredTraceList;
 import dr.inference.trace.Trace;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -173,13 +173,13 @@ public class FilterListPanel extends JPanel {
                 }
 
                 FilterAbstractPanel panel;
-                if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
-                    panel = new FilterDiscretePanel(trace.getRange(), sel);
+                if (trace.getTraceType() == TraceType.CATEGORICAL) {
+                    panel = new FilterDiscretePanel(trace.getCategoricalValues(), sel);
+                    filterPanels.put(traceName, panel);
                 } else {// integer and double
-                    panel = new FilterContinuousPanel(trace.getRange(), sel);
+//                    panel = new FilterContinuousPanel(trace.getRange(), sel);
                 }
                 //            System.out.println("traceName = " + traceName + ";  i = " + i);
-                filterPanels.put(traceName, panel);
 
                 current += 1;
             }

@@ -28,7 +28,7 @@ package dr.app.tracer.traces;
 import dr.app.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import dr.inference.trace.TraceList;
 import jam.framework.Exportable;
 
@@ -256,7 +256,7 @@ public class RawTracePanel extends JPanel implements Exportable {
 
                                 Trace trace = tl.getTrace(traceIndex);
                                 if (trace != null) {
-                                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                                    if (trace.getTraceType().isNumber()) {
                                         n++;
                                     }
                                 }
@@ -270,7 +270,7 @@ public class RawTracePanel extends JPanel implements Exportable {
 
                                 Trace trace = tl.getTrace(traceIndex);
                                 if (trace != null) {
-                                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                                    if (trace.getTraceType().isNumber()) {
                                         List values = tl.getValues(traceIndex);
                                         Double[] ar = new Double[values.size()];
                                         values.toArray(ar);
@@ -336,12 +336,12 @@ public class RawTracePanel extends JPanel implements Exportable {
                     if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
                         burninValues = tl.getBurninValues(traceIndex);
                     }
-                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE || trace.getTraceType() == TraceFactory.TraceType.INTEGER) {
+                    if (trace.getTraceType().isNumber()) {
 
-                        traceChart.setYAxis(trace.getTraceType() == TraceFactory.TraceType.INTEGER, new HashMap<Integer, String>());
+                        traceChart.setYAxis(trace.getTraceType() != TraceType.REAL, new HashMap<Integer, String>());
                         traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
 
-                    } else if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
+                    } else if (trace.getTraceType() == TraceType.CATEGORICAL) {
 
                         List<Double> doubleData = new ArrayList<Double>();
                         for (int v = 0; v < values.size(); v++) {

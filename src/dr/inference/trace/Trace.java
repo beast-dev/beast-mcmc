@@ -25,10 +25,7 @@
 
 package dr.inference.trace;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A simple class that stores a trace for a single statistic
@@ -42,8 +39,8 @@ public class Trace<T> { // TODO get rid of generic to make things easy
 //    public static final int INITIAL_SIZE = 1000;
 //    public static final int INCREMENT_SIZE = 1000;
 
-    // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
-    protected TraceFactory.TraceType traceType = TraceFactory.TraceType.DOUBLE;
+    // use <Double> for integer, but traceType must = ORDINAL, because of legacy issue at analyseCorrelationContinuous
+    protected TraceType traceType = TraceType.REAL;
     protected List<T> values = new ArrayList<T>(); // TODO change to String only, and parse to double, int or string in getValues according to trace type
     //    protected int valueCount = 0;
     protected String name;
@@ -54,7 +51,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         this.name = name;
     }
 
-    public Trace(String name, TraceFactory.TraceType traceType) {
+    public Trace(String name, TraceType traceType) {
         this.name = name;
         setTraceType(traceType);
     }
@@ -79,7 +76,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         Collections.addAll(this.values, valuesArray);
     }
 
-    public int getValuesSize() {
+    public int getValueCount() {
         return values.size();
     }
 
@@ -91,16 +88,11 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         return values.get(index);
     }
 
-    public TreeSet<String> getRange() { // Double => bounds; Integer and String => unique values
-        TreeSet<String> range;
+    public double[] getRange() { // Double => bounds; Integer and String => unique values
 
-        if (getValuesSize() < 1) throw new IllegalArgumentException("Cannot find values in trace " + getName());
+        if (getValueCount() < 1) throw new IllegalArgumentException("Cannot find values in trace " + getName());
 
-        if (getTraceType() == TraceFactory.TraceType.STRING) {
-            range = new TreeSet<String>((List<String>) values);
-
-        } else {
-            range = new TreeSet<String>();
+        if (getTraceType().isNumber()) {
 
             Double min = Double.MAX_VALUE;
             Double max = Double.MIN_VALUE;
@@ -111,26 +103,24 @@ public class Trace<T> { // TODO get rid of generic to make things easy
                     max = (Double) t;
                 }
             }
-            range.add(min.toString());
-            if (max == Double.MIN_VALUE) {
-                range.add(min.toString()); // only 1 unique value
-            } else {
-                range.add(max.toString());
-            }
+            return new double[] {min, max};
+        } else {
+            throw new UnsupportedOperationException("cannot call getRange for categorical data");
         }
-
-        return range;
     }
 
+    public Set<String> getCategoricalValues() {
+        return new TreeSet<String>((List<String>) values);
+    }
     /**
      * @param fromIndex low endpoint (inclusive) of the subList.
      * @param toIndex   high endpoint (exclusive) of the subList.
      * @return The list of values (which are selected values if filter applied)
      */
     public List<T> getValues(int fromIndex, int toIndex) {
-        if (toIndex > getValuesSize() || fromIndex > toIndex)
+        if (toIndex > getValueCount() || fromIndex > toIndex)
             throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
-                    + "; List size = " + getValuesSize() + "; in Trace " + name);
+                    + "; List size = " + getValueCount() + "; in Trace " + name);
 
         if (getFilter() == null) {
             return values.subList(fromIndex, toIndex);
@@ -154,6 +144,10 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
 //    public Class getTraceType() {
 //        if (values.get(0) == null) {
 //            return null;
@@ -161,11 +155,11 @@ public class Trace<T> { // TODO get rid of generic to make things easy
 //        return values.get(0).getClass();
 //    }
 
-    public TraceFactory.TraceType getTraceType() {
+    public TraceType getTraceType() {
         return traceType;
     }
 
-    public void setTraceType(TraceFactory.TraceType traceType) {
+    public void setTraceType(TraceType traceType) {
         this.traceType = traceType;
     }
 

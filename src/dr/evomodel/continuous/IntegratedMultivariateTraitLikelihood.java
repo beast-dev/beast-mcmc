@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.CompoundParameter;
@@ -43,6 +44,7 @@ import dr.math.matrixAlgebra.Vector;
 import dr.util.Author;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import java.util.*;
 
@@ -99,6 +101,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  List<BranchRateModel> optimalValues,
                                                  BranchRateModel strengthOfSelection,
                                                  Model samplingDensity,
+                                                 List<RestrictedPartials> clamps,
                                                  boolean reportAsMultivariate,
                                                  boolean reciprocalRates) {
 
@@ -108,26 +111,38 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 samplingDensity, reportAsMultivariate, reciprocalRates);
 
 
-        // Delegate caches to helper
-        meanCache = new double[dim * treeModel.getNodeCount()];
-        if (driftModels != null) {
-            cacheHelper = new DriftCacheHelper(dim * treeModel.getNodeCount(), cacheBranches); // new DriftCacheHelper ....
-        } else if (optimalValues != null) {
-            cacheHelper = new OUCacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
-        } else {
-            cacheHelper = new CacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
+        partialsCount = treeModel.getNodeCount();
+        if (clamps != null) {
+            for (RestrictedPartials partials : clamps) {
+                partials.setIndex(partialsCount);
+                addRestrictedPartials(partials);
+                ++partialsCount;
+            }
+            spareOffset = partialsCount;
+            ++partialsCount;
+            setupClamps();
         }
 
-        drawnStates = new double[dim * treeModel.getNodeCount()];
-        upperPrecisionCache = new double[treeModel.getNodeCount()];
-        lowerPrecisionCache = new double[treeModel.getNodeCount()];
-        logRemainderDensityCache = new double[treeModel.getNodeCount()];
+        // Delegate caches to helper
+//        meanCache = new double[dim * treeModel.getNodeCount()];
+        if (driftModels != null) {
+            cacheHelper = new DriftCacheHelper(dim * partialsCount, cacheBranches); // new DriftCacheHelper ....
+        } else if (optimalValues != null) {
+            cacheHelper = new OUCacheHelper(dim * partialsCount, cacheBranches);
+        } else {
+            cacheHelper = new CacheHelper(dim * partialsCount, cacheBranches);
+        }
+
+        drawnStates = new double[dim * partialsCount];
+        upperPrecisionCache = new double[partialsCount];
+        lowerPrecisionCache = new double[partialsCount];
+        logRemainderDensityCache = new double[partialsCount];
 
         if (cacheBranches) {
-            storedMeanCache = new double[dim * treeModel.getNodeCount()];
-            storedUpperPrecisionCache = new double[treeModel.getNodeCount()];
-            storedLowerPrecisionCache = new double[treeModel.getNodeCount()];
-            storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
+//            storedMeanCache = new double[dim * treeModel.getNodeCount()];
+            storedUpperPrecisionCache = new double[partialsCount];
+            storedLowerPrecisionCache = new double[partialsCount];
+            storedLogRemainderDensityCache = new double[partialsCount];
         }
 
         // Set up reusable temporary storage
@@ -281,9 +296,48 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return getLogLikelihood();
     }
 
+    private void setupClamps() {
+        if (nodeToClampMap == null) {
+            nodeToClampMap = new HashMap<NodeRef, RestrictedPartials>();
+        }
+        nodeToClampMap.clear();
+
+        recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet());
+
+        anyClamps = (nodeToClampMap.size() > 0);
+    }
+
+    private void recursiveSetupClamp(Tree tree, NodeRef node, BitSet tips) {
+
+        if (tree.isExternal(node)) {
+            tips.set(node.getNumber());
+        } else {
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                NodeRef child = tree.getChild(node, i);
+
+                BitSet childTips = new BitSet();
+                recursiveSetupClamp(tree, child, childTips);
+                tips.or(childTips);
+            }
+
+            if (clampList.containsKey(tips)) {
+                RestrictedPartials partials = clampList.get(tips);
+                partials.setNode(node);
+                nodeToClampMap.put(node, partials);
+            }
+        }
+    }
+
     public abstract boolean getComputeWishartSufficientStatistics();
 
     public double calculateLogLikelihood() {
+
+        if (updateRestrictedNodePartials) {
+            if (clampList != null) {
+                setupClamps();
+            }
+            updateRestrictedNodePartials = false;
+        }
 
         double logLikelihood = 0;
         double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
@@ -498,25 +552,94 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         final double precision1 = upperPrecisionCache[childNumber1];
         final double totalPrecision = precision0 + precision1;
 
-        lowerPrecisionCache[thisNumber] = totalPrecision;
+        final double factorOU0 = cacheHelper.getOUFactor(childNode0);
+        final double factorOU1 = cacheHelper.getOUFactor(childNode1);
 
-        // Multiply child0 and child1 densities
+        doPeel(thisNumber,
+                meanThisOffset, meanOffset0, meanOffset1,
+                totalPrecision, precision0, precision1,
+                missingTraits,
+                thisNumber,
+                precisionMatrix, logDetPrecisionMatrix,
+                factorOU0, factorOU1,
+                cacheOuterProducts
+                , node, childNode0, childNode1 // TODO arguments to remove
+                , true
+                , false
+        );
+
+        final boolean DO_CLAMP = true;
+        final boolean debug = false;
+
+        if (DO_CLAMP && nodeToClampMap != null && nodeToClampMap.containsKey(node)) { // TODO precompute boolean contains for all nodes
+            RestrictedPartials clamp = nodeToClampMap.get(node);
+            final int clampIndex = clamp.getIndex();
+            final int clampOffset = dim * clampIndex;
+
+            // Copy partial into meanCache // TODO Only when value changes
+            for (int i = 0; i < dim; ++i) {
+                meanCache[clampOffset + i] = clamp.getPartial(i);
+            }
+
+            if (debug) {
+                System.err.println("BEFORE");
+                System.err.println(new Vector(logRemainderDensityCache));
+                System.err.println(new Vector(meanCache));
+                System.err.println(new Vector(lowerPrecisionCache));
+                System.err.println(new Vector(upperPrecisionCache));
+                System.err.println("");
+            }
+
+            final double precisionThis = lowerPrecisionCache[thisNumber];
+            final double precisionClamp = clamp.getPriorSampleSize();
+            final double precisionNew = precisionThis + precisionClamp;
+
+            doPeel(spareOffset,
+                    spareOffset, meanThisOffset, clampOffset,
+                    precisionNew, precisionThis, precisionClamp,
+                    missingTraits,
+                    clampIndex,
+                    precisionMatrix, logDetPrecisionMatrix,
+                    1.0, 1.0, // TODO Do yet figured out for OU models
+                    cacheOuterProducts,
+                    node, null, null
+                    , true
+                    , false
+            );
+
+            // Move values from clampIndex -> thisIndex
+            lowerPrecisionCache[thisNumber] = lowerPrecisionCache[spareOffset];
+            upperPrecisionCache[thisNumber] = upperPrecisionCache[spareOffset];
+
+            for (int i = 0; i < dim; ++i) {
+                meanCache[meanThisOffset + i] = meanCache[spareOffset + i];
+            }
+        }
+
+        if (debug) {
+            System.err.println(thisNumber);
+            System.err.println(new Vector(logRemainderDensityCache));
+            System.err.println(new Vector(meanCache));
+            System.err.println(new Vector(lowerPrecisionCache));
+            System.err.println(new Vector(upperPrecisionCache));
+            System.err.println("");
+        }
+    }
+
+    private void doPeel(int thisNumber,
+                        int meanThisOffset, int meanOffset0, int meanOffset1,
+                        double totalPrecision, double precision0, double precision1,
+                        MissingTraits missingTraits,
+                        int remainderNumber,
+                        double[][] precisionMatrix, double logDetPrecisionMatrix,
+                        double factorOU0, double factorOU1,
+                        boolean cacheOuterProducts,
+                        NodeRef node, NodeRef childNode0, NodeRef childNode1, boolean integrable, boolean debug) {
+        lowerPrecisionCache[thisNumber] = totalPrecision;
 
         // changeou
         cacheHelper.computeMeanCaches(meanThisOffset, meanOffset0, meanOffset1,
                 totalPrecision, precision0, precision1, missingTraits, node, childNode0, childNode1);
-//        if (totalPrecision == 0) {
-//            System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
-//        } else {
-//            // Delegate in case either child is partially missing
-//            // computeCorrectedWeightedAverage
-//            missingTraits.computeWeightedAverage(meanCache,
-//                    meanOffset0, precision0,
-//                    meanOffset1, precision1,
-//                    meanThisOffset, dim);
-//        }
-        // In this delegation, you can call
-        //getShiftForBranchLength(node);
 
         if (!treeModel.isRoot(node)) {
             // Integrate out trait value at this node
@@ -533,19 +656,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         // Compute logRemainderDensity
 
-        logRemainderDensityCache[thisNumber] = 0;
+        logRemainderDensityCache[remainderNumber] = 0;
 
-        if (precision0 != 0 && precision1 != 0) {
+        if (precision0 != 0 && precision1 != 0 && integrable) {
             // changeou
             incrementRemainderDensities(
                     precisionMatrix,
-                    logDetPrecisionMatrix, thisNumber, meanThisOffset,
-                    meanOffset0,
-                    meanOffset1,
-                    precision0,
-                    precision1,
-                    cacheHelper.getOUFactor(childNode0),
-                    cacheHelper.getOUFactor(childNode1),
+                    logDetPrecisionMatrix, remainderNumber, meanThisOffset,
+                    meanOffset0, meanOffset1,
+                    precision0, precision1,
+                    factorOU0, factorOU1,
                     cacheOuterProducts);
         }
     }
@@ -1190,8 +1310,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected boolean areStatesRedrawn = false;
 
     protected double[] meanCache;
+    protected double[] storedMeanCache;
     protected double[] correctedMeanCache;
-
 
     class CacheHelper {
 
@@ -1249,10 +1369,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         //  private double[] meanCache;
         //  private double[] storedMeanCache;
 
-        public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
-                                      double precision0, double precision1, MissingTraits missingTraits) {
-            //To change body of created methods use File | Settings | File Templates.
-        }
+//        public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
+//                                      double precision0, double precision1, MissingTraits missingTraits) {
+//            //To change body of created methods use File | Settings | File Templates.
+//        }
 
         public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
                                       double totalPrecision, double precision0, double precision1, MissingTraits missingTraits,
@@ -1360,7 +1480,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             */
         }
 
-
         public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
                                       double totalPrecision, double precision0, double precision1, MissingTraits missingTraits,
                                       NodeRef thisNode, NodeRef node0, NodeRef node1) {
@@ -1456,7 +1575,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
 
-    private double[] storedMeanCache;
+//    private double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;
     private double[] storedLowerPrecisionCache;
     private double[] storedLogRemainderDensityCache;
@@ -1479,5 +1598,51 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] tmp2;
 
     protected final MissingTraits missingTraits;
+
+//    class NodeClamp {
+//        private double trait[];
+//        private double precision;
+//
+//        List<Integer> tipList;
+//
+////        BitSet tipSet;
+//
+//        NodeClamp(double trait[], double precision) {
+////            tipSet = Tree.Utils.getTipsBitSetForTaxa(tree, taxa);
+////            this.tipSet = tipSet;
+//            this.trait = trait;
+//            this.precision = precision;
+//        }
+//
+//        double[] getTrait() { return trait; }
+//
+//        double getTrait(int i) { return trait[i]; }
+//
+//        double getPrecision() { return precision; }
+//
+////        BitSet getTipSet() { return tipSet; }
+//
+//    }
+
+    @Override
+    protected void addRestrictedPartials(RestrictedPartials nodeClamp) {
+        if (clampList == null) {
+            clampList = new HashMap<BitSet, RestrictedPartials>();
+        }
+        clampList.put(nodeClamp.getTipBitSet(), nodeClamp);
+        addModel(nodeClamp);
+
+        System.err.println("Added a CLAMP!");
+    }
+
+    protected boolean clampsKnown = false;
+//    private List<NodeClamp> clampList = null;
+    protected Map<BitSet, RestrictedPartials> clampList = null;
+    protected Map<NodeRef, RestrictedPartials> nodeToClampMap = null;
+
+    private int partialsCount;
+    private int spareOffset;
+
+    protected boolean anyClamps = false;
 
 }

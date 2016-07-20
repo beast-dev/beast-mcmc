@@ -338,7 +338,16 @@ public class RawTracePanel extends JPanel implements Exportable {
                     }
                     if (trace.getTraceType().isNumber()) {
 
-                        traceChart.setYAxis(trace.getTraceType() != TraceType.REAL, new HashMap<Integer, String>());
+                        traceChart.setYAxis(trace.getTraceType().isOrdinal(), new HashMap<Integer, String>());
+                        if (trace.getTraceType().isOrdinal()) {
+                            traceChart.getYAxis().setAxisFlags(Axis.AT_DATA, Axis.AT_DATA);
+
+                            if (trace.getTraceType().isBinary()) {
+                                traceChart.getYAxis().setManualAxis(0, 1.0, 1.0, 0.0);
+                                traceChart.getYAxis().setManualRange(0.0, 1.0);
+                                traceChart.getYAxis().setRange(0.0, 1.0);
+                            }
+                        }
                         traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
 
                     } else if (trace.getTraceType() == TraceType.CATEGORICAL) {

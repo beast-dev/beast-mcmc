@@ -500,6 +500,16 @@ public class DensityPanel extends JPanel implements Exportable {
                         }
 
                         densityChart.addPlot(plot);
+
+                        if (trace.getTraceType().isOrdinal()) {
+                            densityChart.getXAxis().setAxisFlags(Axis.AT_DATA, Axis.AT_DATA);
+
+                            if (trace.getTraceType().isBinary()) {
+                                densityChart.getXAxis().setManualAxis(0, 1.0, 1.0, 0.0);
+                                densityChart.getXAxis().setManualRange(0.0, 1.0);
+                                densityChart.getXAxis().setRange(0.0, 1.0);
+                            }
+                        }
                     }
                     if (currentSettings.colourBy == ColourByOptions.COLOUR_BY_TRACE || currentSettings.colourBy == ColourByOptions.COLOUR_BY_ALL) {
                         i++;

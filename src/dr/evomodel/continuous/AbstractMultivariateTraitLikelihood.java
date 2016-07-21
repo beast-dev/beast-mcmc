@@ -382,6 +382,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
     }
 
+    protected double rescaleLength(double length) {
+        if (scaleByTime) {
+            length /= treeLength;
+        }
+        return length;
+    }
+
     public double getRescaledBranchLengthForPrecision(NodeRef node) {
 
         double length = treeModel.getBranchLength(node);
@@ -394,9 +401,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
         }
 
-        if (scaleByTime) {
-            length /= treeLength;
-        }
+//        if (scaleByTime) {
+//            length /= treeLength;
+//        }
+        length = rescaleLength(length);
 
         if (deltaParameter != null && treeModel.isExternal(node)) {
             length += deltaParameter.getParameterValue(0);

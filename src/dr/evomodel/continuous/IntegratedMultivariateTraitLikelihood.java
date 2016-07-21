@@ -591,7 +591,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
 
             final double precisionThis = lowerPrecisionCache[thisNumber];
-            final double precisionClamp = clamp.getPriorSampleSize();
+            final double precisionClamp = clamp.getPriorSampleSize() / rescaleLength(1.0);
             final double precisionNew = precisionThis + precisionClamp;
 
             doPeel(spareOffset,

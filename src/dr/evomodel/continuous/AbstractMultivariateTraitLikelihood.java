@@ -29,7 +29,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -382,6 +382,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
     }
 
+    protected double rescaleLength(double length) {
+        if (scaleByTime) {
+            length /= treeLength;
+        }
+        return length;
+    }
+
     public double getRescaledBranchLengthForPrecision(NodeRef node) {
 
         double length = treeModel.getBranchLength(node);
@@ -394,9 +401,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
         }
 
-        if (scaleByTime) {
-            length /= treeLength;
-        }
+//        if (scaleByTime) {
+//            length /= treeLength;
+//        }
+        length = rescaleLength(length);
 
         if (deltaParameter != null && treeModel.isExternal(node)) {
             length += deltaParameter.getParameterValue(0);
@@ -421,6 +429,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         if (!cacheBranches) {
             likelihoodKnown = false;
+            updateRestrictedNodePartials = true;
             if (model == treeModel)
                 recalculateTreeLength();
             return;
@@ -439,6 +448,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 if (event.isTreeChanged()) {
                     recalculateTreeLength();
                     updateAllNodes();
+                    updateRestrictedNodePartials = true;
                 } else if (event.isHeightChanged()) {
                     recalculateTreeLength();
                     if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
@@ -455,6 +465,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     else {
                         updateNodeAndChildren(event.getNode());
                     }
+                    updateRestrictedNodePartials = true;
                 } else {
                     throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occurring in AbstractMultivariateTraitLikelihood");
                 }
@@ -735,7 +746,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
             MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
 
-            boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
+            boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, true);
             boolean integrate = xo.getAttribute(INTEGRATE, false);
             boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
             boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
@@ -840,6 +851,22 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 Logger.getLogger("dr.evomodel").info(sb.toString());
 
             }
+
+            List<RestrictedPartials> restrictedPartialsList = null;
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                Object cxo = xo.getChild(i);
+
+                if (cxo instanceof RestrictedPartials) {
+                    if (!integrate) {
+                        throw new XMLParseException("Restricted partials are currently only implements" +
+                                "for integrated multivariate trait likelihood models");
+                    }
+                    if (restrictedPartialsList == null) {
+                        restrictedPartialsList = new ArrayList<RestrictedPartials>();
+                    }
+                    restrictedPartialsList.add((RestrictedPartials) cxo);
+                }
+            }
             
             AbstractMultivariateTraitLikelihood like;
 
@@ -858,7 +885,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     like = new SemiConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
                             scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                            rootDistribution, reciprocalRates);
+                            rootDistribution, reciprocalRates, restrictedPartialsList);
 
 //                    like = new DebugableIntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
 //                            traitParameter, missingIndices, cacheBranches,
@@ -890,7 +917,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         like = new NonPhylogeneticMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                 traitParameter, deltaParameter, missingIndices, cacheBranches,
                                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                                mean, pseudoObservations, reciprocalRates, exchangeableTips);
+                                mean, pseudoObservations, restrictedPartialsList, reciprocalRates, exchangeableTips);
                     } else {
                         if (driftModels == null) {
                             if (strengthOfSelection == null) {
@@ -899,14 +926,14 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                         scaleByTime, useTreeLength,
                                         rateModel, null, null, null,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                             } else {
                                 like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                         traitParameter, deltaParameter, missingIndices, cacheBranches,
                                         scaleByTime, useTreeLength,
                                         rateModel, null, optimalValues, strengthOfSelection,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList,pseudoObservations, reciprocalRates);
                             }
                         } else {
                             like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
@@ -914,7 +941,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                     scaleByTime, useTreeLength,
                                     rateModel, driftModels, null, null,
                                     samplingDensity, reportAsMultivariate,
-                                    mean, pseudoObservations, reciprocalRates);
+                                    mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                         }
                     }
                 }
@@ -1014,6 +1041,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
                         new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
                 }, true),
+                new ElementRule(RestrictedPartials.class, 0, Integer.MAX_VALUE),
         };
 
 
@@ -1021,6 +1049,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             return AbstractMultivariateTraitLikelihood.class;
         }
     };
+
+    protected void addRestrictedPartials(RestrictedPartials restrictedPartials) {
+        throw new IllegalArgumentException("Not implemented for this model type");
+    }
 
     MultivariateTraitTree treeModel = null;
     MultivariateDiffusionModel diffusionModel = null;
@@ -1062,5 +1094,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected int dimTrait;
     protected int dim;
 
+    protected boolean updateRestrictedNodePartials = true;
+    protected Map<BitSet, RestrictedPartials> restrictedPartialsMap;
 }
 

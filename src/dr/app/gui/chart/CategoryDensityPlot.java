@@ -39,26 +39,19 @@ public class CategoryDensityPlot extends FrequencyPlot {
 
     public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
                                int barCount, int barId) {
-        this(data, minimumBinCount, traceDistribution,
-                Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, barCount, barId);
-    }
-
-
-    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
-                               double minValue, double maxValue, int barCount, int barId) {
         super(traceDistribution);
         this.barCount = barCount;
         this.barId = barId;
 
-        setData(new Variate.D(data), minimumBinCount, minValue, maxValue);
+        setData(new Variate.D(data), minimumBinCount);
     }
 
     /**
      * Set data
      */
-    public void setData(Variate data, int minimumBinCount, double minValue, double maxValue) {
+    public void setData(Variate data, int minimumBinCount) {
         raw = data;
-        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount, minValue, maxValue);
+        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
         Variate.D xData = new Variate.D();
         Variate.D yData = new Variate.D();
@@ -73,59 +66,10 @@ public class CategoryDensityPlot extends FrequencyPlot {
             x += frequency.getBinSize();
 
             xData.add(x);
-            yData.add(frequency.getProb(i));
+            yData.add(frequency.getProbability(i));
 
         }
         setData(xData, yData);
-    }
-
-
-    /**
-     * Get the FrequencyDistribution object
-     */
-    protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount, double minRange, double maxRange) {
-        double min = Math.min((Double) data.getMin(), minRange);
-        double max = Math.max((Double) data.getMax(), maxRange);
-
-        if (min == max) {
-            if (min == 0) {
-                min = -1.0;
-            } else {
-                min -= Math.abs(min / 10.0);
-            }
-            if (max == 0) {
-                max = 1.0;
-            } else {
-                max += Math.abs(max / 10.0);
-            }
-        }
-
-        Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
-        axis.setRange(min, max);
-
-        int majorTickCount = axis.getMajorTickCount();
-        axis.setPrefNumTicks(majorTickCount, 4);
-
-        double binSize = axis.getMinorTickSpacing();
-        int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
-
-        if (minimumBinCount > 0) {
-            while (binCount < minimumBinCount) {
-                majorTickCount++;
-                axis.setPrefNumTicks(majorTickCount, 4);
-
-                binSize = axis.getMinorTickSpacing();
-                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
-            }
-        }
-
-        FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
-
-        for (int i = 0; i < raw.getCount(); i++) {
-            frequency.addValue((Double) raw.get(i));
-        }
-
-        return frequency;
     }
 
     /**

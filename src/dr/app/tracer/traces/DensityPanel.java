@@ -392,14 +392,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
     protected Plot setupIntegerPlot(TraceList tl, int traceIndex, TraceType type, TraceCorrelation td, int barCount, int barId) {
         List values = tl.getValues(traceIndex);
-        double minValue = Double.POSITIVE_INFINITY;
-        double maxValue = Double.NEGATIVE_INFINITY;
-
-        if (type.isBinary()) {
-            minValue = 0.0;
-            maxValue = 1.0;
-        }
-        CategoryDensityPlot plot = new CategoryDensityPlot(values, -1, td, minValue, maxValue, barCount, barId);
+        CategoryDensityPlot plot = new CategoryDensityPlot(values, -1, td, barCount, barId);
         return plot;
     }
 
@@ -482,7 +475,7 @@ public class DensityPanel extends JPanel implements Exportable {
                         plot = setupIntegerPlot(tl, traceIndex, trace.getTraceType(), td, currentSettings.barCount, barId);
                         barId++;
 
-                    } else if (trace.getTraceType() == TraceType.CATEGORICAL) {
+                    } else if (trace.getTraceType().isCatorical()) {
 
                         plot = setupCategoryPlot(tl, traceIndex, td, categoryDataMap, currentSettings.barCount, barId);
                         barId++;
@@ -501,14 +494,16 @@ public class DensityPanel extends JPanel implements Exportable {
 
                         densityChart.addPlot(plot);
 
-                        if (trace.getTraceType().isOrdinal()) {
-                            densityChart.getXAxis().setAxisFlags(Axis.AT_DATA, Axis.AT_DATA);
+                        if (trace.getTraceType().isDiscrete()) {
+                            densityChart.setXAxis(new DiscreteAxis(true, true));
+                            //densityChart.getXAxis().setManualAxis(0, 1.0, 1.0, 0.0);
 
                             if (trace.getTraceType().isBinary()) {
-                                densityChart.getXAxis().setManualAxis(0, 1.0, 1.0, 0.0);
                                 densityChart.getXAxis().setManualRange(0.0, 1.0);
                                 densityChart.getXAxis().setRange(0.0, 1.0);
                             }
+                        } else {
+                            densityChart.setXAxis(new LinearAxis());
                         }
                     }
                     if (currentSettings.colourBy == ColourByOptions.COLOUR_BY_TRACE || currentSettings.colourBy == ColourByOptions.COLOUR_BY_ALL) {

@@ -55,15 +55,42 @@ public enum TraceType {
         return type;
     }
 
+    /**
+     * is the data type numerical
+     * @return
+     */
     public boolean isNumber() {
         return getTypeClass() == Double.class || getTypeClass() == Integer.class;
     }
+
+    /**
+     * is the datatype ordinal (integer or binary)
+     * @return
+     */
     public boolean isOrdinal() {
         return getTypeClass() == Integer.class;
     }
-    public boolean isBinary() {
-        return getTypeClass() == Integer.class;
+
+    /**
+     * is the datatype discrete (ordinal or categorical)
+     * @return
+     */
+    public boolean isDiscrete() {
+        return isOrdinal() || isCatorical();
     }
+
+    /**
+     * is the datatype binary
+     * @return
+     */
+    public boolean isBinary() {
+        return this == BINARY;
+    }
+
+    /**
+     * is the datatype categorical
+     * @return
+     */
     public boolean isCatorical() {
         return getTypeClass() == String.class;
     }

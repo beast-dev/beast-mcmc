@@ -35,9 +35,9 @@ import java.util.logging.Logger;
 
 /**
  * A generic scale operator for use with a multi-dimensional parameters.
- * Either scale all dimentions at once or scale one dimention at a time.
+ * Either scale all dimensions at once or scale one dimension at a time.
  * An optional bit vector and a threshold is used to vary the rate of the individual dimentions according
- * to their on/off status. For example a threshold of 1 means pick only "on" dimentions.
+ * to their on/off status. For example a threshold of 1 means pick only "on" dimensions.
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -113,7 +113,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
         } else if (scaleAll) {
             // update all dimensions
             // hasting ratio is dim-2 times of 1dim case. would be nice to have a reference here
-            // for the proof. It is supposed to be somewhere in an Alexei/Nicholes article.
+            // for the proof. It is supposed to be somewhere in an Alexei/Nicholls article.
             if (degreesOfFreedom > 0)
                 // For parameters with non-uniform prior on only one dimension
                 logq = -degreesOfFreedom * Math.log(scale);

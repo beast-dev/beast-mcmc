@@ -28,6 +28,7 @@ import dr.math.GammaFunction;
 import dr.math.UnivariateFunction;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.special.Beta;
+import org.apache.commons.math.distribution.*;;
 
 /**
  * @author Trevor Bedford
@@ -37,7 +38,7 @@ public class NegativeBinomialDistribution implements Distribution {
 
     double mean;
     double alpha;
-
+   
     public NegativeBinomialDistribution(double mean, double alpha) {
         this.mean = mean;
         this.alpha = alpha;
@@ -46,7 +47,7 @@ public class NegativeBinomialDistribution implements Distribution {
     public double pdf(double x) {
         return pdf(x, mean, alpha);
     }
-
+    
     public double logPdf(double x) {
         return logPdf(x, mean, alpha);
     }
@@ -56,8 +57,17 @@ public class NegativeBinomialDistribution implements Distribution {
     }
 
     public double quantile(double y) {
-        // TB - I'm having trouble implementing this
-        return Double.NaN;
+    	// TB - I'm having trouble implementing this
+    	// LM - here's a first stab. Pending resolving discretisation issues.
+    	int theta = (int) Math.ceil(1.0 / alpha);
+    	double p = theta / (theta + mean);
+    	int N = (int) Math.ceil(theta + y);
+    	BinomialDistributionImpl binom = new org.apache.commons.math.distribution.BinomialDistributionImpl(N, p);
+    	try {
+			return 1-binom.cumulativeProbability(Math.ceil(theta-1));
+		} catch (MathException e) {
+			return Double.NaN;
+		}
     }
 
     public double mean() {
@@ -106,7 +116,7 @@ public class NegativeBinomialDistribution implements Distribution {
 
     public static void main(String[] args) {
         System.out.println("Test negative binomial");
-        System.out.println("Mean 5, sd 5, x 5, pdf 0.074487, logPdf -2.59713");
+        System.out.println("Mean 5, sd 5, x 5, pdf 0.074487, logPdf -2.59713, quantile 0.6395149");
 
         double mean = 5;
         double stdev = 5;
@@ -116,6 +126,7 @@ public class NegativeBinomialDistribution implements Distribution {
         NegativeBinomialDistribution dist = new NegativeBinomialDistribution(5, alpha);
         System.out.println("pdf = " + dist.pdf(5));
         System.out.println("logPdf = " + dist.logPdf(5));
+        System.out.println("quantile= " + dist.quantile(5));
     }
 
 }

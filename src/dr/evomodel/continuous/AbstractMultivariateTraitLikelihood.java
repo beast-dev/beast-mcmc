@@ -584,6 +584,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             storedValidLogLikelihoods = validLogLikelihoods;
             validLogLikelihoods = tmp2;
         }
+        updateRestrictedNodePartials = true; // TODO remove or cache?  Caching is still not working, see IMTL.restoreState()
     }
 
     protected void acceptState() {
@@ -1095,6 +1096,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected int dim;
 
     protected boolean updateRestrictedNodePartials = true;
-    protected Map<BitSet, RestrictedPartials> restrictedPartialsMap;
+    protected boolean savedUpdateRestrictedNodePartials;
+//    protected Map<BitSet, RestrictedPartials> restrictedPartialsMap;
 }
 

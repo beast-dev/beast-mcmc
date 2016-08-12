@@ -1000,6 +1000,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             System.arraycopy(lowerPrecisionCache, 0, storedLowerPrecisionCache, 0, lowerPrecisionCache.length);
             System.arraycopy(logRemainderDensityCache, 0, storedLogRemainderDensityCache, 0, logRemainderDensityCache.length);
         }
+
+//        savedUpdateRestrictedNodePartials = updateRestrictedNodePartials;
+//
+//        if (clampList != null) {
+//            savedClampList = new HashMap<BitSet, RestrictedPartials>(clampList);
+//        }
+//
+//        if (nodeToClampMap != null) {
+//            savedNodeToClampMap = new HashMap<NodeRef, RestrictedPartials>(nodeToClampMap);
+//        }
     }
 
     public void restoreState() {
@@ -1025,6 +1035,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             storedLogRemainderDensityCache = logRemainderDensityCache;
             logRemainderDensityCache = tmp;
         }
+
+//        updateRestrictedNodePartials = savedUpdateRestrictedNodePartials;
+//
+//        if (savedClampList != null) {
+//            clampList = savedClampList;
+//        }
+//
+//        if (savedNodeToClampMap != null) {
+//            nodeToClampMap = savedNodeToClampMap;
+//        }
     }
 
 
@@ -1635,10 +1655,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         System.err.println("Added a CLAMP!");
     }
 
-    protected boolean clampsKnown = false;
-//    private List<NodeClamp> clampList = null;
+//    protected boolean clampsKnown = false;
     protected Map<BitSet, RestrictedPartials> clampList = null;
+//    protected Map<BitSet, RestrictedPartials> savedClampList;
     protected Map<NodeRef, RestrictedPartials> nodeToClampMap = null;
+//    protected Map<NodeRef, RestrictedPartials> savedNodeToClampMap;
 
     private int partialsCount;
     private int spareOffset;

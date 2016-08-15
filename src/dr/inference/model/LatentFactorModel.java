@@ -328,14 +328,21 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 answer[i * p + j] = sum;
             }
         } else {
+            for (int i = 0; i < answer.length; i++) {
+                answer[i] = 0;
+            }
             for (int i = 0; i < n; i++) {
-                for (int j = 0; j < p; j++) {
-                    if ((changed[i][j] == true && continuous.getParameterValue(i) != 0) || newModel) {
-                        double sum = 0;
-                        for (int k = 0; k < dim; k++)
-                            sum += Left.getParameterValue(i, k) * Right.getParameterValue(k, j);
-                        answer[i * p + j] = sum;
-                        //changed[i][j]=false;
+                for (int k = 0; k < dim; k++){
+                    if (Left.getParameterValue(i, k) != 0){
+                        for (int j = 0; j < p; j++) {
+                            if ((changed[i][j] == true && continuous.getParameterValue(i) != 0) || newModel) {
+                                double sum = 0;
+
+                                sum += Left.getParameterValue(i, k) * Right.getParameterValue(k, j);
+                                answer[i * p + j] += sum;
+                                //changed[i][j]=false;
+                            }
+                        }
                     }
                 }
             }

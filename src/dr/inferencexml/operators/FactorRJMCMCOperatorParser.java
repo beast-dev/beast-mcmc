@@ -1,6 +1,7 @@
 package dr.inferencexml.operators;
 
 import dr.inference.distribution.DeterminentalPointProcessPrior;
+import dr.inference.distribution.RowDimensionPoissonPrior;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.operators.BitFlipOperator;
@@ -38,11 +39,12 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
         BitFlipOperator sparsityOperator = (BitFlipOperator) xo.getChild(BitFlipOperator.class);
         LoadingsGibbsTruncatedOperator loadingsOperator = (LoadingsGibbsTruncatedOperator) xo.getChild(LoadingsGibbsTruncatedOperator.class);
         FactorTreeGibbsOperator factorOperator = (FactorTreeGibbsOperator) xo.getChild(FactorTreeGibbsOperator.class);
+        RowDimensionPoissonPrior rowPrior = (RowDimensionPoissonPrior) xo.getChild(RowDimensionPoissonPrior.class);
         double sizeParameter = xo.getDoubleAttribute(SIZE_PARAMETER);
 
 
 
-        return new FactorRJMCMCOperator(weight, sizeParameter, chainLength, factors, loadings, cutoffs, loadingsSparcity, LFM, DPP, loadingsOperator, factorOperator, sparsityOperator);
+        return new FactorRJMCMCOperator(weight, sizeParameter, chainLength, factors, loadings, cutoffs, loadingsSparcity, LFM, DPP, loadingsOperator, factorOperator, sparsityOperator, rowPrior);
     }
 
     @Override
@@ -63,6 +65,7 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
                     new ElementRule(AdaptableSizeFastMatrixParameter.class)}),
             new ElementRule(LOADINGS_SPARSITY, new XMLSyntaxRule[]{
                     new ElementRule(AdaptableSizeFastMatrixParameter.class)}),
+            new ElementRule(RowDimensionPoissonPrior.class),
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newIntegerRule(CHAIN_LENGTH),
             AttributeRule.newDoubleRule(SIZE_PARAMETER),

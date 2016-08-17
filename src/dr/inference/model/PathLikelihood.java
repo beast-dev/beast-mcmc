@@ -190,14 +190,14 @@ public class PathLikelihood implements Likelihood {
 
         public double getDoubleValue() {
             // Remove pseudo-densities
-            double sum=0;
+            double totalLikelihoodCorrection = 0;
             if(thresholdSofteners!=null){
                 for(SoftThresholdLikelihood threshold:thresholdSofteners){
-                    sum+=threshold.getLikelihoodCorrection();
+                    totalLikelihoodCorrection += threshold.getLikelihoodCorrection();
                 }
             }
 
-            double logDensity = source.getLogLikelihood() - destination.getLogLikelihood()+sum;
+            double logDensity = source.getLogLikelihood() - destination.getLogLikelihood() + totalLikelihoodCorrection;
             if (pseudoSource != null) {
                 logDensity -= pseudoSource.getLogLikelihood();
             }

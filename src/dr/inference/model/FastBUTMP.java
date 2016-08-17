@@ -40,7 +40,7 @@ public class FastBUTMP extends FastMatrixParameter {
 //    }
 
     public FastBUTMP(String name, int rows, int cols) {
-        super(name, cols, rows);
+        super(name, cols, rows, 1);
 
 
         boolean diagonalRestriction=false;

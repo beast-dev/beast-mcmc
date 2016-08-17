@@ -1,4 +1,4 @@
-                    BEAST v1.8.3 2002-2016
+                    BEAST v1.8.4 2002-2016
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,8 +17,34 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 13th February 2016
+Last updated: a.rambaut@ed.ac.uk - 17th June 2016
 All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
+
+================================================================================
+
+Version 1.8.4 released 17th June 2016
+
+    New Features:
+        New structured list of citations printed to screen before running.
+        Option ('-citation_file') to write citation list to file.
+        Option in BEAUti Priors panel to set parameters to 'Fixed Value'
+
+	Bug Fixes:
+	    Issue 808: Set autoOptimize to false in the randomWalkOperator on 
+	               Pagel's lambda
+	    Issue 806: SRD06 in BEAUTi selecting incorrect options.
+	    Issue 799: Relative rate parameters for partitions were not being 
+	               created. All partitions within a clock model have a 
+	               relative rate if their substitution models are unlinked.
+	    Issue 798: Calculating pairwise distances was slow for big data sets -
+	               removed this (but initial values no longer suggested based
+	               on data).
+	    Issue 797: Removed 'meanRate' from Priors tab in BEAUti.
+	    Issue 794: Running with empty command line causes error.
+	    Issue 792: Check to see that the same likelihood isn't included multiple
+                   times into the density.
+	    
+
 
 ================================================================================
 

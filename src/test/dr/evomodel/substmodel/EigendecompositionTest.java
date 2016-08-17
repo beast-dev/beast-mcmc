@@ -25,9 +25,9 @@
 
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.ComplexSubstitutionModel;
+import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.GeneralDataType;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;

@@ -27,8 +27,8 @@ package dr.app.tracer.traces;
 
 import dr.inference.trace.TraceAnalysis;
 import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
+import dr.inference.trace.TraceType;
 import jam.framework.Exportable;
 import jam.table.TableRenderer;
 
@@ -204,7 +204,9 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
     class StatisticsModel extends AbstractTableModel {
 
-        String[] rowNames = {MEAN_ROW, STDEV_ROW, STDEV, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, GEOMETRIC_MEAN_ROW,
+        String[] rowNamesNumbers = {MEAN_ROW, STDEV_ROW, STDEV, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, GEOMETRIC_MEAN_ROW,
+                LOWER_UPPER_ROW, ACT_ROW, ESS_ROW};
+        String[] rowNamesCategorical = {MEAN_ROW, STDEV_ROW, STDEV, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, CRED_SET_ROW,
                 LOWER_UPPER_ROW, ACT_ROW, ESS_ROW};
 
         public StatisticsModel() {
@@ -219,7 +221,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         }
 
         public int getRowCount() {
-            return rowNames.length;
+            return rowNamesNumbers.length;
         }
 
         public Object getValueAt(int row, int col) {
@@ -241,12 +243,10 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             }
 
             if (col == 0) {
-                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.DOUBLE && row == 6) {
-                    return CRED_SET_ROW;
-//                } else if (tc != null && tc.getTraceType() != TraceFactory.TraceType.DOUBLE && row == 6) {
-//                    return INCRED_SET_ROW;
+                if (tc != null && !tc.getTraceType().isNumber()) {
+                    return rowNamesCategorical[row];
                 } else {
-                    return rowNames[row];
+                    return rowNamesNumbers[row];
                 }
             }
 
@@ -255,71 +255,65 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             if (tc != null) {
                 if (row != 0 && !tc.isValid()) return "n/a";
 
-                switch (row) {
-                    case 0:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
-                            return "n/a";
-                        } else {
+                if (tc.getTraceType().isNumber()) {
+                    switch (row) {
+                        case 0:
                             value = tc.getMean();
-                        }
-                        break;
-                    case 1:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
-                            return "n/a";
-                        } else {
+                            break;
+                        case 1:
                             value = tc.getStdErrorOfMean();
-                        }
-                        break;
-                    case 2:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
-                            return "n/a";
-                        } else {
+                            break;
+                        case 2:
                             value = tc.getStdError();
-                        }
-                        break;
-                    case 3:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
-                            return "n/a";
-                        } else {
+                            break;
+                        case 3:
                             value = tc.getVariance();
-                        }
-                        break;
-                    case 4:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
-                            return "n/a";
-                        } else {
+                            break;
+                        case 4:
                             value = tc.getMedian();
-                        }
-                        break;
-                    case 5:
-                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-                            return "n/a";
-                        } else {
+                            break;
+                        case 5:
                             return tc.getMode();
-                        }
-                    case 6:
-                        if (!tc.hasGeometricMean()) return "n/a";
-                        value = tc.getGeometricMean();
-                        break;
-                    case 7:
-                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                        case 6:
+                            if (!tc.hasGeometricMean()) return "n/a";
+                            value = tc.getGeometricMean();
+                            break;
+                        case 7:
                             return "[" + TraceAnalysis.formattedNumber(tc.getLowerHPD()) + ", " + TraceAnalysis.formattedNumber(tc.getUpperHPD()) + "]";
-                        } else {
-                            return tc.printCredibleSet();
-                        }
-                    case 8:
-                        value = tc.getACT();
-                        break;
-                    case 9:
-                        value = tc.getESS();
-                        break;
-                    case 10:
-                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                        case 8:
+                            value = tc.getACT();
+                            break;
+                        case 9:
+                            value = tc.getESS();
+                            break;
+                        case 10:
                             return "-";
-                        } else {
+                    } // END switch
+                } else{
+                    switch (row) {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                            return "n/a";
+                        case 6:
+                            if (!tc.hasGeometricMean()) return "n/a";
+                            value = tc.getGeometricMean();
+                            break;
+                        case 7:
+                            return tc.printCredibleSet();
+                        case 8:
+                            value = tc.getACT();
+                            break;
+                        case 9:
+                            value = tc.getESS();
+                            break;
+                        case 10:
                             return tc.printInCredibleSet();
-                        }
 
+                    }
                 }
             } else {
                 return "-";
@@ -340,7 +334,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         columnName += ": ";
                     }
                 }
-                if (traceNames.size() > 1) {
+                if (traceNames.size() > 0) {
                     columnName += traceNames.get(n2);
                 }
                 return columnName;

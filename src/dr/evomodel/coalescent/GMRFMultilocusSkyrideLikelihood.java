@@ -34,11 +34,15 @@ import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,7 +50,8 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood implements MultiLociTreeSet, CoalescentIntervalProvider {
+public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
+        implements MultiLociTreeSet, CoalescentIntervalProvider, Citable {
 
     public static final boolean DEBUG = false;
 
@@ -119,7 +124,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         if (betaParameter != null) {
             addVariable(betaParameter);
             skygridHelper = new SkygridCovariateHelper();
-        }else{
+        } else {
             skygridHelper = new SkygridHelper();
         }
         if (phiParameter != null) {
@@ -202,9 +207,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         this.numGridPoints = gridPoints.length;
         this.cutOff = gridPoints[numGridPoints - 1];
 
-        if(lastObservedIndexParameter != null){
+        if (lastObservedIndexParameter != null) {
             lastObservedIndex = new int[lastObservedIndexParameter.size()];
-            for(int i=0; i < lastObservedIndexParameter.size(); i++) {
+            for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
                 this.lastObservedIndex[i] = (int) lastObservedIndexParameter.get(i).getParameterValue(0);
             }
         }
@@ -233,13 +238,13 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         this.ploidyFactors = ploidyFactorsParameter;
         this.covariates = covariates;
         if (covariates != null) {
-            for (MatrixParameter cov : covariates){
+            for (MatrixParameter cov : covariates) {
                 addVariable(cov);
             }
         }
         this.covPrecParameters = covPrecParameters;
         if (covPrecParameters != null) {
-            for (Parameter covPrec : covPrecParameters){
+            for (Parameter covPrec : covPrecParameters) {
                 addVariable(covPrec);
             }
         }
@@ -278,7 +283,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                     addVariable(betaParam);
                 }
             }
-            if(lastObservedIndexParameter != null){
+            if (lastObservedIndexParameter != null) {
                 setupGMRFWeightsForMissingCov();
                 skygridHelper = new SkygridMissingCovariateHelper();
             } else {
@@ -359,11 +364,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     }
 
     public void initializationReport() {
-        System.out.println("Creating a GMRF smoothed skyride model for multiple loci:");
+        System.out.println("Creating a GMRF smoothed skyride model for multiple loci (SkyGrid)");
         System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
-        System.out.println("\tIf you publish results using this model, please reference: ");
-        System.out.println("\t\tMinin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471, and");
-        System.out.println("\t\tGill, Lemey, Faria, Rambaut, Shapiro and Suchard (2013) Molecular Biology and Evolution, 30, 713-724.");
     }
 
     public void wrapSetupIntervals() {
@@ -560,7 +562,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
                 }
 
-            // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
+                // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
 
             } else {
                 while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
@@ -711,7 +713,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         //Set up the weight Matrix
         weightMatricesForMissingCov = new ArrayList<SymmTridiagMatrix>();
 
-        for (int i = 0; i < covPrecParameters.size(); i++){
+        for (int i = 0; i < covPrecParameters.size(); i++) {
             double[] offdiag = new double[fieldLength - lastObservedIndex[i] - 1];
             double[] diag = new double[fieldLength - lastObservedIndex[i]];
 
@@ -741,11 +743,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             a.set(i, i, a.get(i, i) * precision);
             a.set(i + 1, i, a.get(i + 1, i) * precision);
         }
-        a.set(fieldLength -lastObs - 1, fieldLength - lastObs - 1,
+        a.set(fieldLength - lastObs - 1, fieldLength - lastObs - 1,
                 a.get(fieldLength - lastObs - 1, fieldLength - lastObs - 1) * precision);
         return a;
     }
-
 
 
     private List<Tree> treeList;
@@ -814,11 +815,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     public IntervalType getCoalescentIntervalType(int i) {
         return null;
-    }*/    
+    }*/
 
-    class SkygridHelper{
+    class SkygridHelper {
 
-        public SkygridHelper() { }
+        public SkygridHelper() {
+        }
 
         protected void updateGammaWithCovariates(DenseVector currentGamma) {
             // Do nothing
@@ -828,7 +830,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             return 0.0;
         }
 
-        public double getLogFieldLikelihood(){
+        public double getLogFieldLikelihood() {
 
             if (!intervalsKnown) {
                 //intervalsKnown -> false when handleModelChanged event occurs in super.
@@ -861,7 +863,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     class SkygridCovariateHelper extends SkygridHelper {
 
-        public SkygridCovariateHelper() { }
+        public SkygridCovariateHelper() {
+        }
 
         @Override
         protected void updateGammaWithCovariates(DenseVector currentGamma) {
@@ -945,7 +948,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     class SkygridMissingCovariateHelper extends SkygridCovariateHelper {
 
-        public SkygridMissingCovariateHelper() { }
+        public SkygridMissingCovariateHelper() {
+        }
 
         @Override
         protected double handleMissingValues() {
@@ -957,7 +961,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
             double currentLike = 0.0;
 
-            for(int i = 0; i < covPrecParameters.size(); i++){
+            for (int i = 0; i < covPrecParameters.size(); i++) {
 
                 numMissing = fieldLength - lastObservedIndex[i];
                 tempVectMissingCov = new DenseVector(numMissing);
@@ -966,23 +970,63 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                 missingCovQ = getScaledWeightMatrixForMissingCov(covPrecParameters.get(i).getParameterValue(0), i,
                         lastObservedIndex[i]);
 
-                for(int j = 0; j < numMissing; j++) {
+                for (int j = 0; j < numMissing; j++) {
                     // System.err.println("covariate.get(i).getSize(): " + covariates.get(i).getSize());
                     // System.err.println("lastObservedIndex: " + lastObservedIndex);
                     // System.err.println("j: " + j);
                     // System.err.println("getParameterValue(0, lastObservedIndex-1): " + covariates.get(i).getParameterValue(0,lastObservedIndex-1));
                     tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, lastObservedIndex[i] + j) -
-                            covariates.get(i).getParameterValue(0, lastObservedIndex[i]-1));
+                            covariates.get(i).getParameterValue(0, lastObservedIndex[i] - 1));
                 }
 
                 missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);
                 // System.err.println("missingCovQ: " + missingCovQ.get(0,0));
-                currentLike += 0.5*(numMissing)*Math.log(covPrecParameters.get(i).getParameterValue(0))
-                        -0.5*tempVectMissingCov.dot(tempVectMissingCov2);
+                currentLike += 0.5 * (numMissing) * Math.log(covPrecParameters.get(i).getParameterValue(0))
+                        - 0.5 * tempVectMissingCov.dot(tempVectMissingCov2);
             }
             return currentLike;
         }
 
     }
-}
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Skyride coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
+                    new Author[]{
+                            new Author("MS", "Gill"),
+                            new Author("P", "Lemey"),
+                            new Author("NR", "Faria"),
+                            new Author("A", "Rambaut"),
+                            new Author("B", "Shapiro"),
+                            new Author("MA", "Suchard")
+                    },
+                    "Improving Bayesian population dynamics inference: a coalescent-based model for multiple loci",
+                    2013,
+                    "Mol Biol Evol",
+                    30, 713, 724
+            ),
+            new Citation(
+                    new Author[]{
+                            new Author("VN", "Minin"),
+                            new Author("EW", "Bloomquist"),
+                            new Author("MA", "Suchard")
+                    },
+                    "Smooth skyride through a rough skyline: Bayesian coalescent-based inference of population dynamics",
+                    2008,
+                    "Mol Biol Evol",
+                    25, 1459, 1471,
+                    "10.1093/molbev/msn090"
+            )
+        );
+    }
+}

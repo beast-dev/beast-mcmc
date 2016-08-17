@@ -26,8 +26,17 @@
 package dr.app.tools;
 
 
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.parsers.GammaSiteModelParser;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
+import dr.evomodel.substmodel.aminoacid.JTT;
+import dr.evomodel.substmodel.aminoacid.LG;
+import dr.evomodel.substmodel.aminoacid.WAG;
+import dr.evomodel.substmodel.codon.GY94CodonModel;
+import dr.evomodel.substmodel.nucleotide.GTR;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
@@ -45,25 +54,18 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-//import dr.evomodel.sitemodel.GammaSiteModel;
-//import dr.evomodel.sitemodel.SiteModel;
-//import dr.evomodel.substmodel.*;
-import dr.evomodel.substmodel.JTT;
-import dr.evomodel.substmodel.LG;
-import dr.evomodel.substmodel.WAG;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
+import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.Parameter;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
 
 
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.*;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 
 import java.io.*;
 import java.util.*;

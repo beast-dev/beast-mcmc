@@ -32,10 +32,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
-    public final Object parseXMLObject(XMLObject xo, String id, ObjectStore store, boolean strictXML)
+    public final Object parseXMLObject(XMLObject xo, String id, Map<String, XMLObject> store, boolean strictXML)
             throws XMLParseException {
 
         this.store = store;
@@ -197,7 +198,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         return null;
     }
 
-    public final ObjectStore getStore() {
+    public final Map<String, XMLObject> getStore() {
         return store;
     }
 
@@ -309,5 +310,5 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         return (rules != null && rules.length > 0);
     }
 
-    private ObjectStore store = null;
+    private Map<String, XMLObject>  store = null;
 }

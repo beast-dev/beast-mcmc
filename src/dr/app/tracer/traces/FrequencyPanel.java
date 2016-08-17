@@ -28,7 +28,7 @@ package dr.app.tracer.traces;
 import dr.app.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import dr.inference.trace.TraceList;
 import jam.framework.Exportable;
 
@@ -173,7 +173,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
         if (trace != null) {
             Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
             List values = traceList.getValues(traceIndex);
-            if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+            if (trace.getTraceType() == TraceType.REAL) {
                 plot = new FrequencyPlot(values, currentSettings.minimumBins, td);
 
                 if (td != null) {
@@ -186,7 +186,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 binsCombo.setVisible(true);
                 showValuesCheckBox.setVisible(false);
 
-            } else if (trace.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            } else if (trace.getTraceType() == TraceType.ORDINAL || trace.getTraceType() == TraceType.BINARY) {
                 plot = new FrequencyPlot(values, -1, td);
 
                 if (td != null) {
@@ -199,7 +199,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 binsCombo.setVisible(false);
                 showValuesCheckBox.setVisible(true);
 
-            } else if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
+            } else if (trace.getTraceType() == TraceType.CATEGORICAL) {
                 List<Double> intData = new ArrayList<Double>();
                 for (int v = 0; v < values.size(); v++) {
                     int index = td.getIndex(values.get(v).toString());

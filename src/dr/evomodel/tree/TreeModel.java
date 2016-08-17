@@ -30,6 +30,9 @@ import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.inference.model.*;
 import dr.util.Attributable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -42,7 +45,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MultivariateTraitTree {
+public class TreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
 
     //
     // Public stuff
@@ -1022,6 +1025,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
             throw new RuntimeException("only leaves can be used with getLeafHeightParameter");
         }
 
+        isTipDateSampled = true;
+
         return nodes[node.getNumber()].heightParameter;
     }
 
@@ -1488,4 +1493,53 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
 
     private boolean hasRates = false;
     private boolean hasTraits = false;
+    private boolean isTipDateSampled = false;
+
+    public boolean isTipDateSampled() {
+        return isTipDateSampled;
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Sampling tip dates model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        if (isTipDateSampled()) {
+            return Arrays.asList(new Citation(
+                            new Author[]{
+                                    new Author("B", "Shapiro"),
+                                    new Author("SYW", "Ho"),
+                                    new Author("AJ", "Drummond"),
+                                    new Author("MA", "Suchard"),
+                                    new Author("OG", "Pybus"),
+                                    new Author("A", "Rambaut"),
+                            },
+                            "A Bayesian phylogenetic method to estimate unknown sequence ages",
+                            2010,
+                            "Mol Biol Evol",
+                            28,
+                            879, 887,
+                            "10.1093/molbev/msq262"
+                    ),
+                    new Citation(
+                            new Author[]{
+                                    new Author("AJ", "Drummond"),
+                            },
+                            "PhD Thesis",
+                            2002,
+                            "University of Auckland",
+                            ""
+                    ));
+        } else {
+            return  Collections.EMPTY_LIST;
+        }
+    }
+
 }

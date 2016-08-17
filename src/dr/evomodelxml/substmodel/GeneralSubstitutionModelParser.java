@@ -1,7 +1,7 @@
 /*
  * GeneralSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,11 +25,12 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
+import dr.evolution.datatype.DataType;
+import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
@@ -49,15 +50,8 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES = "frequencies";
     public static final String INDICATOR = "rateIndicator";
 
-    public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
-    public static final String SVS_COMPLEX_SUBSTITUTION_MODEL = "svsComplexSubstitutionModel";
-
     public String getParserName() {
         return GENERAL_SUBSTITUTION_MODEL;
-    }
-
-    public String[] getParserNames() {
-        return new String[]{getParserName(), SVS_GENERAL_SUBSTITUTION_MODEL, SVS_COMPLEX_SUBSTITUTION_MODEL};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -99,7 +93,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         int states = dataType.getStateCount();
         Logger.getLogger("dr.evomodel").info("  General Substitution Model (stateCount=" + states + ")");
 
-        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO) || (cxo.hasAttribute(RELATIVE_TO) && cxo.getIntegerAttribute(RELATIVE_TO) > 0);     
+        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO) || (cxo.hasAttribute(RELATIVE_TO) && cxo.getIntegerAttribute(RELATIVE_TO) > 0);
 
         int nonReversibleRateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount());
         int reversibleRateCount = (nonReversibleRateCount / 2);
@@ -129,14 +123,29 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
                         dataType.getStateCount(), !isNonReversible);
                 }
+
             }
 
             if (isNonReversible) {
+//                if (xo.hasChildNamed(ROOT_FREQ)) {
+//                    cxo = xo.getChild(ROOT_FREQ);
+//                    FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+//
+//                    if (dataType != rootFreq.getDataType()) {
+//                        throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
+//                    }
+//
+//                    Logger.getLogger("dr.evomodel").info("  Using BSSVS Complex Substitution Model");
+//                    return new SVSComplexSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
+//
+//                } else {
+//                    throw new XMLParseException("Non-reversible model missing " + ROOT_FREQ + " element");
+//                }
                 Logger.getLogger("dr.evomodel").info("  Using BSSVS Complex Substitution Model");
                 return new SVSComplexSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
             } else {
                 Logger.getLogger("dr.evomodel").info("  Using BSSVS General Substitution Model");
-                return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
+                return new SVSGeneralSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
             }
 
 
@@ -178,7 +187,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                 }
             }
 
-            return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
+            return new GeneralSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, relativeTo);
         }
     }
 
@@ -213,6 +222,6 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }, true),
-            AttributeRule.newBooleanRule(ComplexSubstitutionModelParser.RANDOMIZE, true),
+            AttributeRule.newBooleanRule(ComplexSubstitutionModelParser.RANDOMIZE,true),
     };
 }

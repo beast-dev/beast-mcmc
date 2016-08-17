@@ -26,11 +26,7 @@
 package dr.evomodel.epidemiology.casetocase;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import dr.app.tools.NexusExporter;
 import dr.evolution.tree.FlexibleNode;
@@ -43,7 +39,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
+import dr.oldevomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
@@ -1122,12 +1118,25 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(new Author[]{new Author("M", "Hall"), new Author("A", "Rambaut")},
-                Citation.Status.IN_PREPARATION));
-        return citations;
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
+
+    @Override
+    public String getDescription() {
+        return "Case to Case Transmission Tree model";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
+                        new Author[]{new Author("M", "Hall"), new Author("M", "Woolhouse"), new Author("A", "Rambaut")},
+            "Epidemic Reconstruction in a Phylogenetics Framework: Transmission Trees as Partitions of the Node Set",
+            2016, "PLOS Comput Biol",
+                11,
+                0, 0, "10.1371/journal.pcbi.1004613",
+                Citation.Status.PUBLISHED));
+}
 
     // **************************************************************
     // TreeTraitProvider IMPLEMENTATION

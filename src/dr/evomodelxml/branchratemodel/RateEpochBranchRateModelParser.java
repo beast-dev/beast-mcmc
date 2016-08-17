@@ -52,7 +52,7 @@ public class RateEpochBranchRateModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Logger.getLogger("dr.evomodel").info("Using multi-epoch rate model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing multi-epoch rate model.");
 
         List<Epoch> epochs = new ArrayList<Epoch>();
 

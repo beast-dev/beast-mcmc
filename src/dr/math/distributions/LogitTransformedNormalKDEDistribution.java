@@ -1,7 +1,7 @@
 /*
  * LogitTransformedNormalKDEDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -40,46 +40,57 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
 
     //the samples should not already be logit transformed (the logit transformation is done in this class)
     public LogitTransformedNormalKDEDistribution(Double[] sample) {
-    	this(sample, null, null, null);
+        this(sample, 1.0, null, null, null);
+    }
+
+    public LogitTransformedNormalKDEDistribution(Double[] sample, Double upperLimit) {
+        this(sample, upperLimit, null, null, null);
     }
 
     public LogitTransformedNormalKDEDistribution(Double[] sample, int n) {
-    	this(sample, null, null, null, 3.0, n);
+        this(sample, 1.0, null, null, null, 3.0, n);
     }
 
-    public LogitTransformedNormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
-        this(sample, lowerBound, upperBound, bandWidth, 3.0, MINIMUM_GRID_SIZE);
+    public LogitTransformedNormalKDEDistribution(Double[] sample, Double upperLimit, int n) {
+        this(sample, upperLimit, null, null, null, 3.0, n);
     }
 
-    public LogitTransformedNormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth,
+    public LogitTransformedNormalKDEDistribution(Double[] sample, Double upperLimit, Double lowerBound, Double upperBound, Double bandWidth) {
+        this(sample, upperLimit, lowerBound, upperBound, bandWidth, 3.0, MINIMUM_GRID_SIZE);
+    }
+
+    public LogitTransformedNormalKDEDistribution(Double[] sample, Double upperLimit, Double lowerBound, Double upperBound, Double bandWidth,
                                                  int n) {
-        this(sample, lowerBound, upperBound, bandWidth, 3.0, n);
+        this(sample, upperLimit, lowerBound, upperBound, bandWidth, 3.0, n);
     }
 
-    public LogitTransformedNormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth, double cut, int n) {
+    public LogitTransformedNormalKDEDistribution(Double[] sample, Double upperLimit, Double lowerBound, Double upperBound, Double bandWidth, double cut, int n) {
 
         super(sample, lowerBound, upperBound, bandWidth);
         //transform the data to the logit scale and store in logSample
+        this.upperLimit = upperLimit;
         if (DEBUG) {
             System.out.println("Creating the KDE in logit space");
             System.out.println("lowerBound = " + lowerBound);
             System.out.println("upperBound = " + upperBound);
+            System.out.println("upperlimit = " + upperLimit);
         }
 
         this.logitSample = new double[sample.length];
         for (int i = 0; i < logitSample.length; i++) {
-        	this.logitSample[i] = Math.log(sample[i] / (1.0 - sample[i]));
+            //this.logitSample[i] = Math.log(sample[i] / (1.0 - sample[i]));
+            this.logitSample[i] = Math.log(sample[i] / (upperLimit - sample[i]));
         }
         //keep a backup copy of the samples in normal space
         this.backupSample = new double[sample.length];
         for (int i = 0; i < sample.length; i++) {
-        	this.backupSample[i] = sample[i];
+            this.backupSample[i] = sample[i];
         }
         //overwrite the stored samples, sample.length stays the same
         this.sample = logitSample;
         processBounds(lowerBound, upperBound);
         setBandWidth(bandWidth);
-        
+
         this.gridSize = Math.max(n, MINIMUM_GRID_SIZE);
         if (this.gridSize > MINIMUM_GRID_SIZE) {
             this.gridSize = (int) Math.pow(2, Math.ceil(Math.log(this.gridSize) / Math.log(2.0)));
@@ -95,7 +106,7 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
             System.out.println("from = " + from);
             System.out.println("to = " + to);
         }
-        
+
         lo = from - 4.0 * this.bandWidth;
         up = to + 4.0 * this.bandWidth;
 
@@ -105,7 +116,7 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
         }
 
         densityKnown = false;
-        
+
         //run computeDensity to estimate the KDE on the log scale
         //and afterwards return to the normal scale
         computeDensity();
@@ -234,17 +245,18 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
     }
     
     private void transformEstimator() {
-    	
-    	if (DEBUG) {
+
+        if (DEBUG) {
             System.out.println("\nCreating the KDE in normal space");
             System.out.println("lowerBound = " + lowerBound);
             System.out.println("upperBound = " + upperBound);
+            System.out.println("upperlimit = " + upperLimit);
         }
 
-    	this.sample = backupSample;
-    	//processBounds(lowerBound, upperBound);
+        this.sample = backupSample;
+        //processBounds(lowerBound, upperBound);
         setBandWidth(null);
-        
+
         from = DiscreteStatistics.min(this.sample) - this.cut * this.bandWidth;
         to = DiscreteStatistics.max(this.sample) + this.cut * this.bandWidth;
 
@@ -254,63 +266,63 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
             System.out.println("from = " + from);
             System.out.println("to = " + to);
         }
-        
+
         lo = from - 4.0 * this.bandWidth;
         up = to + 4.0 * this.bandWidth;
-        
+
         if (DEBUG) {
             System.out.println("lo = " + lo);
             System.out.println("up = " + up);
         }
-        
+
         /*if (from < 0.0) {
         	from = 0.0;
         }
         if (lo < 0.0) {
         	lo = 0.0;
         }*/
-        
+
         //make new ordinates for the transformation back to normal space
         //need a backup of the xPoints for the logit scale KDE
         this.backupXPoints = new double[xPoints.length];
         System.arraycopy(xPoints, 0, backupXPoints, 0, xPoints.length);
         makeOrdinates();
-        
+
         int numberOfNegatives = 0;
         if (DEBUG) {
             System.out.println("\nxPoints length = " + xPoints.length);
         }
         for (int i = 0; i < xPoints.length; i++) {
-        	if (xPoints[i] < 0.0) {
-        		numberOfNegatives++;
-        	}
-        	//System.out.println(xPoints[i]);
+            if (xPoints[i] < 0.0) {
+                numberOfNegatives++;
+            }
+            //System.out.println(xPoints[i]);
         }
         if (DEBUG) {
             System.out.println("number of negative xPoints = " + numberOfNegatives);
         }
-        
+
         //the KDE on logit scale is contained in the xPoints and densityPoints arrays
-    	//copy them to finalXPoints and finalDensityPoints
-    	this.finalXPoints = new double[xPoints.length - numberOfNegatives];
-    	System.arraycopy(xPoints, numberOfNegatives, finalXPoints, 0, xPoints.length - numberOfNegatives);
-    	if (DEBUG) {
+        //copy them to finalXPoints and finalDensityPoints
+        this.finalXPoints = new double[xPoints.length - numberOfNegatives];
+        System.arraycopy(xPoints, numberOfNegatives, finalXPoints, 0, xPoints.length - numberOfNegatives);
+        if (DEBUG) {
             for (int i = 0; i < xPoints.length; i++) {
                 System.out.println(backupXPoints[i] + " : " + densityPoints[i]);
             }
             System.out.println("\nfinalXPoints length = " + finalXPoints.length);
         }
 
-    	this.finalDensityPoints = new double[densityPoints.length - numberOfNegatives];
-    	
-    	for (int i = 0; i < finalXPoints.length; i++) {
-    		finalDensityPoints[i] = linearApproximate(backupXPoints, densityPoints, Math.log(finalXPoints[i]/(1.0 - finalXPoints[i])), 0.0, 0.0)*(1.0/(finalXPoints[i]*(1.0-finalXPoints[i])));
-    		if (DEBUG) {
+        this.finalDensityPoints = new double[densityPoints.length - numberOfNegatives];
+
+        for (int i = 0; i < finalXPoints.length; i++) {
+            finalDensityPoints[i] = linearApproximate(backupXPoints, densityPoints, Math.log(finalXPoints[i]/(upperLimit - finalXPoints[i])), 0.0, 0.0)*(1.0/(finalXPoints[i]*(upperLimit-finalXPoints[i])));
+            if (DEBUG) {
                 System.out.println(finalXPoints[i] + "\t" + finalDensityPoints[i]);
             }
-    	}
-    	
-    	//System.exit(0);
+        }
+
+        //System.exit(0);
     	
     }
 
@@ -378,7 +390,7 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
     protected void processBounds(Double lowerBound, Double upperBound) {
         if ((lowerBound != null && lowerBound != Double.NEGATIVE_INFINITY) ||
                 (upperBound != null && upperBound != Double.POSITIVE_INFINITY)) {
-            throw new RuntimeException("LogTransformedNormalKDEDistribution must be unbounded");
+            throw new RuntimeException("LogitTransformedNormalKDEDistribution must be unbounded");
         }
     }
 
@@ -416,45 +428,49 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
     private double lo;
     private double up;
 
+    private double upperLimit;
+
     private boolean densityKnown = false;
 
     public static void main(String[] args) {
 
+        double upperlimit = 3.0;
+
         //Generate a normal distribution, truncated at 0.0
-        Double[] samples = new Double[2000];
+        Double[] samples = new Double[2001];
         NormalDistribution dist = new NormalDistribution(0.5, 0.08);
         for (int i = 0; i < samples.length; i++) {
-            samples[i] = 1.0-Math.abs((Double)dist.nextRandom()-0.5);
+            samples[i] = upperlimit-Math.abs((Double)dist.nextRandom()-0.5);
         }
 
-        //Generate R code for visualisation
+        //Generate R code for visualisation in [0,1]
         System.out.print("par(mfrow=c(2,2))\n\nsamples <- c(");
         for (int i = 0; i < samples.length-1; i++) {
             System.out.print(samples[i] + ",");
         }
         System.out.println(samples[samples.length-1] + ")\n");
-        System.out.println("hist(samples,200,xlim=c(0.5,1.0))\n");
-        System.out.println("plot(density(samples),xlim=c(0.5,1.0))\n");
+        System.out.println("hist(samples,200,xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
+        System.out.println("plot(density(samples),xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
-        LogitTransformedNormalKDEDistribution ltn = new LogitTransformedNormalKDEDistribution(samples);
+        LogitTransformedNormalKDEDistribution ltn = new LogitTransformedNormalKDEDistribution(samples, upperlimit);
         NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
 
         System.out.print("normalKDE <- c(");
-        for (int i = 0; i < 1999; i++) {
-            Double test = 0.0 + ((double)i)/((double)1000);
+        for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
+            Double test = 0.0 + ((double)i)/(1000);
             System.out.print(nKDE.evaluateKernel(test) + ",");
         }
-        System.out.println(nKDE.evaluateKernel(((double)1999)/((double)1000)) + ")\n");
-        System.out.println("index <- seq(0.0,1.999,by=0.001)");
-        System.out.println("plot(index,normalKDE,type=\"l\",xlim=c(0.5,1.0))\n");
+        System.out.println(nKDE.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
+        System.out.println("index <- seq(" + (upperlimit-1) + "," + (upperlimit+1) + ",by=0.001)");
+        System.out.println("plot(index,normalKDE,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
         System.out.print("TransKDE <- c(");
-        for (int i = 0; i < 1999; i++) {
-            Double test = 0.0 + ((double)i)/((double)1000);
+        for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
+            Double test = 0.0 + ((double)i)/(1000);
             System.out.print(ltn.evaluateKernel(test) + ",");
         }
-        System.out.println(ltn.evaluateKernel(((double)1999)/((double)1000)) + ")\n");
-        System.out.println("plot(index,TransKDE,type=\"l\",xlim=c(0.5,1.0))");
+        System.out.println(ltn.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
+        System.out.println("plot(index,TransKDE,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
     }
 

@@ -1,8 +1,8 @@
 package test.dr.evomodel.substmodel;
 
 import test.dr.math.MathTestCase;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.ProductChainFrequencyModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.ProductChainFrequencyModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.math.matrixAlgebra.Vector;
 

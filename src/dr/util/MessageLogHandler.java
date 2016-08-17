@@ -25,12 +25,18 @@
 
 package dr.util;
 
+import java.io.OutputStream;
 import java.util.logging.*;
 
 public class MessageLogHandler extends StreamHandler {
 
 	public MessageLogHandler() {
-		setOutputStream(System.out);
+		this(System.out);
+		setFormatter(new MessageLogFormatter());
+	}
+
+	public MessageLogHandler(OutputStream stream) {
+		setOutputStream(stream);
 		setFormatter(new MessageLogFormatter());
 	}
 

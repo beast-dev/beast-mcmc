@@ -44,6 +44,7 @@ import jam.util.IconUtils;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -123,6 +124,12 @@ public class BeastMain {
                 }
             });
             infoLogger.addHandler(errorHandler);
+
+            if (System.getProperty("citations.filename") != null) {
+                FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+                Handler citationHandler = new MessageLogHandler(citationStream);
+                Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
+            }
 
             logger.setUseParentHandlers(false);
 
@@ -354,6 +361,8 @@ public class BeastMain {
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
 
+                        new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
@@ -549,6 +558,11 @@ public class BeastMain {
         if (arguments.hasOption("dump_every")) {
             long debugWriteEvery = arguments.getLongOption("dump_every");
             System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
+        }
+
+        if (arguments.hasOption("citations_file")) {
+            String debugStateFile = arguments.getStringOption("citations_file");
+            System.setProperty("citations.filename", debugStateFile);
         }
 
         if (useMPI) {
@@ -757,9 +771,7 @@ public class BeastMain {
 
         MathUtils.setSeed(seed);
 
-        System.out.println();
         System.out.println("Random number seed: " + seed);
-        System.out.println();
 
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);

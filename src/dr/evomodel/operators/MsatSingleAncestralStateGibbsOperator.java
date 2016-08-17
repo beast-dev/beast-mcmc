@@ -28,7 +28,7 @@ package dr.evomodel.operators;
 import dr.inference.model.Parameter;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.substmodel.MicrosatelliteModel;
+import dr.oldevomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evolution.tree.NodeRef;
 import dr.inference.operators.GibbsOperator;

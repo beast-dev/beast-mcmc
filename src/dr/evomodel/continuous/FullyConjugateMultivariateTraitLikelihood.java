@@ -40,10 +40,7 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Integrated multivariate trait likelihood that assumes a fully-conjugate prior on the root.
@@ -124,11 +121,12 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
                                                      Model samplingDensity,
                                                      boolean reportAsMultivariate,
                                                      double[] rootPriorMean,
+                                                     List<RestrictedPartials> partials,
                                                      double rootPriorSampleSize,
                                                      boolean reciprocalRates) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, driftModels, optimalValues, strengthOfSelection, samplingDensity, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, driftModels, optimalValues, strengthOfSelection, samplingDensity, partials, reportAsMultivariate, reciprocalRates);
 
         // fully-conjugate multivariate normal with own mean and prior sample size
         this.rootPriorMean = rootPriorMean;
@@ -661,6 +659,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //        sb.append(this.g)
 //        System.err.println("Hello");
         sb.append("Tree:\n");
+        sb.append(getId()).append("\t");
         sb.append(treeModel.toString());
         sb.append("\n\n");
 
@@ -681,8 +680,23 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //        sb.append(new Matrix(jointVariance));
 //        sb.append("\n\n");
 
+        sb.append("Tree dim: " + treeVariance.length + "\n");
+        sb.append("data dim: " + jointVariance.length);
+        sb.append("\n\n");
+
         double[] data = new double[jointVariance.length];
         System.arraycopy(meanCache, 0, data, 0, jointVariance.length);
+
+        if (nodeToClampMap != null) {
+            int offset = treeModel.getExternalNodeCount() * getDimTrait();
+            for(Map.Entry<NodeRef, RestrictedPartials> clamps : nodeToClampMap.entrySet()) {
+                double[] partials = clamps.getValue().getPartials();
+                for (int i = 0; i < partials.length; ++i) {
+                    data[offset] = partials[i];
+                    ++offset;
+                }
+            }
+        }
 
         sb.append("Data:\n");
         sb.append(new Vector(data)).append("\n");
@@ -824,7 +838,15 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     public double[][] computeTreeVariance(boolean includeRoot) {
         final int tipCount = treeModel.getExternalNodeCount();
-        double[][] variance = new double[tipCount][tipCount];
+        int length = tipCount;
+
+        boolean DO_CLAMP = true;
+        if (DO_CLAMP && nodeToClampMap != null) {
+            length += nodeToClampMap.size();
+        }
+//        System.exit(-1);
+
+        double[][] variance = new double[length][length];
 
         for (int i = 0; i < tipCount; i++) {
 
@@ -840,24 +862,52 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             }
         }
 
+        if (DO_CLAMP && nodeToClampMap != null) {
+            List<RestrictedPartials> partialsList = new ArrayList<RestrictedPartials>();
+            for (Map.Entry<NodeRef, RestrictedPartials> keySet : nodeToClampMap.entrySet()) {
+                partialsList.add(keySet.getValue());
+            }
+
+            for (int i = 0; i < partialsList.size(); ++i) {
+                RestrictedPartials partials = partialsList.get(i);
+                NodeRef node = partials.getNode();
+
+                variance[tipCount + i][tipCount + i] = getRescaledLengthToRoot(node) +
+                        1.0 / partials.getPriorSampleSize();
+
+                for (int j = 0; j < tipCount; ++j) {
+                    NodeRef friend = treeModel.getExternalNode(j);
+                    NodeRef mrca = Tree.Utils.getCommonAncestor(treeModel, node, friend);
+                    variance[j][tipCount + i] = getRescaledLengthToRoot(mrca);
+
+                }
+
+                for (int j = 0; j < i; ++j) {
+                    NodeRef friend = partialsList.get(j).getNode();
+                    NodeRef mrca = Tree.Utils.getCommonAncestor(treeModel, node, friend);
+                    variance[tipCount + j][tipCount + i] = getRescaledLengthToRoot(mrca);
+                }
+            }
+        }
+
         // Make symmetric
-        for (int i = 0; i < tipCount; i++) {
-            for (int j = i + 1; j < tipCount; j++) {
+        for (int i = 0; i < length; i++) {
+            for (int j = i + 1; j < length; j++) {
                 variance[j][i] = variance[i][j];
             }
         }
 
-        if (DEBUG) {
-            System.err.println("");
-            System.err.println("New tree conditional variance:\n" + new Matrix(variance));
-        }
-
-        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
-
-        if (DEBUG) {
-            System.err.println("");
-            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
-        }
+//        if (DEBUG) {
+//            System.err.println("");
+//            System.err.println("New tree conditional variance:\n" + new Matrix(variance));
+//        }
+//
+//        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
+//
+//        if (DEBUG) {
+//            System.err.println("");
+//            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
+//        }
 
         if (includeRoot) {
             for (int i = 0; i < variance.length; ++i) {

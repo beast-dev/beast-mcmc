@@ -29,6 +29,14 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.apache.commons.math.special.Gamma.logGamma;
 
@@ -49,7 +57,7 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  * @author Joseph Heled
  *         Date: 24/02/2008
  */
-public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
+public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implements Citable {
 
     public enum TreeType {
         UNSCALED,     // no coefficient 
@@ -71,7 +79,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
      *    lambda - mu
      */
     private Parameter birthDiffRateParameter;
-   
+
     private Parameter sampleProbability;
 
     private TreeType type;
@@ -106,8 +114,8 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
 
         this.relativeDeathRateParameter = relativeDeathRateParameter;
         if( relativeDeathRateParameter != null ) {
-          addVariable(relativeDeathRateParameter);
-          relativeDeathRateParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+            addVariable(relativeDeathRateParameter);
+            relativeDeathRateParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         }
 
         this.sampleProbability = sampleProbability;
@@ -132,8 +140,8 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
 
     @Override
     public double getMarginal(Tree tree, CalibrationPoints calibration) {
-       // Yule only
-       return calibration.getCorrection(tree, getR());
+        // Yule only
+        return calibration.getCorrection(tree, getR());
     }
 
     public double getR() {
@@ -198,9 +206,9 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
                 final double ca = 1 - a;
                 final double emrh = Math.exp(-mrh);
                 if( emrh != 1.0 ) {
-                  l = (tree.getTaxonCount() - 2) * Math.log(r * ca * (1 + ca /(emrh - 1)));
+                    l = (tree.getTaxonCount() - 2) * Math.log(r * ca * (1 + ca /(emrh - 1)));
                 } else {  // use exp(x)-1 = x for x near 0
-                  l = (tree.getTaxonCount() - 2) * Math.log(ca * (r + ca/height));
+                    l = (tree.getTaxonCount() - 2) * Math.log(ca * (r + ca/height));
                 }
             }
             return l;
@@ -210,4 +218,30 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
     public boolean includeExternalNodesInLikelihoodCalculation() {
         return false;
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Gernhard 2008 Birth Death Tree Model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(new Citation(
+                new Author[]{
+                        new Author("T", "Gernhard"),
+                },
+                "The conditioned reconstructed process",
+                2008,
+                "Journal of Theoretical Biology",
+                253,
+                769, 778,
+                "10.1016/j.jtbi.2008.04.005"
+        ));
+    }
 }
+

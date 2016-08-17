@@ -1,7 +1,7 @@
 /*
  * TreeTraitParserUtilities.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -36,8 +36,8 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
-public class TreeTraitParserUtilities {
 
+public class TreeTraitParserUtilities {
 
     public static final String TRAIT_PARAMETER = "traitParameter";
     public static final String TRAIT_NAME = "traitName";

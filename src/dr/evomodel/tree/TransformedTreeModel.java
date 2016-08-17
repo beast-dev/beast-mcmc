@@ -34,13 +34,12 @@ import dr.evolution.util.Taxon;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
+import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -59,8 +58,6 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
 
         Logger log = Logger.getLogger("dr.evomodel.tree");
         log.info("Creating a transform tree.");
-        log.info(treeTransform.getInfo() + "\n\tPlease cite:");
-        log.info(Citable.Utils.getCitationString(this));
     }
 
     public String toString() {
@@ -192,14 +189,6 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
         // Do nothing
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                CommonCitations.LEMEY_MIXTURE_2012
-        );
-        return citations;
-    }
-
     private final TreeTransform treeTransform;
     private final TreeModel treeModel;
 
@@ -329,5 +318,20 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
 
     public void setUnits(Type units) {
         treeModel.setUnits(units);
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian estimation of Pagel's lambda";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.VRANCKEN_2015_SIMULTANEOUSLY);
     }
 }

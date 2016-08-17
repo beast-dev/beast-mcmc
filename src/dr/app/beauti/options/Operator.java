@@ -55,6 +55,8 @@ public class Operator implements Serializable {
     private boolean tuningEdited = false;
     private boolean isUsed = true;
 
+    private boolean autoOptimize = true;
+
     private String idref;
 
     public static class Builder {
@@ -73,6 +75,8 @@ public class Operator implements Serializable {
         private String tag = null;
         private String idref = null;
 
+        private boolean autoOptimize = true;
+
         public Builder(String name, String description, Parameter parameter, OperatorType type, double tuning, double weight) {
             this.baseName = name;
             this.description = description;
@@ -81,6 +85,7 @@ public class Operator implements Serializable {
             this.tuning = tuning;
             this.weight = weight;
         }
+
 
         public Builder parameter2(Parameter parameter2) {
             this.parameter2 = parameter2;
@@ -96,8 +101,14 @@ public class Operator implements Serializable {
             this.tag = tag;
             return this;
         }
+
         public Builder idref(String idref) {
             this.idref = idref;
+            return this;
+        }
+
+        public Builder autoOptimize(boolean autoOptimize) {
+            this.autoOptimize = autoOptimize;
             return this;
         }
 
@@ -125,6 +136,7 @@ public class Operator implements Serializable {
         idref = builder.idref;
         isUsed = true;
         tuningEdited = false;
+        autoOptimize = builder.autoOptimize;
     }
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -185,6 +197,10 @@ public class Operator implements Serializable {
 
     public void setUsed(boolean used) {
         this.isUsed = used;
+    }
+
+    public boolean isAutoOptimize() {
+        return autoOptimize;
     }
 
     public boolean isParameterFixed() {

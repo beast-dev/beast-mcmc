@@ -30,7 +30,7 @@
         $Id$
     </description>
 
-    <property name="JDK_VERSION" value="1.6"/>
+    <property name="JDK_VERSION" value="1.7"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
@@ -93,6 +93,8 @@
             <include name="dr/evolution/**"/>
             <include name="dr/evomodel/**"/>
             <include name="dr/evomodelxml/**"/>
+            <include name="dr/oldevomodel/**"/>
+            <include name="dr/oldevomodelxml/**"/>
             <include name="dr/evoxml/**"/>
             <include name="dr/exporters/**"/>
             <include name="dr/gui/chart/**"/>
@@ -136,10 +138,11 @@
                 <include name="dr/app/beagle/**/*.class"/>
                 <!-- include beagle -->
                 <include name="dr/evolution/**/*.class"/>
-                <exclude name="dr/evomodel/beagle/**"/>
-                <include name="dr/evomodel/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
-                <include name="dr/evomodelxml/**"/>
+                <include name="dr/evomodel/**/*.class"/>
+                <include name="dr/evomodelxml/**/*.class"/>
+                <include name="dr/oldevomodel/**/*.class"/>
+                <include name="dr/oldevomodelxml/**/*.class"/>
                 <include name="dr/exporters/**/*.class"/>
                 <include name="dr/gui/tree/**/*.class"/>
                 <include name="dr/inference/**/*.class"/>
@@ -195,7 +198,6 @@
                 <include name="dr/evomodel/branchratemodel/**/*.class"/>
                 <include name="dr/evomodel/clock/**/*.class"/>
                 <include name="dr/evomodel/coalescent/**/*.class"/>
-                <include name="dr/evomodel/indel/**/*.class"/>
                 <include name="dr/evomodel/operators/**/*.class"/>
                 <include name="dr/evomodel/sitemodel/**/*.class"/>
                 <include name="dr/evomodel/speciation/**/*.class"/>
@@ -290,10 +292,10 @@
         <echo message="JUnit test report finished."/>
     </target>
 
-    <!--
     <property name="version" value="1.8.4"/>
+    <!--
+    <property name="version" value="1.8.4pre20160615"/>
     -->
-    <property name="version" value="1.8.4pre20160319"/>
 
     <property name="version_number" value="1.8.4"/>
     <property name="release_dir" value="release"/>

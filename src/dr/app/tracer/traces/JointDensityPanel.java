@@ -27,7 +27,7 @@ package dr.app.tracer.traces;
 
 import dr.app.gui.chart.*;
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import jam.framework.Exportable;
@@ -228,7 +228,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
 
         messageLabel.setText("");
 
-        if (td1.getTraceType() != TraceFactory.TraceType.DOUBLE && td2.getTraceType() != TraceFactory.TraceType.DOUBLE) {
+        if (!td1.getTraceType().isNumber() && !td2.getTraceType().isNumber()) {
             chartPanel.remove(correlationChart);
             chartPanel.add(tableScrollPane, "Table");
 
@@ -251,7 +251,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
             cateTableProbTypeCombo.setVisible(false);
             defaultNumberFormatCheckBox.setVisible(false);
 
-            if (td1.getTraceType() == TraceFactory.TraceType.STRING) {
+            if (td1.getTraceType() == TraceType.CATEGORICAL) {
                 mixedCategoricalPlot(td1, false); // isFirstTraceListNumerical
 
                 sampleCheckBox.setVisible(false);
@@ -259,7 +259,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 translucencyCheckBox.setVisible(false);
 
 
-            } else if (td2.getTraceType() == TraceFactory.TraceType.STRING) {
+            } else if (td2.getTraceType() == TraceType.CATEGORICAL) {
                 mixedCategoricalPlot(td2, true); // isFirstTraceListNumerical
 
                 sampleCheckBox.setVisible(false);
@@ -337,7 +337,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 }
             }
 
-            TraceDistribution categoryTd = new TraceDistribution(sepValues[i], TraceFactory.TraceType.DOUBLE); // todo ?
+            TraceDistribution categoryTd = new TraceDistribution(sepValues[i], TraceType.REAL); // todo ?
             categoryTdMap.put(categoryValues.get(i), categoryTd);
         }
 
@@ -364,9 +364,9 @@ public class JointDensityPanel extends JPanel implements Exportable {
         int k = 0;
 
         List values = tl1.getValues(traceIndex1);
-        TraceFactory.TraceType type = tl1.getTrace(traceIndex1).getTraceType();
+        TraceType type = tl1.getTrace(traceIndex1).getTraceType();
         for (int i = 0; i < sampleSize; i++) {
-            if (type == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+            if (type == TraceType.ORDINAL) { // as Integer is stored as Double in Trace
                 samples1[i] = Integer.toString( ((Number) values.get(k)).intValue() );
             } else {
                 samples1[i] = values.get(k).toString();
@@ -380,7 +380,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
         values = tl2.getValues(traceIndex2);
         type = tl2.getTrace(traceIndex2).getTraceType();
         for (int i = 0; i < sampleSize; i++) {
-            if (type == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+            if (type == TraceType.ORDINAL) { // as Integer is stored as Double in Trace
                 samples2[i] = Integer.toString( ((Number) values.get(k)).intValue() );
             } else {
                 samples2[i] = values.get(k).toString();
@@ -456,7 +456,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
         }
 
         int k = 0;
-        if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
+        if (td1.getTraceType() == TraceType.ORDINAL) {
             correlationChart.setXAxis(new DiscreteAxis(true, true));
         } else {
             correlationChart.setXAxis(new LinearAxis());
@@ -470,7 +470,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
         }
 
         k = 0;
-        if (td2.getTraceType() == TraceFactory.TraceType.INTEGER) {
+        if (td2.getTraceType() == TraceType.ORDINAL) {
             correlationChart.setYAxis(new DiscreteAxis(true, true));
         } else {
             correlationChart.setYAxis(new LinearAxis());

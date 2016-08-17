@@ -25,6 +25,8 @@
 
 package dr.xml;
 
+import java.util.Map;
+
 public interface XMLObjectParser {
 
     /**
@@ -36,7 +38,7 @@ public interface XMLObjectParser {
     /**
      * @param store contains all named objects that have already been parsed.
      */
-    Object parseXMLObject(XMLObject xo, String id, ObjectStore store, boolean strictXML) throws XMLParseException;
+    Object parseXMLObject(XMLObject xo, String id, Map<String, XMLObject> store, boolean strictXML) throws XMLParseException;
 
     /**
      *

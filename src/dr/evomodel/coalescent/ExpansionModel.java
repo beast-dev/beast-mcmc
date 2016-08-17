@@ -29,6 +29,12 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.Expansion;
 import dr.evomodelxml.coalescent.ExpansionModelParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Exponential growth from a constant ancestral population size.
@@ -37,7 +43,7 @@ import dr.inference.model.Parameter;
  * @author Andrew Rambaut
  * @version $Id: ExpansionModel.java,v 1.5 2005/05/24 20:25:57 rambaut Exp $
  */
-public class ExpansionModel extends DemographicModel {
+public class ExpansionModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -111,4 +117,30 @@ public class ExpansionModel extends DemographicModel {
     Parameter growthRateParameter = null;
     Expansion expansion = null;
     boolean usingGrowthRate = true;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Expansion Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("OG", "Pybus"),
+                    new Author("A", "Rambaut")
+            },
+            "GENIE: estimating demographic history from molecular phylogenies",
+            2001,
+            "Bioinformatics",
+            18, 1404, 1405
+    );
 }

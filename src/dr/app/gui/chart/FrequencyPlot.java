@@ -26,7 +26,7 @@
 package dr.app.gui.chart;
 
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.TraceType;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -294,7 +294,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 	}
 
     protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceDistribution != null && traceDistribution.getTraceType() != TraceFactory.TraceType.DOUBLE) {
+        if (traceDistribution != null && traceDistribution.getTraceType() != TraceType.REAL) {
             super.fillRect(g2, x1-(x2-x1), y1, x2, y2);
         } else {
             super.fillRect(g2, x1, y1, x2, y2);
@@ -302,7 +302,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     }
 
     protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceDistribution != null && traceDistribution.getTraceType() != TraceFactory.TraceType.DOUBLE) {
+        if (traceDistribution != null && traceDistribution.getTraceType() != TraceType.REAL) {
             super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
         } else {
             super.drawRect(g2, x1, y1, x2, y2);

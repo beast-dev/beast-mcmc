@@ -44,6 +44,7 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 import jebl.util.FixedBitSet;
 import java.util.*;
 import java.util.logging.Logger;
@@ -277,39 +278,33 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     /***********************************************************************************/
 
 
-    // Citable implementation
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SPECIES_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Allopolyploid Species Networks";
+    }
+
     @Override
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("Graham", "Jones"),
-                        new Author("Serik", "Sagitov"),
-                        new Author("Bengt", "Oxelman")
-                },
-                "Statistical Inference of Allopolyploid Species Networks in the Presence of Incomplete Lineage Sorting",
-                2013,
-                "Systematic Biology",
-                62,
-                467,
-                478,
-                Citation.Status.PUBLISHED
-        ));
-
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("Graham", "Jones")
-                },
-                "Bayesian phylogenetic analysis for diploid and allotetraploid species networks",
-                2013,
-                "",
-                -1,
-                -1,
-                -1,
-                Citation.Status.IN_PREPARATION
-        ));
-
-        return citations;
+        return Collections.singletonList(
+                new Citation(
+                        new Author[]{
+                                new Author("Graham", "Jones"),
+                                new Author("Serik", "Sagitov"),
+                                new Author("Bengt", "Oxelman")
+                        },
+                        "Statistical Inference of Allopolyploid Species Networks in the Presence of Incomplete Lineage Sorting",
+                        2013,
+                        "Systematic Biology",
+                        62,
+                        467,
+                        478,
+                        Citation.Status.PUBLISHED
+                ));
     }
 
 

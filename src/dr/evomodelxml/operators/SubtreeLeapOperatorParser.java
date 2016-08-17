@@ -50,13 +50,16 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
         final double size = xo.getAttribute("size", 1.0);
+        final double prob = xo.getAttribute("accP", 0.234);
 
         if (Double.isInfinite(size) || size <= 0.0) {
-            throw new XMLParseException("size attribute must be positive and not infinite. was " + size +
-           " for tree " + treeModel.getId() );
+            throw new XMLParseException("size attribute must be positive and not infinite. was " + size);
         }
-
-        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, mode);
+        
+        if (prob <= 0.0 || prob >= 1.0) {
+            throw new XMLParseException("Target acceptance probability has to lie in (0, 1). Currently: " + prob);
+        }
+        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, prob, mode);
 
         return operator;
     }
@@ -76,6 +79,7 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule("size", true),
+            AttributeRule.newDoubleRule("accP", true),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };

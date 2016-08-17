@@ -30,6 +30,7 @@ import dr.inference.model.Parameter;
 
 /**
  * @author Alexei Drummond
+ * @author Marc A. Suchard
  */
 public class CovarionFrequencyModel extends FrequencyModel {
 

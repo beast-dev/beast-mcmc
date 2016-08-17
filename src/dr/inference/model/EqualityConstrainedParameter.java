@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class EqualityConstrainedParameter extends Parameter.Abstract implements VariableListener, Citable {
+public class EqualityConstrainedParameter extends Parameter.Abstract implements VariableListener {
     public static final String EQUALITY_CONSTRAINED_PARAMETER = "constrainedEqualParameter";
 
     public EqualityConstrainedParameter(String name, List<Parameter> params) {
@@ -56,8 +56,6 @@ public class EqualityConstrainedParameter extends Parameter.Abstract implements 
         }
         StringBuilder sb = new StringBuilder("Constraining multiple parameters to be equal: ");
         sb.append(getId()).append("\n");
-        sb.append("\tPlease cite:\n");
-        sb.append(Citable.Utils.getCitationString(this));
         java.util.logging.Logger.getLogger("dr.inference.model").info(sb.toString());
     }
 
@@ -227,19 +225,6 @@ public class EqualityConstrainedParameter extends Parameter.Abstract implements 
             return EQUALITY_CONSTRAINED_PARAMETER;
         }
     };
-
-    public List<Citation> getCitations() {
-        List<Citation> list = new ArrayList<Citation>();
-        list.add(
-                new Citation(
-                        new Author[]{
-                                new Author("MA", "Suchard"),
-                        },
-                        Citation.Status.IN_PREPARATION
-                )
-        );
-        return list;
-    }
 
     private final List<Parameter> uniqueParameters;
 

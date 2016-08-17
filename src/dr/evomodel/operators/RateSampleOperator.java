@@ -26,7 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.clock.RateEvolutionLikelihood;
+import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.RateSampleOperatorParser;
 import dr.inference.operators.OperatorFailedException;

@@ -25,11 +25,11 @@
 
 package dr.app.beagle.tools.parsers;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.sequence.Sequence;
 import dr.evomodel.branchratemodel.BranchRateModel;

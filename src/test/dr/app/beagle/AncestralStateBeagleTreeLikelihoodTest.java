@@ -1,8 +1,7 @@
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
@@ -17,12 +16,11 @@ import dr.math.MathUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Parameter;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 
 
 /**

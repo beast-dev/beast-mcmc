@@ -1,7 +1,7 @@
 /*
  * LewisMkSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,9 +25,9 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -118,7 +118,7 @@ public class LewisMkSubstitutionModelParser extends AbstractXMLObjectParser {
             throw (new XMLParseException("The state transitions form a disconnected graph! This model is not suited for this case."));
         }
 
-        return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, 0);
+        return new GeneralSubstitutionModel(LEWIS_MK_MODEL, dataType, freqModel, ratesParameter, 0);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -163,7 +163,7 @@ public class LewisMkSubstitutionModelParser extends AbstractXMLObjectParser {
     };
 
     public String getParserDescription() {
-        return "A parser for Lewis' Mk model";
+        return "A parser for Lewis's Mk model";
     }
 
     public Class getReturnType() {

@@ -26,9 +26,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
-import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.DuplicatedParameter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
@@ -36,36 +38,39 @@ import dr.inference.model.Parameter;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: GeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
+ * @author Marc Suchard
  */
-public class GeneralSubstitutionModel extends AbstractSubstitutionModel implements dr.util.XHTMLable {
+public class GeneralSubstitutionModel extends BaseSubstitutionModel {
 
     /**
      * the rate which the others are set relative to
      */
     protected int ratesRelativeTo;
 
+    public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
+                                    Parameter parameter, int relativeTo) {
+        this(name, dataType, freqModel, parameter, relativeTo, null);
+
+    }
+
     /**
      * constructor
      *
-     * @param dataType   the data type
-     * @param freqModel  the equilibrium frequency model - this must match the data type
-     * @param parameter  the rates parameter, minus the rate that they are specified relative to
-     * @param relativeTo the index of the rate that all other are specified relative to
+     * @param dataType the data type
      */
-    public GeneralSubstitutionModel(
-            DataType dataType,
-            FrequencyModel freqModel,
-            Parameter parameter,
-            int relativeTo) {
+    public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
+                                    Parameter parameter, int relativeTo, EigenSystem eigenSystem) {
 
-        super(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, dataType, freqModel);
+        super(name, dataType, freqModel, eigenSystem);
 
         ratesParameter = parameter;
         if (ratesParameter != null) {
             addVariable(ratesParameter);
             if (!(ratesParameter instanceof DuplicatedParameter))
-                ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
+                ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+                        ratesParameter.getDimension()));
+
+            setupDimensionNames(relativeTo);
         }
         setRatesRelativeTo(relativeTo);
     }
@@ -73,18 +78,12 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel implemen
     /**
      * constructor
      *
-     * @param name       a name to give the substitution model
-     * @param dataType   the data type
-     * @param freqModel  the equilibrium frequency model - this must match the data type
-     * @param relativeTo the index of the rate that all other are specified relative to
+     * @param dataType the data type
      */
-    protected GeneralSubstitutionModel(
-            String name,
-            DataType dataType,
-            FrequencyModel freqModel,
-            int relativeTo) {
+    protected GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
 
-        super(name, dataType, freqModel);
+        super(name, dataType, freqModel,
+                null);
 
         setRatesRelativeTo(relativeTo);
     }
@@ -97,24 +96,49 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel implemen
         // Nothing to precalculate
     }
 
-    protected void setupRelativeRates() {
-
-        for (int i = 0; i < relativeRates.length; i++) {
+    protected void setupRelativeRates(double[] rates) {
+        for (int i = 0; i < rates.length; i++) {
             if (i == ratesRelativeTo) {
-                relativeRates[i] = 1.0;
+                rates[i] = 1.0;
             } else if (i < ratesRelativeTo) {
-                relativeRates[i] = ratesParameter.getParameterValue(i);
+                rates[i] = ratesParameter.getParameterValue(i);
             } else {
-                relativeRates[i] = ratesParameter.getParameterValue(i - 1);
+                rates[i] = ratesParameter.getParameterValue(i - 1);
             }
+        }
+    }
+
+    protected void setupDimensionNames(int relativeTo) {
+        List<String> rateNames = new ArrayList<String>();
+
+        String ratePrefix = ratesParameter.getParameterName();
+
+        int index = 0;
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                if (index != relativeTo) {
+                    rateNames.add(getDimensionString(i, j, ratePrefix));
+                }
+            }
+            index++;
+        }
+
+        String[] tmp = new String[0];
+        ratesParameter.setDimensionNames(rateNames.toArray(tmp));
+    }
+
+    protected String getDimensionString(int i, int j, String prefix) {
+        String codes =  dataType.getCode(i) + "." + dataType.getCode(j);
+        if (prefix == null) {
+            return codes;
+        } else {
+            return prefix + "." + codes;
         }
     }
 
     /**
      * set which rate the others are relative to
-     *
-     * @param ratesRelativeTo the index of the rate in the matrix that all other
-     *                        rates are parameterized relative to.
      */
     public void setRatesRelativeTo(int ratesRelativeTo) {
         this.ratesRelativeTo = ratesRelativeTo;
@@ -138,17 +162,10 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel implemen
     protected void acceptState() {
     } // nothing to do
 
-    // **************************************************************
-    // XHTMLable IMPLEMENTATION
-    // **************************************************************
-
-    public String toXHTML() {
-        StringBuffer buffer = new StringBuffer();
-
-        buffer.append("<em>General Model</em>");
-
-        return buffer.toString();
-    }
+    /**
+     * Parses an element from an DOM document into a DemographicModel. Recognises
+     * ConstantPopulation and ExponentialGrowth.
+     */
 
     protected Parameter ratesParameter = null;
 }

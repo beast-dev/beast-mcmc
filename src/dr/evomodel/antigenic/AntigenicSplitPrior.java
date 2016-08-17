@@ -29,11 +29,10 @@ import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -409,20 +408,17 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
         }
     };
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian Antigenic Cartography framework";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("T", "Bedford"),
-                        new Author("MA", "Suchard"),
-                        new Author("P", "Lemey"),
-                        new Author("G", "Dudas"),
-                        new Author("C", "Russell"),
-                        new Author("D", "Smith"),
-                        new Author("A", "Rambaut")
-                },
-                Citation.Status.IN_PREPARATION
-        ));
-        return citations;
+        return Arrays.asList(CommonCitations.BEDFORD_2015_INTEGRATING);
     }
 }

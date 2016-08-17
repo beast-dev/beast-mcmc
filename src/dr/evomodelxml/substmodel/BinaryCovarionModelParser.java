@@ -1,7 +1,7 @@
 /*
  * BinaryCovarionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,8 +25,8 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.datatype.TwoStateCovarion;
 import dr.evomodel.substmodel.BinaryCovarionModel;
+import dr.evolution.datatype.TwoStateCovarion;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -34,13 +34,14 @@ import dr.xml.*;
  * Parses an element from an DOM document into a TwoStateCovarionModel
  */
 public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
-    public static final String COVARION_MODEL = "binaryCovarionModel";
-    public static final String ALPHA = "alpha";
-    public static final String SWITCHING_RATE = "switchingRate";
-    public static final String FREQUENCIES = "frequencies";
-    public static final String HIDDEN_FREQUENCIES = "hiddenFrequencies";
-    public static final String VERSION = "version";
-    public static final BinaryCovarionModel.Version DEFAULT_VERSION = BinaryCovarionModel.Version.VERSION1;
+    public static final String COVARION_MODEL = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.COVARION_MODEL;
+    public static final String ALPHA = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.ALPHA;
+    public static final String SWITCHING_RATE = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.SWITCHING_RATE;
+    public static final String FREQUENCIES = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.FREQUENCIES;
+    public static final String HIDDEN_FREQUENCIES = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.HIDDEN_FREQUENCIES;
+    public static final String VERSION = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.VERSION;
+    public static final dr.oldevomodel.substmodel.BinaryCovarionModel.Version DEFAULT_VERSION =
+            dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.DEFAULT_VERSION;
 
     public String getParserName() {
         return COVARION_MODEL;
@@ -68,9 +69,9 @@ public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(SWITCHING_RATE);
         switchingRateParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        BinaryCovarionModel.Version version = DEFAULT_VERSION;
+        dr.oldevomodel.substmodel.BinaryCovarionModel.Version version = DEFAULT_VERSION;
         if (xo.hasAttribute(VERSION)) {
-            version = BinaryCovarionModel.Version.parseFromString(xo.getStringAttribute(VERSION));
+            version = dr.oldevomodel.substmodel.BinaryCovarionModel.Version.parseFromString(xo.getStringAttribute(VERSION));
         }
 
         BinaryCovarionModel model = new BinaryCovarionModel(TwoStateCovarion.INSTANCE,

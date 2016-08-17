@@ -27,16 +27,16 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.distribution.LogLinearModel;
-import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
- * <b>A irreversible class for any data type where
- * rates come from a log-linear model; allows complex eigenstructures.</b>
- *
  * @author Marc A. Suchard
- * @author Alexei J. Drummond
  */
 public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
@@ -46,12 +46,12 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
         addModel(glm);
-        testProbabilities = new double[stateCount*stateCount];
-            
+        testProbabilities = new double[stateCount * stateCount];
+
     }
 
-    public double[] getRates() {
-        return glm.getXBeta();
+    protected void setupRelativeRates(double[] rates) {
+        System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);       
     }
 
 
@@ -59,24 +59,37 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         if (model == glm) {
             updateMatrix = true;
             fireModelChanged();
-        }
-        else
-            super.handleModelChangedEvent(model,object,index);       
+        } else
+            super.handleModelChangedEvent(model, object, index);
     }
 
-    public LogColumn[] getColumns() {
-        return glm.getColumns();
-    }
+    // This info can be gotten from the GLM
+//    public LogColumn[] getColumns() {
+//        return glm.getColumns();
+//    }
 
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
         if (logL == 0 &&
-            BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(testProbabilities,this)) { // Also check that graph is connected
+                BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(testProbabilities, this)) {
+            // Also check that graph is connected
             return 0;
         }
         return Double.NEGATIVE_INFINITY;
-    }   
+    }
+
+    @Override
+    public String getDescription() {
+        return "Generalized linear (model, GLM) substitution model"; // TODO Horrible; fix
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+
+        return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
+    }
 
     private LogLinearModel glm;
-    private double[] testProbabilities;    
+    private double[] testProbabilities;
+
 }

@@ -333,11 +333,19 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
                 + Citable.Utils.getCitationString(this));
     }
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SPECIES_MODELS;
+    }
 
+    @Override
+    public String getDescription() {
+        return "Multi-species coalescent model";
+    }
 
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
+        return Arrays.asList(
+                new Citation(
                 new Author[]{
                         new Author("Graham", "Jones")
                 },
@@ -345,7 +353,6 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
                 "??",  // journal
                 Citation.Status.IN_PREPARATION
         ));
-        return citations;
     }
 
 

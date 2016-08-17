@@ -25,6 +25,8 @@
 
 package dr.app.beauti.siteModelsPanel;
 
+import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
@@ -39,12 +41,9 @@ import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.logging.Logger;
@@ -590,7 +589,7 @@ public class PartitionModelPanel extends OptionsPanel {
      * position model
      */
     private void setYang96Model() {
-        nucSubstCombo.setSelectedIndex(1);
+        nucSubstCombo.setSelectedIndex(2);
         heteroCombo.setSelectedIndex(1);
         codingCombo.setSelectedIndex(2);
         substUnlinkCheck.setSelected(true);
@@ -603,7 +602,7 @@ public class PartitionModelPanel extends OptionsPanel {
      * position model
      */
     private void setSRD06Model() {
-        nucSubstCombo.setSelectedIndex(0);
+        nucSubstCombo.setSelectedIndex(1);
         heteroCombo.setSelectedIndex(1);
         codingCombo.setSelectedIndex(1);
         substUnlinkCheck.setSelected(true);

@@ -1,9 +1,9 @@
 package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
+import dr.oldevomodel.substmodel.ComplexSubstitutionModel;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 

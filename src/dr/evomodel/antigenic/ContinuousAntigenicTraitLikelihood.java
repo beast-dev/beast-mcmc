@@ -521,19 +521,17 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
         }
     };
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian Antigenic Cartography framework";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("A", "Rambaut"),
-                        new Author("T", "Bedford"),
-                        new Author("P", "Lemey"),
-                        new Author("C", "Russell"),
-                        new Author("D", "Smith"),
-                        new Author("MA", "Suchard"),
-                },
-                Citation.Status.IN_PREPARATION
-        ));
-        return citations;
+        return Arrays.asList(CommonCitations.BEDFORD_2015_INTEGRATING);
     }
 }

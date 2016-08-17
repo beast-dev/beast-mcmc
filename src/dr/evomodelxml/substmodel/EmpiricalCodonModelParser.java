@@ -1,7 +1,7 @@
 /*
  * EmpiricalCodonModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,12 +25,15 @@
 
 package dr.evomodelxml.substmodel;
 
+
 import java.util.logging.Logger;
 
+import dr.evomodel.substmodel.codon.EmpiricalCodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneticCode;
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.EmpiricalRateMatrixReader;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -40,7 +43,7 @@ import dr.xml.*;
  * @author Stefan Zoller
  */
 public class EmpiricalCodonModelParser extends AbstractXMLObjectParser {
-    public static final String EMPIRICAL_CODON_MODEL = "empiricalCodonModel";
+	public static final String EMPIRICAL_CODON_MODEL = "empiricalCodonModel";
     public static final String EMPIRICAL_RATE_MATRIX = "empiricalRateMatrix";
     public static final String ECM_DATA_DIR = "ecmDataDir";
     public static final String ECM_DATA_MATRIX = "ecmRateFile";
@@ -48,6 +51,7 @@ public class EmpiricalCodonModelParser extends AbstractXMLObjectParser {
     public static final String OMEGA = "omega";
     public static final String KAPPATSTV = "kappaTsTv";
     public static final String MULTI_NT_CHANGE = "multiNtChange";
+
     public String getParserName() { return EMPIRICAL_CODON_MODEL; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -99,15 +103,14 @@ public class EmpiricalCodonModelParser extends AbstractXMLObjectParser {
     	} else {
     		mntParam = (Parameter)xo.getElementFirstChild(MULTI_NT_CHANGE);
     	}
-        
+    	
         String dirString = xo.getStringAttribute(ECM_DATA_DIR);
         String freqString = xo.getStringAttribute(ECM_FREQ_MATRIX);
         String matString = xo.getStringAttribute(ECM_DATA_MATRIX);
         
-        EmpiricalCodonRateMatrix rateMat = new EmpiricalCodonRateMatrix(EMPIRICAL_RATE_MATRIX, codons, 
+        EmpiricalRateMatrixReader rateMat = new EmpiricalRateMatrixReader(EMPIRICAL_RATE_MATRIX, codons,
         													dirString, freqString, matString);
 
-        // get frequencies from XML, from frequency csv file or estimate from data
         FrequencyModel freqModel = null;
         if (xo.getChild(FrequencyModel.class) != null) {
         	freqModel = (FrequencyModel)xo.getChild(FrequencyModel.class);
@@ -119,7 +122,7 @@ public class EmpiricalCodonModelParser extends AbstractXMLObjectParser {
     }
     
     // creates new FrequencyModel from XML frequencies
-    private FrequencyModel createNewFreqModel(DataType codons, EmpiricalCodonRateMatrix type) throws XMLParseException {
+    private FrequencyModel createNewFreqModel(DataType codons, EmpiricalRateMatrixReader type) throws XMLParseException {
     	double[] freqs = type.getFrequencies();
     	double sum = 0;
         for (int j = 0; j < freqs.length; j++) {
@@ -171,10 +174,10 @@ public class EmpiricalCodonModelParser extends AbstractXMLObjectParser {
         	"The directory with the ECM data file",
             "ecmdata", true),
         new StringAttributeRule(ECM_DATA_MATRIX,
-        	"The csv file with the ECM data matrix",
+        	"The file with the ECM data matrix",
             "matrix.csv", true),
         new StringAttributeRule(ECM_FREQ_MATRIX,
-        	"The csv file with the ECM frequency matrix",
+            "The csv file with the ECM frequency matrix",
             "freqs.csv", true),
         new ElementRule(OMEGA,
         	new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),

@@ -85,6 +85,9 @@ public class TreeModelOptions extends ModelOptions {
     }
 
     public int isNodeCalibrated(PartitionTreeModel treeModel) {
+        if (treeModel == null) {
+            return -1;
+        }
         if (isNodeCalibrated(treeModel.getParameter("treeModel.rootHeight"))) {
             return 0; // root node
         } else if (options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 0) {

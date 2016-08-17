@@ -1,8 +1,8 @@
 package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Nucleotides;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.HKY;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.HKY;
 import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 

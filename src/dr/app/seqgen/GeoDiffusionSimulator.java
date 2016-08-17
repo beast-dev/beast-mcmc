@@ -30,7 +30,7 @@ import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.sequence.Sequence;
-import dr.evomodel.sitemodel.SiteModel;
+import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.math.MathUtils;
 import dr.inference.model.Parameter;

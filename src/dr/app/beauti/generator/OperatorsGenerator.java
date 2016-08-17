@@ -32,7 +32,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
+import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
@@ -42,7 +42,7 @@ import dr.evomodelxml.operators.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
+import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.RateBitExchangeOperator;
@@ -278,7 +278,10 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>("windowSize", operator.getTuning()),
                         getWeightAttribute(operator.getWeight()),
                         new Attribute.Default<String>("boundaryCondition",
-                                (reflecting ? "reflecting" : "absorbing"))
+                                (reflecting ? "reflecting" : "absorbing")),
+                        (operator.isAutoOptimize() == false ?
+                                new Attribute.Default<Boolean>("autoOptimize", false) :
+                                null)
                 });
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);

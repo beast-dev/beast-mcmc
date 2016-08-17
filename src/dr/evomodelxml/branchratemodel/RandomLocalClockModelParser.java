@@ -60,7 +60,7 @@ public class RandomLocalClockModelParser extends AbstractXMLObjectParser {
 
         boolean ratesAreMultipliers = xo.getAttribute(RATES_ARE_MULTIPLIERS, false);
 
-        Logger.getLogger("dr.evomodel").info("Using random local clock (RLC) model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing random local clock (RLC) model.");
         Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " +
                 (ratesAreMultipliers ? " relative to parent rates." : "independent of parent rates."));
 

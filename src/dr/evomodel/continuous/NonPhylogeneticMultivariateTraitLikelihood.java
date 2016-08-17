@@ -67,11 +67,12 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
                                                      boolean reportAsMultivariate,
                                                      double[] rootPriorMean,
                                                      double rootPriorSampleSize,
+                                                      List<RestrictedPartials> partials,
                                                      boolean reciprocalRates,
                                                      boolean exchangeableTips) {
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches,
                 scaleByTime, useTreeLength, rateModel, null, null, null, samplingDensity, reportAsMultivariate, rootPriorMean,
-                rootPriorSampleSize, reciprocalRates);
+                partials, rootPriorSampleSize, reciprocalRates);
         this.exchangeableTips = exchangeableTips;
         this.zeroHeightTip = findZeroHeightTip(treeModel);
         printInformtion2();
@@ -122,21 +123,6 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         return treeLength;
     }
         
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{                                                           
-                                new Author("MA", "Suchard"),
-                                new Author("P", "Lemey"),
-                                new Author("A", "Rambaut"),
-                        },
-                        Citation.Status.IN_PREPARATION
-                )
-        );
-        return citations;
-    }
-
     private class SufficientStatistics {
         double sumWeight;
         double productWeight;

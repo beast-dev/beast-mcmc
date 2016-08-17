@@ -34,6 +34,9 @@ import dr.evomodelxml.branchratemodel.LocalClockModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
 import java.util.*;
 
@@ -41,7 +44,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $Id: LocalClockModel.java,v 1.1 2005/04/05 09:27:48 rambaut Exp $
  */
-public class LocalClockModel extends AbstractBranchRateModel {
+public class LocalClockModel extends AbstractBranchRateModel implements Citable {
 
     private TreeModel treeModel;
     protected Map<Integer, LocalClock> localTipClocks = new HashMap<Integer, LocalClock>();
@@ -346,4 +349,30 @@ public class LocalClockModel extends AbstractBranchRateModel {
     }
 
     private final Helper helper = new Helper();
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.MOLECULAR_CLOCK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Local clock model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("AD", "Yoder"),
+                    new Author("Z", "Yang")
+            },
+            "Estimation of Primate Speciation Dates Using Local Molecular Clocks",
+            2000,
+            "Mol Biol Evol",
+            17, 1081, 1090
+    );
 }

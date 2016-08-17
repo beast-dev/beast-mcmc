@@ -25,9 +25,9 @@
 
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
+import dr.evomodel.substmodel.ComplexSubstitutionModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStates;
 import dr.inference.markovjumps.MarkovJumpsType;

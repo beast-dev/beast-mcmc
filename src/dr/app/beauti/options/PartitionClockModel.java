@@ -46,6 +46,7 @@ public class PartitionClockModel extends PartitionOptions {
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean continuousQuantile = false;
 
+    private final AbstractPartitionData partition;
     private final int dataLength;
 
     public PartitionClockModel(final BeautiOptions options, AbstractPartitionData partition) {
@@ -54,6 +55,7 @@ public class PartitionClockModel extends PartitionOptions {
         this.partitionName = partition.getName();
         dataLength = partition.getSiteCount();
 
+        this.partition = partition;
         initModelParametersAndOpererators();
     }
 
@@ -73,6 +75,8 @@ public class PartitionClockModel extends PartitionOptions {
         clockDistributionType = source.clockDistributionType;
 
         dataLength = source.dataLength;
+
+        this.partition = source.partition;
 
         initModelParametersAndOpererators();
     }
@@ -197,12 +201,13 @@ public class PartitionClockModel extends PartitionOptions {
                     break;
 
                 case UNCORRELATED:
+                    // add the scale parameter (if needed) for the distribution. The location parameter will be added
+                    // in getClockRateParameter.
                     switch (clockDistributionType) {
                         case LOGNORMAL:
                             params.add(getParameter(ClockType.UCLD_STDEV));
                             break;
                         case GAMMA:
-                            params.add(getParameter(ClockType.UCGD_MEAN));
                             params.add(getParameter(ClockType.UCGD_SHAPE));
                             break;
                         case CAUCHY:
@@ -264,6 +269,15 @@ public class PartitionClockModel extends PartitionOptions {
 
             default:
                 throw new IllegalArgumentException("Unknown clock model");
+        }
+
+        if (!rateParam.isPriorEdited()) {
+            if (options.treeModelOptions.isNodeCalibrated(partition.treeModel) < 0
+                    && !options.clockModelOptions.isTipCalibrated()) {
+                rateParam.setFixed(true);
+        } else {
+                rateParam.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;
+            }
         }
 
         return rateParam;

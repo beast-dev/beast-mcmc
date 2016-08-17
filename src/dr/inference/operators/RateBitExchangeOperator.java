@@ -37,21 +37,32 @@ public class RateBitExchangeOperator extends SimpleMCMCOperator {
     public static final String OPERATOR_NAME = "rateBitExchangeOperator";
     public static final String BITS = "bits";
     public static final String RATES = "rates";
+    public static final String MAX_TRIES = "maxTries";
+    private static final int MAX_TRIES_MAGIC_NUMBER = 1000;
 
-    RateBitExchangeOperator(Parameter rateParameter, Parameter bitParameter, double weight) {
+    RateBitExchangeOperator(Parameter rateParameter, Parameter bitParameter, double weight,
+                            int maxTries) {
         this.rateParameter = rateParameter;
         this.bitParameter = bitParameter;
         setWeight(weight);
+        this.maxTries = maxTries;
     }
 
     public double doOperation() throws OperatorFailedException {
         int dim = rateParameter.getDimension() / 2;
+        int tries = 0;
 
         // Find a pair-set in which at least one bit is non-zero
         int index = -1;
         do {
             index = MathUtils.nextInt(dim);
-        } while( bitParameter.getParameterValue(index) + bitParameter.getParameterValue(index+dim) < 1 );
+            ++tries;
+        } while( (bitParameter.getParameterValue(index) + bitParameter.getParameterValue(index+dim) < 1) &&
+                (tries < maxTries) );
+
+        if (tries >= maxTries) {
+            throw new OperatorFailedException("Too many attempts");
+        }
 
         // Swap (bit,rate) values
         double tmpBit = bitParameter.getParameterValue(index);
@@ -90,8 +101,9 @@ public class RateBitExchangeOperator extends SimpleMCMCOperator {
             Parameter ratesParameter = (Parameter) ((XMLObject)xo.getChild(RATES)).getChild(Parameter.class);
             Parameter bitsParameter = (Parameter) ((XMLObject)xo.getChild(BITS)).getChild(Parameter.class);
 
+            int maxTries = xo.getAttribute(MAX_TRIES, MAX_TRIES_MAGIC_NUMBER);
 
-            return new RateBitExchangeOperator(ratesParameter,bitsParameter, weight);
+            return new RateBitExchangeOperator(ratesParameter,bitsParameter, weight, maxTries);
         }
 
         //************************************************************************
@@ -113,11 +125,12 @@ public class RateBitExchangeOperator extends SimpleMCMCOperator {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(BITS, new XMLSyntaxRule[] {
-            new ElementRule(Parameter.class)
-            }),
+                new ElementRule(Parameter.class)
+                }),
                 new ElementRule(RATES, new XMLSyntaxRule[] {
                         new ElementRule(Parameter.class)
                 }),
+                AttributeRule.newIntegerRule(MAX_TRIES, true),
         };
 
     };
@@ -125,5 +138,5 @@ public class RateBitExchangeOperator extends SimpleMCMCOperator {
     // Private instance variables
     private Parameter bitParameter = null;
     private Parameter rateParameter = null;
-    
+    final private int maxTries;
 }

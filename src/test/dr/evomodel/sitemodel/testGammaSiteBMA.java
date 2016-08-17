@@ -3,10 +3,10 @@ package test.dr.evomodel.sitemodel;
 import junit.framework.TestCase;
 import dr.inference.model.Variable;
 import dr.inference.model.Parameter;
-import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.HKY;
-import dr.evomodel.sitemodel.GammaSiteBMA;
+import dr.oldevomodel.substmodel.SubstitutionModel;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.HKY;
+import dr.oldevomodel.sitemodel.GammaSiteBMA;
 import dr.evolution.datatype.Nucleotides;
 
 /**

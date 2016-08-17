@@ -2,9 +2,9 @@ package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStateCovarion;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SubstitutionModelUtils;
-import dr.evomodel.substmodel.TwoStateCovarionModel;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.SubstitutionModelUtils;
+import dr.oldevomodel.substmodel.TwoStateCovarionModel;
 import dr.inference.model.Parameter;
 import junit.framework.Test;
 import junit.framework.TestCase;

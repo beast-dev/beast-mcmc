@@ -35,8 +35,7 @@ import dr.util.Citation;
 import dr.util.CommonCitations;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -278,9 +277,19 @@ public class MixtureModelLikelihood extends AbstractModelLikelihood implements C
     private final Parameter mixtureWeights;
     List<Likelihood> likelihoodList;
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(CommonCitations.LEMEY_MIXTURE_2012);
-        return citations;
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.MISC;
     }
+
+    @Override
+    public String getDescription() {
+        return "Mixture model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.LEMEY_MIXTURE_2012);
+    }
+
 }

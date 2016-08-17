@@ -31,11 +31,10 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
- * Created by msuchard on 5/19/16.
+ * Created by msuchard on 2016-05-19.
  */
 public class UncertainSiteList extends SimpleSiteList implements Citable {
 
@@ -75,9 +74,18 @@ public class UncertainSiteList extends SimpleSiteList implements Citable {
         System.arraycopy(sitePatterns[sequenceIndex], 0, partials, offset, getDataType().getStateCount());
     }
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.DATA_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Uncertain site list";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
+        return Arrays.asList(
                 new Citation(
                         new Author[]{
                                 new Author("MA", "Suchard"),
@@ -87,7 +95,6 @@ public class UncertainSiteList extends SimpleSiteList implements Citable {
                         },
                         Citation.Status.IN_PREPARATION
                 ));
-        return citations;
     }
 
     private List<double[][]> uncertainSitePatterns = new ArrayList<double[][]>();

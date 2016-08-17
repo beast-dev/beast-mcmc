@@ -32,7 +32,13 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.*;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A likelihood function for the coalescent. Takes a tree and a exponential markov model.
@@ -41,7 +47,7 @@ import dr.xml.*;
  *
  * @author Alexei Drummond
  */
-public class SkylineLikelihood extends OldAbstractCoalescentLikelihood {
+public class SkylineLikelihood extends OldAbstractCoalescentLikelihood implements Citable {
 
 	// PUBLIC STUFF
 
@@ -157,4 +163,32 @@ public class SkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
 	/** The demographic model. */
 	Parameter popSizeParameter = null;
+
+	@Override
+	public Citation.Category getCategory() {
+		return Citation.Category.TREE_PRIORS;
+	}
+
+	@Override
+	public String getDescription() {
+		return "Bayesian Skyline Coalescent";
+	}
+
+	@Override
+	public List<Citation> getCitations() {
+		return Collections.singletonList(CITATION);
+	}
+
+	public static Citation CITATION = new Citation(
+			new Author[]{
+					new Author("AJ", "Drummond"),
+					new Author("A", "Rambaut"),
+					new Author("B", "Shapiro"),
+					new Author("OG", "Pybus")
+			},
+			"Bayesian coalescent inference of past population dynamics from molecular sequences",
+			2005,
+			"Mol Biol Evol",
+			22, 1185, 1192
+	);
 }

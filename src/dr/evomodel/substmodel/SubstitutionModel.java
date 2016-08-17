@@ -25,7 +25,6 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
 
 /**
@@ -36,44 +35,6 @@ import dr.inference.model.Model;
  * @author Alexei Drummond
  * @version $Id: SubstitutionModel.java,v 1.13 2005/05/24 20:25:58 rambaut Exp $
  */
-public interface SubstitutionModel extends Model {
-
-    /**
-     * Get the complete transition probability matrix for the given distance.
-     *
-     * @param distance the time (branch length)
-     * @param matrix   an array to store the matrix
-     */
-    void getTransitionProbabilities(double distance, double[] matrix);
-
-    /**
-     * This function returns the Eigen vectors.
-     * @return the array
-     */
-    double[][] getEigenVectors();
-
-    /**
-     * This function returns the inverse Eigen vectors.
-     * @return the array
-     */
-    double[][] getInverseEigenVectors();
-
-    /**
-     * This function returns the Eigen values.
-     * @return the Eigen values
-     */
-    double[] getEigenValues();
-
-    /**
-     * get the state frequencies
-     *
-     * @return the frequencies
-     */
-    FrequencyModel getFrequencyModel();
-
-    /**
-     * @return the data type
-     */
-    DataType getDataType();
-
+public interface SubstitutionModel extends SubstitutionProcess, Model {
+    // Combines SubstitutionProcess and Model
 }

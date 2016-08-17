@@ -51,7 +51,7 @@ public abstract class AbstractTraceList extends FilteredTraceList {
 
         Trace trace = getTrace(index);        
         TraceCorrelation traceCorrelation = new TraceCorrelation(
-                trace.getValues(start, trace.getValuesSize()),
+                trace.getValues(start, trace.getValueCount()),
                 trace.getTraceType(), getStepSize());
         trace.setTraceStatistics(traceCorrelation);
 

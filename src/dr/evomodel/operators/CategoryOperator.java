@@ -26,7 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.alignment.Alignment;
-import dr.evomodel.sitemodel.CategorySampleModel;
+import dr.oldevomodel.sitemodel.CategorySampleModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;

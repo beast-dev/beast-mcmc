@@ -1,7 +1,7 @@
 /*
  * GTRParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,14 +26,13 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.GTR;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.inference.model.Variable;
 import dr.xml.*;
 
 /**
- * Parses an element from an DOM document into a DemographicModel. Recognises
- * ConstantPopulation and ExponentialGrowth.
+ * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class GTRParser extends AbstractXMLObjectParser {
     public static final String GTR_MODEL = "gtrModel";
@@ -56,41 +55,41 @@ public class GTRParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-        Variable rateACValue = null;
+        Variable<Double> rateACVariable = null;
         if (xo.hasChildNamed(A_TO_C)) {
-            rateACValue = (Variable) xo.getElementFirstChild(A_TO_C);
+            rateACVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_C);
         }
-        Variable rateAGValue = null;
+        Variable<Double> rateAGVariable = null;
         if (xo.hasChildNamed(A_TO_G)) {
-            rateAGValue = (Variable) xo.getElementFirstChild(A_TO_G);
+            rateAGVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_G);
         }
-        Variable rateATValue = null;
+        Variable<Double> rateATVariable = null;
         if (xo.hasChildNamed(A_TO_T)) {
-            rateATValue = (Variable) xo.getElementFirstChild(A_TO_T);
+            rateATVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_T);
         }
-        Variable rateCGValue = null;
+        Variable<Double> rateCGVariable = null;
         if (xo.hasChildNamed(C_TO_G)) {
-            rateCGValue = (Variable) xo.getElementFirstChild(C_TO_G);
+            rateCGVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_G);
         }
-        Variable rateCTValue = null;
+        Variable<Double> rateCTVariable = null;
         if (xo.hasChildNamed(C_TO_T)) {
-            rateCTValue = (Variable) xo.getElementFirstChild(C_TO_T);
+            rateCTVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_T);
         }
-        Variable rateGTValue = null;
+        Variable<Double> rateGTVariable = null;
         if (xo.hasChildNamed(G_TO_T)) {
-            rateGTValue = (Variable) xo.getElementFirstChild(G_TO_T);
+            rateGTVariable = (Variable<Double>) xo.getElementFirstChild(G_TO_T);
         }
         int countNull = 0;
-        if (rateACValue == null) countNull++;
-        if (rateAGValue == null) countNull++;
-        if (rateATValue == null) countNull++;
-        if (rateCGValue == null) countNull++;
-        if (rateCTValue == null) countNull++;
-        if (rateGTValue == null) countNull++;
+        if (rateACVariable == null) countNull++;
+        if (rateAGVariable == null) countNull++;
+        if (rateATVariable == null) countNull++;
+        if (rateCGVariable == null) countNull++;
+        if (rateCTVariable == null) countNull++;
+        if (rateGTVariable == null) countNull++;
 
         if (countNull != 1)
             throw new XMLParseException("Only five parameters may be specified in GTR, leave exactly one out, the others will be specifed relative to the one left out.");
-        return new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, freqModel);
+        return new GTR(rateACVariable, rateAGVariable, rateATVariable, rateCGVariable, rateCTVariable, rateGTVariable, freqModel);
     }
 
     //************************************************************************
@@ -119,7 +118,7 @@ public class GTRParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubstitutionModel.class;
+        return GTR.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -142,6 +141,4 @@ public class GTRParser extends AbstractXMLObjectParser {
             new ElementRule(G_TO_T,
                     new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true)
     };
-
-
 }

@@ -1330,7 +1330,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected boolean areStatesRedrawn = false;
 
     protected double[] meanCache;
-    protected double[] storedMeanCache;
     protected double[] correctedMeanCache;
 
     class CacheHelper {

@@ -190,16 +190,16 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     private void iterate() throws OperatorFailedException {
         factorOperator.setPathParameter(sizeParam);
         loadingsOperator.setPathParameter(sizeParam);
-        if(separator == null){
+//        if(separator == null){
             separator = new double[2];
-            double foWeight = factorOperator.getWeight();
-            double loWeight = loadingsOperator.getWeight();
-            double sparoWeight = sparsityOperator.getWeight();
+            double foWeight = factors.getColumnDimension() * chainLength;
+            double loWeight = loadings.getColumnDimension() * chainLength;
+            double sparoWeight = (loadings.getRowDimension() * loadings.getColumnDimension() + factors.getColumnDimension() * factors.getRowDimension()) * chainLength;
             double total = foWeight + loWeight + sparoWeight;
             separator[0] = foWeight / total;
             separator[1] = (foWeight + loWeight) / total;
-        }
-        for (int i = 0; i < chainLength; i++) {
+//        }
+        for (int i = 0; i < total; i++) {
             double rand = MathUtils.nextDouble();
             if(rand < separator[0]){
                 factorOperator.doOperation();

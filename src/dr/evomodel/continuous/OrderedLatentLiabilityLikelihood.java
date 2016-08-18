@@ -177,7 +177,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             return 0;
         }
         else{
-            return 1/(1-pathParameter);
+            return  - 1 / (1-pathParameter);
         }
     }
 

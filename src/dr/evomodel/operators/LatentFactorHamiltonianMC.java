@@ -23,7 +23,6 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private double stepSize;
     private int nSteps;
     private boolean diffusionSN=true;
-    private Random random;
 
 
     public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
@@ -39,7 +38,6 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         ntraits = Precision.getRowDimension();
         this.stepSize = stepSize;
         this.nSteps = nSteps;
-        random = new Random(555);
     }
 
 
@@ -111,7 +109,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         double[] mean = tree.getConditionalMean(randel);
         double precfactor = 0;
         double[][] prec = null;
-        double rand = random.nextDouble();
+        double rand = MathUtils.nextDouble();
 //        System.out.println(rand);
         double functionalStepSize = stepSize * rand;
 
@@ -127,7 +125,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         double prop=0;
         for (int i = 0; i < momentum.length ; i++) {
-            prop += momentum[i]*momentum[i] / (2 * getMomentumSd()*getMomentumSd());
+            prop += momentum[i]*momentum[i] / (2 * getMomentumSd() * getMomentumSd());
         }
 
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {

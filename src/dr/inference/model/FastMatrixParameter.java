@@ -28,6 +28,7 @@ package dr.inference.model;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,11 +40,13 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     public static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
     public static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
 
-    public FastMatrixParameter(String id, int rowDimension, int colDimension) {
+    public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue) {
         super(id);
         singleParameter = new Parameter.Default(rowDimension * colDimension);
         addParameter(singleParameter);
-
+        for (int i = 0; i < singleParameter.getDimension(); i++) {
+            singleParameter.setParameterValue(i, startingValue);
+        }
         this.rowDimension = rowDimension;
         this.colDimension = colDimension;
     }
@@ -142,12 +145,18 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         @Override
         public int getDimension() {
-            return rowDimension;
+            return matrix.getRowDimension();
         }
     }
 
     private final int index(int row, int col) {
         // column-major
+        if(col > getColumnDimension()){
+            throw new RuntimeException("Column " + col + " out of bounds: Compared to " + getColumnDimension() + "maximum size.");
+        }
+        if(row > getRowDimension()){
+            throw new RuntimeException("Row " + row + " out of bounds: Compared to " + getRowDimension() + "maximum size.");
+        }
         return col * rowDimension + row;
     }
 
@@ -192,8 +201,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     @Override
     public double[] getColumnValues(int col) {
-        double[] rtn = new double[rowDimension];
-        for (int i = 0; i < rowDimension; ++i) {
+        double[] rtn = new double[getRowDimension()];
+        for (int i = 0; i < getRowDimension(); ++i) {
             rtn[i] = getParameterValue(i, col);
         }
         return rtn;
@@ -201,9 +210,9 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     @Override
     public double[][] getParameterAsMatrix() {
-        double[][] rtn = new double[rowDimension][colDimension];
-        for (int j = 0; j < colDimension; ++j) {
-            for (int i = 0; i < rowDimension; ++i) {
+        double[][] rtn = new double[getRowDimension()][getColumnDimension()];
+        for (int j = 0; j < getColumnDimension(); ++j) {
+            for (int i = 0; i < getRowDimension(); ++i) {
                 rtn[i][j] = getParameterValue(i, j);
             }
         }
@@ -235,6 +244,15 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         return super.getParameter(0);
     }
 
+    public void addBounds(Bounds<Double> boundary){
+        singleParameter.addBounds(boundary);
+    }
+
+    public Bounds<Double> getBounds(){
+        return singleParameter.getBounds();
+    }
+
+
     private final int rowDimension;
     private final int colDimension;
     private final Parameter singleParameter;
@@ -253,7 +271,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
             final int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
             final int colDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
 
-            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension);
+            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, 1);
 
             return matrixParameter;
         }

@@ -461,7 +461,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == traitParameter) { // A tip value got updated
-            if (index > dimTrait * treeModel.getExternalNodeCount()) {
+            if (index > dimTrait * numData * treeModel.getExternalNodeCount()) {
                 throw new RuntimeException("Attempting to update an invalid index");
             }
 
@@ -1330,7 +1330,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected boolean areStatesRedrawn = false;
 
     protected double[] meanCache;
-    protected double[] storedMeanCache;
     protected double[] correctedMeanCache;
 
     class CacheHelper {
@@ -1348,7 +1347,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         public double[] getShift(NodeRef node) {
 
-            double[] shift = new double[dimTrait];
+            double[] shift = new double[dimTrait * numData];
             for (int i = 0; i < dim; ++i) {
                 shift[i] = 0;
             }
@@ -1596,11 +1595,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     private double[] logRemainderDensityCache;
 
 //    private double[] storedMeanCache;
+    protected double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;
     private double[] storedLowerPrecisionCache;
     private double[] storedLogRemainderDensityCache;
 
-    private double[] drawnStates;
+    protected double[] drawnStates;
 
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     //  protected final boolean integrateRoot = false;

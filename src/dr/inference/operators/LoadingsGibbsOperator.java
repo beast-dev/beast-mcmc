@@ -27,9 +27,7 @@ package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.TransposedBlockUpperTriangularMatrixParameter;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
@@ -49,6 +47,7 @@ import java.util.ListIterator;
  */
 public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     NormalDistribution prior;
+    NormalDistribution workingPrior;
     LatentFactorModel LFM;
     ArrayList<double[][]> precisionArray;
     ArrayList<double[]> meanMidArray;
@@ -59,11 +58,16 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 
     double priorPrecision;
     double priorMeanPrecision;
+    double priorPrecisionWorking;
+    double priorMeanPrecisionWorking;
+    private double a;
 
-    public LoadingsGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan) {
+    public LoadingsGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan, DistributionLikelihood workingPrior) {
         setWeight(weight);
 
         this.prior = (NormalDistribution) prior.getDistribution();
+        if(workingPrior != null){
+         this.workingPrior = (NormalDistribution) workingPrior.getDistribution();}
         this.LFM = LFM;
         precisionArray = new ArrayList<double[][]>();
         double[][] temp;
@@ -117,6 +121,16 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //            }
         priorPrecision = 1 / (this.prior.getSD() * this.prior.getSD());
         priorMeanPrecision = this.prior.getMean() * priorPrecision;
+
+        if(workingPrior == null)
+        {
+            priorMeanPrecisionWorking = priorMeanPrecision;
+            priorPrecisionWorking = priorPrecision;
+        }
+        else{
+            priorPrecisionWorking = 1 / (this.workingPrior.getSD() * this.workingPrior.getSD());
+            priorMeanPrecisionWorking = this.workingPrior.getMean() * priorPrecisionWorking;
+        }
     }
 
     private void getPrecisionOfTruncated(MatrixParameterInterface full, int newRowDimension, int row, double[][] answer) {
@@ -134,9 +148,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                     sum += full.getParameterValue(i, k) * full.getParameterValue(j, k);
                 answer[i][j] = sum * LFM.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
-                    answer[i][j] =answer[i][j]*pathParameter+ priorPrecision;
+                    answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();
                 } else {
-                    answer[i][j]*=pathParameter;
+                    answer[i][j] *= pathParameter;
                     answer[j][i] = answer[i][j];
                 }
             }
@@ -204,8 +218,8 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 //            }
         }
-        for (int j = 0; j <mean.length ; j++) {//TODO implement for generic prior
-            mean[j]*=pathParameter;
+        for (int j = 0; j < mean.length ; j++) {//TODO implement for generic prior
+            mean[j] *= pathParameter;
         }
 
     }
@@ -321,5 +335,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 
     public void setPathParameter(double beta){
         pathParameter=beta;
+    }
+
+    public double getAdjustedPriorPrecision() {
+        return priorPrecision * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
     }
 }

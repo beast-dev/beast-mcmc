@@ -47,13 +47,14 @@ public class XMLObject {
     /**
      * @param e the element the construct this XML object from
      */
-    public XMLObject(Element e) {
+    public XMLObject(Element e, XMLObject parent) {
         this.element = e;
+        this.parent = parent;
     }
 
     public XMLObject(XMLObject obj, int index) {
 
-       this(obj.element);
+       this(obj.element, null);
        nativeObject = ((List)obj.getNativeObject()).get(index);
    }
 
@@ -590,12 +591,17 @@ public class XMLObject {
         throw new XMLParseException("'" + name + "' attribute was not found in " + element.getTagName() + " element.");
     }
 
+    public XMLObject getParent() {
+        return parent;
+    }
+
     //*********************************************************************
     // Private instance variables
     //*********************************************************************
 
     private final Vector<Object> children = new Vector<Object>();
-    private Element element = null;
+    private final Element element;
+    private final XMLObject parent;
 
     private Object nativeObject;
 

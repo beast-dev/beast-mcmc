@@ -36,10 +36,11 @@ public class GaussianProcessSkytrackParser {
 //        System.out.println("Old Positions: " + Arrays.toString(result.getPositionOld()));
 
         int NGRID = 101;
+        double quantile = 0.5;
         String filePathName = "examples/hcvNew2small.log";
         CSVstats stats = parseCSV(filePathName, 3);
         //System.out.println(Arrays.toString(stats.precisions));
-        double tmrca = DiscreteStatistics.median(stats.tmrcas);
+        double tmrca = DiscreteStatistics.quantile(quantile, stats.tmrcas);
         System.out.println(tmrca);
 
         double[] grid = new double[NGRID];
@@ -51,8 +52,13 @@ public class GaussianProcessSkytrackParser {
 
         double[] result = gpPosterior(stats, grid, stats.getSize() - 1);
 
+        double[] result2 = new double[result.length];
+        for (int i = 0; i < result.length; i++) {
+            result2[i] = 1/result[i];
+        }
+
         System.out.println(Arrays.toString(grid));
-        System.out.println(Arrays.toString(result));
+        System.out.println(Arrays.toString(result2));
     }
 
     public static CSVstats parseCSV(String filename, int skip) {

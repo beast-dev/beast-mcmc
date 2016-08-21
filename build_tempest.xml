@@ -54,7 +54,7 @@
 
     <target name="compile" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">
+        <javac source="1.6" target="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">
             <include name="dr/app/tempest/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/tools/**"/>
@@ -116,7 +116,7 @@
         </jar>
     </target>
 
-    <property name="version" value="1.5" />
+    <property name="version" value="1.5.1" />
     <property name="packaging_tools" value="packaging_tools" />
     <property name="release_dir" value="release_tempest" />
     <property name="name" value="TempEst" />

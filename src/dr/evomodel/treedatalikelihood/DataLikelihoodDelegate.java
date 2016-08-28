@@ -38,6 +38,8 @@ import java.util.List;
  */
 public interface DataLikelihoodDelegate extends Model {
 
+    TreeDataLikelihood.TraversalType getOptimalTraversalType();
+
     double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
 
     void makeDirty();

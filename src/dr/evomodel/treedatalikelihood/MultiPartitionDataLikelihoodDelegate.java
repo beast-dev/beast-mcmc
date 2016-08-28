@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-    private static final boolean RESCALING_OFF = true; // a debugging switch
+    private static final boolean RESCALING_OFF = false; // a debugging switch
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -423,6 +423,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+    }
+
+    @Override
+    public TreeDataLikelihood.TraversalType getOptimalTraversalType() {
+        return TreeDataLikelihood.TraversalType.REVERSE_LEVEL_ORDER;
     }
 
     private void updateSubstitutionModels(boolean... state) {

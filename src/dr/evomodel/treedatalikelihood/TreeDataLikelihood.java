@@ -49,6 +49,11 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
+    enum TraversalType {
+        POST_ORDER,
+        REVERSE_LEVEL_ORDER
+    };
+
     public TreeDataLikelihood(DataLikelihoodDelegate delegate,
                               TreeModel treeModel,
                               BranchRateModel branchRateModel) {
@@ -231,7 +236,18 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             nodeOperations.clear();
 
             final NodeRef root = treeModel.getRoot();
-            traverse(treeModel, root);
+
+            switch (delegate.getOptimalTraversalType()) {
+
+                case POST_ORDER:
+                    traversePostOrder(treeModel, root);
+                    break;
+                case REVERSE_LEVEL_ORDER:
+                    traverseReverseLevelOrder(treeModel, root);
+                    break;
+                default:
+                    assert false : "Unknown traversal type";
+            }
 
             if (COUNT_TOTAL_OPERATIONS) {
                 totalMatrixUpdateCount += branchOperations.size();
@@ -263,13 +279,13 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     /**
-     * Traverse the tree calculating partial likelihoods.
+     * Traverse the tree in post order.
      *
      * @param tree           tree
      * @param node           node
      * @return boolean
      */
-    private boolean traverse(Tree tree, NodeRef node) {
+    private boolean traversePostOrder(Tree tree, NodeRef node) {
 
         boolean update = false;
 
@@ -305,10 +321,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1);
+            final boolean update1 = traversePostOrder(tree, child1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2);
+            final boolean update2 = traversePostOrder(tree, child2);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -324,9 +340,50 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     }
 
+
     /**
-     * Set update flag for a node only
+     * Traverse the tree in reverse level order.
+     *
+     * @param tree           tree
+     * @param rootNode       rootNode
+     * @return boolean
      */
+    private boolean traverseReverseLevelOrder(final Tree tree, final NodeRef rootNode) {
+        Stack<NodeRef> nodeStack = new Stack<NodeRef>();
+        Queue<NodeRef> nodeQueue = new LinkedList<NodeRef>();
+        nodeQueue.add(rootNode);
+
+        // Do something like normal level order traversal order.Following
+        // are the differences with normal level order traversal
+        // 1) Instead of printing a node, we push the node to stack
+        // 2) Right subtree is visited before left subtree
+        while (!nodeQueue.isEmpty()) {
+            /* Dequeue node and make it root */
+            NodeRef node = nodeQueue.remove();
+            nodeStack.push(node);
+
+            if (!tree.isExternal(node)) {
+                // NOTE: RIGHT CHILD IS ENQUEUED BEFORE LEFT
+                nodeQueue.add(tree.getChild(node, 1));
+                nodeQueue.add(tree.getChild(node, 0));
+            }
+
+        }
+
+        // Now pop all items from stack one by one and add to operations
+        while (!nodeStack.empty()) {
+           NodeRef node = nodeStack.peek();
+
+            // do stuff here
+
+            nodeStack.pop();
+        }
+        return true;
+    }
+
+        /**
+         * Set update flag for a node only
+         */
     protected void updateNode(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;

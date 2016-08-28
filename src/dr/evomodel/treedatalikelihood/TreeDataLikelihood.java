@@ -240,10 +240,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             switch (delegate.getOptimalTraversalType()) {
 
                 case POST_ORDER:
-                    traversePostOrder(treeModel, root);
+                    traversePostOrder(treeModel);
                     break;
                 case REVERSE_LEVEL_ORDER:
-                    traverseReverseLevelOrder(treeModel, root);
+                    traverseReverseLevelOrder(treeModel);
                     break;
                 default:
                     assert false : "Unknown traversal type";
@@ -282,6 +282,16 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * Traverse the tree in post order.
      *
      * @param tree           tree
+     * @return boolean
+     */
+    private void traversePostOrder(Tree tree) {
+        traversePostOrder(tree, tree.getRoot());
+    }
+
+    /**
+     * Traverse the tree in post order.
+     *
+     * @param tree           tree
      * @param node           node
      * @return boolean
      */
@@ -291,27 +301,11 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         int nodeNum = node.getNumber();
 
-        NodeRef parent = tree.getParent(node);
-
         // First update the transition probability matrix(ices) for this branch
-        if (parent != null && updateNode[nodeNum]) {
+        if (tree.getParent(node) != null && updateNode[nodeNum]) {
             // @todo - at the moment a matrix is updated even if a branch length doesn't change
 
-            final double branchRate;
-
-            synchronized (branchRateModel) {
-                branchRate = branchRateModel.getBranchRate(tree, node);
-            }
-            final double parentHeight = tree.getNodeHeight(parent);
-            final double nodeHeight = tree.getNodeHeight(node);
-
-            // Get the operational time of the branch
-            final double branchLength = branchRate * (parentHeight - nodeHeight);
-            if (branchLength < 0.0) {
-                throw new RuntimeException("Negative branch length: " + branchLength);
-            }
-
-            branchOperations.add(new DataLikelihoodDelegate.BranchOperation(nodeNum, branchLength));
+            addBranchUpdateOperation(tree, node);
 
             update = true;
         }
@@ -340,50 +334,109 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     }
 
+    /**
+     * Traverse the tree in reverse level order.
+     *
+     * @param tree           tree
+     */
+    private void traverseReverseLevelOrder(final Tree tree) {
+        Map<Integer, List<DataLikelihoodDelegate.NodeOperation>> operationMap =
+                new HashMap<Integer, List<DataLikelihoodDelegate.NodeOperation>>();
+
+        traverseReverseLevelOrder(tree, tree.getRoot(), 0, operationMap);
+
+        // get the levels as keys in reverse order (they are currently largest towards
+        // the tips
+        List<Integer> keyList = new ArrayList<Integer>(operationMap.keySet());
+        Collections.sort(keyList, Collections.reverseOrder());
+
+        for (Integer key : keyList) {
+            List<DataLikelihoodDelegate.NodeOperation> opList = operationMap.get(key);
+            for (DataLikelihoodDelegate.NodeOperation op : opList) {
+                nodeOperations.add(op);
+            }
+        }
+    }
 
     /**
      * Traverse the tree in reverse level order.
      *
      * @param tree           tree
-     * @param rootNode       rootNode
+     * @param node          node
      * @return boolean
      */
-    private boolean traverseReverseLevelOrder(final Tree tree, final NodeRef rootNode) {
-        Stack<NodeRef> nodeStack = new Stack<NodeRef>();
-        Queue<NodeRef> nodeQueue = new LinkedList<NodeRef>();
-        nodeQueue.add(rootNode);
+    private boolean traverseReverseLevelOrder(final Tree tree, final NodeRef node,
+                                              final int level,
+                                              Map<Integer, List<DataLikelihoodDelegate.NodeOperation>> operationMap) {
+        boolean update = false;
 
-        // Do something like normal level order traversal order.Following
-        // are the differences with normal level order traversal
-        // 1) Instead of printing a node, we push the node to stack
-        // 2) Right subtree is visited before left subtree
-        while (!nodeQueue.isEmpty()) {
-            /* Dequeue node and make it root */
-            NodeRef node = nodeQueue.remove();
-            nodeStack.push(node);
+        int nodeNum = node.getNumber();
 
-            if (!tree.isExternal(node)) {
-                // NOTE: RIGHT CHILD IS ENQUEUED BEFORE LEFT
-                nodeQueue.add(tree.getChild(node, 1));
-                nodeQueue.add(tree.getChild(node, 0));
+        // First update the transition probability matrix(ices) for this branch
+        if (tree.getParent(node) != null && updateNode[nodeNum]) {
+            // @todo - at the moment a matrix is updated even if a branch length doesn't change
+
+            addBranchUpdateOperation(tree, node);
+
+            update = true;
+        }
+
+        // If the node is internal, update the partial likelihoods.
+        if (!tree.isExternal(node)) {
+
+            // Traverse down the two child nodes incrementing the level (this will give
+            // level order but we will reverse these later
+            NodeRef child1 = tree.getChild(node, 0);
+            final boolean update1 = traverseReverseLevelOrder(tree, child1, level + 1, operationMap);
+
+            NodeRef child2 = tree.getChild(node, 1);
+            final boolean update2 = traverseReverseLevelOrder(tree, child2, level + 1, operationMap);
+
+            // If either child node was updated then update this node too
+            if (update1 || update2) {
+
+                List<DataLikelihoodDelegate.NodeOperation> ops = operationMap.get(level);
+                if (ops == null) {
+                    ops = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
+                    operationMap.put(level, ops);
+                }
+                ops.add(new DataLikelihoodDelegate.NodeOperation(nodeNum, child1.getNumber(), child2.getNumber()));
+
+                update = true;
+
             }
-
         }
 
-        // Now pop all items from stack one by one and add to operations
-        while (!nodeStack.empty()) {
-           NodeRef node = nodeStack.peek();
-
-            // do stuff here
-
-            nodeStack.pop();
-        }
-        return true;
+        return update;
     }
 
-        /**
-         * Set update flag for a node only
-         */
+    /**
+     * Add this node to the branchOperation list for updating of the transition probability matrix.
+     *
+     * @param tree           tree
+     * @param node           node
+     */
+    private void addBranchUpdateOperation(Tree tree, NodeRef node) {
+        final double branchRate;
+
+        synchronized (branchRateModel) {
+            branchRate = branchRateModel.getBranchRate(tree, node);
+        }
+        final double parentHeight = tree.getNodeHeight(tree.getParent(node));
+        final double nodeHeight = tree.getNodeHeight(node);
+
+        // Get the operational time of the branch
+        final double branchLength = branchRate * (parentHeight - nodeHeight);
+        if (branchLength < 0.0) {
+            throw new RuntimeException("Negative branch length: " + branchLength);
+        }
+
+        branchOperations.add(new DataLikelihoodDelegate.BranchOperation(node.getNumber(), branchLength));
+    }
+
+    /**
+     * Set update flag for a node only
+     */
     protected void updateNode(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;

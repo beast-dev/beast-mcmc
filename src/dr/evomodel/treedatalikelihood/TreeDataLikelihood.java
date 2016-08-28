@@ -340,13 +340,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * @param tree           tree
      */
     private void traverseReverseLevelOrder(final Tree tree) {
+
+        // create a map of all the operations at each particular level
         Map<Integer, List<DataLikelihoodDelegate.NodeOperation>> operationMap =
                 new HashMap<Integer, List<DataLikelihoodDelegate.NodeOperation>>();
 
-        traverseReverseLevelOrder(tree, tree.getRoot(), 0, operationMap);
+        traverseLevelOrder(tree, tree.getRoot(), 0, operationMap);
 
         // get the levels as keys in reverse order (they are currently largest towards
-        // the tips
+        // the tips) and add the operations to the nodeOperation array.
         List<Integer> keyList = new ArrayList<Integer>(operationMap.keySet());
         Collections.sort(keyList, Collections.reverseOrder());
 
@@ -359,13 +361,13 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     /**
-     * Traverse the tree in reverse level order.
+     * Traverse the tree in level order.
      *
      * @param tree           tree
      * @param node          node
      * @return boolean
      */
-    private boolean traverseReverseLevelOrder(final Tree tree, final NodeRef node,
+    private boolean traverseLevelOrder(final Tree tree, final NodeRef node,
                                               final int level,
                                               Map<Integer, List<DataLikelihoodDelegate.NodeOperation>> operationMap) {
         boolean update = false;
@@ -387,10 +389,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             // Traverse down the two child nodes incrementing the level (this will give
             // level order but we will reverse these later
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverseReverseLevelOrder(tree, child1, level + 1, operationMap);
+            final boolean update1 = traverseLevelOrder(tree, child1, level + 1, operationMap);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverseReverseLevelOrder(tree, child2, level + 1, operationMap);
+            final boolean update2 = traverseLevelOrder(tree, child2, level + 1, operationMap);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {

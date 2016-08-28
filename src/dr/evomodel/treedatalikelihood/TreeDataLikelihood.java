@@ -182,7 +182,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         } else {
 
-            throw new RuntimeException("Unknown componentChangedEvent");
+            assert false: "Unknown componentChangedEvent";
         }
 
         if (COUNT_TOTAL_OPERATIONS)
@@ -429,9 +429,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         // Get the operational time of the branch
         final double branchLength = branchRate * (parentHeight - nodeHeight);
-        if (branchLength < 0.0) {
-            throw new RuntimeException("Negative branch length: " + branchLength);
-        }
+
+        assert branchLength > 0.0 : "Negative branch length: " + branchLength + " for node " +
+                node.getNumber() + (tree.isExternal(node) ?
+                " (" + tree.getNodeTaxon(node).getId() + ")": "");
 
         branchOperations.add(new DataLikelihoodDelegate.BranchOperation(node.getNumber(), branchLength));
     }

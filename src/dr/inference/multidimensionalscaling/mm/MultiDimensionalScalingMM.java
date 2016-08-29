@@ -122,7 +122,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 //        setParameterValues(likelihood.getMatrixParameter(), mode);
 //        printLogObjective();
 
-        throw new RuntimeException("done");
+//        throw new RuntimeException("done");
     }
 
     private double printLogObjective() {

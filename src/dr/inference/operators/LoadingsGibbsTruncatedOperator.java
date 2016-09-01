@@ -154,8 +154,11 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
         getMean(i, variance, meanMidArray, meanArray);
 
+            if(LFM.getFactorDimension() != 1)
+                conditioned = getConditionalDistribution(meanArray, variance, column, i);
 
-        conditioned = getConditionalDistribution(meanArray, variance, column, i);
+            else
+                conditioned = new NormalDistribution(meanArray[0], Math.sqrt(variance[0][0]));
         }
         else
             conditioned = new NormalDistribution(0, Math.sqrt(1 / prior.getScaleMatrix()[0][0]));

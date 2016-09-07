@@ -25,6 +25,7 @@
 
 package dr.geo;
 
+import dr.inference.distribution.CachedDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
@@ -50,6 +51,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public static final String KML_FILE = "kmlFileName";
     public static final String INSIDE = "inside";
     public static final String UNION = "union";
+    public static final String CACHE = "cache";
     private static final String DEFAULT_LABEL = "";
 
     public static final int dimPoint = 2; // Assumes 2D points only
@@ -113,6 +115,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
             boolean inside = xo.getAttribute(INSIDE, true);
             boolean union = xo.getAttribute(UNION, false);
             boolean readFromFile = false;
+            boolean cache = xo.getAttribute(CACHE, false);
 
             List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
 
@@ -179,7 +182,12 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                     MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
                             new MultiRegionGeoSpatialDistribution(label, geoSpatialDistributions, union));
                     likelihood.addData(parameter);
-                    return likelihood;
+                    likelihood.setId(xo.getId());
+                    if (cache) {
+                        return new CachedDistributionLikelihood(xo.getId(), likelihood, parameter);
+                    } else {
+                        return likelihood;
+                    }
 
                 } else {
 
@@ -203,6 +211,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 AttributeRule.newStringRule(NODE_LABEL, true),
                 AttributeRule.newBooleanRule(INSIDE, true),
                 AttributeRule.newBooleanRule(UNION, true),
+                AttributeRule.newBooleanRule(CACHE, true),
                 new XORRule(
                         AttributeRule.newStringRule(KML_FILE),
                         new ElementRule(Polygon2D.class, 1, Integer.MAX_VALUE)

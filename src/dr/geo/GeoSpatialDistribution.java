@@ -29,6 +29,9 @@ import dr.inference.distribution.CachedDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.*;
 
 import java.awt.geom.Point2D;
@@ -42,7 +45,7 @@ import java.util.logging.Logger;
  * @author Alexei J. Drummond
  */
 
-public class GeoSpatialDistribution implements MultivariateDistribution {
+public class GeoSpatialDistribution implements MultivariateDistribution, Citable {
 
     public static final String FLAT_SPATIAL_DISTRIBUTION = "flatGeoSpatialPrior";
     public static final String DATA = "data";
@@ -230,4 +233,35 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         }
     };
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.PRIOR_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Integrated continuous traits over polygons";
+    }
+
+    public List<Citation> getCitations() {
+        List<Citation> citationList = new ArrayList<Citation>();
+        citationList.add(new Citation(
+                new Author[] {
+                        new Author("S", "Nylinder"),
+                        new Author("P", "Lemey"),
+                        new Author("M", "de Bruyn"),
+                        new Author("MA", "Suchard"),
+                        new Author("BE", "Pfeil"),
+                        new Author("N", "Walsh"),
+                        new Author("AA", "Anderberg")
+                },
+                "On the biogeography of Centipeda: a species-tree diffusion approach",
+                2014,
+                "Systematic Biology",
+                63,
+                178, 191,
+                Citation.Status.PUBLISHED
+        ));
+        return citationList;
+    }
 }

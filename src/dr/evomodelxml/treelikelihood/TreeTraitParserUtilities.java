@@ -54,6 +54,7 @@ public class TreeTraitParserUtilities {
     public static final String WINDOW = "window";
     public static final String DUPLICATES = "duplicatesOnly";
     public static final String STANDARDIZE = "standardize";
+    public static final String SAMPLE_MISSING_TRAITS = "sampleMissingTraits";
 
     public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)
@@ -408,6 +409,12 @@ public class TreeTraitParserUtilities {
                 }
             }
         }
+
+        if (xo.getAttribute(SAMPLE_MISSING_TRAITS, false)) {
+            missingIndices = new ArrayList<Integer>(); // return empty
+
+        }
+
         return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName);
     }
 

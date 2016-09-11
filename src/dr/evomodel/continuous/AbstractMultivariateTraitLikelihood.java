@@ -803,6 +803,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             List<Integer> missingIndices = returnValue.missingIndices;
             traitName = returnValue.traitName;
 
+            /* TODO Add partially integrated traits here */
+
             Model samplingDensity = null;
 
             if (xo.hasChildNamed(SAMPLING_DENSITY)) {
@@ -1033,6 +1035,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newIntegerRule(RANDOM_SAMPLE, true),
                 AttributeRule.newBooleanRule(IGNORE_PHYLOGENY, true),
                 AttributeRule.newBooleanRule(EXCHANGEABLE_TIPS, true),
+                AttributeRule.newBooleanRule(TreeTraitParserUtilities.SAMPLE_MISSING_TRAITS, true),
                 new ElementRule(Parameter.class, true),
                 TreeTraitParserUtilities.randomizeRules(true),
                 TreeTraitParserUtilities.jitterRules(true),

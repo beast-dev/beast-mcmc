@@ -52,6 +52,8 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
     public GaussianProcessRandomGenerator getGaussianProcess() { return gp; }
 
+    public double getTolerance() { return tolerance; }
+
     public MultiDimensionalScalingMM(MultiDimensionalScalingLikelihood likelihood,
                                      GaussianProcessRandomGenerator gp,
                                      double tolerance) {
@@ -333,7 +335,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
         };
 
         public Class getReturnType() {
-            return MultiDimensionalScalingMM.class;
+            return MMAlgorithm.class;
         }
     };
 

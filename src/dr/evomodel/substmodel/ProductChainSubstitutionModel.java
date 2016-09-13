@@ -105,8 +105,6 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
 
         updateMatrix = true;
 
-        Logger.getLogger("dr.app.beagle").info("\tConstructing a product chain substition model,  please cite:\n"
-                + Citable.Utils.getCitationString(this));
     }
 
     @Override

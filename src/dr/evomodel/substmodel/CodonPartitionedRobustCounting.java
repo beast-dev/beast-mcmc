@@ -765,8 +765,12 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     @Override
     public String getDescription() {
-        return "Using robust counting (first citation) for labeled distances between sequences" +
-                " to efficiently estimate site-specific dN/dS rate ratios (second citation):";
+        StringBuilder sb = new StringBuilder("Using robust counting (first citation) for labeled distances between sequences" +
+                " to efficiently estimate site-specific dN/dS rate ratios (second citation)");
+        if (saveCompleteHistory) {
+            sb.append(" and inferring the complete transition history (third citation)");
+        }
+        return sb.toString();
     }
 
     /**
@@ -777,6 +781,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         List<Citation> list = new ArrayList<Citation>();
         list.add(CommonCitations.OBRIEN_2009_LEARNING);
         list.add(CommonCitations.LEMEY_2012_RENAISSANCE);
+        if (saveCompleteHistory) {
+            list.add(CommonCitations.BLOOM_2013_STABILITY);
+        }
         return list;
     }
 }

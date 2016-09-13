@@ -229,6 +229,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "robustCounting2"),
                         new Attribute.Default<String>("labeling", "N"),
                         new Attribute.Default<String>("prefix", prefix),
+                        new Attribute.Default<String>("saveCompleteHistory",
+                                                        isCompleteHistoryLogging ? "true" : "false"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",

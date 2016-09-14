@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.inference.model.*;
 
 import java.util.List;
@@ -37,14 +38,21 @@ public class ContinuousTraitDataModel extends AbstractModel {
     private final CompoundParameter parameter;
     private final List<Integer> missingIndices;
 
+    private final int numTraits;
+
     public ContinuousTraitDataModel(String name,
                              CompoundParameter parameter,
-                             List<Integer> missingIndices) {
+                             List<Integer> missingIndices,
+                                    final int dim) {
         super(name);
         this.parameter = parameter;
         this.missingIndices = missingIndices;
         addVariable(parameter);
+
+        numTraits = getParameter().getParameter(0).getDimension() / dim;
     }
+
+    public int getTraitCount() {  return numTraits; }
 
     public String getName() { return super.getModelName(); }
 
@@ -77,4 +85,13 @@ public class ContinuousTraitDataModel extends AbstractModel {
     @Override
     protected void acceptState() { }
 
+    public double[] getTipMean(int index) {
+        return parameter.getParameter(index).getParameterValues();
+    }
+
+    public double[] getTipPrecision(int index) {
+        return NON_MISSING;
+    }
+
+    private static double[] NON_MISSING = new double[] { Double.POSITIVE_INFINITY };
 }

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood;
+package dr.evomodel.treedatalikelihood.continuous;
 
 /**
  * ContinuousDataLikelihoodDelegate
@@ -36,28 +36,22 @@ package dr.evomodel.treedatalikelihood;
  * @version $Id$
  */
 
-import beagle.*;
-import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.UncertainSiteList;
-import dr.evolution.datatype.DataType;
 import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.branchmodel.BranchModel;
+import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.continuous.cdi.CDIFactory;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.InstanceDetails;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ResourceDetails;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -81,6 +75,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //                                               boolean reportAsMultivariate,
 //                                               boolean reciprocalRates)
 
+    private final int numTraits;
+    private final int dimMean;
+    private final int dimPrecision;
+
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
                                             MultivariateDiffusionModel diffusionModel,
                                             ContinuousTraitDataModel dataModel,
@@ -101,189 +99,43 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             addModel(rateModel);
         }
 
-//        this.dataType = patternList.getDataType();
-//        patternCount = patternList.getPatternCount();
-//        stateCount = dataType.getStateCount();
-//
-//        patternWeights = patternList.getPatternWeights();
-//
-//        this.branchModel = branchModel;
-//        addModel(this.branchModel);
-//
-//        this.siteRateModel = siteRateModel;
-//        addModel(this.siteRateModel);
-//
-//        this.categoryCount = this.siteRateModel.getCategoryCount();
-//
+        this.numTraits = dataModel.getTraitCount();
+
+        this.dimMean = dataModel.getTipMean(0).length;
+        this.dimPrecision = dataModel.getTipPrecision(0).length;
+
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
         internalNodeCount = nodeCount - tipCount;
 
         branchUpdateIndices = new int[nodeCount];
         branchLengths = new double[nodeCount];
-//        scaleBufferIndices = new int[internalNodeCount];
-//        storedScaleBufferIndices = new int[internalNodeCount];
 
         operations = new int[internalNodeCount * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
 
         try {
-
-
-//            int compactPartialsCount = tipCount;
-//            if (useAmbiguities) {
-//                // if we are using ambiguities then we don't use tip partials
-//                compactPartialsCount = 0;
-//            }
-//
             // one partials buffer for each tip and two for each internal node (for store restore)
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
+
+
+            cdi = new ContinuousDiffusionIntegrator.Basic(
+                    numTraits,
+                    dimMean,
+                    dimPrecision,
+                    partialBufferHelper.getBufferCount(),
+                    1
+            );
+
+            // TODO Make separate library
+//            cdi = CDIFactory.loadCDIInstance();
 //
-//            // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
-//            scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
-//
-//            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
-//
-//            // Attempt to get the resource order from the System Property
-//            if (resourceOrder == null) {
-//                resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
-//            }
-//            if (preferredOrder == null) {
-//                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
-//            }
-//            if (requiredOrder == null) {
-//                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
-//            }
-//            if (scalingOrder == null) {
-//                scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
-//            }
-//            if (extraBufferOrder == null) {
-//                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
-//            }
-//
-//            // first set the rescaling scheme to use from the parser
-//            this.rescalingScheme = rescalingScheme;
-//            this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
-//
-//            int[] resourceList = null;
-//            long preferenceFlags = 0;
-//            long requirementFlags = 0;
-//
-//            if (scalingOrder.size() > 0) {
-//                this.rescalingScheme = PartialsRescalingScheme.parseFromString(
-//                        scalingOrder.get(instanceCount % scalingOrder.size()));
-//            }
-//
-//            if (resourceOrder.size() > 0) {
-//                // added the zero on the end so that a CPU is selected if requested resource fails
-//                resourceList = new int[]{resourceOrder.get(instanceCount % resourceOrder.size()), 0};
-//                if (resourceList[0] > 0) {
-//                    preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
-//                }
-//            }
-//
-//            if (preferredOrder.size() > 0) {
-//                preferenceFlags = preferredOrder.get(instanceCount % preferredOrder.size());
-//            }
-//
-//            if (requiredOrder.size() > 0) {
-//                requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
-//            }
-//
-//
-//            // Define default behaviour here
-//            if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {
-//                //if GPU: the default is dynamic scaling in BEAST
-//                if (resourceList != null && resourceList[0] > 1) {
-//                    this.rescalingScheme = DEFAULT_RESCALING_SCHEME;
-//                } else { // if CPU: just run as fast as possible
-////                    this.rescalingScheme = PartialsRescalingScheme.NONE;
-//                    // Dynamic should run as fast as none until first underflow
-//                    this.rescalingScheme = DEFAULT_RESCALING_SCHEME;
-//                }
-//            }
-//
-//            // to keep behaviour of the delayed scheme (always + delay)...
-//            if (this.rescalingScheme == PartialsRescalingScheme.DELAYED) {
-//                this.delayRescalingUntilUnderflow = true;
-//                this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
-//            }
-//
-//            if (this.rescalingScheme == PartialsRescalingScheme.AUTO) {
-//                preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();
-//                useAutoScaling = true;
-//            } else {
-////                preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
-//            }
-//
-//            String r = System.getProperty(RESCALE_FREQUENCY_PROPERTY);
-//            if (r != null) {
-//                rescalingFrequency = Integer.parseInt(r);
-//                if (rescalingFrequency < 1) {
-//                    rescalingFrequency = RESCALE_FREQUENCY;
-//                }
-//            }
-//
-//            String d = System.getProperty(DELAY_SCALING_PROPERTY);
-//            if (d != null) {
-//                this.delayRescalingUntilUnderflow = Boolean.parseBoolean(d);
-//            }
-//
-//
-//            if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
-//                if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
-//                    preferenceFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
-//            }
-//
-//            boolean forceVectorization = false;
-//            String vectorizationString = System.getProperty(FORCE_VECTORIZATION);
-//            if (vectorizationString != null) {
-//                forceVectorization = true;
-//            }
-//
-//            if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
-//                    && !forceVectorization
-//                    ) {
-//                // @todo SSE doesn't seem to work for larger state spaces so for now we override the
-//                // SSE option.
-//                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
-//                preferenceFlags |= BeagleFlag.VECTOR_NONE.getMask();
-//
-//                if (stateCount > 4 && this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-//                    this.rescalingScheme = PartialsRescalingScheme.DELAYED;
-//                }
-//            }
-//
-//            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
-//                // if single precision not explicitly set then prefer double
-//                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-//            }
-//
-//            if (evolutionaryProcessDelegate.canReturnComplexDiagonalization()) {
-//                requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
-//            }
-//
-//            beagle = BeagleFactory.loadBeagleInstance(
-//                    tipCount,
-//                    partialBufferHelper.getBufferCount(),
-//                    compactPartialsCount,
-//                    stateCount,
-//                    patternCount,
-//                    evolutionaryProcessDelegate.getEigenBufferCount(),
-//                    evolutionaryProcessDelegate.getMatrixBufferCount(),
-//                    categoryCount,
-//                    scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
-//                    resourceList,
-//                    preferenceFlags,
-//                    requirementFlags
-//            );
-//
-//            InstanceDetails instanceDetails = beagle.getDetails();
+//            InstanceDetails instanceDetails = cdi.getDetails();
 //            ResourceDetails resourceDetails = null;
 //
 //            if (instanceDetails != null) {
-//                resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
+//                resourceDetails = CDIFactory.getResourceDetails(instanceDetails.getResourceNumber());
 //                if (resourceDetails != null) {
-//                    StringBuilder sb = new StringBuilder("  Using BEAGLE resource ");
+//                    StringBuilder sb = new StringBuilder("  Using CDI resource ");
 //                    sb.append(resourceDetails.getNumber()).append(": ");
 //                    sb.append(resourceDetails.getName()).append("\n");
 //                    if (resourceDetails.getDescription() != null) {
@@ -297,20 +149,34 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //                    sb.append("    with instance flags: ").append(instanceDetails.toString());
 //                    logger.info(sb.toString());
 //                } else {
-//                    logger.info("  Error retrieving BEAGLE resource for instance: " + instanceDetails.toString());
+//                    logger.info("  Error retrieving CDI resource for instance: " + instanceDetails.toString());
 //                }
 //            } else {
-//                logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
+//                logger.info("  No external CDI resources available, or resource list/requirements not met, using Java implementation");
+//            }
+
+            // Set tip data
+            for (int i = 0; i < tipCount; i++) {
+                final NodeRef node = tree.getExternalNode(i);
+                final int index = node.getNumber();
+
+                checkDataAlignment(node, tree);
+
+                cdi.setPartialMean(index, dataModel.getTipMean(index));
+                cdi.setPartialPrecision(index, dataModel.getTipPrecision(index));
+            }
+
+            System.err.println("DONE CHECK");
+            System.exit(-1);
+
+//            int index = node.getNumber();
+//            double[] traitValue = traitParameter.getParameter(index).getParameterValues();
+//            if (traitValue.length < dim) {
+//                throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
 //            }
 //
-//            if (patternList instanceof UncertainSiteList) {
-//                useAmbiguities = true;
-//            }
-//
-//            logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-//            logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
-//
-//            for (int i = 0; i < tipCount; i++) {
+//            cacheHelper.setTipMeans(traitValue, dim, index, node);
+
 //                // Find the id of tip i in the patternList
 //                String id = tree.getTaxonId(i);
 //                int index = patternList.getTaxonIndex(id);
@@ -327,31 +193,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //                }
 //            }
 //
-//            beagle.setPatternWeights(patternWeights);
 //
-//            String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
-//            if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
-//                    resourceDetails != null &&
-//                    (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
-//                // If auto scaling in BEAGLE is not supported then do it here
-//                this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
-//                rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
-//            }
-//            boolean parenthesis = false;
-//            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-//                rescaleMessage += " (rescaling every " + rescalingFrequency + " evaluations";
-//                parenthesis = true;
-//            }
-//            if (this.delayRescalingUntilUnderflow) {
-//                rescaleMessage += (parenthesis ? ", " : "(") + "delay rescaling until first overflow";
-//                parenthesis = true;
-//            }
-//            rescaleMessage += (parenthesis ? ")" : "");
-//            logger.info(rescaleMessage);
-//
-//            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-//                everUnderflowed = false; // If false, BEAST does not rescale until first under-/over-flow.
-//            }
+
+            // TODO set all submodels to update == true
 //
 //            updateSubstitutionModel = true;
 //            updateSiteModel = true;
@@ -363,121 +207,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
+    private boolean checkDataAlignment(NodeRef node, Tree tree) {
+        int index = node.getNumber();
+        String name1 = dataModel.getParameter().getParameter(index).getParameterName();
+        Taxon taxon = tree.getNodeTaxon(node);
+        System.err.println(name1 + " ?= " + taxon.getId());
+        return name1.contentEquals(taxon.getId());
+    }
+
     @Override
     public TreeDataLikelihood.TraversalType getOptimalTraversalType() {
         return TreeDataLikelihood.TraversalType.POST_ORDER;
     }
-
-    private int getScaleBufferCount() {
-        return internalNodeCount + 1;
-    }
-
-    /**
-     * Sets the partials from a sequence in an alignment.
-     *
-     * @param beagle        beagle
-     * @param patternList   patternList
-     * @param sequenceIndex sequenceIndex
-     * @param nodeIndex     nodeIndex
-     */
-//    private final void setPartials(Beagle beagle,
-//                                   PatternList patternList,
-//                                   int sequenceIndex,
-//                                   int nodeIndex) {
-//        double[] partials = new double[patternCount * stateCount * categoryCount];
-//
-//        boolean[] stateSet;
-//
-//        int v = 0;
-//        for (int i = 0; i < patternCount; i++) {
-//
-//            if (patternList instanceof UncertainSiteList) {
-//                ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
-//                v += stateCount;
-//                // TODO Add this functionality to SimpleSiteList to avoid if statement here
-//            } else {
-//
-//                int state = patternList.getPatternState(sequenceIndex, i);
-//                stateSet = dataType.getStateSet(state);
-//
-//                for (int j = 0; j < stateCount; j++) {
-//                    if (stateSet[j]) {
-//                        partials[v] = 1.0;
-//                    } else {
-//                        partials[v] = 0.0;
-//                    }
-//                    v++;
-//                }
-//            }
-//        }
-//
-//        // if there is more than one category then replicate the partials for each
-//        int n = patternCount * stateCount;
-//        int k = n;
-//        for (int i = 1; i < categoryCount; i++) {
-//            System.arraycopy(partials, 0, partials, k, n);
-//            k += n;
-//        }
-//
-//        beagle.setPartials(nodeIndex, partials);
-//    }
-
-    /**
-     * Sets the partials from a sequence in an alignment.
-     */
-//    private final void setPartials(Beagle beagle,
-//                                   TipStatesModel tipStatesModel,
-//                                   int nodeIndex) {
-//        double[] partials = new double[patternCount * stateCount * categoryCount];
-//
-//        tipStatesModel.getTipPartials(nodeIndex, partials);
-//
-//        // if there is more than one category then replicate the partials for each
-//        int n = patternCount * stateCount;
-//        int k = n;
-//        for (int i = 1; i < categoryCount; i++) {
-//            System.arraycopy(partials, 0, partials, k, n);
-//            k += n;
-//        }
-//
-//        beagle.setPartials(nodeIndex, partials);
-//    }
-
-    /**
-     * Sets the partials from a sequence in an alignment.
-     *
-     * @param beagle        beagle
-     * @param patternList   patternList
-     * @param sequenceIndex sequenceIndex
-     * @param nodeIndex     nodeIndex
-     */
-//    private final void setStates(Beagle beagle,
-//                                 PatternList patternList,
-//                                 int sequenceIndex,
-//                                 int nodeIndex) {
-//        int i;
-//
-//        int[] states = new int[patternCount];
-//
-//        for (i = 0; i < patternCount; i++) {
-//
-//            states[i] = patternList.getPatternState(sequenceIndex, i);
-//        }
-//
-//        beagle.setTipStates(nodeIndex, states);
-//    }
-
-
-    //    public void setStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:setStates");
-//        beagle.setTipStates(tipIndex, states);
-//        makeDirty();
-//    }
-//
-//    public void getStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:getStates");
-//        beagle.getTipStates(tipIndex, states);
-//    }
 
     /**
      * Calculate the log likelihood of the current state.
@@ -733,8 +474,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final int[] branchUpdateIndices;
     private final double[] branchLengths;
 
-    private int[] scaleBufferIndices;
-    private int[] storedScaleBufferIndices;
+//    private int[] scaleBufferIndices;
+//    private int[] storedScaleBufferIndices;
 
     private final int[] operations;
 
@@ -746,8 +487,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //    private int rescalingFrequency = RESCALE_FREQUENCY;
 //    private boolean delayRescalingUntilUnderflow = true;
 
-    private boolean useScaleFactors = false;
-    private boolean useAutoScaling = false;
+//    private boolean useScaleFactors = false;
+//    private boolean useAutoScaling = false;
 
 //    private boolean recomputeScaleFactors = false;
 //    private boolean everUnderflowed = false;
@@ -813,9 +554,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //    private int[] tipStates;
 
     /**
-     * the BEAGLE library instance
+     * the CDI library instance
      */
-    private ContinuousDiffusionIntegrator cdi; // TODO Make final
+    private final ContinuousDiffusionIntegrator cdi;
 
     /**
      * Flag to specify that the substitution model has changed

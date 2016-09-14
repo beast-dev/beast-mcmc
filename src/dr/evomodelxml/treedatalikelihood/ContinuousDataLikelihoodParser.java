@@ -25,34 +25,18 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
-import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.tree.MultivariateTraitTree;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.xml.*;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,7 +75,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         ContinuousTraitDataModel dataModel = new ContinuousTraitDataModel(traitName,
                 traitParameter,
-                missingIndices);
+                missingIndices,
+                diffusionModel.getPrecisionmatrix().length);
 
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
                 diffusionModel, dataModel, rateModel);

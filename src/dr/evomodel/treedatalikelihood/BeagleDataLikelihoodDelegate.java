@@ -23,7 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood;/**
+package dr.evomodel.treedatalikelihood;
+
+/**
  * BeagleDataLikelihoodDelegate
  *
  * A DataLikelihoodDelegate that uses BEAGLE

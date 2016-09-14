@@ -57,7 +57,7 @@ import java.util.*;
  * @author Marc Suchard
  * @version $Id$
  */
-public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
+public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 

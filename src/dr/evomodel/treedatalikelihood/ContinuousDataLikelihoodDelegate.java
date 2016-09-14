@@ -40,18 +40,19 @@ import beagle.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -62,49 +63,43 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-//    // This property is a comma-delimited list of resource numbers (0 == CPU) to
-//    // allocate each BEAGLE instance to. If less than the number of instances then
-//    // will wrap around.
-//    private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
-//    private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
-//    private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
-//    private static final String SCALING_PROPERTY = "beagle.scaling";
-//    private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
-//    private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
-//    private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
-//    private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
-//
-//    // Which scheme to use if choice not specified (or 'default' is selected):
-//    private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
-//
-//    private static int instanceCount = 0;
-//    private static List<Integer> resourceOrder = null;
-//    private static List<Integer> preferredOrder = null;
-//    private static List<Integer> requiredOrder = null;
-//    private static List<String> scalingOrder = null;
-//    private static List<Integer> extraBufferOrder = null;
-//
-//    // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
-//    private static final int RESCALE_FREQUENCY = 100;
-//    private static final int RESCALE_TIMES = 1;
-//
-//    private static final boolean RESCALING_OFF = true; // a debugging switch
 
-    /**
-     *
-     * @param tree Used for configuration - shouldn't be watched for changes
-     * @param branchModel Specifies substitution model for each branch
-     * @param patternList List of patterns
-     * @param siteRateModel Specifies rates per site
-     * @param useAmbiguities Whether to respect state ambiguities in data
-     */
-    public ContinuousDataLikelihoodDelegate(Tree tree,
-                                            BranchModel branchModel) {
+//                                              (String traitName,
+//                                               MultivariateTraitTree treeModel,
+//                                               MultivariateDiffusionModel diffusionModel,
+//                                               CompoundParameter traitParameter,
+//                                               Parameter deltaParameter,
+//                                               List<Integer> missingIndices,
+//                                               boolean cacheBranches,
+//                                               boolean scaleByTime,
+//                                               boolean useTreeLength,
+//                                               BranchRateModel rateModel,
+//                                               List<BranchRateModel> driftModels,
+//                                               List<BranchRateModel> optimalValues,
+//                                               BranchRateModel strengthOfSelection,
+//                                               Model samplingDensity,
+//                                               boolean reportAsMultivariate,
+//                                               boolean reciprocalRates)
+
+    public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
+                                            MultivariateDiffusionModel diffusionModel,
+                                            ContinuousTraitDataModel dataModel,
+                                            BranchRateModel rateModel) {
 
         super("ContinousDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel.treedatalikelihood");
 
         logger.info("Using ContinuousDataLikelihood Delegate");
+
+        this.diffusionModel = diffusionModel;
+        this.dataModel = dataModel;
+
+        addModel(diffusionModel);
+        addModel(dataModel);
+
+        if (rateModel != null) {
+            addModel(rateModel);
+        }
 
 //        this.dataType = patternList.getDataType();
 //        patternCount = patternList.getPatternCount();
@@ -112,8 +107,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //
 //        patternWeights = patternList.getPatternWeights();
 //
-        this.branchModel = branchModel;
-        addModel(this.branchModel);
+//        this.branchModel = branchModel;
+//        addModel(this.branchModel);
 //
 //        this.siteRateModel = siteRateModel;
 //        addModel(this.siteRateModel);
@@ -653,7 +648,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //        if (model == siteRateModel) {
 //            updateSiteModel = true;
 //        } else
-        if (model == branchModel) {
+        if (model == diffusionModel) {
             updateSubstitutionModel = true;
         }
 
@@ -782,7 +777,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     /**
      * the branch-site model for these sites
      */
-    private final BranchModel branchModel;
+
+    private final MultivariateDiffusionModel diffusionModel;
+
+    private final ContinuousTraitDataModel dataModel;
 
     /**
      * A delegate to handle substitution models on branches

@@ -27,21 +27,30 @@ package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
 import dr.xml.*;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,6 +62,12 @@ import java.util.List;
  */
 public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
+    public static final String CONJUGATE_ROOT_PRIOR = AbstractMultivariateTraitLikelihood.CONJUGATE_ROOT_PRIOR;
+    public static final String USE_TREE_LENGTH = AbstractMultivariateTraitLikelihood.USE_TREE_LENGTH;
+    public static final String SCALE_BY_TIME = AbstractMultivariateTraitLikelihood.SCALE_BY_TIME;
+    public static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
+    public static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
+
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
     public String getParserName() {
@@ -60,7 +75,28 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        return null;
+
+        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
+        BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+        TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
+        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+
+        TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
+                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
+        CompoundParameter traitParameter = returnValue.traitParameter;
+        List<Integer> missingIndices = returnValue.missingIndices;
+        traitName = returnValue.traitName;
+
+        ContinuousTraitDataModel dataModel = new ContinuousTraitDataModel(traitName,
+                traitParameter,
+                missingIndices);
+
+        ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionModel, dataModel, rateModel);
+
+        return new TreeDataLikelihood(delegate, treeModel, rateModel);
     }
 
     //************************************************************************
@@ -77,6 +113,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
+            new ElementRule(MultivariateDiffusionModel.class),
+            new ElementRule(BranchRateModel.class, true),
+            new ElementRule(CONJUGATE_ROOT_PRIOR, ConjugateRootTraitPrior.rules),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

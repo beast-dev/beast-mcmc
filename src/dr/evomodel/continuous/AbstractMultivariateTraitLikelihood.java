@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -970,7 +971,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 like.check(check);
             }
 
+            boolean isRRW = (rateModel != null) && (!(rateModel instanceof StrictClockBranchRates));
+
             if (!xo.hasAttribute(TreeTraitParserUtilities.ALLOW_IDENTICAL) &&
+                    isRRW &&
                     utilities.hasIdenticalTraits(traitParameter, missingIndices, diffusionModel.getPrecisionmatrix().length)) {
                 throw new XMLParseException("For multivariate trait analyses, all trait values should be unique.\n" +
                         "Check data or add random noise using 'jitter' option.");

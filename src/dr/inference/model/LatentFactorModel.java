@@ -363,13 +363,15 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         int row = Left.getRowDimension();
         int col = Left.getColumnDimension();
         if(((!RecomputeResiduals && !dataKnown) || (!RecomputeFactors && !factorsKnown) || (!RecomputeLoadings && !loadingsKnown)) && !totalRecompute) {
-            while(!changedValues.isEmpty()){
-                int id = changedValues.remove(0);
+            int size = changedValues.size();
+            for (int i = 0; i < size; i++) {
+                int id = changedValues.get(i);
                 int tcol=id / row;
                 int trow=id % row;
 //                System.out.println(Left.getParameterValue(id)==Left.getParameterValue(tcol,trow));
                 answer[trow * col + tcol] = Left.getParameterValue(id) - Right[trow * col + tcol];
             }
+            changedValues.clear();
         } else {
             for (int i = 0; i < row; i++) {
                 if (continuous.getParameterValue(i) != 0 || newModel) {
@@ -823,4 +825,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //    public double getLikelihoodCorrection() {
 //        return 0;
 //    }
+
+    public double[] getLxF(){
+        if(!LxFKnown)
+            computeResiduals();
+        return LxF;
+    }
 }

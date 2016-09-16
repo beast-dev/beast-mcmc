@@ -676,8 +676,25 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 readScale = Beagle.NONE;
             }
 
+            //Example 1: 1 partition with 1 evolutionary model & -beagle_instances 3
+            //partition 0 -> model 0
+            //partition 1 -> model 0
+            //partition 2 -> model 0
+
+            //Example 2: 3 partitions with 3 evolutionary models & -beagle_instances 2
+            //partitions 0 & 1 -> model 0
+            //partitions 2 & 3 -> model 1
+            //partitions 4 & 5 -> model 2
+
+            int mapPartition = partitionCount/evolutionaryProcessDelegates.size();
+
             for (int i = 0; i < partitionCount; i++) {
-                EvolutionaryProcessDelegate evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i);
+                EvolutionaryProcessDelegate evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i/(mapPartition));
+                /*if (evolutionaryProcessDelegates.size() == partitionCount) {
+                    evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i);
+                } else {
+                    evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(0);
+                }*/
 
                 operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
                 operations[k + 1] = writeScale;

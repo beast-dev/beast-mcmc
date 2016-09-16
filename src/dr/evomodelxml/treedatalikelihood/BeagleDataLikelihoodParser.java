@@ -83,7 +83,7 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
                                                           XMLObject xo) throws XMLParseException {
 
         if (tipStatesModel != null) {
-            throw new XMLParseException("Tip State Error models are no supported yet with TreeDataLikelihood");
+            throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
         }
 
 //        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(

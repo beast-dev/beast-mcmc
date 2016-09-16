@@ -154,8 +154,11 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
         getMean(i, variance, meanMidArray, meanArray);
 
+            if(LFM.getFactorDimension() != 1)
+                conditioned = getConditionalDistribution(meanArray, variance, column, i);
 
-        conditioned = getConditionalDistribution(meanArray, variance, column, i);
+            else
+                conditioned = new NormalDistribution(meanArray[0], Math.sqrt(variance[0][0]));
         }
         else
             conditioned = new NormalDistribution(0, Math.sqrt(1 / prior.getScaleMatrix()[0][0]));
@@ -163,10 +166,10 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
         if(MathUtils.nextDouble() < .5) {
             getTruncatedDraw(i, column, conditioned);
-            getCutoffDraw(i, column);
+            getCutoffDraw(i, column, conditioned);
         }
         else{
-            getCutoffDraw(i, column);
+            getCutoffDraw(i, column, conditioned);
             getTruncatedDraw(i, column, conditioned);
         }
     }
@@ -240,11 +243,16 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
     }
 
-    void getCutoffDraw(int row, int column){
+    void getCutoffDraw(int row, int column, NormalDistribution posteriorLoadings){
         double loadingsCutoff = Math.abs(loadings.getParameterValue(row, column));
-        double stopperCDF = Math.pow(cutoffPrior.getDistribution().cdf(loadingsCutoff), 2);
-        double randQuant = MathUtils.nextDouble() * stopperCDF;
-        ((MatrixParameterInterface) prior.getCutoff()).setParameterValue(row, column, cutoffPrior.getDistribution().quantile(randQuant));
+        double draw = MathUtils.nextDouble() * loadingsCutoff;
+        double cutoffVal = Math.sqrt(((AdaptableSizeFastMatrixParameter) prior.getCutoff()).getParameterValue(row, column));
+        double top = cutoffPrior.getDistribution().pdf(Math.pow(draw,2)) / (1 - (posteriorLoadings.cdf(draw) - posteriorLoadings.cdf(-draw)));
+        double bottom = cutoffPrior.getDistribution().pdf(Math.pow(cutoffVal, 2)) / (1 - (posteriorLoadings.cdf(cutoffVal) - posteriorLoadings.cdf(-cutoffVal)));
+//        double stopperCDF = Math.pow(cutoffPrior.getDistribution().cdf(loadingsCutoff), 2);
+//        double randQuant = MathUtils.nextDouble() * stopperCDF;
+        if(MathUtils.nextDouble() < top / bottom){
+        ((MatrixParameterInterface) prior.getCutoff()).setParameterValue(row, column, Math.pow(draw, 2));}
     }
 
     @Override

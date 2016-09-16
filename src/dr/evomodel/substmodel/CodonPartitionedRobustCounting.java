@@ -43,8 +43,12 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -58,7 +62,7 @@ import java.util.List;
  *         molecular sequences. Molecular Biology and Evolution, 26, 801-814
  */
 
-public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable {
+public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable, Citable {
 
     private static final boolean DEBUG = false;
 
@@ -754,4 +758,32 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private boolean tryNewNeutralModel = false;
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.COUNTING_PROCESSES;
+    }
+
+    @Override
+    public String getDescription() {
+        StringBuilder sb = new StringBuilder("Using robust counting (first citation) for labeled distances between sequences" +
+                " to efficiently estimate site-specific dN/dS rate ratios (second citation)");
+        if (saveCompleteHistory) {
+            sb.append(" and inferring the complete transition history (third citation)");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return a list of citations associated with this object
+     */
+    @Override
+    public List<Citation> getCitations() {
+        List<Citation> list = new ArrayList<Citation>();
+        list.add(CommonCitations.OBRIEN_2009_LEARNING);
+        list.add(CommonCitations.LEMEY_2012_RENAISSANCE);
+        if (saveCompleteHistory) {
+            list.add(CommonCitations.BLOOM_2013_STABILITY);
+        }
+        return list;
+    }
 }

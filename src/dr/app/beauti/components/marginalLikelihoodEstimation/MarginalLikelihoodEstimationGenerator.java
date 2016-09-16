@@ -218,6 +218,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             writer.writeComment("Path sampling estimator from collected samples");
             attributes = new ArrayList<Attribute>();
             attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
+            attributes.add(new Attribute.Default<String>("resultsFileName", options.mleResultFileName));
             writer.writeOpenTag(PathSamplingAnalysis.PATH_SAMPLING_ANALYSIS, attributes);
             writer.writeTag("likelihoodColumn", new Attribute.Default<String>("name", "pathLikelihood.delta"), true);
             writer.writeTag("thetaColumn", new Attribute.Default<String>("name", "pathLikelihood.theta"), true);
@@ -226,6 +227,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             writer.writeComment("Stepping-stone sampling estimator from collected samples");
             attributes = new ArrayList<Attribute>();
             attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
+            attributes.add(new Attribute.Default<String>("resultsFileName", options.mleResultFileName));
             writer.writeOpenTag(SteppingStoneSamplingAnalysis.STEPPING_STONE_SAMPLING_ANALYSIS, attributes);
             writer.writeTag("likelihoodColumn", new Attribute.Default<String>("name", "pathLikelihood.delta"), true);
             writer.writeTag("thetaColumn", new Attribute.Default<String>("name", "pathLikelihood.theta"), true);
@@ -976,6 +978,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             writer.writeComment("Generalized stepping-stone sampling estimator from collected samples");
             attributes = new ArrayList<Attribute>();
             attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
+            attributes.add(new Attribute.Default<String>("resultsFileName", options.mleResultFileName));
             writer.writeOpenTag(GeneralizedSteppingStoneSamplingAnalysis.GENERALIZED_STEPPING_STONE_SAMPLING_ANALYSIS, attributes);
             writer.writeTag("sourceColumn", new Attribute.Default<String>("name", "pathLikelihood.source"), true);
             writer.writeTag("destinationColumn", new Attribute.Default<String>("name", "pathLikelihood.destination"), true);

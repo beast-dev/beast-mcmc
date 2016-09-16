@@ -57,7 +57,7 @@ import java.util.*;
  * @author Marc Suchard
  * @version $Id$
  */
-public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
+public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 
@@ -83,7 +83,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                           XMLObject xo) throws XMLParseException {
 
         if (tipStatesModel != null) {
-            throw new XMLParseException("Tip State Error models are no supported yet with TreeDataLikelihood");
+            throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
         }
 
 //        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(

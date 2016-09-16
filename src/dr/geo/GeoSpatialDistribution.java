@@ -25,9 +25,13 @@
 
 package dr.geo;
 
+import dr.inference.distribution.CachedDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.*;
 
 import java.awt.geom.Point2D;
@@ -41,7 +45,7 @@ import java.util.logging.Logger;
  * @author Alexei J. Drummond
  */
 
-public class GeoSpatialDistribution implements MultivariateDistribution {
+public class GeoSpatialDistribution implements MultivariateDistribution, Citable {
 
     public static final String FLAT_SPATIAL_DISTRIBUTION = "flatGeoSpatialPrior";
     public static final String DATA = "data";
@@ -50,6 +54,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public static final String KML_FILE = "kmlFileName";
     public static final String INSIDE = "inside";
     public static final String UNION = "union";
+    public static final String CACHE = "cache";
     private static final String DEFAULT_LABEL = "";
 
     public static final int dimPoint = 2; // Assumes 2D points only
@@ -113,6 +118,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
             boolean inside = xo.getAttribute(INSIDE, true);
             boolean union = xo.getAttribute(UNION, false);
             boolean readFromFile = false;
+            boolean cache = xo.getAttribute(CACHE, false);
 
             List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
 
@@ -179,7 +185,12 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                     MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
                             new MultiRegionGeoSpatialDistribution(label, geoSpatialDistributions, union));
                     likelihood.addData(parameter);
-                    return likelihood;
+                    likelihood.setId(xo.getId());
+                    if (cache) {
+                        return new CachedDistributionLikelihood(xo.getId(), likelihood, parameter);
+                    } else {
+                        return likelihood;
+                    }
 
                 } else {
 
@@ -203,6 +214,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 AttributeRule.newStringRule(NODE_LABEL, true),
                 AttributeRule.newBooleanRule(INSIDE, true),
                 AttributeRule.newBooleanRule(UNION, true),
+                AttributeRule.newBooleanRule(CACHE, true),
                 new XORRule(
                         AttributeRule.newStringRule(KML_FILE),
                         new ElementRule(Polygon2D.class, 1, Integer.MAX_VALUE)
@@ -221,4 +233,35 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         }
     };
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.PRIOR_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Integrated continuous traits over polygons";
+    }
+
+    public List<Citation> getCitations() {
+        List<Citation> citationList = new ArrayList<Citation>();
+        citationList.add(new Citation(
+                new Author[] {
+                        new Author("S", "Nylinder"),
+                        new Author("P", "Lemey"),
+                        new Author("M", "de Bruyn"),
+                        new Author("MA", "Suchard"),
+                        new Author("BE", "Pfeil"),
+                        new Author("N", "Walsh"),
+                        new Author("AA", "Anderberg")
+                },
+                "On the biogeography of Centipeda: a species-tree diffusion approach",
+                2014,
+                "Systematic Biology",
+                63,
+                178, 191,
+                Citation.Status.PUBLISHED
+        ));
+        return citationList;
+    }
 }

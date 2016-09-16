@@ -65,6 +65,8 @@ public class CachedDistributionLikelihood extends AbstractModelLikelihood {
 
     }
 
+    public AbstractDistributionLikelihood getDistributionLikelihood() { return likelihood; }
+
     public Model getModel() {
         return this;
     }

@@ -25,8 +25,10 @@
 
 package dr.inference.trace;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.util.*;
 
 import dr.util.Attribute;
@@ -41,6 +43,7 @@ import dr.xml.*;
 public class GeneralizedSteppingStoneSamplingAnalysis {
 	
     public static final String GENERALIZED_STEPPING_STONE_SAMPLING_ANALYSIS = "generalizedSteppingStoneSamplingAnalysis";
+    public static final String RESULT_FILE_NAME = "resultsFileName";
     public static final String THETA_COLUMN = "thetaColumn";
     public static final String SOURCE_COLUMN = "sourceColumn";
     public static final String DESTINATION_COLUMN = "destinationColumn";
@@ -158,6 +161,7 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
     	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
     		
     		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+            String resultFileName = xo.getStringAttribute(RESULT_FILE_NAME);
     		StringTokenizer tokenFileName = new StringTokenizer(fileName);
     		int numberOfFiles = tokenFileName.countTokens();
     		System.out.println(numberOfFiles + " file(s) found with marginal likelihood samples");
@@ -242,6 +246,12 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
 
                 System.out.println(analysis.toString());
 
+                FileWriter fw = new FileWriter(resultFileName, true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(analysis.toString());
+                bw.flush();
+                bw.close();
+
                 return analysis;
     			
     		} catch (FileNotFoundException fnfe) {
@@ -273,6 +283,8 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
         private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(FileHelpers.FILE_NAME,
                         "The traceName of a BEAST log file (can not include trees, which should be logged separately)"),
+                new StringAttributeRule(RESULT_FILE_NAME,
+                        "The name of the output file to which the generalized stepping-stone sampling estimate will be written"),
                 new ElementRule(THETA_COLUMN, new XMLSyntaxRule[]{
                         new StringAttributeRule(Attribute.NAME, "The column name")}),
                 new ElementRule(SOURCE_COLUMN, new XMLSyntaxRule[]{

@@ -185,6 +185,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     }
 
     @Override
+    public String toSymmetricString() {
+        return MatrixParameter.toSymmetricString(this);
+    }
+
+    @Override
     public void setParameterValue(int row, int col, double value) {
         singleParameter.setParameterValue(index(row, col), value);
     }

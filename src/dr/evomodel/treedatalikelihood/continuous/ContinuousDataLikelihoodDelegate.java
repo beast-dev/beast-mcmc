@@ -43,10 +43,8 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.continuous.cdi.CDIFactory;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.InstanceDetails;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ResourceDetails;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -76,12 +74,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //                                               boolean reciprocalRates)
 
     private final int numTraits;
-    private final int dimMean;
-    private final int dimPrecision;
+    private final int dimTrait;
+    private final PrecisionType precisionType;
+    private final ContinuousRateTransformation rateTransformation;
+
+    private double branchNormalization;
+    private double storedBranchNormalization;
 
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
                                             MultivariateDiffusionModel diffusionModel,
                                             ContinuousTraitDataModel dataModel,
+                                            ConjugateRootTraitPrior rootPrior,
+                                            ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel) {
 
         super("ContinousDataLikelihoodDelegate");
@@ -92,7 +96,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         this.diffusionModel = diffusionModel;
         this.dataModel = dataModel;
 
-        addModel(diffusionModel);
+//        for (int i = 0; i < diffusionProcessDelegate.getDiffusionModelCount(); ++i) {
+//            addModel(diffusionProcessDelegate.getDiffusionModel(i));
+//        }
         addModel(dataModel);
 
         if (rateModel != null) {
@@ -100,9 +106,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
 
         this.numTraits = dataModel.getTraitCount();
-
-        this.dimMean = dataModel.getTipMean(0).length;
-        this.dimPrecision = dataModel.getTipPrecision(0).length;
+        this.dimTrait = dataModel.getTraitDimension();
+        this.precisionType = dataModel.getPrecisionType();
+        this.rateTransformation = rateTransformation;
 
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
@@ -117,13 +123,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             // one partials buffer for each tip and two for each internal node (for store restore)
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
+            int partialBufferCount = partialBufferHelper.getBufferCount();
+            rootProcessDelegate = new RootProcessDelegate.FullyConjugate(rootPrior, numTraits, partialBufferCount);
+            partialBufferCount += rootProcessDelegate.getExtraPartialBufferCount();
+
+            diffusionProcessDelegate = new HomogenousDiffusionModelDelegate(tree, diffusionModel);
+
 
             cdi = new ContinuousDiffusionIntegrator.Basic(
+                    precisionType,
                     numTraits,
-                    dimMean,
-                    dimPrecision,
-                    partialBufferHelper.getBufferCount(),
-                    1
+                    dimTrait,
+                    partialBufferCount,
+                    diffusionProcessDelegate.getEigenBufferCount()
             );
 
             // TODO Make separate library
@@ -162,44 +174,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
                 checkDataAlignment(node, tree);
 
-                cdi.setPartialMean(index, dataModel.getTipMean(index));
-                cdi.setPartialPrecision(index, dataModel.getTipPrecision(index));
+                cdi.setPartial(index, dataModel.getTipPartial(index));
+
+//                cdi.setPartialMean(index, dataModel.getTipMean(index));
+//                cdi.setPartialPrecision(index, dataModel.getTipPrecision(index));
             }
 
-            System.err.println("DONE CHECK");
-            System.exit(-1);
+//            System.err.println("DONE CHECK");
+//            System.exit(-1);
 
-//            int index = node.getNumber();
-//            double[] traitValue = traitParameter.getParameter(index).getParameterValues();
-//            if (traitValue.length < dim) {
-//                throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
-//            }
-//
-//            cacheHelper.setTipMeans(traitValue, dim, index, node);
-
-//                // Find the id of tip i in the patternList
-//                String id = tree.getTaxonId(i);
-//                int index = patternList.getTaxonIndex(id);
-//
-//                if (index == -1) {
-//                    throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
-//                            ", is not found in patternList, " + patternList.getId());
-//                } else {
-//                    if (useAmbiguities) {
-//                        setPartials(beagle, patternList, index, i);
-//                    } else {
-//                        setStates(beagle, patternList, index, i);
-//                    }
-//                }
-//            }
-//
-//
-
-            // TODO set all submodels to update == true
-//
-//            updateSubstitutionModel = true;
-//            updateSiteModel = true;
-
+            updateDiffusionModel = true;
+            
         } catch (Exception mte
                 //TaxonList.MissingTaxonException mte
         ) {
@@ -226,171 +211,71 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
      * @return the log likelihood.
      */
     @Override
-    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
+    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
+                                      int rootNodeNumber) throws LikelihoodUnderflowException {
 
-//        if (RESCALING_OFF) { // a debugging switch
-//            useScaleFactors = false;
-//            recomputeScaleFactors = false;
-//        }
-//
-//        int branchUpdateCount = 0;
-//        for (BranchOperation op : branchOperations) {
-//            branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
-//            branchLengths[branchUpdateCount] = op.getBranchLength();
-//            branchUpdateCount ++;
-//        }
-//
-//        if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
-//            evolutionaryProcessDelegate.updateSubstitutionModels(beagle, flip);
-//
-//            // we are currently assuming a no-category model...
-//        }
-//
-//        if (updateSiteModel) {
-//            double[] categoryRates = this.siteRateModel.getCategoryRates();
-//            beagle.setCategoryRates(categoryRates);
-//        }
-//
-//        if (branchUpdateCount > 0) {
-//            evolutionaryProcessDelegate.updateTransitionMatrices(
-//                    beagle,
-//                    branchUpdateIndices,
-//                    branchLengths,
-//                    branchUpdateCount,
-//                    flip);
-//        }
-//
-//        if (flip) {
-//            // Flip all the buffers to be written to first...
-//            for (NodeOperation op : nodeOperations) {
-//                partialBufferHelper.flipOffset(op.getNodeNumber());
-//            }
-//        }
-//
-//        int operationCount = nodeOperations.size();
-//        int k = 0;
-//        for (NodeOperation op : nodeOperations) {
-//            int nodeNum = op.getNodeNumber();
-//
-//            operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
-//
-//            if (useScaleFactors) {
-//                // get the index of this scaling buffer
-//                int n = nodeNum - tipCount;
-//
-//                if (recomputeScaleFactors) {
-//                    // flip the indicator: can take either n or (internalNodeCount + 1) - n
-//                    scaleBufferHelper.flipOffset(n);
-//
-//                    // store the index
-//                    scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
-//
-//                    operations[k + 1] = scaleBufferIndices[n]; // Write new scaleFactor
-//                    operations[k + 2] = Beagle.NONE;
-//
-//                } else {
-//                    operations[k + 1] = Beagle.NONE;
-//                    operations[k + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
-//                }
-//
-//            } else {
-//
-//                if (useAutoScaling) {
-//                    scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
-//                }
-//                operations[k + 1] = Beagle.NONE; // Not using scaleFactors
-//                operations[k + 2] = Beagle.NONE;
-//            }
-//
-//            operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-//            operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
-//            operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
-//            operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
-//
-//            k += Beagle.OPERATION_TUPLE_SIZE;
-//        }
-//
-//        beagle.updatePartials(operations, operationCount, Beagle.NONE);
-//
-//        int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
-//
-//        double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-//
-//        // This should probably explicitly be the state frequencies for the root node...
-//        double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
-//
-//        int cumulateScaleBufferIndex = Beagle.NONE;
-//        if (useScaleFactors) {
-//
-//            if (recomputeScaleFactors) {
-//                scaleBufferHelper.flipOffset(internalNodeCount);
-//                cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-//                beagle.resetScaleFactors(cumulateScaleBufferIndex);
-//                beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
-//            } else {
-//                cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-//            }
-//        } else if (useAutoScaling) {
-//            beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
-//        }
-//
-//        // these could be set only when they change but store/restore would need to be considered
-//        beagle.setCategoryWeights(0, categoryWeights);
-//        beagle.setStateFrequencies(0, frequencies);
-//
-//        double[] sumLogLikelihoods = new double[1];
-//
-//        beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-//                new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
-//
-//        double logL = sumLogLikelihoods[0];
-//
-//        if (Double.isNaN(logL) || Double.isInfinite(logL)) {
-//            everUnderflowed = true;
-//            // turn off double buffer flipping so the next call overwrites the
-//            // underflowed buffers. Flip will be turned on again in storeState for
-//            // next step
-//            flip = false;
-//            throw new LikelihoodUnderflowException();
-//        }
-//
-//        updateSubstitutionModel = false;
-//        updateSiteModel = false;
-//        //********************************************************************
-//
-//        // If these are needed...
-//        //if (patternLogLikelihoods == null) {
-//        //    patternLogLikelihoods = new double[patternCount];
-//        //}
-//        //beagle.getSiteLogLikelihoods(patternLogLikelihoods);
-//
-//        return logL;
-        return 0.0;
+        branchNormalization = rateTransformation.getNormalization();  // TODO Cache branchNormalization
+
+        int branchUpdateCount = 0;
+        for (BranchOperation op : branchOperations) {
+            branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
+            branchLengths[branchUpdateCount] = op.getBranchLength() * branchNormalization;
+            branchUpdateCount ++;
+        }
+
+        if (updateDiffusionModel) {
+            diffusionProcessDelegate.setDiffusionModels(cdi, flip);
+        }
+
+        if (branchUpdateCount > 0) {
+            diffusionProcessDelegate.updateDiffusionMatrices(
+                    cdi,
+                    branchUpdateIndices,
+                    branchLengths,
+                    branchUpdateCount,
+                    flip);
+        }
+
+        if (flip) {
+            // Flip all the buffers to be written to first...
+            for (NodeOperation op : nodeOperations) {
+                partialBufferHelper.flipOffset(op.getNodeNumber());
+            }
+        }
+
+        int operationCount = nodeOperations.size();
+        int k = 0;
+        for (NodeOperation op : nodeOperations) {
+            int nodeNum = op.getNodeNumber();
+
+            operations[k + 0] = partialBufferHelper.getOffsetIndex(nodeNum);
+            operations[k + 1] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
+            operations[k + 2] = diffusionProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+            operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
+            operations[k + 4] = diffusionProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+
+            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+        }
+
+        cdi.updatePartials(operations, operationCount);
+
+        double logL = rootProcessDelegate.calculateRootLogLikelihood(cdi,
+                partialBufferHelper.getOffsetIndex(rootNodeNumber), null);
+
+        updateDiffusionModel = false;
+
+        return logL;
     }
-
-//    public void getPartials(int number, double[] partials) {
-//        int cumulativeBufferIndex = Beagle.NONE;
-//        /* No need to rescale partials */
-//        beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
-//    }
-
-//    private void setPartials(int number, double[] partials) {
-//        beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
-//    }
 
     @Override
     public void makeDirty() {
-        updateSiteModel = true;
-        updateSubstitutionModel = true;
+        updateDiffusionModel = true;
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-//        if (model == siteRateModel) {
-//            updateSiteModel = true;
-//        } else
         if (model == diffusionModel) {
-            updateSubstitutionModel = true;
+            updateDiffusionModel = true;
         }
 
         // Tell TreeDataLikelihood to update all nodes
@@ -408,16 +293,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public void storeState() {
         partialBufferHelper.storeState();
-//        evolutionaryProcessDelegate.storeState();
-//
-//        if (useScaleFactors || useAutoScaling) { // Only store when actually used
-//            scaleBufferHelper.storeState();
-//            System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
-////             storedRescalingCount = rescalingCount;
-//        }
+        diffusionProcessDelegate.storeState();
 
         // turn on double buffering flipping (may have been turned off to enable a rescale)
         flip = true;
+
+        storedBranchNormalization = branchNormalization;
     }
 
     /**
@@ -425,19 +306,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
      */
     @Override
     public void restoreState() {
-        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
+//        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
-//        evolutionaryProcessDelegate.restoreState();
-//
-//        if (useScaleFactors || useAutoScaling) {
-//            scaleBufferHelper.restoreState();
-//            int[] tmp = storedScaleBufferIndices;
-//            storedScaleBufferIndices = scaleBufferIndices;
-//            scaleBufferIndices = tmp;
-////            rescalingCount = storedRescalingCount;
-//        }
+        diffusionProcessDelegate.restoreState();
 
+        branchNormalization = storedBranchNormalization;
     }
 
     @Override
@@ -474,84 +348,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final int[] branchUpdateIndices;
     private final double[] branchLengths;
 
-//    private int[] scaleBufferIndices;
-//    private int[] storedScaleBufferIndices;
-
     private final int[] operations;
 
     private boolean flip = true;
     private final BufferIndexHelper partialBufferHelper;
-//    private final BufferIndexHelper scaleBufferHelper;
 
-//    private PartialsRescalingScheme rescalingScheme;
-//    private int rescalingFrequency = RESCALE_FREQUENCY;
-//    private boolean delayRescalingUntilUnderflow = true;
-
-//    private boolean useScaleFactors = false;
-//    private boolean useAutoScaling = false;
-
-//    private boolean recomputeScaleFactors = false;
-//    private boolean everUnderflowed = false;
-//    private int rescalingCount = 0;
-//    private int rescalingCountInner = 0;
-
-    /**
-     * the patternList
-     */
-//    private final DataType dataType;
-
-    /**
-     * the pattern weights
-     */
-//    private final double[] patternWeights;
-
-    /**
-     * the number of patterns
-     */
-//    private final int patternCount;
-
-    /**
-     * the number of states in the data
-     */
-//    private final int stateCount;
-
-    /**
-     * the branch-site model for these sites
-     */
+    private final DiffusionProcessDelegate diffusionProcessDelegate;
 
     private final MultivariateDiffusionModel diffusionModel;
 
+    private final RootProcessDelegate rootProcessDelegate;
+
     private final ContinuousTraitDataModel dataModel;
-
-    /**
-     * A delegate to handle substitution models on branches
-     */
-//    private final EvolutionaryProcessDelegate evolutionaryProcessDelegate;
-
-    /**
-     * the site model for these sites
-     */
-//    private final SiteRateModel siteRateModel;
-
-    /**
-     * the pattern likelihoods
-     */
-//    private double[] patternLogLikelihoods = null;
-
-    /**
-     * the number of rate categories
-     */
-//    private final int categoryCount;
-
-    /**
-     * an array used to transfer tip partials
-     */
-//    private double[] tipPartials;
-
-    /**
-     * an array used to transfer tip states
-     */
-//    private int[] tipStates;
 
     /**
      * the CDI library instance
@@ -559,12 +367,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final ContinuousDiffusionIntegrator cdi;
 
     /**
-     * Flag to specify that the substitution model has changed
+     * Flag to specify that the diffusion model has changed
      */
-    private boolean updateSubstitutionModel;
+    private boolean updateDiffusionModel;
 
     /**
      * Flag to specify that the site model has changed
      */
-    private boolean updateSiteModel;
+//    private boolean updateSiteModel;
 }

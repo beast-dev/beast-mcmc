@@ -48,13 +48,14 @@ public interface ContinuousRateTransformation {
             this.useTreeLength = useTreeLength;
         }
 
+        @Override
         public double getNormalization() {
             if (!scaleByTime) {
                 return 1.0;
             } else {
                 return (useTreeLength ?
-                        getTreeLength() :
-                        tree.getNodeHeight(tree.getRoot())
+                        (1.0 / getTreeLength()) :
+                        (1.0 / tree.getNodeHeight(tree.getRoot()))
                 );
             }
         }

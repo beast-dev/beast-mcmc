@@ -825,4 +825,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //    public double getLikelihoodCorrection() {
 //        return 0;
 //    }
+
+    public double[] getLxF(){
+        if(!LxFKnown)
+            computeResiduals();
+        return LxF;
+    }
 }

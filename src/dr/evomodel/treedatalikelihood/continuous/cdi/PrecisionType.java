@@ -49,12 +49,16 @@ public enum PrecisionType {
         return power;
     }
 
-    public int getPartialLength(final int numTraits, final int dimTrait) {
-        int precision = 1;
+    public int getMatrixLength(int dimTrait) {
+        int length = 1;
         final int pow = getPower();
         for (int i = 0; i < pow; ++i) {
-            precision *= numTraits;
+            length *= dimTrait;
         }
-        return numTraits * (dimTrait + precision);
+        return length;
     }
+
+//    public int getPartialLength(final int numTraits, final int dimTrait) {
+//        return  (dimTrait + getMatrixLength(dimTrait));
+//    }
 }

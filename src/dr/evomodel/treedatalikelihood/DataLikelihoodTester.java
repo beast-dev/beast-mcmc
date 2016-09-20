@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood;
 
 
+import dr.evolution.alignment.Patterns;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
@@ -236,7 +237,72 @@ public class DataLikelihoodTester {
 
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
+
+
+        //START ADDITIONAL TEST - Guy Baele
+
+        //alpha in partition 1 reject followed by alpha in partition 2 reject
+        System.out.print("Adjust alpha in partition 1: ");
+        siteRateModel.setAlpha(0.4);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood);
+
+        System.out.print("Return alpha in partition 1 to original value: ");
+        siteRateModel.setAlpha(0.5);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n");
+
+        System.out.print("Adjust alpha in partition 2: ");
+        siteRateModel2.setAlpha(0.35);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        System.out.print("Return alpha in partition 2 to original value: ");
+        siteRateModel2.setAlpha(0.5);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n");
+
+        //alpha in partition 1 accept followed by alpha in partition 2 accept
+        System.out.print("Adjust alpha in partition 1: ");
+        siteRateModel.setAlpha(0.4);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        System.out.print("Adjust alpha in partition 2: ");
+        siteRateModel2.setAlpha(0.35);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only setting alpha in partition 2)");
+
+        System.out.print("Return alpha in partition 1 to original value: ");
+        siteRateModel.setAlpha(0.5);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: alpha in partition 2 has not been returned to original value yet)");
+
+        System.out.print("Return alpha in partition 2 to original value: ");
+        siteRateModel2.setAlpha(0.5);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
+
+        //adjusting alphas in both partitions without explicitly calling getLogLikelihood() in between
+        System.out.print("Adjust both alphas in partitions 1 and 2: ");
+        siteRateModel.setAlpha(0.4);
+        siteRateModel2.setAlpha(0.35);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        System.out.print("Return alpha in partition 2 to original value: ");
+        siteRateModel2.setAlpha(0.5);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: alpha in partition 1 has not been returned to original value yet)");
+
+        System.out.print("Return alpha in partition 1 to original value: ");
+        siteRateModel.setAlpha(0.5);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        //END ADDITIONAL TEST - Guy Baele
+
     }
 
     private static SimpleAlignment createAlignment(Object[][] taxa_sequence, DataType dataType) {

@@ -32,6 +32,7 @@ import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
+import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.CONJUGATE_ROOT_PRIOR;
 import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.PRIOR_SAMPLE_SIZE;
 
 /**
@@ -50,8 +51,10 @@ public class ConjugateRootTraitPrior {
     public double[] getMean() { return mean; }
     public double getPseudoObservations() { return pseudoObservations; }
 
-    public static ConjugateRootTraitPrior parseConjugateRootTraitPrior(XMLObject cxo,
+    public static ConjugateRootTraitPrior parseConjugateRootTraitPrior(XMLObject xo,
                                                                        final int dim) throws XMLParseException {
+
+        XMLObject cxo = xo.getChild(CONJUGATE_ROOT_PRIOR);
 
         Parameter meanParameter = (Parameter) cxo.getChild(MultivariateDistributionLikelihood.MVN_MEAN)
                 .getChild(Parameter.class);

@@ -25,9 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.NodeRef;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,20 +40,30 @@ public class ContinuousTraitDataModel extends AbstractModel {
     private final List<Integer> missingIndices;
 
     private final int numTraits;
+    private final int dimTrait;
+    private final PrecisionType precisionType;
 
     public ContinuousTraitDataModel(String name,
                              CompoundParameter parameter,
                              List<Integer> missingIndices,
-                                    final int dim) {
+                                    final int dimTrait) {
         super(name);
         this.parameter = parameter;
         this.missingIndices = missingIndices;
         addVariable(parameter);
 
-        numTraits = getParameter().getParameter(0).getDimension() / dim;
+        this.dimTrait = dimTrait;
+        this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
+        this.precisionType = PrecisionType.SCALAR;
     }
 
     public int getTraitCount() {  return numTraits; }
+
+    public int getTraitDimension() { return dimTrait; }
+
+    public PrecisionType getPrecisionType() {
+        return precisionType;
+    }
 
     public String getName() { return super.getModelName(); }
 
@@ -90,7 +101,27 @@ public class ContinuousTraitDataModel extends AbstractModel {
     }
 
     public double[] getTipPrecision(int index) {
-        return NON_MISSING;
+        if (numTraits == 1) {
+            return NON_MISSING;
+        } else {
+            double[] missing = new double[numTraits];
+            Arrays.fill(missing, Double.POSITIVE_INFINITY);
+            return missing;
+        }
+    }
+
+    public double[] getTipPartial(int index) {
+        double[] partial = new double[numTraits * (dimTrait + 1)];
+        final Parameter p = parameter.getParameter(index);
+        int offset = 0;
+        for (int i = 0; i < numTraits; ++i) {
+            for (int j = 0; j < dimTrait; ++j) {
+                partial[offset + j] = p.getParameterValue(i * dimTrait + j);
+            }
+            partial[offset + numTraits] = Double.POSITIVE_INFINITY;
+            offset += dimTrait + 1;
+        }
+        return partial;
     }
 
     private static double[] NON_MISSING = new double[] { Double.POSITIVE_INFINITY };

@@ -81,9 +81,9 @@ public class CDIFactory {
     }
 
     public static ContinuousDiffusionIntegrator loadCDIInstance(
+            final PrecisionType precisionType,
             final int numTraits,
-            final int dimMean,
-            final int dimPrecision,
+            final int dimTrait,
             final int bufferCount,
             final int diffusionCount
     ) {
@@ -113,7 +113,7 @@ public class CDIFactory {
         }
 
         return new ContinuousDiffusionIntegrator.Basic(
-                numTraits, dimMean, dimPrecision, bufferCount, diffusionCount
+                precisionType, numTraits, dimTrait, bufferCount, diffusionCount
         );
     }
 

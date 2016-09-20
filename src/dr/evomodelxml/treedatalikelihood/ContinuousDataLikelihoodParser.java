@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
@@ -32,6 +33,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
@@ -73,13 +75,24 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         List<Integer> missingIndices = returnValue.missingIndices;
         traitName = returnValue.traitName;
 
+        final int dim = diffusionModel.getPrecisionmatrix().length;
+
         ContinuousTraitDataModel dataModel = new ContinuousTraitDataModel(traitName,
                 traitParameter,
                 missingIndices,
-                diffusionModel.getPrecisionmatrix().length);
+                dim);
+
+        ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dim);
+
+        boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
+        boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
+//        boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false); // TODO Still need to add
+
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, scaleByTime, useTreeLength);
 
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionModel, dataModel, rateModel);
+                diffusionModel, dataModel, rootPrior, rateTransformation, rateModel);
 
         return new TreeDataLikelihood(delegate, treeModel, rateModel);
     }
@@ -101,6 +114,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(MultivariateDiffusionModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(CONJUGATE_ROOT_PRIOR, ConjugateRootTraitPrior.rules),
+            AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
+            AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
+            AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

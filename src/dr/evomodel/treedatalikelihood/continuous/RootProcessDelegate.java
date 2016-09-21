@@ -25,9 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.Tree;
-import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 /**
@@ -38,30 +35,83 @@ public interface RootProcessDelegate {
 
     int getExtraPartialBufferCount();
 
-    double calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike);
+    int getExtraMatrixBufferCount();
 
-//    void storeState();
+    void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike);
 
-//    void restoreState();
+    void setRootPartial(ContinuousDiffusionIntegrator cdi);
 
-    class FullyConjugate implements RootProcessDelegate {
+    abstract class Abstract implements RootProcessDelegate {
 
-        private final ConjugateRootTraitPrior prior;
-        private final int bufferOffset;
+        protected final ConjugateRootTraitPrior prior;
+        private final int priorBufferIndex;
+        private final int numTraits;
 
-        public FullyConjugate(final ConjugateRootTraitPrior prior, int numTraits, int bufferOffset) {
+        protected abstract double getPseudoObservations();
+
+        public Abstract(final ConjugateRootTraitPrior prior, int numTraits,
+                        int partialBufferCount, int matrixBufferCount) {
             this.prior = prior;
-            this.bufferOffset = bufferOffset;
+            this.numTraits = numTraits;
+
+            this.priorBufferIndex = partialBufferCount;
         }
 
         @Override
-        public int getExtraPartialBufferCount() { return 2; }
+        public int getExtraPartialBufferCount() {
+            return 2; // TODO Why does 1 not work?
+        }
 
         @Override
-        public double calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex,
+        public int getExtraMatrixBufferCount() {
+            return 0;
+        }
+
+        @Override
+        public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
                                                final double[] logLike) {
-            cdi.calculateRootLogLikelihood(rootIndex, logLike);
-            return 0.0;
+            cdi.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike);
+        }
+
+        @Override
+        public void setRootPartial(ContinuousDiffusionIntegrator cdi) {
+            double[] mean = prior.getMean();
+            final int dimTrait = mean.length;
+
+            double[] partial = new double[(dimTrait + 1) * numTraits];
+
+            int offset = 0;
+            for (int trait = 0; trait < numTraits; ++trait) {
+                System.arraycopy(mean, 0, partial, offset, dimTrait);
+                offset += dimTrait;
+                partial[offset] = getPseudoObservations();
+                offset += 1;
+            }
+
+            cdi.setPartial(priorBufferIndex, partial);
+        }
+    }
+
+    class Fixed extends Abstract {
+
+        public Fixed(ConjugateRootTraitPrior prior, int numTraits, int partialBufferCount, int matrixBufferCount) {
+            super(prior, numTraits, partialBufferCount, matrixBufferCount);
+        }
+
+        @Override
+        protected double getPseudoObservations() {
+            return Double.POSITIVE_INFINITY;
+        }
+    }
+
+    class FullyConjugate extends Abstract {
+
+        public FullyConjugate(ConjugateRootTraitPrior prior, int numTraits, int partialBufferCount, int matrixBufferCount) {
+            super(prior, numTraits, partialBufferCount, matrixBufferCount);
+        }
+
+        protected double getPseudoObservations() {
+            return prior.getPseudoObservations();
         }
     }
 }

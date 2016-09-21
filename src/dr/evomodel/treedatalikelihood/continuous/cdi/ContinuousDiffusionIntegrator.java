@@ -25,8 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.math.distributions.MultivariateNormalDistribution;
-
 /**
  * @author Marc A. Suchard
  */
@@ -59,7 +57,7 @@ public interface ContinuousDiffusionIntegrator {
     void updateDiffusionMatrices(int precisionIndex, final int[] probabilityIndices, final double[] edgeLengths,
                                  int updateCount);
 
-    void calculateRootLogLikelihood(int rootIndex, double[] logLike);
+    void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike);
 
 //    abstract class AbstractBase implements ContinuousDiffusionIntegrator {
 //
@@ -187,13 +185,16 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         @Override
-        public void calculateRootLogLikelihood(int rootIndex, final double[] logLikelihoods) {
+        public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods) {
+            assert(logLikelihoods.length == numTraits);
 
             if (DEBUG) {
-                System.err.println("Root calculation for " + rootIndex);
+                System.err.println("Root calculation for " + rootBufferIndex);
+                System.err.println("Prior buffer index is " + priorBufferIndex);
             }
 
-            int rootOffset = dimPartial * rootIndex;
+            int rootOffset = dimPartial * rootBufferIndex;
+            int priorOffset = dimPartial * priorBufferIndex;
 
             // TODO For each trait in parallel
             for (int trait = 0; trait < numTraits; ++trait) {
@@ -201,11 +202,21 @@ public interface ContinuousDiffusionIntegrator {
                 double SS = 0;
                 int pob = precisionOffset;
 
-                final double rootScalar = partials[rootOffset + dimTrait];
+                double rootScalar = partials[rootOffset + dimTrait];
+                final double priorScalar = partials[priorOffset + dimTrait];
+
+                if (!Double.isInfinite(priorScalar)) {
+                    rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
+                }
+
 
                 for (int g = 0; g < dimTrait; ++g) {
+                    final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
+
                     for (int h = 0; h < dimTrait; ++h) {
-                        SS += partials[rootOffset + g] * diffusions[pob] * partials[rootOffset + h];
+                        final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
+
+                        SS += gDifference * diffusions[pob] * hDifference;
                         ++pob;
                     }
                 }
@@ -213,7 +224,7 @@ public interface ContinuousDiffusionIntegrator {
                 final double logLike = -dimTrait * LOG_SQRT_2_PI
                         + 0.5 * (dimTrait * Math.log(rootScalar) + precisionLogDet)
                         - 0.5 * rootScalar * SS;
-                final double remainder = remainders[rootIndex * dimTrait + trait];
+                final double remainder = remainders[rootBufferIndex * dimTrait + trait];
 
                 logLikelihoods[trait] = logLike + remainder;
 
@@ -242,6 +253,7 @@ public interface ContinuousDiffusionIntegrator {
                 }
 
                 rootOffset += dimPartialForTrait;
+                priorOffset += dimPartialForTrait;
             }
         }
 

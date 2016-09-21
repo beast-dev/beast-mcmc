@@ -117,17 +117,24 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         branchUpdateIndices = new int[nodeCount];
         branchLengths = new double[nodeCount];
 
-        operations = new int[internalNodeCount * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
+        diffusionProcessDelegate = new HomogenousDiffusionModelDelegate(tree, diffusionModel);
+
+        // one partials buffer for each tip and two for each internal node (for store restore)
+        partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
+
+        int partialBufferCount = partialBufferHelper.getBufferCount();
+        int matrixBufferCount = diffusionProcessDelegate.getEigenBufferCount();
+
+        rootProcessDelegate = new RootProcessDelegate.FullyConjugate(rootPrior, numTraits,
+                partialBufferCount, matrixBufferCount);
+
+        partialBufferCount += rootProcessDelegate.getExtraPartialBufferCount();
+        matrixBufferCount += rootProcessDelegate.getExtraMatrixBufferCount();
+
+        operations = new int[(internalNodeCount + rootProcessDelegate.getExtraPartialBufferCount())
+                * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
 
         try {
-            // one partials buffer for each tip and two for each internal node (for store restore)
-            partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
-
-            int partialBufferCount = partialBufferHelper.getBufferCount();
-            rootProcessDelegate = new RootProcessDelegate.FullyConjugate(rootPrior, numTraits, partialBufferCount);
-            partialBufferCount += rootProcessDelegate.getExtraPartialBufferCount();
-
-            diffusionProcessDelegate = new HomogenousDiffusionModelDelegate(tree, diffusionModel);
 
 
             cdi = new ContinuousDiffusionIntegrator.Basic(
@@ -135,7 +142,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     numTraits,
                     dimTrait,
                     partialBufferCount,
-                    diffusionProcessDelegate.getEigenBufferCount()
+                    matrixBufferCount
             );
 
             // TODO Make separate library
@@ -179,6 +186,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //                cdi.setPartialMean(index, dataModel.getTipMean(index));
 //                cdi.setPartialPrecision(index, dataModel.getTipPrecision(index));
             }
+
+            rootProcessDelegate.setRootPartial(cdi);
 
 //            System.err.println("DONE CHECK");
 //            System.exit(-1);
@@ -261,9 +270,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         double[] logLikelihoods = new double[dimTrait];
 
-        double logL = rootProcessDelegate.calculateRootLogLikelihood(cdi,
-                partialBufferHelper.getOffsetIndex(rootNodeNumber), logLikelihoods);
+        rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
+                logLikelihoods);
 
+        double logL = 0.0;
+        for (double d : logLikelihoods) {
+            logL += d;
+        }
+        System.err.println("Final: " + logL);
         System.exit(-1);
 
         updateDiffusionModel = false;

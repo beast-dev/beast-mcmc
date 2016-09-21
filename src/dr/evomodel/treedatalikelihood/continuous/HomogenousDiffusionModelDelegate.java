@@ -104,18 +104,12 @@ public final class HomogenousDiffusionModelDelegate implements DiffusionProcessD
         if (flip) {
             eigenBufferHelper.flipOffset(0);
         }
-//        EigenDecomposition ed = diffusionModel.getEigenDecomposition();
-//
-//        beagle.setEigenDecomposition(
-//                eigenBufferHelper.getOffsetIndex(0),
-//                ed.getEigenVectors(),
-//                ed.getInverseEigenVectors(),
-//                ed.getEigenValues());
-//        cdi.setDiffusionPrecision(
-//                eigenBufferHelper.getOffsetIndex(0),
-//                diffusionModel.getDeterminantPrecisionMatrix(),
-//
-//                );
+
+        cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                diffusionModel.getPrecisionParameter().getParameterValues(),
+                Math.log(diffusionModel.getDeterminantPrecisionMatrix())
+
+        );
     }
 
     @Override

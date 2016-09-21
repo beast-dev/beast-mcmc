@@ -60,7 +60,8 @@ public interface RootProcessDelegate {
         @Override
         public double calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex,
                                                final double[] logLike) {
-           return 0.0;
+            cdi.calculateRootLogLikelihood(rootIndex, logLike);
+            return 0.0;
         }
     }
 }

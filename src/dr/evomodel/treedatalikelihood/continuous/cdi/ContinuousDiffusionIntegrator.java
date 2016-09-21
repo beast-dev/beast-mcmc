@@ -25,6 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.distributions.MultivariateNormalDistribution;
+
 /**
  * @author Marc A. Suchard
  */
@@ -56,6 +58,8 @@ public interface ContinuousDiffusionIntegrator {
 
     void updateDiffusionMatrices(int precisionIndex, final int[] probabilityIndices, final double[] edgeLengths,
                                  int updateCount);
+
+    void calculateRootLogLikelihood(int rootIndex, double[] logLike);
 
 //    abstract class AbstractBase implements ContinuousDiffusionIntegrator {
 //
@@ -183,6 +187,65 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         @Override
+        public void calculateRootLogLikelihood(int rootIndex, final double[] logLikelihoods) {
+
+            if (DEBUG) {
+                System.err.println("Root calculation for " + rootIndex);
+            }
+
+            int rootOffset = dimPartial * rootIndex;
+
+            // TODO For each trait in parallel
+            for (int trait = 0; trait < numTraits; ++trait) {
+
+                double SS = 0;
+                int pob = precisionOffset;
+
+                final double rootScalar = partials[rootOffset + dimTrait];
+
+                for (int g = 0; g < dimTrait; ++g) {
+                    for (int h = 0; h < dimTrait; ++h) {
+                        SS += partials[rootOffset + g] * diffusions[pob] * partials[rootOffset + h];
+                        ++pob;
+                    }
+                }
+
+                final double logLike = -dimTrait * LOG_SQRT_2_PI
+                        + 0.5 * (dimTrait * Math.log(rootScalar) + precisionLogDet)
+                        - 0.5 * rootScalar * SS;
+                final double remainder = remainders[rootIndex * dimTrait + trait];
+
+                logLikelihoods[trait] = logLike + remainder;
+
+                if (DEBUG) {
+                    System.err.print("mean:");
+                    for (int g = 0; g < dimTrait; ++g) {
+                        System.err.print(" " + partials[rootOffset + g]);
+                    }
+                    System.err.println("");
+                    System.err.println("prec: " + partials[rootOffset + dimTrait]);
+                    System.err.println("\t" + logLike + " " + (logLike + remainder));
+//                    double[][] prec = new double[dimTrait][dimTrait];
+//                    double[] mean = new double[dimTrait];
+//                    for (int i = 0; i < dimTrait; ++i) {
+//                        mean[i] = partials[rootOffset + i];
+//                        for (int j = 0; j < dimTrait; ++j) {
+//                            System.err.print(" " + diffusions[precisionOffset + i * dimTrait + j]);
+//                            prec[i][j] = rootScalar * diffusions[precisionOffset + i * dimTrait + j];
+//                        }
+//                    }
+//                    System.err.println("");
+//                    MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[dimTrait],
+//                            prec);
+//                    System.err.println(mvn.logPdf(mean));
+//                    System.err.println(mvn.getLogDet() + " ?= " + (dimTrait * Math.log(rootScalar) + precisionLogDet));
+                }
+
+                rootOffset += dimPartialForTrait;
+            }
+        }
+
+        @Override
         public void updatePartials(final int[] operations, int operationCount) {
 
             if (DEBUG) {
@@ -278,8 +341,6 @@ public interface ContinuousDiffusionIntegrator {
                 System.err.println("\tvar : " + variances[imo]);
             }
 
-            double remainder = 0.0;
-
             // For each trait // TODO in parallel
             for (int trait = 0; trait < numTraits; ++trait) {
 
@@ -314,10 +375,13 @@ public interface ContinuousDiffusionIntegrator {
                 partials[kbo + dimTrait] = pk;
 
                 // Computer remainder at node k
+                double remainder = 0.0;
                 if (pi != 0 && pj != 0) {
                     if (INLINE) {
 
                         // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
+
+                        final double remainderPrecision = pip * pjp / pk;
 
                         // Inner products
                         double SSk = 0;
@@ -348,33 +412,47 @@ public interface ContinuousDiffusionIntegrator {
                         }
 
                         remainder += -dimTrait * LOG_SQRT_2_PI // TODO Can move some calculation outside the loop
-                                + 0.5 * (dimTrait * Math.log(pk) + precisionLogDet)
+                                + 0.5 * (dimTrait * Math.log(remainderPrecision) + precisionLogDet)
                                 - 0.5 * (pip * SSi + pjp * SSj - pk * SSk);
+
+                        if (DEBUG) {
+                            System.err.println("\t\t\tpk: " + pk);
+                            System.err.println("\t\t\tSSi = " + (pip * SSi));
+                            System.err.println("\t\t\tSSj = " + (pjp * SSj));
+                            System.err.println("\t\t\tSSk = " + (pk * SSk));
+                        }
 
                     } else {
                         remainder += 0.0;
-//                    incrementRemainderDensities(); // TODO
+                        // incrementRemainderDensities(); // TODO
                     }
 
                     if (DEBUG) {
-                        System.err.println("\ttrait: " + trait);
-                        System.err.println("\t\tprec: " + pi);
-                        System.err.print("\t\tmean:");
-                        for (int e = 0; e < dimTrait; ++e) {
-                            System.err.print(" " + partials[ibo + e]);
-                        }
-                        System.err.println("");
-                        System.err.println("");
+                        System.err.println("\t\tremainder: " + remainder);
                     }
-
-                    // Get ready for next trait
-                    kbo += dimPartialForTrait;
-                    ibo += dimPartialForTrait;
-                    jbo += dimPartialForTrait;
                 }
 
                 // Accumulate remainder up tree and store
-                remainders[kBuffer] = remainder + remainders[iBuffer] + remainders[jBuffer];
+                remainders[kBuffer * dimTrait + trait] = remainder
+                        + remainders[iBuffer * dimTrait + trait] + remainders[jBuffer * dimTrait + trait];
+
+                if (DEBUG) {
+                    System.err.println("\ttrait: " + trait);
+                    System.err.println("\t\tprec: " + pi);
+                    System.err.print("\t\tmean:");
+                    for (int e = 0; e < dimTrait; ++e) {
+                        System.err.print(" " + partials[ibo + e]);
+                    }
+                    System.err.println("");
+                    System.err.println("");
+                }
+
+
+                // Get ready for next trait
+                kbo += dimPartialForTrait;
+                ibo += dimPartialForTrait;
+                jbo += dimPartialForTrait;
+
             }
         }
 
@@ -394,7 +472,7 @@ public interface ContinuousDiffusionIntegrator {
         private void allocateStorage() {
             partials = new double[dimPartial * bufferCount];
             variances = new double[dimMatrix * bufferCount];
-            remainders = new double[bufferCount];
+            remainders = new double[bufferCount * dimTrait];
 
             diffusions = new double[dimTrait * dimTrait * diffusionCount];
             determinants = new double[diffusionCount];

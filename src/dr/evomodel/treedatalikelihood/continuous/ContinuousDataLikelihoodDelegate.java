@@ -259,8 +259,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         cdi.updatePartials(operations, operationCount);
 
+        double[] logLikelihoods = new double[dimTrait];
+
         double logL = rootProcessDelegate.calculateRootLogLikelihood(cdi,
-                partialBufferHelper.getOffsetIndex(rootNodeNumber), null);
+                partialBufferHelper.getOffsetIndex(rootNodeNumber), logLikelihoods);
+
+        System.exit(-1);
 
         updateDiffusionModel = false;
 

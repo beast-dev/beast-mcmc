@@ -118,7 +118,7 @@ public class ContinuousTraitDataModel extends AbstractModel {
             for (int j = 0; j < dimTrait; ++j) {
                 partial[offset + j] = p.getParameterValue(i * dimTrait + j);
             }
-            partial[offset + numTraits] = Double.POSITIVE_INFINITY;
+            partial[offset + dimTrait] = Double.POSITIVE_INFINITY;
             offset += dimTrait + 1;
         }
         return partial;

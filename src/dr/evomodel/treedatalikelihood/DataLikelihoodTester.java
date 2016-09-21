@@ -237,11 +237,12 @@ public class DataLikelihoodTester {
 
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+        System.out.println("logLikelihood = " + logLikelihood + "\n\n");
 
 
         //START ADDITIONAL TEST - Guy Baele
 
+        System.out.println("-- Test #1 SiteRateModels -- ");
         //alpha in partition 1 reject followed by alpha in partition 2 reject
         System.out.print("Adjust alpha in partition 1: ");
         siteRateModel.setAlpha(0.4);
@@ -299,9 +300,105 @@ public class DataLikelihoodTester {
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood);
+        System.out.println("logLikelihood = " + logLikelihood + "\n\n");
 
         //END ADDITIONAL TEST - Guy Baele
+
+
+        //START ADDITIONAL TEST - Guy Baele
+
+        System.out.println("-- Test #2 SiteRateModels -- ");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        //1 siteRateModel shared across 2 partitions
+        siteRateModels = new ArrayList<SiteRateModel>();
+        siteRateModels.add(siteRateModel);
+
+        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                treeModel,
+                patternLists,
+                branchModels,
+                siteRateModels,
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                multiPartitionDataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
+
+        System.out.print("Adjust alpha in shared siteRateModel: ");
+        siteRateModel.setAlpha(0.4);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only adjusted alpha for partition 1)");
+        siteRateModel.setAlpha(0.4);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + "\n\n");
+
+        //END ADDITIONAL TEST - Guy BAELE
+
+
+        //START ADDITIONAL TEST - Guy Baele
+
+        System.out.println("-- Test #3 SiteRateModels -- ");
+
+        siteRateModel = new GammaSiteRateModel("gammaModel");
+        siteRateModel.setSubstitutionModel(hky);
+        siteRateModel.setMutationRateParameter(mu);
+
+        siteRateModel2 = new GammaSiteRateModel("gammaModel2");
+        siteRateModel2.setSubstitutionModel(hky2);
+        siteRateModel2.setMutationRateParameter(mu);
+
+        siteRateModels = new ArrayList<SiteRateModel>();
+        siteRateModels.add(siteRateModel);
+        siteRateModels.add(siteRateModel2);
+
+        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                treeModel,
+                patternLists,
+                branchModels,
+                siteRateModels,
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                multiPartitionDataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
+
+        System.out.print("Adjust kappa in partition 1: ");
+        hky.setKappa(5.0);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: logLikelihood has not changed?)");
+
+        System.out.print("Return kappa in partition 1 to original value: ");
+        hky.setKappa(1.0);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
+
+        System.out.print("Adjust kappa in partition 2: ");
+        hky2.setKappa(11.0);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        System.out.print("Return kappa in partition 2 to original value: ");
+        hky2.setKappa(10.0);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n");
+
+        //END ADDITIONAL TEST - Guy BAELE
 
     }
 

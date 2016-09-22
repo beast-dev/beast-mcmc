@@ -37,9 +37,12 @@ public interface RootProcessDelegate {
 
     int getExtraMatrixBufferCount();
 
-    void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike);
+    void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike,
+                                    boolean incrementOuterProducts);
 
     void setRootPartial(ContinuousDiffusionIntegrator cdi);
+
+    int getDegreesOfFreedom();
 
     abstract class Abstract implements RootProcessDelegate {
 
@@ -69,8 +72,8 @@ public interface RootProcessDelegate {
 
         @Override
         public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
-                                               final double[] logLike) {
-            cdi.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike);
+                                               final double[] logLike, boolean incrementOuterProducts) {
+            cdi.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike, incrementOuterProducts);
         }
 
         @Override
@@ -102,6 +105,9 @@ public interface RootProcessDelegate {
         protected double getPseudoObservations() {
             return Double.POSITIVE_INFINITY;
         }
+
+        @Override
+        public int getDegreesOfFreedom() { return 0; }
     }
 
     class FullyConjugate extends Abstract {
@@ -110,8 +116,12 @@ public interface RootProcessDelegate {
             super(prior, numTraits, partialBufferCount, matrixBufferCount);
         }
 
+        @Override
         protected double getPseudoObservations() {
             return prior.getPseudoObservations();
         }
+
+        @Override
+        public int getDegreesOfFreedom() { return 1; }
     }
 }

@@ -40,12 +40,16 @@ import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
+import dr.math.distributions.WishartStatistics;
+import dr.math.distributions.WishartSufficientStatistics;
+import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -54,24 +58,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
-
-//                                              (String traitName,
-//                                               MultivariateTraitTree treeModel,
-//                                               MultivariateDiffusionModel diffusionModel,
-//                                               CompoundParameter traitParameter,
-//                                               Parameter deltaParameter,
-//                                               List<Integer> missingIndices,
-//                                               boolean cacheBranches,
-//                                               boolean scaleByTime,
-//                                               boolean useTreeLength,
-//                                               BranchRateModel rateModel,
-//                                               List<BranchRateModel> driftModels,
-//                                               List<BranchRateModel> optimalValues,
-//                                               BranchRateModel strengthOfSelection,
-//                                               Model samplingDensity,
-//                                               boolean reportAsMultivariate,
-//                                               boolean reciprocalRates)
+public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, ConjugateWishartStatisticsProvider, Citable {
 
     private final int numTraits;
     private final int dimTrait;
@@ -80,6 +67,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private double branchNormalization;
     private double storedBranchNormalization;
+
+    private TreeDataLikelihood callbackLikelihood = null;
 
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
                                             MultivariateDiffusionModel diffusionModel,
@@ -94,11 +83,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         logger.info("Using ContinuousDataLikelihood Delegate");
 
         this.diffusionModel = diffusionModel;
-        this.dataModel = dataModel;
+        addModel(diffusionModel);
+        //        for (int i = 0; i < diffusionProcessDelegate.getDiffusionModelCount(); ++i) {
+        //            addModel(diffusionProcessDelegate.getDiffusionModel(i));
+        //        }
 
-//        for (int i = 0; i < diffusionProcessDelegate.getDiffusionModelCount(); ++i) {
-//            addModel(diffusionProcessDelegate.getDiffusionModel(i));
-//        }
+        this.dataModel = dataModel;
         addModel(dataModel);
 
         if (rateModel != null) {
@@ -179,26 +169,29 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 final NodeRef node = tree.getExternalNode(i);
                 final int index = node.getNumber();
 
-                checkDataAlignment(node, tree);
+                if (!checkDataAlignment(node, tree)) {
+                    throw new TaxonList.MissingTaxonException("Missing taxon");
+                }
 
                 cdi.setPartial(index, dataModel.getTipPartial(index));
-
-//                cdi.setPartialMean(index, dataModel.getTipMean(index));
-//                cdi.setPartialPrecision(index, dataModel.getTipPrecision(index));
             }
 
             rootProcessDelegate.setRootPartial(cdi);
 
-//            System.err.println("DONE CHECK");
-//            System.exit(-1);
-
             updateDiffusionModel = true;
             
-        } catch (Exception mte
-                //TaxonList.MissingTaxonException mte
-        ) {
+        } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+    }
+
+    @Override
+    public void setCallback(TreeDataLikelihood treeDataLikelihood) {
+        this.callbackLikelihood = treeDataLikelihood;
+    }
+
+    public MultivariateDiffusionModel getDiffusionModel() {
+        return diffusionModel;
     }
 
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
@@ -206,7 +199,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         String name1 = dataModel.getParameter().getParameter(index).getParameterName();
         Taxon taxon = tree.getNodeTaxon(node);
         System.err.println(name1 + " ?= " + taxon.getId());
-        return name1.contentEquals(taxon.getId());
+        return name1.contains(taxon.getId());
     }
 
     @Override
@@ -266,19 +259,38 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
         }
 
-        cdi.updatePartials(operations, operationCount);
+        double[] outerProducts = null;
+        if (computeWishartStatistics) {
+            outerProducts = new double[(dimTrait * dimTrait + 1) * numTraits];
+            cdi.setOuterProducts(outerProducts);
+        }
+
+        cdi.updatePartials(operations, operationCount, computeWishartStatistics);
 
         double[] logLikelihoods = new double[dimTrait];
 
         rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
-                logLikelihoods);
+                logLikelihoods, computeWishartStatistics);
+
+        if (computeWishartStatistics) {
+            final int df = (internalNodeCount + rootProcessDelegate.getDegreesOfFreedom()) * numTraits;
+            cdi.getOuterProducts(outerProducts);
+            wishartStatistics = new WishartSufficientStatistics(
+//                    df,
+//                    outerProducts,
+                    outerProducts,
+                    dimTrait, numTraits
+            );
+
+        } else {
+            wishartStatistics = null;
+        }
 
         double logL = 0.0;
         for (double d : logLikelihoods) {
             logL += d;
         }
         System.err.println("Final: " + logL);
-        System.exit(-1);
 
         updateDiffusionModel = false;
 
@@ -379,18 +391,28 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private final ContinuousTraitDataModel dataModel;
 
-    /**
-     * the CDI library instance
-     */
     private final ContinuousDiffusionIntegrator cdi;
 
-    /**
-     * Flag to specify that the diffusion model has changed
-     */
     private boolean updateDiffusionModel;
 
-    /**
-     * Flag to specify that the site model has changed
-     */
+    private WishartSufficientStatistics wishartStatistics = null;
+
+    private boolean computeWishartStatistics = false;
+
+    @Override
+    public WishartSufficientStatistics getWishartStatistics() {
+        assert (callbackLikelihood != null);
+        callbackLikelihood.makeDirty();
+        computeWishartStatistics = true;
+        callbackLikelihood.getLogLikelihood();
+        computeWishartStatistics = false;
+        return wishartStatistics;
+    }
+
+    @Override
+    public MatrixParameterInterface getPrecisionParamter() {
+        return diffusionModel.getPrecisionParameter();
+    }
+
 //    private boolean updateSiteModel;
 }

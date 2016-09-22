@@ -907,7 +907,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //
 //        }
 
-        wishartStatistics.incrementDf(1); // Peeled one node
+        wishartStatistics.incrementDf(numData); // Peeled one node
     }
 
 //    private boolean checkIsPositiveDefinite(double[][] S) {

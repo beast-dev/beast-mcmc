@@ -66,6 +66,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         this.delegate = delegate;
         addModel(delegate);
+        delegate.setCallback(this);
 
         this.treeModel = treeModel;
         addModel(treeModel);
@@ -86,6 +87,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         addModel(this.branchRateModel);
 
         hasInitialized = true;
+    }
+
+    public DataLikelihoodDelegate getDataLikelihoodDelegate() {
+        return delegate;
     }
 
     // **************************************************************

@@ -29,10 +29,14 @@ import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.distribution.WishartGammalDistributionModel;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
@@ -67,9 +71,11 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //    public static final String TRAIT_MODEL = "traitModel";
 
     private final AbstractMultivariateTraitLikelihood traitModel;
+    private AbstractMultivariateTraitLikelihood debugModel = null;
+    private final ConjugateWishartStatisticsProvider conjugateWishartProvider;
     private final MultivariateDistributionLikelihood multivariateLikelihood;
     private final Parameter meanParam;
-    private final MatrixParameter precisionParam;
+    private final MatrixParameterInterface precisionParam;
 
     private double priorDf;
     private SymmetricMatrix priorInverseScaleMatrix;
@@ -93,6 +99,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.traitModel = null;
         this.treeModel = null;
         this.traitName = null;
+        this.conjugateWishartProvider = null;
         this.isSampledTraitLikelihood = false;
 
         this.multivariateLikelihood = likelihood;
@@ -119,12 +126,14 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                     (SymmetricMatrix) (new SymmetricMatrix(scale)).inverse();
     }
 
+    @Deprecated
     public PrecisionMatrixGibbsOperator(
             AbstractMultivariateTraitLikelihood traitModel,
             WishartStatistics priorDistribution,
             double weight) {
         super();
         this.traitModel = traitModel;
+        this.conjugateWishartProvider = null;
         this.meanParam = null;
         this.precisionParam = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 
@@ -147,6 +156,44 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood or " +
                     "ConjugateWishartStatisticsProvider");
         }
+
+        multivariateLikelihood = null;
+    }
+
+    public PrecisionMatrixGibbsOperator(
+            ConjugateWishartStatisticsProvider wishartStatisticsProvider,
+            WishartStatistics priorDistribution,
+            double weight,
+            AbstractMultivariateTraitLikelihood debugModel) {
+        super();
+        this.traitModel = null;
+        this.debugModel = debugModel;
+        this.conjugateWishartProvider = wishartStatisticsProvider;
+        this.meanParam = null;
+        this.precisionParam = conjugateWishartProvider.getPrecisionParamter();
+        isSampledTraitLikelihood = false;
+        this.treeModel = null;
+        this.traitName = null;
+
+        setupWishartStatistics(priorDistribution);
+        if (priorDistribution instanceof WishartGammalDistributionModel) {
+            wishartIsModel = true;
+            priorModel = (WishartGammalDistributionModel) priorDistribution;
+        }
+
+        setWeight(weight);
+
+//        this.treeModel = traitModel.getTreeModel();
+//        traitName = traitModel.getTraitName();
+        dim = precisionParam.getRowDimension(); // assumed to be square
+
+//        isSampledTraitLikelihood = (traitModel instanceof SampledMultivariateTraitLikelihood);
+
+//        if (!isSampledTraitLikelihood &&
+//                !(traitModel instanceof ConjugateWishartStatisticsProvider)) {
+//            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood or " +
+//                    "ConjugateWishartStatisticsProvider");
+//        }
 
         multivariateLikelihood = null;
     }
@@ -210,6 +257,18 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         final double[][] outerProducts = sufficientStatistics.getScaleMatrix();
 
         final double df = sufficientStatistics.getDf();
+
+
+        if (debugModel != null) {
+            final WishartSufficientStatistics debug = ((ConjugateWishartStatisticsProvider) debugModel).getWishartStatistics();
+            System.err.println(df + " ?= " + debug.getDf());
+            System.err.println(new Matrix(outerProducts));
+            System.err.println("");
+            System.err.println(new Matrix(debug.getScaleMatrix()));
+            System.exit(-1);
+        }
+
+
 //        final double df = 2;
 
 //        final double df = integratedLikelihood.getTotalTreePrecision();
@@ -280,7 +339,9 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             incrementOuterProduct(S, treeModel.getRoot());
         } else { // IntegratedTraitLikelihood
             if (traitModel != null) { // is a tree
-                incrementOuterProduct(S, (ConjugateWishartStatisticsProvider) traitModel);
+                incrementOuterProduct(S, (ConjugateWishartStatisticsProvider) traitModel); // TODO deprecate usage
+            } else if (conjugateWishartProvider != null) {
+                incrementOuterProduct(S, conjugateWishartProvider);
             } else { // is a normal-normal-wishart model
                 incrementOuterProduct(S, multivariateLikelihood);
             }
@@ -400,24 +461,41 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            if (xo.getChildCount() != 2) {
-                throw new XMLParseException(
-                        "Element with id = '" + xo.getName() + "' should contain either:\n" +
-                                "\t 1 multivariateTraitLikelihood and 1 multivariateDistributionLikelihood (prior), or\n" +
-                                "\t 2 multivariateDistributionLikelihoods (likelihood and prior)\n"
-                );
-            }
+//            if (xo.getChildCount() != 2) {
+//                throw new XMLParseException(
+//                        "Element with id = '" + xo.getName() + "' should contain either:\n" +
+//                                "\t 1 multivariateTraitLikelihood and 1 multivariateDistributionLikelihood (prior), or\n" +
+//                                "\t 2 multivariateDistributionLikelihoods (likelihood and prior)\n"
+//                );
+//            }
 
             double weight = xo.getDoubleAttribute(WEIGHT);
+
             AbstractMultivariateTraitLikelihood traitModel = (AbstractMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
+            TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
             MultivariateDistributionLikelihood prior = null;
             MatrixParameter precMatrix = null;
             MultivariateDistributionLikelihood likelihood = null;
 
+            ContinuousDataLikelihoodDelegate continuousData = null;
+
             if (traitModel != null) {
                 precMatrix = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
                 prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
-            } else { // generic likelihood and prior
+            }
+            if (treeDataLikelihood != null) {
+                DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+                if (delegate instanceof ContinuousDataLikelihoodDelegate) {
+                    continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+                    precMatrix = (MatrixParameter) continuousData.getDiffusionModel().getPrecisionParameter();
+                } else {
+                    throw new XMLParseException("May not provide a sequence data likelihood in the precision Gibbs sampler");
+                }
+                prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
+            }
+
+            if (traitModel == null && treeDataLikelihood == null) { // generic likelihood and prior
                 for (int i = 0; i < xo.getChildCount(); ++i) {
                     MultivariateDistributionLikelihood density = (MultivariateDistributionLikelihood) xo.getChild(i);
                     if (density.getDistribution() instanceof WishartStatistics) {
@@ -446,10 +524,15 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 throw new XMLParseException("The variance matrix is not square or of wrong dimension");
             }
 
-            if (traitModel != null) {
+            if (traitModel != null && treeDataLikelihood == null) {
                 return new PrecisionMatrixGibbsOperator(
                         traitModel, (WishartStatistics) prior.getDistribution(), weight
                 );
+            } else if (treeDataLikelihood != null) {
+                return new PrecisionMatrixGibbsOperator(
+                        continuousData, (WishartStatistics) prior.getDistribution(), weight, traitModel
+                );
+
             } else {
                 return new PrecisionMatrixGibbsOperator(likelihood, (WishartStatistics) prior.getDistribution(), weight);
             }
@@ -474,6 +557,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, true),
+                new ElementRule(TreeDataLikelihood.class, true),
                 new ElementRule(MultivariateDistributionLikelihood.class, 1, 2),
         };
     };

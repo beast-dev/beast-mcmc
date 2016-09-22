@@ -25,6 +25,7 @@
 
 package dr.math.interfaces;
 
+import dr.inference.model.MatrixParameterInterface;
 import dr.math.distributions.WishartSufficientStatistics;
 
 /**
@@ -35,5 +36,8 @@ import dr.math.distributions.WishartSufficientStatistics;
  */
 
 public interface ConjugateWishartStatisticsProvider {
+    
     WishartSufficientStatistics getWishartStatistics();
+
+    MatrixParameterInterface getPrecisionParamter();
 }

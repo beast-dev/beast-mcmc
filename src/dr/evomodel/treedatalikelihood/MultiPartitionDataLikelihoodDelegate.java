@@ -849,6 +849,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
+    public void setCallback(TreeDataLikelihood treeDataLikelihood) {
+        // Callback not necessary
+    }
+
+    @Override
     protected void acceptState() {
     }
 

@@ -235,6 +235,11 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return wishartStatistics;
     }
 
+    @Override
+    public MatrixParameterInterface getPrecisionParamter() {
+        return diffusionModel.getPrecisionParameter();
+    }
+
 //    private double getLogPrecisionDetermination() {
 //        return Math.log(diffusionModel.getDeterminantPrecisionMatrix()) + dimTrait * Math.log(rootPriorSampleSize);
 //    }

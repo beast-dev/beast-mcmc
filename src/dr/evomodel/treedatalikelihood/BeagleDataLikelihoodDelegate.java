@@ -739,6 +739,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     @Override
+    public void setCallback(TreeDataLikelihood treeDataLikelihood) {
+        // Callback not necessary
+    }
+
+    @Override
     protected void acceptState() {
     }
 

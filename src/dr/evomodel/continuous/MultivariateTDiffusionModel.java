@@ -25,6 +25,7 @@
 
 package dr.evomodel.continuous;
 
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.distributions.TDistribution;
 import dr.xml.*;
@@ -40,7 +41,7 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
     //	public static final String PRECISION_TREE_ATTRIBUTE = "precision";
     public static final String DF = "dfParameter";
 
-    public MultivariateTDiffusionModel(Parameter df, Parameter precision) {
+    public MultivariateTDiffusionModel(Parameter df, MatrixParameterInterface precision) {
         super();
         this.dfParameter = df;
         this.precisionParameter = precision;
@@ -78,7 +79,7 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
     }
 */
 
-    public Parameter getPrecisionParameter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return precisionParameter;
     }
 
@@ -95,7 +96,7 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
-            Parameter diffusionParam = (Parameter) cxo.getChild(Parameter.class);
+            MatrixParameterInterface diffusionParam = (MatrixParameterInterface) cxo.getChild(MatrixParameterInterface.class);
             cxo = xo.getChild(DF);
             Parameter df = (Parameter) cxo.getChild(Parameter.class);
 
@@ -131,6 +132,6 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
     // **************************************************************
 
     private final Parameter dfParameter;
-    private final Parameter precisionParameter;
+    private final MatrixParameterInterface precisionParameter;
 
 }

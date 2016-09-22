@@ -39,6 +39,23 @@ public class WishartSufficientStatistics {
         this.scaleMatrix = scaleMatrix;
     }
 
+    public WishartSufficientStatistics(int df, double[] matrix, int dim) {
+        this(df, convertToSquare(matrix, dim));
+    }
+
+    public WishartSufficientStatistics(int df, double[] matrix, int dim, int count) {
+        this(df, convertToSquareAndAccumulate(matrix, dim, count));
+    }
+
+    public WishartSufficientStatistics(double[] matrix, int dim, int count) {
+        this(convertFromSquareAndAccumulate(matrix, dim, count));
+    }
+
+    private WishartSufficientStatistics(WishartSufficientStatistics copy) {
+        this.df = copy.df;
+        this.scaleMatrix = copy.scaleMatrix;
+    }
+
     public final int getDf() {
         return df;
     }
@@ -56,6 +73,48 @@ public class WishartSufficientStatistics {
         for (double[] v : scaleMatrix) {
             Arrays.fill(v, 0.0);
         }
+    }
+
+    private static double[][] convertToSquare(double[] vector, int dim)  {
+        double[][] matrix = new double[dim][dim];
+        int offset = 0;
+        for (int row = 0; row < dim; ++row) {
+            System.arraycopy(vector, offset, matrix[row], 0, dim);
+            offset += dim;
+        }
+        return matrix;
+    }
+
+    private static WishartSufficientStatistics convertFromSquareAndAccumulate(double[] vector, int dim, int count)  {
+        double[][] matrix = new double[dim][dim];
+        int df = 0;
+
+        for (int c = 0; c < count; ++c) {
+            int offset = (dim * dim + 1) * c;
+            for (int i = 0; i < dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    matrix[i][j] += vector[offset];
+                    ++offset;
+                }
+            }
+            df += vector[offset];
+        }
+        return new WishartSufficientStatistics(df, matrix);
+    }
+
+    private static double[][] convertToSquareAndAccumulate(double[] vector, int dim, int count)  {
+        double[][] matrix = new double[dim][dim];
+
+        for (int c = 0; c < count; ++c) {
+            int offset = dim * dim * c;
+            for (int i = 0; i < dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    matrix[i][j] += vector[offset];
+                    ++offset;
+                }
+            }
+        }
+        return matrix;
     }
 
     private int df;

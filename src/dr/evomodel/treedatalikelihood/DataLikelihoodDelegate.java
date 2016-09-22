@@ -48,6 +48,8 @@ public interface DataLikelihoodDelegate extends Model {
 
     void restoreState();
 
+    void setCallback(TreeDataLikelihood treeDataLikelihood);
+
     final class BranchOperation {
         public BranchOperation(int branchNumber, double branchLength) {
             this.branchNumber = branchNumber;

@@ -72,7 +72,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         assert trait != null;
     }
 
-    public Parameter getPrecisionParameter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         checkVariableChanged();
         return diffusionPrecisionMatrixParameter;
     }

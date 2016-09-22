@@ -31,36 +31,40 @@ public class WishartSufficientStatistics {
 
     public WishartSufficientStatistics(int dim) {
         df = 0;
-        scaleMatrix = new double[dim][dim];
+        scaleMatrix = new double[dim * dim];
     }
 
-    public WishartSufficientStatistics(int df, double[][] scaleMatrix) {
+    public WishartSufficientStatistics(int df, double[] scaleMatrix) {
         this.df = df;
         this.scaleMatrix = scaleMatrix;
     }
 
-    public WishartSufficientStatistics(int df, double[] matrix, int dim) {
-        this(df, convertToSquare(matrix, dim));
+//    public WishartSufficientStatistics(int df, double[] matrix, int dim) {
+//        this(df, convertToSquare(matrix, dim));
+//    }
+//
+//    public WishartSufficientStatistics(int df, double[] matrix, int dim, int count) {
+//        this(df, convertToSquareAndAccumulate(matrix, dim, count));
+//    }
+//
+//    public WishartSufficientStatistics(double[] matrix, int dim, int count) {
+//        this(convertFromSquareAndAccumulate(matrix, dim, count));
+//    }
+
+    public WishartSufficientStatistics(int[] dfs, double[] matrix) {
+        this(sum(dfs), accumulateMatrix(matrix, dfs.length));
     }
 
-    public WishartSufficientStatistics(int df, double[] matrix, int dim, int count) {
-        this(df, convertToSquareAndAccumulate(matrix, dim, count));
-    }
-
-    public WishartSufficientStatistics(double[] matrix, int dim, int count) {
-        this(convertFromSquareAndAccumulate(matrix, dim, count));
-    }
-
-    private WishartSufficientStatistics(WishartSufficientStatistics copy) {
-        this.df = copy.df;
-        this.scaleMatrix = copy.scaleMatrix;
-    }
+//    private WishartSufficientStatistics(WishartSufficientStatistics copy) {
+//        this.df = copy.df;
+//        this.scaleMatrix = copy.scaleMatrix;
+//    }
 
     public final int getDf() {
         return df;
     }
 
-    public final double[][] getScaleMatrix() {
+    public final double[] getScaleMatrix() {
         return scaleMatrix;
     }
     
@@ -70,53 +74,77 @@ public class WishartSufficientStatistics {
 
     public final void clear() {
         df = 0;
-        for (double[] v : scaleMatrix) {
-            Arrays.fill(v, 0.0);
-        }
+        Arrays.fill(scaleMatrix, 0.0);
     }
 
-    private static double[][] convertToSquare(double[] vector, int dim)  {
-        double[][] matrix = new double[dim][dim];
-        int offset = 0;
-        for (int row = 0; row < dim; ++row) {
-            System.arraycopy(vector, offset, matrix[row], 0, dim);
-            offset += dim;
-        }
-        return matrix;
-    }
+//    private static double[][] convertToSquare(double[] vector, int dim)  {
+//        double[][] matrix = new double[dim][dim];
+//        int offset = 0;
+//        for (int row = 0; row < dim; ++row) {
+//            System.arraycopy(vector, offset, matrix[row], 0, dim);
+//            offset += dim;
+//        }
+//        return matrix;
+//    }
 
-    private static WishartSufficientStatistics convertFromSquareAndAccumulate(double[] vector, int dim, int count)  {
-        double[][] matrix = new double[dim][dim];
-        int df = 0;
+//    private static WishartSufficientStatistics convertFromSquareAndAccumulate(double[] vector, int dim, int count)  {
+//        double[][] matrix = new double[dim][dim];
+//        int df = 0;
+//
+//        for (int c = 0; c < count; ++c) {
+//            int offset = (dim * dim + 1) * c;
+//            for (int i = 0; i < dim; ++i) {
+//                for (int j = 0; j < dim; ++j) {
+//                    matrix[i][j] += vector[offset];
+//                    ++offset;
+//                }
+//            }
+//            df += vector[offset];
+//        }
+//        return new WishartSufficientStatistics(df, matrix);
+//    }
 
-        for (int c = 0; c < count; ++c) {
-            int offset = (dim * dim + 1) * c;
-            for (int i = 0; i < dim; ++i) {
-                for (int j = 0; j < dim; ++j) {
-                    matrix[i][j] += vector[offset];
-                    ++offset;
+    private static double[] accumulateMatrix(double[] matrix, final int count) {
+        if (count == 1) {
+            return matrix;
+        } else {
+            final int length = matrix.length / count;
+            double[] result = new double[length];
+            System.arraycopy(matrix, 0, result, 0, length);
+
+            for (int i = 1; i < count; ++i) {
+                final int offset = i * length;
+                for (int j = 0; j < length; ++j) {
+                    result[j] += matrix[offset + j];
                 }
             }
-            df += vector[offset];
+            return result;
         }
-        return new WishartSufficientStatistics(df, matrix);
     }
 
-    private static double[][] convertToSquareAndAccumulate(double[] vector, int dim, int count)  {
-        double[][] matrix = new double[dim][dim];
-
-        for (int c = 0; c < count; ++c) {
-            int offset = dim * dim * c;
-            for (int i = 0; i < dim; ++i) {
-                for (int j = 0; j < dim; ++j) {
-                    matrix[i][j] += vector[offset];
-                    ++offset;
-                }
-            }
+    private static int sum(int[] vector) {
+        int sum = 0;
+        for (int x : vector) {
+            sum += x;
         }
-        return matrix;
+        return sum;
     }
+
+//    private static double[][] convertToSquareAndAccumulate(double[] vector, int dim, int count)  {
+//        double[][] matrix = new double[dim][dim];
+//
+//        for (int c = 0; c < count; ++c) {
+//            int offset = dim * dim * c;
+//            for (int i = 0; i < dim; ++i) {
+//                for (int j = 0; j < dim; ++j) {
+//                    matrix[i][j] += vector[offset];
+//                    ++offset;
+//                }
+//            }
+//        }
+//        return matrix;
+//    }
 
     private int df;
-    private final double[][] scaleMatrix;
+    private final double[] scaleMatrix;
 }

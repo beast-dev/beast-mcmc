@@ -29,6 +29,7 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -44,8 +45,8 @@ public class ContinuousTraitDataModel extends AbstractModel {
     private final PrecisionType precisionType;
 
     public ContinuousTraitDataModel(String name,
-                             CompoundParameter parameter,
-                             List<Integer> missingIndices,
+                                    CompoundParameter parameter,
+                                    List<Integer> missingIndices,
                                     final int dimTrait) {
         super(name);
         this.parameter = parameter;
@@ -110,15 +111,21 @@ public class ContinuousTraitDataModel extends AbstractModel {
         }
     }
 
-    public double[] getTipPartial(int index) {
+    public double[] getTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];
-        final Parameter p = parameter.getParameter(index);
+        final Parameter p = parameter.getParameter(taxonIndex);
         int offset = 0;
         for (int i = 0; i < numTraits; ++i) {
+            boolean missing = false;
             for (int j = 0; j < dimTrait; ++j) {
-                partial[offset + j] = p.getParameterValue(i * dimTrait + j);
+                final int index = i * dimTrait + j;
+                final int missingIndex = index + dimTrait * numTraits * taxonIndex;
+                partial[offset + j] = p.getParameterValue(index);
+                if (missingIndices != null && missingIndices.contains(missingIndex)) {
+                    missing = true;
+                }
             }
-            partial[offset + dimTrait] = Double.POSITIVE_INFINITY;
+            partial[offset + dimTrait] = missing ? 0.0 : Double.POSITIVE_INFINITY;
             offset += dimTrait + 1;
         }
         return partial;

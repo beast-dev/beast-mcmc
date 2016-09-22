@@ -523,13 +523,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
             if (computeWishartStatistics) {
 
-                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
+                final double[] outerProducts = wishartStatistics.getScaleMatrix();
 
                 final double weight = conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
                 for (int i = 0; i < dimTrait; i++) {
                     final double diffi = conditionalRootMean[i] - rootPriorMean[i];
                     for (int j = 0; j < dimTrait; j++) {
-                        outerProducts[i][j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
+                        outerProducts[i * dimTrait + j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
                     }
                 }
                 wishartStatistics.incrementDf(1);
@@ -540,9 +540,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             square = x * x * treePrecisionMatrix[0][0] * marginalVariance;
 
             if (computeWishartStatistics) {
-                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
+                final double[] outerProducts = wishartStatistics.getScaleMatrix();
                 final double y = conditionalRootMean[0] - rootPriorMean[0];
-                outerProducts[0][0] += y * y * conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
+                outerProducts[0] += y * y * conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
                 wishartStatistics.incrementDf(1);
             }
         }
@@ -714,10 +714,10 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         sb.append("logLikelihood: " + getLogLikelihood() + " == " + logDensity + "\n\n");
 
         final WishartSufficientStatistics sufficientStatistics = getWishartStatistics();
-        final double[][] outerProducts = sufficientStatistics.getScaleMatrix();
+        final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         sb.append("Outer-products (DP):\n");
-        sb.append(new Matrix(outerProducts));
+        sb.append(new Vector(outerProducts));
         sb.append(sufficientStatistics.getDf() + "\n");
 
         Matrix treePrecision = new Matrix(treeVariance).inverse();

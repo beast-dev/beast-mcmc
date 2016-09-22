@@ -768,7 +768,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                         double precision0,
                                         double precision1) {
 
-        final double[][] outerProduct = wishartStatistics.getScaleMatrix();
+        final double[] outerProduct = wishartStatistics.getScaleMatrix();
 
 //        for (int k = 0; k < numData; k++) {
 //
@@ -875,7 +875,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
                     final double inc = (child0i - child1i) * (child0j - child1j) * weight;
 
-                    outerProduct[i][j] += inc;
+                    outerProduct[i * dimTrait + j] += inc;
 //                    increment3[i][j] += inc;
                 }
             }

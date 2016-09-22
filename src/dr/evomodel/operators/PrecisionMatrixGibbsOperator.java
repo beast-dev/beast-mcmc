@@ -49,6 +49,7 @@ import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
 import dr.xml.*;
 
@@ -254,7 +255,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
 
         final WishartSufficientStatistics sufficientStatistics = integratedLikelihood.getWishartStatistics();
-        final double[][] outerProducts = sufficientStatistics.getScaleMatrix();
+        final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         final double df = sufficientStatistics.getDf();
 
@@ -262,9 +263,9 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         if (debugModel != null) {
             final WishartSufficientStatistics debug = ((ConjugateWishartStatisticsProvider) debugModel).getWishartStatistics();
             System.err.println(df + " ?= " + debug.getDf());
-            System.err.println(new Matrix(outerProducts));
+            System.err.println(new Vector(outerProducts));
             System.err.println("");
-            System.err.println(new Matrix(debug.getScaleMatrix()));
+            System.err.println(new Vector(debug.getScaleMatrix()));
             System.exit(-1);
         }
 
@@ -277,8 +278,9 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //        System.err.println("Total tree DF  = " + df);
 //        System.exit(-1);
 
-        for (int i = 0; i < outerProducts.length; i++) {
-            System.arraycopy(outerProducts[i], 0, S[i], 0, S[i].length);
+        final int dim = S.length;
+        for (int i = 0; i < dim; i++) {
+            System.arraycopy(outerProducts, i * dim, S[i], 0, dim);
         }
         numberObservations = df;
 

@@ -47,7 +47,6 @@ import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
-import dr.math.distributions.WishartStatistics;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.util.Citable;
@@ -259,10 +258,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
         }
 
+        int[] degreesOfFreedom = null;
         double[] outerProducts = null;
+
         if (computeWishartStatistics) {
-            outerProducts = new double[(dimTrait * dimTrait + 1) * numTraits];
-            cdi.setOuterProducts(outerProducts);
+            // TODO Abstract this ugliness away
+            degreesOfFreedom = new int[numTraits];
+            outerProducts = new double[dimTrait * dimTrait  * numTraits];
+            cdi.setWishartStatistics(degreesOfFreedom, outerProducts);
         }
 
         cdi.updatePartials(operations, operationCount, computeWishartStatistics);
@@ -273,13 +276,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 logLikelihoods, computeWishartStatistics);
 
         if (computeWishartStatistics) {
-            final int df = (internalNodeCount + rootProcessDelegate.getDegreesOfFreedom()) * numTraits;
-            cdi.getOuterProducts(outerProducts);
+            // TODO Abstract this ugliness away
+            cdi.getWishartStatistics(degreesOfFreedom, outerProducts);
             wishartStatistics = new WishartSufficientStatistics(
-//                    df,
-//                    outerProducts,
-                    outerProducts,
-                    dimTrait, numTraits
+                    degreesOfFreedom,
+                    outerProducts
             );
 
         } else {
@@ -290,7 +291,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         for (double d : logLikelihoods) {
             logL += d;
         }
-        System.err.println("Final: " + logL);
 
         updateDiffusionModel = false;
 

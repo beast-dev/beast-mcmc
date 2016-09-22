@@ -48,9 +48,9 @@ public interface ContinuousDiffusionIntegrator {
 
     void getPartial(int bufferIndex, final double[] partial);
 
-    void setOuterProducts(final double[] outerProducts);
+    void setWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts);
 
-    void getOuterProducts(final double[] outerProducts);
+    void getWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts);
 
     void setDiffusionPrecision(int diffusionIndex, final double[] matrix, double logDeterminant);
 
@@ -123,8 +123,6 @@ public interface ContinuousDiffusionIntegrator {
         private final int dimMatrix;
         private final int dimPartialForTrait;
         private final int dimPartial;
-        private final int dimOuterProductForTrait;
-
 
         public Basic(
                 final PrecisionType precisionType,
@@ -147,7 +145,6 @@ public interface ContinuousDiffusionIntegrator {
             this.dimMatrix = precisionType.getMatrixLength(dimTrait);
             this.dimPartialForTrait = dimTrait + dimMatrix;
             this.dimPartial = numTraits * dimPartialForTrait;
-            this.dimOuterProductForTrait = 1 + dimTrait * dimTrait;
 
             if (DEBUG) {
                 System.err.println("numTraits: " + numTraits);
@@ -182,17 +179,21 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         @Override
-        public void setOuterProducts(final double[] outerProducts) {
-            assert(outerProducts.length == dimOuterProductForTrait * numTraits);
+        public void setWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts) {
+            assert(degreesOfFreedom.length == numTraits);
+            assert(outerProducts.length == dimTrait * dimTrait * numTraits);
 
-            System.arraycopy(outerProducts, 0, this.outerProducts, 0, dimOuterProductForTrait * numTraits);
+            System.arraycopy(degreesOfFreedom, 0, this.degreesOfFreedom, 0, numTraits);
+            System.arraycopy(outerProducts, 0, this.outerProducts, 0, dimTrait * dimTrait * numTraits);
         }
 
         @Override
-        public void getOuterProducts(final double[] outerProducts) {
-            assert(outerProducts.length == dimOuterProductForTrait * numTraits);
+        public void getWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts) {
+            assert(degreesOfFreedom.length == numTraits);
+            assert(outerProducts.length == dimTrait * dimTrait * numTraits);
 
-            System.arraycopy(this.outerProducts, 0, outerProducts, 0, dimOuterProductForTrait * numTraits);
+            System.arraycopy(this.degreesOfFreedom, 0, degreesOfFreedom, 0, numTraits);
+            System.arraycopy(this.outerProducts, 0, outerProducts, 0, dimTrait * dimTrait * numTraits);
         }
 
         @Override
@@ -251,7 +252,7 @@ public interface ContinuousDiffusionIntegrator {
                 logLikelihoods[trait] = logLike + remainder;
 
                 if (incrementOuterProducts) {
-                    int opo = dimOuterProductForTrait * trait;;
+                    int opo = dimTrait * dimTrait * trait;;
 
                     for (int g = 0; g < dimTrait; ++g) {
                         final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
@@ -264,7 +265,7 @@ public interface ContinuousDiffusionIntegrator {
                         }
                     }
 
-                    outerProducts[opo] += 1; // incremenent degrees-of-freedom
+                    degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
                 }
 
                 if (DEBUG) {
@@ -361,6 +362,7 @@ public interface ContinuousDiffusionIntegrator {
         private double[] remainders;
         private double[] diffusions;
         private double[] determinants;
+        private int[] degreesOfFreedom;
         private double[] outerProducts;
 
         // Set during updateDiffusionMatrices() and used in updatePartials()
@@ -485,7 +487,7 @@ public interface ContinuousDiffusionIntegrator {
                     }
 
                     if (incrementOuterProducts) {
-                        int opo = dimOuterProductForTrait * trait;
+                        int opo = dimTrait * dimTrait * trait;
 
                         final double remainderPrecision = pip * pjp / (pip + pjp);
 
@@ -502,7 +504,7 @@ public interface ContinuousDiffusionIntegrator {
                             }
                         }
 
-                        outerProducts[opo] += 1; // incremenent degrees-of-freedom
+                        degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
                     }
                 } // End if remainder
 
@@ -550,7 +552,8 @@ public interface ContinuousDiffusionIntegrator {
             diffusions = new double[dimTrait * dimTrait * diffusionCount];
             determinants = new double[diffusionCount];
 
-            outerProducts = new double[dimOuterProductForTrait * numTraits];
+            degreesOfFreedom = new int[numTraits];
+            outerProducts = new double[dimTrait * dimTrait * numTraits];
         }
 
         private String getOperationString(final int[] operations, final int offset) {
@@ -561,6 +564,6 @@ public interface ContinuousDiffusionIntegrator {
             return sb.toString();
         }
 
-        private static boolean DEBUG = true;
+        private static boolean DEBUG = false;
     }
 }

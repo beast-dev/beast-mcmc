@@ -65,7 +65,7 @@ public class DataLikelihoodTester {
         // turn off logging to avoid screen noise...
         Logger logger = Logger.getLogger("dr");
         logger.setUseParentHandlers(false);
-
+        
         SimpleAlignment alignment = createAlignment(sequences, Nucleotides.INSTANCE);
 
         TreeModel treeModel;
@@ -145,6 +145,11 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
+        hky.setKappa(5.0);
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 5): ");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
         System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 10): ");
 
         dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
@@ -163,6 +168,13 @@ public class DataLikelihoodTester {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.println("logLikelihood = " + logLikelihood);
+        hky2.setKappa(11.0);
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 11): ");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(1.0);
+        hky2.setKappa(10.0);
 
         MultiPartitionDataLikelihoodDelegate multiPartitionDataLikelihoodDelegate;
 
@@ -185,6 +197,13 @@ public class DataLikelihoodTester {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(5.0);
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5):");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood);
+        hky.setKappa(1.0);
 
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 10):");
 
@@ -237,10 +256,10 @@ public class DataLikelihoodTester {
 
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + "\n\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: this is 2x the logLikelihood of the 2nd partition)\n\n");
 
 
-        //START ADDITIONAL TEST - Guy Baele
+        //START ADDITIONAL TEST #1 - Guy Baele
 
         System.out.println("-- Test #1 SiteRateModels -- ");
         //alpha in partition 1 reject followed by alpha in partition 2 reject
@@ -305,7 +324,7 @@ public class DataLikelihoodTester {
         //END ADDITIONAL TEST - Guy Baele
 
 
-        //START ADDITIONAL TEST - Guy Baele
+        //START ADDITIONAL TEST #2 - Guy Baele
 
         System.out.println("-- Test #2 SiteRateModels -- ");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
@@ -337,14 +356,14 @@ public class DataLikelihoodTester {
         siteRateModel.setAlpha(0.4);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only adjusted alpha for partition 1)");
-        siteRateModel.setAlpha(0.4);
+        siteRateModel.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + "\n\n");
 
         //END ADDITIONAL TEST - Guy BAELE
 
 
-        //START ADDITIONAL TEST - Guy Baele
+        //START ADDITIONAL TEST #3 - Guy Baele
 
         System.out.println("-- Test #3 SiteRateModels -- ");
 

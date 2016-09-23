@@ -51,6 +51,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.util.MessageLogHandler;
 
 import java.util.ArrayList;
@@ -442,7 +443,15 @@ public class DataLikelihoodTester {
 
         logLikelihood = treeDataLikelihoodOne.getLogLikelihood();
 
-        System.out.println("\nBeagleDataLikelihoodDelegate logLikelihood partition 1 = " + logLikelihood);
+        System.out.println("\nBeagleDataLikelihoodDelegate logLikelihood partition 1 (kappa = 1) = " + logLikelihood);
+
+        hky.setKappa(10.0);
+
+        logLikelihood = treeDataLikelihoodOne.getLogLikelihood();
+
+        System.out.println("BeagleDataLikelihoodDelegate logLikelihood partition 1 (kappa = 10) = " + logLikelihood);
+
+        hky.setKappa(1.0);
 
         BeagleDataLikelihoodDelegate dataLikelihoodDelegateTwo = new BeagleDataLikelihoodDelegate(
                 treeModel,
@@ -459,7 +468,7 @@ public class DataLikelihoodTester {
 
         logLikelihood = treeDataLikelihoodTwo.getLogLikelihood();
 
-        System.out.println("BeagleDataLikelihoodDelegate logLikelihood partition 2 = " + logLikelihood + "\n");
+        System.out.println("BeagleDataLikelihoodDelegate logLikelihood partition 2 (kappa = 10) = " + logLikelihood + "\n");
 
         multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                 treeModel,
@@ -479,8 +488,15 @@ public class DataLikelihoodTester {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 1):");
-
         System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(10.0);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 10):");
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(1.0);
 
         multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                 treeModel,
@@ -500,7 +516,6 @@ public class DataLikelihoodTester {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.print("Test MultiPartitionDataLikelihoodDelegate 2nd partition (kappa = 10):");
-
         System.out.println("logLikelihood = " + logLikelihood + "\n");
 
         patternLists = new ArrayList<PatternList>();
@@ -525,7 +540,7 @@ public class DataLikelihoodTester {
 
         System.out.print("Test MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
 
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: should be the sum of both separate logLikelihoods)\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: should be the sum of both separate logLikelihoods)\nKappa value of partition 2 is used to compute logLikelihood for both partitions?");
 
         //END ADDITIONAL TEST - Guy Baele
 

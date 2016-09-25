@@ -25,6 +25,7 @@
 
 package dr.xml;
 
+import dr.inference.model.AbstractModel;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 
@@ -99,6 +100,26 @@ public class XMLObject {
             }
         }
         return null;
+    }
+
+    /**
+     * @param c the class of the children to return
+     * @return all children with a native format of the given class, or null if no such child exists.
+     */
+    public List<Object> getAllChildren(Class c) {
+
+        List<Object> allChildren = null;
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+            if( c.isInstance(child) ) {
+                if (allChildren == null) {
+                    allChildren = new ArrayList<Object>();
+                }
+                allChildren.add(child);
+            }
+        }
+        return allChildren;
+
     }
 
     /**

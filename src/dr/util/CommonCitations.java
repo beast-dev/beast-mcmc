@@ -54,6 +54,7 @@ public class CommonCitations {
                     new Author("P", "Lemey"),
                     new Author("A", "Rambaut"),
                     new Author("AJ", "Drummond"),
+                    new Author("MA", "Suchard")
             },
             "Bayesian phylogeography finds its roots",
             2009,
@@ -118,7 +119,7 @@ public class CommonCitations {
                     new Author("C", "Lee"),
                     new Author("MA", "Suchard")
             },
-            "Wagner and Dollo: a stochastic duet by composing two parsiminious solos",
+            "Wagner and Dollo: a stochastic duet by composing two parsimonious solos",
             2008,
             "Systematic Biology",
             57,

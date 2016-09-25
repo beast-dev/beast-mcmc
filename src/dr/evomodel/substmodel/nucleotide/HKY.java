@@ -248,7 +248,7 @@ public class HKY extends BaseSubstitutionModel implements Citable {
 
     public static Citation CITATION = new Citation(
             new Author[]{
-                    new Author("M", "Hasegowa"),
+                    new Author("M", "Hasegawa"),
                     new Author("H", "Kishino"),
                     new Author("T", "Yano")
             },

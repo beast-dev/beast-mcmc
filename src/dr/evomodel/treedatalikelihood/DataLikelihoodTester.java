@@ -51,6 +51,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.util.MessageLogHandler;
 
 import java.util.ArrayList;
@@ -145,6 +146,11 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
+        hky.setKappa(5.0);
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 5): ");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
         System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 10): ");
 
         dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
@@ -163,6 +169,13 @@ public class DataLikelihoodTester {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.println("logLikelihood = " + logLikelihood);
+        hky2.setKappa(11.0);
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 11): ");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(1.0);
+        hky2.setKappa(10.0);
 
         MultiPartitionDataLikelihoodDelegate multiPartitionDataLikelihoodDelegate;
 
@@ -185,6 +198,13 @@ public class DataLikelihoodTester {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(5.0);
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5):");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood);
+        hky.setKappa(1.0);
 
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 10):");
 
@@ -237,10 +257,10 @@ public class DataLikelihoodTester {
 
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + "\n\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: this is 2x the logLikelihood of the 2nd partition)\n\n");
 
 
-        //START ADDITIONAL TEST - Guy Baele
+        //START ADDITIONAL TEST #1 - Guy Baele
 
         System.out.println("-- Test #1 SiteRateModels -- ");
         //alpha in partition 1 reject followed by alpha in partition 2 reject
@@ -305,7 +325,7 @@ public class DataLikelihoodTester {
         //END ADDITIONAL TEST - Guy Baele
 
 
-        //START ADDITIONAL TEST - Guy Baele
+        //START ADDITIONAL TEST #2 - Guy Baele
 
         System.out.println("-- Test #2 SiteRateModels -- ");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
@@ -337,14 +357,14 @@ public class DataLikelihoodTester {
         siteRateModel.setAlpha(0.4);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only adjusted alpha for partition 1)");
-        siteRateModel.setAlpha(0.4);
+        siteRateModel.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + "\n\n");
 
-        //END ADDITIONAL TEST - Guy BAELE
+        //END ADDITIONAL TEST - Guy Baele
 
 
-        //START ADDITIONAL TEST - Guy Baele
+        //START ADDITIONAL TEST #3 - Guy Baele
 
         System.out.println("-- Test #3 SiteRateModels -- ");
 
@@ -396,9 +416,133 @@ public class DataLikelihoodTester {
         System.out.print("Return kappa in partition 2 to original value: ");
         hky2.setKappa(10.0);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n\n");
 
-        //END ADDITIONAL TEST - Guy BAELE
+        //END ADDITIONAL TEST - Guy Baele
+
+
+        //START ADDITIONAL TEST #4 - Guy Baele
+
+        System.out.println("-- Test #4 SiteRateModels -- ");
+
+        SimpleAlignment secondAlignment = createAlignment(moreSequences, Nucleotides.INSTANCE);
+        SitePatterns morePatterns = new SitePatterns(secondAlignment, null, 0, -1, 1, true);
+
+        BeagleDataLikelihoodDelegate dataLikelihoodDelegateOne = new BeagleDataLikelihoodDelegate(
+                treeModel,
+                patterns,
+                branchModel,
+                siteRateModel, false,
+                PartialsRescalingScheme.NONE,
+                false);
+
+        TreeDataLikelihood treeDataLikelihoodOne = new TreeDataLikelihood(
+                dataLikelihoodDelegateOne,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihoodOne.getLogLikelihood();
+
+        System.out.println("\nBeagleDataLikelihoodDelegate logLikelihood partition 1 (kappa = 1) = " + logLikelihood);
+
+        hky.setKappa(10.0);
+
+        logLikelihood = treeDataLikelihoodOne.getLogLikelihood();
+
+        System.out.println("BeagleDataLikelihoodDelegate logLikelihood partition 1 (kappa = 10) = " + logLikelihood);
+
+        hky.setKappa(1.0);
+
+        BeagleDataLikelihoodDelegate dataLikelihoodDelegateTwo = new BeagleDataLikelihoodDelegate(
+                treeModel,
+                morePatterns,
+                branchModel2,
+                siteRateModel2, false,
+                PartialsRescalingScheme.NONE,
+                false);
+
+        TreeDataLikelihood treeDataLikelihoodTwo = new TreeDataLikelihood(
+                dataLikelihoodDelegateTwo,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihoodTwo.getLogLikelihood();
+
+        System.out.println("BeagleDataLikelihoodDelegate logLikelihood partition 2 (kappa = 10) = " + logLikelihood + "\n");
+
+        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                treeModel,
+                Collections.singletonList((PatternList)patterns),
+                Collections.singletonList((BranchModel)branchModel),
+                Collections.singletonList((SiteRateModel)siteRateModel),
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
+
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                multiPartitionDataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 1):");
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(10.0);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 10):");
+        System.out.println("logLikelihood = " + logLikelihood);
+
+        hky.setKappa(1.0);
+
+        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                treeModel,
+                Collections.singletonList((PatternList)morePatterns),
+                Collections.singletonList((BranchModel)branchModel2),
+                Collections.singletonList((SiteRateModel)siteRateModel2),
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
+
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                multiPartitionDataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.print("Test MultiPartitionDataLikelihoodDelegate 2nd partition (kappa = 10):");
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
+
+        patternLists = new ArrayList<PatternList>();
+        patternLists.add(patterns);
+        patternLists.add(morePatterns);
+
+        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                treeModel,
+                patternLists,
+                branchModels,
+                siteRateModels,
+                true,
+                PartialsRescalingScheme.NONE,
+                false);
+
+        treeDataLikelihood = new TreeDataLikelihood(
+                multiPartitionDataLikelihoodDelegate,
+                treeModel,
+                branchRateModel);
+
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.print("Test MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
+
+        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: should be the sum of both separate logLikelihoods)\nKappa value of partition 2 is used to compute logLikelihood for both partitions?");
+
+        //END ADDITIONAL TEST - Guy Baele
 
     }
 
@@ -446,6 +590,15 @@ public class DataLikelihoodTester {
                     "AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAACCCCCTTATTTCTACTAGGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATTTAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGACCAATGGGACTTAAACCCACAAACACTTAGTTAACAGCTAAGCACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCGGAGCTTGGTAAAAAGAGGCCTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCCAAAGCTGGTTTCAAGCCAACCCCATGGCCTCCATGACTTTTTCAAAAGGTATTAGAAAAACCATTTCATAACTTTGTCAAAGTTAAATTATAGGCT-AAATCCTATATATCTTA-CACTGTAAAGCTAACTTAGCATTAACCTTTTAAGTTAAAGATTAAGAGAACCAACACCTCTTTACAGTGA",
                     "AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAATCCCCTTATTTCTACTAGGACTATAAGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATTTAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATTAATGGGACTTAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCAGAGCTTGGTAAAAAGAGGCTTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCTAAAGCTGGTTTCAAGCCAACCCCATGACCTCCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAAGTTAAATTACAGGTT-AACCCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCATTAACCTTTTAAGTTAAAGATTAAGAGGACCGACACCTCTTTACAGTGA",
                     "AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGAGGTTTAAACCCCCTTATTTCTACTAGGACTATGAGAATTGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTGTCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTCACATCCTTCCCGTACTAAGAAATTTAGGTTAAACATAGACCAAGAGCCTTCAAAGCCCTTAGTAAGTTA-CAACACTTAATTTCTGTAAGGACTGCAAAACCCTACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATCAATGGGACTCAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAGTCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAT-TCACCTCGGAGCTTGGTAAAAAGAGGCCCAGCCTCTGTCTTTAGATTTACAGTCCAATGCCTTA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCCAAAGCTGGTTTCAAGCCAACCCCATGACCTTCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAGGTTAAATTACGGGTT-AAACCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCGTTAACCTTTTAAGTTAAAGATTAAGAGTATCGGCACCTCTTTGCAGTGA"
+            }
+    };
+
+    static private String moreSequences[][] = {
+            {"human", "chimp", "gorilla"},
+            {
+                    "AGGGATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAAATTTCTACTAGGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATTTAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGACCAATGGGACTTAAACCCACAAACACTTAGTTAACAGCTAAGCACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCGGAGCTTGGTAAAAAGAGGCCTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCCAAAGCTGGTTTCAAGCCAACCCCATGGCCTCCATGACTTTTTCAAAAGGTATTAGAAAAACCATTTCATAACTTTGTCAAAGTTAAATTATAGGCT-AAATCCTATATATCTTA-CACTGTAAAGCTAACTTAGCATTAACCTTTTAAGTTAAAGATTAAGAGAACCAACACCTCTTTACAGTGA",
+                    "AGCGATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAAATTTCTGCTAGGTCTATACGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATTTAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATTAATGGGACTTAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCAGAGCTTGGTAAAAAGAGGCTTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCTAAAGCTGGTTTCAAGCCAACCCCATGACCTCCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAAGTTAAATTACAGGTT-AACCCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCATTAACCTTTTAAGTTAAAGATTAAGAGGACCGACACCTCTTTACAGTGA",
+                    "AGGTATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGAGGTTTAAAATTTCTACTAGGACTATGAGAATTGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTGTCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTCACATCCTTCCCGTACTAAGAAATTTAGGTTAAACATAGACCAAGAGCCTTCAAAGCCCTTAGTAAGTTA-CAACACTTAATTTCTGTAAGGACTGCAAAACCCTACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATCAATGGGACTCAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAGTCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAT-TCACCTCGGAGCTTGGTAAAAAGAGGCCCAGCCTCTGTCTTTAGATTTACAGTCCAATGCCTTA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCCAAAGCTGGTTTCAAGCCAACCCCATGACCTTCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAGGTTAAATTACGGGTT-AAACCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCGTTAACCTTTTAAGTTAAAGATTAAGAGTATCGGCACCTCTTTGCAGTGA"
             }
     };
 

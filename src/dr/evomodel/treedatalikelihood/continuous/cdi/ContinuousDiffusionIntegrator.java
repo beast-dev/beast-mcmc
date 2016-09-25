@@ -232,7 +232,6 @@ public interface ContinuousDiffusionIntegrator {
                     rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
                 }
 
-
                 for (int g = 0; g < dimTrait; ++g) {
                     final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
 
@@ -547,7 +546,7 @@ public interface ContinuousDiffusionIntegrator {
         private void allocateStorage() {
             partials = new double[dimPartial * bufferCount];
             variances = new double[dimMatrix * bufferCount];
-            remainders = new double[bufferCount * dimTrait];
+            remainders = new double[numTraits * bufferCount];
 
             diffusions = new double[dimTrait * dimTrait * diffusionCount];
             determinants = new double[diffusionCount];

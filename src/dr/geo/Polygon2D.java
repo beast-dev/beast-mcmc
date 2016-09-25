@@ -408,19 +408,29 @@ public class Polygon2D {
 
     public double[][] getXYMinMax(){
 
-        int[] indicesX = new int[x.length];
-        int[] indicesY = new int[y.length];
-        HeapSort.sort(x, indicesX);
-        HeapSort.sort(y, indicesY);
+        if (minMax == null) {
+            int[] indicesX = new int[x.length];
+            int[] indicesY = new int[y.length];
+            HeapSort.sort(x, indicesX);
+            HeapSort.sort(y, indicesY);
 
-        double[][] returnArray = new double[2][2];
-        returnArray[0][0] = x[indicesX[0]];
-        returnArray[0][1] = x[indicesX[indicesX.length - 1]];
-        returnArray[1][0] = y[indicesY[0]];
-        returnArray[1][1] = y[indicesY[indicesY.length - 1]];
+            minMax = new double[2][2];
+            minMax[0][0] = x[indicesX[0]];
+            minMax[0][1] = x[indicesX[indicesX.length - 1]];
+            minMax[1][0] = y[indicesY[0]];
+            minMax[1][1] = y[indicesY[indicesY.length - 1]];
+        }
 
-        return returnArray;
+        double[][] returnMatrix = new double[2][2];
+        returnMatrix[0][0] = minMax[0][0];
+        returnMatrix[0][1] = minMax[0][1];
+        returnMatrix[1][0] = minMax[1][0];
+        returnMatrix[1][1] = minMax[1][1];
+
+        return returnMatrix;
     }
+
+    private double[][] minMax = null;
 
 
     // Here is a formula for the area of a polygon with vertices {(xk,yk): k = 1,...,n}:

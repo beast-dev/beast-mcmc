@@ -42,7 +42,7 @@ public interface RootProcessDelegate {
 
     void setRootPartial(ContinuousDiffusionIntegrator cdi);
 
-    int getDegreesOfFreedom();
+//    int getDegreesOfFreedom();
 
     abstract class Abstract implements RootProcessDelegate {
 
@@ -106,8 +106,8 @@ public interface RootProcessDelegate {
             return Double.POSITIVE_INFINITY;
         }
 
-        @Override
-        public int getDegreesOfFreedom() { return 0; }
+//        @Override
+//        public int getDegreesOfFreedom() { return 0; }
     }
 
     class FullyConjugate extends Abstract {
@@ -121,7 +121,7 @@ public interface RootProcessDelegate {
             return prior.getPseudoObservations();
         }
 
-        @Override
-        public int getDegreesOfFreedom() { return 1; }
+//        @Override
+//        public int getDegreesOfFreedom() { return 1; }
     }
 }

@@ -53,8 +53,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, ConjugateWishartStatisticsProvider, Citable {
@@ -108,8 +107,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         diffusionProcessDelegate = new HomogenousDiffusionModelDelegate(tree, diffusionModel);
 
-        // one partials buffer for each tip and two for each internal node (for store restore)
-        partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
+        // one or two partials buffer for each tip and two for each internal node (for store restore)
+        partialBufferHelper = new BufferIndexHelper(nodeCount,
+                dataModel.bufferTips() ? 0 : tipCount);
 
         int partialBufferCount = partialBufferHelper.getBufferCount();
         int matrixBufferCount = diffusionProcessDelegate.getEigenBufferCount();
@@ -163,17 +163,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //                logger.info("  No external CDI resources available, or resource list/requirements not met, using Java implementation");
 //            }
 
-            // Set tip data
+            // Check tip data
             for (int i = 0; i < tipCount; i++) {
                 final NodeRef node = tree.getExternalNode(i);
                 final int index = node.getNumber();
+                
+                assert (i == index);
 
                 if (!checkDataAlignment(node, tree)) {
                     throw new TaxonList.MissingTaxonException("Missing taxon");
                 }
+            }            
 
-                cdi.setPartial(index, dataModel.getTipPartial(index));
-            }
+            setAllTipData(dataModel.bufferTips());
 
             rootProcessDelegate.setRootPartial(cdi);
 
@@ -193,6 +195,22 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return diffusionModel;
     }
 
+    private void setAllTipData(boolean flip) {
+        for (int index = 0; index < tipCount; index++) {
+             setTipData(index, flip);
+        }
+        updateTipData.clear();
+    }
+    
+    private void setTipData(int tipIndex, boolean flip) {
+        if (flip) {
+            partialBufferHelper.flipOffset(tipIndex);
+        }
+
+        cdi.setPartial(partialBufferHelper.getOffsetIndex(tipIndex),
+                dataModel.getTipPartial(tipIndex));
+    }
+    
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
         int index = node.getNumber();
         String name1 = dataModel.getParameter().getParameter(index).getParameterName();
@@ -222,6 +240,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength() * branchNormalization;
             branchUpdateCount ++;
+        }
+
+        if (!updateTipData.isEmpty()) {
+            if (updateTipData.getFirst() == -1) { // Update all tips
+                setAllTipData(flip);
+//                System.err.println("SET ALL TIPS");
+            } else {
+                while(!updateTipData.isEmpty()) {
+                    int tipIndex = updateTipData.removeFirst();
+                    setTipData(tipIndex, flip);
+//                    System.err.println("SET TIP " + tipIndex);
+                }
+            }
         }
 
         if (updateDiffusionModel) {
@@ -306,10 +337,22 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionModel) {
             updateDiffusionModel = true;
-        }
+            // Tell TreeDataLikelihood to update all nodes
+            fireModelChanged();
+        } else if (model == dataModel) {
+            if (object == dataModel) {
+                if (index == -1) { // all taxa updated
+                    updateTipData.addFirst(index);
+                    fireModelChanged();
+                } else { // only one taxon updated
+                    updateTipData.addLast(index);
+                    fireModelChanged(this, index);
+                }
+            }
 
-        // Tell TreeDataLikelihood to update all nodes
-        fireModelChanged();
+        } else {
+            throw new RuntimeException("Unknown model component");
+        }
     }
 
     @Override
@@ -394,6 +437,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final ContinuousDiffusionIntegrator cdi;
 
     private boolean updateDiffusionModel;
+
+    private final Deque<Integer> updateTipData = new ArrayDeque<Integer>();
 
     private WishartSufficientStatistics wishartStatistics = null;
 

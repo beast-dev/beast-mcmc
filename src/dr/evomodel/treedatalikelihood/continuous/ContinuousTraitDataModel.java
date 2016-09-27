@@ -58,6 +58,8 @@ public class ContinuousTraitDataModel extends AbstractModel {
         this.precisionType = PrecisionType.SCALAR;
     }
 
+    public boolean bufferTips() { return true; }
+
     public int getTraitCount() {  return numTraits; }
 
     public int getTraitDimension() { return dimTrait; }
@@ -81,11 +83,17 @@ public class ContinuousTraitDataModel extends AbstractModel {
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == parameter) {
             if (type == Parameter.ChangeType.VALUE_CHANGED) {
-                fireModelChanged(variable, index);
+                fireModelChanged(this, getTaxonIndex(index));
+            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED){
+                fireModelChanged(this);
             } else {
-                fireModelChanged(variable);
+                throw new RuntimeException("Unhandled parameter change type");
             }
         }
+    }
+
+    private int getTaxonIndex(int parameterIndex) {
+        return parameterIndex / (dimTrait * numTraits);
     }
 
     @Override
@@ -97,19 +105,19 @@ public class ContinuousTraitDataModel extends AbstractModel {
     @Override
     protected void acceptState() { }
 
-    public double[] getTipMean(int index) {
-        return parameter.getParameter(index).getParameterValues();
-    }
-
-    public double[] getTipPrecision(int index) {
-        if (numTraits == 1) {
-            return NON_MISSING;
-        } else {
-            double[] missing = new double[numTraits];
-            Arrays.fill(missing, Double.POSITIVE_INFINITY);
-            return missing;
-        }
-    }
+//    public double[] getTipMean(int index) {
+//        return parameter.getParameter(index).getParameterValues();
+//    }
+//
+//    public double[] getTipPrecision(int index) {
+//        if (numTraits == 1) {
+//            return NON_MISSING;
+//        } else {
+//            double[] missing = new double[numTraits];
+//            Arrays.fill(missing, Double.POSITIVE_INFINITY);
+//            return missing;
+//        }
+//    }
 
     public double[] getTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];

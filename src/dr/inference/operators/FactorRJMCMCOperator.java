@@ -14,6 +14,7 @@ import dr.math.distributions.NormalDistribution;
  * Created by max on 4/29/16.
  */
 public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOperator{
+
     GaussianProcessFromTree randomTree;
     AdaptableSizeFastMatrixParameter factors;
     AdaptableSizeFastMatrixParameter loadings;
@@ -34,6 +35,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     AdaptableSizeFastMatrixParameter storedLoadingsSparsity;
     RowDimensionPoissonPrior rowPrior;
 
+    public static final boolean DEBUG = false;
 
     public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, LatentFactorModel lfm, DeterminentalPointProcessPrior sparsityPrior, LoadingsGibbsTruncatedOperator loadingsOperator, FactorTreeGibbsOperator factorOperator, BitFlipOperator sparsityOperator, RowDimensionPoissonPrior rowPrior) {
         setWeight(weight);
@@ -60,7 +62,6 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     }
 
 
-
     @Override
     public String getPerformanceSuggestion() {
         return null;
@@ -73,38 +74,42 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 
     @Override
     public double doOperation() throws OperatorFailedException {
-//        System.out.println(sparsityPrior.getLogLikelihood());
-//        System.out.println(lfm.getLogLikelihood());
-        String outpu="";
-//        for (int i = 0; i <loadingsSparsity.getDimension() ; i++) {
-//            outpu += loadingsSparsity.getParameterValue(i);
-//            outpu += " ";
-//        }
-//        System.out.println(outpu);
+
+        if (DEBUG) {
+            System.out.println("sparsity prior lnL = " + sparsityPrior.getLogLikelihood());
+            System.out.println("latentFactorModel lnL = " + lfm.getLogLikelihood());
+            System.out.print("loadingsSparsity: ");
+            for (int i = 0; i <loadingsSparsity.getDimension() ; i++) {
+                System.out.print(loadingsSparsity.getParameterValue(i) + " ");
+            }
+        }
+
         double random = MathUtils.nextDouble();
         double from1 = 0;
         double initialLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getLogLikelihood();
         boolean increment;
-//        outpu="";
-//        for (int i = 0; i < loadings.getDimension() ; i++) {
-//            outpu += loadings.getParameterValue(i);
-//            outpu += " ";
-//        }
-//        System.out.println(outpu);
+
+        if (DEBUG) {
+            System.out.print("\nloadings: ");
+            for (int i = 0; i < loadings.getDimension() ; i++) {
+                System.out.print(loadings.getParameterValue(i) + " ");
+            }
+        }
+
         storeDimensions();
         storeValues();
-//        outpu="";
-//        for (int i = 0; i < storedLoadings.getDimension() ; i++) {
-//            outpu += storedLoadings.getParameterValue(i);
-//            outpu += " ";
-//        }
-//        System.out.println(outpu);
-//        outpu = "";
-//        for (int i = 0; i < storedLoadingsSparsity.getDimension() ; i++) {
-//            outpu += storedLoadingsSparsity.getParameterValue(i);
-//            outpu += " ";
-//        }
-//        System.out.println(outpu);
+
+        if (DEBUG) {
+            System.out.print("\nstoredLoadings: ");
+            for (int i = 0; i < storedLoadings.getDimension(); i++) {
+                System.out.print(storedLoadings.getParameterValue(i) + " ");
+            }
+            System.out.println("\nstoredLoadingsSparsity: ");
+            for (int i = 0; i < storedLoadingsSparsity.getDimension(); i++) {
+                System.out.print(storedLoadingsSparsity.getParameterValue(i) + " ");
+            }
+            System.out.println();
+        }
 
         int currentSize = factors.getRowDimension();
         if(random > .5 || currentSize == 1){
@@ -115,7 +120,9 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             loadings.setColumnDimension(loadings.getColumnDimension()+1);
             loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()+1);
             cutoffs.setColumnDimension(cutoffs.getColumnDimension()+1);
-//            System.out.println("up");
+            if (DEBUG) {
+                System.out.println("up");
+            }
             increment = true;
         }
         else{
@@ -126,7 +133,9 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             loadings.setColumnDimension(loadings.getColumnDimension()-1);
             loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()-1);
             cutoffs.setColumnDimension(cutoffs.getColumnDimension()-1);
-//            System.out.println("down");
+            if (DEBUG) {
+                System.out.println("down");
+            }
             increment = false;
         }
 
@@ -134,25 +143,25 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         lfm.acceptModelState();
         sparsityPrior.acceptModelState();
 
-
-
-
         iterate();
-        outpu = "";
-//        for (int i = 0; i <storedFactors.getDimension() ; i++) {
-//            outpu += storedFactors.getParameterValue(i);
-//            outpu += " ";
-//        }
-//        System.out.println(outpu);
-        double finalLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getLogLikelihood();
 
+        if (DEBUG) {
+            System.out.print("storedFactors: ");
+            for (int i = 0; i <storedFactors.getDimension(); i++) {
+                System.out.print(storedFactors.getParameterValue(i) + " ");
+            }
+            System.out.println();
+        }
+
+        double finalLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getLogLikelihood();
 
         random = MathUtils.nextDouble();
         double test = from1 + finalLikelihood - initialLikelihood;
         test = Math.min(Math.exp(test), 1);
         if(random < test){
-//            System.out.println("yup!");
-//            System.out.println(test);
+            if (DEBUG) {
+                System.out.println("accepted!\n" + test);
+            }
             lfm.acceptModelState();
             lfm.makeDirty();
             sparsityPrior.acceptModelState();
@@ -160,28 +169,31 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         else{
             restoreDimensions();
             restoreValues();
-//            outpu = "";
-//            for (int i = 0; i <loadingsSparsity.getDimension() ; i++) {
-//                outpu += loadingsSparsity.getParameterValue(i);
-//                outpu += " ";
-//            }
-//            System.out.println(outpu);
+            if (DEBUG) {
+                System.out.print("loadingsSparsity: ");
+                for (int i = 0; i <loadingsSparsity.getDimension(); i++) {
+                    System.out.print(loadingsSparsity.getParameterValue(i) + " ");
+                }
+                System.out.println();
+            }
             sparsityPrior.makeDirty();
             lfm.makeDirty();
-//            System.out.println(sparsityPrior.getLogLikelihood());
-//            System.out.println(lfm.getLogLikelihood());
-//            outpu = "";
-//            for (int i = 0; i <loadingsSparsity.getDimension() ; i++) {
-//                outpu += loadingsSparsity.getParameterValue(i);
-//                outpu += " ";
-//            }
-//            System.out.println(outpu);
+            if (DEBUG) {
+                System.out.println("sparsity prior lnL = " + sparsityPrior.getLogLikelihood());
+                System.out.println("latentFactorModel lnL = " + lfm.getLogLikelihood());
+                System.out.print("loadingsSparsity: ");
+                for (int i = 0; i <loadingsSparsity.getDimension(); i++) {
+                    System.out.print(loadingsSparsity.getParameterValue(i) + " ");
+                }
+                System.out.println();
+            }
             factors.storeParameterValues();
             loadings.storeParameterValues();
             loadingsSparsity.storeParameterValues();
             cutoffs.storeParameterValues();
-//            System.out.println("nope :(");
-//            System.out.println(test);
+            if (DEBUG) {
+                System.out.println("rejected!\n" + test);
+            }
 
         }
         return 0;

@@ -435,7 +435,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         // Get the operational time of the branch
         final double branchLength = branchRate * (parentHeight - nodeHeight);
 
-        assert branchLength > 0.0 : "Negative branch length: " + branchLength + " for node " +
+        assert branchLength > 0.0 : "Non-positive branch length: " + branchLength + " for node " +
                 node.getNumber() + (tree.isExternal(node) ?
                 " (" + tree.getNodeTaxon(node).getId() + ")": "");
 

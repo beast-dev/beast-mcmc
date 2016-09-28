@@ -52,6 +52,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String NODE_TRAITS = "nodeTraits";
     public static final String MULTIVARIATE_TRAIT = "traitDimension";
     public static final String INITIAL_VALUE = "initialValue";
+    public static final String AS_MATRIX = "asMatrix";
 
     public static final String ROOT_NODE = "rootNode";
     public static final String INTERNAL_NODES = "internalNodes";
@@ -70,6 +71,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 new ElementRule(Tree.class),
                 new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
                 AttributeRule.newBooleanRule(FIX_HEIGHTS, true),
+                AttributeRule.newBooleanRule(AS_MATRIX, true),
                 new ElementRule(NODE_HEIGHTS,
                         new XMLSyntaxRule[]{
                                 AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
@@ -90,6 +92,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                                 AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
                                 AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
                                 AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
+                                AttributeRule.newBooleanRule(AS_MATRIX, true, "Whether to return parameter as a matrix"),
                                 new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
                         }, 0, Integer.MAX_VALUE),
                 new ElementRule(NODE_RATES,
@@ -125,8 +128,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
         boolean fixHeights = xo.getAttribute(FIX_HEIGHTS, false);
+        boolean heightsAsMatrix = xo.getAttribute(AS_MATRIX, false);
 
-        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights);
+        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights, heightsAsMatrix);
 
         Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
 
@@ -220,6 +224,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
                     boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
                     boolean fireTreeEvents = cxo.getAttribute(FIRE_TREE_EVENTS, false);
+                    boolean asMatrix = cxo.getAttribute(AS_MATRIX, false);
                     String name = cxo.getAttribute(NAME, "trait");
                     int dim = cxo.getAttribute(MULTIVARIATE_TRAIT, 1);
 
@@ -232,7 +237,11 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
                     }
 
-                    ParameterParser.replaceParameter(cxo, treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents));
+                    Parameter newParameter = asMatrix ?
+                            treeModel.createNodeTraitsParameterAsMatrix(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents) :
+                            treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents);
+
+                    ParameterParser.replaceParameter(cxo, newParameter);
 
                 } else if (cxo.getName().equals(LEAF_TRAIT)) {
 

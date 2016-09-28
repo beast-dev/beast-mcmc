@@ -246,7 +246,7 @@ public interface ContinuousDiffusionIntegrator {
                 final double logLike = -dimTrait * LOG_SQRT_2_PI
                         + 0.5 * (dimTrait * Math.log(rootScalar) + precisionLogDet)
                         - 0.5 * rootScalar * SS;
-                final double remainder = remainders[rootBufferIndex * dimTrait + trait];
+                final double remainder = remainders[rootBufferIndex * numTraits + trait];
 
                 logLikelihoods[trait] = logLike + remainder;
 
@@ -508,8 +508,23 @@ public interface ContinuousDiffusionIntegrator {
                 } // End if remainder
 
                 // Accumulate remainder up tree and store
-                remainders[kBuffer * dimTrait + trait] = remainder
-                        + remainders[iBuffer * dimTrait + trait] + remainders[jBuffer * dimTrait + trait];
+
+//                int bound = iBuffer * dimTrait + trait;
+//                if (bound == 15355) {
+//                    System.err.println("Before");
+//                    System.err.println("iBuffer = " + iBuffer);
+//                    System.err.println("numTraits = " + numTraits);
+//                    System.err.println("dimTrait = " + dimTrait);
+//                    System.err.println("trait = " + trait);
+//                    System.err.println("dimPartialForTrait = " + dimPartialForTrait);
+//                }
+
+                remainders[kBuffer * numTraits + trait] = remainder
+                        + remainders[iBuffer * numTraits + trait] + remainders[jBuffer * numTraits + trait];
+
+//                if (bound == 15355) {
+//                    System.err.println("After");
+//                }
 
                 if (DEBUG) {
                     System.err.println("\ttrait: " + trait);

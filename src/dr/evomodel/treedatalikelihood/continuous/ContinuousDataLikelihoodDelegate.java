@@ -82,9 +82,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
-        //        for (int i = 0; i < diffusionProcessDelegate.getDiffusionModelCount(); ++i) {
-        //            addModel(diffusionProcessDelegate.getDiffusionModel(i));
-        //        }
 
         this.dataModel = dataModel;
         addModel(dataModel);
@@ -124,7 +121,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
 
         try {
-
 
             cdi = new ContinuousDiffusionIntegrator.Basic(
                     precisionType,
@@ -301,7 +297,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         cdi.updatePartials(operations, operationCount, computeWishartStatistics);
 
-        double[] logLikelihoods = new double[dimTrait];
+        double[] logLikelihoods = new double[numTraits];
 
         rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
                 logLikelihoods, computeWishartStatistics);

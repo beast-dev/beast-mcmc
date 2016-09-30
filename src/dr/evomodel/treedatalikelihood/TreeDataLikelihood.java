@@ -27,10 +27,15 @@ package dr.evomodel.treedatalikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.Reportable;
 
 import java.util.*;
@@ -44,7 +49,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public final class TreeDataLikelihood extends AbstractModelLikelihood implements Reportable {
+public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -54,9 +59,16 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         REVERSE_LEVEL_ORDER
     };
 
-    public TreeDataLikelihood(DataLikelihoodDelegate delegate,
+    public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                               TreeModel treeModel,
                               BranchRateModel branchRateModel) {
+        this(likelihoodDelegate, treeModel, branchRateModel, null);
+    }
+
+    public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
+                              TreeModel treeModel,
+                              BranchRateModel branchRateModel,
+                              DataSimulationDelegate simulationDelegate) {
 
         super("TreeDataLikelihood");  // change this to use a const once the parser exists
 
@@ -64,9 +76,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         logger.info("\nUsing TreeDataLikelihood");
 
-        this.delegate = delegate;
-        addModel(delegate);
-        delegate.setCallback(this);
+        this.likelihoodDelegate = likelihoodDelegate;
+        addModel(likelihoodDelegate);
+        likelihoodDelegate.setCallback(this);
+
+        this.simulationDelegate = simulationDelegate;
+        if (simulationDelegate != null) {
+            addModel(simulationDelegate);
+            simulationDelegate.setCallback(this);
+        }
 
         this.treeModel = treeModel;
         addModel(treeModel);
@@ -90,7 +108,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     public DataLikelihoodDelegate getDataLikelihoodDelegate() {
-        return delegate;
+        return likelihoodDelegate;
     }
 
     // **************************************************************
@@ -124,7 +142,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             totalMakeDirtyCount++;
 
         likelihoodKnown = false;
-        delegate.makeDirty();
+        likelihoodDelegate.makeDirty();
         updateAllNodes();
     }
 
@@ -169,7 +187,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
             }
-        } else if (model == delegate) {
+        } else if (model == likelihoodDelegate) {
 
             if (index == -1) {
                 updateAllNodes();
@@ -178,6 +196,14 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             }
 
         } else if (model == branchRateModel) {
+
+            if (index == -1) {
+                updateAllNodes();
+            } else {
+                updateNode(treeModel.getNode(index));
+            }
+
+        } else if (model == simulationDelegate) {
 
             if (index == -1) {
                 updateAllNodes();
@@ -242,7 +268,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
             final NodeRef root = treeModel.getRoot();
 
-            switch (delegate.getOptimalTraversalType()) {
+            switch (likelihoodDelegate.getOptimalTraversalType()) {
 
                 case POST_ORDER:
                     traversePostOrder(treeModel);
@@ -261,7 +287,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
 
             try {
-                logL = delegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+                logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
 
                 done = true;
             } catch (DataLikelihoodDelegate.LikelihoodUnderflowException e) {
@@ -526,13 +552,47 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     // **************************************************************
+    // TreeTrait IMPLEMENTATION
+    // **************************************************************
+
+    /**
+     * Returns an array of all the available traits
+     *
+     * @return the array
+     */
+    @Override
+    public TreeTrait[] getTreeTraits() {  // TODO AR: You probably want to look at this
+        if (simulationDelegate == null) {
+            return new TreeTrait[0];
+        } else {
+            return simulationDelegate.getTreeTraits();
+        }
+    }
+
+    /**
+     * Returns a trait that is stored using a specific key. This will often be the same
+     * as the 'name' of the trait but may not be depending on the application.
+     *
+     * @param key a unique key
+     * @return the trait
+     */
+    @Override
+    public TreeTrait getTreeTrait(String key) {
+        if (simulationDelegate == null) {
+            return null;
+        } else {
+            return simulationDelegate.getTreeTrait(key);
+        }
+    }
+
+    // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
 
     /**
      * The data likelihood delegate
      */
-    private final DataLikelihoodDelegate delegate;
+    private final DataLikelihoodDelegate likelihoodDelegate;
 
     /**
      * the tree model
@@ -543,6 +603,16 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * the branch rate model
      */
     private final BranchRateModel branchRateModel;
+
+    /**
+     * data simulation delegates
+     */
+    private final DataSimulationDelegate simulationDelegate;
+
+    /**
+     * TreeTrait helper
+     */
+//    private Helper treeTraits = new Helper();
 
     /**
      * Flags to specify which nodes are to be updated

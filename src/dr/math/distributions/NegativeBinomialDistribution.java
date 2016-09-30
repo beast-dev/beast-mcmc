@@ -73,7 +73,7 @@ public class NegativeBinomialDistribution implements Distribution {
 
     public double quantile(double y) {
     	// TB - I'm having trouble implementing this
-    	// LM - A first stab using simple minimisation to invert the function (under quadratic loss)
+    	// LM - A first stab using simple minimisation to invert the function (under absolute loss)
     	// Implementation based on the qnbinom.c function used in R
     	 final double r = -1 * (mean*mean) / (mean - stdev*stdev);
          final double p = mean / (stdev*stdev);

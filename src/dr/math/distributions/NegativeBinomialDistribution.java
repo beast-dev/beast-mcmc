@@ -24,14 +24,11 @@
  */
 
 package dr.math.distributions;
-import dr.stats.DiscreteStatistics;
-import dr.stats.Regression;
 import dr.math.ErrorFunction;
 
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.special.Beta;
 
-import dr.evolution.tree.NodeRef;
 import dr.math.*;
 
 /**

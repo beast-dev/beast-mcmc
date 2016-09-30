@@ -27,9 +27,19 @@ public class BNPRSamplingBetasUpdateOperator extends AbstractCoercableOperator {
         this.bnprField = bnprLikelihood;
     }
 
+    private double[] getNewBetas(double[] currentBetas) {
+        double[] newBetas = new double[this.betas.getSize()];
+
+        for (int i = 0; i < newBetas.length; i++) {
+            newBetas[i] = currentBetas[i] + MathUtils.nextGaussian() * scaleFactor;
+        }
+
+        return newBetas;
+    }
+
     public double doOperation() throws OperatorFailedException {
 
-        
+
         double hRatio = 0;
 
         //hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);

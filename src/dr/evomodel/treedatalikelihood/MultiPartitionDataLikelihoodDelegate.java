@@ -106,7 +106,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         super("MultiPartitionDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3"));
+//        boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3"));
+        boolean useBeagle3 = false;
 
         if (useBeagle3) {
             logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 extensions");
@@ -385,10 +386,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             beagle.setPatternWeights(patternWeights);
 
-            if (useBeagle3) {
-                // This call is only available in BEAGLE3
-                beagle.setPatternPartitions(partitionCount, patternPartitions);
-            }
+//            if (useBeagle3) {
+//                // This call is only available in BEAGLE3
+//                beagle.setPatternPartitions(partitionCount, patternPartitions);
+//            }
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&

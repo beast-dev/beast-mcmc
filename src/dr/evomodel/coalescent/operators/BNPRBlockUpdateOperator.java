@@ -52,12 +52,10 @@ public class BNPRBlockUpdateOperator extends GMRFMultilocusSkyrideBlockUpdateOpe
         double l = bnprField.getLogLikelihood(); // TODO: How to get likelihood for almost-proposed points?
 
         while (l < logy) {
-            if (t < 0)
-            {
+
+            if (t < 0) {
                 tMin = t;
-            }
-            else
-            {
+            } else {
                 tMax = t;
             }
 

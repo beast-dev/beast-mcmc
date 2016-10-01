@@ -68,7 +68,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                               TreeModel treeModel,
                               BranchRateModel branchRateModel,
-                              DataSimulationDelegate simulationDelegate) {
+                              ProcessSimulationDelegate simulationDelegate) {
 
         super("TreeDataLikelihood");  // change this to use a const once the parser exists
 
@@ -204,7 +204,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 updateNode(treeModel.getNode(index));
             }
 
-        } else if (model == simulationDelegate) {
+        } else if (model != null && model == simulationDelegate) {
 
             if (index == -1) {
                 updateAllNodes();
@@ -256,6 +256,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      */
     protected final void simulateProcess() {
 
+        assert simulationDelegate != null : "Unassigned simulation delegate";
+
+        updateAllNodes();
+        dispatchTreeTraversalCollectBranchAndNodeOperations(simulationDelegate);
+
+        final NodeRef root = treeModel.getRoot();
+        simulationDelegate.simulate(branchOperations, nodeOperations, root.getNumber());
+
+        setAllNodesUpdated();
     }
 
 
@@ -291,11 +300,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
+        setAllNodesUpdated();
+
+        return logL;
+    }
+
+    private void setAllNodesUpdated() {
         for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = false;
         }
-
-        return logL;
     }
 
     private void dispatchTreeTraversalCollectBranchAndNodeOperations(ProcessOnTreeDelegate delegate) {
@@ -610,7 +623,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     /**
      * data simulation delegates
      */
-    private final DataSimulationDelegate simulationDelegate;
+    private final ProcessSimulationDelegate simulationDelegate;
 
     /**
      * TreeTrait helper
@@ -644,4 +657,4 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
     private List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
 
-}//END: class
+}

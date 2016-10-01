@@ -33,24 +33,15 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * DataSimulationDelegate - interface for a plugin delegate for data simulation on a tree.
+ * ProcessSimulationDelegate - interface for a plugin delegate for data simulation on a tree.
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataSimulationDelegate extends Model, TreeTraitProvider {
+public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, Model, TreeTraitProvider {
 
-    TreeDataLikelihood.TraversalType getOptimalTraversalType();
-
-    void simulate(List<DataLikelihoodDelegate.BranchOperation> branchOperations, List<DataLikelihoodDelegate.NodeOperation> nodeOperations, int rootNodeNumber);
-
-    void makeDirty();
-
-    void storeState();
-
-    void restoreState();
-
-    void setCallback(TreeDataLikelihood treeDataLikelihood);
-
+    void simulate(List<DataLikelihoodDelegate.BranchOperation> branchOperations,
+                  List<DataLikelihoodDelegate.NodeOperation> nodeOperations,
+                  int rootNodeNumber);
 }

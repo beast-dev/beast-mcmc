@@ -51,10 +51,9 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
 
     }
 
-    public double[] getRates() {
-        return glm.getXBeta();
+    protected void setupRelativeRates(double[] rates) {
+        System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);
     }
-
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == glm) {

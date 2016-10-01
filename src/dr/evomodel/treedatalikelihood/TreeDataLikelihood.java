@@ -84,6 +84,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (simulationDelegate != null) {
             addModel(simulationDelegate);
             simulationDelegate.setCallback(this);
+            treeTraits.addTraits(simulationDelegate.getTreeTraits());
         }
 
         this.treeModel = treeModel;
@@ -561,12 +562,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * @return the array
      */
     @Override
-    public TreeTrait[] getTreeTraits() {  // TODO AR: You probably want to look at this
-        if (simulationDelegate == null) {
-            return new TreeTrait[0];
-        } else {
-            return simulationDelegate.getTreeTraits();
-        }
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
     }
 
     /**
@@ -578,11 +575,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      */
     @Override
     public TreeTrait getTreeTrait(String key) {
-        if (simulationDelegate == null) {
-            return null;
-        } else {
-            return simulationDelegate.getTreeTrait(key);
-        }
+        return treeTraits.getTreeTrait(key);
     }
 
     // **************************************************************
@@ -612,7 +605,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     /**
      * TreeTrait helper
      */
-//    private Helper treeTraits = new Helper();
+    private Helper treeTraits = new Helper();
 
     /**
      * Flags to specify which nodes are to be updated

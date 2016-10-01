@@ -59,7 +59,7 @@ public class BeastVersion implements Version, Citable {
     private static final boolean IS_PRERELEASE = true;
 
     // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "#7d240f1";
+    private static final String REVISION = "7d240f1";
 
     public String getVersion() {
         return VERSION;
@@ -129,11 +129,10 @@ public class BeastVersion implements Version, Citable {
     }
 
     public String getBuildString() {
-        try {
-            return "r" + REVISION.split(" ")[1];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            return "Invalid Revision String : " + REVISION;
+        if (IS_PRERELEASE) {
+            return "https://github.com/beast-dev/beast-mcmc/commit/" + REVISION;
         }
+        return "#" + REVISION;
     }
 
     @Override

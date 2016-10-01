@@ -1,7 +1,7 @@
 /*
  * LogLinearModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,36 +25,39 @@
 
 package dr.inference.distribution;
 
+import dr.inference.model.Parameter;
+
 /**
  * @author Marc A. Suchard
  */
-//public class LogLinearModel extends GeneralizedLinearModel {
-//
-//    public LogLinearModel(Parameter dependentParam) {
-//        super(dependentParam);
-//    }
-//
-//    @Override
-//    public double[] getXBeta() {
-//        double[] xBeta = super.getXBeta();
-//        for(int i=0; i<xBeta.length; i++)
-//            xBeta[i] = Math.exp(xBeta[i]);
-//        return xBeta;
-//    }
-//
-//    protected double calculateLogLikelihood(double[] beta) {
-//        throw new RuntimeException("Not yet implemented.");
-//    }
-//
-//    protected double calculateLogLikelihood() {
-//        throw new RuntimeException("Not yet implemented.");
-//    }
-//
-//    protected boolean confirmIndependentParameters() {
-//        return false;
-//    }
-//
-//    public boolean requiresScale() {
-//        return false;
-//    }
-//}
+@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
+public class LogLinearModel extends GeneralizedLinearModel {
+
+    public LogLinearModel(Parameter dependentParam) {
+        super(dependentParam);
+    }
+
+    @Override
+    public double[] getXBeta() {
+        double[] xBeta = super.getXBeta();
+        for(int i=0; i<xBeta.length; i++)
+            xBeta[i] = Math.exp(xBeta[i]);
+        return xBeta;
+    }
+
+    protected double calculateLogLikelihood(double[] beta) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    protected double calculateLogLikelihood() {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    protected boolean confirmIndependentParameters() {
+        return false;
+    }
+
+    public boolean requiresScale() {
+        return false;
+    }
+}

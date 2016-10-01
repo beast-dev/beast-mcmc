@@ -27,9 +27,10 @@ package dr.inferencexml.distribution;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
-import dr.inference.distribution.DensityModel;
-import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.glm.*;
+import dr.inference.distribution.GeneralizedLinearModel;
+import dr.inference.distribution.LinearRegression;
+import dr.inference.distribution.LogLinearModel;
+import dr.inference.distribution.LogisticRegression;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -44,11 +45,15 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
     public static final String DEPENDENT_VARIABLES = "dependentVariables";
     public static final String INDEPENDENT_VARIABLES = "independentVariables";
-
-    public static final String MODEL = "model";
-    public static final String LINK_FUNCTION = "linkFunction";
-
+    public static final String BASIS_MATRIX = "basis";
+    public static final String FAMILY = "family";
+    public static final String SCALE_VARIABLES = "scaleVariables";
     public static final String INDICATOR = "indicator";
+    public static final String LOGISTIC_REGRESSION = "logistic";
+    public static final String NORMAL_REGRESSION = "normal";
+    public static final String LOG_NORMAL_REGRESSION = "logNormal";
+    public static final String LOG_LINEAR = "logLinear";
+//    public static final String LOG_TRANSFORM = "logDependentTransform";
     public static final String RANDOM_EFFECTS = "randomEffects";
     public static final String CHECK_IDENTIFIABILITY = "checkIdentifiability";
     public static final String CHECK_FULL_RANK = "checkFullRank";
@@ -60,48 +65,54 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-        XMLObject cxo = xo.getChild(MODEL);
-        String linkFunctionName = cxo.getAttribute(LINK_FUNCTION, "identity");
-        DensityModel model = (DensityModel) cxo.getChild(DensityModel.class);
-        GeneralizedLinearModel.LinkFunction linkFunction = GeneralizedLinearModel.LinkFunction.valueOf(linkFunctionName.toUpperCase());
+//        System.err.println("PASSED 0");
+        XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
+        Parameter dependentParam = null;
+        if (cxo != null)
+            dependentParam = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(DEPENDENT_VARIABLES);
-        Parameter dependentParam = (Parameter) cxo.getChild(Parameter.class);
+        String family = xo.getStringAttribute(FAMILY);
+        GeneralizedLinearModel glm;
+        if (family.compareTo(LOGISTIC_REGRESSION) == 0) {
+            glm = new LogisticRegression(dependentParam);
+        } else if (family.compareTo(NORMAL_REGRESSION) == 0) {
+            glm = new LinearRegression(dependentParam, false);
+        } else if (family.compareTo(LOG_NORMAL_REGRESSION) == 0) {
+            glm = new LinearRegression(dependentParam, true);
+        } else if (family.compareTo(LOG_LINEAR) == 0) {
+            glm = new LogLinearModel(dependentParam);
+        } else
+            throw new XMLParseException("Family '" + family + "' is not currently implemented");
 
-        GeneralizedLinearModel glm = new GeneralizedLinearModel(dependentParam, model, linkFunction);
+        if (glm.requiresScale()) {
+            cxo = xo.getChild(SCALE_VARIABLES);
+            Parameter scaleParameter = null;
+//                DesignMatrix designMatrix = null;
+            Parameter scaleDesign = null;
+            if (cxo != null) {
+                scaleParameter = (Parameter) cxo.getChild(Parameter.class);
+                XMLObject gxo = cxo.getChild(INDICATOR);
+                if (gxo != null)
+                    scaleDesign = (Parameter) gxo.getChild(Parameter.class);
+//                    designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
+            }
+            if (scaleParameter == null)
+                throw new XMLParseException("Family '" + family + "' requires scale parameters");
+            if (scaleDesign == null)
+                scaleDesign = new Parameter.Default(dependentParam.getDimension(), 0.0);
+            else {
+                if (scaleDesign.getDimension() != dependentParam.getDimension())
+                    throw new XMLParseException("Scale ("+dependentParam.getDimension()+") and scaleDesign parameters ("+scaleDesign.getDimension()+") must be the same dimension");
+                for (int i = 0; i < scaleDesign.getDimension(); i++) {
+                    double value = scaleDesign.getParameterValue(i);
+                    if (value < 1 || value > scaleParameter.getDimension())
+                        throw new XMLParseException("Invalid scaleDesign value");
+                    scaleDesign.setParameterValue(i, value - 1);
+                }
+            }
 
-        // parse this as parameters in a DistributionModel?
-//        if (glm.requiresScale()) {
-//            cxo = xo.getChild(SCALE_VARIABLES);
-//            Parameter scaleParameter = null;
-////                DesignMatrix designMatrix = null;
-//            Parameter scaleDesign = null;
-//            if (cxo != null) {
-//                scaleParameter = (Parameter) cxo.getChild(Parameter.class);
-//                XMLObject gxo = cxo.getChild(INDICATOR);
-//                if (gxo != null)
-//                    scaleDesign = (Parameter) gxo.getChild(Parameter.class);
-////                    designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
-//            }
-//            if (scaleParameter == null)
-//                throw new XMLParseException("Family '" + family + "' requires scale parameters");
-//            if (scaleDesign == null)
-//                scaleDesign = new Parameter.Default(dependentParam.getDimension(), 0.0);
-//            else {
-//                if (scaleDesign.getDimension() != dependentParam.getDimension())
-//                    throw new XMLParseException("Scale ("+dependentParam.getDimension()+") and scaleDesign parameters ("+scaleDesign.getDimension()+") must be the same dimension");
-//                for (int i = 0; i < scaleDesign.getDimension(); i++) {
-//                    double value = scaleDesign.getParameterValue(i);
-//                    if (value < 1 || value > scaleParameter.getDimension())
-//                        throw new XMLParseException("Invalid scaleDesign value");
-//                    scaleDesign.setParameterValue(i, value - 1);
-//                }
-//            }
-//
-//            glm.addScaleParameter(scaleParameter, scaleDesign);
-//        }
-
-
+            glm.addScaleParameter(scaleParameter, scaleDesign);
+        }
 //        System.err.println("START 0");
         addIndependentParameters(xo, glm, dependentParam);
 //        System.err.println("START 1");
@@ -221,15 +232,11 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(FAMILY),
             AttributeRule.newBooleanRule(CHECK_IDENTIFIABILITY, true),
             AttributeRule.newBooleanRule(CHECK_FULL_RANK, true),
-            new ElementRule(MODEL,
-                    new XMLSyntaxRule[]{
-                            AttributeRule.newStringRule(LINK_FUNCTION),
-                            new ElementRule(ParametricDistributionModel.class),
-                    }),
             new ElementRule(DEPENDENT_VARIABLES,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, false),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(INDEPENDENT_VARIABLES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class, true),

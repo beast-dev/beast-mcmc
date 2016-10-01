@@ -43,6 +43,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  */
+@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
 public class MultivariateOUModel extends GeneralizedLinearModel implements Statistic {
 
     private SubstitutionModel Q;

@@ -30,6 +30,7 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc Suchard
  */
+@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
 public class LinearRegression extends GeneralizedLinearModel {
 
 	private static final double normalizingConstant = -0.5 * Math.log(2 * Math.PI);

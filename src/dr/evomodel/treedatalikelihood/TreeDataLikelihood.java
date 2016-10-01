@@ -251,6 +251,13 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     } // nothing to do
 
 
+    /**
+     * Simulate process along the current tree.
+     */
+    protected final void simulateProcess() {
+
+    }
+
 
     /**
      * Calculate the log likelihood of the data for the current tree.
@@ -264,28 +271,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         long underflowCount = 0;
 
         do {
-            branchOperations.clear();
-            nodeOperations.clear();
+            dispatchTreeTraversalCollectBranchAndNodeOperations(likelihoodDelegate);
 
             final NodeRef root = treeModel.getRoot();
-
-            switch (likelihoodDelegate.getOptimalTraversalType()) {
-
-                case POST_ORDER:
-                    traversePostOrder(treeModel);
-                    break;
-                case REVERSE_LEVEL_ORDER:
-                    traverseReverseLevelOrder(treeModel);
-                    break;
-                default:
-                    assert false : "Unknown traversal type";
-            }
-
-            if (COUNT_TOTAL_OPERATIONS) {
-                totalMatrixUpdateCount += branchOperations.size();
-                totalOperationCount += nodeOperations.size();
-            }
-
 
             try {
                 logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
@@ -308,6 +296,28 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         }
 
         return logL;
+    }
+
+    private void dispatchTreeTraversalCollectBranchAndNodeOperations(ProcessOnTreeDelegate delegate) {
+        branchOperations.clear();
+        nodeOperations.clear();
+
+        switch (delegate.getOptimalTraversalType()) {
+
+            case POST_ORDER:
+                traversePostOrder(treeModel);
+                break;
+            case REVERSE_LEVEL_ORDER:
+                traverseReverseLevelOrder(treeModel);
+                break;
+            default:
+                assert false : "Unknown traversal type";
+        }
+
+        if (COUNT_TOTAL_OPERATIONS) {
+            totalMatrixUpdateCount += branchOperations.size();
+            totalOperationCount += nodeOperations.size();
+        }
     }
 
     /**

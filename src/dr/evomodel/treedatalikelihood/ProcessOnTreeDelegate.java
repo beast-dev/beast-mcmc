@@ -1,5 +1,5 @@
 /*
- * DataLikelihoodDelegate.java
+ * ProcessOnTreeDelegate.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -36,11 +36,9 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataLikelihoodDelegate extends Model {
+public interface ProcessOnTreeDelegate extends Model {
 
     TreeDataLikelihood.TraversalType getOptimalTraversalType();
-
-    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
 
     void makeDirty();
 

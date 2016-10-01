@@ -36,61 +36,9 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataLikelihoodDelegate extends Model {
-
-    TreeDataLikelihood.TraversalType getOptimalTraversalType();
+public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model {
 
     double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
-
-    void makeDirty();
-
-    void storeState();
-
-    void restoreState();
-
-    void setCallback(TreeDataLikelihood treeDataLikelihood);
-
-    final class BranchOperation {
-        public BranchOperation(int branchNumber, double branchLength) {
-            this.branchNumber = branchNumber;
-            this.branchLength = branchLength;
-        }
-
-        public int getBranchNumber() {
-            return branchNumber;
-        }
-
-        public double getBranchLength() {
-            return branchLength;
-        }
-
-        private final int branchNumber;
-        private final double branchLength;
-    }
-
-    final class NodeOperation {
-        public NodeOperation(int nodeNumber, int leftChild, int rightChild) {
-            this.nodeNumber = nodeNumber;
-            this.leftChild = leftChild;
-            this.rightChild = rightChild;
-        }
-
-        public int getNodeNumber() {
-            return nodeNumber;
-        }
-
-        public int getLeftChild() {
-            return leftChild;
-        }
-
-        public int getRightChild() {
-            return rightChild;
-        }
-
-        private final int nodeNumber;
-        private final int leftChild;
-        private final int rightChild;
-    }
 
     class LikelihoodUnderflowException extends Exception { }
 }

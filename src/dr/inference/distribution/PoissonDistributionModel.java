@@ -1,7 +1,7 @@
 /*
- * SkewNormalDistributionModel.java
+ * PoissonDistributionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,78 +25,58 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
+import dr.inferencexml.distribution.PoissonDistributionModelParser;
 import dr.math.UnivariateFunction;
-import dr.math.distributions.NormalDistribution;
+import dr.math.distributions.PoissonDistribution;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * A class that acts as a model for skew-normally distributed data.
+ * A class that acts as a model for Poisson distributed data.
  *
- * @author Marc A. Suchard
+ * @author Andrew Rambaut
+ * @version $Id$
  */
 
-public class SkewNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
-
-    public static final String SKEW_NORMAL_DISTRIBUTION_MODEL = "skewNormalDistributionModel";
+public class PoissonDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
     /**
      * Constructor.
      */
-    public SkewNormalDistributionModel(Variable<Double> location, Variable<Double> scale, Variable<Double> shape) {
+    public PoissonDistributionModel(Variable<Double> mean) {
 
-        super(SKEW_NORMAL_DISTRIBUTION_MODEL);
+        super(PoissonDistributionModelParser.POISSON_DISTRIBUTION_MODEL);
 
-        this.location = location;
-        this.scale = scale;
-        this.shape = shape;
-
-        addVariable(location);
-        location.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        addVariable(scale);
-        scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        addVariable(shape);
-        shape.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-
+        this.mean = mean;
+        addVariable(mean);
+        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
-
-    private double shift(double x) {
-        return (x - location.getValue(0)) / scale.getValue(0);
-    }
-
 
     // *****************************************************************
     // Interface Distribution
     // *****************************************************************
 
     public double pdf(double x) {
-        double delta = shift(x);
-        return 2.0 / scale.getValue(0) * NormalDistribution.pdf(delta, 0, 1) * NormalDistribution.cdf(shape.getValue(0) * delta, 0, 1);
+        return PoissonDistribution.pdf(x, mean());
     }
 
-    public double logPdf(double x) {
-        return Math.log(pdf(x));
-    }
+    public double logPdf(double x) { return PoissonDistribution.logPdf(x, mean()); }
 
     public double cdf(double x) {
-        throw new IllegalArgumentException("Not yet implement");
-//        return NormalDistribution.cdf(x, mean(), getStdev());
+        return PoissonDistribution.cdf(x, mean());
     }
 
     public double quantile(double y) {
-        throw new IllegalArgumentException("Not yet implement");
+        return PoissonDistribution.quantile(y, mean());
     }
 
     public double mean() {
-        throw new IllegalArgumentException("Not yet implement");
+        return mean.getValue(0);
     }
 
     public double variance() {
-        throw new IllegalArgumentException("Not yet implement");
+        throw new RuntimeException("Not implemented!");
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {
@@ -109,13 +89,27 @@ public class SkewNormalDistributionModel extends AbstractModel implements Parame
         }
 
         public final double getLowerBound() {
-            return Double.NEGATIVE_INFINITY;
+            return 0.0;
         }
 
         public final double getUpperBound() {
             return Double.POSITIVE_INFINITY;
         }
     };
+
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return mean;
+    }
 
     // *****************************************************************
     // Interface Model
@@ -126,7 +120,7 @@ public class SkewNormalDistributionModel extends AbstractModel implements Parame
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // no intermediates need to be recalculated...
+        // using a depricated method or else we would be reallocating this every call...
     }
 
     protected void storeState() {
@@ -142,25 +136,10 @@ public class SkewNormalDistributionModel extends AbstractModel implements Parame
         throw new RuntimeException("Not implemented!");
     }
 
-    // *****************************************************************
-    // Interface DensityModel
-    // *****************************************************************
-
-    @Override
-    public double logPdf(double[] x) {
-        return logPdf(x[0]);
-    }
-
-    @Override
-    public Variable<Double> getLocationVariable() {
-        return location;
-    }
-
     // **************************************************************
     // Private instance variables
     // **************************************************************
 
-    private final Variable<Double> location;
-    private final Variable<Double> scale;
-    private final Variable<Double> shape;
+    private final Variable<Double> mean;
+
 }

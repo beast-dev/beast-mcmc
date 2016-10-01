@@ -218,6 +218,20 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     };
 
     // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return meanParameter;
+    }
+
+    // *****************************************************************
     // Interface Model
     // *****************************************************************
 

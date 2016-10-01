@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.distribution;
+package dr.inferencexml.glm;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
@@ -33,6 +33,7 @@ import dr.inference.glm.*;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.*;
 
 /**

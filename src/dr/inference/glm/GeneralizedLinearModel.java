@@ -23,14 +23,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.distribution;
+package dr.inference.glm;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import dr.inference.distribution.DensityModel;
+import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 import dr.inferencexml.glm.GeneralizedLinearModelParser;
+import dr.math.MultivariateFunction;
+import dr.math.distributions.Distribution;
 import dr.util.Transform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

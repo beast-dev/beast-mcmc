@@ -28,6 +28,7 @@ package dr.math.distributions;
 import dr.math.Poisson;
 import dr.math.UnivariateFunction;
 import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.PoissonDistributionImpl;
 
 /**
  * @author Alexei Drummond
@@ -94,5 +95,38 @@ public class PoissonDistribution implements Distribution {
             CDF += p;
         }
         return mean / CDF;        
+    }
+
+    public static double pdf(double x, double mean) {
+        PoissonDistributionImpl dist = new PoissonDistributionImpl(mean);
+        return dist.probability(x);
+    }
+
+    public static double logPdf(double x, double mean) {
+        PoissonDistributionImpl dist = new PoissonDistributionImpl(mean);
+        double pdf = dist.probability(x);
+        if (pdf == 0 || Double.isNaN(pdf)) { // bad estimate
+            return x * Math.log(mean) - Poisson.gammln(x + 1) - mean;
+        }
+        return Math.log(pdf);
+
+    }
+
+    public static double cdf(double x, double mean) {
+        try {
+            PoissonDistributionImpl dist = new PoissonDistributionImpl(mean);
+            return dist.cumulativeProbability(x);
+        } catch (MathException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static double quantile(double y, double mean) {
+        try {
+            PoissonDistributionImpl dist = new PoissonDistributionImpl(mean);
+            return dist.inverseCumulativeProbability(y);
+        } catch (MathException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

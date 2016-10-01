@@ -1,7 +1,7 @@
 /*
- * BetaDistributionModel.java
+ * NegativeBinomialDistributionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,45 +29,35 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inferencexml.distribution.NegativeBinomialDistributionModelParser;
 import dr.math.UnivariateFunction;
-import dr.math.distributions.BetaDistribution;
+import dr.math.distributions.NegativeBinomialDistribution;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * A class that acts as a model for beta distributed data.
+ * A class that acts as a model for Negative Binomially distributed data.
  *
- * @author Marc A. Suchard
+ * @author Andrew Rambaut
+ * @version $Id$
  */
 
-public class BetaDistributionModel extends AbstractModel implements ParametricDistributionModel {
-
-    public static final String BETA_DISTRIBUTION_MODEL = "betaDistributionModel";
-
-    public BetaDistributionModel(Variable<Double> alpha, Variable<Double> beta) {
-        this(alpha, beta, 0.0, 1.0);
-    }
-
+public class NegativeBinomialDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
     /**
      * Constructor.
      */
-    public BetaDistributionModel(Variable<Double> alpha, Variable<Double> beta, double offset, double length) {
+    public NegativeBinomialDistributionModel(Variable<Double> mean, Variable<Double> alpha) {
 
-        super(BETA_DISTRIBUTION_MODEL);
+        super(NegativeBinomialDistributionModelParser.NEGATIVE_BINOMIAL_DISTRIBUTION_MODEL);
+
+        this.mean = mean;
+        addVariable(mean);
+        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.alpha = alpha;
-        this.beta = beta;
-        this.length = length;
-        this.offset = offset;
-
         addVariable(alpha);
         alpha.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
-        addVariable(beta);
-        beta.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
-        recomputeBetaDistribution();
     }
 
     // *****************************************************************
@@ -75,34 +65,31 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
     // *****************************************************************
 
     public double pdf(double x) {
-        double xScaled = getXScaled(x);
-        if (xScaled < 0.0 || xScaled > 1.0) return 0.0;
-
-        return betaDistribution.pdf(xScaled);
+        return NegativeBinomialDistribution.pdf(x, mean(), alpha());
     }
 
     public double logPdf(double x) {
-        double xScaled = getXScaled(x);
-        if (xScaled < 0.0 || xScaled > 1.0) return Double.NEGATIVE_INFINITY;
-
-        return betaDistribution.logPdf(xScaled);
+        return NegativeBinomialDistribution.logPdf(x, mean(), alpha());
     }
 
     public double cdf(double x) {
-        if (x < offset) return 0.0;
-        return betaDistribution.cdf(getXScaled(x));
+            return NegativeBinomialDistribution.cdf(x, mean(), alpha());
     }
 
     public double quantile(double y) {
-        return betaDistribution.quantile(getXScaled(y)) * length + offset;
+        throw new RuntimeException("Not implemented.");
     }
 
     public double mean() {
-        return betaDistribution.mean() * length + offset;
+        return mean.getValue(0);
+    }
+
+    public double alpha() {
+        return alpha.getValue(0);
     }
 
     public double variance() {
-        return betaDistribution.variance() * length * length;
+        throw new RuntimeException("Not implemented!");
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {
@@ -111,16 +98,15 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
 
     private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
-            double xScale = (x - offset) / length;
-            return pdf(xScale);
+            return pdf(x);
         }
 
         public final double getLowerBound() {
-            return offset;
+            return 0.0;
         }
 
         public final double getUpperBound() {
-            return offset + length;
+            return Double.POSITIVE_INFINITY;
         }
     };
 
@@ -135,7 +121,7 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
 
     @Override
     public Variable<Double> getLocationVariable() {
-        throw new UnsupportedOperationException("Not implemented");
+        return mean;
     }
 
     // *****************************************************************
@@ -146,52 +132,28 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
         // no intermediates need to be recalculated...
     }
 
-    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        recomputeBetaDistribution();
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        fireModelChanged();
     }
 
     protected void storeState() {
-        storedBetaDistribution = betaDistribution;
-    }
+    } // no additional state needs storing
 
     protected void restoreState() {
-        betaDistribution = storedBetaDistribution;
-    }
+    } // no additional state needs restoring
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
 
     public Element createElement(Document document) {
         throw new RuntimeException("Not implemented!");
     }
 
     // **************************************************************
-    // Private methods
-    // **************************************************************
-
-    private void recomputeBetaDistribution() {
-        betaDistribution = new BetaDistribution(alpha.getValue(0), beta.getValue(0));
-    }
-
-    private double getXScaled(double x) {
-        return (x - offset) / length;
-    }
-
-    // **************************************************************
     // Private instance variables
     // **************************************************************
 
-    private Variable<Double> alpha = null;
-    private Variable<Double> beta = null;
-    private double offset = 0.0;
-    private double length = 0.0;
-
-    private BetaDistribution betaDistribution = null;
-    private BetaDistribution storedBetaDistribution = null;
+    private final Variable<Double> mean;
+    private final Variable<Double> alpha;
 
 }
-

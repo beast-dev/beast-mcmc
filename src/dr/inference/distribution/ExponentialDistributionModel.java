@@ -119,6 +119,20 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     };
 
     // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return mean;
+    }
+
+    // *****************************************************************
     // Interface Model
     // *****************************************************************
 

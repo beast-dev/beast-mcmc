@@ -39,6 +39,7 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated
 public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
 
     public OldGLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,

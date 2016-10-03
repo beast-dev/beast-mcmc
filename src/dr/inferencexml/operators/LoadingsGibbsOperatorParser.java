@@ -25,6 +25,7 @@
 
 package dr.inferencexml.operators;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
@@ -46,6 +47,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final String RANDOM_SCAN = "randomScan";
     private final String WORKING_PRIOR = "workingPrior";
     private final String CUTOFF_PRIOR = "cutoffPrior";
+    private final String MULTI_THREADED = "multiThreaded";
+    private final String NUM_THREADS = "numThreads";
 
 
     @Override
@@ -60,6 +63,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             cutoffPrior = (DistributionLikelihood) xo.getChild(CUTOFF_PRIOR).getChild(DistributionLikelihood.class);
         }
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
+        int numThreads = xo.getAttribute(NUM_THREADS, 4);
         MatrixParameterInterface loadings=null;
         if(xo.getChild(MatrixParameterInterface.class)!=null){
             loadings=(MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
@@ -69,9 +73,10 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             System.out.println("here");
             WorkingPrior = (DistributionLikelihood) xo.getChild(WORKING_PRIOR).getChild(DistributionLikelihood.class);
         }
+        boolean multiThreaded = xo.getAttribute(MULTI_THREADED, false);
 
         if(prior!=null)
-        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior);  //To change body of implemented methods use File | Settings | File Templates.
+        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);  //To change body of implemented methods use File | Settings | File Templates.
         else
             return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings, cutoffPrior);
     }
@@ -93,6 +98,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             ),
 //            new ElementRule(CompoundParameter.class),
             AttributeRule.newDoubleRule(WEIGHT),
+            AttributeRule.newBooleanRule(MULTI_THREADED, true),
+            AttributeRule.newIntegerRule(NUM_THREADS, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),

@@ -40,6 +40,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
     public static final String FROM = "from";
     public static final String TO = "to";
     public static final String EVERY = "every";
+    public static final String BUILD = "build";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -49,7 +50,16 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(MASKING);
         if (cxo != null) {
             mask = (Parameter) cxo.getChild(Parameter.class);
-        } else {
+        }
+        else if(xo.getAttribute(BUILD, false)){
+            mask = new Parameter.Default(parameter.getDimension(), 0.0);
+            for (int i = 0; i < parameter.getDimension(); i++) {
+                if(parameter.getParameterValue(i) == 0){
+                    mask.setParameterValue(i, 1.0);
+                }
+            }
+        }
+        else {
             int from = xo.getAttribute(FROM, 1) - 1;
             int to = xo.getAttribute(TO, parameter.getDimension()) - 1;
             int every = xo.getAttribute(EVERY, 1);
@@ -88,6 +98,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class)
                     }, true),
             AttributeRule.newBooleanRule(COMPLEMENT, true),
+            AttributeRule.newBooleanRule(BUILD, true),
             AttributeRule.newIntegerRule(FROM, true),
             AttributeRule.newIntegerRule(TO, true),
             AttributeRule.newIntegerRule(EVERY, true),

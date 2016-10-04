@@ -36,14 +36,6 @@ public interface ContinuousDiffusionIntegrator {
 
     void finalize() throws Throwable;
 
-//    void setPartialMean(int bufferIndex, final double[] mean);
-
-//    void getPartialMean(int bufferIndex, final double[] mean);
-
-//    void setPartialPrecision(int bufferIndex, final double[] precision);
-
-//    void getPartialPrecision(int bufferIndex, final double[] precision);
-
     void setPartial(int bufferIndex, final double[] partial);
 
     void getPartial(int bufferIndex, final double[] partial);
@@ -63,51 +55,6 @@ public interface ContinuousDiffusionIntegrator {
 
     void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
                                     boolean incrementOuterProducts);
-
-//    abstract class AbstractBase implements ContinuousDiffusionIntegrator {
-//
-//        private InstanceDetails details = new InstanceDetails();
-//
-//        @Override
-//        public void finalize() throws Throwable {
-//            super.finalize();
-//        }
-//
-//        @Override
-//        public void setPartialMean(int bufferIndex, double[] mean) {
-//
-//        }
-//
-//        @Override
-//        public void getPartialMean(int bufferIndex, double[] mean) {
-//
-//        }
-//
-//        @Override
-//        public void setPartialPrecision(int bufferIndex, double[] precision) {
-//
-//        }
-//
-//        @Override
-//        public void getPartialPrecision(int bufferIndex, double[] precision) {
-//
-//        }
-//
-//
-//
-//        @Override
-//        public abstract void setPartial(int bufferIndex, double[] partial);
-//
-//        @Override
-//        public abstract void getPartial(int bufferIndex, double[] partial);
-//
-//        @Override
-//        public abstract void setDiffusionPrecision(int diffusionIndex, double[] matrix);
-//
-//        @Override
-//        public abstract void updatePartials(int[] operations, int operationCount);
-//
-//    }
 
     class Basic implements ContinuousDiffusionIntegrator {
 
@@ -275,20 +222,6 @@ public interface ContinuousDiffusionIntegrator {
                     System.err.println("");
                     System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
-//                    double[][] prec = new double[dimTrait][dimTrait];
-//                    double[] mean = new double[dimTrait];
-//                    for (int i = 0; i < dimTrait; ++i) {
-//                        mean[i] = partials[rootOffset + i];
-//                        for (int j = 0; j < dimTrait; ++j) {
-//                            System.err.print(" " + diffusions[precisionOffset + i * dimTrait + j]);
-//                            prec[i][j] = rootScalar * diffusions[precisionOffset + i * dimTrait + j];
-//                        }
-//                    }
-//                    System.err.println("");
-//                    MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[dimTrait],
-//                            prec);
-//                    System.err.println(mvn.logPdf(mean));
-//                    System.err.println(mvn.getLogDet() + " ?= " + (dimTrait * Math.log(rootScalar) + precisionLogDet));
                 }
 
                 rootOffset += dimPartialForTrait;
@@ -509,22 +442,8 @@ public interface ContinuousDiffusionIntegrator {
 
                 // Accumulate remainder up tree and store
 
-//                int bound = iBuffer * dimTrait + trait;
-//                if (bound == 15355) {
-//                    System.err.println("Before");
-//                    System.err.println("iBuffer = " + iBuffer);
-//                    System.err.println("numTraits = " + numTraits);
-//                    System.err.println("dimTrait = " + dimTrait);
-//                    System.err.println("trait = " + trait);
-//                    System.err.println("dimPartialForTrait = " + dimPartialForTrait);
-//                }
-
                 remainders[kBuffer * numTraits + trait] = remainder
                         + remainders[iBuffer * numTraits + trait] + remainders[jBuffer * numTraits + trait];
-
-//                if (bound == 15355) {
-//                    System.err.println("After");
-//                }
 
                 if (DEBUG) {
                     System.err.println("\ttrait: " + trait);
@@ -533,7 +452,6 @@ public interface ContinuousDiffusionIntegrator {
                     for (int e = 0; e < dimTrait; ++e) {
                         System.err.print(" " + partials[ibo + e]);
                     }
-                    System.err.println("");
                     System.err.println("");
                 }
 

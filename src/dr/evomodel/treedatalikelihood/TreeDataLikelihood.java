@@ -53,10 +53,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
-    public enum TraversalType {
-        POST_ORDER,
-        REVERSE_LEVEL_ORDER
-    };
+    ;
 
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                               TreeModel treeModel,

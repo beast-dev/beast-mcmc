@@ -27,8 +27,6 @@ package dr.evomodel.treedatalikelihood;
 
 import dr.inference.model.Model;
 
-import java.util.List;
-
 /**
  * DataLikelihoodDelegate - interface for a plugin delegate for the data likelihood.
  *
@@ -38,7 +36,7 @@ import java.util.List;
  */
 public interface ProcessOnTreeDelegate extends Model {
 
-    TreeDataLikelihood.TraversalType getOptimalTraversalType();
+    TreeTraversal.TraversalType getOptimalTraversalType();
 
     void makeDirty();
 

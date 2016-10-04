@@ -216,8 +216,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     @Override
-    public TreeDataLikelihood.TraversalType getOptimalTraversalType() {
-        return TreeDataLikelihood.TraversalType.POST_ORDER;
+    public TreeTraversal.TraversalType getOptimalTraversalType() {
+        return TreeTraversal.TraversalType.POST_ORDER;
     }
 
     /**

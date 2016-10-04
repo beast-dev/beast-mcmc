@@ -37,9 +37,14 @@ import java.util.*;
  */
 public class TreeTraversal {
 
+    public enum TraversalType {
+        POST_ORDER,
+        REVERSE_LEVEL_ORDER
+    }
+
     public TreeTraversal(final Tree treeModel, final boolean[] updateNode,
                          final BranchRateModel branchRateModel,
-                         final TreeDataLikelihood.TraversalType traversalType) {
+                         final TraversalType traversalType) {
 
         this.treeModel = treeModel;
         this.branchRateModel = branchRateModel;
@@ -236,7 +241,7 @@ public class TreeTraversal {
     final private BranchRateModel branchRateModel;
     final private boolean[] updateNode;
 
-    private final TreeDataLikelihood.TraversalType traversalType;
+    private final TraversalType traversalType;
 
 
     private List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();

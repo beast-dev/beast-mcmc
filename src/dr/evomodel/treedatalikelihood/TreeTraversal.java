@@ -31,6 +31,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 
 import java.util.*;
 
+
 /**
  * @author Andrew Rambaut
  * @author Marc A Suchard
@@ -39,21 +40,25 @@ public class TreeTraversal {
 
     public enum TraversalType {
         POST_ORDER,
+        PRE_ORDER,
         REVERSE_LEVEL_ORDER
     }
 
-    public TreeTraversal(final Tree treeModel, final boolean[] updateNode,
+    public TreeTraversal(final Tree treeModel,
                          final BranchRateModel branchRateModel,
                          final TraversalType traversalType) {
 
         this.treeModel = treeModel;
         this.branchRateModel = branchRateModel;
-        this.updateNode = updateNode;
         this.traversalType = traversalType;
+
+        updateNode = new boolean[treeModel.getNodeCount()];
+        for (int i = 0; i < updateNode.length; i++) {
+            updateNode[i] = true;
+        }
     }
 
-
-    public void dispatchTreeTraversalCollectBranchAndNodeOperations() {
+    public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
         branchOperations.clear();
         nodeOperations.clear();
 
@@ -62,6 +67,9 @@ public class TreeTraversal {
             case POST_ORDER:
                 traversePostOrder(treeModel);
                 break;
+            case PRE_ORDER:
+                traversePreOrder(treeModel);
+                break;
             case REVERSE_LEVEL_ORDER:
                 traverseReverseLevelOrder(treeModel);
                 break;
@@ -69,6 +77,110 @@ public class TreeTraversal {
                 assert false : "Unknown traversal type";
         }
     }
+
+    public List<DataLikelihoodDelegate.BranchOperation> getBranchOperations() {
+        return branchOperations;
+    }
+
+    public List<DataLikelihoodDelegate.NodeOperation> getNodeOperations() {
+        return nodeOperations;
+    }
+
+    public final void setAllNodesUpdated() {
+        Arrays.fill(updateNode, false);
+    }
+
+    public final void updateAllNodes() {
+        Arrays.fill(updateNode, true);
+    }
+
+    public final void updateNode(final NodeRef node) {
+        updateNode[node.getNumber()] = true;
+    }
+
+    public final void updateNodeAndChildren(final NodeRef node) {
+        updateNode[node.getNumber()] = true;
+
+        for (int i = 0; i < treeModel.getChildCount(node); i++) {
+            final NodeRef child = treeModel.getChild(node, i);
+            updateNode[child.getNumber()] = true;
+        }
+    }
+
+    public final void updateNodeAndDescendents(final NodeRef node) {
+        updateNode[node.getNumber()] = true;
+
+        for (int i = 0; i < treeModel.getChildCount(node); i++) {
+            final NodeRef child = treeModel.getChild(node, i);
+            updateNodeAndDescendents(child);
+        }
+    }
+
+    public final void updateNodeAndAncestors(final NodeRef node) {
+        updateNode[node.getNumber()] = true;
+
+        if (!treeModel.isRoot(node)) {
+            final NodeRef parent = treeModel.getParent(node);
+            updateNodeAndAncestors(parent);
+        }
+    }
+
+    /**
+     * Traverse the tree in pre order.
+     *
+     * @param tree tree
+     * @return boolean
+     */
+    private void traversePreOrder(Tree tree) {
+        traversePreOrder(tree, tree.getRoot());
+    }
+
+    /**
+     * Traverse the tree in pre order.
+     *
+     * @param tree tree
+     * @param node node
+     * @return boolean
+     */
+
+    /**
+     * Traverse the tree in pre order.
+     *
+     * @param tree tree
+     * @param node node
+     * @return boolean
+     */
+    private boolean traversePreOrder(Tree tree, NodeRef node) {
+
+        boolean update = false;
+
+        int nodeNum = node.getNumber();
+
+        // First update the transition probability matrix(ices) for this branch
+        if (tree.getParent(node) != null && updateNode[nodeNum]) {
+            // @todo - at the moment a matrix is updated even if a branch length doesn't change
+
+            addBranchUpdateOperation(tree, node);
+
+            update = true;
+        }
+
+        if (!tree.isExternal(node)) {
+            final NodeRef child1 = tree.getChild(node, 0);
+            final NodeRef child2 = tree.getChild(node, 1);
+
+            if (update) {
+                nodeOperations.add(new DataLikelihoodDelegate.NodeOperation(nodeNum,
+                        child1.getNumber(), child2.getNumber()));
+            }
+
+            final boolean update1 = traversePreOrder(tree, child1);
+            final boolean update2 = traversePreOrder(tree, child2);
+        }
+
+        return update;
+    }
+
 
     /**
      * Traverse the tree in post order.
@@ -229,22 +341,13 @@ public class TreeTraversal {
         branchOperations.add(new DataLikelihoodDelegate.BranchOperation(node.getNumber(), branchLength));
     }
 
-    public List<DataLikelihoodDelegate.BranchOperation> getBranchOperations() {
-        return branchOperations;
-    }
-
-    public List<DataLikelihoodDelegate.NodeOperation> getNodeOperations() {
-        return nodeOperations;
-    }
-
-    final private Tree treeModel;
-    final private BranchRateModel branchRateModel;
-    final private boolean[] updateNode;
+    private final Tree treeModel;
+    private final BranchRateModel branchRateModel;
+    private final boolean[] updateNode;
 
     private final TraversalType traversalType;
 
-
-    private List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
-    private List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
+    private final List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
+    private final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
 
 }

@@ -148,7 +148,10 @@ public class SteppingStoneSamplingAnalysis {
     	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
     		
     		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-            String resultFileName = xo.getStringAttribute(RESULT_FILE_NAME);
+            String resultFileName = null;
+            if (xo.hasAttribute(RESULT_FILE_NAME)) {
+                resultFileName = xo.getStringAttribute(RESULT_FILE_NAME);
+            }
     		StringTokenizer tokenFileName = new StringTokenizer(fileName);
     		int numberOfFiles = tokenFileName.countTokens();
     		System.out.println(numberOfFiles + " file(s) found with marginal likelihood samples");
@@ -219,11 +222,13 @@ public class SteppingStoneSamplingAnalysis {
 
                 System.out.println(analysis.toString());
 
-                FileWriter fw = new FileWriter(resultFileName, true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(analysis.toString());
-                bw.flush();
-                bw.close();
+                if (resultFileName != null) {
+                    FileWriter fw = new FileWriter(resultFileName, true);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    bw.write(analysis.toString());
+                    bw.flush();
+                    bw.close();
+                }
 
                 return analysis;
     			

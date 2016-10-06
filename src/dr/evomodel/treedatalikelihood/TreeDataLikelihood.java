@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -88,7 +89,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         hasInitialized = true;
     }
 
-    public DataLikelihoodDelegate getDataLikelihoodDelegate() {
+    public final Tree getTree() {
+        return treeModel;
+    }
+
+    public final BranchRateModel getBranchRateModel() {
+        return branchRateModel;
+    }
+
+    public final DataLikelihoodDelegate getDataLikelihoodDelegate() {
         return likelihoodDelegate;
     }
 

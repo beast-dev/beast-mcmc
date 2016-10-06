@@ -182,11 +182,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
-    public final int getNumTraits() {
+    @Override
+    public final int getTraitCount() {
         return numTraits;
     }
 
-    public final int getDimTrait() {
+    @Override
+    public final int getTraitDim() {
         return dimTrait;
     }
 

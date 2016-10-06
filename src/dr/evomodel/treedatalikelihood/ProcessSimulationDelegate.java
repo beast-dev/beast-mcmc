@@ -25,16 +25,13 @@
 
 package dr.evomodel.treedatalikelihood;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
-import dr.inference.model.Model;
-import dr.inference.model.ModelListener;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,17 +43,23 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate {
+public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTraitProvider {
 
     void simulate(List<DataLikelihoodDelegate.BranchOperation> branchOperations,
                   List<DataLikelihoodDelegate.NodeOperation> nodeOperations,
                   int rootNodeNumber);
 
+    void setCallback(ProcessSimulation simulationProcess);
+
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
 
-        AbstractDelegate(double[] simulation) {
-            this.simulation = simulation;
+        AbstractDelegate(String name, Tree tree) {
+            this.name = name;
+            this.tree = tree;
+            constructTraits(treeTraitHelper);
         }
+
+        abstract void constructTraits(Helper treeTraitHelper);
 
         @Override
         public final TreeTraversal.TraversalType getOptimalTraversalType() {
@@ -64,179 +67,141 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate {
         }
 
         @Override
-        public final void setCallback(TreeDataLikelihood treeDataLikelihood) {
-            // TODO Is a call back ever necessary?
-        }
-
-        protected final double[] simulation;
-    }
-
-    class ConditionalOnTipsDelegate extends AbstractDelegate {
-
-        ConditionalOnTipsDelegate(double[] simulation) {
-            super(simulation);
+        public final void setCallback(ProcessSimulation simulationProcess) {
+            this.simulationProcess = simulationProcess;
         }
 
         @Override
-        public void simulate(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
-            Arrays.fill(simulation, 42.0); // TODO Do nothing yet
-        }
-    }
-
-    class UnconditionalOnTipsDelegate extends AbstractDelegate {
-
-        UnconditionalOnTipsDelegate(double[] simulation) {
-            super(simulation);
+        public final TreeTrait[] getTreeTraits() {
+            return treeTraitHelper.getTreeTraits();
         }
 
         @Override
-        public void simulate(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
-            Arrays.fill(simulation, 42.0); // TODO Do nothing yet
+        public final TreeTrait getTreeTrait(String key) {
+            return treeTraitHelper.getTreeTrait(key);
         }
+
+        protected final TreeTraitProvider.Helper treeTraitHelper = new Helper();
+
+        protected ProcessSimulation simulationProcess = null;
+
+        protected final Tree tree;
+        protected final String name;
 
     }
 
-    class Test implements ModelListener, TreeTraitProvider { // TODO Rename and move into separate unit
+    abstract class AbstractContinuousTraitDelegate extends AbstractDelegate {
 
-        private final TreeModel treeModel;
-        private final String traitName;
-        private final TreeTraversal treeTraversalDelegate;
-        private final TreeDataLikelihood treeDataLikelihood;
-        private final ContinuousDiffusionIntegrator integrator;
-        private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
-        private final Helper treeTraitProvider = new TreeTraitProvider.Helper();
+        protected final int dimTrait;
+        protected final int numTraits;
+        protected final int dimNode;
 
-        private final ConditionalOnTipsDelegate simulationDelegate;
 
-        private final int dimNode;
-        private final double[] simulation;
+        AbstractContinuousTraitDelegate(String name,
+                                        MultivariateTraitTree tree,
+                                        MultivariateDiffusionModel diffusionModel,
+                                        ContinuousTraitDataModel dataModel,
+                                        ConjugateRootTraitPrior rootPrior,
+                                        ContinuousRateTransformation rateTransformation,
+                                        BranchRateModel rateModel,
+                                        ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+            super(name, tree);
 
-        private boolean validSimulation;
+            dimTrait = likelihoodDelegate.getTraitDim();
+            numTraits = likelihoodDelegate.getTraitCount();
+            dimNode = dimTrait * numTraits;
 
-        public Test(String traitName, TreeModel treeModel, TreeDataLikelihood treeDataLikelihood, BranchRateModel branchRateModel,
-                    ContinuousDiffusionIntegrator integrator) {
-            this(traitName, treeModel, treeDataLikelihood, new TreeTraversal(treeModel, branchRateModel,
-                    TreeTraversal.TraversalType.PRE_ORDER), integrator);
+            this.buffer = new double[dimNode * tree.getNodeCount()];
         }
 
-        public Test(String traitName, TreeModel treeModel, TreeDataLikelihood treeDataLikelihood, TreeTraversal treeTraversalDelegate,
-                    ContinuousDiffusionIntegrator integrator) {
+        @Override
+        void constructTraits(Helper treeTraitHelper) {
 
-            assert treeDataLikelihood.getDataLikelihoodDelegate() instanceof ContinuousDataLikelihoodDelegate : "Implemented for continuous traits";
+            TreeTrait.DA baseTrait = new TreeTrait.DA() {
 
-            this.traitName = traitName;
-            this.treeModel = treeModel;
-            this.treeDataLikelihood = treeDataLikelihood;
-            this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
-            this.integrator = integrator;
-            this.treeTraversalDelegate = treeTraversalDelegate;
+                public String getTraitName() {
+                    return name;
+                }
 
-            treeDataLikelihood.addModelListener(this);
+                public Intent getIntent() {
+                    return Intent.NODE;
+                }
 
-            dimNode = likelihoodDelegate.getNumTraits() * likelihoodDelegate.getDimTrait();
-            simulation = new double[treeModel.getNodeCount() * dimNode];
+                public double[] getTrait(Tree t, NodeRef node) {
 
-            simulationDelegate = new ConditionalOnTipsDelegate(simulation);
+                    assert t == tree;
+                    return getTraitForNode(node);
+                }
+            };
 
-            addTraitToProvider();
-
-            validSimulation = false;
+            treeTraitHelper.addTrait(baseTrait);
         }
 
-        private void addTraitToProvider() {
-            if (treeTraitProvider.getTreeTrait(traitName) == null) {
-                treeTraitProvider.addTrait(
-                        new TreeTrait.DA() {
-                            public String getTraitName() {
-                                return traitName;
-                            }
+        private double[] getTraitForAllTips() { // TODO To be used as a GaussianProcessRandomGenerator
 
-                            public Intent getIntent() {
-                                return Intent.NODE;
-                            }
+            assert simulationProcess != null;
 
-                            public Class getTraitClass() {
-                                return Double.class;
-                            }
+            simulationProcess.cacheSimulatedTraits(null);
 
-                            public double[] getTrait(Tree tree, NodeRef node) {
-                                assert tree == treeModel : "Bad tree";
-
-                                return getTraitForNode(tree, node);
-                            }
-                        });
-            }
-        }
-
-        private double[] getTraitForAllTips() {
-
-            cacheSimulatedTraits(null);
-
-            final int length = dimNode * treeTraversalDelegate.getTree().getExternalNodeCount();
+            final int length = dimNode * tree.getExternalNodeCount();
             double[] trait = new double[length];
-            System.arraycopy(simulation, 0, trait, 0, length);
+            System.arraycopy(buffer, 0, trait, 0, length);
 
             return trait;
         }
 
-        private double[] getTraitForNode(final Tree tree, final NodeRef node) {
+        private double[] getTraitForNode(final NodeRef node) {
 
-            cacheSimulatedTraits(null);
+            assert simulationProcess != null;
+
+            simulationProcess.cacheSimulatedTraits(null);
 
             double[] trait = new double[dimNode];
-            System.arraycopy(simulation, node.getNumber() * dimNode, trait, 0, dimNode);
+            System.arraycopy(buffer, node.getNumber() * dimNode, trait, 0, dimNode);
 
             return trait;
         }
 
-        private void cacheSimulatedTraits(final NodeRef node) {
-            treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
+        protected final double[] buffer;
+    }
 
-            if (!validSimulation) {
-                simulateTraits(node);
-                validSimulation = true;
-            }
-        }
+    class ConditionalOnTipsDelegate extends AbstractContinuousTraitDelegate {
 
-        private void simulateTraits(final NodeRef targetNode) {
-
-            if (targetNode == null) {
-                treeTraversalDelegate.updateAllNodes(); // TODO depends on targetNode
-            } else {
-                throw new RuntimeException("Not yet implemented");
-            }
-
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-
-            List<BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
-            List<NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
-
-            final NodeRef root = treeModel.getRoot();
-            simulationDelegate.simulate(branchOperations, nodeOperations, root.getNumber());
-
-            treeTraversalDelegate.setAllNodesUpdated();
+        public ConditionalOnTipsDelegate(String name,
+                                         MultivariateTraitTree tree,
+                                         MultivariateDiffusionModel diffusionModel,
+                                         ContinuousTraitDataModel dataModel,
+                                         ConjugateRootTraitPrior rootPrior,
+                                         ContinuousRateTransformation rateTransformation,
+                                         BranchRateModel rateModel,
+                                         ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+            super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
         }
 
         @Override
-        public TreeTrait[] getTreeTraits() {
-            return treeTraitProvider.getTreeTraits();
-        }
-
-        @Override
-        public TreeTrait getTreeTrait(String key) {
-            return treeTraitProvider.getTreeTrait(key);
-        }
-
-        @Override
-        public void modelChangedEvent(Model model, Object object, int index) {
-            assert model == treeDataLikelihood : "Invalid model";
-
-            validSimulation = false;
-        }
-
-        @Override
-        public void modelRestored(Model model) {
-            // Do nothing
+        public void simulate(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
+            Arrays.fill(buffer, 42.0); // TODO Do nothing yet
         }
     }
+
+    class UnconditionalOnTipsDelegate extends AbstractContinuousTraitDelegate {
+
+        public UnconditionalOnTipsDelegate(String name,
+                                           MultivariateTraitTree tree,
+                                           MultivariateDiffusionModel diffusionModel,
+                                           ContinuousTraitDataModel dataModel,
+                                           ConjugateRootTraitPrior rootPrior,
+                                           ContinuousRateTransformation rateTransformation,
+                                           BranchRateModel rateModel,
+                                           ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+            super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        }
+
+        @Override
+        public void simulate(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
+            Arrays.fill(buffer, 42.0); // TODO Do nothing yet
+        }
+
+    }
+
 }

@@ -373,6 +373,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return TreeTraversal.TraversalType.POST_ORDER;
     }
 
+    @Override
+    public int getTraitCount() {
+        return 1;
+    }
+
+    @Override
+    public int getTraitDim() {
+        return  patternCount;
+    }
+
     private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
         List<Integer> order = new ArrayList<Integer>();
         String r = System.getProperty(propertyName);

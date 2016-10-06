@@ -431,6 +431,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
     }
 
+
+    @Override
+    public int getTraitCount() {
+        return 1;
+    }
+
+    @Override
+    public int getTraitDim() {
+        return totalPatternCount;
+    }
+
     private void updateSubstitutionModels(boolean... state) {
         for (int i = 0; i < updateSubstitutionModels.length; i++) {
             updateSubstitutionModels[i] = (state.length < 1 || state[0]);

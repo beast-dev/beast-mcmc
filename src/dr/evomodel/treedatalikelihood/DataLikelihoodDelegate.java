@@ -46,5 +46,11 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model {
 
     double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
 
+    int getTraitCount();
+
+    int getTraitDim();
+
     class LikelihoodUnderflowException extends Exception { }
+
+    void setCallback(TreeDataLikelihood treeDataLikelihood);
 }

@@ -38,8 +38,6 @@ public interface ProcessOnTreeDelegate {
 
     TreeTraversal.TraversalType getOptimalTraversalType();
 
-    void setCallback(TreeDataLikelihood treeDataLikelihood);
-
     final class BranchOperation {
         public BranchOperation(int branchNumber, double branchLength) {
             this.branchNumber = branchNumber;
@@ -81,6 +79,4 @@ public interface ProcessOnTreeDelegate {
         private final int leftChild;
         private final int rightChild;
     }
-
-    class LikelihoodUnderflowException extends Exception { }
 }

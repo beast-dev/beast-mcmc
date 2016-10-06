@@ -25,13 +25,13 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -107,8 +107,12 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
-            TreeTraitProvider traitProvider = new ProcessSimulationDelegate.Test(traitName, treeModel,
-                    treeDataLikelihood, rateModel, delegate.getIntegrator());
+            ProcessSimulationDelegate.ConditionalOnTipsDelegate simulationDelegate =
+                    new ProcessSimulationDelegate.ConditionalOnTipsDelegate(traitName, treeModel,
+                            diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+
+            TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
+                    treeDataLikelihood, simulationDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }
 

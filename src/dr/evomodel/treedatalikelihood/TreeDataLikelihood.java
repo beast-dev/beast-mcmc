@@ -53,13 +53,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
-    ;
-
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                               TreeModel treeModel,
                               BranchRateModel branchRateModel) {
 
         super("TreeDataLikelihood");  // change this to use a const once the parser exists
+
+        assert likelihoodDelegate != null;
+        assert treeModel != null;
+        assert branchRateModel != null;
 
         final Logger logger = Logger.getLogger("dr.evomodel");
 
@@ -74,15 +76,13 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         likelihoodKnown = false;
 
-        if (branchRateModel != null) {
-            this.branchRateModel = branchRateModel;
+        this.branchRateModel = branchRateModel;
+        if (!(branchRateModel instanceof DefaultBranchRateModel)) {
             logger.info("  Branch rate model used: " + branchRateModel.getModelName());
-        } else {
-            this.branchRateModel = new DefaultBranchRateModel();
         }
         addModel(this.branchRateModel);
 
-        treeTraversalDelegate = new TreeTraversal(treeModel, this.branchRateModel,
+        treeTraversalDelegate = new TreeTraversal(treeModel, branchRateModel,
                 likelihoodDelegate.getOptimalTraversalType());
 
         hasInitialized = true;
@@ -369,6 +369,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     public void addTrait(TreeTrait trait) {
         treeTraits.addTrait(trait);
+    }
+
+    public void addTraits(TreeTrait[] traits) {
+        treeTraits.addTraits(traits);
     }
 
     // **************************************************************

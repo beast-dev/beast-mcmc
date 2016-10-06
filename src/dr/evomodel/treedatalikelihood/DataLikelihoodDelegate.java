@@ -38,6 +38,12 @@ import java.util.List;
  */
 public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model {
 
+    void makeDirty();
+
+    void storeState();
+
+    void restoreState();
+
     double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
 
     class LikelihoodUnderflowException extends Exception { }

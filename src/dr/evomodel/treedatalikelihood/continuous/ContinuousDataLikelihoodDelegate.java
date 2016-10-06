@@ -182,6 +182,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
+    public final int getNumTraits() {
+        return numTraits;
+    }
+
+    public final int getDimTrait() {
+        return dimTrait;
+    }
+
+    public final ContinuousDiffusionIntegrator getIntegrator() {
+        return cdi;
+    }
+
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
         this.callbackLikelihood = treeDataLikelihood;

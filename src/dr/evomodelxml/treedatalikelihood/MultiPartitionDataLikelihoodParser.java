@@ -30,6 +30,7 @@ import dr.evolution.alignment.Patterns;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -158,6 +159,9 @@ public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser 
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        if (branchRateModel == null) {
+            branchRateModel = new DefaultBranchRateModel();
+        }
 
         if (DEBUG) {
             System.out.println("BranchRateModel: " + branchRateModel.getId());

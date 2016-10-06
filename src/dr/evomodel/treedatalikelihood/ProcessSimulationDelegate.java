@@ -25,15 +25,18 @@
 
 package dr.evomodel.treedatalikelihood;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
-import dr.inference.model.Variable;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,174 +46,175 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, Model, TreeTraitProvider {
+public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate {
 
     void simulate(List<DataLikelihoodDelegate.BranchOperation> branchOperations,
                   List<DataLikelihoodDelegate.NodeOperation> nodeOperations,
                   int rootNodeNumber);
 
+    abstract class AbstractDelegate implements ProcessSimulationDelegate {
 
-    class Test implements ProcessSimulationDelegate {
+        AbstractDelegate(double[] simulation) {
+            this.simulation = simulation;
+        }
 
+        @Override
+        public final TreeTraversal.TraversalType getOptimalTraversalType() {
+            return TreeTraversal.TraversalType.PRE_ORDER;
+        }
+
+        @Override
+        public final void setCallback(TreeDataLikelihood treeDataLikelihood) {
+            // TODO Is a call back ever necessary?
+        }
+
+        protected final double[] simulation;
+    }
+
+    class ConditionalOnTipsDelegate extends AbstractDelegate {
+
+        ConditionalOnTipsDelegate(double[] simulation) {
+            super(simulation);
+        }
+
+        @Override
+        public void simulate(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
+            Arrays.fill(simulation, 42.0); // TODO Do nothing yet
+        }
+    }
+
+    class UnconditionalOnTipsDelegate extends AbstractDelegate {
+
+        UnconditionalOnTipsDelegate(double[] simulation) {
+            super(simulation);
+        }
+
+        @Override
+        public void simulate(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
+            Arrays.fill(simulation, 42.0); // TODO Do nothing yet
+        }
+
+    }
+
+    class Test implements ModelListener, TreeTraitProvider { // TODO Rename and move into separate unit
+
+        private final TreeModel treeModel;
+        private final String traitName;
         private final TreeTraversal treeTraversalDelegate;
-        private TreeDataLikelihood treeDataLikelihood;
+        private final TreeDataLikelihood treeDataLikelihood;
+        private final ContinuousDiffusionIntegrator integrator;
+        private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
         private final Helper treeTraitProvider = new TreeTraitProvider.Helper();
 
-        public Test(TreeModel treeModel, boolean[] updateNode, BranchRateModel branchRateModel) { // TODO deprecate
-            this(new TreeTraversal(treeModel, branchRateModel, TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER));
+        private final ConditionalOnTipsDelegate simulationDelegate;
+
+        private final int dimNode;
+        private final double[] simulation;
+
+        private boolean validSimulation;
+
+        public Test(String traitName, TreeModel treeModel, TreeDataLikelihood treeDataLikelihood, BranchRateModel branchRateModel,
+                    ContinuousDiffusionIntegrator integrator) {
+            this(traitName, treeModel, treeDataLikelihood, new TreeTraversal(treeModel, branchRateModel,
+                    TreeTraversal.TraversalType.PRE_ORDER), integrator);
         }
 
-        public Test(TreeTraversal treeTraversalDelegate) {
+        public Test(String traitName, TreeModel treeModel, TreeDataLikelihood treeDataLikelihood, TreeTraversal treeTraversalDelegate,
+                    ContinuousDiffusionIntegrator integrator) {
+
+            assert treeDataLikelihood.getDataLikelihoodDelegate() instanceof ContinuousDataLikelihoodDelegate : "Implemented for continuous traits";
+
+            this.traitName = traitName;
+            this.treeModel = treeModel;
+            this.treeDataLikelihood = treeDataLikelihood;
+            this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
+            this.integrator = integrator;
             this.treeTraversalDelegate = treeTraversalDelegate;
+
+            treeDataLikelihood.addModelListener(this);
+
+            dimNode = likelihoodDelegate.getNumTraits() * likelihoodDelegate.getDimTrait();
+            simulation = new double[treeModel.getNodeCount() * dimNode];
+
+            simulationDelegate = new ConditionalOnTipsDelegate(simulation);
+
+            addTraitToProvider();
+
+            validSimulation = false;
         }
 
-        @Override
-        public TreeTraversal.TraversalType getOptimalTraversalType() {
-            return null;
+        private void addTraitToProvider() {
+            if (treeTraitProvider.getTreeTrait(traitName) == null) {
+                treeTraitProvider.addTrait(
+                        new TreeTrait.DA() {
+                            public String getTraitName() {
+                                return traitName;
+                            }
+
+                            public Intent getIntent() {
+                                return Intent.NODE;
+                            }
+
+                            public Class getTraitClass() {
+                                return Double.class;
+                            }
+
+                            public double[] getTrait(Tree tree, NodeRef node) {
+                                assert tree == treeModel : "Bad tree";
+
+                                return getTraitForNode(tree, node);
+                            }
+                        });
+            }
         }
 
-        @Override
-        public void makeDirty() {
+        private double[] getTraitForAllTips() {
 
+            cacheSimulatedTraits(null);
+
+            final int length = dimNode * treeTraversalDelegate.getTree().getExternalNodeCount();
+            double[] trait = new double[length];
+            System.arraycopy(simulation, 0, trait, 0, length);
+
+            return trait;
         }
 
-        @Override
-        public void storeState() {
+        private double[] getTraitForNode(final Tree tree, final NodeRef node) {
 
+            cacheSimulatedTraits(null);
+
+            double[] trait = new double[dimNode];
+            System.arraycopy(simulation, node.getNumber() * dimNode, trait, 0, dimNode);
+
+            return trait;
         }
 
-        @Override
-        public void restoreState() {
+        private void cacheSimulatedTraits(final NodeRef node) {
+            treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
 
+            if (!validSimulation) {
+                simulateTraits(node);
+                validSimulation = true;
+            }
         }
 
-        @Override
-        public void setCallback(TreeDataLikelihood treeDataLikelihood) {
+        private void simulateTraits(final NodeRef targetNode) {
 
-        }
+            if (targetNode == null) {
+                treeTraversalDelegate.updateAllNodes(); // TODO depends on targetNode
+            } else {
+                throw new RuntimeException("Not yet implemented");
+            }
 
-        /**
-         * @return the id as a string.
-         */
-        @Override
-        public String getId() {
-            return null;
-        }
+            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
-        /**
-         * set the id as a string.
-         *
-         * @param id
-         */
-        @Override
-        public void setId(String id) {
+            List<BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
+            List<NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
 
-        }
+            final NodeRef root = treeModel.getRoot();
+            simulationDelegate.simulate(branchOperations, nodeOperations, root.getNumber());
 
-        /**
-         * Adds a listener that is notified when the this model changes.
-         *
-         * @param listener
-         */
-        @Override
-        public void addModelListener(ModelListener listener) {
-
-        }
-
-        /**
-         * Remove a listener previously addeed by addModelListener
-         *
-         * @param listener
-         */
-        @Override
-        public void removeModelListener(ModelListener listener) {
-
-        }
-
-        /**
-         * This function should be called to store the state of the
-         * entire model. This makes the model state invalid until either
-         * an acceptModelState or restoreModelState is called.
-         */
-        @Override
-        public void storeModelState() {
-
-        }
-
-        /**
-         * This function should be called to restore the state of the entire model.
-         */
-        @Override
-        public void restoreModelState() {
-
-        }
-
-        /**
-         * This function should be called to accept the state of the entire model
-         */
-        @Override
-        public void acceptModelState() {
-
-        }
-
-        /**
-         * @return whether this model is in a valid state
-         */
-        @Override
-        public boolean isValidState() {
-            return false;
-        }
-
-        /**
-         * @return the total number of sub-models
-         */
-        @Override
-        public int getModelCount() {
-            return 0;
-        }
-
-        /**
-         * @param i
-         * @return the ith sub-model
-         */
-        @Override
-        public Model getModel(int i) {
-            return null;
-        }
-
-        /**
-         * @return the total number of variable in this model
-         */
-        @Override
-        public int getVariableCount() {
-            return 0;
-        }
-
-        /**
-         * @param i
-         * @return the ith variable
-         */
-        @Override
-        public Variable getVariable(int i) {
-            return null;
-        }
-
-        /**
-         * @return the name of this model
-         */
-        @Override
-        public String getModelName() {
-            return null;
-        }
-
-        /**
-         * is the model being listened to by another or by a likelihood?
-         *
-         * @return
-         */
-        @Override
-        public boolean isUsed() {
-            return false;
+            treeTraversalDelegate.setAllNodesUpdated();
         }
 
         @Override
@@ -224,8 +228,15 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, Model,
         }
 
         @Override
-        public void simulate(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
+        public void modelChangedEvent(Model model, Object object, int index) {
+            assert model == treeDataLikelihood : "Invalid model";
 
+            validSimulation = false;
+        }
+
+        @Override
+        public void modelRestored(Model model) {
+            // Do nothing
         }
     }
 }

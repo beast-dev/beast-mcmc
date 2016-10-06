@@ -58,6 +58,10 @@ public class TreeTraversal {
         }
     }
 
+    public final Tree getTree() {
+        return treeModel;
+    }
+
     public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
         branchOperations.clear();
         nodeOperations.clear();

@@ -34,15 +34,9 @@ import dr.inference.model.Model;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface ProcessOnTreeDelegate extends Model {
+public interface ProcessOnTreeDelegate {
 
     TreeTraversal.TraversalType getOptimalTraversalType();
-
-    void makeDirty();
-
-    void storeState();
-
-    void restoreState();
 
     void setCallback(TreeDataLikelihood treeDataLikelihood);
 

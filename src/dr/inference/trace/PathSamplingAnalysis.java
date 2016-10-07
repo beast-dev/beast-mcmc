@@ -272,7 +272,7 @@ public class PathSamplingAnalysis {
                 new StringAttributeRule(FileHelpers.FILE_NAME,
                         "The traceName of a BEAST log file (can not include trees, which should be logged separately)"),
                 new StringAttributeRule(RESULT_FILE_NAME,
-                        "The name of the output file to which the path sampling estimate will be written"),
+                        "The name of the output file to which the path sampling estimate will be written", true),
                 new ElementRule(THETA_COLUMN, new XMLSyntaxRule[]{
                         new StringAttributeRule(Attribute.NAME, "The column name")}),
                 new ElementRule(LIKELIHOOD_COLUMN, new XMLSyntaxRule[]{

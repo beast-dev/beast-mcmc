@@ -27,6 +27,8 @@ package dr.evomodel.treedatalikelihood;
 
 import dr.inference.model.Model;
 
+import java.util.List;
+
 /**
  * DataLikelihoodDelegate - interface for a plugin delegate for the data likelihood.
  *
@@ -52,6 +54,10 @@ public interface ProcessOnTreeDelegate {
             return branchLength;
         }
 
+        public String toString() {
+            return branchNumber + ":" + branchLength;
+        }
+
         private final int branchNumber;
         private final double branchLength;
     }
@@ -75,8 +81,47 @@ public interface ProcessOnTreeDelegate {
             return rightChild;
         }
 
+        public String toString() {
+            return nodeNumber + "(" + leftChild + "," + rightChild + ")";
+        }
+
         private final int nodeNumber;
         private final int leftChild;
         private final int rightChild;
+    }
+
+    final class BranchNodeOperation {
+        public BranchNodeOperation(int nodeNumber, int parentNumber, double branchLength) {
+            this.nodeNumber = nodeNumber;
+            this.parentNumber = parentNumber;
+            this.branchLength = branchLength;
+        }
+
+        public int getNodeNumber() {
+            return nodeNumber;
+        }
+
+        public int getParentNumber() { return parentNumber; }
+
+        public double getBranchLength() { return branchLength; }
+
+        public String toString() {
+            return nodeNumber + "(" + parentNumber + "):" + branchLength;
+        }
+
+        private final int nodeNumber;
+        private final int parentNumber;
+        private final double branchLength;
+    }
+
+    final class Utils {
+
+        static <T> String toString(List<T> operations) {
+            StringBuilder sb = new StringBuilder();
+            for (T op : operations) {
+                sb.append(op.toString()).append("\n");
+            }
+            return sb.toString();
+        }
     }
 }

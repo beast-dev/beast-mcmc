@@ -338,6 +338,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return logL;
     }
 
+    public void getPartial(final int nodeNumber, double[] vector) {
+        cdi.getPartial(partialBufferHelper.getOffsetIndex(nodeNumber), vector);
+    }
+
     @Override
     public void makeDirty() {
         updateDiffusionModel = true;

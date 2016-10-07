@@ -30,9 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 
@@ -48,7 +45,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
     private final Tree tree;
     private final String name;
 
-    private final TreeTraversal treeTraversalDelegate;
+    private final SimulationTreeTraversal treeTraversalDelegate;
     private final TreeDataLikelihood treeDataLikelihood;
     private final DataLikelihoodDelegate likelihoodDelegate;
     private final ProcessSimulationDelegate simulationDelegate;
@@ -63,7 +60,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         this.tree = treeDataLikelihood.getTree();
 
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
-        treeTraversalDelegate = new TreeTraversal(tree, branchRateModel,
+        treeTraversalDelegate = new SimulationTreeTraversal(tree, branchRateModel,
                 simulationDelegate.getOptimalTraversalType());
 
         this.likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
@@ -95,11 +92,10 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
-        List<ProcessOnTreeDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
-        List<ProcessOnTreeDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+        List<ProcessOnTreeDelegate.BranchNodeOperation> branchNodeOperations = treeTraversalDelegate.getBranchNodeOperations();
 
         final NodeRef root = tree.getRoot();
-        simulationDelegate.simulate(branchOperations, nodeOperations, root.getNumber());
+        simulationDelegate.simulate(branchNodeOperations, root.getNumber());
 
         treeTraversalDelegate.setAllNodesUpdated();
     }

@@ -77,6 +77,18 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
+        public final void simulate(final List<BranchNodeOperation> branchNodeOperations, final int rootNodeNumber) {
+
+            setupStatistics();
+
+            simulateRoot(rootNodeNumber);
+
+            for (BranchNodeOperation operation : branchNodeOperations) {
+                simulateNode(operation);
+            }
+        }
+
+        @Override
         public final TreeTrait[] getTreeTraits() {
             return treeTraitHelper.getTreeTraits();
         }
@@ -86,13 +98,18 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return treeTraitHelper.getTreeTrait(key);
         }
 
+        protected abstract void setupStatistics();
+
+        protected abstract void simulateRoot(final int rootNumber);
+
+        protected abstract void simulateNode(final BranchNodeOperation operation);
+
         protected final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 
         protected ProcessSimulation simulationProcess = null;
 
         protected final Tree tree;
         protected final String name;
-
     }
 
     abstract class AbstractContinuousTraitDelegate extends AbstractDelegate {
@@ -100,7 +117,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected final int dimTrait;
         protected final int numTraits;
         protected final int dimNode;
-
 
         AbstractContinuousTraitDelegate(String name,
                                         MultivariateTraitTree tree,
@@ -115,8 +131,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             dimTrait = likelihoodDelegate.getTraitDim();
             numTraits = likelihoodDelegate.getTraitCount();
             dimNode = dimTrait * numTraits;
+            this.diffusionModel = diffusionModel;
 
             sample = new double[dimNode * tree.getNodeCount()];
+
+            tmpEpsilon = new double[dimTrait];
         }
 
         @Override
@@ -167,7 +186,29 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return trait;
         }
 
+        private static double[][] getCholeskyOfVariance(double[][] precision) {
+            Matrix variance = new SymmetricMatrix(precision).inverse();
+            final double[][] cholesky;
+            try {
+                cholesky = new CholeskyDecomposition(variance).getL();
+            } catch (IllegalDimension illegalDimension) {
+                throw new RuntimeException("Attempted Cholesky decomposition on non-square matrix");
+            }
+            return cholesky;
+        }
+
+        @Override
+        protected void setupStatistics() {
+            double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
+            cholesky = getCholeskyOfVariance(diffusionPrecision); // TODO Cache
+        }
+
         protected final double[] sample;
+
+        protected final MultivariateDiffusionModel diffusionModel;
+
+        protected double[][] cholesky;
+        protected final double[] tmpEpsilon;
     }
 
     class ConditionalOnTipsDelegate extends AbstractContinuousTraitDelegate {
@@ -182,43 +223,18 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                          ContinuousDataLikelihoodDelegate likelihoodDelegate) {
             super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
 
-            this.diffusionModel = diffusionModel;
             this.likelihoodDelegate = likelihoodDelegate;
-            integrator = likelihoodDelegate.getIntegrator();
+//            integrator = likelihoodDelegate.getIntegrator();
 
             final int partialLength = dataModel.getTipPartial(0).length; // TODO Need to generalize
             partialNodeBuffer = new double[partialLength];
 
-            tmpEpsilon = new double[dimTrait];
-        }
-
-        private static double[][] getCholeskyOfVariance(double[][] precision) {
-            Matrix variance = new SymmetricMatrix(precision).inverse();
-            final double[][] cholesky;
-            try {
-                cholesky = new CholeskyDecomposition(variance).getL();
-            } catch (IllegalDimension illegalDimension) {
-                throw new RuntimeException("Attempted Cholesky decomposition on non-square matrix");
-            }
-            return cholesky;
+//            tmpEpsilon = new double[dimTrait];
+            tmpMean = new double[dimTrait];
         }
 
         @Override
-        public void simulate(List<BranchNodeOperation> branchNodeOperations, int rootNodeNumber) {
-
-            double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
-            cholesky = getCholeskyOfVariance(diffusionPrecision); // TODO Cache
-
-            // Simulate root
-            simulateRoot(rootNodeNumber);
-
-            // Simulate down tree
-            for (BranchNodeOperation operation : branchNodeOperations) {
-                simulateNode(operation);
-            }
-        }
-
-        private void simulateRoot(final int nodeIndex) {
+        protected void simulateRoot(final int nodeIndex) {
             likelihoodDelegate.getPartial(nodeIndex, partialNodeBuffer);
 
             int offsetPartial = 0;
@@ -226,11 +242,13 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             for (int trait = 0; trait < numTraits; ++trait) {
 
                 final double nodePrecision = partialNodeBuffer[offsetPartial + dimTrait];
-                final double sqrtScale = Double.isInfinite(nodePrecision) ? 0.0 : Math.sqrt(1.0 / nodePrecision);
 
-                if (sqrtScale == 0.0) {
+                if (Double.isInfinite(nodePrecision)) {
                     System.arraycopy(partialNodeBuffer, offsetPartial, sample, offsetSample, dimTrait);
                 } else {
+
+                    final double sqrtScale = Math.sqrt(1.0 / nodePrecision);
+
                     MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                             partialNodeBuffer, offsetPartial, // input mean
                             cholesky, sqrtScale, // input variance
@@ -243,55 +261,54 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
-        private void simulateNode(final BranchNodeOperation operation) {
+        @Override
+        protected void simulateNode(final BranchNodeOperation operation) {
             final int nodeIndex = operation.getNodeNumber();
             likelihoodDelegate.getPartial(nodeIndex, partialNodeBuffer);
 
             int offsetPartial = 0;
             int offsetSample = dimNode * nodeIndex;
-
             int offsetParent = dimNode * operation.getParentNumber();
+
+            final double branchPrecision = 1.0 / operation.getBranchLength();
             
             for (int trait = 0; trait < numTraits; ++trait) {
 
                 final double nodePrecision = partialNodeBuffer[offsetPartial + dimTrait];
-                final double sqrtScale = Double.isInfinite(nodePrecision) ? 0.0 :
-                        computeTODO(nodePrecision, operation.getBranchLength());
 
-//                if (sqrtScale == 0.0) {
+                if (Double.isInfinite(nodePrecision)) {
                     System.arraycopy(partialNodeBuffer, offsetPartial, sample, offsetSample, dimTrait);
-//                } else {
-                    // TODO
-//                }
+                } else {
+
+                    final double totalPrecision = nodePrecision + branchPrecision;
+
+                     for (int i = 0; i < dimTrait; ++i) {
+                        tmpMean[i] = (nodePrecision * partialNodeBuffer[offsetPartial + i]
+                                + branchPrecision * sample[offsetParent + i]) / totalPrecision;
+                    }
+
+                    final double sqrtScale = Math.sqrt(1.0 / totalPrecision);
+
+                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                            tmpMean, 0, // input mean
+                            cholesky, sqrtScale, // input variance
+                            sample, offsetSample, // output sample
+                            tmpEpsilon);
+                }
 
                 offsetSample += dimTrait;
                 offsetParent += dimTrait;
                 offsetPartial += (dimTrait + 1); // TODO Need to generalize
-
             }
-
-//            if (nodeIndex == 0) {
-//                System.err.println("numTraits: " + numTraits);
-//                System.err.println("dimNode  : " + dimNode);
-//
-//                for (int i = 0; i < dimNode; ++i) {
-//                    System.err.print(" " + sample[dimNode * nodeIndex + i]);
-//                }
-//                System.exit(-1);
-//            }
         }
 
-        private final double computeTODO(final double nodePrecision, final double branchLength) {
-            return 1.0;
-        }
-
-        private final MultivariateDiffusionModel diffusionModel;
-        private final ContinuousDiffusionIntegrator integrator;
+//        private final MultivariateDiffusionModel diffusionModel;
+//        private final ContinuousDiffusionIntegrator integrator;
         private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
         private final double[] partialNodeBuffer;
-        private final double[] tmpEpsilon;
+//        private final double[] tmpEpsilon;
+        private final double[] tmpMean;
 
-        private double[][] cholesky;
     }
 
     class UnconditionalOnTipsDelegate extends AbstractContinuousTraitDelegate {
@@ -305,13 +322,57 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                            BranchRateModel rateModel,
                                            ContinuousDataLikelihoodDelegate likelihoodDelegate) {
             super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+
+            this.rootPrior = rootPrior;
         }
 
         @Override
-        public void simulate(List<BranchNodeOperation> branchNodeOperations, int rootNodeNumber) {
-            Arrays.fill(sample, 42.0); // TODO Do nothing yet
+        protected void simulateRoot(final int nodeIndex) {
+
+            final double[] rootMean = rootPrior.getMean();
+            final double sqrtScale = Math.sqrt(1.0 / rootPrior.getPseudoObservations());
+
+            int offsetSample = dimNode * nodeIndex;
+            for (int trait = 0; trait < numTraits; ++trait) {
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        rootMean, 0, // input meant
+                        cholesky, sqrtScale,
+                        sample, offsetSample,
+                        tmpEpsilon
+                );
+
+                offsetSample += dimTrait;
+            }
         }
 
+        @Override
+        protected void simulateNode(final BranchNodeOperation operation) {
+            final int nodeIndex = operation.getNodeNumber();
+            int offsetSample = dimNode * nodeIndex;
+            int offsetParent = dimNode * operation.getParentNumber();
+
+            final double branchLength =  operation.getBranchLength();
+
+            if (branchLength == 0.0) {
+                System.arraycopy(sample, offsetParent, sample, offsetSample, dimTrait * numTraits);
+            } else {
+
+                final double sqrtScale = Math.sqrt(branchLength);
+                for (int trait = 0; trait < numTraits; ++trait) {
+                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                            sample, offsetParent,
+                            cholesky, sqrtScale,
+                            sample, offsetSample,
+                            tmpEpsilon
+                    );
+
+                    offsetParent += dimTrait;
+                    offsetSample += dimTrait;
+                }
+            }
+        }
+
+        private final ConjugateRootTraitPrior rootPrior;
     }
 
 }

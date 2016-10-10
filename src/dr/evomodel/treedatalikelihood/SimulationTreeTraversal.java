@@ -109,18 +109,6 @@ public class SimulationTreeTraversal extends TreeTraversal {
         return update;
     }
 
-    /**
-     * Add this node to the branchOperation list for updating of the transition probability matrix.
-     *
-     * @param tree tree
-     * @param node node
-     */
-    private void addBranchUpdateOperation(Tree tree, NodeRef node) {
-//
-//        branchOperations.add(new DataLikelihoodDelegate.BranchOperation(node.getNumber(),
-//                computeBranchLength(tree, node)));
-    }
-
     private final List<DataLikelihoodDelegate.BranchNodeOperation> branchNodeOperations =
             new ArrayList<DataLikelihoodDelegate.BranchNodeOperation>();
 }

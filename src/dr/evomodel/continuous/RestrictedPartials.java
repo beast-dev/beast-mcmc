@@ -109,7 +109,7 @@ public class RestrictedPartials extends AbstractModel {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        throw new RuntimeException("Not yet implemented");
+        fireModelChanged(variable, index);
     }
 
     final private TreeModel treeModel;

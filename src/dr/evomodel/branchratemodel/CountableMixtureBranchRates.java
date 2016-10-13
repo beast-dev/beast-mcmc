@@ -27,6 +27,7 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.CountableMixtureBranchRatesParser;
 import dr.inference.loggers.LogColumn;
@@ -74,6 +75,41 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         // TODO Check that randomEffectsModel means are zero
 
         modelInLogSpace = inLogSpace;
+
+        helper.addTrait(this);
+        helper.addTrait(new TreeTrait.I() {
+
+            @Override
+            public String getTraitName() {
+                return getCategoryTraitName();
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Integer getTrait(Tree tree, NodeRef node) {
+                return getBranchCategory(tree, node);
+            }
+        });
+    }
+
+    private String getCategoryTraitName() {
+        return getTraitName() + ".category";
+    }
+
+    private int getBranchCategory(Tree tree, NodeRef node) {
+        return rateCategories.getBranchCategory(tree, node);
+    }
+
+    public TreeTrait[] getTreeTraits() {
+        return helper.getTreeTraits();
+    }
+
+    public TreeTrait getTreeTrait(String key) {
+        return helper.getTreeTrait(key);
     }
 
     public double getLogLikelihood() {
@@ -184,6 +220,8 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         }
         return effect;
     }
+
+    private final Helper helper = new Helper();
 
     private final CountableBranchCategoryProvider rateCategories;
     private final boolean modelInLogSpace;

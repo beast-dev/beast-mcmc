@@ -28,7 +28,6 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.CompoundParameter;
@@ -37,14 +36,11 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Author;
 import dr.util.Citation;
-import dr.util.CommonCitations;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import java.util.*;
 
@@ -118,7 +114,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 addRestrictedPartials(partials);
                 ++partialsCount;
             }
-            spareOffset = partialsCount;
+            spareIndex = partialsCount;
             ++partialsCount;
             setupClamps();
         }
@@ -575,6 +571,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             RestrictedPartials clamp = nodeToClampMap.get(node);
             final int clampIndex = clamp.getIndex();
             final int clampOffset = dim * clampIndex;
+            final int spareOffset = dim * spareIndex;
 
             // Copy partial into meanCache // TODO Only when value changes
             for (int i = 0; i < dim; ++i) {
@@ -594,7 +591,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             final double precisionClamp = clamp.getPriorSampleSize() / rescaleLength(1.0);
             final double precisionNew = precisionThis + precisionClamp;
 
-            doPeel(spareOffset,
+            doPeel(spareIndex,
                     spareOffset, meanThisOffset, clampOffset,
                     precisionNew, precisionThis, precisionClamp,
                     missingTraits,
@@ -608,8 +605,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             );
 
             // Move values from clampIndex -> thisIndex
-            lowerPrecisionCache[thisNumber] = lowerPrecisionCache[spareOffset];
-            upperPrecisionCache[thisNumber] = upperPrecisionCache[spareOffset];
+            lowerPrecisionCache[thisNumber] = lowerPrecisionCache[spareIndex];
+            upperPrecisionCache[thisNumber] = upperPrecisionCache[spareIndex];
 
             for (int i = 0; i < dim; ++i) {
                 meanCache[meanThisOffset + i] = meanCache[spareOffset + i];
@@ -1662,7 +1659,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //    protected Map<NodeRef, RestrictedPartials> savedNodeToClampMap;
 
     private int partialsCount;
-    private int spareOffset;
+    private int spareIndex;
 
     protected boolean anyClamps = false;
 

@@ -484,6 +484,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 else
                     updateAllNodes(); // Probably an epoch model
             }
+        } else if (model instanceof RestrictedPartials) {
+            updateAllNodes();
+            updateRestrictedNodePartials = true;
         } else {
             throw new RuntimeException("Unknown componentChangedEvent");
         }

@@ -25,7 +25,6 @@
 
 package dr.inferencexml.operators;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;

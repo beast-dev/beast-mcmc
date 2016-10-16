@@ -1,5 +1,5 @@
 /*
- * DataSimulationDelegate.java
+ * FireParameterOperator.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,34 +23,39 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood;
+package dr.inference.operators;
 
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
-import dr.inference.model.Model;
-
-import java.util.Collection;
-import java.util.List;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
+import dr.inferencexml.operators.DirtyLikelihoodOperatorParser;
+import dr.inferencexml.operators.FireParameterOperatorParser;
 
 /**
- * DataSimulationDelegate - interface for a plugin delegate for data simulation on a tree.
- *
- * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
-public interface DataSimulationDelegate extends Model, TreeTraitProvider {
+public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    TreeDataLikelihood.TraversalType getOptimalTraversalType();
+    public FireParameterOperator(Parameter parameter, double weight) {
+        this.parameter = parameter;
+        setWeight(weight);
+    }
 
-    void simulate(List<DataLikelihoodDelegate.BranchOperation> branchOperations, List<DataLikelihoodDelegate.NodeOperation> nodeOperations, int rootNodeNumber);
+    public String getPerformanceSuggestion() {
+        return null;
+    }
 
-    void makeDirty();
+    public String getOperatorName() {
+        return FireParameterOperatorParser.FIRE_PARAMETER_OPERATOR;
+    }
 
-    void storeState();
+    public double doOperation() throws OperatorFailedException {
+        parameter.setParameterValue(0, parameter.getParameterValue(0));
+        return 0;
+    }
 
-    void restoreState();
+    public int getStepCount() {
+        return 1;
+    }
 
-    void setCallback(TreeDataLikelihood treeDataLikelihood);
-
+    private Parameter parameter;
 }

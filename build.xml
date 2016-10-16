@@ -142,9 +142,9 @@
                 <include name="dr/evolution/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/evomodel/**/*.class"/>
-                <exclude name="dr/evomodel/treedatalikelihood/**/*.class"/>
+                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evomodelxml/**/*.class"/>
-                <exclude name="dr/evomodelxml/treedatalikelihood/**/*.class"/>
+                <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/oldevomodel/**/*.class"/>
                 <include name="dr/oldevomodelxml/**/*.class"/>
                 <include name="dr/exporters/**/*.class"/>
@@ -208,7 +208,9 @@
                 <include name="dr/evomodel/substmodel/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
+                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evomodelxml/**/*.class"/>
+                <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/chart/**"/>
                 <include name="dr/gui/table/**"/>
@@ -299,7 +301,7 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.9pre20160929"/>
+    <property name="version" value="1.9pre20161007"/>
 
     <property name="version_number" value="1.9.0"/>
     <property name="release_dir" value="release"/>

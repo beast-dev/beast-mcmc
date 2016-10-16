@@ -27,6 +27,7 @@ package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
+import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -36,7 +37,11 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -62,12 +67,13 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     double priorMeanPrecisionWorking;
     private double a;
 
-    public LoadingsGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan, DistributionLikelihood workingPrior) {
+    public LoadingsGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan, DistributionLikelihood workingPrior, boolean multiThreaded, int numThreads) {
         setWeight(weight);
 
         this.prior = (NormalDistribution) prior.getDistribution();
-        if(workingPrior != null){
-         this.workingPrior = (NormalDistribution) workingPrior.getDistribution();}
+        if (workingPrior != null) {
+            this.workingPrior = (NormalDistribution) workingPrior.getDistribution();
+        }
         this.LFM = LFM;
         precisionArray = new ArrayList<double[][]>();
         double[][] temp;
@@ -122,16 +128,31 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         priorPrecision = 1 / (this.prior.getSD() * this.prior.getSD());
         priorMeanPrecision = this.prior.getMean() * priorPrecision;
 
-        if(workingPrior == null)
-        {
+        if (workingPrior == null) {
             priorMeanPrecisionWorking = priorMeanPrecision;
             priorPrecisionWorking = priorPrecision;
-        }
-        else{
+        } else {
             priorPrecisionWorking = 1 / (this.workingPrior.getSD() * this.workingPrior.getSD());
             priorMeanPrecisionWorking = this.workingPrior.getMean() * priorPrecisionWorking;
         }
+
+        if (multiThreaded) {
+            for (int i = 0; i < LFM.getLoadings().getRowDimension(); i++) {
+                if (i < LFM.getFactorDimension())
+                    drawCallers.add(new DrawCaller(i, new double[i + 1][i + 1], new double[i + 1], new double[i + 1]));
+                else
+                    drawCallers.add(new DrawCaller(i, new double[LFM.getFactorDimension()][LFM.getFactorDimension()], new double[LFM.getFactorDimension()], new double[LFM.getFactorDimension()]));
+            }
+            int threads = numThreads;
+
+//                    Integer.parseInt(System.getProperty("thread.count"));
+            pool = Executors.newFixedThreadPool(threads);
+        }
+        else{
+            pool = null;
+        }
     }
+
 
     private void getPrecisionOfTruncated(MatrixParameterInterface full, int newRowDimension, int row, double[][] answer) {
 
@@ -231,29 +252,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         }
     }
 
-    private void drawI(int i, ListIterator<double[][]> currentPrecision, ListIterator<double[]> currentMidMean, ListIterator<double[]> currentMean) {
+    private void drawI(int i, double[][] precision, double[] midMean, double[] mean) {
         double[] draws = null;
-        double[][] precision = null;
         double[][] variance;
-        double[] midMean = null;
-        double[] mean = null;
         double[][] cholesky = null;
-        if (currentPrecision.hasNext()) {
-            precision = currentPrecision.next();
-        }
-        else
-            precision = currentPrecision.previous();
-
-        if (currentMidMean.hasNext()) {
-            midMean = currentMidMean.next();
-        }
-        else
-            midMean = currentMidMean.previous();
-        if (currentMean.hasNext()) {
-            mean = currentMean.next();
-        }
-        else
-            mean= currentMean.previous();
         getPrecision(i, precision);
         variance = (new SymmetricMatrix(precision)).inverse().toComponents();
 
@@ -304,31 +306,54 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     public double doOperation() throws OperatorFailedException {
 
         int size = LFM.getLoadings().getRowDimension();
-        if (!randomScan) {
-            ListIterator<double[][]> currentPrecision = precisionArray.listIterator();
-            ListIterator<double[]> currentMidMean = meanMidArray.listIterator();
-            ListIterator<double[]> currentMean = meanArray.listIterator();
-            for (int i = 0; i < size; i++) {
-                drawI(i, currentPrecision, currentMidMean, currentMean);
+
+        if(pool != null){
+            try {
+                pool.invokeAll(drawCallers);
+                LFM.getLoadings().fireParameterChangedEvent();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            LFM.getLoadings().fireParameterChangedEvent();
-        } else {
-            int i = MathUtils.nextInt(LFM.getLoadings().getRowDimension());
-            ListIterator<double[][]> currentPrecision;
-            ListIterator<double[]> currentMidMean;
-            ListIterator<double[]> currentMean;
-            if (i < LFM.getFactorDimension()) {
-                currentPrecision = precisionArray.listIterator(LFM.getFactorDimension() - i - 1);
-                currentMidMean = meanMidArray.listIterator(LFM.getFactorDimension() - i - 1);
-                currentMean = meanArray.listIterator(LFM.getFactorDimension() - i - 1);
+        }
+
+        else {
+
+            if (!randomScan) {
+                ListIterator<double[][]> currentPrecision = precisionArray.listIterator();
+                ListIterator<double[]> currentMidMean = meanMidArray.listIterator();
+                ListIterator<double[]> currentMean = meanArray.listIterator();
+                double[][] precision = null;
+                double[] midMean = null;
+                double[] mean = null;
+                for (int i = 0; i < size; i++) {
+                    if(i < LFM.getFactorDimension())
+                    {precision = currentPrecision.next();
+                        midMean = currentMidMean.next();
+                        mean = currentMean.next();
+                    }
+
+                    drawI(i, precision, midMean, mean);
+                }
+                LFM.getLoadings().fireParameterChangedEvent();
             } else {
-                currentPrecision = precisionArray.listIterator();
-                currentMidMean = meanMidArray.listIterator();
-                currentMean = meanArray.listIterator();
-            }
-            drawI(i, currentPrecision, currentMidMean, currentMean);
-            LFM.getLoadings().fireParameterChangedEvent(i, null);
+                int i = MathUtils.nextInt(LFM.getLoadings().getRowDimension());
+                ListIterator<double[][]> currentPrecision;
+                ListIterator<double[]> currentMidMean;
+                ListIterator<double[]> currentMean;
+                if (i < LFM.getFactorDimension()) {
+                    currentPrecision = precisionArray.listIterator(LFM.getFactorDimension() - i - 1);
+                    currentMidMean = meanMidArray.listIterator(LFM.getFactorDimension() - i - 1);
+                    currentMean = meanArray.listIterator(LFM.getFactorDimension() - i - 1);
+                } else {
+                    currentPrecision = precisionArray.listIterator();
+                    currentMidMean = meanMidArray.listIterator();
+                    currentMean = meanArray.listIterator();
+                }
+                drawI(i, currentPrecision.next(), currentMidMean.next(), currentMean.next());
+                LFM.getLoadings().fireParameterChangedEvent(i, null);
 //            LFM.getLoadings().fireParameterChangedEvent();
+            }
+
         }
         return 0;
     }
@@ -340,4 +365,35 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     public double getAdjustedPriorPrecision() {
         return priorPrecision * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
     }
+
+
+    class DrawCaller implements Callable<Double> {
+
+        int i;
+        double[][] precision;
+        double[] midMean;
+        double[] mean;
+
+        public DrawCaller(int i, double[][] precision, double[] midMean, double [] mean) {
+            this.i = i;
+            this.precision = precision;
+            this.midMean = midMean;
+            this.mean = mean;
+        }
+
+
+        private final boolean DEBUG_PARALLEL_EVALUATION = false;
+        public Double call() throws Exception {
+            if (DEBUG_PARALLEL_EVALUATION) {
+                System.err.print("Invoking thread #" + i + " for "  + ": ");
+            }
+            drawI(i, precision, midMean, mean);
+            return null;
+        }
+
+    }
+
+    private final List<Callable<Double>> drawCallers = new ArrayList<Callable<Double>>();
+
+    private final ExecutorService pool;
 }

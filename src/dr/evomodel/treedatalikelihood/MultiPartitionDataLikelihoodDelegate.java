@@ -427,8 +427,19 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
-    public TreeDataLikelihood.TraversalType getOptimalTraversalType() {
-        return TreeDataLikelihood.TraversalType.REVERSE_LEVEL_ORDER;
+    public TreeTraversal.TraversalType getOptimalTraversalType() {
+        return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
+    }
+
+
+    @Override
+    public int getTraitCount() {
+        return 1;
+    }
+
+    @Override
+    public int getTraitDim() {
+        return totalPatternCount;
     }
 
     private void updateSubstitutionModels(boolean... state) {

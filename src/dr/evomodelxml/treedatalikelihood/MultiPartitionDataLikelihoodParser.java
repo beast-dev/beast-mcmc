@@ -1,5 +1,5 @@
 /*
- * TreeDataLikelihoodParser.java
+ * MultiPartitionDataLikelihoodParser.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -27,8 +27,6 @@ package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -39,30 +37,27 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
-import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author Andrew Rambaut
- * @author Marc Suchard
+ * @author Guy Baele
  * @version $Id$
  */
-public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
+public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser {
+
+    public static final boolean DEBUG = false;
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 
-    public static final String TREE_DATA_LIKELIHOOD = "treeDataLikelihood";
+    //TODO: eventually change String to parse back to treeDataLikelihood
+    public static final String TREE_DATA_LIKELIHOOD = "newTreeDataLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
     public static final String SCALING_SCHEME = "scalingScheme";
@@ -74,8 +69,8 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
 
     protected TreeDataLikelihood createTreeDataLikelihood(List<PatternList> patternLists,
                                                           TreeModel treeModel,
-                                                          BranchModel branchModel,
-                                                          SiteRateModel siteRateModel,
+                                                          List<BranchModel> branchModels,
+                                                          List<SiteRateModel> siteRateModels,
                                                           BranchRateModel branchRateModel,
                                                           TipStatesModel tipStatesModel,
                                                           boolean useAmbiguities,
@@ -99,8 +94,8 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
         DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                 treeModel,
                 patternLists,
-                Collections.singletonList(branchModel),
-                Collections.singletonList(siteRateModel),
+                branchModels,
+                siteRateModels,
                 useAmbiguities,
                 scalingScheme,
                 delayRescalingUntilUnderflow);
@@ -124,27 +119,52 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
             instanceCount = Integer.parseInt(ic);
         }
 
-        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+        if (DEBUG) {
+            System.out.println("instanceCount: " + instanceCount);
+        }
+
+        List<PatternList> patternLists = xo.getAllChildren(PatternList.class);
+
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+
+        List<SiteRateModel> siteRateModels = xo.getAllChildren(SiteRateModel.class);
 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
-        BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
-        if (branchModel == null) {
-            SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-            if (substitutionModel == null) {
-                substitutionModel = siteRateModel.getSubstitutionModel();
+        List<BranchModel> branchModels = xo.getAllChildren(BranchModel.class);
+        if (branchModels == null) {
+            if (DEBUG) {
+                System.out.println("branchModels == null");
             }
-            if (substitutionModel == null) {
-                throw new XMLParseException("No substitution model available for TreeLikelihood: "+xo.getId());
+            branchModels = new ArrayList<BranchModel>();
+            List<SubstitutionModel> substitutionModels = xo.getAllChildren(SubstitutionModel.class);
+            if (substitutionModels == null) {
+                if (DEBUG) {
+                    System.out.println("substitutionModels == null");
+                }
+                for (SiteRateModel siteRateModel : siteRateModels) {
+                    SubstitutionModel substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
+                    if (substitutionModel == null) {
+                        throw new XMLParseException("No substitution model available for TreeDataLikelihood: "+xo.getId());
+                    }
+                    branchModels.add(new HomogeneousBranchModel(substitutionModel, rootFreqModel));
+                }
             }
-            branchModel = new HomogeneousBranchModel(substitutionModel, rootFreqModel);
+            if (DEBUG) {
+                System.out.println("branchModels size: " + branchModels.size());
+            }
+            for (BranchModel branchModel : branchModels) {
+                System.out.println("  " + branchModel.getId() + "  " + branchModel.getModelName());
+            }
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         if (branchRateModel == null) {
             branchRateModel = new DefaultBranchRateModel();
+        }
+
+        if (DEBUG) {
+            System.out.println("BranchRateModel: " + branchRateModel.getId());
         }
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
@@ -162,12 +182,15 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
             delayScaling = xo.getBooleanAttribute(DELAY_SCALING);
         }
 
-        if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
+        if (instanceCount == 1) {
+            if (DEBUG) {
+                System.out.println("instanceCount == 1");
+            }
             return createTreeDataLikelihood(
-                    Collections.singletonList(patternList),
+                    patternLists,
                     treeModel,
-                    branchModel,
-                    siteRateModel,
+                    branchModels,
+                    siteRateModels,
                     branchRateModel,
                     tipStatesModel,
                     useAmbiguities,
@@ -183,23 +206,24 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
         }
 
-        List<PatternList> patternLists = new ArrayList<PatternList>();
-        for (int i = 0; i < instanceCount; i++) {
-
-            patternLists.add(new Patterns(patternList, i, instanceCount));
+        List<PatternList> patternInstanceLists = new ArrayList<PatternList>();
+        for (int j = 0; j < patternLists.size(); j++) {
+            for (int i = 0; i < instanceCount; i++) {
+                patternInstanceLists.add(new Patterns(patternLists.get(j), i, instanceCount));
+            }
         }
 
         return createTreeDataLikelihood(
-                    patternLists,
-                    treeModel,
-                    branchModel,
-                    siteRateModel,
-                    branchRateModel,
-                    null,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayScaling,
-                    xo);
+                patternLists,
+                treeModel,
+                branchModels,
+                siteRateModels,
+                branchRateModel,
+                null,
+                useAmbiguities,
+                scalingScheme,
+                delayScaling,
+                xo);
     }
 
     //************************************************************************
@@ -216,9 +240,11 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-            new ElementRule(PatternList.class),
+            //TODO: remove hard-coded maximum of 3 partitions
+            new ElementRule(PatternList.class,0,2),
             new ElementRule(TreeModel.class),
-            new ElementRule(SiteRateModel.class),
+            //TODO: remove hard-coded maximum of 3 partitions
+            new ElementRule(SiteRateModel.class,0,2),
             new ElementRule(BranchModel.class, true),
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(BranchRateModel.class, true),

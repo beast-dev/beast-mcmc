@@ -369,8 +369,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     @Override
-    public TreeDataLikelihood.TraversalType getOptimalTraversalType() {
-        return TreeDataLikelihood.TraversalType.POST_ORDER;
+    public TreeTraversal.TraversalType getOptimalTraversalType() {
+        return TreeTraversal.TraversalType.POST_ORDER;
+    }
+
+    @Override
+    public int getTraitCount() {
+        return 1;
+    }
+
+    @Override
+    public int getTraitDim() {
+        return  patternCount;
     }
 
     private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {

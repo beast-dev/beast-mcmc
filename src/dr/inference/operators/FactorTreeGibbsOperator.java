@@ -18,13 +18,15 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     FullyConjugateMultivariateTraitLikelihood workingTree;
     MatrixParameterInterface factors;
     MatrixParameterInterface errorPrec;
+    Boolean randomScan;
 
-    public FactorTreeGibbsOperator(double weight, LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, FullyConjugateMultivariateTraitLikelihood workingTree){
+    public FactorTreeGibbsOperator(double weight, LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, Boolean randomScan){
         setWeight(weight);
         this.tree = tree;
         this.lfm = lfm;
         this.factors = lfm.getFactors();
         errorPrec = lfm.getColumnPrecision();
+        this.randomScan = randomScan;
     }
 
     @Override
@@ -39,16 +41,27 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
 
     @Override
     public String getOperatorName() {
-        return null;
+        return "Factor Tree Gibbs Operator";
     }
 
     @Override
     public double doOperation() throws OperatorFailedException {
-        int column = MathUtils.nextInt(factors.getColumnDimension());
-        MultivariateNormalDistribution mvn = getMVN(column);
-        double[] draw = (double[]) mvn.nextRandom();
-        for (int i = 0; i < factors.getRowDimension(); i++) {
-            factors.setParameterValue(i, column, draw[i]);
+        if(randomScan){
+            int column = MathUtils.nextInt(factors.getColumnDimension());
+            MultivariateNormalDistribution mvn = getMVN(column);
+            double[] draw = (double[]) mvn.nextRandom();
+            for (int i = 0; i < factors.getRowDimension(); i++) {
+                factors.setParameterValue(i, column, draw[i]);
+            }
+        }
+        else{
+            for (int i = 0; i < factors.getColumnDimension(); i++) {
+                MultivariateNormalDistribution mvn = getMVN(i);
+                double[] draw = (double[]) mvn.nextRandom();
+                for (int j = 0; j < factors.getRowDimension(); j++) {
+                    factors.setParameterValue(j, i, draw[j]);
+                }
+            }
         }
 
         return 0;

@@ -36,11 +36,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataLikelihoodDelegate extends Model {
-
-    TreeDataLikelihood.TraversalType getOptimalTraversalType();
-
-    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
+public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model {
 
     void makeDirty();
 
@@ -48,49 +44,13 @@ public interface DataLikelihoodDelegate extends Model {
 
     void restoreState();
 
-    void setCallback(TreeDataLikelihood treeDataLikelihood);
+    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
 
-    final class BranchOperation {
-        public BranchOperation(int branchNumber, double branchLength) {
-            this.branchNumber = branchNumber;
-            this.branchLength = branchLength;
-        }
+    int getTraitCount();
 
-        public int getBranchNumber() {
-            return branchNumber;
-        }
-
-        public double getBranchLength() {
-            return branchLength;
-        }
-
-        private final int branchNumber;
-        private final double branchLength;
-    }
-
-    final class NodeOperation {
-        public NodeOperation(int nodeNumber, int leftChild, int rightChild) {
-            this.nodeNumber = nodeNumber;
-            this.leftChild = leftChild;
-            this.rightChild = rightChild;
-        }
-
-        public int getNodeNumber() {
-            return nodeNumber;
-        }
-
-        public int getLeftChild() {
-            return leftChild;
-        }
-
-        public int getRightChild() {
-            return rightChild;
-        }
-
-        private final int nodeNumber;
-        private final int leftChild;
-        private final int rightChild;
-    }
+    int getTraitDim();
 
     class LikelihoodUnderflowException extends Exception { }
+
+    void setCallback(TreeDataLikelihood treeDataLikelihood);
 }

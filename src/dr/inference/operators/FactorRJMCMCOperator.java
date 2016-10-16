@@ -112,9 +112,12 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         }
 
         int currentSize = factors.getRowDimension();
-        if(random > .5 || currentSize == 1){
+        if((random > .5 || currentSize == 1) && currentSize != factors.getMaxRowDimension()){
             if(factors.getRowDimension() == 1) {
                 from1 = Math.log(2);
+            }
+            if(factors.getRowDimension() == factors.getRowDimension() - 1){
+                from1 = -Math.log(2);
             }
             factors.setRowDimension(factors.getRowDimension()+1);
             loadings.setColumnDimension(loadings.getColumnDimension()+1);
@@ -126,7 +129,10 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             increment = true;
         }
         else{
-            if(currentSize == 2){
+            if(factors.getRowDimension() == factors.getMaxRowDimension()) {
+                from1 = Math.log(2);
+            }
+            if(currentSize == 2 || currentSize == factors.getDimension()){
                 from1 = -Math.log(2);
             }
             factors.setRowDimension(factors.getRowDimension()-1);

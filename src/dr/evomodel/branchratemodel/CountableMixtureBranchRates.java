@@ -27,6 +27,7 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.CountableMixtureBranchRatesParser;
 import dr.inference.loggers.LogColumn;
@@ -74,6 +75,139 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         // TODO Check that randomEffectsModel means are zero
 
         modelInLogSpace = inLogSpace;
+
+        helper.addTrait(this);
+        helper.addTrait(new TreeTrait.I() {
+
+            @Override
+            public String getTraitName() {
+                return getCategoryTraitName();
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Integer getTrait(Tree tree, NodeRef node) {
+                return getBranchCategory(tree, node);
+            }
+        });
+        helper.addTrait(new TreeTrait.D() {
+
+            @Override
+            public String getTraitName() {
+                return getCategoryEffectTraitName();
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Double getTrait(Tree tree, NodeRef node) {
+                return getBranchCategoryEffect(tree, node);
+            }
+        });
+        helper.addTrait(new TreeTrait.D() {
+
+            @Override
+            public String getTraitName() {
+                return getCategoryRateTraitName();
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Double getTrait(Tree tree, NodeRef node) {
+                return getBranchCategoryRate(tree, node);
+            }
+        });
+        helper.addTrait(new TreeTrait.D() {
+
+            @Override
+            public String getTraitName() {
+                return getRandomEffectTraitName();
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Double getTrait(Tree tree, NodeRef node) {
+                return getBranchRandomEffect(tree, node);
+            }
+        });
+    }
+
+    private String getCategoryTraitName() {
+        return getTraitName() + ".category";
+    }
+
+    private String getCategoryEffectTraitName() {
+        return getTraitName() + ".category.effect";
+    }
+
+    private String getCategoryRateTraitName() {
+        return getTraitName() + ".category.rate";
+    }
+
+    private String getRandomEffectTraitName() {
+        return getTraitName() + ".random.effect";
+    }
+
+    private int getBranchCategory(Tree tree, NodeRef node) {
+        return rateCategories.getBranchCategory(tree, node);
+    }
+
+    private double getBranchCategoryRate(Tree tree, NodeRef node) {
+        if (modelInLogSpace) {
+            return ratesParameter.getParameterValue(getBranchCategory(tree, node));
+        } else {
+            return Math.exp(ratesParameter.getParameterValue(getBranchCategory(tree, node)));
+        }
+    }
+
+    private double getBranchCategoryEffect(Tree tree, NodeRef node) {
+        if (modelInLogSpace) {
+            return (getBranchCategoryRate(tree, node) - ratesParameter.getParameterValue(0));
+        }  else {
+            return (getBranchCategoryRate(tree, node) / ratesParameter.getParameterValue(0));
+        }
+    }
+
+    private double getBranchRandomEffect(Tree tree, NodeRef node) {
+        double effect;
+        if (modelInLogSpace) {
+            effect = 0;
+        } else {
+            effect = 1;
+        }
+        if (randomEffectsModels != null) {
+            for (AbstractBranchRateModel model : randomEffectsModels) {
+                if (modelInLogSpace) {
+                    effect += model.getBranchRate(tree, node);
+                } else {
+                    effect *= model.getBranchRate(tree, node);
+                }
+            }
+        }
+        return effect;
+    }
+
+    public TreeTrait[] getTreeTraits() {
+        return helper.getTreeTraits();
+    }
+
+    public TreeTrait getTreeTrait(String key) {
+        return helper.getTreeTrait(key);
     }
 
     public double getLogLikelihood() {
@@ -184,6 +318,8 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         }
         return effect;
     }
+
+    private final Helper helper = new Helper();
 
     private final CountableBranchCategoryProvider rateCategories;
     private final boolean modelInLogSpace;

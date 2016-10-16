@@ -618,24 +618,26 @@ public class BayesianSkylineDialog {
                     importer = new NewickImporter(reader, false);
                 }
 
-                int treeTotalStates = importer.importTrees().size();
-                int logTotalStates = traceList.getStateCount() + traceList.getBurninStateCount();
-
-                if (treeTotalStates != logTotalStates) {
-                    throw new IllegalArgumentException("BEAST log states (" + logTotalStates
-                            + ") does not match tree log states (" + treeTotalStates + ")"
-                            + "\nPlease check both log files.");
-                }
-
-                // importer.importTrees() makes point to the end of file, and reader.mark(?) not working for large file
-                reader = new BufferedReader(new FileReader(treeFile));
-
-                line = reader.readLine();
-                if (line.toUpperCase().startsWith("#NEXUS")) {
-                    importer = new NexusImporter(reader);
-                } else {
-                    importer = new NewickImporter(reader, false);
-                }
+                // AR this is really bad idea - tries to load all the trees into memory just
+                // to see how many there are (to compare to the number of states).
+//                int treeTotalStates = importer.importTrees().size();
+//                int logTotalStates = traceList.getStateCount() + traceList.getBurninStateCount();
+//
+//                if (treeTotalStates != logTotalStates) {
+//                    throw new IllegalArgumentException("BEAST log states (" + logTotalStates
+//                            + ") does not match tree log states (" + treeTotalStates + ")"
+//                            + "\nPlease check both log files.");
+//                }
+//
+//                // importer.importTrees() makes point to the end of file, and reader.mark(?) not working for large file
+//                reader = new BufferedReader(new FileReader(treeFile));
+//
+//                line = reader.readLine();
+//                if (line.toUpperCase().startsWith("#NEXUS")) {
+//                    importer = new NexusImporter(reader);
+//                } else {
+//                    importer = new NewickImporter(reader, false);
+//                }
 
                 int burnin = traceList.getBurnIn();
                 int skip = burnin / traceList.getStepSize();
@@ -646,45 +648,24 @@ public class BayesianSkylineDialog {
                     state += 1;
                 }
 
-                // AR - there seems to be lots of uncommented behaviour perhaps to allow different
-                // numbers of trees in tree files than rows in log files? The log file and tree
-                // file have to correspond to exactly the same samples.
-
-//                int treeStateCount = state;
-
-                // AR - this test was always throwing a warning - even though it was apparently able to make
-                // a skyline. If the log file and the tree file are not in sync then the skyline would be invalid.
-//                if ((treeStateCount % stateCount != 0) && (stateCount % treeStateCount != 0)) {
-//                    JOptionPane.showMessageDialog(frame, "The number of states in the log file and tree file not match",
-//                            "Number Format Error", JOptionPane.ERROR_MESSAGE);
-//                }
-
                 double[][] groupTimes;
-//                if (treeStateCount > stateCount) {
-//                    // the age of the end of this group
-//                    groupTimes = new double[treeStateCount][];
-//                } else {
-                // the age of the end of this group
                 groupTimes = new double[stateCount][];
-//                }
 
-                //int treeState = 0;
-                //int logState = 0;
-                // increment treeState by 1
-                // increment logState by totalLogStates / totalTreeState
-
-
-                //int tips = 0;
                 state = 0;
                 current = 0;
 
                 try {
                     while (importer.hasTree()) {
+                        if (state >= traceList.getStateCount()) {
+                            JOptionPane.showMessageDialog(frame, "The number of states in the log file and tree file not match",
+                                    "Number of states don't match", JOptionPane.ERROR_MESSAGE);
+                            return false;
+                        }
+
                         RootedTree tree = (RootedTree) importer.importNextTree();
 
                         IntervalList intervals = new Intervals(tree);
                         int intervalCount = intervals.getIntervalCount();
-                        //tips = tree.getExternalNodes().size();
 
                         // get the coalescent intervals only
                         groupTimes[state] = new double[groupSizeCount];
@@ -726,6 +707,12 @@ public class BayesianSkylineDialog {
 
                         state += 1;
                         current += 1;
+                    }
+
+                    if (state < traceList.getStateCount()) {
+                        JOptionPane.showMessageDialog(frame, "The number of states in the log file and tree file not match",
+                                "Number of states don't match", JOptionPane.ERROR_MESSAGE);
+                        return false;
                     }
 
                 } catch (ImportException ie) {

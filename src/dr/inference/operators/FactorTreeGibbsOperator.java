@@ -93,9 +93,9 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         double[] condMean = getTreeMean(column);
         double[][] condPrec = getTreePrec(column);
         for (int i = 0; i < midMean.length; i++) {
-            for (int j = 0; j < midMean.length; j++) {
-                midMean [i] += condPrec[i][j] * condMean[j];
-            }
+//            for (int j = 0; j < midMean.length; j++) {
+                midMean [i] += condPrec[i][i] * condMean[i];
+//            }
         }
         for (int i = 0; i < lfm.getLoadings().getRowDimension(); i++) {
             for (int j = 0; j < lfm.getLoadings().getColumnDimension(); j++) {
@@ -113,7 +113,12 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     }
 
     public double[][] getTreePrec(int column){
-        double[][] answer = tree.getConditionalPrecision(column);
+        double answerFactor = tree.getPrecisionFactor(column);
+        double[][] answer = new double[factors.getRowDimension()][factors.getRowDimension()];
+        for (int i = 0; i < factors.getRowDimension(); i++) {
+            answer[i][i] = answerFactor;
+        }
+//        double[][] answer = tree.getConditionalPrecision(column);
         if(workingTree == null){
             return answer;
         }

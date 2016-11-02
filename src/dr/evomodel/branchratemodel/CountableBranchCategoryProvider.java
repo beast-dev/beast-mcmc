@@ -213,7 +213,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
         private void recurseDownClade(final NodeRef node, final TreeModel treeModel, final CladeContainer clade, boolean include) {
 
-            if (include) {
+            if (include && !treeModel.isRoot(node)) {
                 setNodeValue(treeModel, node, clade.getRateCategory());
             }
 

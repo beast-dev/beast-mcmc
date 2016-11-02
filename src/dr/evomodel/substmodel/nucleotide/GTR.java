@@ -208,7 +208,7 @@ public class GTR extends BaseSubstitutionModel implements Citable {
             },
             "Some probabilistic and statistical problems in the analysis of DNA sequences",
             1985,
-            "In: Miura R. M., editor. Lectures on mathematics in the life sciences.",
+            "In: Miura R. M., editor. Lectures on Mathematics in the Life Sciences",
             17, 57, 86
     );
 

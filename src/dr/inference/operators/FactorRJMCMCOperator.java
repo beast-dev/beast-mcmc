@@ -2,10 +2,8 @@ package dr.inference.operators;
 
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
-import dr.inference.distribution.RowDimensionPoissonPrior;
 import dr.inference.model.*;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 
 /**
  * Created by max on 4/29/16.
@@ -52,10 +50,10 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 //        Parameter[] paramListTemp = new Parameter.Default[1];
 //        paramListTemp[1] = new Parameter.Default(factors.getColumnDimension());
 //        this.traitsTemp = new CompoundParameter(null, paramListTemp);
-        this.storedFactors = new AdaptableSizeFastMatrixParameter(factors.getId()+".stored", 1, 1, factors.getMaxRowDimension(), factors.getMaxColumnDimension(), 1);
-        this.storedLoadings = new AdaptableSizeFastMatrixParameter(loadings.getId()+".stored", 1, 1, loadings.getMaxRowDimension(), loadings.getMaxColumnDimension(), 1);
-        this.storedCutoffs = new AdaptableSizeFastMatrixParameter(cutoffs.getId()+".stored", 1, 1, cutoffs.getMaxRowDimension(), cutoffs.getMaxColumnDimension(), 1);
-        this.storedLoadingsSparsity = new AdaptableSizeFastMatrixParameter(loadingsSparsity.getId()+".stored", 1, 1, loadingsSparsity.getMaxRowDimension(), loadingsSparsity.getMaxColumnDimension(), 1);
+        this.storedFactors = new AdaptableSizeFastMatrixParameter(factors.getId()+".stored", 1, 1, factors.getMaxRowDimension(), factors.getMaxColumnDimension(), 1, false);
+        this.storedLoadings = new AdaptableSizeFastMatrixParameter(loadings.getId()+".stored", 1, 1, loadings.getMaxRowDimension(), loadings.getMaxColumnDimension(), 1, false);
+        this.storedCutoffs = new AdaptableSizeFastMatrixParameter(cutoffs.getId()+".stored", 1, 1, cutoffs.getMaxRowDimension(), cutoffs.getMaxColumnDimension(), 1, false);
+        this.storedLoadingsSparsity = new AdaptableSizeFastMatrixParameter(loadingsSparsity.getId()+".stored", 1, 1, loadingsSparsity.getMaxRowDimension(), loadingsSparsity.getMaxColumnDimension(), 1, false);
         this.loadingsOperator = loadingsOperator;
         this.factorOperator = factorOperator;
         this.sparsityOperator = sparsityOperator;

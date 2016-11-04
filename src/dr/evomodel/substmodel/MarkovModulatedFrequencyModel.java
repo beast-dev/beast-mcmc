@@ -83,7 +83,7 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     public double getFrequency(int index) {
         int whichModel = index / stateCount;
         int whichState = index % stateCount;
-        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState);
+        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState) / numBaseModel;
 
         // Scale by stationary distribution over hidden classes
         if (numBaseModel > 1) {

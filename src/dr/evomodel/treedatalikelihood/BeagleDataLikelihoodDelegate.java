@@ -112,6 +112,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
 
+        // Check for matching state counts
+        int stateCount2 = branchModel.getRootFrequencyModel().getFrequencyCount();
+        if (stateCount != stateCount2) {
+            throw new IllegalArgumentException("Pattern state count (" + stateCount
+                    + ") does not match substitution model state count (" + stateCount2 + ")");
+        }
+
         patternWeights = patternList.getPatternWeights();
 
         this.branchModel = branchModel;

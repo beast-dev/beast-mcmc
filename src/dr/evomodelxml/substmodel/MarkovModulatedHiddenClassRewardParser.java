@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.substmodel;
 
-import com.sun.tools.doclint.HtmlTag;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evolution.datatype.HiddenDataType;
 import dr.inference.model.Parameter;

@@ -90,12 +90,32 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
     public double getParameterValue(int dim) {
         computeValues();
         throw new RuntimeException("Not yet implemented");
+//        return values[dim];
+    }
+
+    @Override
+    public double[][] getParameterAsMatrix() {
+        computeValues();
+        double[][] matrix = new double[dim][dim];
+        for (int i = 0; i < dim; ++i) {
+            System.arraycopy(values, i * dim, matrix[i], 0, dim);
+        }
+        return matrix;
     }
 
     @Override
     public double getParameterValue(int row, int col) {
         computeValues();
-        return 0;
+        throw new RuntimeException("Not yet implemented");
+//        return values[col * dim + row];
+    }
+
+    @Override
+    public double[] getParameterValues() {
+        computeValues();
+        throw new RuntimeException("Not yet implemented");
+//        double[] matrix = new double[values.length];
+//        System.arraycopy(value, 0, matrix, 0, values.length);
     }
 
     @Override
@@ -120,11 +140,6 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
 
     @Override
     public double[] getColumnValues(int col) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public double[][] getParameterAsMatrix() {
         throw new RuntimeException("Not yet implemented");
     }
 

@@ -128,7 +128,9 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             }
         }
 
-        if (gammaRateModel != null) addModel(gammaRateModel);
+        if (gammaRateModel != null) {
+            addModel(gammaRateModel);
+        }
         this.gammaRateModel = gammaRateModel;
 
         if (rateScalar != null) addVariable(rateScalar);

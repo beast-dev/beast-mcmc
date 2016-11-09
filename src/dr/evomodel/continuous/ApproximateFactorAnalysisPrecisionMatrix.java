@@ -25,15 +25,18 @@
 
 package dr.evomodel.continuous;
 
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
+import dr.xml.*;
 
 /**
- * Created by msuchard on 11/8/16.
+ * @author Marc A. Suchard
+ *
  */
-public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter implements MatrixParameterInterface {
+
+public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract implements
+        MatrixParameterInterface, VariableListener {
 
     private double[] values;
     private double[] storedValues;
@@ -41,20 +44,29 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
     private boolean valuesKnown;
     private boolean storedValuesKnow;
 
-    final private MatrixParameterInterface L;
-    final private Parameter gamma;
-    final int dim;
+    private final MatrixParameterInterface L;
+    private final Parameter gamma;
+    private final int dim;
+
+    private final static boolean DEBUG = false;
 
     public ApproximateFactorAnalysisPrecisionMatrix(String name,
                                                     MatrixParameterInterface L,
                                                     Parameter gamma) {
-        super(name, new Parameter[] {L, gamma});
+        super(name);
+
         this.L = L;
         this.gamma = gamma;
+
+        L.addVariableListener(this);
+        gamma.addVariableListener(this);
+
         this.dim = L.getColumnDimension();
         if (L.getRowDimension() != dim) {
             throw new IllegalArgumentException("Can only use square matrices");
         }
+
+        values = new double[dim * dim];
     }
 
     private void computeValues() {
@@ -69,10 +81,21 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
 
         for (int row = 0; row < dim; ++row) {
             for (int col = 0; col < dim; ++col) {
-                matrix[row][col] = L.getParameterValue(row, col) * L.getParameterValue(col, row);
+                double sum = 0;
+                for (int k = 0; k < dim; ++k) { // TODO Many columns are 0
+                    sum += L.getParameterValue(row, k) * L.getParameterValue(col, k);
+                }
+                matrix[row][col] = sum;
             }
 
             matrix[row][row] += gamma.getParameterValue(row);
+        }
+
+        if (DEBUG) {
+            System.err.println("mult:");
+            System.err.println(new Matrix(L.getParameterAsMatrix()));
+            System.err.println(new Vector(gamma.getParameterValues()) + "\n");
+            System.err.println(new Matrix(matrix));
         }
 
         Matrix inverse = new Matrix(matrix).inverse();
@@ -87,10 +110,21 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
     }
 
     @Override
-    public double getParameterValue(int dim) {
+    public String getDimensionName(int index) {
+        int row = index % dim + 1;
+        int col = index / dim + 1; // column-major
+        return getParameterName() + row + col;
+    }
+
+    @Override
+    public int getDimension() {
+        return dim * dim;
+    }
+
+    @Override
+    public double getParameterValue(int index) {
         computeValues();
-        throw new RuntimeException("Not yet implemented");
-//        return values[dim];
+        return values[index];
     }
 
     @Override
@@ -100,26 +134,108 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
         for (int i = 0; i < dim; ++i) {
             System.arraycopy(values, i * dim, matrix[i], 0, dim);
         }
+
+        if (DEBUG) {
+            System.err.println("vec:");
+            System.err.println(new Vector(values));
+            System.err.println(new Matrix(matrix));
+         System.err.println("");
+        }
+
         return matrix;
     }
 
     @Override
     public double getParameterValue(int row, int col) {
         computeValues();
-        throw new RuntimeException("Not yet implemented");
-//        return values[col * dim + row];
+        return values[col * dim + row]; // column-major
+    }
+
+    @Override
+    public Parameter getParameter(int column) {
+        return null;
     }
 
     @Override
     public double[] getParameterValues() {
         computeValues();
-        throw new RuntimeException("Not yet implemented");
-//        double[] matrix = new double[values.length];
-//        System.arraycopy(value, 0, matrix, 0, values.length);
+        double[] matrix = new double[values.length];
+        System.arraycopy(values, 0, matrix, 0, values.length);
+        return matrix;
+    }
+
+    @Override
+    protected void storeValues() {
+        L.storeParameterValues();
+        gamma.storeParameterValues();
+
+        if (storedValues == null) {
+            storedValues = new double[dim * dim];
+        }
+
+        System.arraycopy(values, 0, storedValues, 0, values.length);
+        storedValuesKnow = valuesKnown;
+    }
+
+    @Override
+    protected void restoreValues() {
+        L.restoreParameterValues();
+        gamma.restoreParameterValues();
+
+        double[] tmp = values;
+        values = storedValues;
+        storedValues = tmp;
+        valuesKnown = storedValuesKnow;
+    }
+
+    @Override
+    protected void acceptValues() {
+        L.acceptParameterValues();
+        gamma.acceptParameterValues();
+    }
+
+    @Override
+    protected void adoptValues(Parameter source) {
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public void setParameterValue(int dim, double value) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void setParameterValueQuietly(int dim, double value) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void setParameterValueNotifyChangedAll(int dim, double value) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public String getParameterName() {
+        return getId();
+    }
+
+    @Override
+    public void addBounds(Bounds<Double> bounds) {
+
+    }
+
+    @Override
+    public Bounds<Double> getBounds() {
+        return null;
+    }
+
+    @Override
+    public void addDimension(int index, double value) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public double removeDimension(int index) {
         throw new RuntimeException("Not implemented");
     }
 
@@ -145,22 +261,22 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
 
     @Override
     public int getColumnDimension() {
-        return 0;
+        return dim;
     }
 
     @Override
     public int getRowDimension() {
-        return 0;
+        return dim;
     }
 
     @Override
     public int getUniqueParameterCount() {
-        return 0;
+        return 2;
     }
 
     @Override
     public Parameter getUniqueParameter(int index) {
-        return null;
+        return (index == 0) ? L : gamma;
     }
 
     @Override
@@ -175,24 +291,58 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends CompoundParameter 
 
     @Override
     public String toSymmetricString() {
-        throw new RuntimeException("Not yet implemented");
+        return MatrixParameter.toSymmetricString(this);
     }
 
     @Override
-    public void storeValues() {
-        super.storeValues();
-
-        System.arraycopy(values, 0, storedValues, 0, values.length);
-        storedValuesKnow = valuesKnown;
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        valuesKnown = false;
+        fireParameterChangedEvent();
     }
 
-    @Override
-    public void restoreValues() {
-        super.restoreValues();
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        double[] tmp = values;
-        values = storedValues;
-        storedValues = tmp;
-        valuesKnown = storedValuesKnow;
-    }
+        public static final String APPROXIMATE_PARAMETER = "approximateFactorAnalysisPrecision";
+        public static final String L_LABEL = "L";
+        public static final String GAMMA = "gamma";
+
+        public String getParserName() {
+            return APPROXIMATE_PARAMETER;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            MatrixParameterInterface L = (MatrixParameterInterface) xo.getElementFirstChild(L_LABEL);
+            Parameter gamma = (Parameter) xo.getElementFirstChild(GAMMA);
+
+            String name = xo.hasId() ? xo.getId() : APPROXIMATE_PARAMETER;
+
+            return new ApproximateFactorAnalysisPrecisionMatrix(name, L, gamma);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "A diffusion approximation to a factor analysis";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(L_LABEL, new XMLSyntaxRule[] {
+                        new ElementRule(MatrixParameterInterface.class),
+                }),
+                new ElementRule(GAMMA, new XMLSyntaxRule[] {
+                        new ElementRule(Parameter.class),
+                }),
+        };
+
+        public Class getReturnType() {
+            return ApproximateFactorAnalysisPrecisionMatrix.class;
+        }
+    };
 }

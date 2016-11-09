@@ -69,6 +69,12 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
     }
 
     public void run() {
+        run(100000);
+    }
+
+    public void run(final int maxIterations) {
+
+        if (maxIterations == 0) return;
 
         if (gp != null) {
             double[][] precision = gp.getPrecisionMatrix();
@@ -93,7 +99,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
         try {
             mode = findMode(likelihood.getMatrixParameter().getParameterValues(),
-                    tolerance, 100000);
+                    tolerance, maxIterations);
 
         } catch (NotConvergedException e) {
             e.printStackTrace();

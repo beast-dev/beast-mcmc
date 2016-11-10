@@ -41,6 +41,7 @@ public class RandomLocalClockModelParser extends AbstractXMLObjectParser {
     public static final String RATES = "rates";
     public static final String CLOCK_RATE = "clockRate";
     public static final String RATES_ARE_MULTIPLIERS = "ratesAreMultipliers";
+    public static final String THRESHOLD = "threshold";
 
     public String getParserName() {
         return LOCAL_BRANCH_RATES;
@@ -64,8 +65,10 @@ public class RandomLocalClockModelParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " +
                 (ratesAreMultipliers ? " relative to parent rates." : "independent of parent rates."));
 
+        double threshold = xo.getAttribute(THRESHOLD, Double.NaN); // NaN == binary values
+
         return new RandomLocalClockModel(tree, meanRateParameter, rateIndicatorParameter,
-                ratesParameter, ratesAreMultipliers);
+                ratesParameter, ratesAreMultipliers, threshold);
     }
 
     //************************************************************************
@@ -93,6 +96,7 @@ public class RandomLocalClockModelParser extends AbstractXMLObjectParser {
             new ElementRule(RATE_INDICATORS, Parameter.class, "The rate change indicators parameter", false),
             new ElementRule(RATES, Parameter.class, "The rates parameter", false),
             new ElementRule(CLOCK_RATE, Parameter.class, "The mean rate across all local clocks", true),
-            AttributeRule.newBooleanRule(RATES_ARE_MULTIPLIERS, false)
+            AttributeRule.newBooleanRule(RATES_ARE_MULTIPLIERS, false),
+            AttributeRule.newDoubleRule(THRESHOLD, true),
     };
 }

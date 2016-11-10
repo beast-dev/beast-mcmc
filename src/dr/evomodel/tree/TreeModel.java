@@ -64,7 +64,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
     public TreeModel(Tree tree) {
-        this(TREE_MODEL, tree, false, false);
+        this(TREE_MODEL, tree, false, false, false);
     }
 
     public TreeModel(String id, Tree tree) { this(id, tree, false, false); }
@@ -95,6 +95,9 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
 
         this.isTreeRandom = !fixTree;
 
+        // clone the node structure (this will create the individual parameters)
+        Node node = new Node(binaryTree, binaryTree.getRoot());
+
         internalNodeCount = binaryTree.getInternalNodeCount();
         externalNodeCount = binaryTree.getExternalNodeCount();
 
@@ -102,9 +105,6 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
 
         nodes = new Node[nodeCount];
         storedNodes = new Node[nodeCount];
-
-        // clone the node structure (this will create the individual parameters)
-        Node node = new Node(binaryTree, binaryTree.getRoot());
 
         int i = 0;
         int j = externalNodeCount;
@@ -1246,12 +1246,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         public Node(Tree tree, NodeRef node) {
             parent = null;
             leftChild = rightChild = null;
-            number = node.getNumber();
-            taxon = tree.getNodeTaxon(node);
 
             heightParameter = new Parameter.Default(tree.getNodeHeight(node));
             addVariable(heightParameter);
 
+            number = node.getNumber();
+            taxon = tree.getNodeTaxon(node);
             heightParameter.setId("" + number);
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 addChild(new Node(tree, tree.getChild(node, i)));
@@ -1516,8 +1516,6 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     // Private members
     // ***********************************************************************
 
-
-    private FastMatrixParameter allHeightParameters;
 
     /**
      * root node

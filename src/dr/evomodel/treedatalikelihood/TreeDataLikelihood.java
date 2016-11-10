@@ -174,12 +174,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
-//                    System.err.println("Full tree update event - these events currently aren't used\n" +
-//                            "so either this is in error or a new feature is using them so remove this message.");
                     updateAllNodes();
                 } else {
                     // Other event types are ignored (probably trait changes).
-                    //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
             }
         } else if (model == likelihoodDelegate) {

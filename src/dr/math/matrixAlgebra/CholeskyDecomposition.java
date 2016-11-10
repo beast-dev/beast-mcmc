@@ -54,6 +54,10 @@ public class CholeskyDecomposition {
 
 	private double[][] L;
 
+	public CholeskyDecomposition(Matrix A) throws IllegalDimension{
+		this(A.components);
+	}
+
 	public CholeskyDecomposition(double[][] A) throws IllegalDimension {
 
 		n = A.length;

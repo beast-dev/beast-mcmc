@@ -106,7 +106,24 @@ public class XMLObject {
      * @param c the class of the children to return
      * @return all children with a native format of the given class, or null if no such child exists.
      */
-    public List<Object> getAllChildren(Class c) {
+    public <T> List<T> getAllChildren(Class<T> c) {
+
+        List<T> allChildren = null;
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+            if( c.isInstance(child) ) {
+                if (allChildren == null) {
+                    allChildren = new ArrayList<T>();
+                }
+                allChildren.add(c.cast(child));
+            }
+
+        }
+        return allChildren;
+
+    }
+
+    /*public List<Object> getAllChildren(Class c) {
 
         List<Object> allChildren = null;
         for (int i = 0; i < getChildCount(); i++) {
@@ -120,7 +137,7 @@ public class XMLObject {
         }
         return allChildren;
 
-    }
+    }*/
 
     /**
      * @param name the name of the child to return

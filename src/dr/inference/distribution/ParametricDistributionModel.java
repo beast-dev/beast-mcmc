@@ -26,6 +26,8 @@
 package dr.inference.distribution;
 
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.distributions.Distribution;
 
 /**
@@ -35,5 +37,6 @@ import dr.math.distributions.Distribution;
  * @version $Id: ParametricDistributionModel.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public interface ParametricDistributionModel extends Distribution, Model {
+public interface ParametricDistributionModel extends Distribution, DensityModel {
+
 }

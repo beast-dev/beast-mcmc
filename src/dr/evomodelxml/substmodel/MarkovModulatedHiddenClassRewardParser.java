@@ -37,6 +37,7 @@ import dr.xml.*;
 public class MarkovModulatedHiddenClassRewardParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "hiddenClassRewardParameter";
+    public static final String NAME = "name";
     public static final String CLASS_NUMBER = "class";
 
     @Override
@@ -58,6 +59,12 @@ public class MarkovModulatedHiddenClassRewardParser extends AbstractXMLObjectPar
             parameter.setParameterValue(i + classNumber * stateCount, 1.0);
         }
 
+        if (xo.hasAttribute(NAME)) {
+            parameter.setId((String) xo.getAttribute(NAME));
+        } else {
+            parameter.setId(substitutionModel.getId() + "_" + Integer.toString(classNumber + 1));
+        }
+
         return parameter;
     }
 
@@ -72,6 +79,7 @@ public class MarkovModulatedHiddenClassRewardParser extends AbstractXMLObjectPar
 
     private XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(CLASS_NUMBER),
+            AttributeRule.newStringRule(NAME, true),
             new ElementRule(MarkovModulatedSubstitutionModel.class),
     };
 

@@ -27,13 +27,18 @@ package dr.evomodel.treedatalikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.Reportable;
 
-import java.util.*;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -44,53 +49,56 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public final class TreeDataLikelihood extends AbstractModelLikelihood implements Reportable {
+public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
-    public enum TraversalType {
-        POST_ORDER,
-        REVERSE_LEVEL_ORDER
-    };
-
-    public TreeDataLikelihood(DataLikelihoodDelegate delegate,
+    public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                               TreeModel treeModel,
                               BranchRateModel branchRateModel) {
 
         super("TreeDataLikelihood");  // change this to use a const once the parser exists
 
+        assert likelihoodDelegate != null;
+        assert treeModel != null;
+        assert branchRateModel != null;
+
         final Logger logger = Logger.getLogger("dr.evomodel");
 
         logger.info("\nUsing TreeDataLikelihood");
 
-        this.delegate = delegate;
-        addModel(delegate);
-        delegate.setCallback(this);
+        this.likelihoodDelegate = likelihoodDelegate;
+        addModel(likelihoodDelegate);
+        likelihoodDelegate.setCallback(this);
 
         this.treeModel = treeModel;
         addModel(treeModel);
 
-        updateNode = new boolean[treeModel.getNodeCount()];
-        for (int i = 0; i < updateNode.length; i++) {
-            updateNode[i] = true;
-        }
-
         likelihoodKnown = false;
 
-        if (branchRateModel != null) {
-            this.branchRateModel = branchRateModel;
+        this.branchRateModel = branchRateModel;
+        if (!(branchRateModel instanceof DefaultBranchRateModel)) {
             logger.info("  Branch rate model used: " + branchRateModel.getModelName());
-        } else {
-            this.branchRateModel = new DefaultBranchRateModel();
         }
         addModel(this.branchRateModel);
+
+        treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
+                likelihoodDelegate.getOptimalTraversalType());
 
         hasInitialized = true;
     }
 
-    public DataLikelihoodDelegate getDataLikelihoodDelegate() {
-        return delegate;
+    public final Tree getTree() {
+        return treeModel;
+    }
+
+    public final BranchRateModel getBranchRateModel() {
+        return branchRateModel;
+    }
+
+    public final DataLikelihoodDelegate getDataLikelihoodDelegate() {
+        return likelihoodDelegate;
     }
 
     // **************************************************************
@@ -124,7 +132,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             totalMakeDirtyCount++;
 
         likelihoodKnown = false;
-        delegate.makeDirty();
+        likelihoodDelegate.makeDirty();
         updateAllNodes();
     }
 
@@ -169,7 +177,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
             }
-        } else if (model == delegate) {
+        } else if (model == likelihoodDelegate) {
 
             if (index == -1) {
                 updateAllNodes();
@@ -184,10 +192,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             } else {
                 updateNode(treeModel.getNode(index));
             }
-
         } else {
 
-            assert false: "Unknown componentChangedEvent";
+            assert false : "Unknown componentChangedEvent";
         }
 
         if (COUNT_TOTAL_OPERATIONS)
@@ -205,7 +212,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     protected final void storeState() {
 
-        assert(likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
+        assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
 
         storedLogLikelihood = logLikelihood;
 
@@ -223,8 +230,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected void acceptState() {
     } // nothing to do
 
-
-
     /**
      * Calculate the log likelihood of the data for the current tree.
      *
@@ -237,31 +242,20 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         long underflowCount = 0;
 
         do {
-            branchOperations.clear();
-            nodeOperations.clear();
+            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
-            final NodeRef root = treeModel.getRoot();
-
-            switch (delegate.getOptimalTraversalType()) {
-
-                case POST_ORDER:
-                    traversePostOrder(treeModel);
-                    break;
-                case REVERSE_LEVEL_ORDER:
-                    traverseReverseLevelOrder(treeModel);
-                    break;
-                default:
-                    assert false : "Unknown traversal type";
-            }
+            final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
+            final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
 
             if (COUNT_TOTAL_OPERATIONS) {
                 totalMatrixUpdateCount += branchOperations.size();
                 totalOperationCount += nodeOperations.size();
             }
 
+            final NodeRef root = treeModel.getRoot();
 
             try {
-                logL = delegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+                logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
 
                 done = true;
             } catch (DataLikelihoodDelegate.LikelihoodUnderflowException e) {
@@ -269,177 +263,20 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 // if there is an underflow, assume delegate will attempt to rescale
                 // so flag all nodes to update and return to try again.
                 updateAllNodes();
-                underflowCount ++;
+                underflowCount++;
             }
 
         } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
-        for (int i = 0; i < updateNode.length; i++) {
-            updateNode[i] = false;
-        }
+        setAllNodesUpdated();
 
         return logL;
     }
 
-    /**
-     * Traverse the tree in post order.
-     *
-     * @param tree           tree
-     * @return boolean
-     */
-    private void traversePostOrder(Tree tree) {
-        traversePostOrder(tree, tree.getRoot());
-    }
-
-    /**
-     * Traverse the tree in post order.
-     *
-     * @param tree           tree
-     * @param node           node
-     * @return boolean
-     */
-    private boolean traversePostOrder(Tree tree, NodeRef node) {
-
-        boolean update = false;
-
-        int nodeNum = node.getNumber();
-
-        // First update the transition probability matrix(ices) for this branch
-        if (tree.getParent(node) != null && updateNode[nodeNum]) {
-            // @todo - at the moment a matrix is updated even if a branch length doesn't change
-
-            addBranchUpdateOperation(tree, node);
-
-            update = true;
-        }
-
-        // If the node is internal, update the partial likelihoods.
-        if (!tree.isExternal(node)) {
-
-            // Traverse down the two child nodes
-            NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traversePostOrder(tree, child1);
-
-            NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traversePostOrder(tree, child2);
-
-            // If either child node was updated then update this node too
-            if (update1 || update2) {
-
-                nodeOperations.add(new DataLikelihoodDelegate.NodeOperation(nodeNum, child1.getNumber(), child2.getNumber()));
-
-                update = true;
-
-            }
-        }
-
-        return update;
-
-    }
-
-    /**
-     * Traverse the tree in reverse level order.
-     *
-     * @param tree           tree
-     */
-    private void traverseReverseLevelOrder(final Tree tree) {
-
-        // create a map of all the operations at each particular level
-        Map<Integer, List<DataLikelihoodDelegate.NodeOperation>> operationMap =
-                new HashMap<Integer, List<DataLikelihoodDelegate.NodeOperation>>();
-
-        traverseLevelOrder(tree, tree.getRoot(), 0, operationMap);
-
-        // get the levels as keys in reverse order (they are currently largest towards
-        // the tips) and add the operations to the nodeOperation array.
-        List<Integer> keyList = new ArrayList<Integer>(operationMap.keySet());
-        Collections.sort(keyList, Collections.reverseOrder());
-
-        for (Integer key : keyList) {
-            List<DataLikelihoodDelegate.NodeOperation> opList = operationMap.get(key);
-            for (DataLikelihoodDelegate.NodeOperation op : opList) {
-                nodeOperations.add(op);
-            }
-        }
-    }
-
-    /**
-     * Traverse the tree in level order.
-     *
-     * @param tree           tree
-     * @param node          node
-     * @return boolean
-     */
-    private boolean traverseLevelOrder(final Tree tree, final NodeRef node,
-                                              final int level,
-                                              Map<Integer, List<DataLikelihoodDelegate.NodeOperation>> operationMap) {
-        boolean update = false;
-
-        int nodeNum = node.getNumber();
-
-        // First update the transition probability matrix(ices) for this branch
-        if (tree.getParent(node) != null && updateNode[nodeNum]) {
-            // @todo - at the moment a matrix is updated even if a branch length doesn't change
-
-            addBranchUpdateOperation(tree, node);
-
-            update = true;
-        }
-
-        // If the node is internal, update the partial likelihoods.
-        if (!tree.isExternal(node)) {
-
-            // Traverse down the two child nodes incrementing the level (this will give
-            // level order but we will reverse these later
-            NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverseLevelOrder(tree, child1, level + 1, operationMap);
-
-            NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverseLevelOrder(tree, child2, level + 1, operationMap);
-
-            // If either child node was updated then update this node too
-            if (update1 || update2) {
-
-                List<DataLikelihoodDelegate.NodeOperation> ops = operationMap.get(level);
-                if (ops == null) {
-                    ops = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
-                    operationMap.put(level, ops);
-                }
-                ops.add(new DataLikelihoodDelegate.NodeOperation(nodeNum, child1.getNumber(), child2.getNumber()));
-
-                update = true;
-
-            }
-        }
-
-        return update;
-    }
-
-    /**
-     * Add this node to the branchOperation list for updating of the transition probability matrix.
-     *
-     * @param tree           tree
-     * @param node           node
-     */
-    private void addBranchUpdateOperation(Tree tree, NodeRef node) {
-        final double branchRate;
-
-        synchronized (branchRateModel) {
-            branchRate = branchRateModel.getBranchRate(tree, node);
-        }
-        final double parentHeight = tree.getNodeHeight(tree.getParent(node));
-        final double nodeHeight = tree.getNodeHeight(node);
-
-        // Get the operational time of the branch
-        final double branchLength = branchRate * (parentHeight - nodeHeight);
-
-        assert branchLength > 0.0 : "Non-positive branch length: " + branchLength + " for node " +
-                node.getNumber() + (tree.isExternal(node) ?
-                " (" + tree.getNodeTaxon(node).getId() + ")": "");
-
-        branchOperations.add(new DataLikelihoodDelegate.BranchOperation(node.getNumber(), branchLength));
+    private void setAllNodesUpdated() {
+        treeTraversalDelegate.setAllNodesUpdated();
     }
 
     /**
@@ -449,7 +286,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;
 
-        updateNode[node.getNumber()] = true;
+        treeTraversalDelegate.updateNode(node);
         likelihoodKnown = false;
     }
 
@@ -458,17 +295,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      */
     protected void updateNodeAndChildren(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
-            totalRateUpdateSingleCount++;
+            totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
 
-        updateNode[node.getNumber()] = true;
-
-        for (int i = 0; i < treeModel.getChildCount(node); i++) {
-            if (COUNT_TOTAL_OPERATIONS)
-                totalRateUpdateSingleCount++;
-
-            NodeRef child = treeModel.getChild(node, i);
-            updateNode[child.getNumber()] = true;
-        }
+        treeTraversalDelegate.updateNodeAndChildren(node);
         likelihoodKnown = false;
     }
 
@@ -479,13 +308,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;
 
-        updateNode[node.getNumber()] = true;
-
-        for (int i = 0; i < treeModel.getChildCount(node); i++) {
-            NodeRef child = treeModel.getChild(node, i);
-            updateNodeAndDescendents(child);
-        }
-
+        treeTraversalDelegate.updateNodeAndDescendents(node);
         likelihoodKnown = false;
     }
 
@@ -496,9 +319,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateAllCount++;
 
-        for (int i = 0; i < updateNode.length; i++) {
-            updateNode[i] = true;
-        }
+        treeTraversalDelegate.updateAllNodes();
         likelihoodKnown = false;
     }
 
@@ -509,7 +330,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     public String getReport() {
         if (hasInitialized) {
-            String rtnValue =  getClass().getName() + "(" + getLogLikelihood() + ")";
+            String rtnValue = getClass().getName() + "(" + getLogLikelihood() + ")";
             if (COUNT_TOTAL_OPERATIONS)
                 rtnValue += "\n  total operations = " + totalOperationCount +
                         "\n  matrix updates = " + totalMatrixUpdateCount +
@@ -526,13 +347,51 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     // **************************************************************
+    // TreeTrait IMPLEMENTATION
+    // **************************************************************
+
+    /**
+     * Returns an array of all the available traits
+     *
+     * @return the array
+     */
+    @Override
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
+    }
+
+    /**
+     * Returns a trait that is stored using a specific key. This will often be the same
+     * as the 'name' of the trait but may not be depending on the application.
+     *
+     * @param key a unique key
+     * @return the trait
+     */
+    @Override
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
+    }
+
+    // **************************************************************
+    // Decorate with TreeTraitProviders
+    // **************************************************************
+
+    public void addTrait(TreeTrait trait) {
+        treeTraits.addTrait(trait);
+    }
+
+    public void addTraits(TreeTrait[] traits) {
+        treeTraits.addTraits(traits);
+    }
+
+    // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
 
     /**
      * The data likelihood delegate
      */
-    private final DataLikelihoodDelegate delegate;
+    private final DataLikelihoodDelegate likelihoodDelegate;
 
     /**
      * the tree model
@@ -545,9 +404,11 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private final BranchRateModel branchRateModel;
 
     /**
-     * Flags to specify which nodes are to be updated
+     * TreeTrait helper
      */
-    private boolean[] updateNode;
+    private final Helper treeTraits = new Helper();
+
+    private final LikelihoodTreeTraversal treeTraversalDelegate;
 
     private double logLikelihood;
     private double storedLogLikelihood;
@@ -563,12 +424,4 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private int totalCalculateLikelihoodCount = 0;
     private int totalRateUpdateAllCount = 0;
     private int totalRateUpdateSingleCount = 0;
-
-    // **************************************************************
-    // INSTANCE VARIABLES
-    // **************************************************************
-
-    private List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
-    private List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
-
-}//END: class
+}

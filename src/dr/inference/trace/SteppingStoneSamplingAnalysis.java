@@ -148,7 +148,10 @@ public class SteppingStoneSamplingAnalysis {
     	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
     		
     		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-            String resultFileName = xo.getStringAttribute(RESULT_FILE_NAME);
+            String resultFileName = null;
+            if (xo.hasAttribute(RESULT_FILE_NAME)) {
+                resultFileName = xo.getStringAttribute(RESULT_FILE_NAME);
+            }
     		StringTokenizer tokenFileName = new StringTokenizer(fileName);
     		int numberOfFiles = tokenFileName.countTokens();
     		System.out.println(numberOfFiles + " file(s) found with marginal likelihood samples");
@@ -219,11 +222,13 @@ public class SteppingStoneSamplingAnalysis {
 
                 System.out.println(analysis.toString());
 
-                FileWriter fw = new FileWriter(resultFileName, true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(analysis.toString());
-                bw.flush();
-                bw.close();
+                if (resultFileName != null) {
+                    FileWriter fw = new FileWriter(resultFileName, true);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    bw.write(analysis.toString());
+                    bw.flush();
+                    bw.close();
+                }
 
                 return analysis;
     			
@@ -257,7 +262,7 @@ public class SteppingStoneSamplingAnalysis {
                 new StringAttributeRule(FileHelpers.FILE_NAME,
                         "The traceName of a BEAST log file (can not include trees, which should be logged separately)"),
                 new StringAttributeRule(RESULT_FILE_NAME,
-                        "The name of the output file to which the stepping-stone sampling estimate will be written"),
+                        "The name of the output file to which the stepping-stone sampling estimate will be written", true),
                 new ElementRule(THETA_COLUMN, new XMLSyntaxRule[]{
                         new StringAttributeRule(Attribute.NAME, "The column name")}),
                 new ElementRule(LIKELIHOOD_COLUMN, new XMLSyntaxRule[]{

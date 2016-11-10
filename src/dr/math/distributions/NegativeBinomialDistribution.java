@@ -36,37 +36,23 @@ import org.apache.commons.math.special.Beta;
 public class NegativeBinomialDistribution implements Distribution {
 
     double mean;
-    double stdev;
+    double alpha;
 
-    public NegativeBinomialDistribution(double mean, double stdev) {
+    public NegativeBinomialDistribution(double mean, double alpha) {
         this.mean = mean;
-        this.stdev = stdev;
+        this.alpha = alpha;
     }
 
     public double pdf(double x) {
-        if (x < 0)  return 0;
-        return Math.exp(logPdf(x));
+        return pdf(x, mean, alpha);
     }
 
     public double logPdf(double x) {
-        if (x < 0)  return Double.NEGATIVE_INFINITY;
-        double r = -1 * (mean*mean) / (mean - stdev*stdev);
-        double p = mean / (stdev*stdev);
-        return Math.log(Math.pow(1-p,x)) + Math.log(Math.pow(p, r)) + GammaFunction.lnGamma(r+x) - GammaFunction.lnGamma(r) - GammaFunction.lnGamma(x+1);
+        return logPdf(x, mean, alpha);
     }
 
     public double cdf(double x) {
-        double r = -1 * (mean*mean) / (mean - stdev*stdev);
-        double p = mean / (stdev*stdev);
-        try {
-            return Beta.regularizedBeta(p, r, x+1);
-        } catch (MathException e) {
-            // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
-            // exceptions is bad. Better to return NaN and let the calling code deal with it.
-            return Double.NaN;
-//                throw MathRuntimeException.createIllegalArgumentException(
-//                "Couldn't calculate beta cdf for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
-        }
+        return cdf(x, mean, alpha);
     }
 
     public double quantile(double y) {
@@ -79,17 +65,55 @@ public class NegativeBinomialDistribution implements Distribution {
     }
 
     public double variance() {
-        return stdev*stdev;
+        return mean + (mean * mean * alpha);
     }
 
     public UnivariateFunction getProbabilityDensityFunction() {
         throw new RuntimeException();
     }
 
+
+    public static double pdf(double x, double mean, double alpha) {
+        if (x < 0)  return 0;
+        return Math.exp(logPdf(x, mean, alpha));
+    }
+
+    public static double logPdf(double x, double mean, double alpha) {
+        if (x < 0)  return Double.NEGATIVE_INFINITY;
+//        double r = -1 * (mean*mean) / (mean - stdev*stdev);
+//        double p = mean / (stdev*stdev);
+//        return Math.log(Math.pow(1-p,x)) + Math.log(Math.pow(p, r)) + GammaFunction.lnGamma(r+x) - GammaFunction.lnGamma(r) - GammaFunction.lnGamma(x+1);
+        double theta = 1.0 / alpha;
+
+        double p = theta / (theta + mean);
+        return Math.log(1 - p) * x + Math.log(p) * theta + GammaFunction.lnGamma(theta + x) - GammaFunction.lnGamma(theta) - GammaFunction.lnGamma(x+1);
+    }
+
+    public static double cdf(double x, double mean, double alpha) {
+        double theta = 1.0 / alpha;
+        double p = theta / (theta + mean);
+        try {
+            return Beta.regularizedBeta(p, theta, x+1);
+        } catch (MathException e) {
+            // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+            // exceptions is bad. Better to return NaN and let the calling code deal with it.
+            return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                "Couldn't calculate beta cdf for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
+        }
+    }
+
+
     public static void main(String[] args) {
         System.out.println("Test negative binomial");
         System.out.println("Mean 5, sd 5, x 5, pdf 0.074487, logPdf -2.59713");
-        NegativeBinomialDistribution dist = new NegativeBinomialDistribution(5, 5);
+
+        double mean = 5;
+        double stdev = 5;
+//         double r = -1 * (mean*mean) / (mean - stdev*stdev);
+        double alpha = (stdev * stdev - mean) / (mean * mean);
+
+        NegativeBinomialDistribution dist = new NegativeBinomialDistribution(5, alpha);
         System.out.println("pdf = " + dist.pdf(5));
         System.out.println("logPdf = " + dist.logPdf(5));
     }

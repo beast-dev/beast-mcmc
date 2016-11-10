@@ -25,11 +25,14 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.ProcessSimulation;
+import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
@@ -53,6 +56,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SCALE_BY_TIME = AbstractMultivariateTraitLikelihood.SCALE_BY_TIME;
     public static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
     public static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
+
+    public static final String RECONSTRUCT_TRAITS = "reconstructTraits";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -88,13 +93,30 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
 //        boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false); // TODO Still need to add
 
+        if (rateModel == null) {
+            rateModel = new DefaultBranchRateModel();
+        }
+
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
                 treeModel, scaleByTime, useTreeLength);
 
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
                 diffusionModel, dataModel, rootPrior, rateTransformation, rateModel);
 
-        return new TreeDataLikelihood(delegate, treeModel, rateModel);
+        TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel, rateModel);
+
+        boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
+        if (reconstructTraits) {
+            ProcessSimulationDelegate.ConditionalOnTipsDelegate simulationDelegate =
+                    new ProcessSimulationDelegate.ConditionalOnTipsDelegate(traitName, treeModel,
+                            diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+
+            TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
+                    treeDataLikelihood, simulationDelegate);
+            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+        }
+
+        return treeDataLikelihood;
     }
 
     //************************************************************************
@@ -117,6 +139,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
+            AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

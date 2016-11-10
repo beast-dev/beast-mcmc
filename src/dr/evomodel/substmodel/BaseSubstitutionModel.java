@@ -399,6 +399,14 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         return 1.0E-10;
     }
 
+    protected double[][] getQCopy() {
+        double[][] copy = new double[q.length][q.length];
+        for (int i = 0; i < q.length; ++i) {
+            System.arraycopy(q[i], 0, copy[i], 0, q.length);
+        }
+        return copy;
+    }
+
     private final double q[][];
     protected EigenDecomposition eigenDecomposition;
     private EigenDecomposition storedEigenDecomposition;

@@ -44,6 +44,7 @@ public class PriorParsers {
     public static final String DISCRETE_UNIFORM_PRIOR = "discreteUniformPrior";
     public static final String NORMAL_PRIOR = "normalPrior";
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
+    public static final String HALF_NORMAL_PRIOR = "halfNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
     public static final String INVGAMMA_PRIOR = "invgammaPrior";
     public static final String INVGAMMA_PRIOR_CORRECT = "inverseGammaPrior";
@@ -434,6 +435,49 @@ public class PriorParsers {
             return Likelihood.class;
         }
     };
+
+    public static XMLObjectParser HALF_NORMAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return HALF_NORMAL_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double mean = xo.getDoubleAttribute(MEAN);
+            double stdev = xo.getDoubleAttribute(STDEV);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new HalfNormalDistribution(mean, stdev));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(MEAN),
+                AttributeRule.newDoubleRule(STDEV),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given half-normal distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
 
     /**
      * A special parser that reads a convenient short form of priors on parameters.

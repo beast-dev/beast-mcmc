@@ -112,6 +112,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
 
+        // Check for matching state counts
+        int stateCount2 = branchModel.getRootFrequencyModel().getFrequencyCount();
+        if (stateCount != stateCount2) {
+            throw new IllegalArgumentException("Pattern state count (" + stateCount
+                    + ") does not match substitution model state count (" + stateCount2 + ")");
+        }
+
         patternWeights = patternList.getPatternWeights();
 
         this.branchModel = branchModel;
@@ -369,8 +376,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     @Override
-    public TreeDataLikelihood.TraversalType getOptimalTraversalType() {
-        return TreeDataLikelihood.TraversalType.POST_ORDER;
+    public TreeTraversal.TraversalType getOptimalTraversalType() {
+        return TreeTraversal.TraversalType.POST_ORDER;
+    }
+
+    @Override
+    public int getTraitCount() {
+        return 1;
+    }
+
+    @Override
+    public int getTraitDim() {
+        return  patternCount;
     }
 
     private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {

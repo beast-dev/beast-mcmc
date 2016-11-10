@@ -2,13 +2,8 @@ package dr.inference.operators;
 
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
-import dr.inference.distribution.RowDimensionPoissonPrior;
-import dr.inference.model.AdaptableSizeFastMatrixParameter;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 
 /**
  * Created by max on 4/29/16.
@@ -33,11 +28,16 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     AdaptableSizeFastMatrixParameter storedLoadings;
     AdaptableSizeFastMatrixParameter storedCutoffs;
     AdaptableSizeFastMatrixParameter storedLoadingsSparsity;
-    RowDimensionPoissonPrior rowPrior;
+    MatrixSizePrior rowPrior;
 
+    private final int BASE_SIZE = 1000;
+    private final double MIN_WEIGHT = .01;
+    private int callCount = 0;
+    double callWeighting = 1;
     public static final boolean DEBUG = false;
 
-    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, LatentFactorModel lfm, DeterminentalPointProcessPrior sparsityPrior, LoadingsGibbsTruncatedOperator loadingsOperator, FactorTreeGibbsOperator factorOperator, BitFlipOperator sparsityOperator, RowDimensionPoissonPrior rowPrior) {
+
+    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, LatentFactorModel lfm, DeterminentalPointProcessPrior sparsityPrior, LoadingsGibbsTruncatedOperator loadingsOperator, FactorTreeGibbsOperator factorOperator, BitFlipOperator sparsityOperator, MatrixSizePrior rowPrior) {
         setWeight(weight);
         this.factors = factors;
         this.loadings = loadings;
@@ -50,10 +50,10 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 //        Parameter[] paramListTemp = new Parameter.Default[1];
 //        paramListTemp[1] = new Parameter.Default(factors.getColumnDimension());
 //        this.traitsTemp = new CompoundParameter(null, paramListTemp);
-        this.storedFactors = new AdaptableSizeFastMatrixParameter(factors.getId()+".stored", 1, 1, factors.getMaxRowDimension(), factors.getMaxColumnDimension(), 1);
-        this.storedLoadings = new AdaptableSizeFastMatrixParameter(loadings.getId()+".stored", 1, 1, loadings.getMaxRowDimension(), loadings.getMaxColumnDimension(), 1);
-        this.storedCutoffs = new AdaptableSizeFastMatrixParameter(cutoffs.getId()+".stored", 1, 1, cutoffs.getMaxRowDimension(), cutoffs.getMaxColumnDimension(), 1);
-        this.storedLoadingsSparsity = new AdaptableSizeFastMatrixParameter(loadingsSparsity.getId()+".stored", 1, 1, loadingsSparsity.getMaxRowDimension(), loadingsSparsity.getMaxColumnDimension(), 1);
+        this.storedFactors = new AdaptableSizeFastMatrixParameter(factors.getId()+".stored", 1, 1, factors.getMaxRowDimension(), factors.getMaxColumnDimension(), 1, false);
+        this.storedLoadings = new AdaptableSizeFastMatrixParameter(loadings.getId()+".stored", 1, 1, loadings.getMaxRowDimension(), loadings.getMaxColumnDimension(), 1, false);
+        this.storedCutoffs = new AdaptableSizeFastMatrixParameter(cutoffs.getId()+".stored", 1, 1, cutoffs.getMaxRowDimension(), cutoffs.getMaxColumnDimension(), 1, false);
+        this.storedLoadingsSparsity = new AdaptableSizeFastMatrixParameter(loadingsSparsity.getId()+".stored", 1, 1, loadingsSparsity.getMaxRowDimension(), loadingsSparsity.getMaxColumnDimension(), 1, false);
         this.loadingsOperator = loadingsOperator;
         this.factorOperator = factorOperator;
         this.sparsityOperator = sparsityOperator;
@@ -74,6 +74,32 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 
     @Override
     public double doOperation() throws OperatorFailedException {
+        if(callCount < BASE_SIZE){
+            performOperation();
+        }
+        else{
+            callWeighting *= .99;
+            if(callWeighting < .01){
+                callWeighting = .01;
+            }
+            if(callWeighting > MathUtils.nextDouble()){
+                performOperation();
+            }
+        }
+
+        callCount++;
+        return 0;
+    }
+
+    private void performOperation(){
+        //        System.out.println(sparsityPrior.getLogLikelihood());
+//        System.out.println(lfm.getLogLikelihood());
+        String outpu="";
+//        for (int i = 0; i <loadingsSparsity.getDimension() ; i++) {
+//            outpu += loadingsSparsity.getParameterValue(i);
+//            outpu += " ";
+//        }
+//        System.out.println(outpu);
 
         if (DEBUG) {
             System.out.println("sparsity prior lnL = " + sparsityPrior.getLogLikelihood());
@@ -86,7 +112,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 
         double random = MathUtils.nextDouble();
         double from1 = 0;
-        double initialLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getLogLikelihood();
+        double initialLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getSizeLogLikelihood();
         boolean increment;
 
         if (DEBUG) {
@@ -112,9 +138,12 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         }
 
         int currentSize = factors.getRowDimension();
-        if(random > .5 || currentSize == 1){
+        if((random > .5 || currentSize == 1) && currentSize != factors.getMaxRowDimension()){
             if(factors.getRowDimension() == 1) {
                 from1 = Math.log(2);
+            }
+            if(factors.getRowDimension() == factors.getRowDimension() - 1){
+                from1 = -Math.log(2);
             }
             factors.setRowDimension(factors.getRowDimension()+1);
             loadings.setColumnDimension(loadings.getColumnDimension()+1);
@@ -126,7 +155,10 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             increment = true;
         }
         else{
-            if(currentSize == 2){
+            if(factors.getRowDimension() == factors.getMaxRowDimension()) {
+                from1 = Math.log(2);
+            }
+            if(currentSize == 2 || currentSize == factors.getDimension()){
                 from1 = -Math.log(2);
             }
             factors.setRowDimension(factors.getRowDimension()-1);
@@ -143,7 +175,24 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         lfm.acceptModelState();
         sparsityPrior.acceptModelState();
 
-        iterate();
+
+        try {
+            iterate();
+        } catch (OperatorFailedException e) {
+            e.printStackTrace();
+        }
+        outpu = "";
+//        for (int i = 0; i <storedFactors.getDimension() ; i++) {
+//            outpu += storedFactors.getParameterValue(i);
+//            outpu += " ";
+//        }
+//        System.out.println(outpu);
+        double finalLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getSizeLogLikelihood();
+        try {
+            iterate();
+        } catch (OperatorFailedException e) {
+            e.printStackTrace();
+        }
 
         if (DEBUG) {
             System.out.print("storedFactors: ");
@@ -153,7 +202,6 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             System.out.println();
         }
 
-        double finalLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getLogLikelihood();
 
         random = MathUtils.nextDouble();
         double test = from1 + finalLikelihood - initialLikelihood;
@@ -196,7 +244,6 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             }
 
         }
-        return 0;
     }
 
     private void iterate() throws OperatorFailedException {

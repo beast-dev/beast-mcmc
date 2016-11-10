@@ -125,6 +125,20 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
     };
 
     // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    // *****************************************************************
     // Interface Model
     // *****************************************************************
 

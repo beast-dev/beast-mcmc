@@ -223,7 +223,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         double sum = 0;
         for (int i = 0; i < sData.getRowDimension(); i++) {
             for (int j = 0; j < sData.getColumnDimension(); j++) {
-                if (continuous.getParameterValue(i) == 0 && sData.getParameterValue(i, j) != 0) {
+                if (continuous.getParameterValue(i) == 1 && sData.getParameterValue(i, j) != 0) {
                     sum += -.5 * Math.log(2 * StrictMath.PI) - .5 * sData.getParameterValue(i, j) * sData.getParameterValue(i, j);
                 }
             }
@@ -371,7 +371,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //                System.out.println(Left.getParameterValue(id)==Left.getParameterValue(tcol,trow));
                 answer[trow * col + tcol] = Left.getParameterValue(id) - Right[trow * col + tcol];
             }
-            changedValues.clear();
         } else {
             for (int i = 0; i < row; i++) {
                 if (continuous.getParameterValue(i) != 0 || newModel) {
@@ -387,6 +386,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //                }
 
             }
+            changedValues.clear();
         }
 //        if(containsDiscrete){
 //            Left.fireParameterChangedEvent();}
@@ -634,7 +634,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 int row = index / factors.getRowDimension();
                 if (index != -1)
                     for (int i = 0; i < data.getRowDimension(); i++) {
-                        if(!changedValues.contains(i))
+                        if(!changedValues.contains(row * data.getRowDimension() + i))
                           changedValues.add(row * data.getRowDimension() + i);
                     }
                 else{
@@ -659,7 +659,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 int col = index % loadings.getRowDimension();
                 if (index != -1) {
                     for (int i = 0; i < data.getColumnDimension(); i++) {
-                        if(!changedValues.contains(i))
+                        if(!changedValues.contains(i * data.getRowDimension() + col))
                          changedValues.add(i * data.getRowDimension() + col);
                     }
                 }

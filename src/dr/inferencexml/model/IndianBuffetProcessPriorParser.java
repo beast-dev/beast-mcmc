@@ -25,6 +25,7 @@
 
 package dr.inferencexml.model;
 
+import dr.inference.model.AdaptableSizeFastMatrixParameter;
 import dr.inference.model.IndianBuffetProcessPrior;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -43,7 +44,7 @@ public class IndianBuffetProcessPriorParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Parameter alpha=(Parameter) xo.getChild(ALPHA).getChild(0);
-        MatrixParameter data=(MatrixParameter) xo.getChild(DATA).getChild(0);
+        AdaptableSizeFastMatrixParameter data=(AdaptableSizeFastMatrixParameter) xo.getChild(DATA).getChild(0);
         Parameter beta;
         if(xo.hasChildNamed(BETA))
         {
@@ -74,7 +75,7 @@ public class IndianBuffetProcessPriorParser extends AbstractXMLObjectParser {
             ),
             new ElementRule(DATA,
                     new XMLSyntaxRule[]{
-                            new ElementRule(MatrixParameter.class)
+                            new ElementRule(AdaptableSizeFastMatrixParameter.class)
                     }
             )
     };

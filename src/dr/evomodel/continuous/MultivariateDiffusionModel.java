@@ -206,7 +206,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
-            MatrixParameter diffusionParam = (MatrixParameter) cxo.getChild(MatrixParameter.class);
+            MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
+                    cxo.getChild(MatrixParameterInterface.class);
 
             return new MultivariateDiffusionModel(diffusionParam);
         }
@@ -225,7 +226,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(DIFFUSION_CONSTANT,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
+                        new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}),
         };
 
         public Class getReturnType() {

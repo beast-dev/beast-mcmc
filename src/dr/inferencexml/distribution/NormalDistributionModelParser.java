@@ -36,6 +36,7 @@ public class NormalDistributionModelParser extends AbstractXMLObjectParser {
 
     public static final String NORMAL_DISTRIBUTION_MODEL = "normalDistributionModel";
     public static final String MEAN = "mean";
+    public static final String SCALE = "scale";
     public static final String STDEV = "stdev";
     public static final String PREC = "precision";
 
@@ -46,7 +47,7 @@ public class NormalDistributionModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter meanParam;
-        Parameter stdevParam;
+        Parameter scaleParam;
         Parameter precParam;
 
         XMLObject cxo = xo.getChild(MEAN);
@@ -56,23 +57,26 @@ public class NormalDistributionModelParser extends AbstractXMLObjectParser {
             meanParam = new Parameter.Default(cxo.getDoubleChild(0));
         }
 
-        if (xo.getChild(STDEV) != null) {
-
-            cxo = xo.getChild(STDEV);
-            if (cxo.getChild(0) instanceof Parameter) {
-                stdevParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
-
-            return new NormalDistributionModel(meanParam, stdevParam);
+        cxo = xo.getChild(STDEV);
+        if (cxo == null) {
+            cxo = xo.getChild(SCALE);
         }
 
-        cxo = xo.getChild(PREC);
-        if (cxo.getChild(0) instanceof Parameter) {
-            precParam = (Parameter) cxo.getChild(Parameter.class);
+        if (cxo != null) {
+            if (cxo.getChild(0) instanceof Parameter) {
+                scaleParam = (Parameter) cxo.getChild(Parameter.class);
+            } else {
+                scaleParam = new Parameter.Default(cxo.getDoubleChild(0));
+            }
+
+            return new NormalDistributionModel(meanParam, scaleParam);
         } else {
-            precParam = new Parameter.Default(cxo.getDoubleChild(0));
+            cxo = xo.getChild(PREC);
+            if (cxo.getChild(0) instanceof Parameter) {
+                precParam = (Parameter) cxo.getChild(Parameter.class);
+            } else {
+                precParam = new Parameter.Default(cxo.getDoubleChild(0));
+            }
         }
         return new NormalDistributionModel(meanParam, precParam, true);
     }
@@ -94,12 +98,21 @@ public class NormalDistributionModelParser extends AbstractXMLObjectParser {
                             )}
             ),
             new XORRule(
-                    new ElementRule(STDEV,
-                            new XMLSyntaxRule[]{
-                                    new XORRule(
-                                            new ElementRule(Parameter.class),
-                                            new ElementRule(Double.class)
-                                    )}
+                    new XORRule(
+                            new ElementRule(SCALE,
+                                    new XMLSyntaxRule[]{
+                                            new XORRule(
+                                                    new ElementRule(Parameter.class),
+                                                    new ElementRule(Double.class)
+                                            )}
+                            ),
+                            new ElementRule(STDEV,
+                                    new XMLSyntaxRule[]{
+                                            new XORRule(
+                                                    new ElementRule(Parameter.class),
+                                                    new ElementRule(Double.class)
+                                            )}
+                            )
                     ),
                     new ElementRule(PREC,
                             new XMLSyntaxRule[]{

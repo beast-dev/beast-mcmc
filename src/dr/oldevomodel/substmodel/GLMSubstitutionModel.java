@@ -37,11 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * <b>A irreversible class for any data type where
- * rates come from a log-linear model; allows complex eigenstructures.</b>
- *
  * @author Marc A. Suchard
- * @author Alexei J. Drummond
  */
 public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
@@ -52,7 +48,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         this.glm = glm;
         addModel(glm);
         testProbabilities = new double[stateCount*stateCount];
-            
+
     }
 
     public double[] getRates() {
@@ -66,7 +62,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
             fireModelChanged();
         }
         else
-            super.handleModelChangedEvent(model,object,index);       
+            super.handleModelChangedEvent(model,object,index);
     }
 
     public LogColumn[] getColumns() {
@@ -94,5 +90,5 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
     }
 
     private LogLinearModel glm;
-    private double[] testProbabilities;    
+    private double[] testProbabilities;
 }

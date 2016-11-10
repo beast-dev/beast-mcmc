@@ -200,6 +200,20 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
     };
 
     // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return mean;
+    }
+
+    // *****************************************************************
     // Interface Model
     // *****************************************************************
 

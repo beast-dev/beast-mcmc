@@ -293,6 +293,13 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
+            // Check for matching state counts
+            int stateCount2 = branchModel.getRootFrequencyModel().getFrequencyCount();
+            if (stateCount != stateCount2) {
+                throw new RuntimeException("Pattern state count (" + stateCount
+                        + ") does not match substitution model state count (" + stateCount2 + ")");
+            }
+
             instanceCount++;
 
             beagle = BeagleFactory.loadBeagleInstance(

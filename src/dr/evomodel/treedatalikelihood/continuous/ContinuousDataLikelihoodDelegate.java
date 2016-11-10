@@ -183,6 +183,20 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     @Override
+    public final int getTraitCount() {
+        return numTraits;
+    }
+
+    @Override
+    public final int getTraitDim() {
+        return dimTrait;
+    }
+
+    public final ContinuousDiffusionIntegrator getIntegrator() {
+        return cdi;
+    }
+
+    @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
         this.callbackLikelihood = treeDataLikelihood;
     }
@@ -216,8 +230,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     @Override
-    public TreeDataLikelihood.TraversalType getOptimalTraversalType() {
-        return TreeDataLikelihood.TraversalType.POST_ORDER;
+    public TreeTraversal.TraversalType getOptimalTraversalType() {
+        return TreeTraversal.TraversalType.POST_ORDER;
     }
 
     /**
@@ -322,6 +336,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         updateDiffusionModel = false;
 
         return logL;
+    }
+
+    public void getPartial(final int nodeNumber, double[] vector) {
+        cdi.getPartial(partialBufferHelper.getOffsetIndex(nodeNumber), vector);
     }
 
     @Override

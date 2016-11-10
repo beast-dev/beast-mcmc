@@ -28,6 +28,7 @@ package dr.inference.operators;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.multidimensionalscaling.mm.MMAlgorithm;
 import dr.inference.multidimensionalscaling.mm.MultiDimensionalScalingMM;
@@ -43,36 +44,67 @@ import javax.sql.rowset.serial.SerialRef;
 /**
  * @author Marc Suchard
  */
-public class ModeFindOperator extends SimpleMCMCOperator {
+public class ModeFindOperator extends AbstractCoercableOperator {
 
     public static final String OPERATOR = "modeFindOperator";
     public static final String MAX_TIMES = "maxTimes";
 
-//    private double scaleFactor;
+    private double scaleFactor;
 
     private final int maxTimes;
+    private final int maxSteps;
     private int executeTimes = 0;
     private final MultiDimensionalScalingMM mm;
 
     public ModeFindOperator(MultiDimensionalScalingMM mm, int maxTimes, double weight, CoercionMode mode) {
-//        super(mode);
+        this(mm, maxTimes, weight, 1000, mode);
+    }
+
+    public ModeFindOperator(MultiDimensionalScalingMM mm, int maxTimes, double weight,
+                            int maxModeSteps, CoercionMode mode) {
+        super(mode);
         setWeight(weight);
 
         this.maxTimes = maxTimes;
         this.mm = mm;
+        this.maxSteps = maxModeSteps;
     }
-
-
 
     public double doOperation() throws OperatorFailedException {
 
         if (executeTimes < maxTimes) {
+
+            MatrixParameterInterface parameter = mm.getLikelihood().getMatrixParameter();
+
+//            double[] original = null;
+
+//            if (mode == CoercionMode.COERCION_ON) {
+//                original = parameter.getParameterValues();
+//            }
+
             System.err.println("START");
-            mm.run();
+            mm.run(maxSteps);
             System.err.println("END");
             ++executeTimes;
 
-            return Double.POSITIVE_INFINITY; // Always accept, breaks target distribution if called infinitely often
+            double logHR = Double.POSITIVE_INFINITY; // Always accept, breaks target distribution if called infinitely often
+
+            if (mode == CoercionMode.COERCION_ON) {
+                double[] center = parameter.getParameterValues();
+
+//                double balance = 0.0;
+                for (int i = 0; i < center.length; ++i) {
+                    final double epsilon = scaleFactor * MathUtils.nextGaussian();
+                    double x = center[i] + epsilon;
+//                    final double old = original[i] - center[i];
+//                    balance += epsilon * epsilon - old * old;
+                }
+
+//                logHR = 0.5 * balance / (scaleFactor * scaleFactor);
+                logHR = 0.0;  // TODO Detailed balance is only met when mode finder run to convergence
+            }
+
+            return logHR;
 
         } else {
             throw new OperatorFailedException("Finished max times");
@@ -84,42 +116,21 @@ public class ModeFindOperator extends SimpleMCMCOperator {
         return OPERATOR;
     }
 
-//    public double getCoercableParameter() {
-//        return Math.log(scaleFactor);
-//    }
-//
-//    public void setCoercableParameter(double value) {
-//        scaleFactor = Math.exp(value);
-//    }
-//
-//    public double getRawParameter() {
-//        return scaleFactor;
-//    }
-//
-//    public double getScaleFactor() {
-//        return scaleFactor;
-//    }
-//
-//    public double getTargetAcceptanceProbability() {
-//        return 0.234;
-//    }
-//
-//    public double getMinimumAcceptanceLevel() {
-//        return 0.1;
-//    }
-//
-//    public double getMaximumAcceptanceLevel() {
-//        return 0.4;
-//    }
-//
-//    public double getMinimumGoodAcceptanceLevel() {
-//        return 0.20;
-//    }
-//
-//    public double getMaximumGoodAcceptanceLevel() {
-//        return 0.30;
-//    }
-//
+    @Override
+    public double getCoercableParameter() {
+        return Math.log(scaleFactor);
+    }
+
+    @Override
+    public void setCoercableParameter(double value) {
+        scaleFactor = Math.exp(value);
+    }
+
+    @Override
+    public double getRawParameter() {
+        return scaleFactor;
+    }
+
     public final String getPerformanceSuggestion() {
         return "None";
     }
@@ -162,7 +173,7 @@ public class ModeFindOperator extends SimpleMCMCOperator {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(MAX_TIMES, true),
                 AttributeRule.newDoubleRule(WEIGHT),
-//                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 new ElementRule(MultiDimensionalScalingMM.class),
         };
 

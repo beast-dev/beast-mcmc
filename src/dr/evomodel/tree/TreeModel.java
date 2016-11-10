@@ -61,17 +61,18 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         externalNodeCount = 0;
         internalNodeCount = 0;
         heightsAsMatrix = false;
+        isTreeRandom = true;
     }
 
     public TreeModel(Tree tree) {
-        this(TREE_MODEL, tree, false, false);
+        this(TREE_MODEL, tree, false, false, false);
     }
 
-    public TreeModel(String id, Tree tree) { this(id, tree, false, false); }
+    public TreeModel(String id, Tree tree) { this(id, tree, false, false, false); }
 
-    public TreeModel(String id, Tree tree, boolean fixHeights, boolean heightsAsMatrix) {
+    public TreeModel(String id, Tree tree, boolean fixHeights, boolean heightsAsMatrix, boolean fixTree) {
 
-        this(id, tree, false, fixHeights, heightsAsMatrix);
+        this(id, tree, false, fixHeights, heightsAsMatrix, fixTree);
         setId(id);
     }
 
@@ -79,7 +80,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
       * Useful for constructing a TreeModel from a NEXUS file entry
       */
 
-    public TreeModel(String name, Tree tree, boolean copyAttributes, boolean fixHeights, boolean heightsAsMatrix) {
+    public TreeModel(String name, Tree tree, boolean copyAttributes, boolean fixHeights, boolean heightsAsMatrix, boolean fixTree) {
 
         super(name);
 
@@ -92,6 +93,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         if (!fixHeights) {
             MutableTree.Utils.correctHeightsForTips(binaryTree);
         }
+
+        this.isTreeRandom = !fixTree;
 
         internalNodeCount = binaryTree.getInternalNodeCount();
         externalNodeCount = binaryTree.getExternalNodeCount();
@@ -185,6 +188,9 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      * Push a tree changed event into the event stack.
      */
     public void pushTreeChangedEvent(TreeChangedEvent event) {
+
+        if (!isTreeRandom) throw new IllegalStateException("Attempting state change in fixed tree");
+
         if (inEdit) {
             treeChangedEvents.add(event);
         } else {
@@ -1568,9 +1574,14 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     private boolean hasRates = false;
     private boolean hasTraits = false;
     private boolean isTipDateSampled = false;
+    private final boolean isTreeRandom;
 
     public boolean isTipDateSampled() {
         return isTipDateSampled;
+    }
+
+    public boolean isTreeRandom() {
+        return isTreeRandom;
     }
 
     @Override

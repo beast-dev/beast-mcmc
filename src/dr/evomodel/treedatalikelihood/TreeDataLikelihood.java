@@ -73,7 +73,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.setCallback(this);
 
         this.treeModel = treeModel;
-        addModel(treeModel);
+        isTreeRandom = treeModel.isTreeRandom();
+        if (isTreeRandom) {
+            addModel(treeModel);
+        }
 
         likelihoodKnown = false;
 
@@ -157,6 +160,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
+
+                if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
 
                 if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
@@ -415,6 +420,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected boolean likelihoodKnown = false;
 
     private boolean hasInitialized = false;
+
+    private final boolean isTreeRandom;
 
     private int totalOperationCount = 0;
     private int totalMatrixUpdateCount = 0;

@@ -62,6 +62,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
     public static final String FIRE_TREE_EVENTS = "fireTreeEvents";
     public static final String FIX_HEIGHTS = "fixHeights";
+    public static final String FIX_TREE = "fixTree";
 
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
@@ -72,6 +73,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
                 AttributeRule.newBooleanRule(FIX_HEIGHTS, true),
                 AttributeRule.newBooleanRule(AS_MATRIX, true),
+                AttributeRule.newBooleanRule(FIX_TREE, true),
                 new ElementRule(NODE_HEIGHTS,
                         new XMLSyntaxRule[]{
                                 AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
@@ -129,8 +131,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         Tree tree = (Tree) xo.getChild(Tree.class);
         boolean fixHeights = xo.getAttribute(FIX_HEIGHTS, false);
         boolean heightsAsMatrix = xo.getAttribute(AS_MATRIX, false);
+        boolean fixTree = xo.getAttribute(FIX_TREE, false);
 
-        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights, heightsAsMatrix);
+        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights, heightsAsMatrix, fixTree);
 
         Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
 

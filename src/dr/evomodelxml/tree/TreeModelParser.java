@@ -72,7 +72,6 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 new ElementRule(Tree.class),
                 new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
                 AttributeRule.newBooleanRule(FIX_HEIGHTS, true),
-                AttributeRule.newBooleanRule(AS_MATRIX, true),
                 AttributeRule.newBooleanRule(FIX_TREE, true),
                 new ElementRule(NODE_HEIGHTS,
                         new XMLSyntaxRule[]{
@@ -130,10 +129,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
         boolean fixHeights = xo.getAttribute(FIX_HEIGHTS, false);
-        boolean heightsAsMatrix = xo.getAttribute(AS_MATRIX, false);
         boolean fixTree = xo.getAttribute(FIX_TREE, false);
 
-        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights, heightsAsMatrix, fixTree);
+        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights, fixTree);
 
         Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
 

@@ -136,7 +136,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         if (rateScalar != null) addVariable(rateScalar);
         this.rateScalar = rateScalar;
 
-        setDoNormalization(true);   // TODO was false
+        setDoNormalization(false);
 
         updateMatrix = true;
 

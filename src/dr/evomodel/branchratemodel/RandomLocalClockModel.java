@@ -72,6 +72,9 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         if (Double.isNaN(threshold)) { // NaN == binary values
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
             this.threshold = 0.5;
+            for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
+                rateIndicatorParameter.setParameterValue(i, 0.0);
+            }
         } else {
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, rateIndicatorParameter.getDimension()));
             this.threshold = threshold;
@@ -79,7 +82,6 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         ratesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, ratesParameter.getDimension()));
 
         for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
-            rateIndicatorParameter.setParameterValue(i, 0.0);
             ratesParameter.setParameterValue(i, 1.0);
         }
 

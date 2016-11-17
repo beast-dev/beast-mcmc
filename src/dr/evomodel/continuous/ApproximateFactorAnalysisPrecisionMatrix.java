@@ -25,13 +25,17 @@
 
 package dr.evomodel.continuous;
 
+import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 /**
  * @author Marc A. Suchard
+ * @author Max R. Tolkoff
  *
  */
 
@@ -46,7 +50,7 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
 
     private final MatrixParameterInterface L;
     private final Parameter gamma;
-    private final int dim;
+    private int dim;
 
     private final static boolean DEBUG = false;
 
@@ -77,6 +81,7 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
     }
 
     private void computeValuesImp() {
+        dim = L.getColumnDimension();
         double[][] matrix = new double[dim][dim];
 
         for (int row = 0; row < dim; ++row) {
@@ -87,6 +92,39 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
                 }
                 matrix[row][col] = sum;
             }
+
+
+        }
+        DoubleMatrix2D LL = new DenseDoubleMatrix2D(matrix);
+        RobustSingularValueDecomposition SVD = new RobustSingularValueDecomposition(LL);
+        double[][] U = SVD.getU().toArray();
+        double[][] V = SVD.getV().toArray();
+        DoubleMatrix2D EvalsTemp= SVD.getS();
+
+        double[] EVals = new double[EvalsTemp.rows()];
+        for (int i = 0; i < EVals.length ; i++) {
+            EVals[i] = EvalsTemp.get(i, i);
+        }
+
+        for (int i = 0; i < EVals.length ; i++) {
+            if(Math.abs(EVals[i]) >= Math.pow(10, -10)){
+                EVals[i] = 1 / EVals[i];
+            }
+        }
+        for (int i = 0; i < EVals.length; i++) {
+            for (int j = 0; j < EVals.length; j++) {
+                U[i][j] = U[i][j] * EVals[i];
+            }
+        }
+
+        for (int i = 0; i <U.length; i++) {
+            for (int j = 0; j <V.length ; j++) {
+                matrix[i][j] = U[j][i] * V[i][j];
+            }
+
+        }
+
+        for (int row = 0; row < dim; row++) {
 
             matrix[row][row] += gamma.getParameterValue(row);
         }
@@ -346,3 +384,29 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
         }
     };
 }
+//        }
+//                DoubleMatrix2D LL = new DenseDoubleMatrix2D(matrix);
+//                RobustSingularValueDecomposition SVD = new RobustSingularValueDecomposition(LL);
+//                double[][] U = SVD.getU().toArray();
+//                double[][] V = SVD.getV().toArray();
+//                double[] EVals = SVD.getSingularValues();
+//
+//                for (int i = 0; i <EVals.length ; i++) {
+//        if(EVals[i] != 0){
+//        EVals[i] = 1 / EVals[i];
+//        }
+//        }
+//        for (int i = 0; i < EVals.length; i++) {
+//        for (int j = 0; j < EVals.length; j++) {
+//        U[i][j] = U[i][j] * EVals[i];
+//        }
+//        }
+//
+//        for (int i = 0; i <U.length; i++) {
+//        for (int j = 0; j <V.length ; j++) {
+//        matrix[i][j] = U[j][i] * V[i][j];
+//        }
+//
+//        }
+//
+//        for (int row = 0; row < dim; row++) {

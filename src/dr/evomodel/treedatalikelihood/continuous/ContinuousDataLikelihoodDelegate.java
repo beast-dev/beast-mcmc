@@ -363,6 +363,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 }
             }
 
+        } else if (model instanceof BranchRateModel) {
+            fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");
         }

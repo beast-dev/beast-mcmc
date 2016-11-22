@@ -26,6 +26,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     SimpleMCMCOperator loadingsOperator;
     SimpleMCMCOperator factorOperator;
     BitFlipOperator sparsityOperator;
+    NegationOperator NOp;
     AdaptableSizeFastMatrixParameter storedFactors;
     AdaptableSizeFastMatrixParameter storedLoadings;
     AdaptableSizeFastMatrixParameter storedCutoffs;
@@ -39,7 +40,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     public static final boolean DEBUG = false;
 
 
-    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm, DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior, SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator, BitFlipOperator sparsityOperator, MatrixSizePrior rowPrior) {
+    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm, DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior, SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator, BitFlipOperator sparsityOperator, NegationOperator NOp, MatrixSizePrior rowPrior) {
         setWeight(weight);
         this.factors = factors;
         this.loadings = loadings;
@@ -49,6 +50,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         this.lfm = lfm;
         this.sizeParam = sizeParam;
         this.chainLength = chainLength;
+        this.NOp = NOp;
 //        Parameter[] paramListTemp = new Parameter.Default[1];
 //        paramListTemp[1] = new Parameter.Default(factors.getColumnDimension());
 //        this.traitsTemp = new CompoundParameter(null, paramListTemp);
@@ -271,7 +273,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         if(loadingsOperator instanceof GibbsOperator)
             loadingsOperator.setPathParameter(sizeParam);
 //        if(separator == null){
-            separator = new double[2];
+            separator = new double[3];
             double foWeight = 0;
             if(factorOperator != null)
                 foWeight = factors.getColumnDimension() * chainLength;
@@ -290,12 +292,17 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 
         double sparoWeight = 0;
         if(sparsityOperator !=null)
-            sparoWeight = (loadings.getRowDimension() * loadings.getColumnDimension() + factors.getColumnDimension() * factors.getRowDimension()) * chainLength;
+            sparoWeight = (loadings.getRowDimension() * loadings.getColumnDimension()
+//                    + factors.getColumnDimension() * factors.getRowDimension()
+            ) * chainLength;
+        double negWeight = 0;
+        if(NOp !=null)
+            negWeight = (loadings.getRowDimension() * loadings.getColumnDimension()) * chainLength;;
 
-
-            double total = foWeight + loWeight + sparoWeight;
+            double total = foWeight + loWeight + sparoWeight + negWeight;
             separator[0] = foWeight / total;
             separator[1] = (foWeight + loWeight) / total;
+            separator[2] = (foWeight + loWeight + sparoWeight) / total;
 //        }
         for (int i = 0; i < total; i++) {
             double rand = MathUtils.nextDouble();
@@ -329,7 +336,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                     }
                 }
             }
-            else {
+            else if (rand < separator[2]){
                 lfm.storeModelState();
                 sparsityPrior.storeModelState();
                 double mhRatio = - lfm.getLogLikelihood() * sizeParam - sparsityPrior.getLogLikelihood();
@@ -347,6 +354,26 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                     sparsityPrior.acceptModelState();
 //                    lfm.makeDirty();
 //                    sparsityPrior.makeDirty();
+                }
+            }
+            else {
+                lfm.storeModelState();
+                if (loadingsPrior instanceof AbstractModelLikelihood)
+                    ((AbstractModelLikelihood) loadingsPrior).storeModelState();
+                double mhRatio = -lfm.getLogLikelihood() * sizeParam - loadingsPrior.getLogLikelihood();
+                mhRatio += NOp.doOperation();
+                mhRatio += lfm.getLogLikelihood() * sizeParam + loadingsPrior.getLogLikelihood();
+                mhRatio = Math.min(1, Math.exp(mhRatio));
+                if (MathUtils.nextDouble() > mhRatio || Double.isNaN(loadingsPrior.getLogLikelihood())) {
+                    lfm.restoreModelState();
+                    if (loadingsPrior instanceof AbstractModelLikelihood)
+                        ((AbstractModelLikelihood) loadingsPrior).restoreModelState();
+//                    lfm.makeDirty();
+//                    sparsityPrior.makeDirty();
+                } else {
+                    lfm.acceptModelState();
+                    if (loadingsPrior instanceof AbstractModelLikelihood)
+                        ((AbstractModelLikelihood) loadingsPrior).acceptModelState();
                 }
             }
 

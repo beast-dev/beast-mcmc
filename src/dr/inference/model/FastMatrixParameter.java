@@ -49,6 +49,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
         this.rowDimension = rowDimension;
         this.colDimension = colDimension;
+        DefaultBounds bounds = new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, singleParameter.getDimension());
+        addBounds(bounds);
     }
 
     public Parameter getParameter(int index) {

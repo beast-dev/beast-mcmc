@@ -2,6 +2,7 @@ package dr.inference.operators;
 
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 
@@ -15,14 +16,15 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     AdaptableSizeFastMatrixParameter loadings;
     AdaptableSizeFastMatrixParameter cutoffs;
     AdaptableSizeFastMatrixParameter loadingsSparsity;
-    LatentFactorModel lfm;
+    AbstractModelLikelihood lfm;
     DeterminentalPointProcessPrior sparsityPrior;
+    Likelihood loadingsPrior;
     int chainLength;
     CompoundParameter traitsTemp;
     double sizeParam;
     private double[] separator;
-    LoadingsGibbsTruncatedOperator loadingsOperator;
-    FactorTreeGibbsOperator factorOperator;
+    SimpleMCMCOperator loadingsOperator;
+    SimpleMCMCOperator factorOperator;
     BitFlipOperator sparsityOperator;
     AdaptableSizeFastMatrixParameter storedFactors;
     AdaptableSizeFastMatrixParameter storedLoadings;
@@ -37,7 +39,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     public static final boolean DEBUG = false;
 
 
-    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, LatentFactorModel lfm, DeterminentalPointProcessPrior sparsityPrior, LoadingsGibbsTruncatedOperator loadingsOperator, FactorTreeGibbsOperator factorOperator, BitFlipOperator sparsityOperator, MatrixSizePrior rowPrior) {
+    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm, DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior, SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator, BitFlipOperator sparsityOperator, MatrixSizePrior rowPrior) {
         setWeight(weight);
         this.factors = factors;
         this.loadings = loadings;
@@ -50,14 +52,18 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 //        Parameter[] paramListTemp = new Parameter.Default[1];
 //        paramListTemp[1] = new Parameter.Default(factors.getColumnDimension());
 //        this.traitsTemp = new CompoundParameter(null, paramListTemp);
-        this.storedFactors = new AdaptableSizeFastMatrixParameter(factors.getId()+".stored", 1, 1, factors.getMaxRowDimension(), factors.getMaxColumnDimension(), 1, false);
+        if(factors != null)
+            this.storedFactors = new AdaptableSizeFastMatrixParameter(factors.getId()+".stored", 1, 1, factors.getMaxRowDimension(), factors.getMaxColumnDimension(), 1, false);
         this.storedLoadings = new AdaptableSizeFastMatrixParameter(loadings.getId()+".stored", 1, 1, loadings.getMaxRowDimension(), loadings.getMaxColumnDimension(), 1, false);
-        this.storedCutoffs = new AdaptableSizeFastMatrixParameter(cutoffs.getId()+".stored", 1, 1, cutoffs.getMaxRowDimension(), cutoffs.getMaxColumnDimension(), 1, false);
-        this.storedLoadingsSparsity = new AdaptableSizeFastMatrixParameter(loadingsSparsity.getId()+".stored", 1, 1, loadingsSparsity.getMaxRowDimension(), loadingsSparsity.getMaxColumnDimension(), 1, false);
+        if(cutoffs != null)
+            this.storedCutoffs = new AdaptableSizeFastMatrixParameter(cutoffs.getId()+".stored", 1, 1, cutoffs.getMaxRowDimension(), cutoffs.getMaxColumnDimension(), 1, false);
+        if(loadingsSparsity != null)
+            this.storedLoadingsSparsity = new AdaptableSizeFastMatrixParameter(loadingsSparsity.getId()+".stored", 1, 1, loadingsSparsity.getMaxRowDimension(), loadingsSparsity.getMaxColumnDimension(), 1, false);
         this.loadingsOperator = loadingsOperator;
         this.factorOperator = factorOperator;
         this.sparsityOperator = sparsityOperator;
         this.rowPrior = rowPrior;
+        this.loadingsPrior = loadingsPrior;
         storeDimensions();
     }
 
@@ -79,8 +85,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         }
         else{
             callWeighting *= .99;
-            if(callWeighting < .01){
-                callWeighting = .01;
+            if(callWeighting < MIN_WEIGHT){
+                callWeighting = MIN_WEIGHT;
             }
             if(callWeighting > MathUtils.nextDouble()){
                 performOperation();
@@ -137,34 +143,41 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             System.out.println();
         }
 
-        int currentSize = factors.getRowDimension();
-        if((random > .5 || currentSize == 1) && currentSize != factors.getMaxRowDimension()){
-            if(factors.getRowDimension() == 1) {
-                from1 = Math.log(2);
-            }
-            if(factors.getRowDimension() == factors.getRowDimension() - 1){
+        int currentSize = loadings.getColumnDimension();
+        if((random > .5 || currentSize == 1) && currentSize != loadings.getMaxColumnDimension()){
+            if(loadings.getColumnDimension() == 1) {
                 from1 = -Math.log(2);
             }
-            factors.setRowDimension(factors.getRowDimension()+1);
+            if(loadings.getColumnDimension() == loadings.getMaxColumnDimension() - 1){
+                from1 = Math.log(2);
+            }
+            if(factors != null)
+                factors.setRowDimension(factors.getRowDimension()+1);
             loadings.setColumnDimension(loadings.getColumnDimension()+1);
-            loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()+1);
-            cutoffs.setColumnDimension(cutoffs.getColumnDimension()+1);
+            if(loadingsSparsity != null)
+                loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()+1);
+            if(cutoffs != null)
+                cutoffs.setColumnDimension(cutoffs.getColumnDimension()+1);
             if (DEBUG) {
                 System.out.println("up");
             }
             increment = true;
         }
         else{
-            if(factors.getRowDimension() == factors.getMaxRowDimension()) {
-                from1 = Math.log(2);
-            }
-            if(currentSize == 2 || currentSize == factors.getDimension()){
+            if(loadings.getColumnDimension() == loadings.getMaxColumnDimension()) {
                 from1 = -Math.log(2);
             }
-            factors.setRowDimension(factors.getRowDimension()-1);
+            if(currentSize == 2){
+                from1 = Math.log(2);
+            }
+            if(factors != null)
+                factors.setRowDimension(factors.getRowDimension()-1);
+
             loadings.setColumnDimension(loadings.getColumnDimension()-1);
-            loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()-1);
-            cutoffs.setColumnDimension(cutoffs.getColumnDimension()-1);
+            if(loadingsSparsity != null)
+                loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()-1);
+            if(cutoffs != null)
+                cutoffs.setColumnDimension(cutoffs.getColumnDimension()-1);
             if (DEBUG) {
                 System.out.println("down");
             }
@@ -173,7 +186,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 
         //hack to let me store model state later in the code
         lfm.acceptModelState();
-        sparsityPrior.acceptModelState();
+        if(sparsityPrior != null)
+            sparsityPrior.acceptModelState();
 
 
         try {
@@ -212,7 +226,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             }
             lfm.acceptModelState();
             lfm.makeDirty();
-            sparsityPrior.acceptModelState();
+            if(sparsityPrior != null)
+                sparsityPrior.acceptModelState();
         }
         else{
             restoreDimensions();
@@ -224,7 +239,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                 }
                 System.out.println();
             }
-            sparsityPrior.makeDirty();
+            if(sparsityPrior != null)
+                sparsityPrior.makeDirty();
             lfm.makeDirty();
             if (DEBUG) {
                 System.out.println("sparsity prior lnL = " + sparsityPrior.getLogLikelihood());
@@ -235,9 +251,12 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                 }
                 System.out.println();
             }
-            factors.storeParameterValues();
+            if(factors != null)
+                factors.storeParameterValues();
             loadings.storeParameterValues();
-            loadingsSparsity.storeParameterValues();
+            if(loadingsSparsity != null)
+                loadingsSparsity.storeParameterValues();
+            if(cutoffs != null)
             cutoffs.storeParameterValues();
             if (DEBUG) {
                 System.out.println("rejected!\n" + test);
@@ -247,13 +266,33 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     }
 
     private void iterate() throws OperatorFailedException {
-        factorOperator.setPathParameter(sizeParam);
-        loadingsOperator.setPathParameter(sizeParam);
+        if(factorOperator != null)
+            factorOperator.setPathParameter(sizeParam);
+        if(loadingsOperator instanceof GibbsOperator)
+            loadingsOperator.setPathParameter(sizeParam);
 //        if(separator == null){
             separator = new double[2];
-            double foWeight = factors.getColumnDimension() * chainLength;
-            double loWeight = loadings.getColumnDimension() * chainLength;
-            double sparoWeight = (loadings.getRowDimension() * loadings.getColumnDimension() + factors.getColumnDimension() * factors.getRowDimension()) * chainLength;
+            double foWeight = 0;
+            if(factorOperator != null)
+                foWeight = factors.getColumnDimension() * chainLength;
+
+
+
+            double loWeight = 0;
+            if(loadingsOperator instanceof GibbsOperator){
+                loWeight = loadings.getColumnDimension() * chainLength;
+            }
+            else{
+                loWeight = loadings.getColumnDimension() * loadings.getRowDimension() * chainLength;
+            }
+
+
+
+        double sparoWeight = 0;
+        if(sparsityOperator !=null)
+            sparoWeight = (loadings.getRowDimension() * loadings.getColumnDimension() + factors.getColumnDimension() * factors.getRowDimension()) * chainLength;
+
+
             double total = foWeight + loWeight + sparoWeight;
             separator[0] = foWeight / total;
             separator[1] = (foWeight + loWeight) / total;
@@ -264,7 +303,31 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                 factorOperator.doOperation();
             }
             else if (rand < separator[1]){
-                loadingsOperator.doOperation();
+                if(loadingsOperator instanceof GibbsOperator)
+                    loadingsOperator.doOperation();
+                else{
+                    lfm.storeModelState();
+                    if(loadingsPrior instanceof AbstractModelLikelihood)
+                        ((AbstractModelLikelihood) loadingsPrior).storeModelState();
+                    double mhRatio = - lfm.getLogLikelihood() * sizeParam - loadingsPrior.getLogLikelihood();
+                    mhRatio += loadingsOperator.doOperation();
+                    mhRatio += lfm.getLogLikelihood() * sizeParam + loadingsPrior.getLogLikelihood();
+                    mhRatio = Math.min(1, Math.exp(mhRatio));
+                    if(MathUtils.nextDouble() > mhRatio || Double.isNaN(loadingsPrior.getLogLikelihood())){
+                        lfm.restoreModelState();
+                        if(loadingsPrior instanceof AbstractModelLikelihood)
+                            ((AbstractModelLikelihood) loadingsPrior).restoreModelState();
+//                    lfm.makeDirty();
+//                    sparsityPrior.makeDirty();
+                    }
+                    else{
+                        lfm.acceptModelState();
+                        if(loadingsPrior instanceof AbstractModelLikelihood)
+                            ((AbstractModelLikelihood) loadingsPrior).acceptModelState();
+//                    lfm.makeDirty();
+//                    sparsityPrior.makeDirty();
+                    }
+                }
             }
             else {
                 lfm.storeModelState();
@@ -288,47 +351,73 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             }
 
         }
-        factorOperator.setPathParameter(1);
-        loadingsOperator.setPathParameter(1);
+        if(factorOperator != null)
+            factorOperator.setPathParameter(1);
+        if(loadingsOperator instanceof GibbsOperator)
+         loadingsOperator.setPathParameter(1);
     }
 
-    private void storeDimensions(){storedFactors.setRowDimension(factors.getRowDimension());
-        storedFactors.setColumnDimension(factors.getColumnDimension());
+    private void storeDimensions(){
+        if(factors != null){
+            storedFactors.setRowDimension(factors.getRowDimension());
+            storedFactors.setColumnDimension(factors.getColumnDimension());
+        }
         storedLoadings.setRowDimension(loadings.getRowDimension());
         storedLoadings.setColumnDimension(loadings.getColumnDimension());
-        storedLoadingsSparsity.setRowDimension(loadingsSparsity.getRowDimension());
-        storedLoadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension());
-        storedCutoffs.setRowDimension(cutoffs.getRowDimension());
-        storedCutoffs.setColumnDimension(cutoffs.getColumnDimension());}
+        if(loadingsSparsity != null){
+            storedLoadingsSparsity.setRowDimension(loadingsSparsity.getRowDimension());
+            storedLoadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension());
+        }
+        if(cutoffs != null){
+            storedCutoffs.setRowDimension(cutoffs.getRowDimension());
+            storedCutoffs.setColumnDimension(cutoffs.getColumnDimension());
+        }
+    }
 
     private void restoreDimensions(){
-        factors.setRowDimension(storedFactors.getRowDimension());
-        factors.setColumnDimension(storedFactors.getColumnDimension());
+        if(factors != null){
+            factors.setRowDimension(storedFactors.getRowDimension());
+            factors.setColumnDimension(storedFactors.getColumnDimension());
+        }
         loadings.setRowDimension(storedLoadings.getRowDimension());
         loadings.setColumnDimension(storedLoadings.getColumnDimension());
-        loadingsSparsity.setRowDimension(storedLoadingsSparsity.getRowDimension());
-        loadingsSparsity.setColumnDimension(storedLoadingsSparsity.getColumnDimension());
-        cutoffs.setRowDimension(storedCutoffs.getRowDimension());
-        cutoffs.setColumnDimension(storedCutoffs.getColumnDimension());}
+        if(loadingsSparsity != null){
+            loadingsSparsity.setRowDimension(storedLoadingsSparsity.getRowDimension());
+            loadingsSparsity.setColumnDimension(storedLoadingsSparsity.getColumnDimension());
+        }
+        if(cutoffs != null){
+            cutoffs.setRowDimension(storedCutoffs.getRowDimension());
+            cutoffs.setColumnDimension(storedCutoffs.getColumnDimension());
+        }
+    }
 
 
     private void storeValues(){
+        if(factors != null){
         for (int i = 0; i < factors.getDimension(); i++) {
             storedFactors.setParameterValue(i, factors.getParameterValue(i));}
+        }
+
         for (int i = 0; i < loadings.getDimension(); i++) {
             storedLoadings.setParameterValue(i, loadings.getParameterValue(i));
-            storedLoadingsSparsity.setParameterValue(i, loadingsSparsity.getParameterValue(i));
-            storedCutoffs.setParameterValue(i, cutoffs.getParameterValue(i));
+            if(loadingsSparsity != null)
+                storedLoadingsSparsity.setParameterValue(i, loadingsSparsity.getParameterValue(i));
+            if(storedCutoffs != null)
+               storedCutoffs.setParameterValue(i, cutoffs.getParameterValue(i));
         }
     }
 
     private void restoreValues(){
+        if(factors != null){
         for (int i = 0; i < factors.getDimension(); i++) {
             factors.setParameterValue(i, storedFactors.getParameterValue(i));}
+        }
         for (int i = 0; i < loadings.getDimension(); i++) {
             loadings.setParameterValue(i, storedLoadings.getParameterValue(i));
-            loadingsSparsity.setParameterValue(i, storedLoadingsSparsity.getParameterValue(i));
-            cutoffs.setParameterValue(i, storedCutoffs.getParameterValue(i));
+            if(loadingsSparsity != null)
+                loadingsSparsity.setParameterValue(i, storedLoadingsSparsity.getParameterValue(i));
+            if(cutoffs != null)
+                cutoffs.setParameterValue(i, storedCutoffs.getParameterValue(i));
         }
     }
 

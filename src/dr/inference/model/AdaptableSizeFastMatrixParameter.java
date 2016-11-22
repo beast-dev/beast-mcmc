@@ -83,6 +83,14 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         }
     }
 
+    public void setParameterValue(int row, int column, double value){
+        if(row >= column || !lowerTriangle){
+            super.setParameterValueQuietly(row, column, value);
+            fireParameterChangedEvent(getRowDimension() * column + row, ChangeType.VALUE_CHANGED);
+        }
+
+    }
+
     public void setParameterValueQuietly(int index, double value){
         int row = index % rowDimension;
         int col = index / rowDimension;
@@ -92,10 +100,24 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         }
     }
 
+    public void setParameterValueQuietly(int row, int column, double value){
+        if(row >= column || !lowerTriangle){
+            super.setParameterValueQuietly(row, column, value);
+            }
+
+    }
+
     public double getParameterValue(int index){
         int row = index % rowDimension;
         int col = index / rowDimension;
 
+        if(row >= col || !lowerTriangle) {
+                return super.getParameterValue(row, col);
+            }
+            else return 0;
+    }
+
+    public double getParameterValue(int row, int col){
         if(row >= col || !lowerTriangle) {
             return super.getParameterValue(row, col);
         }
@@ -155,10 +177,6 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         }
     }
 
-    public void setParameterValue(int row, int column, double value){
-        super.setParameterValueQuietly(row, column, value);
-        fireParameterChangedEvent(getRowDimension() * column + row, ChangeType.VALUE_CHANGED);
 
-    }
 }
 

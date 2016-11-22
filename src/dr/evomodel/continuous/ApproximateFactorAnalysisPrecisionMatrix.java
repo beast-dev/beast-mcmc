@@ -65,10 +65,8 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
         L.addVariableListener(this);
         gamma.addVariableListener(this);
 
-        this.dim = L.getColumnDimension();
-        if (L.getRowDimension() != dim) {
-            throw new IllegalArgumentException("Can only use square matrices");
-        }
+        this.dim = L.getRowDimension();
+
 
         values = new double[dim * dim];
     }
@@ -81,13 +79,13 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
     }
 
     private void computeValuesImp() {
-        dim = L.getColumnDimension();
+        dim = L.getRowDimension();
         double[][] matrix = new double[dim][dim];
 
-        for (int row = 0; row < dim; ++row) {
-            for (int col = 0; col < dim; ++col) {
+        for (int row = 0; row < L.getRowDimension(); ++row) {
+            for (int col = 0; col < L.getRowDimension(); ++col) {
                 double sum = 0;
-                for (int k = 0; k < dim; ++k) { // TODO Many columns are 0
+                for (int k = 0; k < L.getColumnDimension(); ++k) {
                     sum += L.getParameterValue(row, k) * L.getParameterValue(col, k);
                 }
                 matrix[row][col] = sum;
@@ -110,16 +108,18 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
             if(Math.abs(EVals[i]) >= Math.pow(10, -10)){
                 EVals[i] = 1 / EVals[i];
             }
+            else
+                EVals[i] = 0;
         }
-        for (int i = 0; i < EVals.length; i++) {
-            for (int j = 0; j < EVals.length; j++) {
-                U[i][j] = U[i][j] * EVals[i];
-            }
-        }
+
 
         for (int i = 0; i <U.length; i++) {
             for (int j = 0; j <V.length ; j++) {
-                matrix[i][j] = U[j][i] * V[i][j];
+                matrix[i][j] = 0;
+                for (int k = 0; k < U.length; k++) {
+                    matrix[i][j] += V[i][k] * EVals[k] * U[j][k];
+                }
+
             }
 
         }

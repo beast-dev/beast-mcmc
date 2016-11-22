@@ -120,20 +120,19 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
 
         @Override
-        public void addBounds(Bounds<Double> bounds) {
-            matrix.getUniqueParameter(0).addBounds(bounds);
+        public void addBounds(Bounds<Double> boundary) {
+            bounds = boundary;
         }
 
         @Override
         public Bounds<Double> getBounds() {
-            return matrix.getUniqueParameter(0).getBounds();
+            return bounds;
         }
 
         @Override
         public void fireParameterChangedEvent(int index, ChangeType type){
             matrix.fireParameterChangedEvent(index, type);
         }
-
 
         @Override
         public void addDimension(int index, double value) {
@@ -149,6 +148,9 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         public int getDimension() {
             return matrix.getRowDimension();
         }
+
+        private Bounds<Double> bounds = null;
+
     }
 
     private final int index(int row, int col) {

@@ -73,7 +73,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.setCallback(this);
 
         this.treeModel = treeModel;
-        addModel(treeModel);
+        isTreeRandom = treeModel.isTreeRandom();
+        if (isTreeRandom) {
+            addModel(treeModel);
+        }
 
         likelihoodKnown = false;
 
@@ -158,6 +161,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
 
+                if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
+
                 if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
@@ -169,12 +174,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
-//                    System.err.println("Full tree update event - these events currently aren't used\n" +
-//                            "so either this is in error or a new feature is using them so remove this message.");
                     updateAllNodes();
                 } else {
                     // Other event types are ignored (probably trait changes).
-                    //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
             }
         } else if (model == likelihoodDelegate) {
@@ -415,6 +417,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected boolean likelihoodKnown = false;
 
     private boolean hasInitialized = false;
+
+    private final boolean isTreeRandom;
 
     private int totalOperationCount = 0;
     private int totalMatrixUpdateCount = 0;

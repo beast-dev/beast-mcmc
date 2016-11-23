@@ -50,15 +50,13 @@ public class NewHiddenNucleotides extends Nucleotides implements HiddenDataType 
      */
     public boolean[] getStateSet(int state) {
 
+        final boolean[] originalStateSet = Nucleotides.INSTANCE.getStateSet(state);
         boolean[] stateSet = new boolean[stateCount * hiddenClassCount];
 
-        if (!isAmbiguousState(state)) {
-            for (int h = 0; h < hiddenClassCount; h++)
-                stateSet[h * stateCount + state] = true;
-        } else {
-            for (int i = 0; i < stateCount; i++) {
-                stateSet[i] = true;
-            }
+        int offset = 0;
+        for (int h = 0; h < hiddenClassCount; ++h) {
+            System.arraycopy(originalStateSet, 0, stateSet, offset, stateCount);
+            offset += stateCount;
         }
 
         return stateSet;

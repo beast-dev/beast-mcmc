@@ -2,12 +2,11 @@ package dr.inferencexml.operators;
 
 import dr.inference.distribution.DeterminentalPointProcessPrior;
 import dr.inference.distribution.RowDimensionPoissonPrior;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.BitFlipOperator;
-import dr.inference.operators.FactorRJMCMCOperator;
-import dr.inference.operators.FactorTreeGibbsOperator;
-import dr.inference.operators.LoadingsGibbsTruncatedOperator;
+import dr.inference.model.Likelihood;
+import dr.inference.operators.*;
 import dr.xml.*;
 
 /**
@@ -22,29 +21,71 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
     public static final String LOADINGS = "loadings";
     public static final String CUTOFFS = "cutoffs";
     public static final String SIZE_PARAMETER = "sizeParameter";
-
-
+    public static final String LOADINGS_PRIOR = "loadingsPrior";
+    public static final String FACTOR_OPERATOR = "factorOperator";
+    public static final String LOADINGS_OPERATOR = "loadingsOperator";
+    public static final String ROW_PRIOR = "rowPrior";
+    public static final String SPARSITY_PRIOR = "sparsityPrior";
+    public static final String NEGATION_OPERATOR = "negationOperator";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        //attributes
         double weight = xo.getDoubleAttribute(WEIGHT);
         int chainLength = xo.getIntegerAttribute(CHAIN_LENGTH);
-        AdaptableSizeFastMatrixParameter factors, loadings, cutoffs, loadingsSparcity;
-        factors = (AdaptableSizeFastMatrixParameter) xo.getChild(FACTORS).getChild(AdaptableSizeFastMatrixParameter.class);
-        loadings = (AdaptableSizeFastMatrixParameter) xo.getChild(LOADINGS).getChild(AdaptableSizeFastMatrixParameter.class);
-        cutoffs = (AdaptableSizeFastMatrixParameter) xo.getChild(CUTOFFS).getChild(AdaptableSizeFastMatrixParameter.class);
-        loadingsSparcity = (AdaptableSizeFastMatrixParameter) xo.getChild(LOADINGS_SPARSITY).getChild(AdaptableSizeFastMatrixParameter.class);
-        DeterminentalPointProcessPrior DPP = (DeterminentalPointProcessPrior) xo.getChild(DeterminentalPointProcessPrior.class);
-        LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
-        BitFlipOperator sparsityOperator = (BitFlipOperator) xo.getChild(BitFlipOperator.class);
-        LoadingsGibbsTruncatedOperator loadingsOperator = (LoadingsGibbsTruncatedOperator) xo.getChild(LoadingsGibbsTruncatedOperator.class);
-        FactorTreeGibbsOperator factorOperator = (FactorTreeGibbsOperator) xo.getChild(FactorTreeGibbsOperator.class);
-        RowDimensionPoissonPrior rowPrior = (RowDimensionPoissonPrior) xo.getChild(RowDimensionPoissonPrior.class);
         double sizeParameter = xo.getDoubleAttribute(SIZE_PARAMETER);
 
+        //declaration
+        AdaptableSizeFastMatrixParameter factors, loadings, cutoffs, loadingsSparcity;
 
 
-        return new FactorRJMCMCOperator(weight, sizeParameter, chainLength, factors, loadings, cutoffs, loadingsSparcity, LFM, DPP, loadingsOperator, factorOperator, sparsityOperator, rowPrior);
+        //parameters
+        if(xo.hasChildNamed(FACTORS))
+            factors = (AdaptableSizeFastMatrixParameter) xo.getChild(FACTORS).getChild(AdaptableSizeFastMatrixParameter.class);
+        else
+            factors = null;
+
+
+        loadings = (AdaptableSizeFastMatrixParameter) xo.getChild(LOADINGS).getChild(AdaptableSizeFastMatrixParameter.class);
+
+        if(xo.hasChildNamed(CUTOFFS)){
+            cutoffs = (AdaptableSizeFastMatrixParameter) xo.getChild(CUTOFFS).getChild(AdaptableSizeFastMatrixParameter.class);}
+        else
+            cutoffs = null;
+        if(xo.hasChildNamed(LOADINGS_SPARSITY))
+            loadingsSparcity = (AdaptableSizeFastMatrixParameter) xo.getChild(LOADINGS_SPARSITY).getChild(AdaptableSizeFastMatrixParameter.class);
+        else
+            loadingsSparcity = null;
+
+        //models
+        DeterminentalPointProcessPrior DPP = null;
+        if(xo.getChild(SPARSITY_PRIOR) != null)
+             DPP = (DeterminentalPointProcessPrior) xo.getChild(SPARSITY_PRIOR).getChild(DeterminentalPointProcessPrior.class);
+        NegationOperator NOp= null;
+        if(xo.getChild(NEGATION_OPERATOR) != null){
+            NOp = (NegationOperator) xo.getChild(NEGATION_OPERATOR).getChild(NegationOperator.class);
+        }
+        AbstractModelLikelihood LFM = (AbstractModelLikelihood) xo.getChild(AbstractModelLikelihood.class);
+        RowDimensionPoissonPrior rowPrior = (RowDimensionPoissonPrior) xo.getChild(ROW_PRIOR).getChild(RowDimensionPoissonPrior.class);
+        Likelihood loadingsPrior = null;
+        if(xo.hasChildNamed(LOADINGS_PRIOR)){
+            loadingsPrior = (Likelihood) xo.getChild(LOADINGS_PRIOR).getChild(Likelihood.class);
+        }
+
+        //operators
+        BitFlipOperator sparsityOperator = null;
+        if (xo.getChild(BitFlipOperator.class) != null)
+            sparsityOperator = (BitFlipOperator) xo.getChild(BitFlipOperator.class);
+        SimpleMCMCOperator loadingsOperator = (SimpleMCMCOperator) xo.getChild(LOADINGS_OPERATOR).getChild(SimpleMCMCOperator.class);
+        SimpleMCMCOperator factorOperator = null;
+        if(xo.getChild(FACTOR_OPERATOR) != null)
+            factorOperator = (SimpleMCMCOperator) xo.getChild(FACTOR_OPERATOR).getChild(FactorTreeGibbsOperator.class);
+
+
+
+
+
+        return new FactorRJMCMCOperator(weight, sizeParameter, chainLength, factors, loadings, cutoffs, loadingsSparcity, LFM, DPP, loadingsPrior, loadingsOperator, factorOperator, sparsityOperator, NOp, rowPrior);
     }
 
     @Override
@@ -52,20 +93,26 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
         return rules;
     }
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(LoadingsGibbsTruncatedOperator.class),
-            new ElementRule(FactorTreeGibbsOperator.class),
-            new ElementRule(BitFlipOperator.class),
-            new ElementRule(LatentFactorModel.class),
-            new ElementRule(DeterminentalPointProcessPrior.class),
+            new ElementRule(LOADINGS_OPERATOR, new XMLSyntaxRule[]{
+                    new ElementRule(SimpleMCMCOperator.class)}),
+            new ElementRule(FACTOR_OPERATOR, new XMLSyntaxRule[]{
+                    new ElementRule(SimpleMCMCOperator.class)}, true),
+            new ElementRule(BitFlipOperator.class, true),
+            new ElementRule(AbstractModelLikelihood.class),
+            new ElementRule(SPARSITY_PRIOR, new XMLSyntaxRule[]{
+                    new ElementRule(DeterminentalPointProcessPrior.class)}, true),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
-                    new ElementRule(AdaptableSizeFastMatrixParameter.class)}),
+                    new ElementRule(AdaptableSizeFastMatrixParameter.class)}, true),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(AdaptableSizeFastMatrixParameter.class)}),
             new ElementRule(CUTOFFS, new XMLSyntaxRule[]{
-                    new ElementRule(AdaptableSizeFastMatrixParameter.class)}),
+                    new ElementRule(AdaptableSizeFastMatrixParameter.class)}, true),
             new ElementRule(LOADINGS_SPARSITY, new XMLSyntaxRule[]{
-                    new ElementRule(AdaptableSizeFastMatrixParameter.class)}),
-            new ElementRule(RowDimensionPoissonPrior.class),
+                    new ElementRule(AdaptableSizeFastMatrixParameter.class)}, true),
+            new ElementRule(NEGATION_OPERATOR, new XMLSyntaxRule[]{
+                    new ElementRule(NegationOperator.class)}, true),
+            new ElementRule(ROW_PRIOR, new XMLSyntaxRule[]{
+                    new ElementRule(RowDimensionPoissonPrior.class)}),
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newIntegerRule(CHAIN_LENGTH),
             AttributeRule.newDoubleRule(SIZE_PARAMETER),

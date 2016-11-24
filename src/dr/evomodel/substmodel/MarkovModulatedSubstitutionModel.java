@@ -25,21 +25,24 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -97,6 +100,12 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         this.switchingRates = switchingRates;
         addVariable(switchingRates);
 
+        if (switchingRates.getDimension() != 2 * (numBaseModel - 1)
+                && switchingRates.getDimension() != numBaseModel * (numBaseModel - 1)
+                ) {
+            throw new RuntimeException("Wrong switching rate dimensions");
+        }
+
         List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
         int stateSizes = 0;
 
@@ -133,7 +142,13 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         }
         this.gammaRateModel = gammaRateModel;
 
-        if (rateScalar != null) addVariable(rateScalar);
+        if (rateScalar != null) {
+            addVariable(rateScalar);
+
+            if (rateScalar.getDimension() != 1 && rateScalar.getDimension() != numBaseModel) {
+                throw new RuntimeException("Wrong rate scalar dimensions");
+            }
+        }
         this.rateScalar = rateScalar;
 
         setDoNormalization(false);
@@ -332,7 +347,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         if (variable == switchingRates || variable == rateScalar) {
             // Update rates
             updateMatrix = true;
-            if (variable == rateScalar)
+//            if (variable == rateScalar)
                 fireModelChanged(); // TODO Determine if necessary for ExposeRateCategoriesWrapper
         }
         // else do nothing, action taken care of at individual base models

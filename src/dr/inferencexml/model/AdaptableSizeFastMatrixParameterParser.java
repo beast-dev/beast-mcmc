@@ -32,7 +32,7 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
         if(xo.hasAttribute(LOWER_TRIANGLE))
             lowerTriangle = xo.getBooleanAttribute(LOWER_TRIANGLE);
 
-      return new AdaptableSizeFastMatrixParameter(name, rowDimension, columnDimension, MaxRowSize, MaxColumnSize, startingValue, false);
+      return new AdaptableSizeFastMatrixParameter(name, rowDimension, columnDimension, MaxRowSize, MaxColumnSize, startingValue, lowerTriangle);
     }
 
     @Override

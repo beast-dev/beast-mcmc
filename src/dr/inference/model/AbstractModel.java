@@ -248,13 +248,15 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
 
     public final void storeModelState() {
         if (isValidState) {
-            //System.out.println("STORE MODEL: " + getModelName() + "/" + getId());
+//            System.out.println("STORE MODEL: " + getModelName() + "/" + getId() + "/" + getClass().getCanonicalName());
 
             for (Model m : models) {
+//                System.out.println("\t" + m.getModelName() + "/" + m.getClass().getCanonicalName());
                 m.storeModelState();
             }
 
             for (Variable variable : variables) {
+//                System.out.println("\t" + variable.getVariableName() + "/" + variable.getClass().getCanonicalName());
                 variable.storeVariableValues();
             }
 

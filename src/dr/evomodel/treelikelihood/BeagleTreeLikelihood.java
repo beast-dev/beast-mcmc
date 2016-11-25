@@ -26,6 +26,7 @@
 package dr.evomodel.treelikelihood;
 
 import beagle.*;
+import dr.evolution.datatype.HiddenDataType;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
@@ -148,6 +149,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 this.branchRateModel = new DefaultBranchRateModel();
             }
             addModel(this.branchRateModel);
+
+            if (patternList instanceof UncertainSiteList ||
+                    patternList.getDataType() instanceof HiddenDataType) {
+                useAmbiguities = true;
+            }
 
             this.tipStatesModel = tipStatesModel;
 
@@ -293,6 +299,13 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
+            // Check for matching state counts
+            int stateCount2 = branchModel.getRootFrequencyModel().getFrequencyCount();
+            if (stateCount != stateCount2) {
+                throw new RuntimeException("Pattern state count (" + stateCount
+                        + ") does not match substitution model state count (" + stateCount2 + ")");
+            }
+
             instanceCount++;
 
             beagle = BeagleFactory.loadBeagleInstance(
@@ -334,10 +347,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 }
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
-            }
-
-            if (patternList instanceof UncertainSiteList) {
-                useAmbiguities = true;
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");

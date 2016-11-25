@@ -83,7 +83,7 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     public double getFrequency(int index) {
         int whichModel = index / stateCount;
         int whichState = index % stateCount;
-        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState);
+        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState) / numBaseModel;
 
         // Scale by stationary distribution over hidden classes
         if (numBaseModel > 1) {
@@ -133,6 +133,9 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
 //        }
 //        System.err.println(new Vector(statDistr));
 
+        if (allRatesAreZero(switchingRates)) {
+            return;
+        }
 
         // Uses an LU decomposition to solve Q^t \pi = 0 and \sum \pi_i = 1
         DoubleMatrix2D mat2 = new DenseDoubleMatrix2D(numBaseModel + 1, numBaseModel);
@@ -173,6 +176,15 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
             statDistr[i] = y.get(i, 0);
         }
         //System.err.println(new Vector(statDistr));              
+    }
+
+    private static boolean allRatesAreZero(Parameter rates) {
+        for (int i = 0; i < rates.getDimension(); ++i) {
+            if (rates.getParameterValue(i) != 0.0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     protected void storeState() {

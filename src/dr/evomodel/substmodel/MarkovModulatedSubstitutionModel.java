@@ -25,19 +25,24 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -53,6 +58,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
     private static final boolean IGNORE_RATES = false;
     private static final boolean DEBUG = false;
+    private static final boolean NEW_STORE_RESTORE = true;
 
     private final double[] baseMatrix;
     private Parameter rateScalar;
@@ -61,6 +67,9 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     private boolean geometricRates;
 
     private final SiteRateModel gammaRateModel;
+
+    private EigenDecomposition storedEigenDecomposition;
+    private boolean storedUpdateMatrix;
 
     public MarkovModulatedSubstitutionModel(String name,
                                             List<SubstitutionModel> baseModels,
@@ -90,6 +99,12 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
         this.switchingRates = switchingRates;
         addVariable(switchingRates);
+
+        if (switchingRates.getDimension() != 2 * (numBaseModel - 1)
+                && switchingRates.getDimension() != numBaseModel * (numBaseModel - 1)
+                ) {
+            throw new RuntimeException("Wrong switching rate dimensions");
+        }
 
         List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
         int stateSizes = 0;
@@ -122,10 +137,18 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             }
         }
 
-        if (gammaRateModel != null) addModel(gammaRateModel);
+        if (gammaRateModel != null) {
+            addModel(gammaRateModel);
+        }
         this.gammaRateModel = gammaRateModel;
 
-        if (rateScalar != null) addVariable(rateScalar);
+        if (rateScalar != null) {
+            addVariable(rateScalar);
+
+            if (rateScalar.getDimension() != 1 && rateScalar.getDimension() != numBaseModel) {
+                throw new RuntimeException("Wrong rate scalar dimensions");
+            }
+        }
         this.rateScalar = rateScalar;
 
         setDoNormalization(false);
@@ -142,7 +165,9 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
     public double getModelRateScalar(int model) {
         if (gammaRateModel != null) {
-//            System.err.println("M" + model + " = " + gammaRateModel.getRateForCategory(model));
+            if (DEBUG) {
+                System.err.println("M" + model + " = " + gammaRateModel.getRateForCategory(model));
+            }
             return gammaRateModel.getRateForCategory(model);
         }
         if (rateScalar == null) {
@@ -157,8 +182,40 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         //return 1E-2;
     }
 
+    protected void storeState() {
+        if (DEBUG) {
+            System.err.println("MMSM.sS");
+        }
+
+        if (NEW_STORE_RESTORE) {
+            if (eigenDecomposition != null) {
+                storedEigenDecomposition = eigenDecomposition.copy();
+            }
+            storedUpdateMatrix = updateMatrix;
+        } else {
+            super.storeState();
+        }
+    }
+
+    protected void restoreState() {
+        if (DEBUG) {
+            System.err.println("MMSM.rS");
+        }
+
+        if (NEW_STORE_RESTORE) {
+            EigenDecomposition tmp = storedEigenDecomposition;
+            storedEigenDecomposition = eigenDecomposition;
+            eigenDecomposition = tmp;
+
+            updateMatrix = storedUpdateMatrix;
+        } else {
+            super.restoreState();
+        }
+    }
+
     protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
 
+//        System.err.println("MMSM.sQM");
         // Zero matrix
         for (int i = 0; i < matrix.length; ++i) {
             Arrays.fill(matrix[i], 0.0);
@@ -167,6 +224,9 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         for (int m = 0; m < numBaseModel; ++m) {
             final int offset = m * baseStateCount;
             baseModels.get(m).getInfinitesimalMatrix(baseMatrix);
+            if (DEBUG) {
+                System.err.println("m " + m + " : " + new dr.math.matrixAlgebra.Vector(baseMatrix));
+            }
             final double rateScalar = getModelRateScalar(m);
             int k = 0;
             for (int i = 0; i < baseStateCount; i++) {
@@ -221,6 +281,27 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 //        return pcFreqModel;
 //    }
 
+    // TODO Remove
+    public EigenDecomposition getEigenDecomposition() {
+        if (DEBUG) {
+            System.err.println("MMSM.getED");
+        }
+        EigenDecomposition ed = super.getEigenDecomposition();
+
+        if (DEBUG) {
+            double[][] q = getQCopy();
+            System.err.println(new Matrix(q));
+            System.err.println("");
+            System.err.println(new dr.math.matrixAlgebra.Vector(ed.getEigenValues()));
+            System.err.println("");
+            double[] tp = new double[q.length * q.length];
+            getTransitionProbabilities(1.0, tp, ed);
+            System.err.println(new Vector(tp));
+        }
+
+        return ed;
+    }
+
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.SUBSTITUTION_MODELS;
@@ -251,18 +332,22 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (DEBUG) {
+            System.err.println("MMSM.hMCE");
+        }
         // base substitution model changed!
         updateMatrix = true;
 //        frequenciesChanged();
 //        System.err.println("Model " + model.getId() + " changed");
-        fireModelChanged(); // TODO Determine why this is necessary
+        fireModelChanged();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+//        System.err.println("Variable " + variable.getId() + " changed");
         if (variable == switchingRates || variable == rateScalar) {
             // Update rates
             updateMatrix = true;
-            if (variable == rateScalar)
+//            if (variable == rateScalar)
                 fireModelChanged(); // TODO Determine if necessary for ExposeRateCategoriesWrapper
         }
         // else do nothing, action taken care of at individual base models

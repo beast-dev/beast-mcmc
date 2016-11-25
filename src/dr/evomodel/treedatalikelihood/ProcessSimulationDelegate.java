@@ -112,6 +112,13 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected final String name;
     }
 
+    abstract class AbstractDiscreteTraitDelegate extends AbstractDelegate {
+
+        AbstractDiscreteTraitDelegate(String name, Tree tree) {
+            super(name, tree);
+        }
+    }
+
     abstract class AbstractContinuousTraitDelegate extends AbstractDelegate {
 
         protected final int dimTrait;
@@ -224,12 +231,10 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
 
             this.likelihoodDelegate = likelihoodDelegate;
-//            integrator = likelihoodDelegate.getIntegrator();
 
             final int partialLength = dataModel.getTipPartial(0).length; // TODO Need to generalize
             partialNodeBuffer = new double[partialLength];
 
-//            tmpEpsilon = new double[dimTrait];
             tmpMean = new double[dimTrait];
         }
 
@@ -302,11 +307,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
-//        private final MultivariateDiffusionModel diffusionModel;
-//        private final ContinuousDiffusionIntegrator integrator;
         private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
         private final double[] partialNodeBuffer;
-//        private final double[] tmpEpsilon;
         private final double[] tmpMean;
 
     }
@@ -335,7 +337,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             int offsetSample = dimNode * nodeIndex;
             for (int trait = 0; trait < numTraits; ++trait) {
                 MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                        rootMean, 0, // input meant
+                        rootMean, 0, // input mean
                         cholesky, sqrtScale,
                         sample, offsetSample,
                         tmpEpsilon

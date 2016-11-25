@@ -7,7 +7,7 @@ import dr.inference.loggers.NumberColumn;
  * Created by max on 4/6/16.
  */
 public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
-    public AdaptableSizeFastMatrixParameter(String id, int rowDimension, int colDimension, int maxRow, int maxCol, double startingValue) {
+    public AdaptableSizeFastMatrixParameter(String id, int rowDimension, int colDimension, int maxRow, int maxCol, double startingValue, boolean lowerTriangle) {
         super(id, maxRow, maxCol, startingValue);
         if(maxRow < rowDimension){
             throw new RuntimeException("Row Dimension: " + rowDimension + ", is greater than Max Row Dimension: " + maxRow + " in " + getParameterName());
@@ -21,6 +21,7 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         this.maxCol = maxCol;
         this.storedColumnDimension = rowDimension;
         this.storedColumnDimension = columnDimension;
+        this.lowerTriangle = lowerTriangle;
 
     }
 
@@ -72,26 +73,55 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
 
     public int getMaxColumnDimension(){return maxCol;}
 
-    public void setParameterValue(int index, double value){
+    public void setParameterValue(int index, double value) {
         int row = index % rowDimension;
         int col = index / rowDimension;
 
-        super.setParameterValueQuietly(row, col, value);
-        fireParameterChangedEvent(index, null);
+        if (row >= col || !lowerTriangle){
+            super.setParameterValueQuietly(row, col, value);
+            fireParameterChangedEvent(index, null);
+        }
+    }
+
+    public void setParameterValue(int row, int column, double value){
+        if(row >= column || !lowerTriangle){
+            super.setParameterValueQuietly(row, column, value);
+            fireParameterChangedEvent(getRowDimension() * column + row, ChangeType.VALUE_CHANGED);
+        }
+
     }
 
     public void setParameterValueQuietly(int index, double value){
         int row = index % rowDimension;
         int col = index / rowDimension;
 
-        super.setParameterValueQuietly(row, col, value);
+        if(row >= col || !lowerTriangle) {
+            super.setParameterValueQuietly(row, col, value);
+        }
+    }
+
+    public void setParameterValueQuietly(int row, int column, double value){
+        if(row >= column || !lowerTriangle){
+            super.setParameterValueQuietly(row, column, value);
+            }
+
     }
 
     public double getParameterValue(int index){
         int row = index % rowDimension;
         int col = index / rowDimension;
 
-        return super.getParameterValue(row, col);
+        if(row >= col || !lowerTriangle) {
+                return super.getParameterValue(row, col);
+            }
+            else return 0;
+    }
+
+    public double getParameterValue(int row, int col){
+        if(row >= col || !lowerTriangle) {
+            return super.getParameterValue(row, col);
+        }
+        else return 0;
     }
 
     public double[] getParameterValues(){
@@ -108,6 +138,7 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
     int storedColumnDimension;
     int maxRow;
     int maxCol;
+    boolean lowerTriangle;
 
     public LogColumn[] getColumns(){
         LogColumn[] bigMatrixColumn = new ASFMPColumn[1];
@@ -146,10 +177,6 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         }
     }
 
-    public void setParameterValue(int row, int column, double value){
-        super.setParameterValueQuietly(row, column, value);
-        fireParameterChangedEvent(getRowDimension() * column + row, ChangeType.VALUE_CHANGED);
 
-    }
 }
 

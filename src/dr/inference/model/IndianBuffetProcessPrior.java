@@ -26,14 +26,16 @@
 package dr.inference.model;
 
 
+import dr.math.Poisson;
+import dr.math.distributions.PoissonDistribution;
 import org.apache.commons.math.special.Beta;
 
 /**
  * @author Max Tolkoff
  */
-public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
+public class IndianBuffetProcessPrior extends AbstractModelLikelihood implements MatrixSizePrior {
 
-    public IndianBuffetProcessPrior(Parameter alpha, Parameter beta, MatrixParameter data) {
+    public IndianBuffetProcessPrior(Parameter alpha, Parameter beta, AdaptableSizeFastMatrixParameter data) {
         super(null);
         this.alpha=alpha;
         alpha.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, 1));
@@ -43,6 +45,16 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
         addVariable(beta);
         this.data=data;
         addVariable(data);
+        for (int i = 0; i < data.getRowDimension(); i++) {
+            if (data.getParameterValue(i, 0) != 0)
+                containsNonZeroElements[0] = true;
+        }
+        for (int i = 0; i <data.getColumnDimension() ; i++) {
+            for (int j = 0; j < data.getRowDimension(); j++) {
+                rowCount[i] += Math.abs(data.getParameterValue(j, i));
+            }
+        }
+        ncols = data.getColumnDimension();
     }
 
     private int factorial(int num){
@@ -79,6 +91,28 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if(ncols != data.getColumnDimension()){
+            int sum = 0;
+            for (int i = 0; i < data.getRowDimension(); i++) {
+                sum += data.getParameterValue(i, data.getColumnDimension()-1);
+            }
+            rowCount[data.getColumnDimension() - 1] = sum;
+            ncols = data.getColumnDimension();
+        }
+        else{
+            double value = data.getParameterValue(index);
+            int col = index / data.getRowDimension();
+            if(value == 0.0){
+                rowCount[col] -= 1;
+                if(rowCount[col] == 0){
+                    containsNonZeroElements[col] = false;
+                }
+            }
+            else{
+                rowCount[col] += 1;
+                containsNonZeroElements[col] = true;
+            }
+        }
         likelihoodKnown=false;
         if(variable==beta)
             betaKnown=false;
@@ -99,6 +133,7 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
         storedH=H;
         storedBottom=bottom;
         storedSum2=sum2;
+        storedncols=ncols;
 
     }
 
@@ -114,6 +149,7 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
         H=storedH;
         bottom=storedBottom;
         sum2=storedSum2;
+        ncols=storedncols;
     }
 
     @Override
@@ -145,10 +181,6 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
             containsNonZeroElements = new boolean[data.getColumnDimension()];
             rowCount = new int[data.getColumnDimension()];
             boolean same;
-            for (int i = 0; i < data.getRowDimension(); i++) {
-                if (data.getParameterValue(i, 0) != 0)
-                    containsNonZeroElements[0] = true;
-            }
             for (int i = 0; i < data.getColumnDimension(); i++) {
                 sum = 1;
                 if (!isExplored[i]) {
@@ -158,9 +190,9 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
                             for (int k = 0; k < data.getRowDimension(); k++) {
                                 if (Math.abs(data.getParameterValue(k, i)) != Math.abs(data.getParameterValue(k, j)))
                                     same = false;
-                                if (data.getParameterValue(k, j) != 0) {
-                                    containsNonZeroElements[j] = true;
-                                }
+//                                if (data.getParameterValue(k, j) != 0) {
+//                                    containsNonZeroElements[j] = true;
+//                                }
 //                        rowCount[j]+=data.getParameterValue(k,j);
                             }
                         }
@@ -180,16 +212,13 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
 
         if(!dataKnown || !betaKnown){
             sum2=0;
-        KPlus=0;
-        for (int i = 0; i <data.getColumnDimension() ; i++) {
-          if(containsNonZeroElements[i]) {
-              KPlus++;
-              for (int j = 0; j < data.getRowDimension(); j++) {
-                  rowCount[i] += Math.abs(data.getParameterValue(j, i));
+            KPlus=0;
+            for (int i = 0; i <data.getColumnDimension() ; i++) {
+              if(containsNonZeroElements[i]) {
+                  KPlus++;
+                  sum2+=Beta.logBeta(rowCount[i], data.getRowDimension() + beta.getParameterValue(0) - rowCount[i]);
               }
-              sum2+=Beta.logBeta(rowCount[i], data.getRowDimension() + beta.getParameterValue(0) - rowCount[i]);
-          }
-        }
+            }
         }
         double p1=KPlus*Math.log(alpha.getParameterValue(0)*beta.getParameterValue(0)/bottom);
         double p2=-alpha.getParameterValue(0)*H();
@@ -197,6 +226,21 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
         betaKnown=true;
         dataKnown=true;
         return p1+p2+p3;
+    }
+
+    @Override
+    public double getSizeLogLikelihood() {
+        PoissonDistribution poisson = new PoissonDistribution(alpha.getParameterValue(0) * H());
+        calculateLogLikelihood();
+        return poisson.logPdf(KPlus) - Math.log(1 - Math.exp(-poisson.mean()));
+    }
+
+    public int[] getRowCount() {
+        return rowCount;
+    }
+
+    public AdaptableSizeFastMatrixParameter getData() {
+        return data;
     }
 
     @Override
@@ -226,8 +270,10 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
     int storedBottom;
     double sum2;
     double storedSum2;
+    int ncols;
+    int storedncols;
 
-    MatrixParameter data;
+    AdaptableSizeFastMatrixParameter data;
     Parameter alpha;
     Parameter beta;
 }

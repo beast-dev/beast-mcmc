@@ -49,6 +49,7 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Marc A. Suchard
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class RandomLocalClockModel extends AbstractBranchRateModel
@@ -58,7 +59,8 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
                                  Parameter meanRateParameter,
                                  Parameter rateIndicatorParameter,
                                  Parameter ratesParameter,
-                                 boolean ratesAreMultipliers) {
+                                 boolean ratesAreMultipliers,
+                                 double threshold) {
 
         super(RandomLocalClockModelParser.LOCAL_BRANCH_RATES);
 
@@ -67,11 +69,19 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         indicators = new TreeParameterModel(treeModel, rateIndicatorParameter, false);
         rates = new TreeParameterModel(treeModel, ratesParameter, false);
 
-        rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
+        if (Double.isNaN(threshold)) { // NaN == binary values
+            rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
+            this.threshold = 0.5;
+            for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
+                rateIndicatorParameter.setParameterValue(i, 0.0);
+            }
+        } else {
+            rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, rateIndicatorParameter.getDimension()));
+            this.threshold = threshold;
+        }
         ratesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, ratesParameter.getDimension()));
 
         for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
-            rateIndicatorParameter.setParameterValue(i, 0.0);
             ratesParameter.setParameterValue(i, 1.0);
         }
 
@@ -86,7 +96,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
 
         unscaledBranchRates = new double[treeModel.getNodeCount()];
 
-        Logger.getLogger("dr.evomodel").info("  indicator parameter name is '" + rateIndicatorParameter.getId() + "'");
+        Logger.getLogger("dr.evomodel").info("  indicator parameter name is '" + rateIndicatorParameter.getId() + "' with threshold = " + threshold);
 
         recalculateScaleFactor();
     }
@@ -107,7 +117,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
      *         function looking down the tree.
      */
     public final boolean isVariableSelected(Tree tree, NodeRef node) {
-        return indicators.getNodeValue(tree, node) > 0.5;
+        return indicators.getNodeValue(tree, node) > threshold;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -237,6 +247,8 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     private TreeParameterModel rates;
 
     boolean recalculationNeeded = true;
+
+    private final double threshold;
 
     @Override
     public Citation.Category getCategory() {

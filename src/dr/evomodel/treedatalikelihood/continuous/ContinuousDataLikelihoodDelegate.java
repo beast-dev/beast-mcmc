@@ -225,7 +225,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         int index = node.getNumber();
         String name1 = dataModel.getParameter().getParameter(index).getParameterName();
         Taxon taxon = tree.getNodeTaxon(node);
-        System.err.println(name1 + " ?= " + taxon.getId());
         return name1.contains(taxon.getId());
     }
 
@@ -364,6 +363,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 }
             }
 
+        } else if (model instanceof BranchRateModel) {
+            fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");
         }

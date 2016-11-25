@@ -86,10 +86,6 @@ public class CompleteHistoryLogger implements Loggable, Citable {
             throw new RuntimeException("No sum");
         }
 
-        Logger.getLogger("dr.app.beagle").info("\tConstructing a complete history logger;  please cite:\n"
-                + Citable.Utils.getCitationString(this));
-
-
         if (filter == null) {
             this.filter = new HistoryFilter.Default();
         } else {

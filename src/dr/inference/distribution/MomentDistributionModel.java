@@ -48,9 +48,14 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         addVariable(precision);
 //        precision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        this.cutoff=cutoff;  if(cutoff!=null){
-        addVariable(cutoff);
-        cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, cutoff.getDimension()));}
+        this.cutoff=cutoff;
+        if(cutoff!=null){
+            addVariable(cutoff);
+            int boundsDim;
+            if(cutoff.getBounds()!=null)
+                boundsDim = cutoff.getBounds().getBoundsDimension();
+            else boundsDim = cutoff.getDimension();
+            cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, boundsDim));}
         addVariable(data);
         this.data=data;
         untruncated=new NormalDistributionModel(mean, precision, true);

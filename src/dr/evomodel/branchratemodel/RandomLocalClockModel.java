@@ -134,7 +134,8 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     }
 
     protected void restoreState() {
-        recalculateScaleFactor();
+        recalculationNeeded = true;
+//        recalculateScaleFactor();  // Careful about change here; seems fine ... but who knows without unit-tests
     }
 
     protected void acceptState() {

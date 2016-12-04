@@ -33,6 +33,12 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
+ *
+ * To get the age of the root in absolute time:
+ * <tmrcaStatistic id="age" absolute="true">
+ *     <tree idref="tree"/>
+ * </tmrcaStatistic>
+ *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */

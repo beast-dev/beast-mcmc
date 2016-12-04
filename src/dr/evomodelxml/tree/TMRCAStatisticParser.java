@@ -54,7 +54,7 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
         String name = xo.getAttribute(Statistic.NAME, xo.getId());
         Tree tree = (Tree) xo.getChild(Tree.class);
         TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
-        boolean isRate = xo.getAttribute("rate", false);
+        boolean isAbsolute = xo.getAttribute("absolute", false);
         boolean includeStem = false;
         if (xo.hasAttribute(PARENT) && xo.hasAttribute(STEM)) {
              throw new XMLParseException("Please use either " + PARENT + " or " + STEM + "!");
@@ -65,7 +65,7 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
         }
 
         try {
-            return new TMRCAStatistic(name, tree, taxa, isRate, includeStem);
+            return new TMRCAStatistic(name, tree, taxa, isAbsolute, includeStem);
         } catch (Tree.MissingTaxonException mte) {
             throw new XMLParseException(
                     "Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
@@ -78,7 +78,7 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
 
     public String getParserDescription() {
         return "A statistic that has as its value the height of the most recent common ancestor " +
-                "of a set of taxa in a given tree";
+                "of a set of taxa in a given tree. ";
     }
 
     public Class getReturnType() {
@@ -93,9 +93,9 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
             new ElementRule(Tree.class),
             new StringAttributeRule("name",
                     "A name for this statistic primarily for the purposes of logging", true),
-            AttributeRule.newBooleanRule("rate", true),
+            AttributeRule.newBooleanRule("absolute", true),
             new ElementRule(MRCA,
-                    new XMLSyntaxRule[]{new ElementRule(Taxa.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, true),
             new OrRule(
                     new XMLSyntaxRule[]{
                             AttributeRule.newBooleanRule(PARENT, true),

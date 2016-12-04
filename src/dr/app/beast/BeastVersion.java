@@ -52,21 +52,21 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.9.0pre20160929";
+    private static final String VERSION = "1.9.0pre20161204";
 
     private static final String DATE_STRING = "2002-2016";
 
     private static final boolean IS_PRERELEASE = true;
 
     // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "7d240f1";
+    private static final String REVISION = "5657174";
 
     public String getVersion() {
         return VERSION;
     }
 
     public String getVersionString() {
-        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease " + getBuildString() : "");
+        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease #" + REVISION : "");
     }
 
     public String getDateString() {
@@ -129,10 +129,7 @@ public class BeastVersion implements Version, Citable {
     }
 
     public String getBuildString() {
-        if (IS_PRERELEASE) {
-            return "https://github.com/beast-dev/beast-mcmc/commit/" + REVISION;
-        }
-        return "#" + REVISION;
+        return "https://github.com/beast-dev/beast-mcmc/commit/" + REVISION;
     }
 
     @Override

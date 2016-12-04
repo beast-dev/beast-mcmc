@@ -59,7 +59,11 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
 
         String name = xo.getAttribute(Statistic.NAME, xo.getId());
         Tree tree = (Tree) xo.getChild(Tree.class);
-        TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
+        TaxonList taxa = null;
+
+        if (xo.hasChildNamed(MRCA)) {
+            taxa = (TaxonList) xo.getElementFirstChild(MRCA);
+        }
         boolean isAbsolute = xo.getAttribute("absolute", false);
         boolean includeStem = false;
         if (xo.hasAttribute(PARENT) && xo.hasAttribute(STEM)) {

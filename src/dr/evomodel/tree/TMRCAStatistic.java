@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
+import dr.math.Polynomial;
 
 import java.util.Set;
 
@@ -46,11 +47,11 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
             throws Tree.MissingTaxonException {
         super(name);
         this.tree = tree;
-        this.absoluteTime = absoluteTime;
-        if (absoluteTime) {
+        if (absoluteTime && Taxon.getMostRecentDate() != null) {
             mostRecentTipTime = Taxon.getMostRecentDate().getAbsoluteTimeValue();
         } else {
-            mostRecentTipTime = 0.0;
+            // give node heights or taxa don't have dates
+            mostRecentTipTime = Double.NaN;
         }
         if (taxa != null) {
             this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
@@ -89,7 +90,7 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
         }
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
 
-        if (absoluteTime) {
+        if (!Double.isNaN(mostRecentTipTime)) {
             return mostRecentTipTime - tree.getNodeHeight(node);
         } else {
             return tree.getNodeHeight(node);
@@ -98,7 +99,6 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 
     private Tree tree = null;
     private Set<String> leafSet = null;
-    private final boolean absoluteTime;
     private final double mostRecentTipTime;
     private final boolean forParent;
 

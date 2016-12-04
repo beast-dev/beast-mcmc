@@ -603,8 +603,20 @@ public class FlexibleTree implements MutableTree {
 
             if (node.getChildCount() > 2) {
                 resolveNode(node);
-
+            } else  if (node.getChildCount() == 1) {
+                FlexibleNode parent  = node.getParent();
+                if (parent != null) {
+                    // remove the degree 2 node and add its child to its parent
+                    FlexibleNode child = node.getChild(0);
+                    child.setParent(parent);
+                    parent.removeChild(node);
+                    parent.addChild(child);
+                } else {
+                    // the root is a degree 1 node so make the root the node
+                    root = node;
+                }
             }
+
         }
 
         adoptNodes(root, null);

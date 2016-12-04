@@ -91,7 +91,9 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
 
         if (!Double.isNaN(mostRecentTipTime)) {
-            return mostRecentTipTime - tree.getNodeHeight(node);
+            double age = mostRecentTipTime - tree.getNodeHeight(node);
+            // if age is negative then dates were going backwards in time so return positive value
+            return (age < 0 ? -age : age);
         } else {
             return tree.getNodeHeight(node);
         }

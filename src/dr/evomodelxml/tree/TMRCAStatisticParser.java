@@ -46,6 +46,8 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
 
     public static final String TMRCA_STATISTIC = "tmrcaStatistic";
     public static final String MRCA = "mrca";
+    public static final String ABSOLUTE = "absolute";
+
     // The tmrcaStatistic will represent that age of the parent node of the MRCA, rather than the MRCA itself
     public static final String PARENT = "forParent";
     public static final String STEM = "includeStem";
@@ -64,7 +66,7 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(MRCA)) {
             taxa = (TaxonList) xo.getElementFirstChild(MRCA);
         }
-        boolean isAbsolute = xo.getAttribute("absolute", false);
+        boolean isAbsolute = xo.getAttribute(ABSOLUTE, false);
         boolean includeStem = false;
         if (xo.hasAttribute(PARENT) && xo.hasAttribute(STEM)) {
              throw new XMLParseException("Please use either " + PARENT + " or " + STEM + "!");
@@ -103,7 +105,7 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
             new ElementRule(Tree.class),
             new StringAttributeRule("name",
                     "A name for this statistic primarily for the purposes of logging", true),
-            AttributeRule.newBooleanRule("absolute", true),
+            AttributeRule.newBooleanRule(ABSOLUTE, true),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, true),
             new OrRule(

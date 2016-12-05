@@ -43,8 +43,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.math.BigDecimal;
-import java.math.MathContext;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -244,14 +242,41 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
                 DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL, getOperatorSchedule());
 
-                //convert to BigDecimal to fix to 16 digits; solves issue with log likelihood mismatch at the last digit
-                BigDecimal original = new BigDecimal(savedLnL[0], MathContext.DECIMAL64);
-                BigDecimal restored = new BigDecimal(lnL, MathContext.DECIMAL64);
+                //first perform a simple check for equality of two doubles
+                //when this test fails, go over the digits
+                if (lnL != savedLnL[0]) {
 
-                if (original.doubleValue() != restored.doubleValue()) {
+                    //15 is the floor value for the number of decimal digits when representing a double
+                    //checking for 15 identical digits below
+                    String originalString = Double.toString(savedLnL[0]);
+                    String restoredString = Double.toString(lnL);
+                    //System.out.println(lnL + "    " + originalString);
+                    //System.out.println(savedLnL[0] + "    " + restoredString);
+                    //assume values will be nearly identical
+                    int digits = 0;
+                    for (int i = 0; i < Math.max(originalString.length(), restoredString.length()); i++) {
+                        if (originalString.charAt(i) == restoredString.charAt(i)) {
+                            if (!(originalString.charAt(i) == '-' || originalString.charAt(i) == '.')) {
+                                digits++;
+                            }
+                        }
+                    }
+                    //System.out.println("digits = " + digits);
+
+                    if (digits < 15) {
+                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
+                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
+                    }
+
+                }
+
+                //convert to BigDecimal to fix to 16 digits; solves issue with log likelihood mismatch at the last digit
+                //BigDecimal original = new BigDecimal(savedLnL[0], MathContext.DECIMAL64);
+                //BigDecimal restored = new BigDecimal(lnL, MathContext.DECIMAL64);
+                /*if (Math.abs(original.doubleValue() - restored.doubleValue()) > 1E-9) {
                         throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + original.doubleValue() +
                                 ", recomputed lnL: " + restored.doubleValue() + " (difference " + (original.doubleValue() - restored.doubleValue()) + ")");
-                }
+                }*/
 
 //                for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
 //                    System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
@@ -274,9 +299,10 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 chainLength -= coercionDelay;
 
                 // reset operator acceptance levels
-                for (int i = 0; i < schedule.getOperatorCount(); i++) {
+                //GB: we are now restoring these; commenting out for now
+                /*for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
-                }
+                }*/
             }
 
             mc.runChain(chainLength, false);

@@ -360,6 +360,7 @@ public class BeastMain {
                         new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
+                        new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
@@ -558,6 +559,11 @@ public class BeastMain {
         if (arguments.hasOption("dump_every")) {
             long debugWriteEvery = arguments.getLongOption("dump_every");
             System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
+        }
+
+        if (arguments.hasOption("save_dump")) {
+            String debugStateFile = arguments.getStringOption("save_dump");
+            System.setProperty(MCMC.SAVE_DUMP_FILE, debugStateFile);
         }
 
         if (arguments.hasOption("citations_file")) {

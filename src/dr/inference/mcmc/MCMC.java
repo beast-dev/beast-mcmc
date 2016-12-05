@@ -43,6 +43,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -54,6 +56,7 @@ import java.io.PrintStream;
 public class MCMC implements Identifiable, Spawnable, Loggable {
 
     public final static String LOAD_DUMP_FILE = "load.dump.file";
+    public final static String SAVE_DUMP_FILE = "save.dump.file";
     public final static String DUMP_STATE = "dump.state";
     public final static String DUMP_EVERY = "dump.every";
 
@@ -159,13 +162,14 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         this.delegates = delegates;
 
         dumpStateFile = System.getProperty(LOAD_DUMP_FILE);
+        String fileName = System.getProperty(SAVE_DUMP_FILE, null);
         if (System.getProperty(DUMP_STATE) != null) {
             long debugWriteState = Long.parseLong(System.getProperty(DUMP_STATE));
-            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteState, false));
+            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteState, false, fileName));
         }
         if (System.getProperty(DUMP_EVERY) != null) {
             long debugWriteEvery = Long.parseLong(System.getProperty(DUMP_EVERY));
-            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteEvery, true));
+            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteEvery, true, fileName));
         }
 
     }
@@ -232,17 +236,21 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             if (dumpStateFile != null) {
                 double[] savedLnL = new double[1];
 
-                long loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), savedLnL);
+                long loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), getOperatorSchedule(), savedLnL);
 
                 mc.setCurrentLength(loadedState);
 
                 double lnL = mc.evaluate();
 
-                DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL);
+                DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL, getOperatorSchedule());
 
-                if (lnL != savedLnL[0]) {
-                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
-                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
+                //convert to BigDecimal to fix to 16 digits; solves issue with log likelihood mismatch at the last digit
+                BigDecimal original = new BigDecimal(savedLnL[0], MathContext.DECIMAL64);
+                BigDecimal restored = new BigDecimal(lnL, MathContext.DECIMAL64);
+
+                if (original.doubleValue() != restored.doubleValue()) {
+                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + original.doubleValue() +
+                                ", recomputed lnL: " + restored.doubleValue() + " (difference " + (original.doubleValue() - restored.doubleValue()) + ")");
                 }
 
 //                for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
@@ -269,24 +277,6 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
                 }
-            }
-
-            if (TEST_CLONING) {
-                // TEST Code for cloning the MarkovChain to a file to distribute amongst processors
-
-                double lnL1 = mc.getCurrentScore();
-
-                // Write the MarkovChain out and back in again...
-                DebugUtils.writeStateToFile(new File("beast.state"), currentState, mc.getCurrentScore());
-                DebugUtils.readStateFromFile(new File("beast.state"), null);
-
-                double lnL2 = mc.evaluate();
-
-                if (lnL1 != lnL2) {
-                    throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + lnL1 +
-                            ", recomputed lnL: " + lnL2 + " (difference " + (lnL2 - lnL1) + ")");
-                }
-                // TEST Code end
             }
 
             mc.runChain(chainLength, false);

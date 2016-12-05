@@ -74,7 +74,7 @@ public class DebugUtils {
             }
             out.println();
 
-            out.print("\nstate\t");
+            out.print("state\t");
             out.println(state);
 
             out.print("lnL\t");

@@ -43,6 +43,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -240,9 +242,13 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
                 DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL);
 
-                if (lnL != savedLnL[0]) {
-                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
-                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
+                //convert to BigDecimal to fix to 16 digits; solves issue with log likelihood mismatch at the last digit
+                BigDecimal original = new BigDecimal(savedLnL[0], MathContext.DECIMAL64);
+                BigDecimal restored = new BigDecimal(lnL, MathContext.DECIMAL64);
+
+                if (original.doubleValue() != restored.doubleValue()) {
+                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + original.doubleValue() +
+                                ", recomputed lnL: " + restored.doubleValue() + " (difference " + (original.doubleValue() - restored.doubleValue()) + ")");
                 }
 
 //                for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {

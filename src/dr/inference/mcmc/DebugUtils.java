@@ -97,11 +97,16 @@ public class DebugUtils {
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
                 MCMCOperator operator = operatorSchedule.getOperator(i);
+                out.print(operator.getOperatorName());
+                out.print("\t");
+                out.print(operator.getAcceptCount());
+                out.print("\t");
+                out.print(operator.getRejectCount());
                 if (operator instanceof CoercableMCMCOperator) {
-                    out.print(operator.getOperatorName());
                     out.print("\t");
-                    out.println(((CoercableMCMCOperator)operator).getCoercableParameter());
+                    out.print(((CoercableMCMCOperator)operator).getCoercableParameter());
                 }
+                out.println();
             }
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
@@ -209,13 +214,21 @@ public class DebugUtils {
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
                 MCMCOperator operator = operatorSchedule.getOperator(i);
+                line = in.readLine();
+                fields = line.split("\t");
+                if (!fields[0].equals(operator.getOperatorName())) {
+                    throw new RuntimeException("Unable to match operator: " + fields[0]);
+                }
+                if (fields.length < 3) {
+                    throw new RuntimeException("Operator missing values: " + fields[0]);
+                }
+                operator.setAcceptCount(Integer.parseInt(fields[1]));
+                operator.setRejectCount(Integer.parseInt(fields[2]));
                 if (operator instanceof CoercableMCMCOperator) {
-                    line = in.readLine();
-                    fields = line.split("\t");
-                    if (!fields[0].equals(operator.getOperatorName())) {
-                        throw new RuntimeException("Unable to match operator: " + fields[0]);
+                    if (fields.length != 4) {
+                        throw new RuntimeException("Coercable operator missing parameter: " + fields[0]);
                     }
-                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[1]));
+                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[3]));
                 }
             }
 

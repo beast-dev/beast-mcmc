@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood;
 import dr.evolution.alignment.Patterns;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -112,7 +113,7 @@ public class DataLikelihoodTester {
                 siteRateModel2.getSubstitutionModel(),
                 siteRateModel2.getSubstitutionModel().getFrequencyModel());
 
-        BranchRateModel branchRateModel = null;
+        BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
         BeagleTreeLikelihood treeLikelihood = new BeagleTreeLikelihood(
                 patterns,

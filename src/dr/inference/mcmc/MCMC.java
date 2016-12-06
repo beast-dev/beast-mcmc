@@ -231,10 +231,13 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         }
 
         if (!stopping) {
+
+            long loadedState = 0;
+
             if (dumpStateFile != null) {
                 double[] savedLnL = new double[1];
 
-                long loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), getOperatorSchedule(), savedLnL);
+                loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), getOperatorSchedule(), savedLnL);
 
                 mc.setCurrentLength(loadedState);
 
@@ -291,19 +294,27 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             long chainLength = getChainLength();
 
+            //this also potentially gets the new coercionDelay of a possibly increased chain length
             final long coercionDelay = getCoercionDelay();
 
-            if (coercionDelay > 0) {
-                // Run the chain for coercionDelay steps with coercion disabled
-                mc.runChain(coercionDelay, true);
+            //assume that dumped state has passed the coercionDelay
+            //TODO: discuss whether we want to dump the coercionDelay or chainLength to file
+            if (coercionDelay > loadedState) {
+                mc.runChain(coercionDelay - loadedState, true);
                 chainLength -= coercionDelay;
+            }
+
+            //if (coercionDelay > 0) {
+                // Run the chain for coercionDelay steps with coercion disabled
+                //mc.runChain(coercionDelay, true);
+                //chainLength -= coercionDelay;
 
                 // reset operator acceptance levels
                 //GB: we are now restoring these; commenting out for now
                 /*for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
                 }*/
-            }
+            //}
 
             mc.runChain(chainLength, false);
 

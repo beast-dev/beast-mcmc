@@ -26,7 +26,7 @@
 package dr.evomodel.treedatalikelihood;
 
 /**
- * BeagleDataLikelihoodDelegate
+ * MultiPartitionDataLikelihoodDelegate
  *
  * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
  *
@@ -61,7 +61,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private static final boolean RESCALING_OFF = false; // a debugging switch
 
     //turning useBeagle3 into a static debugging switch for now
-    private static final boolean useBeagle3 = false;
+    private static final boolean useBeagle3 = true;
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then

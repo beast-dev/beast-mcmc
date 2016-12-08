@@ -786,8 +786,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         if (useBeagle3) {
 
-            beagle.calculateRootLogLikelihoodsByPartition(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+            /*beagle.calculateRootLogLikelihoodsByPartition(new int[]{rootIndex}, new int[]{0}, new int[]{0},
                     new int[]{cumulateScaleBufferIndex}, partitionIndices, 1, sumLogLikelihoodsByPartition, sumLogLikelihoods);
+            */
 
         } else {
 

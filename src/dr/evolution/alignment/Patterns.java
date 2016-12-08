@@ -202,7 +202,7 @@ public class Patterns implements PatternList {
                 addPattern(pattern, 1.0);
             }
         }
-
+        areUnique = siteList.areUnique();
     }
 
     /**
@@ -237,7 +237,7 @@ public class Patterns implements PatternList {
                 addPattern(pattern, patternList.getPatternWeight(i));
             }
         }
-
+        areUnique = patternList.areUnique();
     }
 
     /**
@@ -470,7 +470,7 @@ public class Patterns implements PatternList {
 
     @Override
     public boolean areUnique() {
-        return true;
+        return areUnique;
     }
 
     // **************************************************************
@@ -594,4 +594,5 @@ public class Patterns implements PatternList {
         return taxonList.getTaxon(taxonIndex);
     }
 
+    private boolean areUnique = true;
 }

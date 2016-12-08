@@ -260,6 +260,9 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: this is 2x the logLikelihood of the 2nd partition)\n\n");
 
+        System.exit(0);
+
+
 
         //START ADDITIONAL TEST #1 - Guy Baele
 

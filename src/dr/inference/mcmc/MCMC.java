@@ -262,6 +262,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                             if (!(originalString.charAt(i) == '-' || originalString.charAt(i) == '.')) {
                                 digits++;
                             }
+                        } else {
+                            break;
                         }
                     }
                     //System.out.println("digits = " + digits);

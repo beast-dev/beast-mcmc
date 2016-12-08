@@ -109,6 +109,8 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
         setParameterValues(likelihood.getMatrixParameter(), mode);
         double penaltyEnd = printLogObjective();
+
+        System.err.println("Move: " + penaltyStart + " -> " + penaltyEnd + " : " + (penaltyEnd - penaltyStart));
 //
 //        if (penaltyStart - penaltyEnd > 1E-1) {
 

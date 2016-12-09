@@ -49,7 +49,8 @@ import java.util.*;
  *
  * @author Marc A. Suchard
  */
-public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider, Reportable {
+public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood
+        implements ConjugateWishartStatisticsProvider, GibbsSampleFromTreeInterface, Reportable {
 
 //    public FullyConjugateMultivariateTraitLikelihood(String traitName,
 //                                                     MultivariateTraitTree treeModel,

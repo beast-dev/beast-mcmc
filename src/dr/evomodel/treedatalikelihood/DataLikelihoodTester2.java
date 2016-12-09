@@ -256,16 +256,15 @@ public class DataLikelihoodTester2 {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.println("logLikelihood = " + logLikelihood);
+        System.out.println("sum of partition log likelihoods checks out when using BEAGLE3");
 
         System.exit(0);
 
 
 
-
-
         //START ADDITIONAL TEST #1 - Guy Baele
 
-        System.out.println("-- Test #1 SiteRateModels -- ");
+        System.out.println("\n-- Test #1 SiteRateModels -- ");
         //alpha in partition 1 reject followed by alpha in partition 2 reject
         System.out.print("Adjust alpha in partition 1: ");
         siteRateModel.setAlpha(0.4);
@@ -287,6 +286,7 @@ public class DataLikelihoodTester2 {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n");
 
+
         //alpha in partition 1 accept followed by alpha in partition 2 accept
         System.out.print("Adjust alpha in partition 1: ");
         siteRateModel.setAlpha(0.4);
@@ -296,7 +296,7 @@ public class DataLikelihoodTester2 {
         System.out.print("Adjust alpha in partition 2: ");
         siteRateModel2.setAlpha(0.35);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only setting alpha in partition 2)");
+        System.out.println("logLikelihood = " + logLikelihood + " (this seems wrong)");
 
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);
@@ -307,6 +307,10 @@ public class DataLikelihoodTester2 {
         siteRateModel2.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + "\n");
+
+
+        System.exit(0);
+
 
         //adjusting alphas in both partitions without explicitly calling getLogLikelihood() in between
         System.out.print("Adjust both alphas in partitions 1 and 2: ");

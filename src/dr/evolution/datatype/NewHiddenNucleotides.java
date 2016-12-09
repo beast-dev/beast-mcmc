@@ -36,6 +36,7 @@ public class NewHiddenNucleotides extends Nucleotides implements HiddenDataType 
     public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new NewHiddenNucleotides(2);
     public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new NewHiddenNucleotides(3);
     public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_4 = new NewHiddenNucleotides(4);
+    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_8 = new NewHiddenNucleotides(8);
 
     /**
      * Private constructor - DEFAULT_INSTANCE provides the only instance

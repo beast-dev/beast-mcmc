@@ -58,7 +58,6 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
     private static final boolean IGNORE_RATES = false;
     private static final boolean DEBUG = false;
-    private static final boolean TEST_NUMERICS = false;
     private static final boolean NEW_STORE_RESTORE = true;
 
     private final double[] baseMatrix;

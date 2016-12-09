@@ -255,9 +255,11 @@ public class DataLikelihoodTester2 {
 
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: this is 2x the logLikelihood of the 2nd partition)\n\n");
+        System.out.println("logLikelihood = " + logLikelihood);
 
         System.exit(0);
+
+
 
 
 

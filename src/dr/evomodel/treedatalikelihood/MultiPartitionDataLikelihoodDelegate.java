@@ -32,6 +32,7 @@ package dr.evomodel.treedatalikelihood;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
+ * @author Guy Baele
  * @version $Id$
  */
 
@@ -638,7 +639,20 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         for (SiteRateModel siteRateModel : siteRateModels) {
             if (updateSiteRateModels[k]) {
                 double[] categoryRates = siteRateModel.getCategoryRates();
-                beagle.setCategoryRates(categoryRates);
+                if (useBeagle3) {
+                    boolean updateAllPartitions = true;
+                    if (updateAllPartitions) {
+                        beagle.setCategoryRates(categoryRates);
+                    } else {
+                        for (int i = 0; i < partitionCount; i++) {
+                            //TODO: can we set these quietly? and then compute those in parallel when needed
+                            //or is that in fact what is happening?
+                            beagle.setCategoryRatesWithIndex(i, categoryRates);
+                        }
+                    }
+                } else {
+                    beagle.setCategoryRates(categoryRates);
+                }
             }
             k++;
         }
@@ -720,6 +734,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 for (int i = 0; i < partitionCount; i++) {
 
                     EvolutionaryProcessDelegate evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i / (mapPartition));
+                    /*if (evolutionaryProcessDelegates.size() == partitionCount) {
+                        evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i);
+                    } else {
+                        evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(0);
+                    }*/
 
                     operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
                     operations[k + 1] = writeScale;
@@ -728,8 +747,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
                     operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
                     operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
-                    //operations[k + 7] = ;
-                    //operations[k + 8] = ;
+                    operations[k + 7] = i;
+                    //TODO: we don't know the cumulateScaleBufferIndex here yet (see below)
+                    operations[k + 8] = Beagle.NONE;
 
                     k += Beagle.PARTITION_OPERATION_TUPLE_SIZE;
                     operationCount++;
@@ -777,8 +797,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 scaleBufferHelper.flipOffset(internalNodeCount);
                 cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
                 if (useBeagle3) {
-                    //beagle.resetScaleFactorsByPartition(cumulateScaleBufferIndex);
-                    //beagle.accumulateScaleFactorsByPartition(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
+                    boolean updateAllPartitions = true;
+                    if (updateAllPartitions) {
+                        beagle.resetScaleFactors(cumulateScaleBufferIndex);
+                        beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
+                    } else {
+                        for (int i = 0; i < partitionCount; i++) {
+                            beagle.resetScaleFactorsByPartition(cumulateScaleBufferIndex, i);
+                            beagle.accumulateScaleFactorsByPartition(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex, i);
+                        }
+                    }
                 } else {
                     beagle.resetScaleFactors(cumulateScaleBufferIndex);
                     beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
@@ -788,7 +816,14 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         } else if (useAutoScaling) {
             if (useBeagle3) {
-                //beagle.accumulateScaleFactorsByPartition(scaleBufferIndices, internalNodeCount, Beagle.NONE);
+                boolean updateAllPartitions = true;
+                if (updateAllPartitions) {
+                    beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
+                } else {
+                    for (int i = 0; i < partitionCount; i++) {
+                        beagle.accumulateScaleFactorsByPartition(scaleBufferIndices, internalNodeCount, Beagle.NONE, i);
+                    }
+                }
             } else {
                 beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
             }
@@ -808,17 +843,20 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         double[] sumLogLikelihoods = new double[1];
-
-        //TODO: not sure yet what will happen to the individual partition likelihoods
         double[] sumLogLikelihoodsByPartition = new double[partitionCount];
 
         if (useBeagle3) {
 
-            /*beagle.calculateRootLogLikelihoodsByPartition(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-                    new int[]{cumulateScaleBufferIndex}, partitionIndices, 1, sumLogLikelihoodsByPartition, sumLogLikelihoods);
-            */
-            beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-                    new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
+            boolean updateAllPartitions = true;
+            if (updateAllPartitions) {
+                beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+                        new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
+            } else {
+                //TODO: check these arguments with Daniel
+                //TODO: partitionIndices needs to be set according to which partitions need updating
+                beagle.calculateRootLogLikelihoodsByPartition(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+                        new int[]{cumulateScaleBufferIndex}, partitionIndices, partitionCount, 1, sumLogLikelihoodsByPartition, sumLogLikelihoods);
+            }
 
         } else {
 
@@ -826,6 +864,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
 
         }
+
+        /*for (int i = 0; i < sumLogLikelihoodsByPartition.length; i++) {
+            System.out.println("partition " + (i+1) + " lnL = " + sumLogLikelihoodsByPartition[i]);
+        }*/
 
         double logL = sumLogLikelihoods[0];
 

@@ -58,6 +58,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
     private static final boolean IGNORE_RATES = false;
     private static final boolean DEBUG = false;
+    private static final boolean TEST_NUMERICS = false;
     private static final boolean NEW_STORE_RESTORE = true;
 
     private final double[] baseMatrix;
@@ -122,6 +123,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
         // This constructor also checks that all models have the same base stateCount
         freqModel = new MarkovModulatedFrequencyModel("mm", freqModels, switchingRates);
+        addModel(freqModel);
 
         if (stateCount != stateSizes) {
             throw new RuntimeException("Incompatible state counts in " + getModelName() + ". Models add up to " + stateSizes + ".");
@@ -139,6 +141,10 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
         if (gammaRateModel != null) {
             addModel(gammaRateModel);
+
+            if (gammaRateModel.getCategoryCount() != numBaseModel && numBaseModel % gammaRateModel.getCategoryCount()  != 0) {
+                throw new RuntimeException("Wrong discretized gamma dimension");
+            }
         }
         this.gammaRateModel = gammaRateModel;
 
@@ -165,6 +171,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
     public double getModelRateScalar(int model) {
         if (gammaRateModel != null) {
+            model = model % gammaRateModel.getCategoryCount();
             if (DEBUG) {
                 System.err.println("M" + model + " = " + gammaRateModel.getRateForCategory(model));
             }
@@ -179,7 +186,6 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                 return rateScalar.getParameterValue(model);
             }
         }
-        //return 1E-2;
     }
 
     protected void storeState() {

@@ -164,7 +164,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         scaleBufferIndices = new int[internalNodeCount];
         storedScaleBufferIndices = new int[internalNodeCount];
 
-        operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE * partitionCount];
+        if (useBeagle3) {
+            operations = new int[internalNodeCount * Beagle.PARTITION_OPERATION_TUPLE_SIZE * partitionCount];
+        } else {
+            operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE * partitionCount];
+        }
 
         try {
 
@@ -647,7 +651,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         if (branchUpdateCount > 0) {
-            for (EvolutionaryProcessDelegate evolutionaryProcessDelegate: evolutionaryProcessDelegates) {
+            for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
                 evolutionaryProcessDelegate.updateTransitionMatrices(
                         beagle,
                         branchUpdateIndices,
@@ -709,26 +713,50 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             //partitions 2 & 3 -> model 1
             //partitions 4 & 5 -> model 2
 
-            int mapPartition = partitionCount/evolutionaryProcessDelegates.size();
+            int mapPartition = partitionCount / evolutionaryProcessDelegates.size();
 
-            for (int i = 0; i < partitionCount; i++) {
-                EvolutionaryProcessDelegate evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i/(mapPartition));
-                /*if (evolutionaryProcessDelegates.size() == partitionCount) {
-                    evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i);
-                } else {
-                    evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(0);
-                }*/
+            if (useBeagle3) {
 
-                operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
-                operations[k + 1] = writeScale;
-                operations[k + 2] = readScale;
-                operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-                operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
-                operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
-                operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+                for (int i = 0; i < partitionCount; i++) {
 
-                k += Beagle.OPERATION_TUPLE_SIZE;
-                operationCount ++;
+                    EvolutionaryProcessDelegate evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i / (mapPartition));
+
+                    operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+                    operations[k + 1] = writeScale;
+                    operations[k + 2] = readScale;
+                    operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
+                    operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+                    operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
+                    operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+                    //operations[k + 7] = ;
+                    //operations[k + 8] = ;
+
+                    k += Beagle.PARTITION_OPERATION_TUPLE_SIZE;
+                    operationCount++;
+
+                }
+            } else {
+                for (int i = 0; i < partitionCount; i++) {
+
+                    EvolutionaryProcessDelegate evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i / (mapPartition));
+                    /*if (evolutionaryProcessDelegates.size() == partitionCount) {
+                        evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(i);
+                    } else {
+                        evolutionaryProcessDelegate = evolutionaryProcessDelegates.get(0);
+                    }*/
+
+                    operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+                    operations[k + 1] = writeScale;
+                    operations[k + 2] = readScale;
+                    operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
+                    operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+                    operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
+                    operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+
+                    k += Beagle.OPERATION_TUPLE_SIZE;
+                    operationCount++;
+
+                }
             }
         }
 
@@ -789,6 +817,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             /*beagle.calculateRootLogLikelihoodsByPartition(new int[]{rootIndex}, new int[]{0}, new int[]{0},
                     new int[]{cumulateScaleBufferIndex}, partitionIndices, 1, sumLogLikelihoodsByPartition, sumLogLikelihoods);
             */
+            beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+                    new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
 
         } else {
 

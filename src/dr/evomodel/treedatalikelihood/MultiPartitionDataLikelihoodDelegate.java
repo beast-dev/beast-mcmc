@@ -378,8 +378,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             //use value of j to construct partitionIndices?
             //TODO: check with Daniel if this is correct
-            partitionIndices = new int[j];
-            for (int i = 0; i < j; i++) {
+            partitionIndices = new int[partitionCount];
+            for (int i = 0; i < partitionCount; i++) {
                 partitionIndices[i] = i;
             }
 
@@ -640,16 +640,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             if (updateSiteRateModels[k]) {
                 double[] categoryRates = siteRateModel.getCategoryRates();
                 if (useBeagle3) {
-                    boolean updateAllPartitions = true;
-                    if (updateAllPartitions) {
-                        beagle.setCategoryRates(categoryRates);
-                    } else {
-                        for (int i = 0; i < partitionCount; i++) {
-                            //TODO: can we set these quietly? and then compute those in parallel when needed
-                            //or is that in fact what is happening?
-                            beagle.setCategoryRatesWithIndex(i, categoryRates);
-                        }
-                    }
+                    beagle.setCategoryRatesWithIndex(k, categoryRates);
                 } else {
                     beagle.setCategoryRates(categoryRates);
                 }
@@ -847,15 +838,25 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         if (useBeagle3) {
 
-            boolean updateAllPartitions = true;
+            boolean updateAllPartitions = false;
             if (updateAllPartitions) {
                 beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
                         new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
             } else {
+
+                /*System.out.println("partitionCount = " + partitionCount);
+                for (int i = 0; i < partitionCount; i++) {
+                    System.out.println("partitionIndices[" + i + "] = " + partitionIndices[i]);
+                }*/
+
                 //TODO: check these arguments with Daniel
-                //TODO: partitionIndices needs to be set according to which partitions need updating
+                //TODO: partitionIndices needs to be set according to which partitions need updating?
                 beagle.calculateRootLogLikelihoodsByPartition(new int[]{rootIndex}, new int[]{0}, new int[]{0},
                         new int[]{cumulateScaleBufferIndex}, partitionIndices, partitionCount, 1, sumLogLikelihoodsByPartition, sumLogLikelihoods);
+
+                /*for (int i = 0; i < partitionCount; i++) {
+                    System.out.println("partition " + i + " lnL = " + sumLogLikelihoodsByPartition[i]);
+                }*/
             }
 
         } else {

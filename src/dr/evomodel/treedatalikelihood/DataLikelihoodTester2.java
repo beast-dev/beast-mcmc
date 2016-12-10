@@ -149,31 +149,18 @@ public class DataLikelihoodTester2 {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood);
 
+        hky.setKappa(10.0);
+
         System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 10): ");
-
-        dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                treeModel,
-                patterns,
-                branchModel2,
-                siteRateModel2, false,
-                PartialsRescalingScheme.NONE,
-                false);
-
-        treeDataLikelihood = new TreeDataLikelihood(
-                dataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
-
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-
-        System.out.println("logLikelihood = " + logLikelihood);
-        hky2.setKappa(11.0);
-        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 11): ");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood);
+
 
         hky.setKappa(1.0);
-        hky2.setKappa(10.0);
+        siteRateModel.setAlpha(0.4);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 1; alpha = 0.4): " + logLikelihood + "\n");
+        siteRateModel.setAlpha(0.5);
 
         MultiPartitionDataLikelihoodDelegate multiPartitionDataLikelihoodDelegate;
 
@@ -197,12 +184,25 @@ public class DataLikelihoodTester2 {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
+        siteRateModel.setAlpha(0.4);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 1; alpha = 0.4):");
+        System.out.println("logLikelihood = " + logLikelihood);
+        siteRateModel.setAlpha(0.5);
+
         hky.setKappa(5.0);
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5):");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.println("logLikelihood = " + logLikelihood);
+        siteRateModel.setAlpha(0.2);
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5; alpha = 0.2):");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+
+        System.out.println("logLikelihood = " + logLikelihood);
+
         hky.setKappa(1.0);
+        siteRateModel.setAlpha(0.5);
 
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 10):");
 
@@ -258,8 +258,6 @@ public class DataLikelihoodTester2 {
         System.out.println("logLikelihood = " + logLikelihood);
         System.out.println("sum of partition log likelihoods checks out when using BEAGLE3");
 
-        System.exit(0);
-
 
 
         //START ADDITIONAL TEST #1 - Guy Baele
@@ -294,9 +292,11 @@ public class DataLikelihoodTester2 {
         System.out.println("logLikelihood = " + logLikelihood);
 
         System.out.print("Adjust alpha in partition 2: ");
-        siteRateModel2.setAlpha(0.35);
+        siteRateModel2.setAlpha(0.2);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (this seems wrong)");
+
+        System.exit(0);
 
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);
@@ -307,9 +307,6 @@ public class DataLikelihoodTester2 {
         siteRateModel2.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + "\n");
-
-
-        System.exit(0);
 
 
         //adjusting alphas in both partitions without explicitly calling getLogLikelihood() in between
@@ -560,8 +557,10 @@ public class DataLikelihoodTester2 {
 //        alignment.setDataType(Nucleotides.INSTANCE);
 
         Taxon[] taxa = new Taxon[taxa_sequence[0].length]; // 6, 17
-        System.out.println("Taxon len = " + taxa_sequence[0].length);
-        System.out.println("Alignment len = " + taxa_sequence[1].length);
+
+        //System.out.println("Taxon len = " + taxa_sequence[0].length);
+        //System.out.println("Alignment len = " + taxa_sequence[1].length);
+
         if (taxa_sequence.length > 2) System.out.println("Date len = " + taxa_sequence[2].length);
 
         for (int i=0; i < taxa_sequence[0].length; i++) {

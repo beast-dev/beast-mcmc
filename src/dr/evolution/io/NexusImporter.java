@@ -1052,19 +1052,13 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         node.addChild(readBranch(translationList));
 
         if (getLastDelimiter() != ',' && !suppressWarnings) {
-            java.util.logging.Logger.getLogger("dr.evolution.io").warning("Internal node only has a single child!");
+            java.util.logging.Logger.getLogger("dr.evolution.io").warning("Internal node only has a single child.");
         }
 
         // this allows one or more children
         while(getLastDelimiter()==',') {
             node.addChild(readBranch(translationList));
         }
-
-        // read subsequent children
-        //do {
-        //    node.addChild(readBranch(translationList));
-        //
-        //} while (getLastDelimiter() == ',');
 
         // should have had a closing ')'
         if (getLastDelimiter() != ')') {

@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.evomodel.continuous.GibbsSampleFromTreeInterface;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.MathUtils;
@@ -11,22 +12,24 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 /**
  * Created by max on 5/16/16.
  */
-public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements GibbsOperator{
-    LatentFactorModel lfm;
-    double pathParameter = 1;
-    FullyConjugateMultivariateTraitLikelihood tree;
-    FullyConjugateMultivariateTraitLikelihood workingTree;
-    MatrixParameterInterface factors;
-    MatrixParameterInterface errorPrec;
-    Boolean randomScan;
+public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public FactorTreeGibbsOperator(double weight, LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, Boolean randomScan){
+    private final LatentFactorModel lfm;
+    private double pathParameter = 1;
+    private final GibbsSampleFromTreeInterface tree;
+    private final GibbsSampleFromTreeInterface workingTree;
+    private final MatrixParameterInterface factors;
+    private final MatrixParameterInterface errorPrec;
+    private final boolean randomScan;
+
+    public FactorTreeGibbsOperator(double weight, LatentFactorModel lfm, GibbsSampleFromTreeInterface tree, Boolean randomScan){
         setWeight(weight);
         this.tree = tree;
         this.lfm = lfm;
         this.factors = lfm.getFactors();
         errorPrec = lfm.getColumnPrecision();
         this.randomScan = randomScan;
+        this.workingTree = null;
     }
 
     @Override
@@ -115,32 +118,34 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     public double[][] getTreePrec(int column){
         double answerFactor = tree.getPrecisionFactor(column);
         double[][] answer = new double[factors.getRowDimension()][factors.getRowDimension()];
+
         for (int i = 0; i < factors.getRowDimension(); i++) {
             answer[i][i] = answerFactor;
         }
-//        double[][] answer = tree.getConditionalPrecision(column);
-        if(workingTree == null){
-            return answer;
-        }
-        double[][] temp = workingTree.getConditionalPrecision(column);
-        for (int i = 0; i <answer.length ; i++) {
-            for (int j = 0; j <answer.length ; j++) {
-                answer[i][j] = answer[i][j] * pathParameter + temp[i][j] * (1 - pathParameter);
-            }
 
+        if (workingTree != null) {
+            double[][] temp = workingTree.getConditionalPrecision(column);
+            for (int i = 0; i < answer.length; i++) {
+                for (int j = 0; j < answer.length; j++) {
+                    answer[i][j] = answer[i][j] * pathParameter + temp[i][j] * (1 - pathParameter);
+                }
+
+            }
         }
+
         return answer;
     }
 
     public double[] getTreeMean(int column){
         double[] answer = tree.getConditionalMean(column);
-        if(workingTree == null){
-            return answer;
-        }
-        double[] temp = workingTree.getConditionalMean(column);
-        for (int i = 0; i <answer.length ; i++) {
+
+        if (workingTree != null) {
+            double[] temp = workingTree.getConditionalMean(column);
+            for (int i = 0; i < answer.length; i++) {
                 answer[i] = answer[i] * pathParameter + temp[i] * (1 - pathParameter);
             }
+        }
+
         return answer;
     }
 

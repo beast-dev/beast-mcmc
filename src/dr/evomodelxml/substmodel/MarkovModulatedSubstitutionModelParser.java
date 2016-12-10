@@ -95,7 +95,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 
         SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
         if (siteRateModel != null) {
-            if (siteRateModel.getCategoryCount() != substModels.size()) {
+            if (siteRateModel.getCategoryCount() != substModels.size() &&  substModels.size() % siteRateModel.getCategoryCount()  != 0) {
                 throw new XMLParseException(
                         "Number of gamma categories must equal number of substitution models in " + xo.getId());
             }

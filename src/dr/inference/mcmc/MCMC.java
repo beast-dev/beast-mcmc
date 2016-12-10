@@ -54,6 +54,7 @@ import java.io.PrintStream;
 public class MCMC implements Identifiable, Spawnable, Loggable {
 
     public final static String LOAD_DUMP_FILE = "load.dump.file";
+    public final static String SAVE_DUMP_FILE = "save.dump.file";
     public final static String DUMP_STATE = "dump.state";
     public final static String DUMP_EVERY = "dump.every";
 
@@ -159,13 +160,14 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         this.delegates = delegates;
 
         dumpStateFile = System.getProperty(LOAD_DUMP_FILE);
+        String fileName = System.getProperty(SAVE_DUMP_FILE, null);
         if (System.getProperty(DUMP_STATE) != null) {
             long debugWriteState = Long.parseLong(System.getProperty(DUMP_STATE));
-            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteState, false));
+            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteState, false, fileName));
         }
         if (System.getProperty(DUMP_EVERY) != null) {
             long debugWriteEvery = Long.parseLong(System.getProperty(DUMP_EVERY));
-            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteEvery, true));
+            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteEvery, true, fileName));
         }
 
     }
@@ -229,21 +231,55 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         }
 
         if (!stopping) {
+
+            long loadedState = 0;
+
             if (dumpStateFile != null) {
                 double[] savedLnL = new double[1];
 
-                long loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), savedLnL);
+                loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), getOperatorSchedule(), savedLnL);
 
                 mc.setCurrentLength(loadedState);
 
                 double lnL = mc.evaluate();
 
-                DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL);
+                DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL, getOperatorSchedule());
 
+                //first perform a simple check for equality of two doubles
+                //when this test fails, go over the digits
                 if (lnL != savedLnL[0]) {
+
+                    //15 is the floor value for the number of decimal digits when representing a double
+                    //checking for 15 identical digits below
+                    String originalString = Double.toString(savedLnL[0]);
+                    String restoredString = Double.toString(lnL);
+                    //System.out.println(lnL + "    " + originalString);
+                    //System.out.println(savedLnL[0] + "    " + restoredString);
+                    //assume values will be nearly identical
+                    int digits = 0;
+                    for (int i = 0; i < Math.max(originalString.length(), restoredString.length()); i++) {
+                        if (originalString.charAt(i) == restoredString.charAt(i)) {
+                            if (!(originalString.charAt(i) == '-' || originalString.charAt(i) == '.')) {
+                                digits++;
+                            }
+                        }
+                    }
+                    //System.out.println("digits = " + digits);
+
+                    if (digits < 15) {
                         throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
                                 ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
+                    }
+
                 }
+
+                //convert to BigDecimal to fix to 16 digits; solves issue with log likelihood mismatch at the last digit
+                //BigDecimal original = new BigDecimal(savedLnL[0], MathContext.DECIMAL64);
+                //BigDecimal restored = new BigDecimal(lnL, MathContext.DECIMAL64);
+                /*if (Math.abs(original.doubleValue() - restored.doubleValue()) > 1E-9) {
+                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + original.doubleValue() +
+                                ", recomputed lnL: " + restored.doubleValue() + " (difference " + (original.doubleValue() - restored.doubleValue()) + ")");
+                }*/
 
 //                for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
 //                    System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
@@ -258,36 +294,27 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             long chainLength = getChainLength();
 
+            //this also potentially gets the new coercionDelay of a possibly increased chain length
             final long coercionDelay = getCoercionDelay();
 
-            if (coercionDelay > 0) {
-                // Run the chain for coercionDelay steps with coercion disabled
-                mc.runChain(coercionDelay, true);
+            //assume that dumped state has passed the coercionDelay
+            //TODO: discuss whether we want to dump the coercionDelay or chainLength to file
+            if (coercionDelay > loadedState) {
+                mc.runChain(coercionDelay - loadedState, true);
                 chainLength -= coercionDelay;
+            }
+
+            //if (coercionDelay > 0) {
+                // Run the chain for coercionDelay steps with coercion disabled
+                //mc.runChain(coercionDelay, true);
+                //chainLength -= coercionDelay;
 
                 // reset operator acceptance levels
-                for (int i = 0; i < schedule.getOperatorCount(); i++) {
+                //GB: we are now restoring these; commenting out for now
+                /*for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
-                }
-            }
-
-            if (TEST_CLONING) {
-                // TEST Code for cloning the MarkovChain to a file to distribute amongst processors
-
-                double lnL1 = mc.getCurrentScore();
-
-                // Write the MarkovChain out and back in again...
-                DebugUtils.writeStateToFile(new File("beast.state"), currentState, mc.getCurrentScore());
-                DebugUtils.readStateFromFile(new File("beast.state"), null);
-
-                double lnL2 = mc.evaluate();
-
-                if (lnL1 != lnL2) {
-                    throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + lnL1 +
-                            ", recomputed lnL: " + lnL2 + " (difference " + (lnL2 - lnL1) + ")");
-                }
-                // TEST Code end
-            }
+                }*/
+            //}
 
             mc.runChain(chainLength, false);
 

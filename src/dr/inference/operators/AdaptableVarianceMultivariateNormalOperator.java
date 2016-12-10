@@ -58,6 +58,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String UPDATE_EVERY = "updateEvery";
     public static final String FORM_XTX = "formXtXInverse";
     public static final String COEFFICIENT = "coefficient";
+    public static final String SKIP_RANK_CHECK = "skipRankCheck";
 
     public static final boolean DEBUG = false;
 
@@ -80,7 +81,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[][] proposal;
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor, double[][] inMatrix,
-            double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix) {
+            double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -103,9 +104,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         this.epsilon = new double[dim];
         this.proposal = new double[dim][dim];
 
-        SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(inMatrix));
-        if (inMatrix[0].length != svd.rank()) {
-            throw new RuntimeException("Variance matrix in AdaptableVarianceMultivariateNormalOperator is not of full rank");
+        if (!skipRankCheck) {
+            SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(inMatrix));
+            if (inMatrix[0].length != svd.rank()) {
+                throw new RuntimeException("Variance matrix in AdaptableVarianceMultivariateNormalOperator is not of full rank");
+            }
         }
 
         if (isVarianceMatrix) {
@@ -130,8 +133,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     }
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor,
-            MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance) {
-        this(parameter, transformations, transformationSizes, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance);
+            MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance, boolean skipRankCheck) {
+        this(parameter, transformations, transformationSizes, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance, skipRankCheck);
     }
 
     private double[][] formXtXInverse(double[][] X) {
@@ -639,7 +642,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             //varMatrix needs to be initialized
             int dim = parameter.getDimension();
-            System.err.println("Dimension: " + dim);
+            if (DEBUG) {
+                System.err.println("Dimension: " + dim);
+            }
 
             if (initial <= 2 * dim) {
                 initial = 2 * dim;
@@ -746,7 +751,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 					"\n If you use this operator, please cite: " + 
 			"   Guy Baele, Philippe Lemey, Marc A. Suchard. 2016. In preparation.");*/
 
-            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, transformationSizes, scaleFactor, varMatrix, weight, beta, initial, burnin, every, mode, !formXtXInverse);
+            boolean skipRankCheck = xo.getAttribute(SKIP_RANK_CHECK, false);
+
+            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, transformationSizes, scaleFactor, varMatrix, weight, beta, initial, burnin, every,
+                    mode, !formXtXInverse, skipRankCheck);
         }
 
         //************************************************************************
@@ -775,6 +783,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newIntegerRule(UPDATE_EVERY, true),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
+                AttributeRule.newBooleanRule(SKIP_RANK_CHECK, true),
                 new ElementRule(Parameter.class),
                 new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
         };

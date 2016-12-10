@@ -289,5 +289,4 @@ public class PathSamplingAnalysis {
     private List<Double> mlContribution;
     private final String logLikelihoodName;
     List<Double> orderedTheta;
-    //private final String thetaName;
 }

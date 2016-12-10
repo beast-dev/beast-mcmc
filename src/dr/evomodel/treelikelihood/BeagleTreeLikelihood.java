@@ -30,6 +30,7 @@ import dr.evolution.datatype.HiddenDataType;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -265,6 +266,13 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 this.delayRescalingUntilUnderflow = Boolean.parseBoolean(d);
             }
 
+            // TODO Remove once issue #854 is fixed
+            for (int s = 0; s < substitutionModelDelegate.getSubstitutionModelCount(); ++s) {
+                if (substitutionModelDelegate.getSubstitutionModel(s) instanceof MarkovModulatedSubstitutionModel) {
+                    this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
+                    this.delayRescalingUntilUnderflow = false;
+                }
+            }
 
             if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
                 if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off

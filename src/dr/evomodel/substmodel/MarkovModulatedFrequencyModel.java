@@ -29,6 +29,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.LUDecomposition;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
@@ -58,6 +59,8 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
             if (stateCount != size) {
                 throw new RuntimeException("MarkovModulatedFrequencyModel requires all frequencies model to have the same dimension");
             }
+            addModel(freqModels.get(i));
+
             freqCount += size;
         }
         totalFreqCount = freqCount;
@@ -204,6 +207,11 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
         if (variable == switchingRates) {
             stationaryDistributionKnown = false;
         }
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+//        System.err.println("MMFM.hMCE : " + model.getId() + " : " + model.getClass().getCanonicalName());
+        fireModelChanged();
     }
 
     public int getFrequencyCount() {

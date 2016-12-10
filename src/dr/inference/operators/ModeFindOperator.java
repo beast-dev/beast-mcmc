@@ -48,6 +48,7 @@ public class ModeFindOperator extends AbstractCoercableOperator {
 
     public static final String OPERATOR = "modeFindOperator";
     public static final String MAX_TIMES = "maxTimes";
+    public static final String SCALE_FACTOR = "sd";
 
     private double scaleFactor;
 
@@ -56,18 +57,20 @@ public class ModeFindOperator extends AbstractCoercableOperator {
     private int executeTimes = 0;
     private final MultiDimensionalScalingMM mm;
 
-    public ModeFindOperator(MultiDimensionalScalingMM mm, int maxTimes, double weight, CoercionMode mode) {
-        this(mm, maxTimes, weight, 1000, mode);
+    public ModeFindOperator(MultiDimensionalScalingMM mm, int maxTimes, double weight,
+                            CoercionMode mode, double scaleFactor) {
+        this(mm, maxTimes, weight, 1000, mode, scaleFactor);
     }
 
     public ModeFindOperator(MultiDimensionalScalingMM mm, int maxTimes, double weight,
-                            int maxModeSteps, CoercionMode mode) {
+                            int maxModeSteps, CoercionMode mode, double scaleFactor) {
         super(mode);
         setWeight(weight);
 
         this.maxTimes = maxTimes;
         this.mm = mm;
         this.maxSteps = maxModeSteps;
+        this.scaleFactor = scaleFactor;
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -76,30 +79,36 @@ public class ModeFindOperator extends AbstractCoercableOperator {
 
             MatrixParameterInterface parameter = mm.getLikelihood().getMatrixParameter();
 
-//            double[] original = null;
 
-//            if (mode == CoercionMode.COERCION_ON) {
+            boolean sample = mode == CoercionMode.COERCION_ON || mode == CoercionMode.DEFAULT;
+
+//            double[] original = null;
+//
+//            if (sample) {
 //                original = parameter.getParameterValues();
 //            }
 
-            System.err.println("START");
+//            System.err.println("START");
             mm.run(maxSteps);
-            System.err.println("END");
+//            System.err.println("END");
             ++executeTimes;
 
             double logHR = Double.POSITIVE_INFINITY; // Always accept, breaks target distribution if called infinitely often
 
-            if (mode == CoercionMode.COERCION_ON) {
-                double[] center = parameter.getParameterValues();
+//            System.err.println("HERE");
 
+            if (sample) {
+                System.err.println("Adaptive sampling: " + scaleFactor);
+//                double[] center = parameter.getParameterValues();
+//
 //                double balance = 0.0;
-                for (int i = 0; i < center.length; ++i) {
-                    final double epsilon = scaleFactor * MathUtils.nextGaussian();
-                    double x = center[i] + epsilon;
+//                for (int i = 0; i < center.length; ++i) {
+//                    final double epsilon = scaleFactor * MathUtils.nextGaussian();
+//                    double x = center[i] + epsilon;
 //                    final double old = original[i] - center[i];
 //                    balance += epsilon * epsilon - old * old;
-                }
-
+//                }
+//
 //                logHR = 0.5 * balance / (scaleFactor * scaleFactor);
                 logHR = 0.0;  // TODO Detailed balance is only met when mode finder run to convergence
             }
@@ -144,6 +153,10 @@ public class ModeFindOperator extends AbstractCoercableOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             CoercionMode mode = CoercionMode.parseMode(xo);
+            double scaleFactor = xo.getAttribute(SCALE_FACTOR, 1.0);
+
+            System.err.println(mode);
+//            System.exit(-1);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
@@ -151,7 +164,7 @@ public class ModeFindOperator extends AbstractCoercableOperator {
 
             MultiDimensionalScalingMM mm = (MultiDimensionalScalingMM) xo.getChild(MMAlgorithm.class);
 
-            return new ModeFindOperator(mm, maxTimes, weight, mode);
+            return new ModeFindOperator(mm, maxTimes, weight, mode, scaleFactor);
         }
 
         //************************************************************************
@@ -174,6 +187,7 @@ public class ModeFindOperator extends AbstractCoercableOperator {
                 AttributeRule.newIntegerRule(MAX_TIMES, true),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                AttributeRule.newDoubleRule(SCALE_FACTOR, true),
                 new ElementRule(MultiDimensionalScalingMM.class),
         };
 

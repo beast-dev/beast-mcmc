@@ -45,6 +45,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 
 import java.io.*;
@@ -58,9 +61,10 @@ public class DebugUtils {
      * If it fails, then returns false but does not stop.
      * @param file the file
      * @param state the current state number
+     * @param operatorSchedule
      * @return success
      */
-    public static boolean writeStateToFile(File file, long state, double lnL) {
+    public static boolean writeStateToFile(File file, long state, double lnL, OperatorSchedule operatorSchedule) {
         OutputStream fileOut = null;
         try {
             fileOut = new FileOutputStream(file);
@@ -74,7 +78,7 @@ public class DebugUtils {
             }
             out.println();
 
-            out.print("\nstate\t");
+            out.print("state\t");
             out.println(state);
 
             out.print("lnL\t");
@@ -87,6 +91,20 @@ public class DebugUtils {
                 for (int dim = 0; dim < parameter.getDimension(); dim++) {
                     out.print("\t");
                     out.print(parameter.getParameterValue(dim));
+                }
+                out.println();
+            }
+
+            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                MCMCOperator operator = operatorSchedule.getOperator(i);
+                out.print(operator.getOperatorName());
+                out.print("\t");
+                out.print(operator.getAcceptCount());
+                out.print("\t");
+                out.print(operator.getRejectCount());
+                if (operator instanceof CoercableMCMCOperator) {
+                    out.print("\t");
+                    out.print(((CoercableMCMCOperator)operator).getCoercableParameter());
                 }
                 out.println();
             }
@@ -121,7 +139,7 @@ public class DebugUtils {
      * @param file the file
      * @return the state number
      */
-    public static long readStateFromFile(File file, double[] lnL) {
+    public static long readStateFromFile(File file, OperatorSchedule operatorSchedule, double[] lnL) {
         long state = -1;
 
         try {
@@ -183,15 +201,35 @@ public class DebugUtils {
                 }
 
                 if (fields[0].equals("branchRates.categories.rootNodeNumber")) {
-                    System.out.println("eek");
+                    // System.out.println("eek");
                     double value = Double.parseDouble(fields[2]);
-                    parameter.setParameterValue(0, 160.0);
+                    parameter.setParameterValue(0, value);
                 } else {
                     for (int dim = 0; dim < parameter.getDimension(); dim++) {
                         parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 2]));
                     }
                 }
 
+            }
+
+            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                MCMCOperator operator = operatorSchedule.getOperator(i);
+                line = in.readLine();
+                fields = line.split("\t");
+                if (!fields[0].equals(operator.getOperatorName())) {
+                    throw new RuntimeException("Unable to match operator: " + fields[0]);
+                }
+                if (fields.length < 3) {
+                    throw new RuntimeException("Operator missing values: " + fields[0]);
+                }
+                operator.setAcceptCount(Integer.parseInt(fields[1]));
+                operator.setRejectCount(Integer.parseInt(fields[2]));
+                if (operator instanceof CoercableMCMCOperator) {
+                    if (fields.length != 4) {
+                        throw new RuntimeException("Coercable operator missing parameter: " + fields[0]);
+                    }
+                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[3]));
+                }
             }
 
             // load the tree models last as we get the node heights from the tree (not the parameters which

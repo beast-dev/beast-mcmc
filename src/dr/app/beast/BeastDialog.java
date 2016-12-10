@@ -75,7 +75,10 @@ public class BeastDialog {
         final JLabel titleIcon = new JLabel();
         titleIcon.setIcon(icon);
 
-        final JLabel titleText = new JLabel(titleString);
+        final JEditorPane titleText = new JEditorPane("text/html", "<html>" + titleString + "</html>");
+        titleText.setOpaque(false);
+        titleText.setEditable(false);
+        titleText.addHyperlinkListener(new SimpleLinkListener());
         optionPanel3.addComponent(titleText);
 
 //        final JButton aboutButton = new JButton("About BEAST...");
@@ -175,7 +178,7 @@ public class BeastDialog {
                 "<html><div style=\"font-family:'helvetica neue light',helvetica,sans-serif;font-size:12;\"><p>BEAGLE is a high-performance phylogenetic library that can make use of<br>" +
                         "additional computational resources such as graphics boards. It must be<br>" +
                         "downloaded and installed independently of BEAST:</p>" +
-                        "<pre><a href=\"http://github.com/beagle-dev/beagle-lib/\">http://github.com/beagle-dev/beagle-lib/</a></pre></div>");
+                        "<pre><a href=\"http://github.com/beagle-dev/beagle-lib/\">http://github.com/beagle-dev/beagle-lib/</a></pre></div></html>");
         beagleInfo.setOpaque(false);
         beagleInfo.setEditable(false);
         beagleInfo.addHyperlinkListener(new SimpleLinkListener());

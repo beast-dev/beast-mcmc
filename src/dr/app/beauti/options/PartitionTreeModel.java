@@ -233,10 +233,17 @@ public class PartitionTreeModel extends PartitionOptions {
         this.hasTipCalibrations = hasTipCalibrations;
     }
 
+    public boolean hasTipCalibrations() {
+        return hasTipCalibrations;
+    }
+
     public void setNodeCalibrations(boolean hasNodeCalibrations) {
         this.hasNodeCalibrations = hasNodeCalibrations;
     }
 
+    public boolean hasNodeCalibrations() {
+        return hasNodeCalibrations;
+    }
 
     public void setPloidyType(PloidyType ploidyType) {
         this.ploidyType = ploidyType;

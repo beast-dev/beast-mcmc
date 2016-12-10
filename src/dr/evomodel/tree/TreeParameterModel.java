@@ -182,30 +182,32 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
             final int oldRootNodeNumber = rootNodeNumber.getValue(0).intValue();
             final int newRootNodeNumber = tree.getRoot().getNumber();
 
-            if (oldRootNodeNumber > newRootNodeNumber) {
+            if (oldRootNodeNumber != newRootNodeNumber) {
+                if (oldRootNodeNumber > newRootNodeNumber) {
 
-                final double oldValue = parameter.getParameterValue(newRootNodeNumber);
+                    final double oldValue = parameter.getParameterValue(newRootNodeNumber);
 
-                final int end = Math.min(parameter.getDimension() - 1, oldRootNodeNumber);
-                for (int i = newRootNodeNumber; i < end; i++) {
-                    parameter.setParameterValue(i, parameter.getParameterValue(i + 1));
+                    final int end = Math.min(parameter.getDimension() - 1, oldRootNodeNumber);
+                    for (int i = newRootNodeNumber; i < end; i++) {
+                        parameter.setParameterValue(i, parameter.getParameterValue(i + 1));
+                    }
+
+                    parameter.setParameterValue(end, oldValue);
+
+                } else if (oldRootNodeNumber < newRootNodeNumber) {
+
+                    final int end = Math.min(parameter.getDimension() - 1, newRootNodeNumber);
+
+                    final double oldValue = parameter.getParameterValue(end);
+
+                    for (int i = end; i > oldRootNodeNumber; i--) {
+                        parameter.setParameterValue(i, parameter.getParameterValue(i - 1));
+                    }
+
+                    parameter.setParameterValue(oldRootNodeNumber, oldValue);
                 }
-
-                parameter.setParameterValue(end, oldValue);
-
-            } else if (oldRootNodeNumber < newRootNodeNumber) {
-
-                final int end = Math.min(parameter.getDimension() - 1, newRootNodeNumber);
-
-                final double oldValue = parameter.getParameterValue(end);
-
-                for (int i = end; i > oldRootNodeNumber; i--) {
-                    parameter.setParameterValue(i, parameter.getParameterValue(i - 1));
-                }
-
-                parameter.setParameterValue(oldRootNodeNumber, oldValue);
+                rootNodeNumber.setParameterValue(0, newRootNodeNumber);
             }
-            rootNodeNumber.setParameterValue(0, newRootNodeNumber);
         }
     }
 

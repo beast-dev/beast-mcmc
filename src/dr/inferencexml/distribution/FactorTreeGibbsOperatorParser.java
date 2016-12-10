@@ -1,6 +1,7 @@
 package dr.inferencexml.distribution;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.evomodel.continuous.GibbsSampleFromTreeInterface;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
@@ -22,11 +23,10 @@ public class FactorTreeGibbsOperatorParser extends AbstractXMLObjectParser {
         String weightTemp = (String) xo.getAttribute(WEIGHT);
         double weight = Double.parseDouble(weightTemp);
         LatentFactorModel lfm= (LatentFactorModel) xo.getChild(LatentFactorModel.class);
-        FullyConjugateMultivariateTraitLikelihood tree = (FullyConjugateMultivariateTraitLikelihood) xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
-        FullyConjugateMultivariateTraitLikelihood workingTree = null;
+        GibbsSampleFromTreeInterface tree = (GibbsSampleFromTreeInterface) xo.getChild(GibbsSampleFromTreeInterface.class);
+        GibbsSampleFromTreeInterface workingTree = null;
         if(xo.getChild(WORKING_PRIOR) != null){
-            System.out.println("happy");
-            workingTree = (FullyConjugateMultivariateTraitLikelihood) xo.getChild(WORKING_PRIOR).getChild(FullyConjugateMultivariateTraitLikelihood.class);
+            workingTree = (GibbsSampleFromTreeInterface) xo.getChild(WORKING_PRIOR).getChild(GibbsSampleFromTreeInterface.class);
         }
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
 
@@ -40,18 +40,18 @@ public class FactorTreeGibbsOperatorParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(LatentFactorModel.class),
-            new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+            new ElementRule(GibbsSampleFromTreeInterface.class),
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newBooleanRule(RANDOM_SCAN, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
-                    new ElementRule(FullyConjugateMultivariateTraitLikelihood.class)
+                    new ElementRule(GibbsSampleFromTreeInterface.class)
             }, true),
     };
 
 
     @Override
     public String getParserDescription() {
-        return "Gibbs sample a factor column given a FullyConjugateMultivariateTree";
+        return "Gibbs sample a factor row (tip) on a tree";
     }
 
     @Override

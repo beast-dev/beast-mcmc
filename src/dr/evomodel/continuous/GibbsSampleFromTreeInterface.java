@@ -1,7 +1,7 @@
 /*
- * OperatorType.java
+ * TmpTreeInterface.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,25 +23,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.types;
+package dr.evomodel.continuous;
 
 /**
- * @author Andrew Rambaut
+ * Created by msuchard on 12/9/16.
  */
-public enum OperatorSetType {
+public interface GibbsSampleFromTreeInterface {
 
-    DEFAULT("classic operator mix"),
-    FIXED_TREE_TOPOLOGY("fixed tree topology"),
-    NEW_TREE_MIX("new tree operator mix"),
-    ADAPTIVE_MULTIVARIATE("adaptive multivariate");
+    double getPrecisionFactor(int index);
 
-    OperatorSetType(String displayName) {
-        this.displayName = displayName;
-    }
+    double[] getConditionalMean(int index);
 
-    public String toString() {
-        return displayName;
-    }
-
-    private final String displayName;
+    double[][] getConditionalPrecision(int index);
 }

@@ -33,6 +33,12 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
+ *
+ * To get the age of the root in absolute time:
+ * <tmrcaStatistic id="age" absolute="true">
+ *     <tree idref="tree"/>
+ * </tmrcaStatistic>
+ *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
@@ -40,6 +46,8 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
 
     public static final String TMRCA_STATISTIC = "tmrcaStatistic";
     public static final String MRCA = "mrca";
+    public static final String ABSOLUTE = "absolute";
+
     // The tmrcaStatistic will represent that age of the parent node of the MRCA, rather than the MRCA itself
     public static final String PARENT = "forParent";
     public static final String STEM = "includeStem";
@@ -53,8 +61,12 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
 
         String name = xo.getAttribute(Statistic.NAME, xo.getId());
         Tree tree = (Tree) xo.getChild(Tree.class);
-        TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
-        boolean isRate = xo.getAttribute("rate", false);
+        TaxonList taxa = null;
+
+        if (xo.hasChildNamed(MRCA)) {
+            taxa = (TaxonList) xo.getElementFirstChild(MRCA);
+        }
+        boolean isAbsolute = xo.getAttribute(ABSOLUTE, false);
         boolean includeStem = false;
         if (xo.hasAttribute(PARENT) && xo.hasAttribute(STEM)) {
              throw new XMLParseException("Please use either " + PARENT + " or " + STEM + "!");
@@ -65,7 +77,7 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
         }
 
         try {
-            return new TMRCAStatistic(name, tree, taxa, isRate, includeStem);
+            return new TMRCAStatistic(name, tree, taxa, isAbsolute, includeStem);
         } catch (Tree.MissingTaxonException mte) {
             throw new XMLParseException(
                     "Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
@@ -78,7 +90,7 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
 
     public String getParserDescription() {
         return "A statistic that has as its value the height of the most recent common ancestor " +
-                "of a set of taxa in a given tree";
+                "of a set of taxa in a given tree. ";
     }
 
     public Class getReturnType() {
@@ -93,9 +105,9 @@ public class TMRCAStatisticParser extends AbstractXMLObjectParser {
             new ElementRule(Tree.class),
             new StringAttributeRule("name",
                     "A name for this statistic primarily for the purposes of logging", true),
-            AttributeRule.newBooleanRule("rate", true),
+            AttributeRule.newBooleanRule(ABSOLUTE, true),
             new ElementRule(MRCA,
-                    new XMLSyntaxRule[]{new ElementRule(Taxa.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, true),
             new OrRule(
                     new XMLSyntaxRule[]{
                             AttributeRule.newBooleanRule(PARENT, true),

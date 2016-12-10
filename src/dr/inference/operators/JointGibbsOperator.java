@@ -44,7 +44,7 @@ public class JointGibbsOperator extends JointOperator implements GibbsOperator {
 
     @Override
     public int getStepCount() {
-        return 0;
+        return 1;
     }
 }
 

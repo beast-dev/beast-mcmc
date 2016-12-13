@@ -849,10 +849,29 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     System.out.println("partitionIndices[" + i + "] = " + partitionIndices[i]);
                 }*/
 
+                int[] rootIndices             = new int[partitionCount];
+                int[] categoryWeightsIndices  = new int[partitionCount];
+                int[] stateFrequenciesIndices = new int[partitionCount];
+                int[] cumulativeScaleIndices  = new int[partitionCount];
+
+                for (int i = 0; i < partitionCount; i++) {
+                    rootIndices            [i]  = rootIndex;
+                    categoryWeightsIndices [i]  = 0;
+                    stateFrequenciesIndices[i]  = 0;
+                    cumulativeScaleIndices [i]  = cumulateScaleBufferIndex;
+                }
+
                 //TODO: check these arguments with Daniel
                 //TODO: partitionIndices needs to be set according to which partitions need updating?
-                beagle.calculateRootLogLikelihoodsByPartition(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-                        new int[]{cumulateScaleBufferIndex}, partitionIndices, partitionCount, 1, sumLogLikelihoodsByPartition, sumLogLikelihoods);
+                beagle.calculateRootLogLikelihoodsByPartition(rootIndices,
+                                                              categoryWeightsIndices,
+                                                              stateFrequenciesIndices,
+                                                              cumulativeScaleIndices,
+                                                              partitionIndices,
+                                                              partitionCount,
+                                                              1,
+                                                              sumLogLikelihoodsByPartition,
+                                                              sumLogLikelihoods);
 
                 /*for (int i = 0; i < partitionCount; i++) {
                     System.out.println("partition " + i + " lnL = " + sumLogLikelihoodsByPartition[i]);

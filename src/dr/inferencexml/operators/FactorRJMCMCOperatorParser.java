@@ -61,9 +61,9 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
         DeterminentalPointProcessPrior DPP = null;
         if(xo.getChild(SPARSITY_PRIOR) != null)
              DPP = (DeterminentalPointProcessPrior) xo.getChild(SPARSITY_PRIOR).getChild(DeterminentalPointProcessPrior.class);
-        NegationOperator NOp= null;
+        SimpleMCMCOperator NOp= null;
         if(xo.getChild(NEGATION_OPERATOR) != null){
-            NOp = (NegationOperator) xo.getChild(NEGATION_OPERATOR).getChild(NegationOperator.class);
+            NOp = (SimpleMCMCOperator) xo.getChild(NEGATION_OPERATOR).getChild(SimpleMCMCOperator.class);
         }
         AbstractModelLikelihood LFM = (AbstractModelLikelihood) xo.getChild(AbstractModelLikelihood.class);
         RowDimensionPoissonPrior rowPrior = (RowDimensionPoissonPrior) xo.getChild(ROW_PRIOR).getChild(RowDimensionPoissonPrior.class);
@@ -110,7 +110,7 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
             new ElementRule(LOADINGS_SPARSITY, new XMLSyntaxRule[]{
                     new ElementRule(AdaptableSizeFastMatrixParameter.class)}, true),
             new ElementRule(NEGATION_OPERATOR, new XMLSyntaxRule[]{
-                    new ElementRule(NegationOperator.class)}, true),
+                    new ElementRule(SimpleMCMCOperator.class)}, true),
             new ElementRule(ROW_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(RowDimensionPoissonPrior.class)}),
             AttributeRule.newDoubleRule(WEIGHT),

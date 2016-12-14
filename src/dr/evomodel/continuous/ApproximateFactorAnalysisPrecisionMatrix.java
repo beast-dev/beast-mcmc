@@ -136,12 +136,12 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
             System.err.println(new Matrix(matrix));
         }
 
-        Matrix inverse = new Matrix(matrix).inverse();
+//        Matrix inverse = new Matrix(matrix).inverse();
 
         int index = 0;
         for (int row = 0; row < dim; ++row) {
             for (int col = 0; col < dim; ++col) {
-                values[index] = inverse.component(row, col);
+                values[index] = matrix[row][col];
                 ++index;
             }
         }

@@ -92,6 +92,7 @@ public abstract class DataType implements Serializable {
             registerDataType(NewHiddenNucleotides.DESCRIPTION + "2", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_2);
             registerDataType(NewHiddenNucleotides.DESCRIPTION + "3", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_3);
             registerDataType(NewHiddenNucleotides.DESCRIPTION + "4", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_4);
+            registerDataType(NewHiddenNucleotides.DESCRIPTION + "8", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_8);
             registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);

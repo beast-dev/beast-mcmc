@@ -857,8 +857,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
                 for (int i = 0; i < partitionCount; i++) {
                     rootIndices            [i]  = rootIndex;
-                    categoryWeightsIndices [i]  = 0;
-                    stateFrequenciesIndices[i]  = 0;
+                    categoryWeightsIndices [i]  = i;
+                    stateFrequenciesIndices[i]  = i;
                     cumulativeScaleIndices [i]  = cumulateScaleBufferIndex;
                 }
 

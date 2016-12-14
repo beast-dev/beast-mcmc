@@ -481,6 +481,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private void updateSiteRateModel(SiteRateModel siteRateModel) {
         for (int i = 0; i < siteRateModels.size(); i++) {
             if (siteRateModels.get(i) == siteRateModel) {
+                //System.out.println("siteRateModel: " + i);
                 updateSiteRateModels[i] = true;
             }
         }
@@ -873,9 +874,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                                                               sumLogLikelihoodsByPartition,
                                                               sumLogLikelihoods);
 
-                /*for (int i = 0; i < partitionCount; i++) {
+                System.out.println();
+                for (int i = 0; i < partitionCount; i++) {
                     System.out.println("partition " + i + " lnL = " + sumLogLikelihoodsByPartition[i]);
-                }*/
+                }
             }
 
         } else {
@@ -884,10 +886,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
 
         }
-
-        /*for (int i = 0; i < sumLogLikelihoodsByPartition.length; i++) {
-            System.out.println("partition " + (i+1) + " lnL = " + sumLogLikelihoodsByPartition[i]);
-        }*/
 
         double logL = sumLogLikelihoods[0];
 

@@ -138,7 +138,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         // Branch models determine the substitution models per branch. There can be either
         // one per partition or one shared across all partitions
-        assert(branchModels.size() == 1 || (!useBeagle3 && branchModels.size() == patternLists.size()));
+        assert(branchModels.size() == 1 || (useBeagle3 && branchModels.size() == patternLists.size()));
 
         this.branchModels.addAll(branchModels);
         for (BranchModel branchModel : this.branchModels) {
@@ -147,7 +147,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         // SiteRateModels determine the rates per category (for site-heterogeneity models).
         // There can be either one per partition or one shared across all partitions
-        assert(siteRateModels.size() == 1 || (!useBeagle3 && siteRateModels.size() == patternLists.size()));
+        assert(siteRateModels.size() == 1 || (useBeagle3 && siteRateModels.size() == patternLists.size()));
 
         this.siteRateModels.addAll(siteRateModels);
         this.categoryCount = this.siteRateModels.get(0).getCategoryCount();
@@ -605,7 +605,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
 
             for (int i = 0; i < patternList.getPatternCount(); i++) {
-                states[i] = patternList.getPatternState(sequenceIndex, i);
+                states[v] = patternList.getPatternState(sequenceIndex, i);
+                v++;
             }
         }
 
@@ -857,8 +858,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
                 for (int i = 0; i < partitionCount; i++) {
                     rootIndices            [i]  = rootIndex;
-                    categoryWeightsIndices [i]  = i;
-                    stateFrequenciesIndices[i]  = i;
+                    categoryWeightsIndices [i]  = i % siteRateModels.size();
+                    stateFrequenciesIndices[i]  = i % siteRateModels.size();
                     cumulativeScaleIndices [i]  = cumulateScaleBufferIndex;
                 }
 

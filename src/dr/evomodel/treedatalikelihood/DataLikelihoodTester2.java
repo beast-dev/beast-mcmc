@@ -284,7 +284,7 @@ public class DataLikelihoodTester2 {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n");
 
-        System.exit(0);
+        // System.exit(0);
 
 
         //alpha in partition 1 accept followed by alpha in partition 2 accept
@@ -298,7 +298,7 @@ public class DataLikelihoodTester2 {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (this seems wrong)");
 
-        System.exit(0);
+        // System.exit(0);
 
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);

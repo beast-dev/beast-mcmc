@@ -658,15 +658,18 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         if (branchUpdateCount > 0) {
+            k = 0;
             for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
                 if (useBeagle3) {
+                    // TODO use single beagle call to update all branches in all partitions
                     evolutionaryProcessDelegate.updateTransitionMatricesByPartition(
                             beagle,
-                            partitionIndices,
+                            k,
                             branchUpdateIndices,
                             branchLengths,
                             branchUpdateCount,
                             flip);
+                    k++;
                 } else {
                     evolutionaryProcessDelegate.updateTransitionMatrices(
                             beagle,

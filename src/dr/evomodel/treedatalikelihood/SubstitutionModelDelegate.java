@@ -265,7 +265,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }// END: updateTransitionMatrices
 
     @Override
-    public void updateTransitionMatricesByPartition(Beagle beagle, int[] categoryRateIndices, int[] branchIndices, double[] edgeLength, int updateCount, boolean flipBuffers) {
+    public void updateTransitionMatricesByPartition(Beagle beagle, int categoryRateIndex, int[] branchIndices, double[] edgeLength, int updateCount, boolean flipBuffers) {
         throw new UnsupportedOperationException("updateTransitionMatricesByPartition not yet implemented in SubstitutionModelDelegate");
     }
 

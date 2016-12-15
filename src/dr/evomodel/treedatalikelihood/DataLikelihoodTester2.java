@@ -158,8 +158,9 @@ public class DataLikelihoodTester2 {
 
         hky.setKappa(1.0);
         siteRateModel.setAlpha(0.4);
+        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 1; alpha = 0.4): ");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.print("\nTest BeagleDataLikelihoodDelegate (kappa = 1; alpha = 0.4): " + logLikelihood + "\n");
+        System.out.println("logLikelihood = " + logLikelihood);
         siteRateModel.setAlpha(0.5);
 
         MultiPartitionDataLikelihoodDelegate multiPartitionDataLikelihoodDelegate;
@@ -185,20 +186,19 @@ public class DataLikelihoodTester2 {
         System.out.println("logLikelihood = " + logLikelihood);
 
         siteRateModel.setAlpha(0.4);
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 1; alpha = 0.4): ");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 1; alpha = 0.4):");
         System.out.println("logLikelihood = " + logLikelihood);
         siteRateModel.setAlpha(0.5);
 
         hky.setKappa(5.0);
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5):");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-
         System.out.println("logLikelihood = " + logLikelihood);
+        
         siteRateModel.setAlpha(0.2);
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5; alpha = 0.2):");
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-
         System.out.println("logLikelihood = " + logLikelihood);
 
         hky.setKappa(1.0);
@@ -267,7 +267,7 @@ public class DataLikelihoodTester2 {
         System.out.print("Adjust alpha in partition 1: ");
         siteRateModel.setAlpha(0.4);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " wrong; both partition likelihoods have been updated?");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);
@@ -277,7 +277,7 @@ public class DataLikelihoodTester2 {
         System.out.print("Adjust alpha in partition 2: ");
         siteRateModel2.setAlpha(0.2);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood  + " wrong; neither of the partition likelihoods have been updated?");
+        System.out.println("logLikelihood = " + logLikelihood  + " (OK)\n");
 
         System.out.print("Return alpha in partition 2 to original value: ");
         siteRateModel2.setAlpha(0.5);
@@ -291,24 +291,24 @@ public class DataLikelihoodTester2 {
         System.out.print("Adjust alpha in partition 1: ");
         siteRateModel.setAlpha(0.4);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood);
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Adjust alpha in partition 2: ");
         siteRateModel2.setAlpha(0.2);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (this seems wrong)");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         // System.exit(0);
 
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: alpha in partition 2 has not been returned to original value yet)");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Return alpha in partition 2 to original value: ");
         siteRateModel2.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
 
         //adjusting alphas in both partitions without explicitly calling getLogLikelihood() in between
@@ -316,17 +316,17 @@ public class DataLikelihoodTester2 {
         siteRateModel.setAlpha(0.4);
         siteRateModel2.setAlpha(0.35);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood);
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Return alpha in partition 2 to original value: ");
         siteRateModel2.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: alpha in partition 1 has not been returned to original value yet)");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + "\n\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n\n");
 
         //END ADDITIONAL TEST - Guy Baele
 

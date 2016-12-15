@@ -126,12 +126,12 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         // one extra created as a reserve
         // which is used to free up buffers when the avail stack is empty.
         reserveBufferIndex = matrixBufferHelper.getBufferCount() + extraBufferCount;
-        
-		if (DEBUG) {
-			System.out.println("Creating reserve buffer with index: "
-					+ reserveBufferIndex);
-		}
-	
+
+        if (DEBUG) {
+            System.out.println("Creating reserve buffer with index: "
+                    + reserveBufferIndex);
+        }
+
     }// END: Constructor
 
     @Override
@@ -255,14 +255,19 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                 bufferIndices.add(matrixBufferHelper.getOffsetIndex(branchIndices[i]));
 
                 convolutionList.add(bufferIndices);
-			}// END: if convolution needed
+            }// END: if convolution needed
 
-		}// END: i loop
+        }// END: i loop
 
         computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
         convolveMatrices(beagle, convolutionList);
 
     }// END: updateTransitionMatrices
+
+    @Override
+    public void updateTransitionMatricesByPartition(Beagle beagle, int[] categoryRateIndices, int[] branchIndices, double[] edgeLength, int updateCount, boolean flipBuffers) {
+        throw new UnsupportedOperationException("updateTransitionMatricesByPartition not yet implemented in SubstitutionModelDelegate");
+    }
 
     private void computeTransitionMatrices(Beagle beagle, int[][] probabilityIndices, double[][] edgeLengths, int[] counts) {
 
@@ -280,7 +285,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
             if (DEBUG) {
                 for (int j = 0; j < counts[i]; j++) {
 //                    System.out.print(" " + probabilityIndices[i][j]);
-                	System.out.print(" " + probabilityIndices[i][j] + " (" + edgeLengths[i][j] + ")");
+                    System.out.print(" " + probabilityIndices[i][j] + " (" + edgeLengths[i][j] + ")");
                 }
             }
             if (counts[i] > 0) {
@@ -419,10 +424,10 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private void convolveAndRelease(Beagle beagle, int[] firstConvolutionBuffers, int[] secondConvolutionBuffers, int[] resultConvolutionBuffers, int operationsCount) {
 
         if (RUN_IN_SERIES) {
-			if (operationsCount > 1) {
-			    throw new RuntimeException("Unable to convolve matrices in series");
-			}
-		}
+            if (operationsCount > 1) {
+                throw new RuntimeException("Unable to convolve matrices in series");
+            }
+        }
 
         beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                 secondConvolutionBuffers, // B

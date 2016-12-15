@@ -659,12 +659,22 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         if (branchUpdateCount > 0) {
             for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
-                evolutionaryProcessDelegate.updateTransitionMatrices(
-                        beagle,
-                        branchUpdateIndices,
-                        branchLengths,
-                        branchUpdateCount,
-                        flip);
+                if (useBeagle3) {
+                    evolutionaryProcessDelegate.updateTransitionMatricesByPartition(
+                            beagle,
+                            partitionIndices,
+                            branchUpdateIndices,
+                            branchLengths,
+                            branchUpdateCount,
+                            flip);
+                } else {
+                    evolutionaryProcessDelegate.updateTransitionMatrices(
+                            beagle,
+                            branchUpdateIndices,
+                            branchLengths,
+                            branchUpdateCount,
+                            flip);
+                }
             }
         }
 

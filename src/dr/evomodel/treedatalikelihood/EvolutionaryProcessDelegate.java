@@ -56,6 +56,8 @@ public interface EvolutionaryProcessDelegate {
 
     void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flipBuffers);
 
+    void updateTransitionMatricesByPartition(Beagle beagle, int[] categoryRateIndices, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flipBuffers);
+
     void storeState();
 
     void restoreState();

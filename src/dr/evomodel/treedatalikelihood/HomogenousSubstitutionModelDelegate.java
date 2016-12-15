@@ -160,6 +160,27 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
+    public void updateTransitionMatricesByPartition(Beagle beagle, int[] categoryRateIndices, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flip) {
+
+        int[] probabilityIndices = new int[updateCount];
+
+        for (int i = 0; i < updateCount; i++) {
+            if (flip) {
+                matrixBufferHelper.flipOffset(branchIndices[i]);
+            }
+            probabilityIndices[i] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
+        }// END: i loop
+
+        beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(0),
+                probabilityIndices,
+                null, // firstDerivativeIndices
+                null, // secondDerivativeIndices
+                edgeLengths,
+                updateCount);
+
+    }
+
+    @Override
     public void storeState() {
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();

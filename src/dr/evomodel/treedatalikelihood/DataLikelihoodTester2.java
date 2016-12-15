@@ -284,8 +284,6 @@ public class DataLikelihoodTester2 {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n");
 
-        // System.exit(0);
-
 
         //alpha in partition 1 accept followed by alpha in partition 2 accept
         System.out.print("Adjust alpha in partition 1: ");
@@ -298,7 +296,6 @@ public class DataLikelihoodTester2 {
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
-        // System.exit(0);
 
         System.out.print("Return alpha in partition 1 to original value: ");
         siteRateModel.setAlpha(0.5);
@@ -334,10 +331,7 @@ public class DataLikelihoodTester2 {
         //START ADDITIONAL TEST #2 - Guy Baele
 
         System.out.println("-- Test #2 SiteRateModels -- ");
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood);
-
-        //1 siteRateModel shared across 2 partitions
+        System.out.print("1 siteRateModel shared across 2 partitions");
         siteRateModels = new ArrayList<SiteRateModel>();
         siteRateModels.add(siteRateModel);
 
@@ -357,12 +351,13 @@ public class DataLikelihoodTester2 {
 
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Adjust alpha in shared siteRateModel: ");
         siteRateModel.setAlpha(0.4);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only adjusted alpha for partition 1)");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
+        System.out.print("Return alpha in shared siteRateModel: ");
         siteRateModel.setAlpha(0.5);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + "\n\n");
@@ -402,22 +397,22 @@ public class DataLikelihoodTester2 {
 
         logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Adjust kappa in partition 1: ");
         hky.setKappa(5.0);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: logLikelihood has not changed?)");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Return kappa in partition 1 to original value: ");
         hky.setKappa(1.0);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Adjust kappa in partition 2: ");
         hky2.setKappa(11.0);
         logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood);
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         System.out.print("Return kappa in partition 2 to original value: ");
         hky2.setKappa(10.0);
@@ -457,7 +452,7 @@ public class DataLikelihoodTester2 {
 
         System.out.println("BeagleDataLikelihoodDelegate logLikelihood partition 1 (kappa = 10) = " + logLikelihood);
 
-        hky.setKappa(1.0);
+        hky2.setKappa(10.0);
 
         BeagleDataLikelihoodDelegate dataLikelihoodDelegateTwo = new BeagleDataLikelihoodDelegate(
                 treeModel,
@@ -491,18 +486,17 @@ public class DataLikelihoodTester2 {
                 treeModel,
                 branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        hky.setKappa(1.0);
 
         System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 1):");
-        System.out.println("logLikelihood = " + logLikelihood);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
 
         hky.setKappa(10.0);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
 
         System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 10):");
-        System.out.println("logLikelihood = " + logLikelihood);
-
-        hky.setKappa(1.0);
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        System.out.println("logLikelihood = " + logLikelihood + "\n");
 
         multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                 treeModel,
@@ -518,10 +512,11 @@ public class DataLikelihoodTester2 {
                 multiPartitionDataLikelihoodDelegate,
                 treeModel,
                 branchRateModel);
-
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        
+        hky2.setKappa(10.0);
 
         System.out.print("Test MultiPartitionDataLikelihoodDelegate 2nd partition (kappa = 10):");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood + "\n");
 
         patternLists = new ArrayList<PatternList>();
@@ -542,11 +537,13 @@ public class DataLikelihoodTester2 {
                 treeModel,
                 branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+        hky.setKappa(1.0);
+        hky2.setKappa(10.0);
 
         System.out.print("Test MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
+        logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: should be the sum of both separate logLikelihoods)\nKappa value of partition 2 is used to compute logLikelihood for both partitions?");
+        System.out.println("logLikelihood = " + logLikelihood + " (OK)\n");
 
         //END ADDITIONAL TEST - Guy Baele
 

@@ -664,7 +664,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     // TODO use single beagle call to update all branches in all partitions
                     evolutionaryProcessDelegate.updateTransitionMatricesByPartition(
                             beagle,
-                            k,
+                            k % siteRateModels.size(),
                             branchUpdateIndices,
                             branchLengths,
                             branchUpdateCount,

@@ -658,19 +658,42 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         if (branchUpdateCount > 0) {
-            k = 0;
-            for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
-                if (useBeagle3) {
-                    // TODO use single beagle call to update all branches in all partitions
-                    evolutionaryProcessDelegate.updateTransitionMatricesByPartition(
-                            beagle,
-                            k % siteRateModels.size(),
-                            branchUpdateIndices,
-                            branchLengths,
-                            branchUpdateCount,
-                            flip);
-                    k++;
-                } else {
+            if (useBeagle3) {
+                // TODO below only applies to homogenous substitution models
+
+                int   [] eigenDecompositionIndices = new int   [branchUpdateCount * partitionCount];
+                int   [] categoryRateIndices       = new int   [branchUpdateCount * partitionCount];
+                int   [] probabilityIndices        = new int   [branchUpdateCount * partitionCount];
+                double[] edgeLengths               = new double[branchUpdateCount * partitionCount];
+
+                int op = 0;
+                int partition = 0;
+                for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
+                    if (flip) {
+                        evolutionaryProcessDelegate.flipTransitionMatrices(branchUpdateIndices,
+                                                                       branchUpdateCount);
+                    }
+
+                    for (int i = 0; i < branchUpdateCount; i++) {
+                        eigenDecompositionIndices[op] = evolutionaryProcessDelegate.getEigenIndex(0);
+                        categoryRateIndices      [op] = partition % siteRateModels.size();
+                        probabilityIndices       [op] = evolutionaryProcessDelegate.getMatrixIndex(branchUpdateIndices[i]);
+                        edgeLengths              [op] = branchLengths[i];
+                        op++;
+                    }
+                    partition++;
+                }
+
+                beagle.updateTransitionMatricesWithMultipleModels(
+                        eigenDecompositionIndices,
+                        categoryRateIndices,
+                        probabilityIndices,
+                        null, // firstDerivativeIndices
+                        null, // secondDerivativeIndices
+                        edgeLengths,
+                        op);
+            } else {
+                for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
                     evolutionaryProcessDelegate.updateTransitionMatrices(
                             beagle,
                             branchUpdateIndices,

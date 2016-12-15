@@ -115,6 +115,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
+    public int getEigenIndex(int bufferIndex) {
+        return eigenBufferHelper.getOffsetIndex(bufferIndex);
+    }
+
+    @Override
     public int getMatrixIndex(int branchIndex) {
         return matrixBufferHelper.getOffsetIndex(branchIndex);
     }
@@ -160,31 +165,12 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
-    public void updateTransitionMatricesByPartition(Beagle beagle, int categoryRateIndex, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flip) {
-
-        int[] eigenDecompositionIndices = new int[updateCount];
-        int[] categoryRateIndices = new int[updateCount];
-        int[] probabilityIndices = new int[updateCount];
-
+    public void flipTransitionMatrices(int[] branchIndices, int updateCount) {
         for (int i = 0; i < updateCount; i++) {
-            if (flip) {
-                matrixBufferHelper.flipOffset(branchIndices[i]);
-            }
-            eigenDecompositionIndices[i] = eigenBufferHelper.getOffsetIndex(0);
-            categoryRateIndices[i] = categoryRateIndex;
-            probabilityIndices[i] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
-        }// END: i loop
-
-        beagle.updateTransitionMatricesWithMultipleModels(
-                eigenDecompositionIndices,
-                categoryRateIndices,
-                probabilityIndices,
-                null, // firstDerivativeIndices
-                null, // secondDerivativeIndices
-                edgeLengths,
-                updateCount);
-
+            matrixBufferHelper.flipOffset(branchIndices[i]);
+        }
     }
+
 
     @Override
     public void storeState() {

@@ -166,6 +166,11 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
+    public int getEigenIndex(int bufferIndex) {
+        return eigenBufferHelper.getOffsetIndex(bufferIndex);
+    }
+
+    @Override
     public int getMatrixIndex(int branchIndex) {
         return matrixBufferHelper.getOffsetIndex(branchIndex);
     }
@@ -265,8 +270,10 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }// END: updateTransitionMatrices
 
     @Override
-    public void updateTransitionMatricesByPartition(Beagle beagle, int categoryRateIndex, int[] branchIndices, double[] edgeLength, int updateCount, boolean flipBuffers) {
-        throw new UnsupportedOperationException("updateTransitionMatricesByPartition not yet implemented in SubstitutionModelDelegate");
+    public void flipTransitionMatrices(int[] branchIndices, int updateCount) {
+        for (int i = 0; i < updateCount; i++) {
+            matrixBufferHelper.flipOffset(branchIndices[i]);
+        }
     }
 
     private void computeTransitionMatrices(Beagle beagle, int[][] probabilityIndices, double[][] edgeLengths, int[] counts) {

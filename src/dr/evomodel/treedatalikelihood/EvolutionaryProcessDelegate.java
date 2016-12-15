@@ -48,6 +48,8 @@ public interface EvolutionaryProcessDelegate {
 
     SubstitutionModel getSubstitutionModel(int index);
 
+    int getEigenIndex(int bufferIndex);
+
     int getMatrixIndex(int branchIndex);
 
     double[] getRootStateFrequencies();
@@ -56,7 +58,7 @@ public interface EvolutionaryProcessDelegate {
 
     void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flipBuffers);
 
-    void updateTransitionMatricesByPartition(Beagle beagle, int categoryRateIndex, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flipBuffers);
+    void flipTransitionMatrices(int[] branchIndices, int updateCount);
 
     void storeState();
 

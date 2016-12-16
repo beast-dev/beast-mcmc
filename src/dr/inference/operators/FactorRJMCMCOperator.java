@@ -26,7 +26,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     SimpleMCMCOperator loadingsOperator;
     SimpleMCMCOperator factorOperator;
     BitFlipOperator sparsityOperator;
-    NegationOperator NOp;
+    SimpleMCMCOperator NOp;
     AdaptableSizeFastMatrixParameter storedFactors;
     AdaptableSizeFastMatrixParameter storedLoadings;
     AdaptableSizeFastMatrixParameter storedCutoffs;
@@ -40,7 +40,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     public static final boolean DEBUG = false;
 
 
-    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm, DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior, SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator, BitFlipOperator sparsityOperator, NegationOperator NOp, MatrixSizePrior rowPrior) {
+    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm, DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior, SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator, BitFlipOperator sparsityOperator, SimpleMCMCOperator NOp, MatrixSizePrior rowPrior) {
         setWeight(weight);
         this.factors = factors;
         this.loadings = loadings;
@@ -204,11 +204,11 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 //        }
 //        System.out.println(outpu);
         double finalLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getSizeLogLikelihood();
-        try {
-            iterate();
-        } catch (OperatorFailedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            iterate();
+//        } catch (OperatorFailedException e) {
+//            e.printStackTrace();
+//        }
 
         if (DEBUG) {
             System.out.print("storedFactors: ");
@@ -222,14 +222,41 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         random = MathUtils.nextDouble();
         double test = from1 + finalLikelihood - initialLikelihood;
         test = Math.min(Math.exp(test), 1);
-        if(random < test){
+
+        boolean allRowZero = false;
+//        if(loadingsSparsity != null) {
+//            for (int j = 0; j < loadingsSparsity.getColumnDimension() ; j++) {
+//                boolean rowZero = true;
+//                for (int i = 0; i < loadingsSparsity.getRowDimension(); i++) {
+//
+//                    if (loadingsSparsity.getParameterValue(i, j) != 0) {
+//                        rowZero = false;
+//                        break;
+//                    }
+//
+//                }
+//                if(rowZero){
+//                    allRowZero = true;
+//                    break;
+//                }
+//            }
+//        }
+
+
+        if(random < test && (!allRowZero || !increment)){
             if (DEBUG) {
                 System.out.println("accepted!\n" + test);
             }
             lfm.acceptModelState();
             lfm.makeDirty();
-            if(sparsityPrior != null)
+            if(sparsityPrior != null){
                 sparsityPrior.acceptModelState();
+                sparsityPrior.makeDirty();
+            }
+            if(loadingsPrior instanceof AbstractModelLikelihood){
+                ((AbstractModelLikelihood) loadingsPrior).acceptModelState();
+                loadingsPrior.makeDirty();
+            }
         }
         else{
             restoreDimensions();
@@ -244,6 +271,9 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             if(sparsityPrior != null)
                 sparsityPrior.makeDirty();
             lfm.makeDirty();
+            if(loadingsPrior instanceof AbstractModelLikelihood){
+                loadingsPrior.makeDirty();
+            }
             if (DEBUG) {
                 System.out.println("sparsity prior lnL = " + sparsityPrior.getLogLikelihood());
                 System.out.println("latentFactorModel lnL = " + lfm.getLogLikelihood());
@@ -259,7 +289,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             if(loadingsSparsity != null)
                 loadingsSparsity.storeParameterValues();
             if(cutoffs != null)
-            cutoffs.storeParameterValues();
+                cutoffs.storeParameterValues();
             if (DEBUG) {
                 System.out.println("rejected!\n" + test);
             }

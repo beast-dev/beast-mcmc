@@ -392,7 +392,6 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             if (loggers != null) {
                 for (Logger logger : loggers) {
-                    logger.log(currentState);
                     logger.stopLogging();
                 }
             }

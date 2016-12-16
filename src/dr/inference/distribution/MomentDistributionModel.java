@@ -94,16 +94,13 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
             if(data.getDimension()!=cutoff.getDimension()){
                 throw new RuntimeException("Incorrect number of cutoffs");
             }
-        for (int i = 0; i <data.getDimension() ; i++) {
-            if (Math.sqrt(cutoff.getParameterValue(i)) - .05 > Math.abs(data.getParameterValue(i)) && data.getParameterValue(i)!=0){
-//                System.out.println(i);
-//                System.out.println(cutoff.getParameterValue(i));
-//                System.out.println(data.getParameterValue(i));
-                    return Double.NEGATIVE_INFINITY;                                                                          }
-                else if(data.getParameterValue(i)==0)
-                    sum+=-1000-Math.log(precision.getParameterValue(0));
-                else
-                    sum+=untruncated.logPdf(data.getParameterValue(i));//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
+            for (int i = 0; i <data.getDimension() ; i++) {
+                if (Math.sqrt(cutoff.getParameterValue(i)) - .05 > Math.abs(data.getParameterValue(i)) && data.getParameterValue(i)!=0){
+                        return Double.NEGATIVE_INFINITY;                                                                          }
+                    else if(data.getParameterValue(i)==0)
+                        sum+=-1000-Math.log(precision.getParameterValue(0));
+                    else
+                        sum+=untruncated.logPdf(data.getParameterValue(i));//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
             }
         }
         else{
@@ -113,7 +110,6 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         }
         sumKnown=true;
         return sum;
-        //}
 
     }
 

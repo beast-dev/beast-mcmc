@@ -11,5 +11,3 @@ Every time a new state needs to be stored, the file's content will be overwritte
 
 To load a BEAST debugging file from disk and resume a previous analysis, add the following program argument: **-'load_dump filename'** (without the quotation marks).
 
-**BUG:** currently nothing is written to file when the iteration number at which a dump file needs to be created equals the chain length.
-

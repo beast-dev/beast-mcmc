@@ -58,6 +58,21 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
         MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
                 returnValue.traitParameter);
 
+
+        Parameter missing = null;
+        if(xo.hasChildNamed(TreeTraitParserUtilities.MISSING)){
+            missing = (Parameter) xo.getChild(TreeTraitParserUtilities.MISSING).getChild(Parameter.class);
+        }
+        missing.setDimension(dataParameter.getDimension());
+        for (int i = 0; i < missing.getDimension(); i++) {
+            if(returnValue.missingIndices.contains(i)){
+                missing.setParameterValue(i, 1);
+            }
+            else{
+                missing.setParameterValue(i, 0);
+            }
+        }
+
         return dataParameter;
     }
 
@@ -67,6 +82,9 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
             new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
+            new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

@@ -47,6 +47,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public static final String RECOMPUTE_RESIDUALS="recomputeResiduals";
     public static final String RECOMPUTE_FACTORS="recomputeFactors";
     public static final String RECOMPUTE_LOADINGS="recomputeLoadings";
+    public static final String MISSING_INDICATOR = "missingIndicator";
 
 
     public String getParserName() {
@@ -66,6 +67,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         }
         MatrixParameterInterface dataParameter = (MatrixParameterInterface) xo.getChild(DATA).getChild(MatrixParameterInterface.class);
         MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getChild(LOADINGS).getChild(MatrixParameterInterface.class);
+        Parameter missingIndicator = null;
+        if(xo.hasChildNamed(MISSING_INDICATOR))
+            missingIndicator = (Parameter) xo.getChild(MISSING_INDICATOR).getChild(Parameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
         boolean newModel= xo.getAttribute(COMPUTE_RESIDUALS_FOR_DISCRETE, true);
@@ -89,7 +93,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        }
 
 
-        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous, newModel, computeResiduals, computeFactors, computeLoadings);
+        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, missingIndicator, scaleData, continuous, newModel, computeResiduals, computeFactors, computeLoadings);
     }
 
     private static final XMLSyntaxRule[] rules = {
@@ -115,6 +119,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
                     new ElementRule(DiagonalMatrix.class)
             }),
             new ElementRule(CONTINUOUS, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(MISSING_INDICATOR, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
     };

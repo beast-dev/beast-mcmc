@@ -101,6 +101,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private final Parameter missingIndicator;
     private final int[] rowCount;
+    private final int nmeasurements;
 
     public LatentFactorModel(MatrixParameterInterface data, MatrixParameterInterface factors, MatrixParameterInterface loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
@@ -153,6 +154,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             }
 
         }
+        int nmeasurements = 0;
+        for (int i = 0; i < rowCount.length ; i++) {
+            nmeasurements += rowCount[i];
+        }
+        this.nmeasurements = nmeasurements;
 
 //        storedData=new MatrixParameter(null);
 //        for (int i = 0; i <continuous.getDimension(); i++) {
@@ -849,7 +855,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         return -.5 * trace + .5 * logDetCol + .5 * data.getRowDimension()
 
-                - .5 * data.getRowDimension() * data.getColumnDimension() * Math.log(2.0 * StrictMath.PI);
+                - .5 * nmeasurements * Math.log(2.0 * StrictMath.PI);
     }
 
 //    public void setPathParameter(double beta){

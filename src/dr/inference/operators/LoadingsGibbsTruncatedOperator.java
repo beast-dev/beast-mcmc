@@ -19,14 +19,14 @@ import java.util.ListIterator;
  * Created by max on 2/4/16.
  */
 public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implements GibbsOperator{
-    MomentDistributionModel prior;
+    Likelihood prior;
     LatentFactorModel LFM;
     double[][] precisionArray;
     double[] meanMidArray;
     double[] meanArray;
     boolean randomScan;
     double pathParameter=1.0;
-
+    final Parameter missingIndicator;
 
     double priorPrecision;
     double priorMeanPrecision;
@@ -34,15 +34,21 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
     DistributionLikelihood cutoffPrior;
 
-    public LoadingsGibbsTruncatedOperator(LatentFactorModel LFM, MomentDistributionModel prior, double weight, boolean randomScan, MatrixParameterInterface loadings, DistributionLikelihood cutoffPrior) {
+    public LoadingsGibbsTruncatedOperator(LatentFactorModel LFM, Likelihood prior, double weight, boolean randomScan, MatrixParameterInterface loadings, DistributionLikelihood cutoffPrior) {
         setWeight(weight);
 
         this.loadings=loadings;
         this.prior = prior;
         this.LFM = LFM;
-        priorPrecision = (this.prior.getScaleMatrix()[0][0]);
-        priorMeanPrecision = this.prior.getMean()[0] * priorPrecision;
+        if(prior instanceof MomentDistributionModel){
+        priorPrecision = (((MomentDistributionModel) this.prior).getScaleMatrix()[0][0]);
+        priorMeanPrecision = ((MomentDistributionModel) this.prior).getMean()[0] * priorPrecision;}
+        else if (prior instanceof DistributionLikelihood){
+            priorPrecision = 1 / ((DistributionLikelihood) this.prior).getDistribution().variance();
+            priorMeanPrecision = ((DistributionLikelihood) this.prior).getDistribution().mean() * priorPrecision;
+        }
         this.cutoffPrior = cutoffPrior;
+        missingIndicator = LFM.getMissingIndicator();
     }
 
     private void getPrecisionOfTruncated(MatrixParameterInterface full, int newRowDimension, int row, double[][] answer) {
@@ -71,7 +77,10 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
             for (int k = 0; k < p; k++)
-                sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
+            {
+                if(missingIndicator == null || missingIndicator.getParameterValue(k * LFM.getScaledData().getRowDimension() + dataColumn) != 1)
+                    sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
+            }
             sum = sum * LFM.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
             sum += priorMeanPrecision;
             midMean[i] = sum;
@@ -109,7 +118,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
     private void getTruncatedDraw(int row, int column, NormalDistribution truncated){
         double lowCutoff;
         double highCutoff;
-        MatrixParameterInterface cutoff = (MatrixParameterInterface) prior.getCutoff();
+        MatrixParameterInterface cutoff = (MatrixParameterInterface) ((MomentDistributionModel) prior).getCutoff();
         lowCutoff = - Math.sqrt(cutoff.getParameterValue(row, column));
         highCutoff = - lowCutoff;
         double low = truncated.cdf(lowCutoff);
@@ -161,16 +170,20 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
                 conditioned = new NormalDistribution(meanArray[0], Math.sqrt(variance[0][0]));
         }
         else
-            conditioned = new NormalDistribution(0, Math.sqrt(1 / prior.getScaleMatrix()[0][0]));
+            conditioned = new NormalDistribution(0, Math.sqrt(1 / priorPrecision)); //TODO generify
 
-
-        if(MathUtils.nextDouble() < .5) {
-            getTruncatedDraw(i, column, conditioned);
-            getCutoffDraw(i, column, conditioned);
+        if(prior instanceof MomentDistributionModel){
+            if(MathUtils.nextDouble() < .5) {
+                getTruncatedDraw(i, column, conditioned);
+                getCutoffDraw(i, column, conditioned);
+            }
+            else{
+                getCutoffDraw(i, column, conditioned);
+                getTruncatedDraw(i, column, conditioned);
+            }
         }
         else{
-            getCutoffDraw(i, column, conditioned);
-            getTruncatedDraw(i, column, conditioned);
+            loadings.setParameterValue(i, column, conditioned.quantile(MathUtils.nextDouble()));
         }
     }
 
@@ -246,13 +259,13 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
     void getCutoffDraw(int row, int column, NormalDistribution posteriorLoadings){
         double loadingsCutoff = Math.abs(loadings.getParameterValue(row, column));
         double draw = MathUtils.nextDouble() * loadingsCutoff;
-        double cutoffVal = Math.sqrt(((AdaptableSizeFastMatrixParameter) prior.getCutoff()).getParameterValue(row, column));
+        double cutoffVal = Math.sqrt(((AdaptableSizeFastMatrixParameter) ((MomentDistributionModel) prior).getCutoff()).getParameterValue(row, column));
         double top = cutoffPrior.getDistribution().pdf(Math.pow(draw,2)) / (1 - (posteriorLoadings.cdf(draw) - posteriorLoadings.cdf(-draw)));
         double bottom = cutoffPrior.getDistribution().pdf(Math.pow(cutoffVal, 2)) / (1 - (posteriorLoadings.cdf(cutoffVal) - posteriorLoadings.cdf(-cutoffVal)));
 //        double stopperCDF = Math.pow(cutoffPrior.getDistribution().cdf(loadingsCutoff), 2);
 //        double randQuant = MathUtils.nextDouble() * stopperCDF;
         if(MathUtils.nextDouble() < top / bottom){
-        ((MatrixParameterInterface) prior.getCutoff()).setParameterValue(row, column, Math.pow(draw, 2));}
+        ((MatrixParameterInterface) ((MomentDistributionModel) prior).getCutoff()).setParameterValue(row, column, Math.pow(draw, 2));}
     }
 
     @Override

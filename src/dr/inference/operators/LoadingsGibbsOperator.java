@@ -29,6 +29,7 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
@@ -59,6 +60,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     ArrayList<double[]> meanArray;
     boolean randomScan;
     double pathParameter=1.0;
+    final Parameter missingIndicator;
 
 
     double priorPrecision;
@@ -151,6 +153,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         else{
             pool = null;
         }
+        missingIndicator = LFM.getMissingIndicator();
     }
 
 
@@ -191,7 +194,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
             for (int k = 0; k < p; k++)
-                sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
+            {
+                if(missingIndicator == null || missingIndicator.getParameterValue(k * LFM.getScaledData().getRowDimension() + dataColumn) != 1)
+                    sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
+            }
             sum = sum * LFM.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
             sum += priorMeanPrecision;
             midMean[i] = sum;

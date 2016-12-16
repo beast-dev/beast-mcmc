@@ -28,9 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Marc A. Suchard
@@ -119,6 +117,21 @@ public class ContinuousTraitDataModel extends AbstractModel {
 //        }
 //    }
 
+    public boolean[] getPartiallyMissing(int taxonIndex) {
+
+        boolean[] missing = new boolean[numTraits * dimTrait];
+        if (missingIndices != null) {
+            for (int i = 0; i < numTraits; ++i) {
+                for (int j = 0; j < dimTrait; ++j) {
+                    final int index = i * dimTrait + j;
+                    final int missingIndex = index + dimTrait * numTraits * taxonIndex;
+                    missing[index] = missingIndices.contains(missingIndex);
+                }
+            }
+        }
+        return missing;
+    }
+
     public double[] getTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];
         final Parameter p = parameter.getParameter(taxonIndex);
@@ -140,4 +153,20 @@ public class ContinuousTraitDataModel extends AbstractModel {
     }
 
     private static double[] NON_MISSING = new double[] { Double.POSITIVE_INFINITY };
+
+    private Map<Integer, boolean[]> missingCache;
+    private boolean[] hasAnyMissing;
+
+    /**
+     * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
+     *
+     *      \mu = (\mu_1, \mu_2)^t
+     *      \Sigma = ((\Sigma_{11}, \Sigma_{12}), (\Sigma_{21}, \Sigma_{22})^t
+     *
+     * then  y_1 | y_2 \sim N (\bar{\mu}, \bar{\Sigma}), where
+     *
+     *      \bar{\mu} = \mu_1 + \Sigma_{12}\Sigma_{22}^{-1}(y_2 - \mu_2), and
+     *      \bar{\Sigma} = \Sigma_{11} - \Sigma_{12}\Sigma_{22}^1\Sigma{21}
+     *
+     */
 }

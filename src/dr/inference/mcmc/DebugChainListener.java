@@ -46,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class DebugChainListener implements MarkovChainListener {
+
     private MCMC mcmc;
 
     public DebugChainListener(MCMC mcmc, final long writeState, final boolean isRepeating, final String fileName) {
@@ -77,9 +78,11 @@ public class DebugChainListener implements MarkovChainListener {
     public void bestState(long state, Model bestModel) { }
 
     /**
-     * cleans up when the chain finishes (possibly early).
+     * Cleans up when the chain finishes (possibly early).
      */
-    public void finished(long chainLength) { }
+    public void finished(long chainLength) {
+        currentState(chainLength, null);
+    }
 
     private final long writeState;
     private final boolean isRepeating;

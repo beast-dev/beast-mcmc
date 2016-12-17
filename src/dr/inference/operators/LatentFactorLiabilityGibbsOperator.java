@@ -96,7 +96,7 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                     else {
                         for (int l = 1; l < dim; l++) {
                             if(l != datum){
-                                trait[l] = drawTruncatedNormalDistribution(i * lfmData.getRowDimension() + LxF[(LLpointer + l - 1)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                                trait[l] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() +(LLpointer + l - 1)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
                                 lfmData.setParameterValue(LLpointer + l - 1, i, trait[l]);
                             }
                         }
@@ -200,14 +200,15 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
         while(iterator < 10000 && invalid){
                 cdfDraw = MathUtils.nextDouble() * (newUpper - newLower) + newLower;
                 draw = normal.quantile(cdfDraw);
-                if(Double.isNaN(draw) || draw < lower || draw > upper) {
-                    invalid = true;
-                }
-                else
+                if(!Double.isNaN(draw) && draw > lower && draw < upper) {
                     invalid = false;
+                }
                 iterator++;
         }
-        return draw;
+        if(Double.isNaN(draw))
+            return (lower + upper) / 2;
+        else
+            return draw;
     }
 
     @Override

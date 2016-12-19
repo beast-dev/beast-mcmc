@@ -911,10 +911,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                                                               sumLogLikelihoodsByPartition,
                                                               sumLogLikelihoods);
 
-                System.out.println();
+                /*System.out.println();
                 for (int i = 0; i < partitionCount; i++) {
                     System.out.println("partition " + i + " lnL = " + sumLogLikelihoodsByPartition[i]);
-                }
+                }*/
             }
 
         } else {

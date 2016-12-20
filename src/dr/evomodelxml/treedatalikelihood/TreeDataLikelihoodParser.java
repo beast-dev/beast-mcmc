@@ -26,9 +26,6 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -43,22 +40,20 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
-import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @version $Id$
  */
-public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
+public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 
@@ -74,16 +69,15 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_DATA_LIKELIHOOD;
     }
 
-    protected TreeDataLikelihood createTreeDataLikelihood(List<PatternList> patternLists,
-                                                          List<BranchModel> branchModels,
-                                                          List<SiteRateModel> siteRateModels,
-                                                          TreeModel treeModel,
-                                                          BranchRateModel branchRateModel,
-                                                          TipStatesModel tipStatesModel,
-                                                          boolean useAmbiguities,
-                                                          PartialsRescalingScheme scalingScheme,
-                                                          boolean delayRescalingUntilUnderflow,
-                                                          XMLObject xo) throws XMLParseException {
+    protected Likelihood createTreeDataLikelihood(List<PatternList> patternLists,
+                                                  List<BranchModel> branchModels,
+                                                  List<SiteRateModel> siteRateModels,
+                                                  TreeModel treeModel,
+                                                  BranchRateModel branchRateModel,
+                                                  TipStatesModel tipStatesModel,
+                                                  boolean useAmbiguities,
+                                                  PartialsRescalingScheme scalingScheme,
+                                                  boolean delayRescalingUntilUnderflow) throws XMLParseException {
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
@@ -98,33 +92,61 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
 //                scalingScheme,
 //                delayRescalingUntilUnderflow);
 
-        DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                patternLists,
-                branchModels,
-                siteRateModels,
-                useAmbiguities,
-                scalingScheme,
-                delayRescalingUntilUnderflow);
+        if ( MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
+            DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists,
+                    branchModels,
+                    siteRateModels,
+                    useAmbiguities,
+                    scalingScheme,
+                    delayRescalingUntilUnderflow);
 
-        return new TreeDataLikelihood(
-                dataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            return new TreeDataLikelihood(
+                    dataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
+        } else {
+            // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
+            List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
+
+            for (int i = 0; i < patternLists.size(); i++) {
+
+                DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                        treeModel,
+                        patternLists.get(i),
+                        branchModels.get(i),
+                        siteRateModels.get(i),
+                        useAmbiguities,
+                        scalingScheme,
+                        delayRescalingUntilUnderflow);
+
+                treeDataLikelihoods.add(
+                        new TreeDataLikelihood(
+                                dataLikelihoodDelegate,
+                                treeModel,
+                                branchRateModel));
+
+            }
+
+            return new CompoundLikelihood(treeDataLikelihoods);
+        }
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
-        if (instanceCount < 1) {
-            instanceCount = 1;
-        }
 
-        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
-        if (ic != null && ic.length() > 0) {
-            instanceCount = Integer.parseInt(ic);
-        }
+        // TreeDataLikelihood doesn't currently support Instances defined from the command line
+//        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
+//        if (instanceCount < 1) {
+//            instanceCount = 1;
+//        }
+//
+//        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
+//        if (ic != null && ic.length() > 0) {
+//            instanceCount = Integer.parseInt(ic);
+//        }
 
         List<PatternList> patternLists = new ArrayList<PatternList>();
         List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
@@ -175,7 +197,7 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
                 throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(SCALING_SCHEME)+"' in "+
-                        "OldBeagleTreeLikelihood object '"+xo.getId());
+                        "BeagleDataLikelihood object '"+xo.getId());
 
         }
         if (xo.hasAttribute(DELAY_SCALING)) {
@@ -195,8 +217,7 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
                 null,
                 useAmbiguities,
                 scalingScheme,
-                delayScaling,
-                xo);
+                delayScaling);
     }
 
     //************************************************************************
@@ -208,7 +229,7 @@ public class BeagleDataLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return TreeDataLikelihood.class;
+        return Likelihood.class;
     }
 
     public static final XMLSyntaxRule[] rules = {

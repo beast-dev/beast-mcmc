@@ -106,7 +106,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        logger.info("Using BEAGLE DataLikelihood Delegate");
+        logger.info("\nUsing BEAGLE DataLikelihood Delegate");
 
         this.dataType = patternList.getDataType();
         patternCount = patternList.getPatternCount();

@@ -63,6 +63,22 @@ public class LogCombiner {
 
         System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName + "'");
 
+        if (convertToDecimal) {
+            System.out.println("Converting to decimal.");
+        }
+
+        if (treeFiles && stripAnnotations) {
+            System.out.println("Stripping annotations from trees.");
+        }
+
+        if (renumberOutput) {
+            System.out.println("Renumbering output.");
+        }
+
+        if (useScale) {
+            System.out.println("Rescaling using scale factor: " + scale);
+        }
+
         System.out.println();
 
         PrintWriter writer = new PrintWriter(new FileOutputStream(outputFileName));

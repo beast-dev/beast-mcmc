@@ -139,6 +139,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             numTraits = likelihoodDelegate.getTraitCount();
             dimNode = dimTrait * numTraits;
             this.diffusionModel = diffusionModel;
+            this.dataModel = dataModel;
 
             sample = new double[dimNode * tree.getNodeCount()];
 
@@ -216,6 +217,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected double[][] cholesky;
         protected final double[] tmpEpsilon;
+        protected final ContinuousTraitDataModel dataModel;
     }
 
     class ConditionalOnTipsDelegate extends AbstractContinuousTraitDelegate {
@@ -292,13 +294,14 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                 + branchPrecision * sample[offsetParent + i]) / totalPrecision;
                     }
 
-                    final double sqrtScale = Math.sqrt(1.0 / totalPrecision);
-
-                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                            tmpMean, 0, // input mean
-                            cholesky, sqrtScale, // input variance
-                            sample, offsetSample, // output sample
-                            tmpEpsilon);
+//                    final double sqrtScale = Math.sqrt(1.0 / totalPrecision);
+//
+//                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+//                            tmpMean, 0, // input mean
+//                            cholesky, sqrtScale, // input variance
+//                            sample, offsetSample, // output sample
+//                            tmpEpsilon);
+                    doDraw(nodeIndex, tmpMean, totalPrecision, offsetSample);
                 }
 
                 offsetSample += dimTrait;
@@ -307,9 +310,50 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
+        protected void doDraw(final int nodeIndex, final double[] mean,
+                              final double totalPrecision, final int offsetSample) {
+
+            final double sqrtScale = Math.sqrt(1.0 / totalPrecision);
+
+            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                    mean, 0, // input mean
+                    cholesky, sqrtScale, // input variance
+                    sample, offsetSample, // output sample
+                    tmpEpsilon);
+        }
+
         private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
         private final double[] partialNodeBuffer;
         private final double[] tmpMean;
+
+    }
+
+    class ConditionalOnPartiallyMissingTipsDelegate extends ConditionalOnTipsDelegate {
+
+        public ConditionalOnPartiallyMissingTipsDelegate(String name, MultivariateTraitTree tree,
+                                                         MultivariateDiffusionModel diffusionModel,
+                                                         ContinuousTraitDataModel dataModel,
+                                                         ConjugateRootTraitPrior rootPrior,
+                                                         ContinuousRateTransformation rateTransformation,
+                                                         BranchRateModel rateModel,
+                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+            super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        }
+
+        @Override
+        protected void doDraw(final int nodeIndex, final double[] mean, final double totalPrecision, final int offsetSample) {
+
+            final boolean isExternal = nodeIndex < tree.getExternalNodeCount();
+
+            if (isExternal) {
+
+                final boolean[] missing = dataModel.getPartiallyMissing(nodeIndex);
+
+                throw new RuntimeException("Not yet implemented");
+            } else {
+                super.doDraw(nodeIndex, mean, totalPrecision, offsetSample);
+            }
+        }
 
     }
 

@@ -60,11 +60,14 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                 int datum = data[index];
                 Parameter numClasses = liabilityLikelihood.numClasses;
                 int dim = (int) numClasses.getParameterValue(index);
-
+                if(datum >= dim  && continuous.getParameterValue(LLpointer) == 0){
+                    double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + LLpointer], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                    lfmData.setParameterValue(LLpointer, i, draw);
+                }
 
                 if (dim == 1.0) {
                     if (continuous.getParameterValue(LLpointer) == 0) {
-                        double draw = drawTruncatedNormalDistribution(LxF[LLpointer * lfmData.getColumnDimension() + i], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                        double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + LLpointer], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
                         lfmData.setParameterValue(LLpointer, i, draw);
                     }
 
@@ -73,11 +76,11 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
 
 
                     if (datum == 0) {
-                        double draw = drawTruncatedNormalDistribution(LxF[LLpointer * lfmData.getColumnDimension() + i], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, 0);
+                        double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + LLpointer], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, 0);
                         lfmData.setParameterValue(LLpointer, i, draw);
 
                     } else {
-                        double draw = drawTruncatedNormalDistribution(LxF[LLpointer * lfmData.getColumnDimension() + i], colPrec.getParameterValue(LLpointer, LLpointer), 0, Double.POSITIVE_INFINITY);
+                        double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + LLpointer], colPrec.getParameterValue(LLpointer, LLpointer), 0, Double.POSITIVE_INFINITY);
                         lfmData.setParameterValue(LLpointer, i, draw);
 
                     }
@@ -87,13 +90,13 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                     trait[0] = 0.0;
                     if(datum == 0){
                         for (int l = 0; l < dim - 1; l++) {
-                             lfmData.setParameterValue(LLpointer + l, i, drawTruncatedNormalDistribution(LxF[(LLpointer + l) * lfmData.getColumnDimension() + i], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, 0));
+                             lfmData.setParameterValue(LLpointer + l, i, drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + l)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, 0));
                         }
                     }
                     else {
                         for (int l = 1; l < dim; l++) {
                             if(l != datum){
-                                trait[l] = drawTruncatedNormalDistribution(LxF[(LLpointer + l - 1) * lfmData.getColumnDimension() + i], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                                trait[l] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() +(LLpointer + l - 1)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
                                 lfmData.setParameterValue(LLpointer + l - 1, i, trait[l]);
                             }
                         }
@@ -104,7 +107,7 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                             }
                         }
 
-                        trait[datum] = drawTruncatedNormalDistribution(LxF[(LLpointer + datum - 1) * lfmData.getColumnDimension() + i], colPrec.getParameterValue(LLpointer, LLpointer), max, Double.POSITIVE_INFINITY);
+                        trait[datum] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + datum - 1)], colPrec.getParameterValue(LLpointer, LLpointer), max, Double.POSITIVE_INFINITY);
                             lfmData.setParameterValue(LLpointer + datum - 1, i, trait[datum]);
 
                     }
@@ -135,38 +138,42 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                 int datum = data[index];
                 Parameter numClasses = liabilityLikelihood.numClasses;
                 int dim = (int) numClasses.getParameterValue(index);
-
-
-                if (dim == 1.0) {
-                    if (continuous.getParameterValue(index) == 0) {
-                        double draw = drawTruncatedNormalDistribution(LxF[index * lfmData.getColumnDimension() + i], colPrec.getParameterValue(index, index), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-                        lfmData.setParameterValue(index, i, draw);
-                    }
-                } else if (dim == 2.0) {
-
-
-                    if (datum == 0) {
-                        double draw = drawTruncatedNormalDistribution(LxF[index * lfmData.getColumnDimension() + i], colPrec.getParameterValue(index, index), Double.NEGATIVE_INFINITY, 0);
-                        lfmData.setParameterValue(index, i, draw);
-
-                    } else {
-                        double draw = drawTruncatedNormalDistribution(LxF[index * lfmData.getColumnDimension() + i], colPrec.getParameterValue(index, index), 0, Double.POSITIVE_INFINITY);
-                        lfmData.setParameterValue(index, i, draw);
-
-                    }
-                } else {
-                    double[] thresholdList = new double[dim + 1];
-                    thresholdList[0] = Double.NEGATIVE_INFINITY;
-                    thresholdList[1] = 0;
-                    thresholdList[dim] = Double.POSITIVE_INFINITY;
-
-                    for (int j = 0; j < thresholdList.length - 3; j++) {
-                        thresholdList[j + 2] = threshold.getParameterValue(Thresholdpointer + j);
-                    }
-                    Thresholdpointer += dim - 2;
-                    double draw = drawTruncatedNormalDistribution(LxF[index * lfmData.getColumnDimension() + i], colPrec.getParameterValue(index, index), thresholdList[datum], thresholdList[datum + 1]);
+                if(datum >= dim  && continuous.getParameterValue(index) == 0){
+                    double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + index], colPrec.getParameterValue(index, index), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
                     lfmData.setParameterValue(index, i, draw);
+                }
+                else {
+                    if (dim == 1.0) {
+                        if (continuous.getParameterValue(index) == 0) {
+                            double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + index], colPrec.getParameterValue(index, index), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                            lfmData.setParameterValue(index, i, draw);
+                        }
+                    } else if (dim == 2.0) {
 
+
+                        if (datum == 0) {
+                            double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + index], colPrec.getParameterValue(index, index), Double.NEGATIVE_INFINITY, 0);
+                            lfmData.setParameterValue(index, i, draw);
+
+                        } else {
+                            double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + index], colPrec.getParameterValue(index, index), 0, Double.POSITIVE_INFINITY);
+                            lfmData.setParameterValue(index, i, draw);
+
+                        }
+                    } else {
+                        double[] thresholdList = new double[dim + 1];
+                        thresholdList[0] = Double.NEGATIVE_INFINITY;
+                        thresholdList[1] = 0;
+                        thresholdList[dim] = Double.POSITIVE_INFINITY;
+
+                        for (int j = 0; j < thresholdList.length - 3; j++) {
+                            thresholdList[j + 2] = threshold.getParameterValue(Thresholdpointer + j);
+                        }
+                        Thresholdpointer += dim - 2;
+                        double draw = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + index], colPrec.getParameterValue(index, index), thresholdList[datum], thresholdList[datum + 1]);
+                        lfmData.setParameterValue(index, i, draw);
+
+                    }
                 }
 //                    valid = isMax(trait, datum);
 
@@ -188,15 +195,20 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
 
         double cdfDraw = 1.0;
         int iterator = 0;
-        while(iterator < 10 && cdfDraw == 1.0){
+        boolean invalid = true;
+        double draw = 0;
+        while(iterator < 10000 && invalid){
                 cdfDraw = MathUtils.nextDouble() * (newUpper - newLower) + newLower;
+                draw = normal.quantile(cdfDraw);
+                if(!Double.isNaN(draw) && draw > lower && draw < upper) {
+                    invalid = false;
+                }
                 iterator++;
         }
-        double draw = normal.quantile(cdfDraw);
-        if(Double.isNaN(draw) || draw < lower || draw > upper) {
-            draw = lower + .01;
-        }
-        return draw;
+        if(Double.isNaN(draw))
+            return (lower + upper) / 2;
+        else
+            return draw;
     }
 
     @Override

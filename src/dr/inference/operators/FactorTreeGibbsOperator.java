@@ -4,6 +4,7 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.GibbsSampleFromTreeInterface;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.Matrix;
@@ -21,6 +22,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     private final MatrixParameterInterface factors;
     private final MatrixParameterInterface errorPrec;
     private final boolean randomScan;
+    private final Parameter missingIndicator;
 
     public FactorTreeGibbsOperator(double weight, LatentFactorModel lfm, GibbsSampleFromTreeInterface tree, Boolean randomScan){
         setWeight(weight);
@@ -30,6 +32,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         errorPrec = lfm.getColumnPrecision();
         this.randomScan = randomScan;
         this.workingTree = null;
+        missingIndicator = lfm.getMissingIndicator();
     }
 
     @Override
@@ -102,7 +105,8 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         }
         for (int i = 0; i < lfm.getLoadings().getRowDimension(); i++) {
             for (int j = 0; j < lfm.getLoadings().getColumnDimension(); j++) {
-                midMean[j] += lfm.getScaledData().getParameterValue(i, column) * errorPrec.getParameterValue(i,i) * lfm.getLoadings().getParameterValue(i, j) * pathParameter;
+                if(missingIndicator == null || missingIndicator.getParameterValue(column * lfm.getScaledData().getRowDimension() + i) != 1)
+                    midMean[j] += lfm.getScaledData().getParameterValue(i, column) * errorPrec.getParameterValue(i,i) * lfm.getLoadings().getParameterValue(i, j) * pathParameter;
             }
         }
         double[] mean = new double[midMean.length];

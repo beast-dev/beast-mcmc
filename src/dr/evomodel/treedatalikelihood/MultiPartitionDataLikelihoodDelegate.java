@@ -61,9 +61,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private static final boolean RESCALING_OFF = false; // a debugging switch
 
     //turning useBeagle3 into a static debugging switch for now
-    private static final boolean useBeagle3 = false;
+    private static final boolean useBeagle3 = true;
 
-    public static boolean IS_MULTI_PARTITION_COMPATIBLE() { return useBeagle3; }
+    public static boolean IS_MULTI_PARTITION_COMPATIBLE() { return BeagleInfo.getVersionNumbers()[0] >= 3; }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -401,7 +401,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             if (useBeagle3) {
                 // This call is only available in BEAGLE3
-//                beagle.setPatternPartitions(partitionCount, patternPartitions);
+                beagle.setPatternPartitions(partitionCount, patternPartitions);
             }
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
@@ -735,7 +735,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         if (useBeagle3) {
-//            beagle.updatePartialsByPartition(operations, operationCount);
+            beagle.updatePartialsByPartition(operations, operationCount);
         } else {
             beagle.updatePartials(operations, operationCount, Beagle.NONE);
         }

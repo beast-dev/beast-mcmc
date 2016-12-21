@@ -114,8 +114,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         super("MultiPartitionDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        //boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3"));
-
         if (useBeagle3) {
             logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 extensions");
         } else {

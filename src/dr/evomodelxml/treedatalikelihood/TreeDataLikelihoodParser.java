@@ -92,7 +92,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //                scalingScheme,
 //                delayRescalingUntilUnderflow);
 
-        if ( MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
+        boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "false"));
+
+        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
             DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                     treeModel,
                     patternLists,

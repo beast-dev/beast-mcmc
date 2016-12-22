@@ -517,6 +517,10 @@ public final class MarkovChain implements Serializable {
      */
     private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
 
+        if (DEBUG) {
+            System.out.println("coerceAcceptanceProbability " + isCoercable(op));
+        }
+
         if (isCoercable(op)) {
             final double p = op.getCoercableParameter();
 
@@ -528,6 +532,9 @@ public final class MarkovChain implements Serializable {
 
             if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
                 op.setCoercableParameter(newp);
+                if (DEBUG) {
+                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " logr: " + logr);
+                }
             }
         }
     }

@@ -722,10 +722,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         } else {
 
-            //useScaleFactors = false;
-            //recomputeScaleFactors = false;
-
-            //firstRescaleAttempt = true;
+            //flip = true;
 
         }
 

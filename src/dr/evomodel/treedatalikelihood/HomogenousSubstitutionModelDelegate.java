@@ -44,7 +44,6 @@ import java.util.List;
  * @version $Id$
  */
 public final class HomogenousSubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
-    private static final boolean DEBUG = false;
 
     private final SubstitutionModel substitutionModel;
 
@@ -115,6 +114,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
+    public int getEigenIndex(int bufferIndex) {
+        return eigenBufferHelper.getOffsetIndex(bufferIndex);
+    }
+
+    @Override
     public int getMatrixIndex(int branchIndex) {
         return matrixBufferHelper.getOffsetIndex(branchIndex);
     }
@@ -158,6 +162,14 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                 updateCount);
 
     }
+
+    @Override
+    public void flipTransitionMatrices(int[] branchIndices, int updateCount) {
+        for (int i = 0; i < updateCount; i++) {
+            matrixBufferHelper.flipOffset(branchIndices[i]);
+        }
+    }
+
 
     @Override
     public void storeState() {

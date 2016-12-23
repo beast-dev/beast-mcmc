@@ -26,18 +26,6 @@
 package dr.evomodel.treedatalikelihood;
 
 
-import dr.evolution.alignment.Patterns;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
-import dr.evomodelxml.substmodel.HKYParser;
-import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.nucleotide.HKY;
-import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
@@ -49,18 +37,27 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.util.MessageLogHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.*;
+import java.util.logging.Logger;
 
-public class DataLikelihoodTester {
+public class DataLikelihoodTester2 {
 
     public static void main(String[] args) {
 

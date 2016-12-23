@@ -85,7 +85,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
 
-    private static final boolean RESCALING_OFF = true; // a debugging switch
+    private static final boolean RESCALING_OFF = false; // a debugging switch
 
     /**
      *
@@ -106,7 +106,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        logger.info("Using BEAGLE DataLikelihood Delegate");
+        logger.info("\nUsing BEAGLE DataLikelihood Delegate");
 
         this.dataType = patternList.getDataType();
         patternCount = patternList.getPatternCount();
@@ -140,8 +140,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
 
-        try {
+        firstRescaleAttempt = true;
 
+        try {
 
             int compactPartialsCount = tipCount;
             if (useAmbiguities) {
@@ -545,6 +546,30 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
 
+        recomputeScaleFactors = false;
+
+        if (!this.delayRescalingUntilUnderflow || everUnderflowed) {
+            if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS || this.rescalingScheme == PartialsRescalingScheme.DELAYED) {
+                useScaleFactors = true;
+                recomputeScaleFactors = true;
+            } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                useScaleFactors = true;
+
+                if (rescalingCount > rescalingFrequency) {
+                    rescalingCount = 0;
+                    rescalingCountInner = 0;
+                }
+
+                if (rescalingCountInner < RESCALE_TIMES) {
+                    recomputeScaleFactors = true;
+                    //updateAllNodes();
+                    rescalingCountInner++;
+                }
+
+                rescalingCount++;
+            }
+        }
+
         if (RESCALING_OFF) { // a debugging switch
             useScaleFactors = false;
             recomputeScaleFactors = false;
@@ -637,8 +662,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
 
         int cumulateScaleBufferIndex = Beagle.NONE;
-        if (useScaleFactors) {
 
+        if (useScaleFactors) {
             if (recomputeScaleFactors) {
                 scaleBufferHelper.flipOffset(internalNodeCount);
                 cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
@@ -663,12 +688,42 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         double logL = sumLogLikelihoods[0];
 
         if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+
             everUnderflowed = true;
+
+            logL = Double.NEGATIVE_INFINITY;
+
+            if (firstRescaleAttempt && (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
+
+                if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount == 0)) {
+                    // show a message but only every 1000 rescales
+                    if (rescalingMessageCount % 1000 == 0) {
+                        if (rescalingMessageCount > 0) {
+                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
+                        } else {
+                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                        }
+                    }
+                    rescalingMessageCount += 1;
+                }
+
+                useScaleFactors = true;
+                recomputeScaleFactors = true;
+
+                firstRescaleAttempt = false; // Only try to rescale once
+
+            }
+
             // turn off double buffer flipping so the next call overwrites the
             // underflowed buffers. Flip will be turned on again in storeState for
             // next step
             flip = false;
             throw new LikelihoodUnderflowException();
+
+        } else {
+
+            //flip = true;
+
         }
 
         updateSubstitutionModel = false;
@@ -814,6 +869,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private boolean everUnderflowed = false;
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
+
+    private boolean firstRescaleAttempt = false;
+    private int rescalingMessageCount = 0;
 
     /**
      * the patternList

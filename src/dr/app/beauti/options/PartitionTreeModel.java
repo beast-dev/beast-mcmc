@@ -162,23 +162,22 @@ public class PartitionTreeModel extends PartitionOptions {
 
         operators.add(getOperator("subtreeLeap"));
 
-        boolean defaultInUse;
-        boolean branchesInUse;
-        boolean newMixInUse;
+        boolean defaultInUse = false;
+        boolean branchesInUse = false;
+        boolean newTreeOperatorsInUse = false;
+        boolean adaptiveMultivariateInUse = false;
 
         // if not a fixed tree then sample tree space
         if (options.operatorSetType == OperatorSetType.DEFAULT) {
             defaultInUse = true;
             branchesInUse = true;
-            newMixInUse = false;
         } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-            defaultInUse = false;
-            branchesInUse = false;
-            newMixInUse = true;
+            newTreeOperatorsInUse = true;
         } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
-            defaultInUse = false;
             branchesInUse = true;
-            newMixInUse = false;
+        } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
+            newTreeOperatorsInUse = true;
+            adaptiveMultivariateInUse = true;
         } else {
             throw new IllegalArgumentException("Unknown operator set type");
         }
@@ -191,7 +190,9 @@ public class PartitionTreeModel extends PartitionOptions {
         getOperator("treeModel.rootHeight").setUsed(branchesInUse);
         getOperator("uniformHeights").setUsed(branchesInUse);
 
-        getOperator("subtreeLeap").setUsed(newMixInUse);
+        getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
+        getOperator("dataLikelihoodMultivariate").setUsed(adaptiveMultivariateInUse);
+        getOperator("treePriorMultivariate").setUsed(adaptiveMultivariateInUse);
     }
 
     /////////////////////////////////////////////////////////////

@@ -33,7 +33,8 @@ public enum OperatorSetType {
     DEFAULT("classic operator mix"),
     FIXED_TREE_TOPOLOGY("fixed tree topology"),
     NEW_TREE_MIX("new tree operator mix"),
-    ADAPTIVE_MULTIVARIATE("adaptive multivariate");
+    ADAPTIVE_MULTIVARIATE("adaptive multivariate"),
+    CUSTOM("custom operator mix");
 
     OperatorSetType(String displayName) {
         this.displayName = displayName;

@@ -243,7 +243,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 this.delayRescalingUntilUnderflow = Boolean.parseBoolean(d);
             }
 
-
             if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
                 if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
                     preferenceFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
@@ -722,7 +721,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         } else {
 
-            //flip = true;
+            firstRescaleAttempt = true;
+            //recomputeScaleFactors = false;
+            flip = true;
 
         }
 

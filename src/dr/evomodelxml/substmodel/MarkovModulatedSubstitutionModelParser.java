@@ -25,11 +25,11 @@
 
 package dr.evomodelxml.substmodel;
 
+import dr.evolution.datatype.HiddenDataType;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.HiddenNucleotides;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -57,26 +57,9 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         DataType dataType = DataTypeUtils.getDataType(xo);
-        System.err.println("dataType = " + dataType);
-        HiddenNucleotides nucleotides;
-        if (dataType instanceof HiddenNucleotides) {
-            nucleotides = (HiddenNucleotides) dataType;
-        } else {
-            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden nucleotides");
+        if (!(dataType instanceof HiddenDataType)) {
+            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden data types");
         }
-
-
-//
-//        Parameter omegaParam = (Parameter) xo.getElementFirstChild(OMEGA);
-//        Parameter kappaParam = (Parameter) xo.getElementFirstChild(KAPPA);
-//        Parameter switchingParam = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
-//        FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-//
-//        EigenSystem eigenSystem;
-//        if (xo.getAttribute(DIAGONALIZATION,"default").compareToIgnoreCase("colt") == 0)
-//            eigenSystem = new ColtEigenSystem();
-//        else
-//            eigenSystem = new DefaultEigenSystem(dataType.getStateCount());
 
         Parameter switchingRates = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
 

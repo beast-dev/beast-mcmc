@@ -232,14 +232,23 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
+    @Override
+    public void initModelParametersAndOpererators() {
+
+    }
+
+    public List<Parameter> selectParameters() {
+        return selectParameters(new ArrayList<Parameter>());
+    }
+
+
     /**
      * return an list of parameters that are required
      *
      * @return the parameter list
      */
-    public ArrayList<Parameter> selectParameters() {
-
-        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> parameters) {
 
         selectTaxonSetsStatistics(parameters); // have to be before clockModelOptions.selectParameters(parameters);
 
@@ -272,7 +281,7 @@ public class BeautiOptions extends ModelOptions {
 
             model.selectParameters(parameters);
         }
-        clockModelOptions.selectParameters();
+        clockModelOptions.selectParameters(parameters);
 
         for (PartitionClockModelSubstModelLink clockSubst : getTraitClockSubstLinks()) {
             clockSubst.selectParameters(parameters);
@@ -320,9 +329,11 @@ public class BeautiOptions extends ModelOptions {
      * @return the operator list
      */
     public List<Operator> selectOperators() {
+        return selectOperators(new ArrayList<Operator>());
+    }
 
-        ArrayList<Operator> ops = new ArrayList<Operator>();
-
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             model.selectOperators(ops);
         }
@@ -377,6 +388,11 @@ public class BeautiOptions extends ModelOptions {
         ops.removeAll(toRemove);
 
         return ops;
+    }
+
+    @Override
+    public String getPrefix() {
+        return "";
     }
 
     public Operator getOperator(Parameter parameter) {

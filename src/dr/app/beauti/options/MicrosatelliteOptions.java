@@ -44,8 +44,8 @@ public class MicrosatelliteOptions extends ModelOptions {
 //        initParametersAndOperators();
     }
 
-    // has to call after data is imported
-    public void initParametersAndOperators() {
+    @Override
+    public void initModelParametersAndOpererators() {
         //=============== microsat ======================
         for (PartitionPattern partitionData : options.getPartitionPattern()) {
             createParameter(partitionData.getName() + "." + MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL +
@@ -57,26 +57,26 @@ public class MicrosatelliteOptions extends ModelOptions {
         }
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
+
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
         for (PartitionPattern partitionData : options.getPartitionPattern()) {
             getParameter(partitionData.getName() + "." + MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL +
                     ".internalNodesParameter");
         }
+        return params;
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
         for (PartitionPattern partitionData : options.getPartitionPattern()) {
             ops.add(getOperator(partitionData.getName() + "." + "microsatInternalNodesParameter"));
         }
+        return ops;
+    }
+
+    @Override
+    public String getPrefix() {
+        return "";
     }
 }

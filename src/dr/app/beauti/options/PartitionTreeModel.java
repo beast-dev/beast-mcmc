@@ -78,7 +78,7 @@ public class PartitionTreeModel extends PartitionOptions {
         ploidyType = source.ploidyType;
     }
 
-    protected void initModelParametersAndOpererators() {
+    public void initModelParametersAndOpererators() {
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
@@ -107,12 +107,8 @@ public class PartitionTreeModel extends PartitionOptions {
 
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param parameters the parameter list
-     */
-    public void selectParameters(List<Parameter> parameters) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> parameters) {
 //        setAvgRootAndRate();
 
         getParameter("tree");
@@ -133,14 +129,11 @@ public class PartitionTreeModel extends PartitionOptions {
             rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
             parameters.add(rootHeightParameter);
         }
+        return parameters;
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param operators the operator list
-     */
-    public void selectOperators(List<Operator> operators) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> operators) {
 //        setAvgRootAndRate();
 
         Operator subtreeSlideOp = getOperator("subtreeSlide");
@@ -193,6 +186,7 @@ public class PartitionTreeModel extends PartitionOptions {
         getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
         getOperator("dataLikelihoodMultivariate").setUsed(adaptiveMultivariateInUse);
         getOperator("treePriorMultivariate").setUsed(adaptiveMultivariateInUse);
+        return operators;
     }
 
     /////////////////////////////////////////////////////////////

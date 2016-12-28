@@ -139,7 +139,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     // only init in PartitionSubstitutionModel
-    protected void initModelParametersAndOpererators() {
+    @Override
+    public void initModelParametersAndOpererators() {
         double substWeights = 1.0;
 
         //Substitution model parameters
@@ -325,7 +326,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     ////////////////////////////////////////////////////////////////
 
-    public void selectParameters(List<Parameter> params) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
 //        setAvgRootAndRate();
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
         switch (getDataType().getType()) {
@@ -519,6 +521,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 params.add(getParameter("pInv"));
             }
         }
+        return params;
     }
 
     public List<Parameter> getRelativeRateParameters() {
@@ -576,7 +579,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
     }
 
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
 
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
@@ -768,7 +772,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 ops.add(getOperator("pInv"));
             }
         }
-
+        return ops;
     }
 
     private void addFrequencyOps(List<Operator> ops) {

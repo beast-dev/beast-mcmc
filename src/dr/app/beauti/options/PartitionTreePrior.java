@@ -83,7 +83,8 @@ public class PartitionTreePrior extends PartitionOptions {
         this.fixedTree = source.fixedTree;
     }
 
-    protected void initModelParametersAndOpererators() {
+    @Override
+    public void initModelParametersAndOpererators() {
 
         createParameterOneOverXPrior("constant.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0);
@@ -150,11 +151,11 @@ public class PartitionTreePrior extends PartitionOptions {
                 "Birth-Death the proportion of taxa sampled from birth-death tree",
                 0.01, 1.0, 1.0, 0.0);
         createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.LAMBDA,
+                        + BirthDeathSerialSamplingModelParser.LAMBDA,
                 "Birth-Death speciation process rate", PriorScaleType.BIRTH_RATE_SCALE,
                 2.0, 0.0, 100000.0);
         createZeroOneParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
+                        + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
                 "Birth-Death relative death rate", 0.5);
         //Issue 656
 //        createParameterBetaDistributionPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -162,11 +163,11 @@ public class PartitionTreePrior extends PartitionOptions {
 //                "Birth-Death the proportion of taxa sampled from birth death tree",
 //                0.01, 1.0, 1.0, 0.0);
         createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.PSI,
+                        + BirthDeathSerialSamplingModelParser.PSI,
                 "Birth-Death rate of sampling taxa through time", PriorScaleType.NONE,
                 0.05, 0.0, 100.0);
         createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.ORIGIN,
+                        + BirthDeathSerialSamplingModelParser.ORIGIN,
                 "Birth-Death the time of the lineage originated (must > root height)", PriorScaleType.ORIGIN_SCALE,
                 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
 //        createParameter(BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.R,
@@ -247,12 +248,8 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY, demoTuning, 1);
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
 //        setAvgRootAndRate();
 
         if (nodeHeightPrior == TreePriorType.CONSTANT) {
@@ -322,15 +319,11 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
 
         }
-
+        return params;
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
 
         if (nodeHeightPrior == TreePriorType.CONSTANT) {
             ops.add(getOperator("constant.popSize"));
@@ -401,6 +394,7 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator(BirthDeathEpidemiologyModelParser.RECOVERY_RATE));
             ops.add(getOperator(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
         }
+        return ops;
     }
 
 

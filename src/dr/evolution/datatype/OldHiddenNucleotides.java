@@ -31,12 +31,13 @@ package dr.evolution.datatype;
  * @author Alexei Drummond
  * @version $Id: HiddenNucleotides.java,v 1.4 2005/05/24 20:25:56 rambaut Exp $
  */
-public class HiddenNucleotides extends DataType {
+@Deprecated
+public class OldHiddenNucleotides extends DataType {
 
     public static final String DESCRIPTION = "hiddenNucleotide";
-    public static final HiddenNucleotides INSTANCE = new HiddenNucleotides(2);
+    public static final OldHiddenNucleotides INSTANCE = new OldHiddenNucleotides(2);
 
-    public HiddenNucleotides(int numHiddenStates) {
+    public OldHiddenNucleotides(int numHiddenStates) {
         hiddenClassCount = numHiddenStates;
 
         stateCount = 4 * hiddenClassCount;

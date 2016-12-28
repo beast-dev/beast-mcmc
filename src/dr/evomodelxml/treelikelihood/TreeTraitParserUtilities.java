@@ -231,11 +231,14 @@ public class TreeTraitParserUtilities {
         public CompoundParameter traitParameter;
         public List<Integer> missingIndices;
         public String traitName;
+        public Parameter sampleMissingParameter;
 
-        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, String traitName) {
+        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, String traitName,
+                                Parameter sampleMissingParameter) {
             this.traitParameter = traitParameter;
             this.missingIndices = missingIndices;
             this.traitName = traitName;
+            this.sampleMissingParameter = sampleMissingParameter;
         }
     }
 
@@ -254,6 +257,7 @@ public class TreeTraitParserUtilities {
 
         CompoundParameter traitParameter;
         List<Integer> missingIndices = null;
+        Parameter sampleMissingParameter = null;
 
         boolean isMatrixParameter = false;
         if (parameter instanceof MatrixParameter || parameter instanceof FastMatrixParameter) {
@@ -405,6 +409,7 @@ public class TreeTraitParserUtilities {
                 }
                 missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
                 ParameterParser.replaceParameter(cxo, missingParameter);
+                sampleMissingParameter = missingParameter;
             }
 
             // Give warnings if trait exist for internal and root nodes when integrating them out
@@ -427,12 +432,12 @@ public class TreeTraitParserUtilities {
             }
         }
 
-        if (xo.getAttribute(SAMPLE_MISSING_TRAITS, false)) {
+        if (xo.getAttribute(SAMPLE_MISSING_TRAITS, false) || xo.hasChildNamed(MISSING)) {
             missingIndices = new ArrayList<Integer>(); // return empty
 
         }
 
-        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName);
+        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName, sampleMissingParameter);
     }
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {

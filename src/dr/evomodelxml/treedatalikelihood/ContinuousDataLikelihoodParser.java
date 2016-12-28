@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -33,13 +34,14 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.List;
@@ -58,6 +60,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
 
     public static final String RECONSTRUCT_TRAITS = "reconstructTraits";
+
+    public static final String PARTIAL = "partial";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -81,6 +85,13 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         traitName = returnValue.traitName;
 
         final int dim = diffusionModel.getPrecisionmatrix().length;
+
+
+//        System.err.println("Length missing = " + missingIndices.size());
+        Parameter sampleMissingParameter = returnValue.sampleMissingParameter;
+//        System.err.println("sMP: " + (sampleMissingParameter == null ? "null" : "notnull"));
+//        System.exit(-1);
+//        System.exit(-1);
 
         ContinuousTraitDataModel dataModel = new ContinuousTraitDataModel(traitName,
                 traitParameter,
@@ -107,13 +118,25 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
-            ProcessSimulationDelegate.ConditionalOnTipsDelegate simulationDelegate =
-                    new ProcessSimulationDelegate.ConditionalOnTipsDelegate(traitName, treeModel,
-                            diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+
+            ProcessSimulationDelegate simulationDelegate = new ProcessSimulationDelegate.ConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                    diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
 
             TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
                     treeDataLikelihood, simulationDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+
+            if (sampleMissingParameter != null) {
+                String partialTraitName = PARTIAL + "." + traitName;
+                ProcessSimulationDelegate parialSimulationDelegate = new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate(partialTraitName,
+                        treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate,
+                        sampleMissingParameter);
+
+                TreeTraitProvider partialTraitProvider = new ProcessSimulation(partialTraitName,
+                        treeDataLikelihood, parialSimulationDelegate);
+
+                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
+            }
         }
 
         return treeDataLikelihood;

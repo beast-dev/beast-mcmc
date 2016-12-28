@@ -81,7 +81,7 @@ public class Matrix {
             throw new NegativeArraySizeException(
                     "Requested matrix size: " + n + " by " + m);
         components = new double[n][m];
-        clear();
+//        clear();  // Java automatically zeros new vectors
     }
 
     /**
@@ -100,6 +100,19 @@ public class Matrix {
         for (int i = 0; i < components.length; i++) {
             for (int j = 0; j < m; j++)
                 components[i][j] += a.component(i, j);
+        }
+    }
+
+    public void decumulate(Matrix a) throws IllegalDimension {
+        if (a.rows() != rows() || a.columns() != columns())
+            throw new IllegalDimension("Operation error: cannot add a"
+                    + a.rows() + " by " + a.columns()
+                    + " matrix to a " + rows() + " by "
+                    + columns() + " matrix");
+        int m = components[0].length;
+        for (int i = 0; i < components.length; i++) {
+            for (int j = 0; j < m; j++)
+                components[i][j] -= a.component(i, j);
         }
     }
 
@@ -159,6 +172,10 @@ public class Matrix {
      */
     public double component(int n, int m) {
         return components[n][m];
+    }
+
+    public void set(int n, int m, double value) {
+        components[n][m] = value;
     }
 
     /**
@@ -515,6 +532,24 @@ public class Matrix {
                 newComponents[j][i] = components[i][j];
         }
         return new Matrix(newComponents);
+    }
+
+    public Matrix extractRowsAndColumns(final int[] rowIndices, final int[] colIndices) {
+
+        final int rowLength = rowIndices.length;
+        final int colLength = colIndices.length;
+        double[][] tmp = new double[rowLength][colLength];
+
+        for (int i = 0; i < rowLength; ++i) {
+
+            final double[] in = components[rowIndices[i]];
+            final double[] out = tmp[i];
+
+            for (int j = 0; j < colLength; ++j) {
+                out[j] = in[colIndices[j]];
+            }
+        }
+        return new Matrix(tmp);
     }
 
     /**

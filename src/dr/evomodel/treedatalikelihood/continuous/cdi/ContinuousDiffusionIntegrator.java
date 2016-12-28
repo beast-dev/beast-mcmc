@@ -62,14 +62,14 @@ public interface ContinuousDiffusionIntegrator {
         private InstanceDetails details = new InstanceDetails();
 
         private final PrecisionType precisionType;
-        private final int numTraits;
-        private final int dimTrait;
-        private final int bufferCount;
-        private final int diffusionCount;
+        protected final int numTraits;
+        protected final int dimTrait;
+        protected final int bufferCount;
+        protected final int diffusionCount;
 
-        private final int dimMatrix;
-        private final int dimPartialForTrait;
-        private final int dimPartial;
+        protected final int dimMatrix;
+        protected final int dimPartialForTrait;
+        protected final int dimPartial;
 
         public Basic(
                 final PrecisionType precisionType,
@@ -292,7 +292,7 @@ public interface ContinuousDiffusionIntegrator {
         private double[] partials;
         private double[] variances;
         private double[] remainders;
-        private double[] diffusions;
+        protected double[] diffusions;
         private double[] determinants;
         private int[] degreesOfFreedom;
         private double[] outerProducts;
@@ -497,5 +497,40 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         private static boolean DEBUG = false;
+    }
+
+    class Multivariate extends Basic {
+
+        public Multivariate(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
+                            int diffusionCount) {
+            super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
+
+            assert precisionType == PrecisionType.FULL;
+
+            allocateStorage();
+        }
+
+        private void allocateStorage() {
+            inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
+        }
+
+        @Override
+        public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
+            super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
+
+            assert (inverseDiffusions != null);
+
+            invert(diffusions, dimTrait * dimTrait * precisionIndex,
+                    inverseDiffusions, dimTrait * dimTrait * precisionIndex,
+                    dimTrait);
+        }
+
+        private static void invert(final double[] source, final int sourceOffset,
+                                   final double[] destination, final int destinationOffset,
+                                   final int dim) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        private double[] inverseDiffusions;
     }
 }

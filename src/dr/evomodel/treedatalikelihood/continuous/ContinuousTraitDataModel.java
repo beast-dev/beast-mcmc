@@ -117,20 +117,28 @@ public class ContinuousTraitDataModel extends AbstractModel {
 //        }
 //    }
 
-    public boolean[] getPartiallyMissing(int taxonIndex) {
-
-        boolean[] missing = new boolean[numTraits * dimTrait];
-        if (missingIndices != null) {
-            for (int i = 0; i < numTraits; ++i) {
-                for (int j = 0; j < dimTrait; ++j) {
-                    final int index = i * dimTrait + j;
-                    final int missingIndex = index + dimTrait * numTraits * taxonIndex;
-                    missing[index] = missingIndices.contains(missingIndex);
-                }
-            }
-        }
-        return missing;
-    }
+//    public boolean getAnyPartiallyMissing(int taxonIndex) {
+//        boolean missing = false;
+//
+//        return missing;
+//    }
+//
+//    private void buildMissing
+//
+//    public boolean[] getPartiallyMissing(int taxonIndex) {
+//
+//        boolean[] missing = new boolean[numTraits * dimTrait];
+//        if (missingIndices != null) {
+//            for (int i = 0; i < numTraits; ++i) {
+//                for (int j = 0; j < dimTrait; ++j) {
+//                    final int index = i * dimTrait + j;
+//                    final int missingIndex = index + dimTrait * numTraits * taxonIndex;
+//                    missing[index] = missingIndices.contains(missingIndex);
+//                }
+//            }
+//        }
+//        return missing;
+//    }
 
     public double[] getTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];

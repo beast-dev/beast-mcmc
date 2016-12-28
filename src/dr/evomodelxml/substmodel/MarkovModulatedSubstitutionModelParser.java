@@ -29,7 +29,7 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.NewHiddenNucleotides;
+import dr.evolution.datatype.HiddenNucleotides;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -58,9 +58,9 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 
         DataType dataType = DataTypeUtils.getDataType(xo);
         System.err.println("dataType = " + dataType);
-        NewHiddenNucleotides nucleotides;
-        if (dataType instanceof NewHiddenNucleotides) {
-            nucleotides = (NewHiddenNucleotides) dataType;
+        HiddenNucleotides nucleotides;
+        if (dataType instanceof HiddenNucleotides) {
+            nucleotides = (HiddenNucleotides) dataType;
         } else {
             throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden nucleotides");
         }

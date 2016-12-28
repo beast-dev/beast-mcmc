@@ -88,11 +88,11 @@ public abstract class DataType implements Serializable {
             registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);
             registerDataType(HiddenCodons.DESCRIPTION + "2-" + GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_2);
             registerDataType(HiddenCodons.DESCRIPTION + "3-" + GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION + "1", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_1);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION + "2", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_2);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION + "3", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_3);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION + "4", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_4);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION + "8", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_8);
+            registerDataType(HiddenNucleotides.DESCRIPTION + "1", HiddenNucleotides.NUCLEOTIDE_HIDDEN_1);
+            registerDataType(HiddenNucleotides.DESCRIPTION + "2", HiddenNucleotides.NUCLEOTIDE_HIDDEN_2);
+            registerDataType(HiddenNucleotides.DESCRIPTION + "3", HiddenNucleotides.NUCLEOTIDE_HIDDEN_3);
+            registerDataType(HiddenNucleotides.DESCRIPTION + "4", HiddenNucleotides.NUCLEOTIDE_HIDDEN_4);
+            registerDataType(HiddenNucleotides.DESCRIPTION + "8", HiddenNucleotides.NUCLEOTIDE_HIDDEN_8);
             registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);

@@ -28,20 +28,20 @@ package dr.evolution.datatype;
 /**
  * @author Marc A. Suchard
  */
-public class NewHiddenNucleotides extends Nucleotides implements HiddenDataType {
+public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
 
     public static final String DESCRIPTION = "hiddenNucleotide";
 
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new NewHiddenNucleotides(1);
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new NewHiddenNucleotides(2);
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new NewHiddenNucleotides(3);
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_4 = new NewHiddenNucleotides(4);
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_8 = new NewHiddenNucleotides(8);
+    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new HiddenNucleotides(1);
+    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new HiddenNucleotides(2);
+    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new HiddenNucleotides(3);
+    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_4 = new HiddenNucleotides(4);
+    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_8 = new HiddenNucleotides(8);
 
     /**
      * Private constructor - DEFAULT_INSTANCE provides the only instance
      */
-    private NewHiddenNucleotides(int hiddenClassCount) {
+    private HiddenNucleotides(int hiddenClassCount) {
         super();
         this.hiddenClassCount = hiddenClassCount;
     }

@@ -25,7 +25,7 @@
 
 package dr.oldevomodelxml.substmodel;
 
-import dr.evolution.datatype.HiddenNucleotides;
+import dr.evolution.datatype.OldHiddenNucleotides;
 import dr.oldevomodel.substmodel.AbstractCovarionDNAModel;
 import dr.oldevomodel.substmodel.CovarionHKY;
 import dr.oldevomodel.substmodel.FrequencyModel;
@@ -80,11 +80,11 @@ public class CovarionHKYParser extends AbstractXMLObjectParser {
         hiddenClassRates = (Parameter) xo.getElementFirstChild(AbstractCovarionDNAModel.HIDDEN_CLASS_RATES);
         freqModel = (FrequencyModel) xo.getElementFirstChild(AbstractCovarionDNAModel.FREQUENCIES);
 
-        if (!(freqModel.getDataType() instanceof HiddenNucleotides)) {
+        if (!(freqModel.getDataType() instanceof OldHiddenNucleotides)) {
             throw new IllegalArgumentException("Datatype must be hidden nucleotides!!");
         }
 
-        HiddenNucleotides dataType = (HiddenNucleotides) freqModel.getDataType();
+        OldHiddenNucleotides dataType = (OldHiddenNucleotides) freqModel.getDataType();
 
         int hiddenStateCount = dataType.getHiddenClassCount();
 

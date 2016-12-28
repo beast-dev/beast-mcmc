@@ -25,7 +25,7 @@
 
 package dr.oldevomodel.substmodel;
 
-import dr.evolution.datatype.HiddenNucleotides;
+import dr.evolution.datatype.OldHiddenNucleotides;
 import dr.inference.model.Parameter;
 
 /**
@@ -52,7 +52,7 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
      * @param switchingRates   rate of switching between hidden categories
      */
     public AbstractCovarionDNAModel(String name,
-                                    HiddenNucleotides dataType,
+                                    OldHiddenNucleotides dataType,
                                     Parameter hiddenClassRates,
                                     Parameter switchingRates,
                                     FrequencyModel freqModel) {

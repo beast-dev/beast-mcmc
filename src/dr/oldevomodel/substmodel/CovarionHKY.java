@@ -25,7 +25,7 @@
 
 package dr.oldevomodel.substmodel;
 
-import dr.evolution.datatype.HiddenNucleotides;
+import dr.evolution.datatype.OldHiddenNucleotides;
 import dr.oldevomodelxml.substmodel.CovarionHKYParser;
 import dr.inference.model.Parameter;
 
@@ -52,7 +52,7 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
      * @param switchingRates   rate of switching between hidden categories
      * @param freqModel        the frequencies
      */
-    public CovarionHKY(HiddenNucleotides dataType, Parameter kappaParameter, Parameter hiddenClassRates, Parameter switchingRates, FrequencyModel freqModel) {
+    public CovarionHKY(OldHiddenNucleotides dataType, Parameter kappaParameter, Parameter hiddenClassRates, Parameter switchingRates, FrequencyModel freqModel) {
 
         super(CovarionHKYParser.COVARION_HKY, dataType, hiddenClassRates, switchingRates, freqModel);
 

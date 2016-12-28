@@ -30,7 +30,7 @@ import dr.app.beauti.types.OperatorType;
 import java.util.List;
 
 /**
- *
+ * This class needs to be removed.
  */
 public class PartitionClockModelSubstModelLink extends PartitionOptions {
     private static final long serialVersionUID = 796233525816977530L;
@@ -47,7 +47,7 @@ public class PartitionClockModelSubstModelLink extends PartitionOptions {
         initModelParametersAndOpererators();
     }
 
-    protected void initModelParametersAndOpererators() {
+    public void initModelParametersAndOpererators() {
         // <svsGeneralSubstitutionModel idref="originModel"/>
 //        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString(), getPrefix() + "trait.mu",
 //                "bit Flip In Substitution Model Operator",
@@ -60,24 +60,17 @@ public class PartitionClockModelSubstModelLink extends PartitionOptions {
 
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
-
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
+        return params;
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
         if (substModel.isActivateBSSVS()) {
             ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()));
         }
+        return ops;
     }
 
     /////////////////////////////////////////////////////////////

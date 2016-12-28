@@ -42,14 +42,24 @@ public class SiteModelOptions extends ModelOptions {
     }
 
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
+    @Override
+    public void initModelParametersAndOpererators() {
 
-        
+    }
+
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
+        return params;
+    }
+
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
+        return ops;
+    }
+
+    @Override
+    public String getPrefix() {
+        return null;
     }
 
 }

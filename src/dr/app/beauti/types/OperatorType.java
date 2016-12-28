@@ -61,6 +61,7 @@ public enum OperatorType {
     SUBTREE_SLIDE("subtreeSlide"),
     SUBTREE_JUMP("subtreeJump"),
     SUBTREE_LEAP("subtreeLeap"),
+    ADAPTIVE_MULTIVARIATE("adaptiveMultivariate"),
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),

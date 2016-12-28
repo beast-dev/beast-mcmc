@@ -56,14 +56,6 @@ public abstract class PartitionOptions extends ModelOptions {
         initModelParametersAndOpererators();
     }
 
-    protected abstract void initModelParametersAndOpererators();
-
-    protected abstract void selectParameters(List<Parameter> params);
-
-    protected abstract void selectOperators(List<Operator> ops);
-
-    public abstract String getPrefix();
-
     protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight) {
         new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)
                 .isNonNegative(true).initial(Double.NaN).partitionOptions(options).build(parameters);

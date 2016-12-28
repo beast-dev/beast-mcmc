@@ -132,7 +132,7 @@ public class BEAUTiImporter {
                 setData(file.getName(), unionSetTaxonList, patterns, substModel, null);
             }
             // has to call after data is imported
-            options.microsatelliteOptions.initParametersAndOperators();
+            options.microsatelliteOptions.initModelParametersAndOpererators();
 
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());

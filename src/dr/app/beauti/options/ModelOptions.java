@@ -41,7 +41,7 @@ import java.util.Map;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ModelOptions implements Serializable {
+public abstract class ModelOptions implements Serializable {
 
     private static final long serialVersionUID = 6199011531067286245L;
 
@@ -57,6 +57,16 @@ public class ModelOptions implements Serializable {
 	protected static final double rateWeights = 3.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+
+    //+++++++++++++++++++ Abstract Methods ++++++++++++++++++++++++++++++++
+
+    public abstract void initModelParametersAndOpererators();
+
+    public abstract List<Parameter> selectParameters(List<Parameter> params);
+
+    public abstract List<Operator> selectOperators(List<Operator> ops);
+
+    public abstract String getPrefix();
 
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
     public Parameter createParameter(String name, String description) {

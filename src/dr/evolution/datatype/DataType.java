@@ -84,7 +84,7 @@ public abstract class DataType implements Serializable {
             registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.BLEPHARISMA_NUC.getName(), Codons.BLEPHARISMA_NUC);
             registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.NO_STOPS.getName(), Codons.NO_STOPS);
             registerDataType(TwoStates.DESCRIPTION, TwoStates.INSTANCE);
-            registerDataType(HiddenNucleotides.DESCRIPTION, HiddenNucleotides.INSTANCE);
+            registerDataType(OldHiddenNucleotides.DESCRIPTION, OldHiddenNucleotides.INSTANCE);
             registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);
             registerDataType(HiddenCodons.DESCRIPTION + "2-" + GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_2);
             registerDataType(HiddenCodons.DESCRIPTION + "3-" + GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);

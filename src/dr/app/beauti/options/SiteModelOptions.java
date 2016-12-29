@@ -25,6 +25,8 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.types.OperatorType;
+
 import java.util.List;
 
 /**
@@ -44,6 +46,10 @@ public class SiteModelOptions extends ModelOptions {
 
     @Override
     public void initModelParametersAndOpererators() {
+        createOperator("dataLikelihoodMultivariate", "Multiple", "Adaptive Multivariate Normal", "multiple",
+                OperatorType.ADAPTIVE_MULTIVARIATE, 1.0, treeWeights);
+        createOperator("treePriorMultivariate", "Multiple", "Adaptive Multivariate Normal", "multiple",
+                OperatorType.ADAPTIVE_MULTIVARIATE, 1.0, treeWeights);
 
     }
 
@@ -54,6 +60,8 @@ public class SiteModelOptions extends ModelOptions {
 
     @Override
     public List<Operator> selectOperators(List<Operator> ops) {
+        ops.add(getOperator("dataLikelihoodMultivariate"));
+        ops.add(getOperator("treePriorMultivariate"));
         return ops;
     }
 

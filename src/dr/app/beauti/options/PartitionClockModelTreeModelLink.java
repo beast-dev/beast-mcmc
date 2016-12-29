@@ -35,6 +35,8 @@ import dr.evomodelxml.tree.RateStatisticParser;
 import java.util.List;
 
 /**
+ * todo This needs to be merged into PartitionTreeModel. Not sure why it exists.
+ *
  * @author Andrew Rambaut
  * @author Walter Xie
  * @version $Id$

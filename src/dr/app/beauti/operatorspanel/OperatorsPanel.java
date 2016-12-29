@@ -229,6 +229,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             switch (col) {
                 case 0:
                     op.setUsed((Boolean) aValue);
+                    operatorSetCombo.setSelectedItem(OperatorSetType.CUSTOM);
                     break;
                 case 3:
                     op.setTuning((Double) aValue);

@@ -42,6 +42,8 @@ public interface HiddenDataType {
                                      final int hiddenClassCount,
                                      final DataType baseDataType) {
 
+//            System.err.println("state = ");
+            
             final boolean[] originalStateSet = baseDataType.getStateSet(state);
             boolean[] stateSet = new boolean[stateCount * hiddenClassCount];
 

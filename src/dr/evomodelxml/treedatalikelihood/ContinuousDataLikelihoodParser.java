@@ -39,6 +39,7 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -91,12 +92,14 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         Parameter sampleMissingParameter = returnValue.sampleMissingParameter;
 //        System.err.println("sMP: " + (sampleMissingParameter == null ? "null" : "notnull"));
 //        System.exit(-1);
-//        System.exit(-1);
+
+//        PrecisionType precisionType = PrecisionType.SCALAR;
+        PrecisionType precisionType = PrecisionType.FULL;
 
         ContinuousTraitDataModel dataModel = new ContinuousTraitDataModel(traitName,
                 traitParameter,
                 missingIndices,
-                dim);
+                dim, precisionType);
 
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dim);
 

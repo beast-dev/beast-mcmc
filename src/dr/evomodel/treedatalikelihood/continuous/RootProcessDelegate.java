@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 
 /**
  * @author Marc A. Suchard
@@ -47,14 +48,17 @@ public interface RootProcessDelegate {
     abstract class Abstract implements RootProcessDelegate {
 
         protected final ConjugateRootTraitPrior prior;
+        private final PrecisionType precisionType;
         private final int priorBufferIndex;
         private final int numTraits;
 
         protected abstract double getPseudoObservations();
 
-        public Abstract(final ConjugateRootTraitPrior prior, int numTraits,
+        public Abstract(final ConjugateRootTraitPrior prior,
+                        final PrecisionType precisionType, int numTraits,
                         int partialBufferCount, int matrixBufferCount) {
             this.prior = prior;
+            this.precisionType = precisionType;
             this.numTraits = numTraits;
 
             this.priorBufferIndex = partialBufferCount;
@@ -81,14 +85,20 @@ public interface RootProcessDelegate {
             double[] mean = prior.getMean();
             final int dimTrait = mean.length;
 
-            double[] partial = new double[(dimTrait + 1) * numTraits];
+            final int length = dimTrait + precisionType.getMatrixLength(dimTrait);
+            double[] partial = new double[length * numTraits];
 
             int offset = 0;
             for (int trait = 0; trait < numTraits; ++trait) {
                 System.arraycopy(mean, 0, partial, offset, dimTrait);
-                offset += dimTrait;
-                partial[offset] = getPseudoObservations();
-                offset += 1;
+
+                final double precision = getPseudoObservations();
+                for (int i = 0; i < dimTrait; ++i) {
+                    precisionType.fillPrecisionInPartials(partial, offset, i, precision, dimTrait);
+                }
+
+//                partial[offset + dimTrait] = getPseudoObservations();
+                offset += length;
             }
 
             cdi.setPartial(priorBufferIndex, partial);
@@ -97,8 +107,9 @@ public interface RootProcessDelegate {
 
     class Fixed extends Abstract {
 
-        public Fixed(ConjugateRootTraitPrior prior, int numTraits, int partialBufferCount, int matrixBufferCount) {
-            super(prior, numTraits, partialBufferCount, matrixBufferCount);
+        public Fixed(ConjugateRootTraitPrior prior, PrecisionType precisionType,
+                     int numTraits, int partialBufferCount, int matrixBufferCount) {
+            super(prior, precisionType, numTraits, partialBufferCount, matrixBufferCount);
         }
 
         @Override
@@ -112,8 +123,9 @@ public interface RootProcessDelegate {
 
     class FullyConjugate extends Abstract {
 
-        public FullyConjugate(ConjugateRootTraitPrior prior, int numTraits, int partialBufferCount, int matrixBufferCount) {
-            super(prior, numTraits, partialBufferCount, matrixBufferCount);
+        public FullyConjugate(ConjugateRootTraitPrior prior, PrecisionType precisionType,
+                              int numTraits, int partialBufferCount, int matrixBufferCount) {
+            super(prior, precisionType, numTraits, partialBufferCount, matrixBufferCount);
         }
 
         @Override

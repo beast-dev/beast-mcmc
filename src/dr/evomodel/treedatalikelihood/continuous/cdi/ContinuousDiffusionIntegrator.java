@@ -227,6 +227,11 @@ public interface ContinuousDiffusionIntegrator {
                 rootOffset += dimPartialForTrait;
                 priorOffset += dimPartialForTrait;
             }
+
+            if (DEBUG) {
+                System.err.println("End");
+                System.exit(-1);
+            }
         }
 
         @Override
@@ -289,21 +294,21 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         // Internal storage
-        private double[] partials;
-        private double[] variances;
-        private double[] remainders;
+        protected double[] partials;
+        protected double[] variances;
+        protected double[] remainders;
         protected double[] diffusions;
-        private double[] determinants;
-        private int[] degreesOfFreedom;
-        private double[] outerProducts;
+        protected double[] determinants;
+        protected int[] degreesOfFreedom;
+        protected double[] outerProducts;
 
         // Set during updateDiffusionMatrices() and used in updatePartials()
-        private int precisionOffset;
-        private double precisionLogDet;
+        protected int precisionOffset;
+        protected double precisionLogDet;
 
-        private static final boolean INLINE = true;
+        protected static final boolean INLINE = true;
 
-        private void updatePartial(
+        protected void updatePartial(
                 final int kBuffer,
                 final int iBuffer,
                 final int iMatrix,
@@ -496,7 +501,7 @@ public interface ContinuousDiffusionIntegrator {
             return sb.toString();
         }
 
-        private static boolean DEBUG = false;
+        protected static boolean DEBUG = true;
     }
 
     class Multivariate extends Basic {
@@ -528,7 +533,170 @@ public interface ContinuousDiffusionIntegrator {
         private static void invert(final double[] source, final int sourceOffset,
                                    final double[] destination, final int destinationOffset,
                                    final int dim) {
-            throw new RuntimeException("Not yet implemented");
+//            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        protected void updatePartial(
+                final int kBuffer,
+                final int iBuffer,
+                final int iMatrix,
+                final int jBuffer,
+                final int jMatrix,
+                final boolean incrementOuterProducts
+        ) {
+            // Determine buffer offsets
+            int kbo = dimPartial * kBuffer;
+            int ibo = dimPartial * iBuffer;
+            int jbo = dimPartial * jBuffer;
+
+            // Determine matrix offsets
+            final int imo = dimMatrix * iMatrix;
+            final int jmo = dimMatrix * jMatrix;
+
+            // Read variance increments along descendent branches of k
+            final double vi = variances[imo];
+            final double vj = variances[jmo];
+
+            if (DEBUG) {
+                System.err.println("i:");
+                System.err.println("\tvar : " + variances[imo]);
+            }
+
+            // For each trait // TODO in parallel
+            for (int trait = 0; trait < numTraits; ++trait) {
+
+                // Increase variance along the branches i -> k and j -> k
+
+                // A. Get current precision of i and j
+                final double pi = partials[ibo + dimTrait];
+                final double pj = partials[jbo + dimTrait];
+
+                // B. Integrate along branch using two matrix inversions
+                final double pip = Double.isInfinite(pi) ?
+                        1.0 / vi : pi / (1.0 + pi * vi);
+                final double pjp = Double.isInfinite(pj) ?
+                        1.0 / vj : pj / (1.0 + pj * vj);
+
+                // Compute partial mean and precision at node k
+
+                // A. Partial precision scalar
+                final double pk = pip + pjp;
+
+                // B. Partial mean
+//                if (INLINE) {
+                    // For each dimension // TODO in parallel
+                    for (int g = 0; g < dimTrait; ++g) {
+                        partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk;
+                    }
+//                } else {
+//                    updateMean(partials, kbo, ibo, jbo, pip, pjp, pk, dimTrait);
+//                }
+
+                // C. Store precision
+                partials[kbo + dimTrait] = pk;
+
+                // Computer remainder at node k
+                double remainder = 0.0;
+                if (pi != 0 && pj != 0) {
+                    if (INLINE) {
+
+                        // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
+
+                        final double remainderPrecision = pip * pjp / pk;
+
+                        // Inner products
+                        double SSk = 0;
+                        double SSj = 0;
+                        double SSi = 0;
+
+                        int pob = precisionOffset;
+
+                        // vector-matrix-vector TODO in parallel
+                        for (int g = 0; g < dimTrait; ++g) {
+                            final double ig = partials[ibo + g];
+                            final double jg = partials[jbo + g];
+                            final double kg = partials[kbo + g];
+
+                            for (int h = 0; h < dimTrait; ++h) {
+                                final double ih = partials[ibo + h];
+                                final double jh = partials[jbo + h];
+                                final double kh = partials[kbo + h];
+
+                                final double diffusion = diffusions[pob]; // element [g][h]
+
+                                SSi += ig * diffusion * ih;
+                                SSj += jg * diffusion * jh;
+                                SSk += kg * diffusion * kh;
+
+                                ++pob;
+                            }
+                        }
+
+                        remainder += -dimTrait * LOG_SQRT_2_PI // TODO Can move some calculation outside the loop
+                                + 0.5 * (dimTrait * Math.log(remainderPrecision) + precisionLogDet)
+                                - 0.5 * (pip * SSi + pjp * SSj - pk * SSk);
+
+                        if (DEBUG) {
+                            System.err.println("\t\t\tpk: " + pk);
+                            System.err.println("\t\t\tSSi = " + (pip * SSi));
+                            System.err.println("\t\t\tSSj = " + (pjp * SSj));
+                            System.err.println("\t\t\tSSk = " + (pk * SSk));
+                        }
+
+                    } else {
+                        // incrementRemainderDensities(); // TODO
+                    }
+
+                    if (DEBUG) {
+                        System.err.println("\t\tremainder: " + remainder);
+                    }
+
+                    if (incrementOuterProducts) {
+                        int opo = dimTrait * dimTrait * trait;
+
+                        final double remainderPrecision = pip * pjp / (pip + pjp);
+
+                        for (int g = 0; g < dimTrait; ++g) {
+                            final double ig = partials[ibo + g];
+                            final double jg = partials[jbo + g];
+
+                            for (int h = 0; h < dimTrait; ++h) {
+                                final double ih = partials[ibo + h];
+                                final double jh = partials[jbo + h];
+
+                                outerProducts[opo] += (ig - jg) * (ih - jh) * remainderPrecision;
+                                ++opo;
+                            }
+                        }
+
+                        degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
+                    }
+                } // End if remainder
+
+                // Accumulate remainder up tree and store
+
+                remainders[kBuffer * numTraits + trait] = remainder
+                        + remainders[iBuffer * numTraits + trait] + remainders[jBuffer * numTraits + trait];
+
+                if (DEBUG) {
+                    System.err.println("MVN");
+                    System.exit(-1);
+                    System.err.println("\ttrait: " + trait);
+                    System.err.println("\t\tprec: " + pi);
+                    System.err.print("\t\tmean:");
+                    for (int e = 0; e < dimTrait; ++e) {
+                        System.err.print(" " + partials[ibo + e]);
+                    }
+                    System.err.println("");
+                }
+
+                // Get ready for next trait
+                kbo += dimPartialForTrait;
+                ibo += dimPartialForTrait;
+                jbo += dimPartialForTrait;
+
+            }
         }
 
         private double[] inverseDiffusions;

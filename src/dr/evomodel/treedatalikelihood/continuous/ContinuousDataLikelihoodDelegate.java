@@ -36,6 +36,7 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @version $Id$
  */
 
+import com.sun.org.apache.regexp.internal.RE;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -111,7 +112,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         int partialBufferCount = partialBufferHelper.getBufferCount();
         int matrixBufferCount = diffusionProcessDelegate.getEigenBufferCount();
 
-        rootProcessDelegate = new RootProcessDelegate.FullyConjugate(rootPrior, numTraits,
+        rootProcessDelegate = new RootProcessDelegate.FullyConjugate(rootPrior, precisionType, numTraits,
                 partialBufferCount, matrixBufferCount);
 
         partialBufferCount += rootProcessDelegate.getExtraPartialBufferCount();
@@ -122,13 +123,29 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         try {
 
-            cdi = new ContinuousDiffusionIntegrator.Basic(
-                    precisionType,
-                    numTraits,
-                    dimTrait,
-                    partialBufferCount,
-                    matrixBufferCount
-            );
+            if (precisionType == PrecisionType.SCALAR) {
+
+                cdi = new ContinuousDiffusionIntegrator.Basic(
+                        precisionType,
+                        numTraits,
+                        dimTrait,
+                        partialBufferCount,
+                        matrixBufferCount
+                );
+
+            } else if (precisionType == PrecisionType.FULL) {
+
+                cdi = new ContinuousDiffusionIntegrator.Multivariate(
+                        precisionType,
+                        numTraits,
+                        dimTrait,
+                        partialBufferCount,
+                        matrixBufferCount
+                );
+
+            } else {
+                throw new RuntimeException("Not yet implemented");
+            }
 
             // TODO Make separate library
 //            cdi = CDIFactory.loadCDIInstance();

@@ -45,7 +45,7 @@ public class ContinuousTraitDataModel extends AbstractModel {
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
                                     List<Integer> missingIndices,
-                                    final int dimTrait) {
+                                    final int dimTrait, PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
         this.missingIndices = missingIndices;
@@ -53,7 +53,7 @@ public class ContinuousTraitDataModel extends AbstractModel {
 
         this.dimTrait = dimTrait;
         this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
-        this.precisionType = PrecisionType.SCALAR;
+        this.precisionType = precisionType;
     }
 
     public boolean bufferTips() { return true; }
@@ -140,7 +140,7 @@ public class ContinuousTraitDataModel extends AbstractModel {
 //        return missing;
 //    }
 
-    public double[] getTipPartial(int taxonIndex) {
+    public double[] getScalarTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];
         final Parameter p = parameter.getParameter(taxonIndex);
         int offset = 0;
@@ -157,6 +157,39 @@ public class ContinuousTraitDataModel extends AbstractModel {
             partial[offset + dimTrait] = missing ? 0.0 : Double.POSITIVE_INFINITY;
             offset += dimTrait + 1;
         }
+        return partial;
+    }
+
+    private static final boolean OLD = false;
+
+    public double[] getTipPartial(int taxonIndex) {
+
+        if (OLD) {
+            return getScalarTipPartial(taxonIndex);
+        }
+
+        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final double[] partial = new double[numTraits * offsetInc];
+        final Parameter p = parameter.getParameter(taxonIndex);
+
+        int offset = 0;
+        for (int i = 0; i < numTraits; ++i) {
+            for (int j = 0; j < dimTrait; ++j) {
+
+                final int pIndex = i * dimTrait + j;
+                final int missingIndex = pIndex + dimTrait * numTraits * taxonIndex;
+
+                partial[offset + j] = p.getParameterValue(pIndex);
+
+                final boolean missing = missingIndices != null && missingIndices.contains(missingIndex);
+                final double precision = precisionType.getObservedPrecisionValue(missing);
+
+                precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);
+            }
+
+            offset += offsetInc;
+        }
+
         return partial;
     }
 
@@ -178,3 +211,21 @@ public class ContinuousTraitDataModel extends AbstractModel {
      *
      */
 }
+
+/*
+
+MISSING BOTH (3 3)
+
+0	-684.6618158932947	-
+1000	-27.037002713592642	-
+2000	-25.97799960742541	-
+3000	-27.422132418922466	-
+4000	-31.810329425440127	-
+5000	-26.349607062243777	-
+6000	-26.01693963595732	-
+7000	-25.72792498059862	-
+8000	-25.799485212854908	-
+9000	-29.052355626685443	-
+10000	-25.717248570765143	-
+
+ */

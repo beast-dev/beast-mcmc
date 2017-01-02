@@ -29,9 +29,30 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
  * @author Marc A. Suchard
  */
 public enum PrecisionType {
-    SCALAR("proportional scaling per branch", 0),
-    MIXED("mixed method", 1),
-    FULL("full precision matrix per branch", 2);
+    SCALAR("proportional scaling per branch", 0) {
+        public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                            int dimTrait) {
+            if (index == 0) {
+                partial[offset + dimTrait] = precision;
+            } else {
+                if (partial[offset + dimTrait] != 0.0) {
+                    partial[offset + dimTrait] = precision;
+                }
+            }
+        }
+    },
+    MIXED("mixed method", 1) {
+        public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                            int dimTrait) {
+            partial[offset + dimTrait + index] = precision;
+        }
+    },
+    FULL("full precision matrix per branch", 2) {
+        public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                            int dimTrait) {
+            partial[offset + dimTrait + index * dimTrait + index] = precision;
+        }
+    };
 
     private final int power;
     private final String name;
@@ -58,7 +79,11 @@ public enum PrecisionType {
         return length;
     }
 
-//    public int getPartialLength(final int numTraits, final int dimTrait) {
-//        return  (dimTrait + getMatrixLength(dimTrait));
-//    }
+    public static double getObservedPrecisionValue(final boolean missing) {
+        return missing ? 0.0 : Double.POSITIVE_INFINITY;
+    }
+
+    abstract public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                                 int dimTrait);
+
 }

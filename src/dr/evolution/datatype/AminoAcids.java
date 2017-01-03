@@ -35,7 +35,7 @@ package dr.evolution.datatype;
  * @author Alexei Drummond
  * @author Matthew Goode
  */
-public final class AminoAcids extends DataType
+public class AminoAcids extends DataType
 {
 	/**
 	 * Name of data type. For XML and human reading of data type.
@@ -136,7 +136,7 @@ public final class AminoAcids extends DataType
 	/**
 	 * Private constructor - DEFAULT_INSTANCE provides the only instance.
 	 */
-	private AminoAcids() {
+	protected AminoAcids() {
         super();
         stateCount = 20;
         ambiguousStateCount = 26;

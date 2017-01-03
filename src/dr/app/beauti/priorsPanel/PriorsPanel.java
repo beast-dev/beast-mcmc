@@ -68,7 +68,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     JButton hpmButton = null;
     JButton unlinkButton = null;
 
-    public ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    public List<Parameter> parameters = new ArrayList<Parameter>();
 
     BeautiFrame frame = null;
     BeautiOptions options = null;

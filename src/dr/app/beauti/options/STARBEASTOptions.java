@@ -43,6 +43,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
+@Deprecated
 public class STARBEASTOptions extends ModelOptions {
     private static final long serialVersionUID = -668734758207432455L;
 
@@ -77,10 +78,11 @@ public class STARBEASTOptions extends ModelOptions {
 
     public STARBEASTOptions(BeautiOptions options) {
         this.options = options;
-        initTraitParametersAndOperators();
+        initModelParametersAndOpererators();
     }
 
-    protected void initTraitParametersAndOperators() {
+    @Override
+    public void initModelParametersAndOpererators() {
         double spWeights = 5.0;
         double spTuning = 0.9;
 
@@ -115,12 +117,9 @@ public class STARBEASTOptions extends ModelOptions {
 
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
+
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
 
         params.add(getParameter(TraitData.TRAIT_SPECIES + "." + POP_MEAN));
 
@@ -134,16 +133,11 @@ public class STARBEASTOptions extends ModelOptions {
 
 //    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
 
-        //TODO: more
-
+        return params;
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
         ops.add(getOperator(TraitData.TRAIT_SPECIES + "." + POP_MEAN));
 
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
@@ -171,7 +165,13 @@ public class STARBEASTOptions extends ModelOptions {
         ops.add(getOperator(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS));
 
         ops.add(getOperator(TraitData.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT));
-        //TODO: more
+
+        return ops;
+    }
+
+    @Override
+    public String getPrefix() {
+        return "";
     }
 
     /////////////////////////////////////////////////////////////

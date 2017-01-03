@@ -513,7 +513,6 @@ public class GetNSCountsFromTrees {
         }
 
         BranchSet set = BranchSet.ALL;
-        Set taxaSet = null;
         String branch = arguments.getStringOption(BRANCHSET);
         List<Set> inclusionSets = new ArrayList();
         if (branch != null) {
@@ -522,9 +521,13 @@ public class GetNSCountsFromTrees {
         }
         if (set == set.BACKBONE) {
             if (arguments.hasOption(BACKBONETAXA)) {
-                taxaSet = getTargetSet(arguments.getStringOption(BACKBONETAXA));
+                String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(BACKBONETAXA));
+                for (String singleSet: fileList){
+                    inclusionSets.add(getTargetSet(singleSet));
+                    progressStream.println("getting target set for backbone inclusion: "+singleSet);
+                }
             } else {
-                progressStream.println("you want to summarize the backbone, but have no taxa to define it??");
+                progressStream.println("you want to get summaries for (a) backbone(s), but no files with taxa to define it are provided??");
             }
         }
         if (set == set.CLADE) {
@@ -538,9 +541,10 @@ public class GetNSCountsFromTrees {
                 String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(INCLUDECLADES));
                 for (String singleSet: fileList){
                     inclusionSets.add(getTargetSet(singleSet));
+                    progressStream.println("getting target set for clade inclusion: "+singleSet);
                 }
             } else {
-                progressStream.println("you want to get summaries for one or more clades, but no files wiht taxa to define it are provided??");
+                progressStream.println("you want to get summaries for one or more clades, but no files with taxa to define it are provided??");
             }
         }
 
@@ -583,6 +587,7 @@ public class GetNSCountsFromTrees {
             String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(EXCLUDECLADES));
             for (String singleSet: fileList){
                 exclusionSets.add(getTargetSet(singleSet));
+                progressStream.println("getting target set for clade exclusion: "+singleSet);
             }
         }
 

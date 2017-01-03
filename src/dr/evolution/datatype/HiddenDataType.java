@@ -31,8 +31,29 @@ package dr.evolution.datatype;
 
 public interface HiddenDataType {
 
-    public int getHiddenClassCount();
+    int getHiddenClassCount();
 
-    public int getStateCount();
-    
+    int getStateCount();
+
+    class Utils {
+
+        static boolean[] getStateSet(final int state,
+                                     final int stateCount,
+                                     final int hiddenClassCount,
+                                     final DataType baseDataType) {
+
+//            System.err.println("state = ");
+            
+            final boolean[] originalStateSet = baseDataType.getStateSet(state);
+            boolean[] stateSet = new boolean[stateCount * hiddenClassCount];
+
+            int offset = 0;
+            for (int h = 0; h < hiddenClassCount; ++h) {
+                System.arraycopy(originalStateSet, 0, stateSet, offset, stateCount);
+                offset += stateCount;
+            }
+
+            return stateSet;
+        }
+    }
 }

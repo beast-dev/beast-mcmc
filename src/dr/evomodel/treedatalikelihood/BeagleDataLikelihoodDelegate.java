@@ -545,7 +545,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
 
-        recomputeScaleFactors = false;
+        //recomputeScaleFactors = false;
 
         if (!this.delayRescalingUntilUnderflow || everUnderflowed) {
             if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS || this.rescalingScheme == PartialsRescalingScheme.DELAYED) {
@@ -722,7 +722,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } else {
 
             firstRescaleAttempt = true;
-            //recomputeScaleFactors = false;
+            recomputeScaleFactors = false;
             flip = true;
 
         }

@@ -126,7 +126,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 					this.useAmbiguities = true;
 					throw new RuntimeException("Still need to merge codon likelihood core");
 				} else {
-					if (patternList.getDataType() instanceof dr.evolution.datatype.HiddenNucleotides &&
+					if (patternList.getDataType() instanceof dr.evolution.datatype.OldHiddenNucleotides &&
 							NativeCovarionLikelihoodCore.isAvailable()) {
 						Logger.getLogger("dr.evomodel").info("TreeLikelihood using native covarion likelihood core");
 						likelihoodCore = new NativeCovarionLikelihoodCore();

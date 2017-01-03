@@ -69,6 +69,21 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 //        return glm.getColumns();
 //    }
 
+    public LogColumn[] getColumns() {
+        //Aggregate columns from ComplexSubstitutionModel with glm.columns
+        LogColumn[] aggregated = new LogColumn[glm.getColumns().length + 2];
+        int index = 0;
+        for (LogColumn col : glm.getColumns()) {
+            aggregated[index] = col;
+            index++;
+        }
+        aggregated[index++] = new LikelihoodColumn(getId() + ".L");
+        aggregated[index++] = new NormalizationColumn(getId() + ".Norm");
+
+        return aggregated;
+        //return glm.getColumns();
+    }
+
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
         if (logL == 0 &&

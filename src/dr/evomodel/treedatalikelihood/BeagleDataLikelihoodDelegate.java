@@ -87,6 +87,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private static final boolean RESCALING_OFF = false; // a debugging switch
 
+    private static final boolean DEBUG = false;
+
     /**
      *
      * @param tree Used for configuration - shouldn't be watched for changes
@@ -555,14 +557,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 useScaleFactors = true;
 
                 if (rescalingCount > rescalingFrequency) {
+                    if (DEBUG) {
+                        System.out.println("rescalingCount > rescalingFrequency");
+                    }
                     rescalingCount = 0;
                     rescalingCountInner = 0;
                 }
 
                 if (rescalingCountInner < RESCALE_TIMES) {
                     recomputeScaleFactors = true;
-                    //updateAllNodes();
+
                     rescalingCountInner++;
+
+                    throw new LikelihoodUnderflowException();
+
                 }
 
                 rescalingCount++;
@@ -681,12 +689,27 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         double[] sumLogLikelihoods = new double[1];
 
+        if (DEBUG) {
+            System.out.println("useScaleFactors=" + useScaleFactors + " recomputeScaleFactors=" + recomputeScaleFactors);
+        }
+
         beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
                 new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
 
         double logL = sumLogLikelihoods[0];
 
+        /*if (DEBUG) {
+            System.out.println(logL);
+            if (logL > -90000) {
+                System.exit(0);
+            }
+        }*/
+
         if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+
+            if (DEBUG) {
+                System.out.println("Double.isNaN(logL) || Double.isInfinite(logL)");
+            }
 
             everUnderflowed = true;
 

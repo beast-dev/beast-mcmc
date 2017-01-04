@@ -545,7 +545,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @return the log likelihood.
      */
     @Override
-    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
+    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException {
 
         //recomputeScaleFactors = false;
 
@@ -569,7 +569,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
                     rescalingCountInner++;
 
-                    throw new LikelihoodUnderflowException();
+                    throw new LikelihoodRescalingException();
 
                 }
 

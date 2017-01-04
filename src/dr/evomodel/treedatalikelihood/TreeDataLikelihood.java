@@ -260,7 +260,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
 
                 done = true;
-            } catch (DataLikelihoodDelegate.LikelihoodUnderflowException e) {
+            } catch (DataLikelihoodDelegate.LikelihoodException e) {
 
                 // if there is an underflow, assume delegate will attempt to rescale
                 // so flag all nodes to update and return to try again.

@@ -28,6 +28,8 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
+
 import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.wrap;
 
 /**
@@ -594,30 +596,75 @@ public interface ContinuousDiffusionIntegrator {
             return anyInfinities;
         }
 
-        public static void invertWithInfiniteDiagonals(DenseMatrix64F source, DenseMatrix64F destination) {
+        public static boolean allFiniteDiagonals(DenseMatrix64F source) {
+            boolean allFinite = true;
 
-            if (anyDiagonalInfinities(source)) {
-                throw new RuntimeException("Not yet implemented");
-            } else {
-                CommonOps.invert(source, destination);
+            final int length = source.getNumCols();
+            for (int i = 0; i < length; ++i) {
+                allFinite &= !Double.isInfinite(source.unsafe_get(i, i));
             }
+            return allFinite;
         }
 
-        public static DenseMatrix64F invertWithInfiniteDiagonals(DenseMatrix64F source) {
-            DenseMatrix64F destination = new DenseMatrix64F(source.getNumRows(), source.getNumCols());
-            invertWithInfiniteDiagonals(source, destination);
-            return destination;
+        public static int countFiniteDiagonals(DenseMatrix64F source) {
+            final int length = source.getNumCols();
+
+            int count = 0;
+            for (int i = 0; i < length; ++i) {
+                if (!Double.isInfinite(source.unsafe_get(i, i))) {
+                    ++count;
+                }
+            }
+            return count;
         }
 
-        public static void addToDiagonal(DenseMatrix64F source, DenseMatrix64F destination, double increment) {
-            System.arraycopy(source.getData(), 0, destination.getData(), 0, source.getNumElements());
-            addToDiagonal(destination, increment);
-        }
+//        public static void invertWithInfiniteDiagonals(DenseMatrix64F source, DenseMatrix64F destination) {
+//
+//            if (anyDiagonalInfinities(source)) {
+//                throw new RuntimeException("Not yet implemented");
+//            } else {
+//                CommonOps.invert(source, destination);
+//            }
+//        }
+//
+//        public static DenseMatrix64F invertWithInfiniteDiagonals(DenseMatrix64F source) {
+//            DenseMatrix64F destination = new DenseMatrix64F(source.getNumRows(), source.getNumCols());
+//            invertWithInfiniteDiagonals(source, destination);
+//            return destination;
+//        }
+//
+//        public static void addToDiagonal(DenseMatrix64F source, DenseMatrix64F destination, double increment) {
+//            System.arraycopy(source.getData(), 0, destination.getData(), 0, source.getNumElements());
+//            addToDiagonal(destination, increment);
+//        }
 
         public static void addToDiagonal(DenseMatrix64F source, double increment) {
             final int width = source.getNumRows();
             for (int i = 0; i < width; ++i) {
                 source.unsafe_set(i,i, source.unsafe_get(i, i) + increment);
+            }
+        }
+
+        enum InversionReturnCode {
+            FULLY_OBSERVED,
+            NOT_OBSERVED,
+            PARTIALLY_OBSERVED
+        }
+
+        public static InversionReturnCode safeInvert(DenseMatrix64F source, DenseMatrix64F destination) {
+
+            final int finiteCount = countFiniteDiagonals(source);
+            if (finiteCount == source.getNumCols()) {
+                CommonOps.invert(source, destination);
+                return InversionReturnCode.FULLY_OBSERVED;
+            } else {
+                if (finiteCount == 0) {
+                    Arrays.fill(destination.getData(), 0);
+                    return InversionReturnCode.NOT_OBSERVED;
+                } else {
+                    System.err.println(source);
+                    throw new RuntimeException("Not yet implemented");
+                }
             }
         }
 
@@ -681,8 +728,8 @@ public interface ContinuousDiffusionIntegrator {
                 final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
                 final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
 
-                CommonOps.invert(Vip, Pip);
-                CommonOps.invert(Vjp, Pjp);
+                InversionReturnCode ci = safeInvert(Vip, Pip);
+                InversionReturnCode cj = safeInvert(Vjp, Pjp);
 
                 // Compute partial mean and precision at node k
 
@@ -746,7 +793,8 @@ public interface ContinuousDiffusionIntegrator {
 
                 // Computer remainder at node k
                 double remainder = 0.0;
-                if (true) {     // TODO Probably something to do with the determinants of Vip and Vij???
+                if (ci == InversionReturnCode.FULLY_OBSERVED && cj == InversionReturnCode.FULLY_OBSERVED) {
+                    // TODO Fix for partially observed
 //                if (pi != 0 && pj != 0) {
 //
 

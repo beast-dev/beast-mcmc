@@ -25,9 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import mpi.Comm;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
+
+import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.wrap;
 
 /**
  * @author Marc A. Suchard
@@ -202,7 +203,7 @@ public interface ContinuousDiffusionIntegrator {
                 logLikelihoods[trait] = logLike + remainder;
 
                 if (incrementOuterProducts) {
-                    int opo = dimTrait * dimTrait * trait;;
+                    int opo = dimTrait * dimTrait * trait;
 
                     for (int g = 0; g < dimTrait; ++g) {
                         final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
@@ -227,6 +228,8 @@ public interface ContinuousDiffusionIntegrator {
                     System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("rootScalar: " + rootScalar);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
+                    System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                    System.err.println("");
                 }
 
                 rootOffset += dimPartialForTrait;
@@ -467,6 +470,10 @@ public interface ContinuousDiffusionIntegrator {
                             }
                         }
 
+                        if (DEBUG) {
+                            System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                        }
+
                         degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
                     }
                 } // End if remainder
@@ -639,16 +646,9 @@ public interface ContinuousDiffusionIntegrator {
             final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
             if (DEBUG) {
-//                System.err.println("i:");
-//                System.err.println("\tvar : " + variances[imo]);
                 System.err.println("variance diffusion: " + Vd);
-                System.err.println("\ti: " + vi + " j: " + vj);
+                System.err.println("\tvi: " + vi + " vj: " + vj);
                 System.err.println("precisionOffset = " + precisionOffset);
-//                for (int i = 0; i < inverseDiffusions.length; ++i) {
-//                    System.err.print(" " + inverseDiffusions[i]);
-//                }
-//                System.err.println("");
-//                System.exit(-1);
             }
 
             // For each trait // TODO in parallel
@@ -698,7 +698,7 @@ public interface ContinuousDiffusionIntegrator {
 
                 // B. Partial mean
 //                for (int g = 0; g < dimTrait; ++g) {
-//                    partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk; // TODO Use matrix
+//                    partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk;
 //                }
 
                 final double[] tmp = new double[dimTrait];
@@ -719,7 +719,7 @@ public interface ContinuousDiffusionIntegrator {
                 }
 
                 // C. Store precision
-//                partials[kbo + dimTrait] = pk; // TODO Store matrix
+//                partials[kbo + dimTrait] = pk;
 
                 unwrap(Pk, partials, kbo + dimTrait);
                 unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
@@ -746,13 +746,10 @@ public interface ContinuousDiffusionIntegrator {
 
                 // Computer remainder at node k
                 double remainder = 0.0;
-                if (true) {
+                if (true) {     // TODO Probably something to do with the determinants of Vip and Vij???
 //                if (pi != 0 && pj != 0) {
 //
-//                    // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
-//
-//                    final double remainderPrecision = pip * pjp / pk;
-//
+
                     // Inner products
                     double SSk = 0;
                     double SSj = 0;
@@ -779,43 +776,44 @@ public interface ContinuousDiffusionIntegrator {
                     CommonOps.add(Vip, Vjp, Vt);
 
                     remainder += -dimTrait * LOG_SQRT_2_PI - 0.5 * Math.log(CommonOps.det(Vt)) - 0.5 * (SSi + SSj - SSk);
-//
-//                    remainder += -dimTrait * LOG_SQRT_2_PI // TODO Can move some calculation outside the loop
-//                            + 0.5 * (dimTrait * Math.log(remainderPrecision) + precisionLogDet)
-//                            - 0.5 * (pip * SSi + pjp * SSj - pk * SSk);
-//
+
+                    // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
+
                     if (DEBUG) {
                         System.err.println("\t\t\tSSi = " + (SSi));
                         System.err.println("\t\t\tSSj = " + (SSj));
                         System.err.println("\t\t\tSSk = " + (SSk));
                         System.err.println("\t\tremainder: " + remainder);
                     }
-//
-//                    if (DEBUG) {
-//                        System.err.println("\t\tremainder: " + remainder);
-//                    }
-//
-//                    // TODO What is this quantity for multivariate partial precision
-//                    if (incrementOuterProducts) {
-//                        int opo = dimTrait * dimTrait * trait;
-//
-//                        final double remainderPrecision2 = pip * pjp / (pip + pjp);
-//
-//                        for (int g = 0; g < dimTrait; ++g) {
-//                            final double ig = partials[ibo + g];
-//                            final double jg = partials[jbo + g];
-//
-//                            for (int h = 0; h < dimTrait; ++h) {
-//                                final double ih = partials[ibo + h];
-//                                final double jh = partials[jbo + h];
-//
-//                                outerProducts[opo] += (ig - jg) * (ih - jh) * remainderPrecision2;
-//                                ++opo;
-//                            }
-//                        }
-//
-//                        degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
-//                    }
+
+                    if (incrementOuterProducts) {
+
+                        final DenseMatrix64F Pt = new DenseMatrix64F(dimTrait, dimTrait);
+                        CommonOps.invert(Vt, Pt);
+
+                        int opo = dimTrait * dimTrait * trait;
+                        int opd = precisionOffset;
+
+                        for (int g = 0; g < dimTrait; ++g) {
+                            final double ig = partials[ibo + g];
+                            final double jg = partials[jbo + g];
+
+                            for (int h = 0; h < dimTrait; ++h) {
+                                final double ih = partials[ibo + h];
+                                final double jh = partials[jbo + h];
+
+                                outerProducts[opo] += (ig - jg) * (ih - jh) * Pt.unsafe_get(g, h) / diffusions[opd]; // * pip * pjp / (pip + pjp);
+                                ++opo;
+                                ++opd;
+                            }
+                        }
+
+                        if (DEBUG) {
+                            System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                        }
+
+                        degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
+                    }
                 } // End if remainder
 
                 // Accumulate remainder up tree and store
@@ -849,13 +847,6 @@ public interface ContinuousDiffusionIntegrator {
             // TODO For each trait in parallel
             for (int trait = 0; trait < numTraits; ++trait) {
 
-//                double rootScalar = partials[rootOffset + dimTrait];
-//                final double priorScalar = partials[priorOffset + dimTrait];
-//
-//                if (!Double.isInfinite(priorScalar)) {
-//                    rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
-//                }
-
                 final DenseMatrix64F Proot = wrap(partials, rootOffset + dimTrait, dimTrait, dimTrait);
                 final DenseMatrix64F Pprior = wrap(partials, priorOffset + dimTrait, dimTrait, dimTrait);
 
@@ -875,31 +866,7 @@ public interface ContinuousDiffusionIntegrator {
                 final DenseMatrix64F Ptotal = new DenseMatrix64F(dimTrait, dimTrait);
                 CommonOps.invert(Vtotal, Ptotal);  // TODO Can return determinant at same time to avoid extra QR decomp
 
-//                double SS = 0;
-//                int pob = precisionOffset;
-//
-//                for (int g = 0; g < dimTrait; ++g) {
-//                    final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
-//
-//                    for (int h = 0; h < dimTrait; ++h) {
-//                        final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
-//
-//                        SS += gDifference * diffusions[pob] * hDifference;
-//                        ++pob;
-//                    }
-//                }
-//
-//                final double logLike = -dimTrait * LOG_SQRT_2_PI
-//                        + 0.5 * (dimTrait * Math.log(rootScalar) + precisionLogDet)
-//                        - 0.5 * rootScalar * SS;
-//                final double remainder = remainders[rootBufferIndex * numTraits + trait];
-//
-//                logLikelihoods[trait] = logLike + remainder;
-
-                // START NEW
                 double SS = 0;
-//                int pob2 = precisionOffset;
-
                 for (int g = 0; g < dimTrait; ++g) {
                     final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
 
@@ -915,22 +882,24 @@ public interface ContinuousDiffusionIntegrator {
                 final double remainder = remainders[rootBufferIndex * numTraits + trait];
                 logLikelihoods[trait] = logLike + remainder;
 
-//                if (incrementOuterProducts) {
-//                    int opo = dimTrait * dimTrait * trait;;
-//
-//                    for (int g = 0; g < dimTrait; ++g) {
-//                        final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
-//
-//                        for (int h = 0; h < dimTrait; ++h) {
-//                            final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
-//
-//                            outerProducts[opo] += gDifference * hDifference * rootScalar;
-//                            ++opo;
-//                        }
-//                    }
-//
-//                    degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
-//                }
+                if (incrementOuterProducts) {
+                    int opo = dimTrait * dimTrait * trait;
+                    int opd = precisionOffset;
+
+                    for (int g = 0; g < dimTrait; ++g) {
+                        final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
+
+                        for (int h = 0; h < dimTrait; ++h) {
+                            final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
+
+                            outerProducts[opo] += gDifference * hDifference * Ptotal.unsafe_get(g, h) / diffusions[opd]; // * rootScalar;
+                            ++opo;
+                            ++opd;
+                        }
+                    }
+
+                    degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
+                }
 
                 if (DEBUG) {
                     System.err.print("mean:");
@@ -946,6 +915,7 @@ public interface ContinuousDiffusionIntegrator {
                     System.err.println("Vtotal: " + Vtotal);
 //                    System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
+                    System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                 }
 
                 rootOffset += dimPartialForTrait;
@@ -960,7 +930,4 @@ public interface ContinuousDiffusionIntegrator {
 
         private double[] inverseDiffusions;
     }
-
-
-
 }

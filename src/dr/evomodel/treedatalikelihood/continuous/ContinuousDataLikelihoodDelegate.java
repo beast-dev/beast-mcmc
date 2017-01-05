@@ -261,6 +261,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
                                       int rootNodeNumber) throws LikelihoodUnderflowException {
 
+        // TODO REMOVE NEXT LINE
+        computeWishartStatistics = true;
+
         branchNormalization = rateTransformation.getNormalization();  // TODO Cache branchNormalization
 
         int branchUpdateCount = 0;

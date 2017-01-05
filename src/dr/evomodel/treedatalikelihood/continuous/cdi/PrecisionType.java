@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
  */
 public enum PrecisionType {
     SCALAR("proportional scaling per branch", 0) {
+        @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
             if (index == 0) {
@@ -42,15 +43,24 @@ public enum PrecisionType {
         }
     },
     MIXED("mixed method", 1) {
+        @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
             partial[offset + dimTrait + index] = precision;
         }
     },
     FULL("full precision matrix per branch", 2) {
+        @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
-            partial[offset + dimTrait + index * dimTrait + index] = precision;
+            final int offs = offset + dimTrait + index * dimTrait + index;
+            partial[offs] = precision;
+            partial[offs+ dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
+        }
+
+        @Override
+        public int getMatrixLength(int dimTrait) {
+            return 2 * super.getMatrixLength(dimTrait);
         }
     };
 

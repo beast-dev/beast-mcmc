@@ -123,7 +123,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         try {
 
-            if (precisionType == PrecisionType.SCALAR) {
+            boolean USE_OLD = false;
+
+            if (precisionType == PrecisionType.SCALAR || USE_OLD) {
 
                 cdi = new ContinuousDiffusionIntegrator.Basic(
                         precisionType,

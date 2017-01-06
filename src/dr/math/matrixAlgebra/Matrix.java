@@ -535,21 +535,7 @@ public class Matrix {
     }
 
     public Matrix extractRowsAndColumns(final int[] rowIndices, final int[] colIndices) {
-
-        final int rowLength = rowIndices.length;
-        final int colLength = colIndices.length;
-        double[][] tmp = new double[rowLength][colLength];
-
-        for (int i = 0; i < rowLength; ++i) {
-
-            final double[] in = components[rowIndices[i]];
-            final double[] out = tmp[i];
-
-            for (int j = 0; j < colLength; ++j) {
-                out[j] = in[colIndices[j]];
-            }
-        }
-        return new Matrix(tmp);
+        return new Matrix(gatherRowsAndColumns(components, rowIndices, colIndices));
     }
 
     /**
@@ -599,5 +585,33 @@ public class Matrix {
             }
         }
         return newComponents;
+    }
+
+    public static double[][] gatherRowsAndColumns(final double[][] source, final int[] rowIndices, final int[] colIndices) {
+        final int rowLength = rowIndices.length;
+        final int colLength = colIndices.length;
+        double[][] destination = new double[rowLength][colLength];
+
+        for (int i = 0; i < rowLength; ++i) {
+
+            final double[] in = source[rowIndices[i]];
+            final double[] out = destination[i];
+
+            for (int j = 0; j < colLength; ++j) {
+                out[j] = in[colIndices[j]];
+            }
+        }
+        return destination;
+    }
+
+    public static double[] gatherEntries(final double[] in, final int[] indices) {
+        final int indicesLength = indices.length;
+        final double[] out = new double[indicesLength];
+
+        for (int i = 0; i < indicesLength; ++i) {
+            out[i] = in[indices[i]];
+        }
+
+        return out;
     }
 }

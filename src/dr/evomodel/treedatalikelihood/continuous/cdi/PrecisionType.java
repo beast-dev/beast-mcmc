@@ -41,12 +41,28 @@ public enum PrecisionType {
                 }
             }
         }
+
+        @Override
+        public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
+            for (int i = 0; i < dimTrait; ++i) {
+                data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait]) ?
+                        partial[pOffset + i] : Double.NaN;
+            }
+        }
     },
     MIXED("mixed method", 1) {
         @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
             partial[offset + dimTrait + index] = precision;
+        }
+
+        @Override
+        public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
+            for (int i = 0; i < dimTrait; ++i) {
+                data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait + i]) ?
+                        partial[pOffset + i] : Double.NaN;
+            }
         }
     },
     FULL("full precision matrix per branch", 2) {
@@ -56,6 +72,14 @@ public enum PrecisionType {
             final int offs = offset + dimTrait + index * dimTrait + index;
             partial[offs] = precision;
             partial[offs+ dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
+        }
+
+        @Override
+        public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
+            for (int i = 0; i < dimTrait; ++i) {
+                data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait + i * dimTrait + i]) ?
+                        partial[pOffset + i] : Double.NaN;
+            }
         }
 
         @Override
@@ -95,5 +119,7 @@ public enum PrecisionType {
 
     abstract public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                                  int dimTrait);
+
+    abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
 
 }

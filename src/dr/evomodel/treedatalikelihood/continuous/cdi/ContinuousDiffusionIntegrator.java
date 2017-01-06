@@ -25,11 +25,19 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.matrixAlgebra.Matrix;
+import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
+import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
+import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
+import org.ejml.alg.dense.misc.UnrolledInverseFromMinor;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
 
+import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.InversionResult.Code.FULLY_OBSERVED;
+import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.InversionResult.Code.NOT_OBSERVED;
+import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.InversionResult.Code.PARTIALLY_OBSERVED;
 import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.wrap;
 
 /**
@@ -582,6 +590,45 @@ public interface ContinuousDiffusionIntegrator {
             return DenseMatrix64F.wrap(numRows, numCols, buffer);
         }
 
+
+        public static void gatherRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
+                                                          final int[] rowIndices, final int[] colIndices) {
+
+            final int rowLength = rowIndices.length;
+            final int colLength = colIndices.length;
+            final double[] out = destination.getData();
+
+            int index = 0;
+            for (int i = 0; i < rowLength; ++i) {
+                final int rowIndex = rowIndices[i];
+                for (int j = 0; j < colLength; ++j) {
+                    out[index] = source.unsafe_get(rowIndex, colIndices[j]);
+                    ++index;
+                }
+            }
+        }
+
+        public static void scatterRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
+                                                 final int[] rowIdices, final int[] colIndices, final boolean clear) {
+            if (clear) {
+                Arrays.fill(destination.getData(), 0.0);
+            }
+
+            final int rowLength = rowIdices.length;
+            final int colLength = colIndices.length;
+            final double[] in = source.getData();
+
+            int index = 0;
+            for (int i = 0; i < rowLength; ++i) {
+                final int rowIndex = rowIdices[i];
+                for (int j = 0; j < colLength; ++j) {
+                    destination.unsafe_set(rowIndex, colIndices[j], in[index]);
+                    ++index;
+                }
+            }
+        }
+
+
         public static void unwrap(final DenseMatrix64F source, final double[] destination, final int offset) {
             System.arraycopy(source.getData(), 0, destination, offset, source.getNumElements());
         }
@@ -611,11 +658,25 @@ public interface ContinuousDiffusionIntegrator {
 
             int count = 0;
             for (int i = 0; i < length; ++i) {
-                if (!Double.isInfinite(source.unsafe_get(i, i))) {
+                final double d = source.unsafe_get(i, i);
+                if (!Double.isInfinite(d) && d != 0.0) {
                     ++count;
                 }
             }
             return count;
+        }
+
+        public static void getFiniteDiagonalIndices(final DenseMatrix64F source, final int[] indices) {
+            final int length = source.getNumCols();
+
+            int index = 0;
+            for (int i = 0; i < length; ++i) {
+                final double d = source.unsafe_get(i, i);
+                if (!Double.isInfinite(d) && d != 0.0) {
+                    indices[index] = i;
+                    ++index;
+                }
+            }
         }
 
 //        public static void invertWithInfiniteDiagonals(DenseMatrix64F source, DenseMatrix64F destination) {
@@ -645,25 +706,140 @@ public interface ContinuousDiffusionIntegrator {
             }
         }
 
-        enum InversionReturnCode {
-            FULLY_OBSERVED,
-            NOT_OBSERVED,
-            PARTIALLY_OBSERVED
+
+
+        static class InversionResult {
+
+            enum Code {
+                FULLY_OBSERVED,
+                NOT_OBSERVED,
+                PARTIALLY_OBSERVED
+            }
+
+            InversionResult(Code code, int dim, double determinant) {
+                this.code = code;
+                this.dim = dim;
+                this.determinant = determinant;
+            }
+
+            final public Code getReturnCode() {
+                return code;
+            }
+
+            final public int getEffectiveDimension() {
+                return dim;
+            }
+
+            final public double getDeterminant() {
+                return determinant;
+            }
+
+            public String toString() {
+                return code + ":" + dim;
+            }
+
+            final private Code code;
+            final private int dim;
+            final private double determinant;
         }
 
-        public static InversionReturnCode safeInvert(DenseMatrix64F source, DenseMatrix64F destination) {
+        public static double det(DenseMatrix64F mat) {
+            int numCol = mat.getNumCols();
+            int numRow = mat.getNumRows();
+            if(numCol != numRow) {
+                throw new IllegalArgumentException("Must be a square matrix.");
+            } else if(numCol <= 6) {
+                return numCol >= 2? UnrolledDeterminantFromMinor.det(mat):mat.get(0);
+            } else {
+                LUDecompositionAlt_D64 alg = new LUDecompositionAlt_D64();
+                if(alg.inputModified()) {
+                    mat = mat.copy();
+                }
 
+                return !alg.decompose(mat)?0.0D:alg.computeDeterminant().real;
+            }
+        }
+
+        public static double invertAndGetDeterminant(DenseMatrix64F mat, DenseMatrix64F result) {
+
+            final int numCol = mat.getNumCols();
+            final int numRow = mat.getNumRows();
+            if (numCol != numRow) {
+                throw new IllegalArgumentException("Must be a square matrix.");
+            }
+
+            if (numCol <= 5) {
+
+                if (numCol >= 2) {
+                    UnrolledInverseFromMinor.inv(mat, result);
+                } else {
+                    result.set(0, 1.0D / mat.get(0));
+                }
+
+                return numCol >= 2 ?
+                        UnrolledDeterminantFromMinor.det(mat) :
+                        mat.get(0);
+            } else {
+
+                LUDecompositionAlt_D64 alg = new LUDecompositionAlt_D64();
+                LinearSolverLu_D64 solver = new LinearSolverLu_D64(alg);
+                if (solver.modifiesA()) {
+                    mat = mat.copy();
+                }
+
+                if (!solver.setA(mat)) {
+                    return Double.NaN;
+                }
+
+                solver.invert(result);
+
+                return alg.computeDeterminant().real;
+
+            }
+        }
+
+
+        public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
+
+            final int dim = source.getNumCols();
             final int finiteCount = countFiniteDiagonals(source);
-            if (finiteCount == source.getNumCols()) {
-                CommonOps.invert(source, destination);
-                return InversionReturnCode.FULLY_OBSERVED;
+            double det = 0;
+
+            if (finiteCount == dim) {
+                if (getDeterminant) {
+                    det = invertAndGetDeterminant(source, destination);
+                } else {
+                    CommonOps.invert(source, destination);
+                }
+                return new InversionResult(FULLY_OBSERVED, dim, det);
             } else {
                 if (finiteCount == 0) {
                     Arrays.fill(destination.getData(), 0);
-                    return InversionReturnCode.NOT_OBSERVED;
+                    return new InversionResult(NOT_OBSERVED, 0, 0);
                 } else {
-                    System.err.println(source);
-                    throw new RuntimeException("Not yet implemented");
+                    final int[] finiteIndices = new int[finiteCount];
+                    getFiniteDiagonalIndices(source, finiteIndices);
+
+                    final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
+                    gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
+
+//                    System.err.println(source);
+//                    System.err.println(subSource);
+
+                    final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
+                    if (getDeterminant) {
+                        det = invertAndGetDeterminant(subSource, inverseSubSource);
+                    } else {
+                        CommonOps.invert(subSource, inverseSubSource);
+                    }
+
+                    scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
+
+//                    System.err.println(inverseSubSource);
+//                    System.err.println(destination);
+
+                    return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
+//                    throw new RuntimeException("Not yet implemented");
                 }
             }
         }
@@ -728,8 +904,8 @@ public interface ContinuousDiffusionIntegrator {
                 final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
                 final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
 
-                InversionReturnCode ci = safeInvert(Vip, Pip);
-                InversionReturnCode cj = safeInvert(Vjp, Pjp);
+                InversionResult ci = safeInvert(Vip, Pip, true);
+                InversionResult cj = safeInvert(Vjp, Pjp, true);
 
                 // Compute partial mean and precision at node k
 
@@ -741,7 +917,7 @@ public interface ContinuousDiffusionIntegrator {
                 CommonOps.add(Pip, Pjp, Pk);
 
                 final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
-                CommonOps.invert(Pk, Vk);
+                InversionResult ck = safeInvert(Pk, Vk, true);
 
                 // B. Partial mean
 //                for (int g = 0; g < dimTrait; ++g) {
@@ -793,7 +969,19 @@ public interface ContinuousDiffusionIntegrator {
 
                 // Computer remainder at node k
                 double remainder = 0.0;
-                if (ci == InversionReturnCode.FULLY_OBSERVED && cj == InversionReturnCode.FULLY_OBSERVED) {
+
+                if (DEBUG) {
+                    System.err.println("i status: " + ci);
+                    System.err.println("j status: " + cj);
+                    System.err.println("k status: " + ck);
+                    System.err.println("Pip: " + Pip);
+                    System.err.println("Vip: " + Vip);
+                    System.err.println("Pjp: " + Pjp);
+                    System.err.println("Vjp: " + Vjp);
+                }
+
+                if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
+//                if (ci == InversionReturnCode.FULLY_OBSERVED && cj == InversionReturnCode.FULLY_OBSERVED) {
                     // TODO Fix for partially observed
 //                if (pi != 0 && pj != 0) {
 //
@@ -823,7 +1011,30 @@ public interface ContinuousDiffusionIntegrator {
                     final DenseMatrix64F Vt = new DenseMatrix64F(dimTrait, dimTrait);
                     CommonOps.add(Vip, Vjp, Vt);
 
-                    remainder += -dimTrait * LOG_SQRT_2_PI - 0.5 * Math.log(CommonOps.det(Vt)) - 0.5 * (SSi + SSj - SSk);
+                    if (DEBUG) {
+                        System.err.println("Vt: " + Vt);
+                    }
+
+                    int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
+                            - ck.getEffectiveDimension();
+
+
+                    System.err.println(ci.getDeterminant());
+                    System.err.println(CommonOps.det(Vip));
+
+                    System.err.println(cj.getDeterminant());
+                    System.err.println(CommonOps.det(Vjp));
+
+                    System.err.println(1.0 / ck.getDeterminant());
+                    System.err.println(CommonOps.det(Vk));
+//                    System.exit(-1);
+
+
+                    remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
+//                            Math.log(CommonOps.det(Vt))  // TODO Why does this line work?
+//                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
+                            (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
+                            - 0.5 * (SSi + SSj - SSk);
 
                     // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
 
@@ -832,12 +1043,13 @@ public interface ContinuousDiffusionIntegrator {
                         System.err.println("\t\t\tSSj = " + (SSj));
                         System.err.println("\t\t\tSSk = " + (SSk));
                         System.err.println("\t\tremainder: " + remainder);
+//                        System.exit(-1);
                     }
 
                     if (incrementOuterProducts) {
 
                         final DenseMatrix64F Pt = new DenseMatrix64F(dimTrait, dimTrait);
-                        CommonOps.invert(Vt, Pt);
+                        InversionResult ct = safeInvert(Vt, Pt, false);
 
                         int opo = dimTrait * dimTrait * trait;
                         int opd = precisionOffset;

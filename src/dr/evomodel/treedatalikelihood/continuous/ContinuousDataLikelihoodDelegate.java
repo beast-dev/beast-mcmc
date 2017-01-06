@@ -48,8 +48,11 @@ import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
+import dr.math.KroneckerOperation;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
+import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -57,7 +60,8 @@ import dr.util.CommonCitations;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, ConjugateWishartStatisticsProvider, Citable {
+public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate,
+        ConjugateWishartStatisticsProvider, Citable {
 
     private final int numTraits;
     private final int dimTrait;
@@ -199,6 +203,163 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+    }
+
+    private double[] getTipObservations() {
+        final double[] data = new double[numTraits * dimTrait * tipCount];
+
+        for (int tip = 0; tip < tipCount; ++tip) {
+            double[] tipData = dataModel.getTipObservation(tip);
+            System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
+        }
+
+        return data;
+    }
+
+    @Override
+    public String getReport() {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Tree:\n");
+        sb.append(callbackLikelihood.getId()).append("\t");
+
+        final Tree tree = callbackLikelihood.getTree();
+        sb.append(tree.toString());
+        sb.append("\n\n");
+
+        final double normalization = rateTransformation.getNormalization();
+        final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
+
+        double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+        sb.append("Tree structure:\n");
+        sb.append(new Matrix(treeStructure));
+        sb.append("\n\n");
+
+        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
+        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+        Matrix traitVariance = new Matrix(traitPrecision).inverse();
+
+        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+
+        sb.append("Tree variance:\n");
+        sb.append(new Matrix(treeVariance));
+//        sb.append(matrixMin(treeVariance)).append("\t").append(matrixMax(treeVariance)).append("\t").append(matrixSum(treeVariance));
+        sb.append("\n\n");
+        sb.append("Trait variance:\n");
+        sb.append(traitVariance);
+        sb.append("\n\n");
+        sb.append("Joint variance:\n");
+        sb.append(new Matrix(jointVariance));
+        sb.append("\n\n");
+
+        final int datumLength = tipCount * dimTrait;
+
+        sb.append("Tree dim : " + treeVariance.length + "\n");
+        sb.append("dimTrait : " + dimTrait + "\n");
+        sb.append("numTraits: " + numTraits + "\n");
+        sb.append("Jvar dim : " + jointVariance.length + "\n");
+        sb.append("datum dim: " + datumLength);
+        sb.append("\n\n");
+
+        double[] data = getTipObservations();
+        sb.append("data: " + new dr.math.matrixAlgebra.Vector(data));
+        sb.append("\n\n");
+
+        double logLikelihood = 0;
+
+        for (int trait = 0; trait < numTraits; ++trait) {
+            sb.append("Trait #" + trait + "\n");
+
+            double[] rawDatum = new double[datumLength];
+
+            for (int tip = 0; tip < tipCount; ++tip) {
+                for (int dim = 0; dim < dimTrait; ++dim) {
+                    rawDatum[tip * dimTrait + dim] = data[tip * dimTrait * numTraits + trait * dimTrait + dim];
+                }
+            }
+
+//            System.arraycopy(data, datumLength * trait, rawDatum, 0, datumLength);
+
+            List<Integer> missing = new ArrayList<Integer>();
+            for (int i = 0; i < datumLength; ++i) {
+                if (Double.isNaN(rawDatum[i])) {
+                    missing.add(i);
+                }
+            }
+
+            double[][] varianceDatum = jointVariance;
+            double[] datum = rawDatum;
+
+            if (missing.size() > 0) {
+                int[] indices = new int[datumLength - missing.size()];
+                int offset = 0;
+                for (int i = 0; i < datumLength; ++i) {
+                    if (!missing.contains(i)) {
+                        indices[offset] = i;
+                        ++offset;
+                    }
+                }
+
+                datum = Matrix.gatherEntries(rawDatum, indices);
+                varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, indices, indices);
+            }
+
+            sb.append("datum : " + new dr.math.matrixAlgebra.Vector(datum) + "\n");
+            sb.append("variance:\n");
+            sb.append(new Matrix(varianceDatum));
+
+            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[datum.length], new Matrix(varianceDatum).inverse().toComponents());
+            double logDensity = mvn.logPdf(datum);
+            sb.append("\n\n");
+            sb.append("logDatumLikelihood: " + logDensity + "\n\n");
+            logLikelihood += logDensity;
+
+        }
+
+        sb.append("logLikelihood = " + logLikelihood + "\n\n");
+
+//        if (nodeToClampMap != null) {
+//            int offset = treeModel.getExternalNodeCount() * getDimTrait();
+//            for(Map.Entry<NodeRef, RestrictedPartials> clamps : nodeToClampMap.entrySet()) {
+//                double[] partials = clamps.getValue().getPartials();
+//                for (int i = 0; i < partials.length; ++i) {
+//                    data[offset] = partials[i];
+//                    ++offset;
+//                }
+//            }
+//        }
+
+
+//        final WishartSufficientStatistics sufficientStatistics = getWishartStatistics();
+//        final double[] outerProducts = sufficientStatistics.getScaleMatrix();
+//
+//        sb.append("Outer-products (DP):\n");
+//        sb.append(new Vector(outerProducts));
+//        sb.append(sufficientStatistics.getDf() + "\n");
+//
+//        Matrix treePrecision = new Matrix(treeVariance).inverse();
+//        final int n = data.length / traitPrecision.length;
+//        final int p = traitPrecision.length;
+//        double[][] tmp = new double[n][p];
+//
+//        for (int i = 0; i < n; ++i) {
+//            for (int j = 0; j < p; ++j) {
+//                tmp[i][j] = data[i * p + j];
+//            }
+//        }
+//        Matrix y = new Matrix(tmp);
+//
+//        Matrix S = null;
+//        try {
+//            S = y.transpose().product(treePrecision).product(y); // Using Matrix-Normal form
+//        } catch (IllegalDimension illegalDimension) {
+//            illegalDimension.printStackTrace();
+//        }
+//        sb.append("Outer-products (from tree variance:\n");
+//        sb.append(S);
+//        sb.append("\n\n");
+//
+        return sb.toString();
     }
 
     @Override

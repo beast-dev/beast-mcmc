@@ -332,17 +332,27 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     public String getReport() {
         if (hasInitialized) {
-            String rtnValue = getClass().getName() + "(" + getLogLikelihood() + ")";
+            StringBuilder sb = new StringBuilder();
+
+            String delegateString = likelihoodDelegate.getReport();
+            if (delegateString != null) {
+                sb.append(delegateString);
+                System.err.println(delegateString);
+            }
+
+            sb.append(getClass().getName() + "(" + getLogLikelihood() + ")");
+
             if (COUNT_TOTAL_OPERATIONS)
-                rtnValue += "\n  total operations = " + totalOperationCount +
-                        "\n  matrix updates = " + totalMatrixUpdateCount +
-                        "\n  model changes = " + totalModelChangedCount +
-                        "\n  make dirties = " + totalMakeDirtyCount +
-                        "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
-                        "\n  get likelihoods = " + totalGetLogLikelihoodCount +
-                        "\n  all rate updates = " + totalRateUpdateAllCount +
-                        "\n  partial rate updates = " + totalRateUpdateSingleCount;
-            return rtnValue;
+                sb.append("\n  total operations = " + totalOperationCount +
+                          "\n  matrix updates = " + totalMatrixUpdateCount +
+                          "\n  model changes = " + totalModelChangedCount +
+                          "\n  make dirties = " + totalMakeDirtyCount +
+                          "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
+                          "\n  get likelihoods = " + totalGetLogLikelihoodCount +
+                          "\n  all rate updates = " + totalRateUpdateAllCount +
+                          "\n  partial rate updates = " + totalRateUpdateSingleCount);
+
+            return sb.toString();
         } else {
             return getClass().getName() + "(uninitialized)";
         }

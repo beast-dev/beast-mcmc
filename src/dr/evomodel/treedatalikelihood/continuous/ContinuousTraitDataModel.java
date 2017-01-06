@@ -140,7 +140,7 @@ public class ContinuousTraitDataModel extends AbstractModel {
 //        return missing;
 //    }
 
-    public double[] getScalarTipPartial(int taxonIndex) {
+    private double[] getScalarTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];
         final Parameter p = parameter.getParameter(taxonIndex);
         int offset = 0;
@@ -191,6 +191,19 @@ public class ContinuousTraitDataModel extends AbstractModel {
         }
 
         return partial;
+    }
+
+    public double[] getTipObservation(int taxonIndex) {
+        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+
+        final double[] partial = getTipPartial(taxonIndex);
+        final double[] data = new double[numTraits * dimTrait];
+
+        for (int i = 0; i < numTraits; ++i) {
+            precisionType.copyObservation(partial, i * offsetInc, data, i * dimTrait, dimTrait);
+        }
+
+        return data;
     }
 
     private static double[] NON_MISSING = new double[] { Double.POSITIVE_INFINITY };

@@ -446,6 +446,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
+    public String getReport() {
+        return null;
+    }
+
+    @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
         return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
     }

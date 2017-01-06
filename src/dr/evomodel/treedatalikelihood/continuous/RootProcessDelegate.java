@@ -43,6 +43,8 @@ public interface RootProcessDelegate {
 
     void setRootPartial(ContinuousDiffusionIntegrator cdi);
 
+    double getPseudoObservations();
+
 //    int getDegreesOfFreedom();
 
     abstract class Abstract implements RootProcessDelegate {
@@ -52,7 +54,7 @@ public interface RootProcessDelegate {
         private final int priorBufferIndex;
         private final int numTraits;
 
-        protected abstract double getPseudoObservations();
+        public abstract double getPseudoObservations();
 
         public Abstract(final ConjugateRootTraitPrior prior,
                         final PrecisionType precisionType, int numTraits,
@@ -113,7 +115,7 @@ public interface RootProcessDelegate {
         }
 
         @Override
-        protected double getPseudoObservations() {
+        public double getPseudoObservations() {
             return Double.POSITIVE_INFINITY;
         }
 
@@ -129,7 +131,7 @@ public interface RootProcessDelegate {
         }
 
         @Override
-        protected double getPseudoObservations() {
+        public double getPseudoObservations() {
             return prior.getPseudoObservations();
         }
 

@@ -7,11 +7,12 @@ import dr.math.distributions.PoissonDistribution;
  * Created by maxryandolinskytolkoff on 7/20/16.
  */
 public class RowDimensionPoissonPrior extends AbstractModelLikelihood implements MatrixSizePrior {
-    public RowDimensionPoissonPrior(double untruncatedMean, AdaptableSizeFastMatrixParameter parameter){
+    public RowDimensionPoissonPrior(double untruncatedMean, AdaptableSizeFastMatrixParameter parameter, boolean transpose){
         super("");
         this.poisson = new PoissonDistribution(untruncatedMean);
         this.parameter = parameter;
         addVariable(parameter);
+        this.transpose = transpose;
     }
 
     @Override
@@ -47,7 +48,10 @@ public class RowDimensionPoissonPrior extends AbstractModelLikelihood implements
     @Override
     public double getLogLikelihood() {
 //        System.out.println(poisson.logPdf(parameter.getRowDimension()) - Math.log(1 - Math.exp(-poisson.mean())));
-        return poisson.logPdf(parameter.getRowDimension()) - Math.log(1 - Math.exp(-poisson.mean()));
+        if(!transpose)
+            return poisson.logPdf(parameter.getRowDimension()) - Math.log(1 - Math.exp(-poisson.mean()));
+        else
+            return poisson.logPdf(parameter.getColumnDimension()) - Math.log(1 - Math.exp(-poisson.mean()));
     }
 
     @Override
@@ -62,4 +66,5 @@ public class RowDimensionPoissonPrior extends AbstractModelLikelihood implements
 
     PoissonDistribution poisson;
     AdaptableSizeFastMatrixParameter parameter;
+    boolean transpose;
 }

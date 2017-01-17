@@ -898,8 +898,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             beagle.updatePartials(operations, operationCount, Beagle.NONE);
         }
 
-//        double[] rootPartials = new double[totalPatternCount * stateCount];
-//        beagle.getPartials(rootIndex, 0, rootPartials);
+        //double[] rootPartials = new double[totalPatternCount * stateCount];
+        //beagle.getPartials(rootIndex, 0, rootPartials);
 
         int cumulateScaleBufferIndex = Beagle.NONE;
         for (int i = 0; i < partitionCount; i++) {
@@ -908,16 +908,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     scaleBufferHelper[i].flipOffset(internalNodeCount);
                     cumulateScaleBufferIndex = scaleBufferHelper[i].getOffsetIndex(internalNodeCount);
                     if (useBeagle3) {
-                        boolean updateAllPartitions = true;
+                        /*boolean updateAllPartitions = true;
                         if (updateAllPartitions) {
                             beagle.resetScaleFactors(cumulateScaleBufferIndex);
                             beagle.accumulateScaleFactors(scaleBufferIndices[i], internalNodeCount, cumulateScaleBufferIndex);
-                        } else {
-                            for (int j = 0; j < partitionCount; j++) {
-                                beagle.resetScaleFactorsByPartition(cumulateScaleBufferIndex, j);
-                                beagle.accumulateScaleFactorsByPartition(scaleBufferIndices[j], internalNodeCount, cumulateScaleBufferIndex, j);
-                            }
+                        } else {*/
+                        //TODO: check with Daniel if calling these methods using an iteration can be done more efficiently
+                        for (int j = 0; j < partitionCount; j++) {
+                            beagle.resetScaleFactorsByPartition(cumulateScaleBufferIndex, j);
+                            beagle.accumulateScaleFactorsByPartition(scaleBufferIndices[j], internalNodeCount, cumulateScaleBufferIndex, j);
                         }
+                        //}
                     } else {
                         beagle.resetScaleFactors(cumulateScaleBufferIndex);
                         beagle.accumulateScaleFactors(scaleBufferIndices[i], internalNodeCount, cumulateScaleBufferIndex);
@@ -927,14 +928,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 }
             } else if (useAutoScaling) {
                 if (useBeagle3) {
-                    boolean updateAllPartitions = true;
+                    /*boolean updateAllPartitions = true;
                     if (updateAllPartitions) {
                         beagle.accumulateScaleFactors(scaleBufferIndices[i], internalNodeCount, Beagle.NONE);
-                    } else {
+                    } else {*/
+                        //TODO: check with Daniel if calling these methods using an iteration can be done more efficiently
                         for (int j = 0; j < partitionCount; j++) {
                             beagle.accumulateScaleFactorsByPartition(scaleBufferIndices[j], internalNodeCount, Beagle.NONE, j);
                         }
-                    }
+                    //}
                 } else {
                     beagle.accumulateScaleFactors(scaleBufferIndices[i], internalNodeCount, Beagle.NONE);
                 }

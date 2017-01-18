@@ -107,9 +107,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private static final boolean RESCALING_OFF = false; // a debugging switch
     private static final boolean DEBUG = false;
 
-    //switch to provide consistent rescaling with BeagleDataLikelihoodDelegate
-    private static final boolean FORCE_BDLD_RESCALING = false;
-
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
                                 BranchModel branchModel,
@@ -1012,11 +1009,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
                     done = false; // Run through do-while loop again
                     firstRescaleAttempt = false; // Only try to rescale once
-
-                    if (FORCE_BDLD_RESCALING) {
-                        rescalingCount++;
-                        rescalingCountInner++;
-                    }
 
                 } else {
                     // we have already tried a rescale, not rescaling or always rescaling

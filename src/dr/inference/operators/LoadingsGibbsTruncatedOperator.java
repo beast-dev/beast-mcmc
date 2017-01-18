@@ -124,22 +124,24 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         double low = truncated.cdf(lowCutoff);
         double high = truncated.cdf(highCutoff);
         double split = low / (low + (1-high));
-        double rand = MathUtils.nextDouble();
-        double draw;
-        if(rand < split){
-            draw = MathUtils.nextDouble() * low;
-            draw = truncated.quantile(draw);
-        }
-        else{
-            draw = MathUtils.nextDouble() * (1- high) + high;
-            draw = truncated.quantile(draw);
-        }
+        double draw = 0;
+        int count = 0;
+        while((draw < highCutoff && draw > lowCutoff || Double.isNaN(draw)) && count < 10000) {
+            double rand = MathUtils.nextDouble();
+            if (rand < split) {
+                draw = MathUtils.nextDouble() * low;
+                draw = truncated.quantile(draw);
+            } else {
+                draw = MathUtils.nextDouble() * (1 - high) + high;
+                draw = truncated.quantile(draw);
+            }
 
 
-        if(!Double.isNaN(draw)){
+            count++;
+        }
+        if(count < 10000){
             loadings.setParameterValue(row, column, draw);
         }
-
     }
 
     private void drawI(int i, int column) {

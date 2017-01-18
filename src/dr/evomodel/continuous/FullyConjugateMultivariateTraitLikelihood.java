@@ -414,9 +414,24 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return mean;
     }
 
+    public double[][] getConditionalMeans(){
+        setup();
+
+
+//            double[] answer=new double[getRootNodeTrait().length];
+
+
+        return preMeans;
+    }
+
     public double getPrecisionFactor(int taxa){
         setup();
         return preP[taxa];
+    }
+
+    public double[] getPrecisionFactors(){
+        setup();
+        return preP;
     }
 
     public double[][] getConditionalPrecision(int taxa){

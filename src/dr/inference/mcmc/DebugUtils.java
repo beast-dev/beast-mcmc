@@ -1,7 +1,7 @@
 /*
  * DebugUtils.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -197,7 +197,12 @@ public class DebugUtils {
                 int dimension = Integer.parseInt(fields[1]);
 
                 if (dimension != parameter.getDimension()) {
-                    System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension());
+                    System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
+                    System.err.print("Read from file: ");
+                    for (int i = 0; i < fields.length; i++) {
+                        System.err.print(fields[i] + "\t");
+                    }
+                    System.err.println();
                 }
 
                 if (fields[0].equals("branchRates.categories.rootNodeNumber")) {

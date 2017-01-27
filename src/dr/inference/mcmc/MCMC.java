@@ -60,6 +60,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
     // Experimental
     public final static boolean TEST_CLONING = false;
+    // additional boolean to continue analysis after data has been added or removed
+    public final static boolean ALTERED_DATA = true;
 
 
     public MCMC(String id) {
@@ -268,7 +270,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                     }
                     //System.out.println("digits = " + digits);
 
-                    if (digits < 15) {
+                    if (digits < 15 && !ALTERED_DATA) {
                         throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
                                 ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
                     }

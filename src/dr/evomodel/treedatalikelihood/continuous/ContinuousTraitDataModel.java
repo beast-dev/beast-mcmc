@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import com.sun.tools.corba.se.idl.constExpr.Positive;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 
@@ -162,7 +163,35 @@ public class ContinuousTraitDataModel extends AbstractModel {
 
     private static final boolean OLD = false;
 
+    public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
+        if (fullyObserved) {
+
+            final PrecisionType precisionType = PrecisionType.SCALAR;
+            final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+            final double precision = precisionType.getObservedPrecisionValue(false);
+
+            double[] tipPartial = getTipPartial(taxonIndex, precisionType);
+//            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial) + "\n");
+
+            for (int i = 0; i < numTraits; ++i) {
+                precisionType.fillPrecisionInPartials(tipPartial, i * offsetInc, 0, precision, dimTrait);
+            }
+
+//            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial) + "\n");
+//            System.err.println(new dr.math.matrixAlgebra.Vector(getTipPartial(taxonIndex)) + "\n");
+//
+//            System.exit(-1);
+            return tipPartial;
+        } else {
+            return getTipPartial(taxonIndex, precisionType);
+        }
+    }
+
     public double[] getTipPartial(int taxonIndex) {
+        return getTipPartial(taxonIndex, false);
+    }
+
+    private double[] getTipPartial(int taxonIndex, final PrecisionType precisionType) {
 
         if (OLD) {
             return getScalarTipPartial(taxonIndex);
@@ -193,10 +222,10 @@ public class ContinuousTraitDataModel extends AbstractModel {
         return partial;
     }
 
-    public double[] getTipObservation(int taxonIndex) {
+    public double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
         final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
 
-        final double[] partial = getTipPartial(taxonIndex);
+        final double[] partial = getTipPartial(taxonIndex, precisionType);
         final double[] data = new double[numTraits * dimTrait];
 
         for (int i = 0; i < numTraits; ++i) {

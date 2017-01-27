@@ -476,6 +476,17 @@ public class Matrix {
         return answer;
     }
 
+    public double[] toVectorizedComponents() {
+        int n = rows();
+        int m = columns();
+        double[] answer = new double[n * m];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++)
+                answer[i * m  + j] = components[i][j];
+        }
+        return answer;
+    }
+
     /**
      * Returns a string representation of the system.
      *

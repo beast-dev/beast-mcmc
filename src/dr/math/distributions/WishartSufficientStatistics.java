@@ -25,6 +25,8 @@
 
 package dr.math.distributions;
 
+import dr.math.matrixAlgebra.Vector;
+
 import java.util.Arrays;
 
 public class WishartSufficientStatistics {
@@ -37,6 +39,17 @@ public class WishartSufficientStatistics {
     public WishartSufficientStatistics(int df, double[] scaleMatrix) {
         this.df = df;
         this.scaleMatrix = scaleMatrix;
+    }
+
+    public WishartSufficientStatistics clone() {
+        return new WishartSufficientStatistics(this.df, scaleMatrix.clone());
+    }
+
+    public void copyTo(WishartSufficientStatistics destination) {
+        assert (destination != null);
+
+        destination.df = this.df;
+        System.arraycopy(this.scaleMatrix, 0, destination.scaleMatrix, 0, this.scaleMatrix.length);
     }
 
 //    public WishartSufficientStatistics(int df, double[] matrix, int dim) {
@@ -144,6 +157,10 @@ public class WishartSufficientStatistics {
 //        }
 //        return matrix;
 //    }
+
+    public String toString() {
+        return df + " : " + new Vector(scaleMatrix).toString();
+    }
 
     private int df;
     private final double[] scaleMatrix;

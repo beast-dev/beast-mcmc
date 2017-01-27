@@ -42,6 +42,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.PARTIAL;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.MISSING;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
@@ -142,7 +143,7 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
                 traitName = (String) xo.getAttribute(TRAIT_NAME);
             } else {
                 TreeTrait[] traits = treeLikelihood.getTreeTraits();
-                List<String> traitNames = matchedTraitNames(traits, ContinuousDataLikelihoodParser.PARTIAL + ".");
+                List<String> traitNames = matchedTraitNames(traits, PARTIAL + ".");
 
                 if (traitNames.size() == 1) {
                     traitName = traitNames.get(0);

@@ -72,6 +72,7 @@ public enum PrecisionType {
             final int offs = offset + dimTrait + index * dimTrait + index;
             partial[offs] = precision;
             partial[offs+ dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
+            partial[offset + dimTrait + 2 * dimTrait * dimTrait] = Double.POSITIVE_INFINITY;
         }
 
         @Override
@@ -84,7 +85,7 @@ public enum PrecisionType {
 
         @Override
         public int getMatrixLength(int dimTrait) {
-            return 2 * super.getMatrixLength(dimTrait);
+            return 2 * super.getMatrixLength(dimTrait) + 1;
         }
     };
 

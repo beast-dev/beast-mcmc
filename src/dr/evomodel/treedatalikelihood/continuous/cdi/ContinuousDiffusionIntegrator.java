@@ -25,7 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
@@ -71,6 +71,107 @@ public interface ContinuousDiffusionIntegrator {
     void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
                                     boolean incrementOuterProducts);
 
+    boolean requireDataAugmentationForOuterProducts();
+
+//    class OuterProductProvider implements ContinuousDiffusionIntegrator {
+//
+//        private final ContinuousDiffusionIntegrator base;
+//        private final boolean useTwoIntegrators;
+//        private ContinuousDiffusionIntegrator op;
+//
+//        public OuterProductProvider(ContinuousDiffusionIntegrator base) {
+//            this.base = base;
+//            this.useTwoIntegrators = base instanceof Multivariate;
+//
+//            if (useTwoIntegrators) {
+////                op = new Basic((Basic)base);
+//            }
+//            System.err.println("useTwoIntegrators: " + useTwoIntegrators);
+//            System.err.println(base.getClass().getCanonicalName());
+////            System.exit(-1);
+//        }
+//
+//        @Override
+//        public void finalize() throws Throwable {
+//            base.finalize();
+//            if (useTwoIntegrators) op.finalize();
+//        }
+//
+//        @Override
+//        public void setPartial(int bufferIndex, double[] partial) {
+//            base.setPartial(bufferIndex, partial);
+//            if (useTwoIntegrators) op.setPartial(bufferIndex, partial);
+//        }
+//
+//        public void setPartialInOuterProductsOnly(int bufferIndex, double[] partial) {
+//            if (useTwoIntegrators) op.setPartial(bufferIndex, partial);
+//        }
+//
+//        @Override
+//        public void getPartial(int bufferIndex, double[] partial) {
+//            base.getPartial(bufferIndex, partial);
+//        }
+//
+//        @Override
+//        public void setWishartStatistics(int[] degreesOfFreedom, double[] outerProducts) {
+//            if (useTwoIntegrators) {
+//                op.setWishartStatistics(degreesOfFreedom, outerProducts);
+//            } else {
+//                base.setWishartStatistics(degreesOfFreedom, outerProducts);
+//            }
+//        }
+//
+//        @Override
+//        public void getWishartStatistics(int[] degreesOfFreedom, double[] outerProducts) {
+//            if (useTwoIntegrators) {
+//                op.getWishartStatistics(degreesOfFreedom, outerProducts);
+//            } else {
+//                base.getWishartStatistics(degreesOfFreedom, outerProducts);
+//            }
+//        }
+//
+//        @Override
+//        public void setDiffusionPrecision(int diffusionIndex, double[] matrix, double logDeterminant) {
+//            base.setDiffusionPrecision(diffusionIndex, matrix, logDeterminant);
+//            if (useTwoIntegrators) op.setDiffusionPrecision(diffusionIndex, matrix, logDeterminant);
+//        }
+//
+//        @Override
+//        public void updatePartials(int[] operations, int operationCount, boolean incrementOuterProducts) {
+//            if (useTwoIntegrators && incrementOuterProducts) {
+//                op.updatePartials(operations, operationCount, incrementOuterProducts);
+//            } else {
+//                base.updatePartials(operations, operationCount, incrementOuterProducts);
+//            }
+//        }
+//
+//        @Override
+//        public InstanceDetails getDetails() {
+//            return null;
+//        }
+//
+//        @Override
+//        public void updateDiffusionMatrices(int precisionIndex, int[] probabilityIndices, double[] edgeLengths, int updateCount) {
+//            base.updateDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, updateCount);
+//            if (useTwoIntegrators) op.updateDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, updateCount);
+//        }
+//
+//        @Override
+//        public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike, boolean incrementOuterProducts) {
+//            if (useTwoIntegrators && incrementOuterProducts) {
+//                base.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike, incrementOuterProducts);
+//            } else {
+//                base.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike, incrementOuterProducts);
+//            }
+//        }
+//
+//        @Override
+//        public boolean requireDataAugmentationForOuterProducts() {
+//            System.err.println("OOP.rDA = " + useTwoIntegrators);
+//            return useTwoIntegrators;
+//        }
+//    }
+
     class Basic implements ContinuousDiffusionIntegrator {
 
         private int instance = -1;
@@ -85,6 +186,10 @@ public interface ContinuousDiffusionIntegrator {
         protected final int dimMatrix;
         protected final int dimPartialForTrait;
         protected final int dimPartial;
+
+//        public Basic(final Basic base) {
+//            this(base.precisionType, base.numTraits, base.dimTrait, base.bufferCount, base.diffusionCount);
+//        }
 
         public Basic(
                 final PrecisionType precisionType,
@@ -117,6 +222,11 @@ public interface ContinuousDiffusionIntegrator {
             }
 
             allocateStorage();
+        }
+
+        @Override
+        public boolean requireDataAugmentationForOuterProducts() {
+            return false;
         }
 
         @Override
@@ -238,7 +348,9 @@ public interface ContinuousDiffusionIntegrator {
                     System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("rootScalar: " + rootScalar);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
-                    System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                    if (incrementOuterProducts) {
+                        System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                    }
                     System.err.println("");
                 }
 
@@ -248,7 +360,7 @@ public interface ContinuousDiffusionIntegrator {
 
             if (DEBUG) {
                 System.err.println("End");
-                System.exit(-1);
+//                System.exit(-1);
             }
         }
 
@@ -392,71 +504,69 @@ public interface ContinuousDiffusionIntegrator {
                     for (int e = 0; e < dimTrait; ++e) {
                         System.err.print(" " + partials[ibo + e]);
                     }
-                    System.err.println("prec i: " + pi);
+                    System.err.println(" prec i: " + pi);
                     System.err.print("\t\tmean j:");
                     for (int e = 0; e < dimTrait; ++e) {
                         System.err.print(" " + partials[jbo + e]);
                     }
-                    System.err.println("prec j: " + pj);
+                    System.err.println(" prec j: " + pj);
+
+                    if (pj == 0.0) { System.exit(-1); }
                     System.err.print("\t\tmean k:");
                     for (int e = 0; e < dimTrait; ++e) {
                         System.err.print(" " + partials[kbo + e]);
                     }
-                    System.err.println("prec k: " + pk);
+                    System.err.println(" prec k: " + pk);
                     System.err.println("");
                 }
 
                 // Computer remainder at node k
                 double remainder = 0.0;
                 if (pi != 0 && pj != 0) {
-                    if (INLINE) {
 
-                        // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
+                    // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
 
-                        final double remainderPrecision = pip * pjp / pk;
+                    final double remainderPrecision = pip * pjp / pk;
 
-                        // Inner products
-                        double SSk = 0;
-                        double SSj = 0;
-                        double SSi = 0;
+                    // Inner products
+                    double SSk = 0;
+                    double SSj = 0;
+                    double SSi = 0;
 
-                        int pob = precisionOffset;
+                    int pob = precisionOffset;
 
-                        // vector-matrix-vector TODO in parallel
-                        for (int g = 0; g < dimTrait; ++g) {
-                            final double ig = partials[ibo + g];
-                            final double jg = partials[jbo + g];
-                            final double kg = partials[kbo + g];
+                    // vector-matrix-vector TODO in parallel
+                    for (int g = 0; g < dimTrait; ++g) {
+                        final double ig = partials[ibo + g];
+                        final double jg = partials[jbo + g];
+                        final double kg = partials[kbo + g];
 
-                            for (int h = 0; h < dimTrait; ++h) {
-                                final double ih = partials[ibo + h];
-                                final double jh = partials[jbo + h];
-                                final double kh = partials[kbo + h];
+                        for (int h = 0; h < dimTrait; ++h) {
+                            final double ih = partials[ibo + h];
+                            final double jh = partials[jbo + h];
+                            final double kh = partials[kbo + h];
 
-                                final double diffusion = diffusions[pob]; // element [g][h]
+                            final double diffusion = diffusions[pob]; // element [g][h]
 
-                                SSi += ig * diffusion * ih;
-                                SSj += jg * diffusion * jh;
-                                SSk += kg * diffusion * kh;
+                            SSi += ig * diffusion * ih;
+                            SSj += jg * diffusion * jh;
+                            SSk += kg * diffusion * kh;
 
-                                ++pob;
-                            }
+                            ++pob;
                         }
-
-                        remainder += -dimTrait * LOG_SQRT_2_PI // TODO Can move some calculation outside the loop
-                                + 0.5 * (dimTrait * Math.log(remainderPrecision) + precisionLogDet)
-                                - 0.5 * (pip * SSi + pjp * SSj - pk * SSk);
-
-                        if (DEBUG) {
-                            System.err.println("\t\t\tpk: " + pk);
-                            System.err.println("\t\t\tSSi = " + (pip * SSi));
-                            System.err.println("\t\t\tSSj = " + (pjp * SSj));
-                            System.err.println("\t\t\tSSk = " + (pk * SSk));
-                        }
-
-                    } else {
-                        // incrementRemainderDensities(); // TODO
                     }
+
+                    remainder += -dimTrait * LOG_SQRT_2_PI // TODO Can move some calculation outside the loop
+                            + 0.5 * (dimTrait * Math.log(remainderPrecision) + precisionLogDet)
+                            - 0.5 * (pip * SSi + pjp * SSj - pk * SSk);
+
+                    if (DEBUG) {
+                        System.err.println("\t\t\tpk: " + pk);
+                        System.err.println("\t\t\tSSi = " + (pip * SSi));
+                        System.err.println("\t\t\tSSj = " + (pjp * SSj));
+                        System.err.println("\t\t\tSSk = " + (pk * SSk));
+                    }
+
 
                     if (DEBUG) {
                         System.err.println("\t\tremainder: " + remainder);
@@ -465,7 +575,14 @@ public interface ContinuousDiffusionIntegrator {
                     if (incrementOuterProducts) {
                         int opo = dimTrait * dimTrait * trait;
 
-                        final double remainderPrecision = pip * pjp / (pip + pjp);
+//                        final double remainderPrecision = pip * pjp / (pip + pjp);
+
+                        if (DEBUG) {
+                            System.err.println("pip: " + pip);
+                            System.err.println("pjp: " + pjp);
+                            System.err.println("sum: " + (pip + pjp));
+                            System.err.println("op prec: " + remainderPrecision);
+                        }
 
                         for (int g = 0; g < dimTrait; ++g) {
                             final double ig = partials[ibo + g];
@@ -480,7 +597,7 @@ public interface ContinuousDiffusionIntegrator {
                             }
                         }
 
-                        if (DEBUG) {
+                        if (DEBUG && incrementOuterProducts) {
                             System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                         }
 
@@ -534,7 +651,7 @@ public interface ContinuousDiffusionIntegrator {
             return sb.toString();
         }
 
-        protected static boolean DEBUG = true;
+        protected static boolean DEBUG = false;
     }
 
     class Multivariate extends Basic {
@@ -659,7 +776,7 @@ public interface ContinuousDiffusionIntegrator {
             int count = 0;
             for (int i = 0; i < length; ++i) {
                 final double d = source.unsafe_get(i, i);
-                if (!Double.isInfinite(d) && d != 0.0) {
+                if (!Double.isInfinite(d)) {
                     ++count;
                 }
             }
@@ -667,6 +784,32 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         public static void getFiniteDiagonalIndices(final DenseMatrix64F source, final int[] indices) {
+            final int length = source.getNumCols();
+
+            int index = 0;
+            for (int i = 0; i < length; ++i) {
+                final double d = source.unsafe_get(i, i);
+                if (!Double.isInfinite(d)) {
+                    indices[index] = i;
+                    ++index;
+                }
+            }
+        }
+
+        public static int countFiniteNonZeroDiagonals(DenseMatrix64F source) {
+            final int length = source.getNumCols();
+
+            int count = 0;
+            for (int i = 0; i < length; ++i) {
+                final double d = source.unsafe_get(i, i);
+                if (!Double.isInfinite(d) && d != 0.0) {
+                    ++count;
+                }
+            }
+            return count;
+        }
+
+        public static void getFiniteNonZeroDiagonalIndices(final DenseMatrix64F source, final int[] indices) {
             final int length = source.getNumCols();
 
             int index = 0;
@@ -708,7 +851,7 @@ public interface ContinuousDiffusionIntegrator {
 
 
 
-        static class InversionResult {
+        public static class InversionResult {
 
             enum Code {
                 FULLY_OBSERVED,
@@ -802,7 +945,7 @@ public interface ContinuousDiffusionIntegrator {
         public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 
             final int dim = source.getNumCols();
-            final int finiteCount = countFiniteDiagonals(source);
+            final int finiteCount = countFiniteNonZeroDiagonals(source);
             double det = 0;
 
             if (finiteCount == dim) {
@@ -818,7 +961,7 @@ public interface ContinuousDiffusionIntegrator {
                     return new InversionResult(NOT_OBSERVED, 0, 0);
                 } else {
                     final int[] finiteIndices = new int[finiteCount];
-                    getFiniteDiagonalIndices(source, finiteIndices);
+                    getFiniteNonZeroDiagonalIndices(source, finiteIndices);
 
                     final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
                     gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
@@ -844,6 +987,64 @@ public interface ContinuousDiffusionIntegrator {
             }
         }
 
+        public static void weightedAverage(final WrappedVector mi,
+                                           final DenseMatrix64F Pi,
+                                           final WrappedVector mj,
+                                           final DenseMatrix64F Pj,
+                                           final WrappedVector mk,
+                                           final DenseMatrix64F Vk,
+                                           final int dimTrait) {
+            final double[] tmp = new double[dimTrait];
+            for (int g = 0; g < dimTrait; ++g) {
+                double sum = 0.0;
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += Pi.unsafe_get(g, h) * mi.get(h);
+                    sum += Pj.unsafe_get(g, h) * mj.get(h);
+                }
+                tmp[g] = sum;
+            }
+            for (int g = 0; g < dimTrait; ++g) {
+                double sum = 0.0;
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += Vk.unsafe_get(g, h) * tmp[h];
+                }
+                mk.set(g, sum);
+            }
+        }
+
+        public static void weightedAverage(final double[] ipartial,
+                                           final int ibo,
+                                           final DenseMatrix64F Pi,
+                                           final double[] jpartial,
+                                           final int jbo,
+                                           final DenseMatrix64F Pj,
+                                           final double[] kpartial,
+                                           final int kbo,
+                                           final DenseMatrix64F Vk,
+                                           final int dimTrait) {
+            final double[] tmp = new double[dimTrait];
+            for (int g = 0; g < dimTrait; ++g) {
+                double sum = 0.0;
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += Pi.unsafe_get(g, h) * ipartial[ibo + h];
+                    sum += Pj.unsafe_get(g, h) * jpartial[jbo + h];
+                }
+                tmp[g] = sum;
+            }
+            for (int g = 0; g < dimTrait; ++g) {
+                double sum = 0.0;
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += Vk.unsafe_get(g, h) * tmp[h];
+                }
+                kpartial[kbo + g] = sum;
+            }
+        }
+
+        @Override
+        public boolean requireDataAugmentationForOuterProducts() {
+            return true;
+        }
+
         @Override
         protected void updatePartial(
                 final int kBuffer,
@@ -853,6 +1054,11 @@ public interface ContinuousDiffusionIntegrator {
                 final int jMatrix,
                 final boolean incrementOuterProducts
         ) {
+
+            if (incrementOuterProducts) {
+                throw new RuntimeException("Outer-products are not supported.");
+            }
+
             // Determine buffer offsets
             int kbo = dimPartial * kBuffer;
             int ibo = dimPartial * iBuffer;
@@ -877,11 +1083,17 @@ public interface ContinuousDiffusionIntegrator {
             // For each trait // TODO in parallel
             for (int trait = 0; trait < numTraits; ++trait) {
 
+                // Layout, offset, dim
+                // trait, 0, dT
+                // precision, dT, dT * dT
+                // variance, dT + dT * dT, dT * dT
+                // scalar, dT + 2 * dT * dT, 1
+
                 // Increase variance along the branches i -> k and j -> k
 
                 // A. Get current precision of i and j
-//                final double pi = partials[ibo + dimTrait];
-//                final double pj = partials[jbo + dimTrait];
+                final double lpi = partials[ibo + dimTrait + 2 * dimTrait * dimTrait];
+                final double lpj = partials[jbo + dimTrait + 2 * dimTrait * dimTrait];
 
                 final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
                 final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
@@ -890,10 +1102,10 @@ public interface ContinuousDiffusionIntegrator {
                 final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
                 // B. Integrate along branch using two matrix inversions
-//                final double pip = Double.isInfinite(pi) ?
-//                        1.0 / vi : pi / (1.0 + pi * vi);
-//                final double pjp = Double.isInfinite(pj) ?
-//                        1.0 / vj : pj / (1.0 + pj * vj);
+                final double lpip = Double.isInfinite(lpi) ?
+                        1.0 / vi : lpi / (1.0 + lpi * vi);
+                final double lpjp = Double.isInfinite(lpj) ?
+                        1.0 / vj : lpj / (1.0 + lpj * vj);
 
                 final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
                 final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
@@ -910,7 +1122,7 @@ public interface ContinuousDiffusionIntegrator {
                 // Compute partial mean and precision at node k
 
                 // A. Partial precision and variance (for later use) using one matrix inversion
-//                final double pk = pip + pjp;
+                final double lpk = lpip + lpjp;
 
                 final DenseMatrix64F Pk = new DenseMatrix64F(dimTrait, dimTrait);
 
@@ -942,7 +1154,7 @@ public interface ContinuousDiffusionIntegrator {
                 }
 
                 // C. Store precision
-//                partials[kbo + dimTrait] = pk;
+                partials[kbo + dimTrait + 2 * dimTrait * dimTrait] = lpk;
 
                 unwrap(Pk, partials, kbo + dimTrait);
                 unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
@@ -1018,20 +1230,16 @@ public interface ContinuousDiffusionIntegrator {
                     int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
                             - ck.getEffectiveDimension();
 
-
-                    System.err.println(ci.getDeterminant());
-                    System.err.println(CommonOps.det(Vip));
-
-                    System.err.println(cj.getDeterminant());
-                    System.err.println(CommonOps.det(Vjp));
-
-                    System.err.println(1.0 / ck.getDeterminant());
-                    System.err.println(CommonOps.det(Vk));
-//                    System.exit(-1);
-
+//                    System.err.println(ci.getDeterminant());
+//                    System.err.println(CommonOps.det(Vip));
+//
+//                    System.err.println(cj.getDeterminant());
+//                    System.err.println(CommonOps.det(Vjp));
+//
+//                    System.err.println(1.0 / ck.getDeterminant());
+//                    System.err.println(CommonOps.det(Vk));
 
                     remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
-//                            Math.log(CommonOps.det(Vt))  // TODO Why does this line work?
 //                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
                             (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
                             - 0.5 * (SSi + SSj - SSk);
@@ -1048,6 +1256,8 @@ public interface ContinuousDiffusionIntegrator {
 
                     if (incrementOuterProducts) {
 
+                        assert (false);
+
                         final DenseMatrix64F Pt = new DenseMatrix64F(dimTrait, dimTrait);
                         InversionResult ct = safeInvert(Vt, Pt, false);
 
@@ -1062,7 +1272,13 @@ public interface ContinuousDiffusionIntegrator {
                                 final double ih = partials[ibo + h];
                                 final double jh = partials[jbo + h];
 
-                                outerProducts[opo] += (ig - jg) * (ih - jh) * Pt.unsafe_get(g, h) / diffusions[opd]; // * pip * pjp / (pip + pjp);
+                                outerProducts[opo] += (ig - jg) * (ih - jh)
+//                                        * Pt.unsafe_get(g, h)
+//                                        * Pk.unsafe_get(g, h)
+
+//                                        / diffusions[opd];
+                                 // * pip * pjp / (pip + pjp);
+                                        * lpip * lpjp / (lpip + lpjp);
                                 ++opo;
                                 ++opd;
                             }
@@ -1146,13 +1362,22 @@ public interface ContinuousDiffusionIntegrator {
                     int opo = dimTrait * dimTrait * trait;
                     int opd = precisionOffset;
 
+                    double rootScalar = partials[rootOffset + dimTrait + 2 * dimTrait * dimTrait];
+                    final double priorScalar = partials[priorOffset + dimTrait];
+
+                    if (!Double.isInfinite(priorScalar)) {
+                        rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
+                    }
+
                     for (int g = 0; g < dimTrait; ++g) {
                         final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
 
                         for (int h = 0; h < dimTrait; ++h) {
                             final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
 
-                            outerProducts[opo] += gDifference * hDifference * Ptotal.unsafe_get(g, h) / diffusions[opd]; // * rootScalar;
+                            outerProducts[opo] += gDifference * hDifference
+//                                    * Ptotal.unsafe_get(g, h) / diffusions[opd];
+                            * rootScalar;
                             ++opo;
                             ++opd;
                         }
@@ -1175,7 +1400,9 @@ public interface ContinuousDiffusionIntegrator {
                     System.err.println("Vtotal: " + Vtotal);
 //                    System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
-                    System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                    if (incrementOuterProducts) {
+                        System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                    }
                 }
 
                 rootOffset += dimPartialForTrait;
@@ -1184,7 +1411,7 @@ public interface ContinuousDiffusionIntegrator {
 
             if (DEBUG) {
                 System.err.println("End");
-                System.exit(-1);
+//                System.exit(-1);
             }
         }
 

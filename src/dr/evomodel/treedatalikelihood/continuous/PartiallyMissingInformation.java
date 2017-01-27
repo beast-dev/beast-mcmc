@@ -25,16 +25,37 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.MultivariateTraitTree;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Matrix;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
 
 public class PartiallyMissingInformation {
+
+    public PartiallyMissingInformation(MultivariateTraitTree tree, ContinuousTraitDataModel dataModel, ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+        this.tipCount = tree.getExternalNodeCount();
+        this.numTraits = dataModel.getTraitCount(); //likelihoodDelegate.getTraitCount();
+        this.dimTrait = dataModel.getTraitDimension(); //likelihoodDelegate.getTraitDim();
+        this.precisionType = dataModel.getPrecisionType(); //likelihoodDelegate.getPrecisionType();
+//        this.dimPartial = dimTrait + precisionType.getMatrixLength(dimTrait);
+
+        this.missingParameter = null;
+        this.rawMissingIndices = dataModel.getMissingIndices();
+
+        final int length = tipCount * numTraits;
+        anyMissing = new boolean[length];
+        allMissing = new boolean[length];
+        missingIndices = new HashedIntArray[length];
+
+        setupIndices();
+    }
 
     public class HashedIntArray {
         final private int[] array;
@@ -103,12 +124,20 @@ public class PartiallyMissingInformation {
     final private int tipCount;
     final private int numTraits;
     final private int dimTrait;
+    final private PrecisionType precisionType;
+//    final private int dimPartial;
+
+    @Deprecated
     final private Parameter missingParameter;
 
+    final private List<Integer> rawMissingIndices;
+
     final private boolean[] anyMissing;
+    final private boolean[] allMissing;
     final private HashedIntArray[] missingIndices;
 //    final private HashedIntArray[] notMissingIndices;
 
+    @Deprecated
     public PartiallyMissingInformation(int tipCount,
                                        int numTraits,
                                        int dimTrait,
@@ -116,12 +145,17 @@ public class PartiallyMissingInformation {
         this.tipCount = tipCount;
         this.numTraits = numTraits;
         this.dimTrait = dimTrait;
+        this.precisionType = PrecisionType.SCALAR;
+//        this.partialLength = dimTrait + precisionType.getMatrixLength(dimTrait);
         this.missingParameter = missingParameter;
+        this.rawMissingIndices = null;
+
 
         assert (tipCount * numTraits * dimTrait == missingParameter.getDimension());
 
         final int length = tipCount * numTraits;
         anyMissing = new boolean[length];
+        allMissing = new boolean[length];
         missingIndices = new HashedIntArray[length];
 //        notMissingIndices = new HashedIntArray[length];
 
@@ -140,6 +174,34 @@ public class PartiallyMissingInformation {
 //        return notMissingIndices[getIndex(tip, trait)];
 //    }
 
+
+//    private void setupIndices(ContinuousTraitDataModel dataModel) {
+//
+////        final int partialLength = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
+////        double[] partial = new double[partialLength];
+//
+//        List<Integer> missingIndices = dataModel.getMissingIndices();
+//
+//        for (int taxon = 0; taxon < tipCount; ++taxon) {
+//
+//            for (int trait = 0; trait < numTraits; ++trait) {
+//
+//                final int index = getIndex(taxon, trait);
+//
+//                int count = 0;
+//                for (int dim = 0; dim < dimTrait; ++dim) {
+//                    if (isObservationMissing(index, dim)) {
+//                        ++count;
+//                    }
+//                }
+//
+//            }
+//
+//
+//        }
+//
+//    }
+
     private void setupIndices() {
 
         for (int taxon = 0; taxon < tipCount; ++taxon) {
@@ -154,8 +216,6 @@ public class PartiallyMissingInformation {
                         ++count;
                     }
                 }
-
-                System.err.println("count = " + count + " for " + index);
 
                 if (count > 0) {
 
@@ -176,11 +236,14 @@ public class PartiallyMissingInformation {
 
                     anyMissing[index] = true;
                     missingIndices[index] = new HashedIntArray(missing, notMissing);
-//                    notMissingIndices[index] = new HashedIntArray(notMissing);
+
+                    if (count == dimTrait) {
+                        allMissing[index] = true;
+                    }
                 } else {
                     anyMissing[index] = false;
+                    allMissing[index] = false;
                     missingIndices[index] = null;
-//                    notMissingIndices[index] = null;
                 }
             }
         }
@@ -193,7 +256,11 @@ public class PartiallyMissingInformation {
     private boolean isObservationMissing(final int index, final int dim) {
         final int id = index * dimTrait + dim;
 //        System.err.println("id = " + id + " " +  missingParameter.getParameterValue(id));
-        return missingParameter.getParameterValue(id) == 1;
+        if (missingParameter != null) {
+            return missingParameter.getParameterValue(id) == 1;
+        } else {
+            return rawMissingIndices.contains(id);
+        }
     }
 
 //    public static Matrix extractPartialVarianceMatrix(final double[][] variance, final int[] indices) {

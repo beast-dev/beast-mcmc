@@ -29,6 +29,7 @@ import dr.evolution.tree.MultivariateTraitTree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +44,7 @@ public class PartiallyMissingInformation {
         this.tipCount = tree.getExternalNodeCount();
         this.numTraits = dataModel.getTraitCount(); //likelihoodDelegate.getTraitCount();
         this.dimTrait = dataModel.getTraitDimension(); //likelihoodDelegate.getTraitDim();
-        this.precisionType = dataModel.getPrecisionType(); //likelihoodDelegate.getPrecisionType();
+//        this.precisionType = dataModel.getPrecisionType(); //likelihoodDelegate.getPrecisionType();
 //        this.dimPartial = dimTrait + precisionType.getMatrixLength(dimTrait);
 
         this.missingParameter = null;
@@ -105,6 +106,10 @@ public class PartiallyMissingInformation {
             }
         }
 
+        public String toString() {
+            return new Vector(array).toString();
+        }
+
         //        private int[] makeComplement(final int[] array, final int dim) {
 //            int[] complemenet = new int[dim - array.length];
 //
@@ -124,7 +129,7 @@ public class PartiallyMissingInformation {
     final private int tipCount;
     final private int numTraits;
     final private int dimTrait;
-    final private PrecisionType precisionType;
+//    final private PrecisionType precisionType;
 //    final private int dimPartial;
 
     @Deprecated
@@ -145,7 +150,7 @@ public class PartiallyMissingInformation {
         this.tipCount = tipCount;
         this.numTraits = numTraits;
         this.dimTrait = dimTrait;
-        this.precisionType = PrecisionType.SCALAR;
+//        this.precisionType = PrecisionType.SCALAR;
 //        this.partialLength = dimTrait + precisionType.getMatrixLength(dimTrait);
         this.missingParameter = missingParameter;
         this.rawMissingIndices = null;
@@ -164,6 +169,10 @@ public class PartiallyMissingInformation {
 
     public boolean isPartiallyMissing(final int tip, final int trait) {
         return anyMissing[getIndex(tip, trait)];
+    }
+
+    public boolean isCompletelyMissing(final int tip, final int trait) {
+        return allMissing[getIndex(tip, trait)];
     }
 
     public HashedIntArray getMissingIndices(final int tip, final int trait) {

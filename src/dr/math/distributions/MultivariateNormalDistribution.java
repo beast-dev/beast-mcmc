@@ -258,6 +258,25 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
     }
 
+    public static void nextMultivariateNormalCholesky(final WrappedVector mean, final double[][] cholesky,
+                                                      final double sqrtScale, final WrappedVector result,
+                                                      final double[] epsilon) {
+
+        final int dim = mean.getDim();
+        for (int i = 0; i < dim; i++) {
+            epsilon[i] = MathUtils.nextGaussian() * sqrtScale;
+        }
+
+        for (int i = 0; i < dim; i++) {
+            double x = mean.get(i);
+            for (int j = 0; j <= i; j++) {
+                x += cholesky[i][j] * epsilon[j];
+                // caution: decomposition returns lower triangular
+            }
+            result.set(i, x);
+        }
+    }
+
     public static void nextMultivariateNormalCholesky(final double[] mean, final int meanOffset, final double[][] cholesky,
                                                       final double sqrtScale, final double[] result, final int resultOffset,
                                                       final double[] epsilon) {

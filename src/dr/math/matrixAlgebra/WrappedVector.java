@@ -25,50 +25,89 @@
 
 package dr.math.matrixAlgebra;
 
+import dr.inference.model.Parameter;
+
 /**
  * Created by msuchard on 1/27/17.
  */
 
 
-public class WrappedVector {
 
-    final private double[] buffer;
-    final private int offset;
-    final private int dim;
 
-    public WrappedVector(final double[] buffer, final int offset, final int dim) {
-        this.buffer = buffer;
-        this.offset = offset;
-        this.dim = dim;
-    }
 
-    final public double get(final int i) {
-        return buffer[offset + i];
-    }
+public interface WrappedVector {
 
-    final public void set(final int i, final double x) {
-        buffer[offset + i] = x;
-    }
+    double get(final int i);
 
-    final public int getDim() {
-        return dim;
-    }
+    void set(final int i, final double x);
 
-    final public String toString() {
-        StringBuilder sb = new StringBuilder("[ ");
-        if (dim > 0) {
-            sb.append(get(0));
+    int getDim();
+
+    double[] getBuffer();
+
+    abstract class Abstract implements  WrappedVector {
+        final protected double[] buffer;
+        final protected int offset;
+        final protected int dim;
+
+        public Abstract(final double[] buffer, final int offset, final int dim) {
+            this.buffer = buffer;
+            this.offset = offset;
+            this.dim = dim;
         }
-        for (int i = 1; i < dim; ++i) {
-            sb.append(", ").append(get(i));
+
+        final public double[] getBuffer() {
+            return buffer;
         }
-        sb.append(" ]");
 
-        return sb.toString();
+        final public int getDim() {
+            return dim;
+        }
+
+        final public String toString() {
+            StringBuilder sb = new StringBuilder("[ ");
+            if (dim > 0) {
+                sb.append(get(0));
+            }
+            for (int i = 1; i < dim; ++i) {
+                sb.append(", ").append(get(i));
+            }
+            sb.append(" ]");
+
+            return sb.toString();
+        }
     }
 
-    final public double[] getBuffer() {
-        return buffer;
+    final class Raw extends Abstract {
+
+        public Raw(double[] buffer, int offset, int dim) {
+            super(buffer, offset, dim);
+        }
+
+        @Override
+        final public double get(final int i) {
+            return buffer[offset + i];
+        }
+
+        @Override
+        final public void set(final int i, final double x) {
+            buffer[offset + i] = x;
+        }
     }
 
+    final class Indexed extends Abstract {
+
+        final private int[] indices;
+
+        public Indexed(double[] buffer, int offset, int[] indices, int dim) {
+            super(buffer, offset, dim);
+            this.indices = indices;
+        }
+
+        @Override
+        final public double get(int i) { return buffer[offset + indices[i]]; }
+
+        @Override
+        final public void set(int i, double x) { buffer[offset + indices[i]] = x; }
+    }
 }

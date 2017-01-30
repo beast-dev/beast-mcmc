@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;

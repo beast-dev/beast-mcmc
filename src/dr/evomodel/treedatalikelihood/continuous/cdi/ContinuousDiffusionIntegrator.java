@@ -783,6 +783,19 @@ public interface ContinuousDiffusionIntegrator {
             return count;
         }
 
+        public static int countZeroDiagonals(DenseMatrix64F source) {
+            final int length = source.getNumCols();
+
+            int count = 0;
+            for (int i = 0; i < length; ++i) {
+                final double d = source.unsafe_get(i, i);
+                if (d == 0.0) {
+                    ++count;
+                }
+            }
+            return count;
+        }
+
         public static void getFiniteDiagonalIndices(final DenseMatrix64F source, final int[] indices) {
             final int length = source.getNumCols();
 
@@ -966,9 +979,6 @@ public interface ContinuousDiffusionIntegrator {
                     final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
                     gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
 
-//                    System.err.println(source);
-//                    System.err.println(subSource);
-
                     final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
                     if (getDeterminant) {
                         det = invertAndGetDeterminant(subSource, inverseSubSource);
@@ -978,11 +988,7 @@ public interface ContinuousDiffusionIntegrator {
 
                     scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
 
-//                    System.err.println(inverseSubSource);
-//                    System.err.println(destination);
-
                     return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
-//                    throw new RuntimeException("Not yet implemented");
                 }
             }
         }

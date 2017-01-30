@@ -552,6 +552,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //
 ////        System.err.println(cdi.getClass().getCanonicalName());
 
+        setTipDataDirectly(tipIndex, tipPartial);
+    }
+
+    public void setTipDataDirectly(int tipIndex, double[] tipPartial) {
         cdi.setPartial(partialBufferHelper.getOffsetIndex(tipIndex),
                 tipPartial);
     }

@@ -34,7 +34,6 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.inference.model.Parameter;
-import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import org.ejml.data.DenseMatrix64F;
@@ -132,8 +131,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected final MultivariateDiffusionModel diffusionModel;
         protected final ContinuousTraitDataModel dataModel;
+
         protected double[] diffusionVariance;
         protected DenseMatrix64F Vd;
+        protected DenseMatrix64F Pd;
+
         protected double[][] cholesky;
         protected Map<PartiallyMissingInformation.HashedIntArray,
                 ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform> conditionalMap;
@@ -182,6 +184,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
                 diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
                 Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
+                Pd = new DenseMatrix64F(diffusionPrecision);
             }
             if (cholesky == null) {
 //                System.err.println("PDS.sS cholesky");
@@ -192,6 +195,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         public void clearCache() {
             diffusionVariance = null;
             Vd = null;
+            Pd = null;
             cholesky = null;
             conditionalMap = null;
         }
@@ -485,11 +489,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             final double branchPrecision = 1.0 / operation.getBranchLength();
 
-            final boolean isExternal = nodeIndex < tree.getExternalNodeCount();
-            
-            for (int trait = 0; trait < numTraits; ++trait) {
+             for (int trait = 0; trait < numTraits; ++trait) {
 
-                simulateTraitForNode(offsetSample, offsetParent, offsetPartial, branchPrecision, isExternal);
+                simulateTraitForNode(nodeIndex, trait, offsetSample, offsetParent, offsetPartial, branchPrecision);
 
                 offsetSample += dimTrait;
                 offsetParent += dimTrait;
@@ -497,11 +499,12 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
-        protected void simulateTraitForNode(final int offsetSample,
+        protected void simulateTraitForNode(final int nodeIndex,
+                                            final int traitIndex,
+                                            final int offsetSample,
                                              final int offsetParent,
                                              final int offsetPartial,
-                                             final double branchPrecision,
-                                            final boolean isExternal) {
+                                             final double branchPrecision) {
 
              final double nodePrecision = partialNodeBuffer[offsetPartial + dimTrait];
 
@@ -534,7 +537,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOnTipsRealizedDelegate {
 
-        private static final boolean DEBUG = true;
+        private static final boolean DEBUG = false;
+
+        final private PartiallyMissingInformation missingInformation;
 
         public MultivariateConditionalOnTipsRealizedDelegate(String name, MultivariateTraitTree tree,
                                                              MultivariateDiffusionModel diffusionModel,
@@ -544,6 +549,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                                              BranchRateModel rateModel,
                                                              ContinuousDataLikelihoodDelegate likelihoodDelegate) {
             super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+            missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
         }
 
         @Override
@@ -581,53 +587,129 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
-        protected void simulateTraitForNode(final int offsetSample,
+        protected void simulateTraitForNode(final int nodeIndex,
+                                            final int traitIndex,
+                                            final int offsetSample,
                                              final int offsetParent,
                                              final int offsetPartial,
-                                             final double branchPrecision,
-                                            final boolean isExternal) {
+                                             final double branchPrecision) {
 
-            if (isExternal) {
-                simulateTraitForExternalNode(offsetSample, offsetParent, offsetPartial, branchPrecision);
+            if (nodeIndex < tree.getExternalNodeCount()) {
+                simulateTraitForExternalNode(nodeIndex, traitIndex, offsetSample, offsetParent, offsetPartial, branchPrecision);
             } else {
                 simulateTraitForInternalNode(offsetSample, offsetParent, offsetPartial, branchPrecision);
             }
 
         }
 
-
-        boolean debugBreak = false;
-
-        private void simulateTraitForExternalNode(final int offsetSample,
+        private void simulateTraitForExternalNode(final int nodeIndex,
+                                                  final int traitIndex,
+                                                  final int offsetSample,
                                              final int offsetParent,
                                              final int offsetPartial,
                                              final double branchPrecision) {
 
             final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
-
-            if (DEBUG) {
-                System.err.println("sTFEN");
-                System.err.println("P0: " + P0);
-            }
-
             final int missingCount = countFiniteDiagonals(P0);
 
-            if (missingCount == 0) {
+            if (missingCount == 0) { // Completely observed
+
                 System.arraycopy(partialNodeBuffer, offsetPartial, sample, offsetSample, dimTrait);
-            } else {
 
-                if (DEBUG) {
-                    System.err.println("Missing count: " + missingCount);
-                    debugBreak = true;
+            } else  {
+
+                final int zeroCount = countZeroDiagonals(P0);
+                if (zeroCount == dimTrait) { //  All missing completely at random
+
+                    final double sqrtScale = Math.sqrt(1.0 / branchPrecision);
+
+                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                            sample, offsetParent, // input mean
+                            cholesky, sqrtScale, // input variance
+                            sample, offsetSample, // output sample
+                            tmpEpsilon);
+
+                } else {
+
+                    if (missingCount == dimTrait) { // All missing, but not completely at random
+
+                        simulateTraitForInternalNode(offsetSample, offsetParent, offsetPartial, branchPrecision);
+
+                    } else { // Partially observed
+
+                        System.arraycopy(partialNodeBuffer, offsetPartial, sample, offsetSample, dimTrait); // copy observed values
+
+                        final PartiallyMissingInformation.HashedIntArray indices = missingInformation.getMissingIndices(nodeIndex, traitIndex);
+                        final int[] observed = indices.getComplement();
+                        final int[] missing = indices.getArray();
+
+                        ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2 transform =
+                                new ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2(
+                                        Vd, missing, observed
+                                ); // TODO Cache (via delegated function)
+
+
+                        final DenseMatrix64F cP0 = new DenseMatrix64F(missing.length, missing.length);
+                        gatherRowsAndColumns(P0, cP0, missing, missing);
+
+                        final WrappedVector cM2 = transform.getConditionalMean(
+                                partialNodeBuffer, offsetPartial, // Tip value
+                                sample, offsetParent); // Parent value
+
+                        final DenseMatrix64F cP1 = new DenseMatrix64F(missing.length, missing.length);
+                        CommonOps.scale(branchPrecision, transform.getConditionalPrecision(), cP1);
+
+                        final DenseMatrix64F cP2 = new DenseMatrix64F(missing.length, missing.length);
+                        final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
+                        CommonOps.add(cP0, cP1, cP2);
+
+                        final ContinuousDiffusionIntegrator.Multivariate.InversionResult cc2 = safeInvert(cP2, cV2, false);
+                        double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
+
+                        MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                                cM2, // input mean
+                                cC2, 1.0, // input variance
+                                new WrappedVector.Indexed(sample, offsetSample, missing, missing.length), // output sample
+                                tmpEpsilon);
+
+
+                        if (DEBUG) {
+                            final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
+
+                            final WrappedVector M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+                            final DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
+                            CommonOps.scale(branchPrecision, Pd, P1);
+
+                            System.err.println("sTFEN");
+                            System.err.println("M0: " + M0);
+                            System.err.println("P0: " + P0);
+                            System.err.println("");
+                            System.err.println("M1: " + M1);
+                            System.err.println("P1: " + P1);
+                            System.err.println("");
+//                            System.err.println("M2: " + M2);
+//                            System.err.println("P2: " + P2);
+//                            System.err.println("V2: " + V2);
+//                            System.err.println("C2: " + new Matrix(C2));
+//
+//                            System.err.println("result: " + c2.getReturnCode() + " " + c2.getEffectiveDimension());
+//                            System.err.println("Observed = " + new Vector(observed));
+//                            System.err.println("");
+                            System.err.println("");
+                            System.err.println("cP0: " + cP0);
+                            System.err.println("cM2: " + cM2);
+                            System.err.println("cP1: " + cP1);
+                            System.err.println("cP2: " + cP2);
+                            System.err.println("cV2: " + cV2);
+                            System.err.println("cC2: " + new Matrix(cC2));
+                            System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+
+//                            System.exit(-1);
+
+                        }
+                    }
                 }
-                simulateTraitForInternalNode(offsetSample, offsetParent, offsetPartial, branchPrecision);
-
-//                for (int i = 0; i < missingCount; ++i) {
-//                    MathUtils.nextGaussian();
-//                }
             }
-
-//            System.exit(-1);
         }
 
         private void simulateTraitForInternalNode(final int offsetSample,
@@ -635,18 +717,14 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                              final int offsetPartial,
                                              final double branchPrecision) {
 
-            final WrappedVector M0 = new WrappedVector(partialNodeBuffer, offsetPartial, dimTrait);
+            final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
             final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
-//            final DenseMatrix64F V0 = wrap(partialNodeBuffer, offsetPartial + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
-            final WrappedVector M1 = new WrappedVector(sample, offsetParent, dimTrait);
+            final WrappedVector M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
             final DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F V1 = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.scale(branchPrecision, Pd, P1);
 
-            CommonOps.scale(1.0 / branchPrecision, Vd, V1);
-            final ContinuousDiffusionIntegrator.Multivariate.InversionResult c1 = safeInvert(V1, P1, false);
-
-            final WrappedVector M2 = new WrappedVector(tmpMean, 0, dimTrait);
+            final WrappedVector M2 = new WrappedVector.Raw(tmpMean, 0, dimTrait);
             final DenseMatrix64F P2 = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
 
@@ -671,16 +749,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 System.err.println("M2: " + M2);
                 System.err.println("V2: " + V2);
                 System.err.println("C2: " + new Matrix(C2));
-                System.err.println("SS: " + new WrappedVector(sample, offsetSample, dimTrait));
+                System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
                 System.err.println("");
-
-                if (debugBreak) {
-                    debugBreak = false;
-//                    System.exit(-1);
-                }
-//                System.exit(-1);
             }
-
         }
     }
 
@@ -754,7 +825,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
                 if (!isExternal) {
 
-                    simulateTraitForNode(offsetSample, offsetParent, offsetPartial, nodePrecision, isExternal);
+                    simulateTraitForNode(nodeIndex, trait, offsetSample, offsetParent, offsetPartial, nodePrecision);
 
                 } else { // Is external
 
@@ -954,6 +1025,161 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
 
             double[] getTemporageStorage() {
+                return tempStorage;
+            }
+        }
+
+        static class ConditionalVarianceAndTranform2 {
+
+            /**
+             * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
+             *
+             *      \mu = (\mu_1, \mu_2)^t
+             *      \Sigma = ((\Sigma_{11}, \Sigma_{12}), (\Sigma_{21}, \Sigma_{22})^t
+             *
+             * then  y_1 | y_2 \sim N (\bar{\mu}, \bar{\Sigma}), where
+             *
+             *      \bar{\mu} = \mu_1 + \Sigma_{12}\Sigma_{22}^{-1}(y_2 - \mu_2), and
+             *      \bar{\Sigma} = \Sigma_{11} - \Sigma_{12}\Sigma_{22}^1\Sigma{21}
+             *
+             */
+
+            final private DenseMatrix64F Sbar;
+            final private DenseMatrix64F affineTransform;
+
+            final int[] missingIndices;
+            final int[] notMissingIndices;
+            final double[] tempStorage;
+
+            final int numMissing;
+            final int numNotMissing;
+
+            private static final boolean DEBUG = false;
+
+            private double[][] cholesky = null;
+            private DenseMatrix64F SbarInv = null;
+
+            ConditionalVarianceAndTranform2(final DenseMatrix64F variance,
+                                            final int[] missingIndices, final int[] notMissingIndices) {
+
+                assert (missingIndices.length + notMissingIndices.length == variance.getNumRows());
+                assert (missingIndices.length + notMissingIndices.length == variance.getNumCols());
+
+                this.missingIndices = missingIndices;
+                this.notMissingIndices = notMissingIndices;
+
+                if (DEBUG) {
+                    System.err.println("variance:\n" + variance);
+                }
+
+                DenseMatrix64F S22 = new DenseMatrix64F(notMissingIndices.length, notMissingIndices.length);
+                gatherRowsAndColumns(variance, S22, notMissingIndices, notMissingIndices);
+
+                if (DEBUG) {
+                    System.err.println("S22:\n" + S22);
+                }
+
+                DenseMatrix64F S22Inv = new DenseMatrix64F(notMissingIndices.length, notMissingIndices.length);
+                CommonOps.invert(S22, S22Inv);
+
+                if (DEBUG) {
+                    System.err.println("S22Inv:\n" + S22Inv);
+                }
+
+                DenseMatrix64F S12 = new DenseMatrix64F(missingIndices.length, notMissingIndices.length);
+                gatherRowsAndColumns(variance, S12, missingIndices, notMissingIndices);
+
+                if (DEBUG) {
+                    System.err.println("S12:\n" + S12);
+                }
+
+                DenseMatrix64F S12S22Inv = new DenseMatrix64F(missingIndices.length, notMissingIndices.length);
+                CommonOps.mult(S12, S22Inv, S12S22Inv);
+
+                if (DEBUG) {
+                    System.err.println("S12S22Inv:\n" + S12S22Inv);
+                }
+
+                DenseMatrix64F S12S22InvS21 = new DenseMatrix64F(missingIndices.length, missingIndices.length);
+                CommonOps.multTransB(S12S22Inv, S12, S12S22InvS21);
+
+                if (DEBUG) {
+                    System.err.println("S12S22InvS21:\n" + S12S22InvS21);
+                }
+
+                Sbar = new DenseMatrix64F(missingIndices.length, missingIndices.length);
+                gatherRowsAndColumns(variance, Sbar, missingIndices, missingIndices);
+                CommonOps.subtract(Sbar, S12S22InvS21, Sbar);
+
+
+                if (DEBUG) {
+                    System.err.println("Sbar:\n" + Sbar);
+                }
+
+
+                this.affineTransform = S12S22Inv;
+//                this.cholesky = getCholeskyOfVariance(Sbar.data, missingIndices.length);
+                this.tempStorage = new double[missingIndices.length];
+
+                this.numMissing = missingIndices.length;
+                this.numNotMissing = notMissingIndices.length;
+
+            }
+
+            WrappedVector getConditionalMean(final double[] y, final int offsetY,
+                                        final double[] mu, final int offsetMu) {
+
+                double[] muBar = new double[numMissing];
+
+                double[] shift = new double[numNotMissing];
+                for (int i = 0; i < numNotMissing; ++i) {
+                    final int noti = notMissingIndices[i];
+                    shift[i] = y[offsetY + noti] - mu[offsetMu + noti];
+                }
+
+                for (int i = 0; i < numMissing; ++i) {
+                    double delta = 0.0;
+                    for (int k = 0; k < numNotMissing; ++k) {
+                        delta += affineTransform.unsafe_get(i, k) * shift[k];
+                    }
+
+                    muBar[i] = mu[offsetMu + missingIndices[i]] + delta;
+                }
+
+                return new WrappedVector.Raw(muBar, 0, numMissing);
+            }
+
+            void scatterResult(final double[] source, final int offsetSource,
+                               final double[] destination, final int offsetDestination) {
+                for (int i = 0; i < numMissing; ++i) {
+                    destination[offsetDestination + missingIndices[i]] = source[offsetSource + i];
+                }
+            }
+
+            final double[][] getConditionalCholesky() {
+                if (cholesky == null) {
+                    this.cholesky = getCholeskyOfVariance(Sbar.data, missingIndices.length);
+                }
+                return cholesky;
+            }
+
+            final DenseMatrix64F getAffineTransform() {
+                return affineTransform;
+            }
+
+            final DenseMatrix64F getConditionalVariance() {
+                return Sbar;
+            }
+
+            final DenseMatrix64F getConditionalPrecision() {
+                if (SbarInv == null) {
+                    SbarInv = new DenseMatrix64F(numMissing, numMissing);
+                    CommonOps.invert(Sbar, SbarInv);
+                }
+                return SbarInv;
+            }
+
+            final double[] getTemporageStorage() {
                 return tempStorage;
             }
         }

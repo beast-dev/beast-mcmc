@@ -33,10 +33,12 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 import java.util.List;
 
+import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.getPartiallyMissingTraitName;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
@@ -47,14 +49,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
     public static final String PARSER_NAME = "wishartStatistics";
     public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-
-    private final LikelihoodTreeTraversal treeTraversalDelegate;
-    private final ContinuousRateTransformation rateTransformation;
-
-    private final int dimTrait;
-    private final int numTrait;
-    private final int dimPartial;
-    private final int nodeCount;
 
     public WishartStatisticsWrapper(final String name,
                                     final String traitName,
@@ -68,16 +62,13 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         this.dimTrait = likelihoodDelegate.getTraitDim();
         this.numTrait = likelihoodDelegate.getTraitCount();
         this.nodeCount = dataLikelihood.getTree().getNodeCount();
-        this.dimPartial = dimTrait * numTrait;
+        this.tipCount = dataLikelihood.getTree().getExternalNodeCount();
+        this.dimPartial = dimTrait + 1;
 
         addModel(dataLikelihood);
 
-        String partialTraitName = getPartiallyMissingTraitName(traitName);
-        TreeTrait trait = dataLikelihood.getTreeTrait(partialTraitName);
-
-        hasPartiallyMissingTraits = trait != null;
-        System.err.println("ps ? " + (trait instanceof ProcessSimulation ? "yes" : "no"));
-        System.err.println("partial trait is " + (trait == null ? "null" : "notnull"));
+        String partialTraitName = getTipTraitName(traitName);
+        tipSampleTrait = dataLikelihood.getTreeTrait(partialTraitName);
 
         treeTraversalDelegate = new LikelihoodTreeTraversal(
                 dataLikelihood.getTree(),
@@ -105,9 +96,42 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         return wishartStatistics;
     }
 
+
+
     private void simulateMissingTraits() {
-        System.err.println("Attempting to simulate missing traits");
-        throw new RuntimeException("Not yet implemented");
+
+        likelihoodDelegate.fireModelChanged(); // Force new sample!
+        double[] sample = (double[]) tipSampleTrait.getTrait(dataLikelihood.getTree(), null);
+
+        if (DEBUG) {
+            System.err.println("Attempting to simulate missing traits");
+            System.err.println(new Vector(sample));
+        }
+
+        final ContinuousDiffusionIntegrator cdi = outerProductDelegate.getIntegrator();
+        assert (cdi instanceof ContinuousDiffusionIntegrator.Basic);
+
+        double[] buffer = new double[dimPartial * numTrait];
+        for (int trait = 0; trait < numTrait; ++trait) {
+            buffer[trait * dimPartial + dimTrait] = Double.POSITIVE_INFINITY;
+        }
+
+
+        for (int tip = 0; tip < tipCount; ++tip) {
+            int sampleOffset = tip * dimTrait * numTrait;
+            int bufferOffset = 0;
+            for (int trait = 0; trait < numTrait; ++trait) {
+                System.arraycopy(sample, sampleOffset, buffer, bufferOffset, dimTrait);
+                sampleOffset += dimTrait;
+                bufferOffset += dimPartial;
+            }
+            outerProductDelegate.setTipDataDirectly(tip, buffer);
+//            outerProductDelegate.getIntegrator().setPartial(tip, buffer);
+        }
+
+        if (DEBUG) {
+            System.err.println("Finished draw");
+        }
     }
 
     private void computeOuterProducts() {
@@ -137,6 +161,10 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         }
 
         wishartStatistics = outerProductDelegate.getWishartStatistics();
+
+        if (DEBUG) {
+            System.err.println("WS: " + wishartStatistics);
+        }
     }
 
     @Override
@@ -242,13 +270,22 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         };
     };
 
+    private final LikelihoodTreeTraversal treeTraversalDelegate;
+    private final ContinuousRateTransformation rateTransformation;
+    private final TreeTrait tipSampleTrait;
+
+    private final int dimTrait;
+    private final int numTrait;
+    private final int tipCount;
+    private final int dimPartial;
+    private final int nodeCount;
 
     private final ContinuousTraitDataModel continuousTraitDataModel = null;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final ContinuousDataLikelihoodDelegate outerProductDelegate;
     private final TreeDataLikelihood dataLikelihood;
 
-    private final boolean hasPartiallyMissingTraits;
+//    private final boolean hasPartiallyMissingTraits;
 
     private boolean traitDataKnown;
     private boolean outerProductsKnown;
@@ -258,5 +295,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
     private WishartSufficientStatistics wishartStatistics;
     private WishartSufficientStatistics savedWishartStatistics;
+
+    private static final boolean DEBUG = false;
 
 }

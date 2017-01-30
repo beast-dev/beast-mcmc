@@ -16,6 +16,7 @@ import no.uib.cipr.matrix.UpperSPDBandMatrix;
 public class BNPRSamplingBetasUpdateOperator extends AbstractCoercableOperator {
 
     private double scaleFactor;
+    private int numBetas;
 
     private Parameter betas;
 
@@ -25,25 +26,27 @@ public class BNPRSamplingBetasUpdateOperator extends AbstractCoercableOperator {
                                            double scaleFactor) {
         super(mode);
         this.bnprField = bnprLikelihood;
+        this.betas = bnprField.getSamplingBetas();
+        this.numBetas = betas.getDimension();
     }
 
-    private double[] getNewBetas(double[] currentBetas) {
-        double[] newBetas = new double[this.betas.getSize()];
+    private double getNewBeta(double currentBeta) {
+        double newBeta = currentBeta + MathUtils.nextGaussian() * scaleFactor;
 
-        for (int i = 0; i < newBetas.length; i++) {
-            newBetas[i] = currentBetas[i] + MathUtils.nextGaussian() * scaleFactor;
-        }
-
-        return newBetas;
+        return newBeta;
     }
 
     public double doOperation() throws OperatorFailedException {
+        int betaIndex = MathUtils.nextInt(numBetas);
+        double[] currentBetas = betas.getParameterValues();
+        double[] newBetas = currentBetas.clone();
 
+        newBetas[betaIndex] = getNewBeta(currentBetas[betaIndex]);
 
-        double hRatio = 0;
+        betas.setParameterValue(betaIndex, newBetas[betaIndex]);
 
-        //hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-        //hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
+        double hRatio = bnprField.calculateLogSamplingLikelihoodSubBetas(newBetas) -
+                bnprField.calculateLogSamplingLikelihoodSubBetas(currentBetas); // TODO: Check if need priors
 
         return hRatio;
     }
@@ -53,12 +56,12 @@ public class BNPRSamplingBetasUpdateOperator extends AbstractCoercableOperator {
 
     public final String getOperatorName() {
         //return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
-        return "bnprBlockUpdateOperator"; // TODO: Placeholder, redo this correctly
+        return "bnprSamplingBetasUpdateOperator"; // TODO: Placeholder, redo this correctly
     }
 
     public double getCoercableParameter() {
 //        return Math.log(scaleFactor);
-        return Math.sqrt(scaleFactor - 1);
+        return Math.sqrt(scaleFactor - 1); // TODO: Ask about this transformation
     }
 
     public void setCoercableParameter(double value) {

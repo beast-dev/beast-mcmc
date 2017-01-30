@@ -74,7 +74,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     protected double[] storedPloidySums;
     protected SymmTridiagMatrix precMatrix;
     protected SymmTridiagMatrix storedPrecMatrix;
-    private SkygridHelper skygridHelper;
+    protected SkygridHelper skygridHelper;
     protected List<Parameter> missingCov;
     protected List<MatrixParameter> covariates;
     protected List<Parameter> beta;
@@ -841,6 +841,36 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
             DenseVector diagonal1 = new DenseVector(fieldLength);
             DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+
+            updateGammaWithCovariates(currentGamma);
+
+            double currentLike = handleMissingValues();
+
+            SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
+            currentQ.mult(currentGamma, diagonal1);
+
+            currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
+            if (lambdaParameter.getParameterValue(0) == 1) {
+                currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
+            } else {
+                currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
+            }
+
+            return currentLike;
+        }
+
+        // TODO: Potentially should be in a BNPRHelper class
+        public double getLogFieldLikelihoodSubGamma(double[] gamma) {
+
+            if (!intervalsKnown) {
+                //intervalsKnown -> false when handleModelChanged event occurs in super.
+                wrapSetupIntervals();
+                setupSufficientStatistics();
+                intervalsKnown = true;
+            }
+
+            DenseVector diagonal1 = new DenseVector(fieldLength);
+            DenseVector currentGamma = new DenseVector(gamma);
 
             updateGammaWithCovariates(currentGamma);
 

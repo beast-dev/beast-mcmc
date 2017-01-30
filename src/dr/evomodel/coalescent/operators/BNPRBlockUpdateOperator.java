@@ -1,9 +1,10 @@
 package dr.evomodel.coalescent.operators;
 
 import dr.evomodel.coalescent.BNPRLikelihood;
+import dr.evomodelxml.coalescent.operators.BNPRBlockUpdateOperatorParser;
+import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
 import no.uib.cipr.matrix.BandCholesky;
@@ -11,35 +12,46 @@ import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 import no.uib.cipr.matrix.UpperSPDBandMatrix;
 
+import java.util.List;
+
 /**
  * Created by mkarcher on 9/15/16.
  */
-public class BNPRBlockUpdateOperator extends GMRFMultilocusSkyrideBlockUpdateOperator {
+public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     private int fieldLength;
 
     private Parameter popSizeParameter;
     private Parameter precisionParameter;
+    private List<Parameter> betaParameter;
+    private List<MatrixParameter> covariates;
 
     BNPRLikelihood bnprField;
 
     public static final double TWO_TIMES_PI =6.283185;
 
-    public BNPRBlockUpdateOperator(BNPRLikelihood bnprLikelihood,
-                                   double weight, CoercionMode mode, double scaleFactor,
-                                   int maxIterations, double stopValue) {
-        super(bnprLikelihood, weight, mode, scaleFactor, maxIterations, stopValue);
+    public BNPRBlockUpdateOperator(BNPRLikelihood bnprLikelihood, double weight) {
+        bnprField = bnprLikelihood;
+        popSizeParameter = bnprLikelihood.getPopSizeParameter();
+        precisionParameter = bnprLikelihood.getPrecisionParameter();
+
+        betaParameter = bnprLikelihood.getBetaListParameter();
+        covariates = bnprLikelihood.getCovariates();
+
+        fieldLength = popSizeParameter.getDimension();
+
+        setWeight(weight);
 
         this.bnprField = bnprLikelihood;
     }
 
-    private DenseVector ESS(DenseVector currentGamma, double currentL) {
+    private DenseVector ESS(DenseVector currentGamma, double currentLoglik) {
         // Choose ellipse
         DenseVector nu = new DenseVector(bnprField.getNumGridPoints()); // TODO: Implement!
 
         // Log-likelihood threshold
         double u = MathUtils.nextDouble();
-        double logy = currentL + Math.log(u);
+        double logy = currentLoglik + Math.log(u);
 
         // Draw a initial proposal, also defining a bracket
         double t = TWO_TIMES_PI + MathUtils.nextDouble();
@@ -49,7 +61,7 @@ public class BNPRBlockUpdateOperator extends GMRFMultilocusSkyrideBlockUpdateOpe
         DenseVector q = currentGamma.copy();
         q = (DenseVector) q.scale(Math.cos(t)).add(Math.sin(t), nu);
 
-        double l = bnprField.getLogLikelihood(); // TODO: How to get likelihood for almost-proposed points?
+        double l = bnprField.getLogLikelihoodSubGamma(q.getData()); // TODO: How to get likelihood for almost-proposed points?
 
         while (l < logy) {
 
@@ -62,7 +74,7 @@ public class BNPRBlockUpdateOperator extends GMRFMultilocusSkyrideBlockUpdateOpe
             t = tMin + MathUtils.nextDouble() * (tMax - tMin);
             q = (DenseVector) q.scale(Math.cos(t)).add(Math.sin(t), nu);
 
-            l = bnprField.getLogLikelihood(); // TODO: How to get likelihood for almost-proposed points?
+            l = bnprField.getLogLikelihoodSubGamma(q.getData()); // TODO: How to get likelihood for almost-proposed points?
         }
 
         return q;
@@ -186,5 +198,11 @@ public class BNPRBlockUpdateOperator extends GMRFMultilocusSkyrideBlockUpdateOpe
         hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
 
         return hRatio;
+    }
+
+    //MCMCOperator INTERFACE
+
+    public final String getOperatorName() {
+        return BNPRBlockUpdateOperatorParser.BNPR_BLOCK_OPERATOR;
     }
 }

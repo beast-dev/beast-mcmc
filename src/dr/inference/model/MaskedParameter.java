@@ -185,19 +185,6 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         if (variable == maskParameter) {
-            if(maskParameter.getDimension() != map.length) {
-                int[] temp = new int[maskParameter.getDimension()];
-//                System.arraycopy(map, 0, temp, 0, Math.min(map.length, temp.length));
-                map = temp;
-                temp = new int[maskParameter.getDimension()];
-//                System.arraycopy(inverseMap, 0, temp, 0, Math.min(inverseMap.length, temp.length));
-//                System.out.println("dimension here");
-//                System.out.println(maskParameter.getDimension());
-//                for (int i = 0; i <maskParameter.getDimension() ; i++) {
-//                    System.out.println(maskParameter.getParameterValue(i));
-//                }
-                inverseMap = temp;
-            }
             updateMask();
             fireParameterChangedEvent();
         } else { // variable == parameter

@@ -626,7 +626,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * @return the log likelihood.
      */
     @Override
-    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
+    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException {
 
         if (RESCALING_OFF) { // a debugging switch
             useScaleFactors = false;

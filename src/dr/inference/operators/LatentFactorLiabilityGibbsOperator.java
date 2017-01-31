@@ -94,21 +94,25 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                         }
                     }
                     else {
+                        trait[datum] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + datum - 1)], colPrec.getParameterValue(LLpointer, LLpointer), 0, Double.POSITIVE_INFINITY);
+                        lfmData.setParameterValue(LLpointer + datum - 1, i, trait[datum]);
                         for (int l = 1; l < dim; l++) {
                             if(l != datum){
-                                trait[l] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() +(LLpointer + l - 1)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+//                                System.out.println("Free Rolls");
+//                                System.out.println(LxF[i * lfmData.getRowDimension() + (LLpointer + l - 1)]);
+                                trait[l] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + l - 1)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, trait[datum]);
                                 lfmData.setParameterValue(LLpointer + l - 1, i, trait[l]);
                             }
                         }
-                        double max = Double.NEGATIVE_INFINITY;
-                        for (int j = 0; j < trait.length; j++) {
-                            if(max < trait[j]){
-                                max = trait[j];
-                            }
-                        }
+//                        double max = Double.NEGATIVE_INFINITY;
+//                        for (int j = 0; j < trait.length; j++) {
+//                            if(max < trait[j]){
+//                                max = trait[j];
+//                            }
+//                        }
+//                        System.out.println("Constrained");
+//                        System.out.println(LxF[i * lfmData.getRowDimension() + (LLpointer + datum - 1)]);
 
-                        trait[datum] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + datum - 1)], colPrec.getParameterValue(LLpointer, LLpointer), max, Double.POSITIVE_INFINITY);
-                            lfmData.setParameterValue(LLpointer + datum - 1, i, trait[datum]);
 
                     }
 //                    valid = isMax(trait, datum);
@@ -205,8 +209,23 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                 }
                 iterator++;
         }
-        if(Double.isNaN(draw))
-            return (lower + upper) / 2;
+//        if(iterator != 1){
+//            System.out.println(iterator);
+//            System.out.println(draw);
+//            System.out.println(lower);
+//            System.out.println(upper);}
+        if(Double.isNaN(draw) || Double.isInfinite(draw)){
+            if(Double.isInfinite(lower)){
+//                System.out.println("upper");
+//                System.out.println(upper);
+                return upper;}
+            else if(Double.isInfinite(upper)){
+//                System.out.println("lower");
+//                System.out.println(lower);
+                return lower;}
+            else
+                return (lower + upper) / 2;
+        }
         else
             return draw;
     }

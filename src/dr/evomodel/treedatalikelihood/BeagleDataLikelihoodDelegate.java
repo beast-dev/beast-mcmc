@@ -569,13 +569,34 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     rescalingCountInner = 0;
                 }
 
+                if (DEBUG) {
+                    System.out.println("rescalingCountInner = " + rescalingCountInner);
+                }
+
                 if (rescalingCountInner < RESCALE_TIMES) {
+                    if (DEBUG) {
+                        System.out.println("rescalingCountInner < RESCALE_TIMES");
+                    }
+
                     recomputeScaleFactors = true;
 
                     rescalingCountInner++;
 
                     throw new LikelihoodRescalingException();
 
+                }
+
+                if (underflowHandling < 1) {
+                    underflowHandling++;
+                    if (DEBUG) {
+                        System.out.println("underflowHandling < 1");
+                    }
+                } else if (underflowHandling == 1) {
+                    if (DEBUG) {
+                        System.out.println("underflowHandling == 1");
+                    }
+                    recomputeScaleFactors = true;
+                    underflowHandling++;
                 }
 
                 rescalingCount++;
@@ -739,12 +760,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
                 firstRescaleAttempt = false; // Only try to rescale once
 
+                rescalingCount--;
+
             }
 
             // turn off double buffer flipping so the next call overwrites the
             // underflowed buffers. Flip will be turned on again in storeState for
             // next step
             flip = false;
+            underflowHandling = 0;
             throw new LikelihoodUnderflowException();
 
         } else {
@@ -901,6 +925,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private boolean firstRescaleAttempt = false;
     private int rescalingMessageCount = 0;
+
+    //integer to keep track of setting recomputeScaleFactors correctly after an underflow
+    private int underflowHandling = 0;
 
     /**
      * the patternList

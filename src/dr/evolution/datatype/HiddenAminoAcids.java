@@ -1,7 +1,7 @@
 /*
- * NewHiddenNucleotides.java
+ * HiddenAminoAcids.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,18 +28,20 @@ package dr.evolution.datatype;
 /**
  * @author Marc A. Suchard
  */
-public class NewHiddenNucleotides extends Nucleotides implements HiddenDataType {
 
-    public static final String DESCRIPTION = "hiddenNucleotide";
+public class HiddenAminoAcids extends AminoAcids implements HiddenDataType {
 
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new NewHiddenNucleotides(1);
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new NewHiddenNucleotides(2);
-    public static final NewHiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new NewHiddenNucleotides(3);
+    public static final String DESCRIPTION = "hiddenAminoAcid";
+
+    public static final HiddenAminoAcids AMINO_ACIDS_HIDDEN_1 = new HiddenAminoAcids(1);
+    public static final HiddenAminoAcids AMINO_ACIDS_HIDDEN_2 = new HiddenAminoAcids(2);
+    public static final HiddenAminoAcids AMINO_ACIDS_HIDDEN_3 = new HiddenAminoAcids(3);
+    public static final HiddenAminoAcids AMINO_ACIDS_HIDDEN_4 = new HiddenAminoAcids(4);
 
     /**
      * Private constructor - DEFAULT_INSTANCE provides the only instance
      */
-    private NewHiddenNucleotides(int hiddenClassCount) {
+    private HiddenAminoAcids(int hiddenClassCount) {
         super();
         this.hiddenClassCount = hiddenClassCount;
     }
@@ -48,28 +50,16 @@ public class NewHiddenNucleotides extends Nucleotides implements HiddenDataType 
      * returns an array containing the non-ambiguous states that this state represents.
      */
     public boolean[] getStateSet(int state) {
-
-        boolean[] stateSet = new boolean[stateCount * hiddenClassCount];
-
-        if (!isAmbiguousState(state)) {
-            for (int h = 0; h < hiddenClassCount; h++)
-                stateSet[h * stateCount + state] = true;
-        } else {
-            for (int i = 0; i < stateCount; i++) {
-                stateSet[i] = true;
-            }
-        }
-
-        return stateSet;
+        return Utils.getStateSet(state, stateCount, hiddenClassCount, AminoAcids.INSTANCE);
     }
 
     public int getStateCount() {
         return stateCount * hiddenClassCount;
     }
 
-    private int hiddenClassCount;
-
     public int getHiddenClassCount() {
         return hiddenClassCount;
     }
+
+    private int hiddenClassCount;
 }

@@ -54,6 +54,7 @@ public class TreeTraitParserUtilities {
     public static final String WINDOW = "window";
     public static final String DUPLICATES = "duplicatesOnly";
     public static final String STANDARDIZE = "standardize";
+    public static final String SAMPLE_MISSING_TRAITS = "sampleMissingTraits";
 
     public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)
@@ -278,6 +279,10 @@ public class TreeTraitParserUtilities {
             Map<Integer, Integer> randomSample = null;
             traitName = xo.getStringAttribute(TRAIT_NAME);
 
+            StringBuilder warnings = new StringBuilder();
+            int warningLength = 0;
+            final int maxWarnings = 10;
+
             // Fill in attributeValues
             int taxonCount = treeModel.getTaxonCount();
             for (int i = 0; i < taxonCount; i++) {
@@ -338,17 +343,23 @@ public class TreeTraitParserUtilities {
                         if (randomSampleSizeFlag == -1 || randomSample.containsKey(j)) {
                             double value = Double.NaN;
                             if (oneValue.equals("NA") || oneValue.equals("?") ) {
-                                Logger.getLogger("dr.evomodel.continuous").info(
-                                        "Warning: Missing value in tip for taxon " + taxonName +
-                                                " (filling with 0 as starting value when sampling only)"   // See comment below
-                                );
+                                if (warningLength < maxWarnings) {
+                                    warnings.append(
+                                            "Warning: Missing value in tip for taxon " + taxonName +
+                                                    " (filling with 0 as starting value when sampling only)\n"   // See comment below
+                                    );
+                                    ++warningLength;
+                                }
                             } else {
                                 try {
                                     value = new Double(oneValue);
                                     if (Double.isNaN(value)) {
-                                        Logger.getLogger("dr.evomodel.continuous").info(
-                                                "Warning: Unrecognizable number " + oneValue + " for taxon " + taxonName
-                                        );
+                                        if (warningLength < maxWarnings) {
+                                            warnings.append(
+                                                    "Warning: Unrecognizable number " + oneValue + " for taxon " + taxonName + "\n"
+                                            );
+                                            ++warningLength;
+                                        }
                                     }
                                 } catch (NumberFormatException e) {
                                     throw new RuntimeException(e.getMessage());
@@ -366,6 +377,13 @@ public class TreeTraitParserUtilities {
                             }
                         }
                     }
+                }
+            }
+
+            if (warningLength > 0) {
+                Logger.getLogger("dr.evomodel.continuous").info(warnings.toString());
+                if (warningLength == maxWarnings) {
+                    Logger.getLogger("dr.evomodel.continuous").info("Warning: only first " + maxWarnings + " trait warnings were displayed\n");
                 }
             }
 
@@ -408,6 +426,12 @@ public class TreeTraitParserUtilities {
                 }
             }
         }
+
+        if (xo.getAttribute(SAMPLE_MISSING_TRAITS, false)) {
+            missingIndices = new ArrayList<Integer>(); // return empty
+
+        }
+
         return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName);
     }
 

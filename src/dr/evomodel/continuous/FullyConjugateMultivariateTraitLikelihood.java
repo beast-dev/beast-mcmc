@@ -49,7 +49,8 @@ import java.util.*;
  *
  * @author Marc A. Suchard
  */
-public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider, Reportable {
+public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood
+        implements ConjugateWishartStatisticsProvider, GibbsSampleFromTreeInterface, Reportable {
 
 //    public FullyConjugateMultivariateTraitLikelihood(String traitName,
 //                                                     MultivariateTraitTree treeModel,
@@ -135,6 +136,18 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         priorInformationKnown = false;
     }
 
+
+    //TODO temporary function so everything will compile. Need to actually write this.
+    public FullyConjugateMultivariateTraitLikelihood semiClone(CompoundParameter traitParameter){
+        return this;
+    }
+
+//    public FullyConjugateMultivariateTraitLikelihood semiClone(CompoundParameter traitParameter){
+//        return new FullyConjugateMultivariateTraitLikelihood(this.traitName, this.treeModel, this.diffusionModel, traitParameter,
+//                this.deltaParameter, this.missingIndices, this.cacheBranches, this.scaleByTime, this.useTreeLength, this.getBranchRateModel(),
+//                this.optimalValues, this.strengthOfSelection, this.samplingDensity, this.reportAsMultivariate, this.rootPriorMean,
+//                this.rootPriorSampleSize, this.reciprocalRates);
+//    }
 
     public double getRescaledLengthToRoot(NodeRef nodeRef) {
 
@@ -223,6 +236,11 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return wishartStatistics;
     }
 
+    @Override
+    public MatrixParameterInterface getPrecisionParamter() {
+        return diffusionModel.getPrecisionParameter();
+    }
+
 //    private double getLogPrecisionDetermination() {
 //        return Math.log(diffusionModel.getDeterminantPrecisionMatrix()) + dimTrait * Math.log(rootPriorSampleSize);
 //    }
@@ -238,7 +256,12 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
         if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
-            dimKnown=false;
+            dimKnown = false;
+            dim = traitParameter.getParameter(0).getDimension();
+            numData = dim / getDimTrait();
+            meanCache = new double[dim * treeModel.getNodeCount()];
+            storedMeanCache = new double[meanCache.length];
+            drawnStates = new double[dim * treeModel.getNodeCount()];
         }
         PostPreKnown=false;
         super.handleVariableChangedEvent(variable,index,type);
@@ -251,8 +274,10 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         storedDimKnown=dimKnown;
         if(preP!=null)
          System.arraycopy(preP, 0, storedPreP, 0,preP.length);
-        if(preMeans!=null)
-         System.arraycopy(preMeans, 0, storedPreMeans, 0, preMeans.length);
+        if(preMeans!=null){
+            for(int i = 0; i < preMeans.length; i++)
+                storedPreMeans[i] = preMeans[i].clone();
+        }
 
     }
 
@@ -261,8 +286,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         super.restoreState();
         PostPreKnown=storedPostPreKnown;
         priorInformationKnown = false;
-        preP=storedPreP;
+        double[] tempPreP = storedPreP;
+        storedPreP = preP;
+        preP = tempPreP;
         preMeans=storedPreMeans;
+        double[][] preMeansTemp = preMeans;
+        preMeans = storedPreMeans;
+        storedPreMeans = preMeansTemp;
         dimKnown=storedDimKnown;
     }
 
@@ -291,8 +321,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             storedPreP=new double[treeModel.getNodeCount()];
         }
         if(!dimKnown){
-            preMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
-            storedPreMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+            preMeans=new double[treeModel.getNodeCount()][dim];
+            storedPreMeans=new double[treeModel.getNodeCount()][dim];
             dimKnown=true;
         }
 
@@ -302,7 +332,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         if (treeModel.isRoot(node)) {
             preP[thisNumber] = rootPriorSampleSize;
             for (int j = 0; j < dim; j++) {
-                preMeans[thisNumber][j] = rootPriorMean[j];
+                preMeans[thisNumber][j]
+                        = rootPriorMean[j % dimTrait];
             }
 
 
@@ -383,9 +414,24 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return mean;
     }
 
+    public double[][] getConditionalMeans(){
+        setup();
+
+
+//            double[] answer=new double[getRootNodeTrait().length];
+
+
+        return preMeans;
+    }
+
     public double getPrecisionFactor(int taxa){
         setup();
         return preP[taxa];
+    }
+
+    public double[] getPrecisionFactors(){
+        setup();
+        return preP;
     }
 
     public double[][] getConditionalPrecision(int taxa){
@@ -399,13 +445,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         double p = getPrecisionFactor(taxa);
 
         double[][] thisP = new double[dim][dim];
-
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
+        for (int i = 0; i < getNumData(); i++) {
+            for (int j = 0; j < getDimTrait(); j++) {
+                for (int k = 0; k < getDimTrait(); k++) {
 //                System.out.println("P: "+p);
 //                System.out.println("I: "+i+", J: "+j+" value:"+precisionParam[i][j]);
-                thisP[i][j] = p * precisionParam[i][ j];
+                    thisP[i * getDimTrait() + j][i * getDimTrait() + k] = p * precisionParam[j][k];
 
+                }
             }
         }
 
@@ -492,13 +539,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
             if (computeWishartStatistics) {
 
-                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
+                final double[] outerProducts = wishartStatistics.getScaleMatrix();
 
                 final double weight = conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
                 for (int i = 0; i < dimTrait; i++) {
                     final double diffi = conditionalRootMean[i] - rootPriorMean[i];
                     for (int j = 0; j < dimTrait; j++) {
-                        outerProducts[i][j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
+                        outerProducts[i * dimTrait + j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
                     }
                 }
                 wishartStatistics.incrementDf(1);
@@ -509,9 +556,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             square = x * x * treePrecisionMatrix[0][0] * marginalVariance;
 
             if (computeWishartStatistics) {
-                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
+                final double[] outerProducts = wishartStatistics.getScaleMatrix();
                 final double y = conditionalRootMean[0] - rootPriorMean[0];
-                outerProducts[0][0] += y * y * conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
+                outerProducts[0] += y * y * conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
                 wishartStatistics.incrementDf(1);
             }
         }
@@ -683,10 +730,10 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         sb.append("logLikelihood: " + getLogLikelihood() + " == " + logDensity + "\n\n");
 
         final WishartSufficientStatistics sufficientStatistics = getWishartStatistics();
-        final double[][] outerProducts = sufficientStatistics.getScaleMatrix();
+        final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         sb.append("Outer-products (DP):\n");
-        sb.append(new Matrix(outerProducts));
+        sb.append(new Vector(outerProducts));
         sb.append(sufficientStatistics.getDf() + "\n");
 
         Matrix treePrecision = new Matrix(treeVariance).inverse();

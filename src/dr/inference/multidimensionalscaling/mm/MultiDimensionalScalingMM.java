@@ -52,6 +52,8 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
     public GaussianProcessRandomGenerator getGaussianProcess() { return gp; }
 
+    public double getTolerance() { return tolerance; }
+
     public MultiDimensionalScalingMM(MultiDimensionalScalingLikelihood likelihood,
                                      GaussianProcessRandomGenerator gp,
                                      double tolerance) {
@@ -67,6 +69,12 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
     }
 
     public void run() {
+        run(100000);
+    }
+
+    public void run(final int maxIterations) {
+
+        if (maxIterations == 0) return;
 
         if (gp != null) {
             double[][] precision = gp.getPrecisionMatrix();
@@ -91,7 +99,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
         try {
             mode = findMode(likelihood.getMatrixParameter().getParameterValues(),
-                    tolerance, 100000);
+                    tolerance, maxIterations);
 
         } catch (NotConvergedException e) {
             e.printStackTrace();
@@ -101,6 +109,8 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
         setParameterValues(likelihood.getMatrixParameter(), mode);
         double penaltyEnd = printLogObjective();
+
+        System.err.println("Move: " + penaltyStart + " -> " + penaltyEnd + " : " + (penaltyEnd - penaltyStart));
 //
 //        if (penaltyStart - penaltyEnd > 1E-1) {
 
@@ -122,7 +132,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 //        setParameterValues(likelihood.getMatrixParameter(), mode);
 //        printLogObjective();
 
-        throw new RuntimeException("done");
+//        throw new RuntimeException("done");
     }
 
     private double printLogObjective() {
@@ -333,7 +343,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
         };
 
         public Class getReturnType() {
-            return MultiDimensionalScalingMM.class;
+            return MMAlgorithm.class;
         }
     };
 

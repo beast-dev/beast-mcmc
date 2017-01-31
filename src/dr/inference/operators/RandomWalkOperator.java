@@ -94,6 +94,10 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     public final double doOperation() throws OperatorFailedException {
 
         // a random dimension to perturb
+        if (parameter.getDimension() <= 0) {
+            throw new OperatorFailedException("Illegal Dimension");
+        }
+
         int index;
         if (updateMap == null) {
             index = MathUtils.nextInt(parameter.getDimension());

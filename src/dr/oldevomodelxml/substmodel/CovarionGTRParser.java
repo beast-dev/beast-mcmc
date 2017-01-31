@@ -25,7 +25,7 @@
 
 package dr.oldevomodelxml.substmodel;
 
-import dr.evolution.datatype.HiddenNucleotides;
+import dr.evolution.datatype.OldHiddenNucleotides;
 import dr.oldevomodel.substmodel.AbstractCovarionDNAModel;
 import dr.oldevomodel.substmodel.CovarionGTR;
 import dr.oldevomodel.substmodel.FrequencyModel;
@@ -47,7 +47,7 @@ public class CovarionGTRParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(AbstractCovarionDNAModel.FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-        HiddenNucleotides dataType = (HiddenNucleotides) freqModel.getDataType();
+        OldHiddenNucleotides dataType = (OldHiddenNucleotides) freqModel.getDataType();
 
         Parameter hiddenRates = (Parameter) xo.getElementFirstChild(AbstractCovarionDNAModel.HIDDEN_CLASS_RATES);
         Parameter switchingRates = (Parameter) xo.getElementFirstChild(AbstractCovarionDNAModel.SWITCHING_RATES);

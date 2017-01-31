@@ -25,11 +25,11 @@
 
 package dr.evomodelxml.substmodel;
 
+import dr.evolution.datatype.HiddenDataType;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.NewHiddenNucleotides;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -48,6 +48,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     //    public static final String DIAGONALIZATION = "diagonalization";
     public static final String RATE_SCALAR = "rateScalar";
     public static final String GEOMETRIC_RATES = "geometricRates";
+    public static final String RENORMALIZE = "renormalize";
 
     public String getParserName() {
         return MARKOV_MODULATED_MODEL;
@@ -56,26 +57,9 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         DataType dataType = DataTypeUtils.getDataType(xo);
-        System.err.println("dataType = " + dataType);
-        NewHiddenNucleotides nucleotides;
-        if (dataType instanceof NewHiddenNucleotides) {
-            nucleotides = (NewHiddenNucleotides) dataType;
-        } else {
-            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden nucleotides");
+        if (!(dataType instanceof HiddenDataType)) {
+            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden data types");
         }
-
-
-//
-//        Parameter omegaParam = (Parameter) xo.getElementFirstChild(OMEGA);
-//        Parameter kappaParam = (Parameter) xo.getElementFirstChild(KAPPA);
-//        Parameter switchingParam = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
-//        FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-//
-//        EigenSystem eigenSystem;
-//        if (xo.getAttribute(DIAGONALIZATION,"default").compareToIgnoreCase("colt") == 0)
-//            eigenSystem = new ColtEigenSystem();
-//        else
-//            eigenSystem = new DefaultEigenSystem(dataType.getStateCount());
 
         Parameter switchingRates = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
 
@@ -94,14 +78,20 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 
         SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
         if (siteRateModel != null) {
-            if (siteRateModel.getCategoryCount() != substModels.size()) {
+            if (siteRateModel.getCategoryCount() != substModels.size() &&  substModels.size() % siteRateModel.getCategoryCount()  != 0) {
                 throw new XMLParseException(
                         "Number of gamma categories must equal number of substitution models in " + xo.getId());
             }
         }
 
-        return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null,
+        MarkovModulatedSubstitutionModel mmsm = new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null,
                 rateScalar, geometricRates, siteRateModel);
+
+        if (xo.getAttribute(RENORMALIZE, false)) {
+            mmsm.setNormalization(true);
+        }
+
+        return mmsm;
     }
 
     public String getParserDescription() {
@@ -130,6 +120,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 //            AttributeRule.newStringRule(DIAGONALIZATION),
             new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE),
             AttributeRule.newBooleanRule(GEOMETRIC_RATES, true),
+            AttributeRule.newBooleanRule(RENORMALIZE, true),
             new ElementRule(RATE_SCALAR,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
 

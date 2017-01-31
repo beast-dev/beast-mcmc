@@ -50,7 +50,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
      * Construct a diffusion model.
      */
 
-    public MultivariateDiffusionModel(MatrixParameter diffusionPrecisionMatrixParameter) {
+    public MultivariateDiffusionModel(MatrixParameterInterface diffusionPrecisionMatrixParameter) {
 
         super(DIFFUSION_PROCESS);
 
@@ -72,8 +72,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         assert trait != null;
     }
 
-    public Parameter getPrecisionParameter() {checkVariableChanged();
-
+    public MatrixParameterInterface getPrecisionParameter() {
+        checkVariableChanged();
         return diffusionPrecisionMatrixParameter;
     }
 
@@ -85,8 +85,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return null;
     }
 
-    public double getDeterminantPrecisionMatrix() {  checkVariableChanged();
-        return determinatePrecisionMatrix; }
+    public double getDeterminantPrecisionMatrix() {
+        checkVariableChanged();
+        return determinatePrecisionMatrix;
+    }
 
     /**
      * @return the log likelihood of going from start to stop in the given time
@@ -178,6 +180,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         if (diffusionPrecisionMatrixParameter != null) {
             return new String[] {diffusionPrecisionMatrixParameter.toSymmetricString()};
         }
+
+        diffusionPrecisionMatrixParameter.toString();
         return new String[] { "null" };
     }
 
@@ -202,7 +206,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
-            MatrixParameter diffusionParam = (MatrixParameter) cxo.getChild(MatrixParameter.class);
+            MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
+                    cxo.getChild(MatrixParameterInterface.class);
 
             return new MultivariateDiffusionModel(diffusionParam);
         }
@@ -221,7 +226,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(DIFFUSION_CONSTANT,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
+                        new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}),
         };
 
         public Class getReturnType() {
@@ -233,7 +238,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     // Private instance variables
     // **************************************************************
 
-    protected MatrixParameter diffusionPrecisionMatrixParameter;
+    protected MatrixParameterInterface diffusionPrecisionMatrixParameter;
     private double determinatePrecisionMatrix;
     private double savedDeterminatePrecisionMatrix;
     private double[][] diffusionPrecisionMatrix;

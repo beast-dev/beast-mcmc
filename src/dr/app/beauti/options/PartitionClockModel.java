@@ -40,7 +40,7 @@ public class PartitionClockModel extends PartitionOptions {
     private static final long serialVersionUID = -6904595851602060488L;
 
     private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = true;
-    private static final boolean USE_DIRICHLET_PRIOR_FOR_MUS = false;
+    private static final boolean USE_DIRICHLET_PRIOR_FOR_MUS = true;
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
@@ -86,7 +86,7 @@ public class PartitionClockModel extends PartitionOptions {
 //        this.name = name;
 //    }
 
-    protected void initModelParametersAndOpererators() {
+    public void initModelParametersAndOpererators() {
         double rate = 1.0;
 
         if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR || dataLength <= 10) { // TODO Discuss threshold
@@ -163,12 +163,8 @@ public class PartitionClockModel extends PartitionOptions {
 
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
 //        setAvgRootAndRate();
         double rate = 1.0;
 
@@ -230,6 +226,7 @@ public class PartitionClockModel extends PartitionOptions {
             Parameter rateParam = getClockRateParameter();
             params.add(rateParam);
         }
+        return params;
     }
 
     public Parameter getClockRateParameter() {
@@ -275,7 +272,7 @@ public class PartitionClockModel extends PartitionOptions {
             if (options.treeModelOptions.isNodeCalibrated(partition.treeModel) < 0
                     && !options.clockModelOptions.isTipCalibrated()) {
                 rateParam.setFixed(true);
-        } else {
+            } else {
                 rateParam.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;
             }
         }
@@ -283,12 +280,8 @@ public class PartitionClockModel extends PartitionOptions {
         return rateParam;
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
             switch (clockType) {
@@ -349,6 +342,7 @@ public class PartitionClockModel extends PartitionOptions {
             }
             ops.add(muOperator);
         }
+        return ops;
     }
 
     private void addRandomLocalClockOperators(List<Operator> ops) {

@@ -212,16 +212,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
-        JPanel panel1 = new JPanel(new BorderLayout());
-        panel1.setOpaque(false);
-        panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
-        panel1.add(toolBar1, BorderLayout.SOUTH);
+        //JPanel panel1 = new JPanel(new BorderLayout());
+        //panel1.setOpaque(false);
+        //panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
+        //panel1.add(toolBar1, BorderLayout.SOUTH);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        add(panel1, BorderLayout.NORTH);
-//        add(toolBar1, BorderLayout.NORTH);
+        //add(panel1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 

@@ -215,6 +215,11 @@ public final class MarkovChain implements Serializable {
 
             logr[0] = -Double.MAX_VALUE;
 
+            long elaspedTime = 0;
+            if (PROFILE) {
+                elaspedTime = System.currentTimeMillis();
+            }
+
             try {
                 // The new model is proposed
                 // assert Profiler.startProfile("Operate");
@@ -232,6 +237,14 @@ public final class MarkovChain implements Serializable {
                 // assert Profiler.stopProfile("Operate");
             } catch (OperatorFailedException e) {
                 operatorSucceeded = false;
+            }
+
+            if (PROFILE) {
+                long duration = System.currentTimeMillis() - elaspedTime;
+                if (DEBUG) {
+                    System.out.println("Time: " + duration);
+                }
+                mcmcOperator.addEvaluationTime(duration);
             }
 
             double score = Double.NaN;
@@ -504,6 +517,10 @@ public final class MarkovChain implements Serializable {
      */
     private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
 
+        if (DEBUG) {
+            System.out.println("coerceAcceptanceProbability " + isCoercable(op));
+        }
+
         if (isCoercable(op)) {
             final double p = op.getCoercableParameter();
 
@@ -515,6 +532,9 @@ public final class MarkovChain implements Serializable {
 
             if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
                 op.setCoercableParameter(newp);
+                if (DEBUG) {
+                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " logr: " + logr);
+                }
             }
         }
     }

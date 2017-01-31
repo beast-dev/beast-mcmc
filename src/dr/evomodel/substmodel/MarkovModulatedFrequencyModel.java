@@ -29,6 +29,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.LUDecomposition;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
@@ -58,6 +59,8 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
             if (stateCount != size) {
                 throw new RuntimeException("MarkovModulatedFrequencyModel requires all frequencies model to have the same dimension");
             }
+            addModel(freqModels.get(i));
+
             freqCount += size;
         }
         totalFreqCount = freqCount;
@@ -83,7 +86,7 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     public double getFrequency(int index) {
         int whichModel = index / stateCount;
         int whichState = index % stateCount;
-        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState);
+        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState) / numBaseModel;
 
         // Scale by stationary distribution over hidden classes
         if (numBaseModel > 1) {
@@ -133,6 +136,9 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
 //        }
 //        System.err.println(new Vector(statDistr));
 
+        if (allRatesAreZero(switchingRates)) {
+            return;
+        }
 
         // Uses an LU decomposition to solve Q^t \pi = 0 and \sum \pi_i = 1
         DoubleMatrix2D mat2 = new DenseDoubleMatrix2D(numBaseModel + 1, numBaseModel);
@@ -175,6 +181,15 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
         //System.err.println(new Vector(statDistr));              
     }
 
+    private static boolean allRatesAreZero(Parameter rates) {
+        for (int i = 0; i < rates.getDimension(); ++i) {
+            if (rates.getParameterValue(i) != 0.0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     protected void storeState() {
         System.arraycopy(baseStationaryDistribution, 0, storedBaseStationaryDistribution, 0, numBaseModel);
         storedStationaryDistributionKnown = stationaryDistributionKnown;
@@ -192,6 +207,11 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
         if (variable == switchingRates) {
             stationaryDistributionKnown = false;
         }
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+//        System.err.println("MMFM.hMCE : " + model.getId() + " : " + model.getClass().getCanonicalName());
+        fireModelChanged();
     }
 
     public int getFrequencyCount() {

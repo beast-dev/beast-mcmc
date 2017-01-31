@@ -166,6 +166,11 @@ public class CompoundFastMatrixParameter extends CompoundParameter implements Ma
         return rtn;
     }
 
+    @Override
+    public String toSymmetricString() {
+        return MatrixParameter.toSymmetricString(this);
+    }
+
     public final static String COMPOUND_FAST_MATRIX_PARAMETER = "compoundFastMatrixParameter";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

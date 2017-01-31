@@ -628,7 +628,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
     @Override
     public String getDescription() {
-        return super.getDescription() + " and MarkovJumps inference techniques";
+        return super.getDescription() + " (first citation) with MarkovJumps inference techniques (second citation)";
     }
 
     public List<Citation> getCitations() {

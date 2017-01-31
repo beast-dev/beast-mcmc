@@ -92,7 +92,9 @@
             <include name="dr/app/treestat/**"/>
             <include name="dr/evolution/**"/>
             <include name="dr/evomodel/**"/>
+            <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
             <include name="dr/evomodelxml/**"/>
+            <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
             <include name="dr/oldevomodel/**"/>
             <include name="dr/oldevomodelxml/**"/>
             <include name="dr/evoxml/**"/>
@@ -140,7 +142,9 @@
                 <include name="dr/evolution/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/evomodel/**/*.class"/>
+                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evomodelxml/**/*.class"/>
+                <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/oldevomodel/**/*.class"/>
                 <include name="dr/oldevomodelxml/**/*.class"/>
                 <include name="dr/exporters/**/*.class"/>
@@ -204,7 +208,9 @@
                 <include name="dr/evomodel/substmodel/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
+                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evomodelxml/**/*.class"/>
+                <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/chart/**"/>
                 <include name="dr/gui/table/**"/>
@@ -292,12 +298,12 @@
         <echo message="JUnit test report finished."/>
     </target>
 
-    <property name="version" value="1.8.4"/>
     <!--
-    <property name="version" value="1.8.4pre20160615"/>
-    -->
+    <property name="version" value="1.9"/>
+     -->
+    <property name="version" value="1.9pre20161007"/>
 
-    <property name="version_number" value="1.8.4"/>
+    <property name="version_number" value="1.9.0"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEAUti_name" value="BEAUti"/>

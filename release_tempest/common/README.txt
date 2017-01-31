@@ -1,4 +1,4 @@
-                      TempEst v1.5 2016
+                      TempEst v1.5.1 2016
                 Temporal Signal Investigation Tool
                               by
                        Andrew Rambaut
@@ -8,7 +8,7 @@
                       a.rambaut@ed.ac.uk
 
 UNIX / Mac OS X / Linux / Windows README 
-a.rambaut@ed.ac.uk - 21 April 2016
+a.rambaut@ed.ac.uk - 22 August 2016
 
 Contents:
 1) INTRODUCTION
@@ -50,7 +50,11 @@ Finally, you can export the tree (rooted as displayed) using the "Export Tree...
 ___________________________________________________________________________
 4) VERSION HISTORY
 
----Version 1.5 22 April 2015---
+---Version 1.5.1 22 August 2016---
+
+* Repackaged to allow use on older Java versions (including older Mac OS X).
+
+---Version 1.5 22 April 2016---
 
 * New name, TempEst (formerly Path-O-Gen)
 * Re-organization of user-interface

@@ -28,7 +28,6 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.CompoundParameter;
@@ -37,14 +36,11 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Author;
 import dr.util.Citation;
-import dr.util.CommonCitations;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import java.util.*;
 
@@ -118,7 +114,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 addRestrictedPartials(partials);
                 ++partialsCount;
             }
-            spareOffset = partialsCount;
+            spareIndex = partialsCount;
             ++partialsCount;
             setupClamps();
         }
@@ -461,7 +457,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == traitParameter) { // A tip value got updated
-            if (index > dimTrait * treeModel.getExternalNodeCount()) {
+            if (index > dimTrait * numData * treeModel.getExternalNodeCount()) {
                 throw new RuntimeException("Attempting to update an invalid index");
             }
 
@@ -575,6 +571,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             RestrictedPartials clamp = nodeToClampMap.get(node);
             final int clampIndex = clamp.getIndex();
             final int clampOffset = dim * clampIndex;
+            final int spareOffset = dim * spareIndex;
 
             // Copy partial into meanCache // TODO Only when value changes
             for (int i = 0; i < dim; ++i) {
@@ -594,7 +591,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             final double precisionClamp = clamp.getPriorSampleSize() / rescaleLength(1.0);
             final double precisionNew = precisionThis + precisionClamp;
 
-            doPeel(spareOffset,
+            doPeel(spareIndex,
                     spareOffset, meanThisOffset, clampOffset,
                     precisionNew, precisionThis, precisionClamp,
                     missingTraits,
@@ -608,8 +605,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             );
 
             // Move values from clampIndex -> thisIndex
-            lowerPrecisionCache[thisNumber] = lowerPrecisionCache[spareOffset];
-            upperPrecisionCache[thisNumber] = upperPrecisionCache[spareOffset];
+            lowerPrecisionCache[thisNumber] = lowerPrecisionCache[spareIndex];
+            upperPrecisionCache[thisNumber] = upperPrecisionCache[spareIndex];
 
             for (int i = 0; i < dim; ++i) {
                 meanCache[meanThisOffset + i] = meanCache[spareOffset + i];
@@ -768,7 +765,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                         double precision0,
                                         double precision1) {
 
-        final double[][] outerProduct = wishartStatistics.getScaleMatrix();
+        final double[] outerProduct = wishartStatistics.getScaleMatrix();
 
 //        for (int k = 0; k < numData; k++) {
 //
@@ -875,7 +872,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
                     final double inc = (child0i - child1i) * (child0j - child1j) * weight;
 
-                    outerProduct[i][j] += inc;
+                    outerProduct[i * dimTrait + j] += inc;
 //                    increment3[i][j] += inc;
                 }
             }
@@ -907,7 +904,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //
 //        }
 
-        wishartStatistics.incrementDf(1); // Peeled one node
+        wishartStatistics.incrementDf(numData); // Peeled one node
     }
 
 //    private boolean checkIsPositiveDefinite(double[][] S) {
@@ -1000,6 +997,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             System.arraycopy(lowerPrecisionCache, 0, storedLowerPrecisionCache, 0, lowerPrecisionCache.length);
             System.arraycopy(logRemainderDensityCache, 0, storedLogRemainderDensityCache, 0, logRemainderDensityCache.length);
         }
+
+//        savedUpdateRestrictedNodePartials = updateRestrictedNodePartials;
+//
+//        if (clampList != null) {
+//            savedClampList = new HashMap<BitSet, RestrictedPartials>(clampList);
+//        }
+//
+//        if (nodeToClampMap != null) {
+//            savedNodeToClampMap = new HashMap<NodeRef, RestrictedPartials>(nodeToClampMap);
+//        }
     }
 
     public void restoreState() {
@@ -1025,6 +1032,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             storedLogRemainderDensityCache = logRemainderDensityCache;
             logRemainderDensityCache = tmp;
         }
+
+//        updateRestrictedNodePartials = savedUpdateRestrictedNodePartials;
+//
+//        if (savedClampList != null) {
+//            clampList = savedClampList;
+//        }
+//
+//        if (savedNodeToClampMap != null) {
+//            nodeToClampMap = savedNodeToClampMap;
+//        }
     }
 
 
@@ -1310,7 +1327,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected boolean areStatesRedrawn = false;
 
     protected double[] meanCache;
-    protected double[] storedMeanCache;
     protected double[] correctedMeanCache;
 
     class CacheHelper {
@@ -1328,7 +1344,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         public double[] getShift(NodeRef node) {
 
-            double[] shift = new double[dimTrait];
+            double[] shift = new double[dimTrait * numData];
             for (int i = 0; i < dim; ++i) {
                 shift[i] = 0;
             }
@@ -1576,11 +1592,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     private double[] logRemainderDensityCache;
 
 //    private double[] storedMeanCache;
+    protected double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;
     private double[] storedLowerPrecisionCache;
     private double[] storedLogRemainderDensityCache;
 
-    private double[] drawnStates;
+    protected double[] drawnStates;
 
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     //  protected final boolean integrateRoot = false;
@@ -1635,13 +1652,14 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         System.err.println("Added a CLAMP!");
     }
 
-    protected boolean clampsKnown = false;
-//    private List<NodeClamp> clampList = null;
+//    protected boolean clampsKnown = false;
     protected Map<BitSet, RestrictedPartials> clampList = null;
+//    protected Map<BitSet, RestrictedPartials> savedClampList;
     protected Map<NodeRef, RestrictedPartials> nodeToClampMap = null;
+//    protected Map<NodeRef, RestrictedPartials> savedNodeToClampMap;
 
     private int partialsCount;
-    private int spareOffset;
+    private int spareIndex;
 
     protected boolean anyClamps = false;
 

@@ -37,6 +37,7 @@ import java.awt.*;
  * @author Alexei Drummond
  * @version $Id$
  */
+@Deprecated
 public class PathogenApp extends MultiDocApplication {
     private final static Version version = new Version() {
         private static final String VERSION = "1.5";

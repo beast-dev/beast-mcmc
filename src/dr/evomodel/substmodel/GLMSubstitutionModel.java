@@ -26,7 +26,8 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.inference.distribution.LogLinearModel;
+import dr.inference.glm.GeneralizedLinearModel;
+import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
 import dr.util.Citation;
@@ -41,17 +42,17 @@ import java.util.List;
 public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
     public GLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                LogLinearModel glm) {
+                                GeneralizedLinearModel glm) {
 
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
         addModel(glm);
-        testProbabilities = new double[stateCount * stateCount];
-
+        testProbabilities = new double[stateCount*stateCount];
+            
     }
 
-    protected void setupRelativeRates(double[] rates) {
-        System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);       
+    public double[] getRates() {
+        return glm.getXBeta();
     }
 
 
@@ -67,6 +68,21 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 //    public LogColumn[] getColumns() {
 //        return glm.getColumns();
 //    }
+
+    public LogColumn[] getColumns() {
+        //Aggregate columns from ComplexSubstitutionModel with glm.columns
+        LogColumn[] aggregated = new LogColumn[glm.getColumns().length + 2];
+        int index = 0;
+        for (LogColumn col : glm.getColumns()) {
+            aggregated[index] = col;
+            index++;
+        }
+        aggregated[index++] = new LikelihoodColumn(getId() + ".L");
+        aggregated[index++] = new NormalizationColumn(getId() + ".Norm");
+
+        return aggregated;
+        //return glm.getColumns();
+    }
 
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
@@ -89,7 +105,6 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 
-    private LogLinearModel glm;
-    private double[] testProbabilities;
-
+    private GeneralizedLinearModel glm;
+    private double[] testProbabilities;    
 }

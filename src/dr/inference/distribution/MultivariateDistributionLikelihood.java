@@ -71,6 +71,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
     private final MultivariateDistribution distribution;
     private final Transform[] transforms;
+    private Parameter parameter = null;
 
     public MultivariateDistributionLikelihood(String name, ParametricMultivariateDistributionModel model) {
         this(name, model, null);
@@ -110,7 +111,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         double logL = 0.0;
 
         for (Attribute<double[]> data : dataList) {
-            double[] x = data.getAttributeValue();
+            double[] x =
+//                    (data instanceof Parameter) ?
+//                            ((Parameter) data).getParameterValues() :
+                            data.getAttributeValue();
             if (transforms != null) {
                 double[] y = new double[x.length];
                 for (int i = 0; i < x.length; ++i) {
@@ -123,6 +127,16 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             }
         }
         return logL;
+    }
+
+    public void addData(Parameter parameter) {
+        this.parameter = parameter;
+
+        addData((Attribute<double[]>)parameter);
+    }
+
+    public Parameter getDataParameter() {
+        return parameter;
     }
 
     @Override

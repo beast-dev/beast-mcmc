@@ -360,6 +360,7 @@ public class BeastMain {
                         new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
+                        new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
@@ -560,6 +561,11 @@ public class BeastMain {
             System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
         }
 
+        if (arguments.hasOption("save_dump")) {
+            String debugStateFile = arguments.getStringOption("save_dump");
+            System.setProperty(MCMC.SAVE_DUMP_FILE, debugStateFile);
+        }
+
         if (arguments.hasOption("citations_file")) {
             String debugStateFile = arguments.getStringOption("citations_file");
             System.setProperty("citations.filename", debugStateFile);
@@ -628,9 +634,11 @@ public class BeastMain {
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
-                    "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
-                    "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST</div>" +
+                    "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
+                    "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
+                    "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
+                    version.getBuildString() + "</a></div>" +
                     "</div></html>";
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 

@@ -36,9 +36,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataLikelihoodDelegate extends Model {
-
-    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
+public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model {
 
     void makeDirty();
 
@@ -46,47 +44,17 @@ public interface DataLikelihoodDelegate extends Model {
 
     void restoreState();
 
-    final class BranchOperation {
-        public BranchOperation(int branchNumber, double branchLength) {
-            this.branchNumber = branchNumber;
-            this.branchLength = branchLength;
-        }
+    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException;
 
-        public int getBranchNumber() {
-            return branchNumber;
-        }
+    int getTraitCount();
 
-        public double getBranchLength() {
-            return branchLength;
-        }
+    int getTraitDim();
 
-        private final int branchNumber;
-        private final double branchLength;
-    }
+    class LikelihoodException extends Exception { }
 
-    final class NodeOperation {
-        public NodeOperation(int nodeNumber, int leftChild, int rightChild) {
-            this.nodeNumber = nodeNumber;
-            this.leftChild = leftChild;
-            this.rightChild = rightChild;
-        }
+    class LikelihoodUnderflowException extends LikelihoodException { }
 
-        public int getNodeNumber() {
-            return nodeNumber;
-        }
+    class LikelihoodRescalingException extends LikelihoodException { }
 
-        public int getLeftChild() {
-            return leftChild;
-        }
-
-        public int getRightChild() {
-            return rightChild;
-        }
-
-        private final int nodeNumber;
-        private final int leftChild;
-        private final int rightChild;
-    }
-
-    class LikelihoodUnderflowException extends Exception { }
+    void setCallback(TreeDataLikelihood treeDataLikelihood);
 }

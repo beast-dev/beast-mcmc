@@ -191,7 +191,61 @@ public class Polygon2D {
         }
     }
 
+    private void computeBoundingBox() {
+        min = new double[2];
+        max = new double[2];
+
+        min[0] = min(x);
+        max[0] = max(x);
+        min[1] = min(y);
+        max[1] = max(y);
+    }
+
+    private static double min(double[] x) {
+        double min = x[0];
+        for (int i = 1; i < x.length; ++i) {
+            if (x[i] < min) {
+                min = x[i];
+            }
+        }
+        return min;
+    }
+
+    private static double max(double[] x) {
+        double max = x[0];
+        for (int i = 1; i < x.length; ++i) {
+            if (x[i] > max) {
+                max = x[i];
+            }
+        }
+        return max;
+    }
+
+    public boolean roughContainsPoint2D(Point2D point2D) {
+        if (max == null || min == null) {
+            computeBoundingBox();
+        }
+        final double x = point2D.getX();
+        final double y = point2D.getY();
+        if (x < min[0]
+                || x > max[0]
+                || y < min[1]
+                || y > max[1]) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private static boolean TRY_ROUGH = false;
+
     public boolean containsPoint2D(Point2D Point2D) {
+        
+        if (TRY_ROUGH) {
+            if (!roughContainsPoint2D(Point2D)) {
+                return false;
+            }
+        }
 
         final double inX = Point2D.getX();
         final double inY = Point2D.getY();
@@ -354,19 +408,29 @@ public class Polygon2D {
 
     public double[][] getXYMinMax(){
 
-        int[] indicesX = new int[x.length];
-        int[] indicesY = new int[y.length];
-        HeapSort.sort(x, indicesX);
-        HeapSort.sort(y, indicesY);
+        if (minMax == null) {
+            int[] indicesX = new int[x.length];
+            int[] indicesY = new int[y.length];
+            HeapSort.sort(x, indicesX);
+            HeapSort.sort(y, indicesY);
 
-        double[][] returnArray = new double[2][2];
-        returnArray[0][0] = x[indicesX[0]];
-        returnArray[0][1] = x[indicesX[indicesX.length - 1]];
-        returnArray[1][0] = y[indicesY[0]];
-        returnArray[1][1] = y[indicesY[indicesY.length - 1]];
+            minMax = new double[2][2];
+            minMax[0][0] = x[indicesX[0]];
+            minMax[0][1] = x[indicesX[indicesX.length - 1]];
+            minMax[1][0] = y[indicesY[0]];
+            minMax[1][1] = y[indicesY[indicesY.length - 1]];
+        }
 
-        return returnArray;
+        double[][] returnMatrix = new double[2][2];
+        returnMatrix[0][0] = minMax[0][0];
+        returnMatrix[0][1] = minMax[0][1];
+        returnMatrix[1][0] = minMax[1][0];
+        returnMatrix[1][1] = minMax[1][1];
+
+        return returnMatrix;
     }
+
+    private double[][] minMax = null;
 
 
     // Here is a formula for the area of a polygon with vertices {(xk,yk): k = 1,...,n}:
@@ -670,5 +734,6 @@ public class Polygon2D {
     protected double[] x;
     protected double[] y;
 
-
+    private double[] max;
+    private double[] min;
 }

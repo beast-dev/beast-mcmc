@@ -1,7 +1,7 @@
 /*
  * LogLinearModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,6 +30,7 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
 public class LogLinearModel extends GeneralizedLinearModel {
 
     public LogLinearModel(Parameter dependentParam) {

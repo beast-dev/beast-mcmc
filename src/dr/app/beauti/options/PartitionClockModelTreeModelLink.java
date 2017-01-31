@@ -35,6 +35,8 @@ import dr.evomodelxml.tree.RateStatisticParser;
 import java.util.List;
 
 /**
+ * todo This needs to be merged into PartitionTreeModel. Not sure why it exists.
+ *
  * @author Andrew Rambaut
  * @author Walter Xie
  * @version $Id$
@@ -55,7 +57,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         initModelParametersAndOpererators();
     }
 
-    protected void initModelParametersAndOpererators() {
+    @Override
+    public void initModelParametersAndOpererators() {
 //        {
 //            final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", PriorScaleType.LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
 //            p.priorType = PriorType.GAMMA_PRIOR;
@@ -129,12 +132,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.MICROSAT_UP_DOWN, true, demoTuning, branchWeights);
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
 //        setAvgRootAndRate();
 //        getParameter("branchRates.categories");
 //        getParameter("treeModel.rootRate");
@@ -157,6 +156,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //                    break;
 //            }
 //        }
+        return params;
     }
 
     /**
@@ -164,7 +164,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      *
      * @param ops the operator list
      */
-    public void selectOperators(List<Operator> ops) {
+    public List<Operator> selectOperators(List<Operator> ops) {
         if (options.hasData()) {
             // always have upDown(rate, allInternalNodeHeights), but when isEstimatedRate() = false, write nothing on up part (rate)
             Operator op;
@@ -242,6 +242,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 }
             }
         }
+        return ops;
     }
 
     /**

@@ -191,6 +191,7 @@ public class OperatorsGenerator extends Generator {
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, writer);
                 break;
+            // write multivariate operator
             case NARROW_EXCHANGE:
                 writeNarrowExchangeOperator(operator, writer);
                 break;
@@ -544,6 +545,8 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(ScaleOperatorParser.INDICATORS);
         writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
     }
+
+    // write multivariate operator
 
     private void writeSubtreeLeapOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(SubtreeLeapOperatorParser.SUBTREE_LEAP,

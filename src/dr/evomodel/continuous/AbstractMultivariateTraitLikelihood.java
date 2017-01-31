@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -483,6 +484,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 else
                     updateAllNodes(); // Probably an epoch model
             }
+        } else if (model instanceof RestrictedPartials) {
+            updateAllNodes();
+            updateRestrictedNodePartials = true;
         } else {
             throw new RuntimeException("Unknown componentChangedEvent");
         }
@@ -584,6 +588,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             storedValidLogLikelihoods = validLogLikelihoods;
             validLogLikelihoods = tmp2;
         }
+        updateRestrictedNodePartials = true; // TODO remove or cache?  Caching is still not working, see IMTL.restoreState()
     }
 
     protected void acceptState() {
@@ -802,6 +807,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             List<Integer> missingIndices = returnValue.missingIndices;
             traitName = returnValue.traitName;
 
+            /* TODO Add partially integrated traits here */
+
             Model samplingDensity = null;
 
             if (xo.hasChildNamed(SAMPLING_DENSITY)) {
@@ -967,7 +974,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 like.check(check);
             }
 
+            boolean isRRW = (rateModel != null) && (!(rateModel instanceof StrictClockBranchRates));
+
             if (!xo.hasAttribute(TreeTraitParserUtilities.ALLOW_IDENTICAL) &&
+                    isRRW &&
                     utilities.hasIdenticalTraits(traitParameter, missingIndices, diffusionModel.getPrecisionmatrix().length)) {
                 throw new XMLParseException("For multivariate trait analyses, all trait values should be unique.\n" +
                         "Check data or add random noise using 'jitter' option.");
@@ -1032,6 +1042,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newIntegerRule(RANDOM_SAMPLE, true),
                 AttributeRule.newBooleanRule(IGNORE_PHYLOGENY, true),
                 AttributeRule.newBooleanRule(EXCHANGEABLE_TIPS, true),
+                AttributeRule.newBooleanRule(TreeTraitParserUtilities.SAMPLE_MISSING_TRAITS, true),
                 new ElementRule(Parameter.class, true),
                 TreeTraitParserUtilities.randomizeRules(true),
                 TreeTraitParserUtilities.jitterRules(true),
@@ -1095,6 +1106,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected int dim;
 
     protected boolean updateRestrictedNodePartials = true;
-    protected Map<BitSet, RestrictedPartials> restrictedPartialsMap;
+    protected boolean savedUpdateRestrictedNodePartials;
+//    protected Map<BitSet, RestrictedPartials> restrictedPartialsMap;
 }
 

@@ -25,13 +25,14 @@
 
 package dr.evoxml;
 
-import dr.evolution.datatype.HiddenNucleotides;
+import dr.evolution.datatype.OldHiddenNucleotides;
 import dr.xml.*;
 
 /**
  * @author Alexei Drummond
  */
-public class HiddenNucleotideParser extends AbstractXMLObjectParser {
+@Deprecated
+public class OldHiddenNucleotideParser extends AbstractXMLObjectParser {
 
     public static final String HIDDEN_NUCLEOTIDES = "hiddenNucleotides";
     public static final String HIDDEN_CLASS_COUNT = "classCount";
@@ -43,7 +44,7 @@ public class HiddenNucleotideParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         int hiddenClassCount = xo.getIntegerAttribute(HIDDEN_CLASS_COUNT);
-        return new HiddenNucleotides(hiddenClassCount);
+        return new OldHiddenNucleotides(hiddenClassCount);
     }
 
     public String getParserDescription() {
@@ -51,7 +52,7 @@ public class HiddenNucleotideParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return HiddenNucleotides.class;
+        return OldHiddenNucleotides.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

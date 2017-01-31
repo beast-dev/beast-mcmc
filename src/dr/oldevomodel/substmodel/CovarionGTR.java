@@ -25,7 +25,7 @@
 
 package dr.oldevomodel.substmodel;
 
-import dr.evolution.datatype.HiddenNucleotides;
+import dr.evolution.datatype.OldHiddenNucleotides;
 import dr.oldevomodelxml.substmodel.CovarionGTRParser;
 import dr.inference.model.Parameter;
 
@@ -55,7 +55,7 @@ public class CovarionGTR extends AbstractCovarionDNAModel {
      * @param switchingRates  rates of switching between hidden rate classes
      */
     public CovarionGTR(
-            HiddenNucleotides dataType,
+            OldHiddenNucleotides dataType,
             Parameter hiddenRates,
             Parameter switchingRates,
             Parameter rateACParameter,

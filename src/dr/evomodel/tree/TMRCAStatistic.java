@@ -27,8 +27,10 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
+import dr.math.Polynomial;
 
 import java.util.Set;
 
@@ -41,12 +43,22 @@ import java.util.Set;
  */
 public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic {
 
-    public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean isRate, boolean forParent)
+    public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean absoluteTime, boolean forParent)
             throws Tree.MissingTaxonException {
         super(name);
         this.tree = tree;
-        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
-        this.isRate = isRate;
+        if (absoluteTime && Taxon.getMostRecentDate() != null) {
+            mostRecentTipTime = Taxon.getMostRecentDate().getAbsoluteTimeValue();
+        } else {
+            // give node heights or taxa don't have dates
+            mostRecentTipTime = Double.NaN;
+        }
+        if (taxa != null) {
+            this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+        } else {
+            // if no taxa are given then use the root of the tree
+            this.leafSet = null;
+        }
         this.forParent = forParent;
     }
 
@@ -67,19 +79,29 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
      */
     public double getStatisticValue(int dim) {
 
-        NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
-        if (forParent && !tree.isRoot(node))
-            node = tree.getParent(node);       
-        if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
-        if (isRate) {
-            return tree.getNodeRate(node);
+        NodeRef node;
+        if (leafSet != null) {
+            node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+            if (forParent && !tree.isRoot(node)) {
+                node = tree.getParent(node);
+            }
+        } else {
+            node = tree.getRoot();
         }
-        return tree.getNodeHeight(node);
+        if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
+
+        if (!Double.isNaN(mostRecentTipTime)) {
+            double age = mostRecentTipTime - tree.getNodeHeight(node);
+            // if age is negative then dates were going backwards in time so return positive value
+            return (age < 0 ? -age : age);
+        } else {
+            return tree.getNodeHeight(node);
+        }
     }
 
     private Tree tree = null;
     private Set<String> leafSet = null;
-    private final boolean isRate;
+    private final double mostRecentTipTime;
     private final boolean forParent;
 
 }

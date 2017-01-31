@@ -236,14 +236,14 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
 
     private void incrementOuterProducts(int nodeNumber, double nodeWeight) {
 
-        final double[][] outerProduct = wishartStatistics.getScaleMatrix();
+        final double[] outerProduct = wishartStatistics.getScaleMatrix();
 
         int tipOffset = dim * nodeNumber;
         for (int datum = 0; datum < numData; ++datum) {
             for (int i = 0; i < dim; ++i) {
                 double yi = meanCache[tipOffset + i];
                 for (int j = 0; j < dim; ++j) {
-                    outerProduct[i][j] += yi * meanCache[tipOffset +j] * nodeWeight;
+                    outerProduct[i * dim + j] += yi * meanCache[tipOffset +j] * nodeWeight;
                 }
             }
             tipOffset += dimTrait;
@@ -309,13 +309,13 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
             // Add prior on root contribution
             if (computeWishartStatistics) {
 
-                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
+                final double[] outerProducts = wishartStatistics.getScaleMatrix();
                 final double weight = conditionalSumWeight * rootPriorSampleSize / sumWeight;
 
                 for (int i = 0; i < dimTrait; i++) {
                     final double diffi = meanCache[rootOffset + i] - rootPriorMean[i];
                     for (int j = 0; j < dimTrait; j++) {
-                        outerProducts[i][j] += diffi * weight * (meanCache[rootOffset + j] - rootPriorMean[j]);
+                        outerProducts[i * dimTrait + j] += diffi * weight * (meanCache[rootOffset + j] - rootPriorMean[j]);
                     }
                 }
                 wishartStatistics.incrementDf(1);

@@ -28,7 +28,6 @@ package dr.inference.model;
 import dr.inference.loggers.Loggable;
 import dr.util.Identifiable;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,39 +37,41 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: Likelihood.java,v 1.16 2005/05/24 20:26:00 rambaut Exp $
  */
 
 public interface Likelihood extends Loggable, Identifiable {
 
-	/**
-	 * Get the model.
-	 * @return the model.
-	 */
-	Model getModel();
-
-	/**
-	 * Get the log likelihood.
-	 * @return the log likelihood.
-	 */
-	double getLogLikelihood();
-
-	/**
-	 * Forces a complete recalculation of the likelihood next time getLikelihood is called
-	 */
-	void makeDirty();
+    /**
+     * Get the model.
+     *
+     * @return the model.
+     */
+    Model getModel();
 
     /**
-     * @return  A detailed name of likelihood for debugging.
+     * Get the log likelihood.
+     *
+     * @return the log likelihood.
+     */
+    double getLogLikelihood();
+
+    /**
+     * Forces a complete recalculation of the likelihood next time getLikelihood is called
+     */
+    void makeDirty();
+
+    /**
+     * @return A detailed name of likelihood for debugging.
      */
     String prettyName();
 
-	/**
-	 * Get the set of sub-component likelihoods that this likelihood uses
-	 * @return
-	 */
-	Set<Likelihood> getLikelihoodSet();
+    /**
+     * Get the set of sub-component likelihoods that this likelihood uses
+     *
+     * @return
+     */
+    Set<Likelihood> getLikelihoodSet();
 
     /**
      * @return is the likelihood used in the MCMC?
@@ -86,16 +87,16 @@ public interface Likelihood extends Loggable, Identifiable {
     boolean evaluateEarly();
 
     /**
-	 * A simple abstract base class for likelihood functions
-	 */
+     * A simple abstract base class for likelihood functions
+     */
 
-	public abstract class Abstract implements Likelihood, ModelListener {
+    public abstract class Abstract implements Likelihood, ModelListener {
 
-		public Abstract(Model model) {
+        public Abstract(Model model) {
 
-			this.model = model;
-			if (model != null) model.addModelListener(this);
-   		}
+            this.model = model;
+            if (model != null) model.addModelListener(this);
+        }
 
         public void modelChangedEvent(Model model, Object object, int index) {
             makeDirty();
@@ -107,60 +108,64 @@ public interface Likelihood extends Loggable, Identifiable {
         }
 
         // **************************************************************
-	    // Likelihood IMPLEMENTATION
-	    // **************************************************************
+        // Likelihood IMPLEMENTATION
+        // **************************************************************
 
-		/**
-		 * Get the model.
-		 * @return the model.
-		 */
-		public Model getModel() { return model; }
-
-		public final double getLogLikelihood() {
-			if (!getLikelihoodKnown()) {
-				logLikelihood = calculateLogLikelihood();
-				likelihoodKnown = true;
-			}
-			return logLikelihood;
-		}
-
-		public void makeDirty() {
-			likelihoodKnown = false;
-		}
-
-		/**
-		 * Called to decide if the likelihood must be calculated. Can be overridden
-		 * (for example, to always return false).
-         * @return  true if no need to recompute likelihood
+        /**
+         * Get the model.
+         *
+         * @return the model.
          */
-		protected boolean getLikelihoodKnown() {
-			return likelihoodKnown;
-		}
+        public Model getModel() {
+            return model;
+        }
 
-		protected abstract double calculateLogLikelihood();
+        public final double getLogLikelihood() {
+            if (!getLikelihoodKnown()) {
+                logLikelihood = calculateLogLikelihood();
+                likelihoodKnown = true;
+            }
+            return logLikelihood;
+        }
 
-		public Set<Likelihood> getLikelihoodSet() {
-			return new HashSet<Likelihood>(Arrays.asList(this));
-		}
+        public void makeDirty() {
+            likelihoodKnown = false;
+        }
 
-		public String toString() {
+        /**
+         * Called to decide if the likelihood must be calculated. Can be overridden
+         * (for example, to always return false).
+         *
+         * @return true if no need to recompute likelihood
+         */
+        protected boolean getLikelihoodKnown() {
+            return likelihoodKnown;
+        }
+
+        protected abstract double calculateLogLikelihood();
+
+        public Set<Likelihood> getLikelihoodSet() {
+            return new HashSet<Likelihood>(Arrays.asList(this));
+        }
+
+        public String toString() {
             // don't call any "recalculating" stuff like getLogLikelihood() in toString -
             // this interferes with the debugger.
 
             //return getClass().getName() + "(" + getLogLikelihood() + ")";
             return getClass().getName() + "(" + (getLikelihoodKnown() ? logLikelihood : "??") + ")";
-		}
+        }
 
         static public String getPrettyName(Likelihood l) {
             final Model m = l.getModel();
             String s = l.getClass().getName();
             String[] parts = s.split("\\.");
             s = parts[parts.length - 1];
-            if( m != null ) {
+            if (m != null) {
                 final String modelName = m.getModelName();
                 final String i = m.getId();
                 s = s + "(" + modelName;
-                if( i != null && !i.equals(modelName) ) {
+                if (i != null && !i.equals(modelName)) {
                     s = s + '[' + i + ']';
                 }
                 s = s + ")";
@@ -168,9 +173,9 @@ public interface Likelihood extends Loggable, Identifiable {
             return s;
         }
 
-      public String prettyName() {
-          return getPrettyName(this);
-      }
+        public String prettyName() {
+            return getPrettyName(this);
+        }
 
         public boolean isUsed() {
             return used;
@@ -185,43 +190,52 @@ public interface Likelihood extends Loggable, Identifiable {
         }
 
         // **************************************************************
-	    // Loggable IMPLEMENTATION
-	    // **************************************************************
+        // Loggable IMPLEMENTATION
+        // **************************************************************
 
-		/**
-		 * @return the log columns.
-		 */
-		public dr.inference.loggers.LogColumn[] getColumns() {
-			return new dr.inference.loggers.LogColumn[] {
-				new LikelihoodColumn(getId())
-			};
-		}
+        /**
+         * @return the log columns.
+         */
+        public dr.inference.loggers.LogColumn[] getColumns() {
+            return new dr.inference.loggers.LogColumn[]{
+                    new LikelihoodColumn(getId())
+            };
+        }
 
-		private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-			public LikelihoodColumn(String label) { super(label); }
-			public double getDoubleValue() { return getLogLikelihood(); }
-		}
+        private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+            public LikelihoodColumn(String label) {
+                super(label);
+            }
 
-		// **************************************************************
-	    // Identifiable IMPLEMENTATION
-	    // **************************************************************
+            public double getDoubleValue() {
+                return getLogLikelihood();
+            }
+        }
 
-		private String id = null;
+        // **************************************************************
+        // Identifiable IMPLEMENTATION
+        // **************************************************************
 
-		public void setId(String id) { this.id = id; }
+        private String id = null;
 
-		public String getId() { return id; }
+        public void setId(String id) {
+            this.id = id;
+        }
 
-		private final Model model;
-		private double logLikelihood;
-		private boolean likelihoodKnown = false;
+        public String getId() {
+            return id;
+        }
+
+        private final Model model;
+        private double logLikelihood;
+        private boolean likelihoodKnown = false;
 
         private boolean used = false;
-	}
+    }
 
 
     // set to store all created likelihoods
     final static Set<Likelihood> FULL_LIKELIHOOD_SET = new HashSet<Likelihood>();
-	final static Set<Likelihood> CONNECTED_LIKELIHOOD_SET = new HashSet<Likelihood>();
+    final static Set<Likelihood> CONNECTED_LIKELIHOOD_SET = new HashSet<Likelihood>();
 
 }

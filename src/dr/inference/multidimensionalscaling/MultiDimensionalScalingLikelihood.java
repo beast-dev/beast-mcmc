@@ -199,21 +199,13 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         }
 
         MultiDimensionalScalingCore core;
-        if (computeMode > 0) {
+        if (computeMode >= MultiDimensionalScalingCore.USE_NATIVE_MDS) {
             System.err.println("Attempting to use a native MDS core with flag: " + computeMode + "; may the force be with you ....");
             core = new MassivelyParallelMDSImpl();
             flags = computeMode;
         } else {
-            core = new MultiDimensionalScalingCoreImpl2();
+            core = new MultiDimensionalScalingCoreImpl();
         }
-//        switch (computeMode) {
-//            case 1:
-//                System.err.println("Attempting to use a native MDS core; may the force be with you ....");
-//                core = new MassivelyParallelMDSImpl();
-//                break;
-//            default:
-//                core = new MultiDimensionalScalingCoreImpl2();
-//        }
         return core;
     }
 

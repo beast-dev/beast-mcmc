@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  */
+@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
 public abstract class GeneralizedLinearModel extends AbstractModelLikelihood implements MultivariateFunction {
 
     protected Parameter dependentParam;

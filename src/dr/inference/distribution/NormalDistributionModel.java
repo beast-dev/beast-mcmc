@@ -45,16 +45,16 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     /**
      * Constructor.
      */
-    public NormalDistributionModel(Variable<Double> mean, Variable<Double> stdev) {
+    public NormalDistributionModel(Variable<Double> mean, Variable<Double> scale) {
 
         super(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
 
         this.mean = mean;
-        this.stdev = stdev;
+        this.scale = scale;
         addVariable(mean);
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        addVariable(stdev);
-        stdev.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        addVariable(scale);
+        scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     public NormalDistributionModel(Parameter meanParameter, Parameter scale, boolean isPrecision) {
@@ -65,18 +65,22 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         if (isPrecision) {
             this.precision = scale;
-            this.stdev = null;  // todo why not keep the name scale to avoid confusion??
+            this.scale = null;  // todo why not keep the name scale to avoid confusion?? For whom?
         } else {
-            this.stdev = scale;
+            this.scale = scale;
         }
         addVariable(scale);
         scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     public double getStdev() {
+        return getScale();
+    }
+
+    public double getScale() {
         if (hasPrecision)
             return 1.0 / Math.sqrt(precision.getValue(0));
-        return stdev.getValue(0);
+        return scale.getValue(0);
     }
 
     public Variable<Double> getMean() {
@@ -94,19 +98,19 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     // *****************************************************************
 
     public double pdf(double x) {
-        return NormalDistribution.pdf(x, mean(), getStdev());
+        return NormalDistribution.pdf(x, mean(), getScale());
     }
 
     public double logPdf(double x) {
-        return NormalDistribution.logPdf(x, mean(), getStdev());
+        return NormalDistribution.logPdf(x, mean(), getScale());
     }
 
     public double cdf(double x) {
-        return NormalDistribution.cdf(x, mean(), getStdev());
+        return NormalDistribution.cdf(x, mean(), getScale());
     }
 
     public double quantile(double y) {
-        return NormalDistribution.quantile(y, mean(), getStdev());
+        return NormalDistribution.quantile(y, mean(), getScale());
     }
 
     public double mean() {
@@ -116,7 +120,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     public double variance() {
         if (hasPrecision)
             return 1.0 / precision.getValue(0);
-        double sd = stdev.getValue(0);
+        double sd = scale.getValue(0);
         return sd * sd;
     }
 
@@ -168,13 +172,13 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     // **************************************************************
 
     private final Variable<Double> mean;
-    private final Variable<Double> stdev;
+    private final Variable<Double> scale;
     private Variable<Double> precision;
     private boolean hasPrecision = false;
 
     public Object nextRandom() {
         double eps = MathUtils.nextGaussian();
-        eps *= getStdev();
+        eps *= getScale();
         eps += mean();
         return eps;
     }
@@ -196,7 +200,22 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     public double[][] getPrecisionMatrix() {
         double p = hasPrecision ?
                 precision.getValue(0) :
-                stdev.getValue(0) * stdev.getValue(0);
+                scale.getValue(0) * scale.getValue(0);
         return new double[][]{{p}};
     }
+
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return mean;
+    }
+
 }

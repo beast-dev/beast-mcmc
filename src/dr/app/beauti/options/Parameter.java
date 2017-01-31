@@ -25,7 +25,6 @@
 
 package dr.app.beauti.options;
 
-import cern.colt.bitvector.QuickBitVector;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.math.distributions.Distribution;

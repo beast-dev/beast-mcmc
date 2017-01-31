@@ -517,9 +517,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected void simulateTraitForNode(final int nodeIndex,
                                             final int traitIndex,
                                             final int offsetSample,
-                                             final int offsetParent,
-                                             final int offsetPartial,
-                                             final double branchPrecision) {
+                                            final int offsetParent,
+                                            final int offsetPartial,
+                                            final double branchPrecision) {
 
              final double nodePrecision = partialNodeBuffer[offsetPartial + dimTrait];
 

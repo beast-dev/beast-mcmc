@@ -527,10 +527,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 dataModel.getTipPartial(tipIndex, true) :
                 dataModel.getTipPartial(tipIndex);
 
-        if (precisionType == PrecisionType.SCALAR) {
-            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial));
-        }
-
+//        if (precisionType == PrecisionType.SCALAR) {
+//            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial));
+//        }
+//
 //        final double[] tipPartial =
 //                forceCompletelyObserved ?
 //                dataModel.getTipPartial(tipIndex, true) :

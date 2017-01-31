@@ -81,15 +81,22 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
-        public final void simulate(final List<BranchNodeOperation> branchNodeOperations, final int rootNodeNumber) {
+        public final void simulate(final List<BranchNodeOperation> branchNodeOperations,
+                                   final int rootNodeNumber) {
+
+            final double normalization = getNormalization();
 
             setupStatistics();
 
             simulateRoot(rootNodeNumber);
 
             for (BranchNodeOperation operation : branchNodeOperations) {
-                simulateNode(operation);
+                simulateNode(operation, normalization);
             }
+        }
+
+        protected double getNormalization() {
+            return 1.0;
         }
 
         @Override
@@ -106,7 +113,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected abstract void simulateRoot(final int rootNumber);
 
-        protected abstract void simulateNode(final BranchNodeOperation operation);
+        protected abstract void simulateNode(final BranchNodeOperation operation, final double branchNormalization);
 
         protected final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 
@@ -155,9 +162,17 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             dimNode = dimTrait * numTraits;
             this.diffusionModel = diffusionModel;
             this.dataModel = dataModel;
+            this.rateTransformation = rateTransformation;
 
             diffusionModel.addModelListener(this);
         }
+
+        @Override
+        protected final double getNormalization() {
+            return rateTransformation.getNormalization();
+        }
+
+        final private ContinuousRateTransformation rateTransformation;
 
         protected boolean isLoggable() {
             return true;
@@ -284,7 +299,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
-        protected void simulateNode(BranchNodeOperation operation) {
+        protected void simulateNode(BranchNodeOperation operation, final double branchNormalization) {
             System.err.println("computeNodes");
             cachedMeanAndVariance = new MeanAndVariance();
         }
@@ -479,7 +494,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
-        protected void simulateNode(final BranchNodeOperation operation) {
+        protected void simulateNode(final BranchNodeOperation operation, final double branchNormalization) {
             final int nodeIndex = operation.getNodeNumber();
             likelihoodDelegate.getPartial(nodeIndex, partialNodeBuffer);
 
@@ -487,7 +502,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             int offsetSample = dimNode * nodeIndex;
             int offsetParent = dimNode * operation.getParentNumber();
 
-            final double branchPrecision = 1.0 / operation.getBranchLength();
+            final double branchPrecision = 1.0 / (operation.getBranchLength() * branchNormalization);
 
              for (int trait = 0; trait < numTraits; ++trait) {
 
@@ -583,7 +598,25 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 System.err.println("V: " + V);
                 System.err.println("Ch:\n" + new Matrix(cholesky));
                 System.err.println("sample: " + samp);
+
+                if (extremeValue(mean) || extremeValue(samp)) {
+                    System.exit(-1);
+                }
             }
+        }
+
+        boolean extremeValue(final DenseMatrix64F x) {
+            return extremeValue(new WrappedVector.Raw(x.getData(), 0, x.getNumElements()));
+        }
+
+        boolean extremeValue(final WrappedVector x) {
+            boolean valid = true;
+            for (int i = 0; i < x.getDim() && valid; ++i) {
+                if (Math.abs(x.get(i)) > 1E2) {
+                    valid = false;
+                }
+            }
+            return !valid;
         }
 
         @Override
@@ -680,6 +713,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                             final DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
                             CommonOps.scale(branchPrecision, Pd, P1);
 
+                            final WrappedVector samp = new WrappedVector.Raw(sample, offsetSample, dimTrait);
+
                             System.err.println("sTFEN");
                             System.err.println("M0: " + M0);
                             System.err.println("P0: " + P0);
@@ -702,7 +737,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                             System.err.println("cP2: " + cP2);
                             System.err.println("cV2: " + cV2);
                             System.err.println("cC2: " + new Matrix(cC2));
-                            System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+                            System.err.println("SS: " + samp);
+
+                            if (extremeValue(samp)) {
+                                System.exit(-1);
+                            }
 
 //                            System.exit(-1);
 
@@ -807,7 +846,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         final private PartiallyMissingInformation missingInformation;
 
         @Override
-        protected void simulateNode(final BranchNodeOperation operation) {
+        protected void simulateNode(final BranchNodeOperation operation,
+                                    final double branchNormalization) {
             final int nodeIndex = operation.getNodeNumber();
             likelihoodDelegate.getPartial(nodeIndex, partialNodeBuffer);
 
@@ -817,7 +857,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             final boolean isExternal = nodeIndex < tree.getExternalNodeCount();
 
-            final double branchPrecision = 1.0 / operation.getBranchLength();
+            final double branchPrecision = 1.0 / (operation.getBranchLength() * branchNormalization);
 
             for (int trait = 0; trait < numTraits; ++trait) {
 
@@ -1244,12 +1284,13 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
-        protected void simulateNode(final BranchNodeOperation operation) {
+        protected void simulateNode(final BranchNodeOperation operation,
+                                    final double branchNormalization) {
             final int nodeIndex = operation.getNodeNumber();
             int offsetSample = dimNode * nodeIndex;
             int offsetParent = dimNode * operation.getParentNumber();
 
-            final double branchLength =  operation.getBranchLength();
+            final double branchLength =  operation.getBranchLength() * branchNormalization;
 
             if (branchLength == 0.0) {
                 System.arraycopy(sample, offsetParent, sample, offsetSample, dimTrait * numTraits);

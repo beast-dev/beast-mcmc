@@ -94,6 +94,8 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
         List<ProcessOnTreeDelegate.BranchNodeOperation> branchNodeOperations = treeTraversalDelegate.getBranchNodeOperations();
 
+
+
         final NodeRef root = tree.getRoot();
         simulationDelegate.simulate(branchNodeOperations, root.getNumber());
 

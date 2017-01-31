@@ -61,7 +61,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         this.dimTrait = likelihoodDelegate.getTraitDim();
         this.numTrait = likelihoodDelegate.getTraitCount();
-        this.nodeCount = dataLikelihood.getTree().getNodeCount();
         this.tipCount = dataLikelihood.getTree().getExternalNodeCount();
         this.dimPartial = dimTrait + 1;
 
@@ -96,8 +95,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         return wishartStatistics;
     }
 
-
-
     private void simulateMissingTraits() {
 
         likelihoodDelegate.fireModelChanged(); // Force new sample!
@@ -116,7 +113,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
             buffer[trait * dimPartial + dimTrait] = Double.POSITIVE_INFINITY;
         }
 
-
         for (int tip = 0; tip < tipCount; ++tip) {
             int sampleOffset = tip * dimTrait * numTrait;
             int bufferOffset = 0;
@@ -126,7 +122,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
                 bufferOffset += dimPartial;
             }
             outerProductDelegate.setTipDataDirectly(tip, buffer);
-//            outerProductDelegate.getIntegrator().setPartial(tip, buffer);
         }
 
         if (DEBUG) {
@@ -278,14 +273,11 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     private final int numTrait;
     private final int tipCount;
     private final int dimPartial;
-    private final int nodeCount;
 
     private final ContinuousTraitDataModel continuousTraitDataModel = null;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final ContinuousDataLikelihoodDelegate outerProductDelegate;
     private final TreeDataLikelihood dataLikelihood;
-
-//    private final boolean hasPartiallyMissingTraits;
 
     private boolean traitDataKnown;
     private boolean outerProductsKnown;

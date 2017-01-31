@@ -258,8 +258,11 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         final double df = sufficientStatistics.getDf();
-
-//        System.err.println("df = " + df);
+        if (DEBUG) {
+            System.err.println("OP df = " + df);
+            System.err.println("OP    = " + new Vector(outerProducts));
+        }
+//        System.exit(-1);
 
         if (debugModel != null) {
             final WishartSufficientStatistics debug = ((ConjugateWishartStatisticsProvider) debugModel).getWishartStatistics();
@@ -408,6 +411,11 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //        double[][] draw = null;
 //
 //        while (!success && tries < limit) {
+
+        if (DEBUG) {
+            System.err.println("draw = " + new Matrix(draw));
+        }
+
 //
 //
 //        draw = WishartDistribution.nextWishart(df, scaleMatrix);
@@ -552,4 +560,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 new ElementRule(MultivariateDistributionLikelihood.class, 1, 2),
         };
     };
+
+    private static final boolean DEBUG = false;
 }

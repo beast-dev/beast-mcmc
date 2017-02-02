@@ -1310,7 +1310,19 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             } else {
                 likelihoodKnown = false;
             }
-        } else {
+        } else if (optimalValues != null && optimalValues.contains(model)) {
+            if (cacheBranches) {
+                updateAllNodes();
+            } else {
+                likelihoodKnown = false;
+            }
+        } else if(strengthOfSelection != null){
+            if (cacheBranches) {
+                updateAllNodes();
+            } else {
+                likelihoodKnown = false;
+            }
+        } else{
             super.handleModelChangedEvent(model, object, index);
         }
     }

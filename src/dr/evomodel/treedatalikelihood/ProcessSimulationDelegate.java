@@ -55,7 +55,7 @@ import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionI
  */
 public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTraitProvider, ModelListener {
 
-    void simulate(List<DataLikelihoodDelegate.BranchNodeOperation> branchNodeOperations,
+    void simulate(SimulationTreeTraversal treeTraversal,
                   int rootNodeNumber);
 
     void setCallback(ProcessSimulation simulationProcess);
@@ -81,9 +81,10 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
-        public final void simulate(final List<BranchNodeOperation> branchNodeOperations,
+        public void simulate(final SimulationTreeTraversal treeTraversal,
                                    final int rootNodeNumber) {
 
+            final List<BranchNodeOperation> branchNodeOperations = treeTraversal.getBranchNodeOperations();
             final double normalization = getNormalization();
 
             setupStatistics();
@@ -115,6 +116,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected abstract void simulateNode(final BranchNodeOperation operation, final double branchNormalization);
 
+        protected abstract void simulateNode(final NodeOperation operation);
+
         protected final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 
         protected ProcessSimulation simulationProcess = null;
@@ -138,6 +141,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected final MultivariateDiffusionModel diffusionModel;
         protected final ContinuousTraitDataModel dataModel;
+        protected final ConjugateRootTraitPrior rootPrior;
+        protected final RootProcessDelegate rootProcessDelegate;
 
         protected double[] diffusionVariance;
         protected DenseMatrix64F Vd;
@@ -163,6 +168,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             this.diffusionModel = diffusionModel;
             this.dataModel = dataModel;
             this.rateTransformation = rateTransformation;
+            this.rootPrior = rootPrior;
+            this.rootProcessDelegate = likelihoodDelegate.getRootProcessDelegate();
 
             diffusionModel.addModelListener(this);
         }
@@ -236,11 +243,167 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
             return new SymmetricMatrix(precision).inverse().toVectorizedComponents();
         }
+
+    }
+
+    class TipRealizedValuesViaFullConditionalDelegate extends TipFullConditionalDistributionDelegate {
+
+        final private PartiallyMissingInformation missingInformation;
+
+        protected boolean isLoggable() {
+                    return false;
+                }
+
+        public TipRealizedValuesViaFullConditionalDelegate(String name, MultivariateTraitTree tree,
+                                                           MultivariateDiffusionModel diffusionModel,
+                                                           ContinuousTraitDataModel dataModel,
+                                                           ConjugateRootTraitPrior rootPrior,
+                                                           ContinuousRateTransformation rateTransformation,
+                                                           BranchRateModel rateModel,
+                                                           ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+            super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+            missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
+        }
+
+        @Override
+        void constructTraits(Helper treeTraitHelper) {
+            super.constructTraits(treeTraitHelper);
+
+            TreeTrait<double[]> baseTrait = new TreeTrait<double[]>() {
+
+                public String getTraitName() { return "tipSample." + name; }
+
+                public Intent getIntent() { return Intent.NODE; }
+
+                public Class getTraitClass() { return MeanAndVariance.class; }
+
+                public double[] getTrait(Tree t, NodeRef node) {
+                    assert (tree == t);
+
+                    return getTraitForNode(node);
+                }
+
+                public String getTraitString(Tree tree, NodeRef node) {
+                    return getTrait(tree, node).toString();
+                }
+
+                public boolean getLoggable() { return isLoggable(); }
+            };
+
+            treeTraitHelper.addTrait(baseTrait);
+        }
+
+        private double[] getTraitForNode(NodeRef node) {
+
+            assert simulationProcess != null;
+            assert node != null;
+
+//            assert false;
+
+//            simulationProcess.cacheSimulatedTraits(node);
+
+            final int nodeBuffer = likelihoodDelegate.getActiveNodeIndex(node.getNumber());
+
+            if (node.getNumber() >= tree.getExternalNodeCount()) {   // Not external node
+                return new double[0];
+            }
+
+
+//            assert (nodeBuffer == node.getNumber());
+
+            double[] conditionalNodeBuffer = null; //new double[dimPartial * numTraits];
+            likelihoodDelegate.getPostOrderPartial(node.getNumber(), partialNodeBuffer);
+
+            final double[] sample = new double[dimTrait * numTraits];
+
+            int partialOffset = 0;
+            int sampleOffset = 0;
+
+            for (int trait = 0; trait < numTraits; ++trait) {
+                if (missingInformation.isPartiallyMissing(node.getNumber(), trait)) {
+                    if (conditionalNodeBuffer == null) {
+                        conditionalNodeBuffer = new double[dimPartial * numTraits];
+
+                        simulationProcess.cacheSimulatedTraits(node);
+                        likelihoodDelegate.getPreOrderPartial(node.getNumber(), conditionalNodeBuffer);
+                    }
+
+                    System.err.println("Missing tip = " + node.getNumber() + " (" + nodeBuffer + "), trait = " + trait);
+
+                    final WrappedVector preMean = new WrappedVector.Raw(conditionalNodeBuffer, partialOffset, dimTrait);
+                    final DenseMatrix64F preVar = wrap(conditionalNodeBuffer, partialOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+
+                    final WrappedVector postObs = new WrappedVector.Raw(partialNodeBuffer, partialOffset, dimTrait);
+
+                    System.err.println("post: " + postObs);
+                    System.err.println("pre : " + preMean);
+                    System.err.println("V: " + preVar);
+
+                    if (missingInformation.isCompletelyMissing(node.getNumber(), trait)) {
+
+                    } else {
+
+                        final PartiallyMissingInformation.HashedIntArray intArray =
+                                missingInformation.getMissingIndices(node.getNumber(), trait);
+                        final int[] missing = intArray.getArray();
+                        final int[] observed = intArray.getComplement();
+
+                        ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2 transform =
+                                new ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2(
+                                        preVar, missing, observed
+                                );
+
+
+//                     final DenseMatrix64F cP0 = new DenseMatrix64F(missing.length, missing.length);
+//                     gatherRowsAndColumns(P0, cP0, missing, missing);
+
+                        final WrappedVector cM = transform.getConditionalMean(
+                                partialNodeBuffer, partialOffset,      // Tip value
+                                conditionalNodeBuffer, partialOffset); // Mean value
+
+//                        final DenseMatrix64F cP1 = new DenseMatrix64F(missing.length, missing.length);
+//                        CommonOps.scale(branchPrecision, transform.getConditionalPrecision(), cP1);
+
+//                     final DenseMatrix64F cP1 = transform.getConditionalPrecision();
+//
+//                     final DenseMatrix64F cP2 = new DenseMatrix64F(missing.length, missing.length);
+//                     final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
+//                     CommonOps.add(cP0, cP1, cP2);
+//
+//                     final ContinuousDiffusionIntegrator.Multivariate.InversionResult cc2 = safeInvert(cP2, cV2, false);
+//                     double[][] cC = getCholeskyOfVariance(cV.getData(), missing.length);
+
+                        MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                                cM, // input mean
+                                transform.getConditionalCholesky(), 1.0, // input variance
+                                new WrappedVector.Indexed(sample, sampleOffset, missing, missing.length), // output sample
+                                transform.getTemporageStorage());
+
+                        System.err.println("cM: " + cM);
+                              System.err.println("CV: " + transform.getConditionalVariance());
+                              System.err.println("sample: " + new WrappedVector.Raw(sample, sampleOffset, dimTrait));
+
+                    }
+
+
+//                    System.exit(-1);
+
+
+                } else {
+                    System.arraycopy(partialNodeBuffer, partialOffset, sample, sampleOffset, dimTrait);
+                }
+
+                partialOffset += dimPartial;
+                sampleOffset += dimTrait;
+            }
+
+            return sample;
+        }
     }
 
     class TipFullConditionalDistributionDelegate extends AbstractContinuousTraitDelegate {
 
-        TipFullConditionalDistributionDelegate(String name, MultivariateTraitTree tree,
+        public TipFullConditionalDistributionDelegate(String name, MultivariateTraitTree tree,
                                                MultivariateDiffusionModel diffusionModel,
                                                ContinuousTraitDataModel dataModel,
                                                ConjugateRootTraitPrior rootPrior,
@@ -249,7 +412,23 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                                ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 
             super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+            buffer = new MeanAndVariance[tree.getExternalNodeCount()];
+            this.likelihoodDelegate = likelihoodDelegate;
+            this.cdi = likelihoodDelegate.getIntegrator();
+
+            this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
+            partialNodeBuffer = new double[numTraits * dimPartial];
+
         }
+
+        protected boolean isLoggable() {
+                    return false;
+                }
+
+        protected final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+        protected final ContinuousDiffusionIntegrator cdi;
+        protected final int dimPartial;
+        protected final double[] partialNodeBuffer;
 
         void constructTraits(Helper treeTraitHelper) {
 
@@ -278,34 +457,103 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         private MeanAndVariance getTraitForNode(NodeRef node) {
+//        private double[] getTraitForNode(NodeRef node) {
 
             assert simulationProcess != null;
             assert node != null;
 
-            if (nodeForLastCall != node) {
-                // Re-simulate if calling for new node
-                simulationProcess.modelChangedEvent(null, node, -1);
-                nodeForLastCall = node;
-            }
-
             simulationProcess.cacheSimulatedTraits(node);
 
-            return cachedMeanAndVariance;
+            double[] partial = new double[dimPartial * numTraits];
+            cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(node.getNumber()), partial);
+
+            MeanAndVariance mv = new MeanAndVariance();
+            mv.mean = partial;
+
+            return mv;
         }
 
         @Override
         protected void simulateRoot(int rootNumber) {
-            System.err.println("computeRoot");
+
+            if (DEBUG) {
+                System.err.println("computeRoot");
+            }
+
+            final DenseMatrix64F diffusion = new DenseMatrix64F(likelihoodDelegate.getDiffusionModel().getPrecisionmatrix());
+
+            // Copy post-order root prior to pre-order
+
+            final double[] priorBuffer = partialNodeBuffer;
+            final double[] rootBuffer = new double[priorBuffer.length];
+
+            cdi.getPostOrderPartial(rootProcessDelegate.getPriorBufferIndex(), partialNodeBuffer); // No double-buffering
+
+            int offset = 0;
+            for (int trait = 0; trait < numTraits; ++trait) {
+                // Copy mean
+                System.arraycopy(priorBuffer, offset, rootBuffer, offset, dimTrait);
+
+                final DenseMatrix64F Pp = wrap(priorBuffer, offset + dimTrait, dimTrait, dimTrait);
+                final DenseMatrix64F Pr = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.mult(Pp, diffusion, Pr);
+
+                unwrap(Pr, rootBuffer, offset + dimTrait);
+
+                offset += dimPartial;
+            }
+
+            cdi.setPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(rootNumber), rootBuffer);
+
+            if (DEBUG) {
+                System.err.println("Root: " + new WrappedVector.Raw(rootBuffer, 0, rootBuffer.length));
+                System.err.println("");
+            }
         }
 
         @Override
-        protected void simulateNode(BranchNodeOperation operation, final double branchNormalization) {
-            System.err.println("computeNodes");
-            cachedMeanAndVariance = new MeanAndVariance();
+        protected void simulateNode(BranchNodeOperation operation, double branchNormalization) {
+            throw new RuntimeException("Not implemented");
         }
+
+        @Override
+        protected void simulateNode(NodeOperation operation) {
+
+            cdi.updatePreOrderPartial(
+                    likelihoodDelegate.getActiveNodeIndex(operation.getNodeNumber()),
+                    likelihoodDelegate.getActiveNodeIndex(operation.getLeftChild()),
+                    likelihoodDelegate.getActiveMatrixIndex(operation.getLeftChild()),
+                    likelihoodDelegate.getActiveNodeIndex(operation.getRightChild()),
+                    likelihoodDelegate.getActiveMatrixIndex(operation.getRightChild())
+            );
+        }
+
+        @Override
+        public final void simulate(final SimulationTreeTraversal treeTraversal,
+                                   final int rootNodeNumber) {
+
+
+            final List<NodeOperation> nodeOperations = treeTraversal.getNodeOperations();
+            setupStatistics();
+
+            simulateRoot(rootNodeNumber);
+
+            for (NodeOperation operation : nodeOperations) {
+                simulateNode(operation);
+            }
+
+            if (DEBUG) {
+                System.err.println("END OF PRE-ORDER");
+            }
+        }
+
+        final private MeanAndVariance[] buffer;
 
         private NodeRef nodeForLastCall = null;
         private MeanAndVariance cachedMeanAndVariance;
+
+        private static final boolean DEBUG = false;
+
     }
 
     class MeanAndVariance {
@@ -456,13 +704,19 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             this.likelihoodDelegate = likelihoodDelegate;
             this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
             partialNodeBuffer = new double[numTraits * dimPartial];
+            partialPriorBuffer = new double[numTraits * dimPartial];
 
             tmpMean = new double[dimTrait];
         }
 
         @Override
         protected void simulateRoot(final int nodeIndex) {
-            likelihoodDelegate.getPartial(nodeIndex, partialNodeBuffer);
+
+            likelihoodDelegate.getIntegrator().getPostOrderPartial(
+                    likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(),
+                    partialPriorBuffer);
+
+            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
 
             int offsetPartial = 0;
             int offsetSample = dimNode * nodeIndex;
@@ -491,12 +745,15 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                         sample, offsetSample, // output sample
                         tmpEpsilon);
             }
+
+            throw new RuntimeException("This function is incorrect");
+            // TODO Need to integrate in prior on root in partialPriorBuffer
         }
 
         @Override
         protected void simulateNode(final BranchNodeOperation operation, final double branchNormalization) {
             final int nodeIndex = operation.getNodeNumber();
-            likelihoodDelegate.getPartial(nodeIndex, partialNodeBuffer);
+            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
 
             int offsetPartial = 0;
             int offsetSample = dimNode * nodeIndex;
@@ -512,6 +769,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 offsetParent += dimTrait;
                 offsetPartial += dimPartial;
             }
+        }
+
+        @Override
+        protected void simulateNode(NodeOperation operation) {
+
         }
 
         protected void simulateTraitForNode(final int nodeIndex,
@@ -546,6 +808,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected final ContinuousDataLikelihoodDelegate likelihoodDelegate;
         protected final double[] partialNodeBuffer;
+        protected final double[] partialPriorBuffer;
         protected final double[] tmpMean;
     }
 
@@ -577,31 +840,70 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             // variance, dT + dT * dT, dT * dT
             // scalar, dT + 2 * dT * dT, 1
 
-            final double[][] cholesky = CholeskyDecomposition.execute(
-                    partialNodeBuffer,
-                    offsetPartial + dimTrait + dimTrait * dimTrait, // variance
-                    dimTrait);  // TODO Reuse output memory
+            // Integrate out against prior
+//            final WrappedVector rootMean = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
+//            final WrappedVector priorMean = new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait);
+
+            final DenseMatrix64F rootPrec = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F priorPrec = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.mult(Pd, wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait), priorPrec);
+
+            final DenseMatrix64F totalPrec = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.add(rootPrec, priorPrec, totalPrec);
+
+            final DenseMatrix64F totalVar = new DenseMatrix64F(dimTrait, dimTrait);
+            safeInvert(totalPrec, totalVar, false);
+
+            final double[] tmp = new double[dimTrait];
+            final double[] mean = new double[dimTrait];
+
+            for (int g = 0; g < dimTrait; ++g) {
+                double sum = 0.0;
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += rootPrec.unsafe_get(g, h) * partialNodeBuffer[offsetPartial + h];
+                    sum += priorPrec.unsafe_get(g, h) * partialPriorBuffer[offsetPartial + h];
+                }
+                tmp[g] = sum;
+            }
+            for (int g = 0; g < dimTrait; ++g) {
+                double sum = 0.0;
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += totalVar.unsafe_get(g, h) * tmp[h];
+                }
+                mean[g] = sum;
+            }
+
+            final double[][] cholesky = getCholeskyOfVariance(totalVar.getData(), dimTrait);
 
             MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    partialNodeBuffer, offsetPartial, // input mean
+                    mean, 0, // input mean
                     cholesky, 1.0, // input variance
                     sample, offsetSample, // output sample
                     tmpEpsilon);
 
             if (DEBUG) {
                 System.err.println("Attempt to simulate root");
-                final DenseMatrix64F mean = wrap(partialNodeBuffer, offsetPartial, dimTrait, 1);
-                final DenseMatrix64F samp = wrap(sample, offsetSample, dimTrait, 1);
-                final DenseMatrix64F V = wrap(partialNodeBuffer, offsetPartial + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//                final DenseMatrix64F mean = wrap(partialNodeBuffer, offsetPartial, dimTrait, 1);
+//                final DenseMatrix64F samp = wrap(sample, offsetSample, dimTrait, 1);
+//                final DenseMatrix64F V = wrap(partialNodeBuffer, offsetPartial + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
-                System.err.println("mean: " + mean);
-                System.err.println("V: " + V);
-                System.err.println("Ch:\n" + new Matrix(cholesky));
-                System.err.println("sample: " + samp);
+                System.err.println("Root mean: " + new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait));
+                System.err.println("Root prec: " + rootPrec);
+                System.err.println("Priormean: " + new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait));
+                System.err.println("Priorprec: " + priorPrec);
+                System.err.println("Totalprec: " + totalPrec);
+                System.err.println("Total var: " + totalVar);
 
-                if (extremeValue(mean) || extremeValue(samp)) {
-                    System.exit(-1);
-                }
+
+                System.err.println("draw mean: " + new WrappedVector.Raw(mean, 0, dimTrait));
+//                System.err.println("V: " + totalVar);
+//                System.err.println("Ch:\n" + new Matrix(cholesky));
+                System.err.println("sample: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+
+//                System.exit(-1);
+//                if (extremeValue(mean) || extremeValue(samp)) {
+//                    System.exit(-1);
+//                }
             }
         }
 
@@ -676,11 +978,18 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                         final int[] observed = indices.getComplement();
                         final int[] missing = indices.getArray();
 
+                        final DenseMatrix64F V1 = new DenseMatrix64F(dimTrait, dimTrait);
+                        CommonOps.scale(1.0 / branchPrecision, Vd, V1);
+
                         ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2 transform =
                                 new ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2(
-                                        Vd, missing, observed
+                                        V1, missing, observed
                                 ); // TODO Cache (via delegated function)
 
+//                        ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2 transform =
+//                                new ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform2(
+//                                        Vd, missing, observed
+//                                ); // TODO Cache (via delegated function)
 
                         final DenseMatrix64F cP0 = new DenseMatrix64F(missing.length, missing.length);
                         gatherRowsAndColumns(P0, cP0, missing, missing);
@@ -689,8 +998,10 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                 partialNodeBuffer, offsetPartial, // Tip value
                                 sample, offsetParent); // Parent value
 
-                        final DenseMatrix64F cP1 = new DenseMatrix64F(missing.length, missing.length);
-                        CommonOps.scale(branchPrecision, transform.getConditionalPrecision(), cP1);
+//                        final DenseMatrix64F cP1 = new DenseMatrix64F(missing.length, missing.length);
+//                        CommonOps.scale(branchPrecision, transform.getConditionalPrecision(), cP1);
+
+                        final DenseMatrix64F cP1 = transform.getConditionalPrecision();
 
                         final DenseMatrix64F cP2 = new DenseMatrix64F(missing.length, missing.length);
                         final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
@@ -739,9 +1050,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                             System.err.println("cC2: " + new Matrix(cC2));
                             System.err.println("SS: " + samp);
 
-                            if (extremeValue(samp)) {
-                                System.exit(-1);
-                            }
+//                            if (extremeValue(samp)) {
+//                                System.exit(-1);
+//                            }
 
 //                            System.exit(-1);
 
@@ -849,7 +1160,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected void simulateNode(final BranchNodeOperation operation,
                                     final double branchNormalization) {
             final int nodeIndex = operation.getNodeNumber();
-            likelihoodDelegate.getPartial(nodeIndex, partialNodeBuffer);
+            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
 
             int offsetPartial = 0;
             int offsetSample = dimNode * nodeIndex;
@@ -939,7 +1250,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
-        class ConditionalVarianceAndTranform {
+        public static class ConditionalVarianceAndTranform {
 
             /**
              * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
@@ -956,6 +1267,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             final private double[][] cholesky;
             final private Matrix affineTransform;
+            private Matrix Sbar;
             final int[] missingIndices;
             final int[] notMissingIndices;
             final double[] tempStorage;
@@ -965,7 +1277,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             private static final boolean DEBUG = false;
 
-            ConditionalVarianceAndTranform(final Matrix variance, final int[] missingIndices, final int[] notMissingIndices) {
+            public ConditionalVarianceAndTranform(final Matrix variance, final int[] missingIndices, final int[] notMissingIndices) {
 
                 assert (missingIndices.length + notMissingIndices.length == variance.rows());
                 assert (missingIndices.length + notMissingIndices.length == variance.columns());
@@ -978,7 +1290,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 }
 
                 Matrix S12S22Inv = null;
-                Matrix Sbar = null;
+                Sbar = null;
 
                 try {
 
@@ -1026,7 +1338,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             }
 
-            double[] getConditionalMean(final double[] y, final int offsetY,
+            public double[] getConditionalMean(final double[] y, final int offsetY,
                                         final double[] mu, final int offsetMu) {
 
                 double[] muBar = new double[numMissing];
@@ -1056,11 +1368,13 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 }
             }
 
-            double[][] getConditionalCholesky() {
+            public double[][] getConditionalCholesky() {
                 return cholesky;
             }
 
-            Matrix getAffineTransform() {
+            public Matrix getVariance() { return Sbar; }
+
+            public Matrix getAffineTransform() {
                 return affineTransform;
             }
 
@@ -1069,7 +1383,163 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
-        static class ConditionalVarianceAndTranform2 {
+//        static class ConditionalPrecisionAndTranform2 {
+//
+//            /**
+//             * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
+//             *
+//             *      \mu = (\mu_1, \mu_2)^t
+//             *      \Sigma = ((\Sigma_{11}, \Sigma_{12}), (\Sigma_{21}, \Sigma_{22})^t
+//             *
+//             * then  y_1 | y_2 \sim N (\bar{\mu}, \bar{\Sigma}), where
+//             *
+//             *      \bar{\mu} = \mu_1 + \Sigma_{12}\Sigma_{22}^{-1}(y_2 - \mu_2), and
+//             *      \bar{\Sigma} = \Sigma_{11} - \Sigma_{12}\Sigma_{22}^1\Sigma{21}
+//             *
+//             */
+//
+//            final private DenseMatrix64F Sbar;
+//            final private DenseMatrix64F affineTransform;
+//
+//            final int[] missingIndices;
+//            final int[] notMissingIndices;
+//            final double[] tempStorage;
+//
+//            final int numMissing;
+//            final int numNotMissing;
+//
+//            private static final boolean DEBUG = false;
+//
+//            private double[][] cholesky = null;
+//            private DenseMatrix64F SbarInv = null;
+//
+//            ConditionalPrecisionAndTranform2(final DenseMatrix64F precision,
+//                                            final int[] missingIndices, final int[] notMissingIndices) {
+//
+//                assert (missingIndices.length + notMissingIndices.length == variance.getNumRows());
+//                assert (missingIndices.length + notMissingIndices.length == variance.getNumCols());
+//
+//                this.missingIndices = missingIndices;
+//                this.notMissingIndices = notMissingIndices;
+//
+//                if (DEBUG) {
+//                    System.err.println("precision:\n" + precision);
+//                }
+//
+//                DenseMatrix64F S22 = new DenseMatrix64F(notMissingIndices.length, notMissingIndices.length);
+//                gatherRowsAndColumns(variance, S22, notMissingIndices, notMissingIndices);
+//
+//                if (DEBUG) {
+//                    System.err.println("S22:\n" + S22);
+//                }
+//
+//                DenseMatrix64F S22Inv = new DenseMatrix64F(notMissingIndices.length, notMissingIndices.length);
+//                CommonOps.invert(S22, S22Inv);
+//
+//                if (DEBUG) {
+//                    System.err.println("S22Inv:\n" + S22Inv);
+//                }
+//
+//                DenseMatrix64F S12 = new DenseMatrix64F(missingIndices.length, notMissingIndices.length);
+//                gatherRowsAndColumns(variance, S12, missingIndices, notMissingIndices);
+//
+//                if (DEBUG) {
+//                    System.err.println("S12:\n" + S12);
+//                }
+//
+//                DenseMatrix64F S12S22Inv = new DenseMatrix64F(missingIndices.length, notMissingIndices.length);
+//                CommonOps.mult(S12, S22Inv, S12S22Inv);
+//
+//                if (DEBUG) {
+//                    System.err.println("S12S22Inv:\n" + S12S22Inv);
+//                }
+//
+//                DenseMatrix64F S12S22InvS21 = new DenseMatrix64F(missingIndices.length, missingIndices.length);
+//                CommonOps.multTransB(S12S22Inv, S12, S12S22InvS21);
+//
+//                if (DEBUG) {
+//                    System.err.println("S12S22InvS21:\n" + S12S22InvS21);
+//                }
+//
+//                Sbar = new DenseMatrix64F(missingIndices.length, missingIndices.length);
+//                gatherRowsAndColumns(variance, Sbar, missingIndices, missingIndices);
+//                CommonOps.subtract(Sbar, S12S22InvS21, Sbar);
+//
+//
+//                if (DEBUG) {
+//                    System.err.println("Sbar:\n" + Sbar);
+//                }
+//
+//
+//                this.affineTransform = S12S22Inv;
+////                this.cholesky = getCholeskyOfVariance(Sbar.data, missingIndices.length);
+//                this.tempStorage = new double[missingIndices.length];
+//
+//                this.numMissing = missingIndices.length;
+//                this.numNotMissing = notMissingIndices.length;
+//
+//            }
+//
+//            WrappedVector getConditionalMean(final double[] y, final int offsetY,
+//                                        final double[] mu, final int offsetMu) {
+//
+//                double[] muBar = new double[numMissing];
+//
+//                double[] shift = new double[numNotMissing];
+//                for (int i = 0; i < numNotMissing; ++i) {
+//                    final int noti = notMissingIndices[i];
+//                    shift[i] = y[offsetY + noti] - mu[offsetMu + noti];
+//                }
+//
+//                for (int i = 0; i < numMissing; ++i) {
+//                    double delta = 0.0;
+//                    for (int k = 0; k < numNotMissing; ++k) {
+//                        delta += affineTransform.unsafe_get(i, k) * shift[k];
+//                    }
+//
+//                    muBar[i] = mu[offsetMu + missingIndices[i]] + delta;
+//                }
+//
+//                return new WrappedVector.Raw(muBar, 0, numMissing);
+//            }
+//
+//            void scatterResult(final double[] source, final int offsetSource,
+//                               final double[] destination, final int offsetDestination) {
+//                for (int i = 0; i < numMissing; ++i) {
+//                    destination[offsetDestination + missingIndices[i]] = source[offsetSource + i];
+//                }
+//            }
+//
+//            final double[][] getConditionalCholesky() {
+//                if (cholesky == null) {
+//                    this.cholesky = getCholeskyOfVariance(Sbar.data, missingIndices.length);
+//                }
+//                return cholesky;
+//            }
+//
+//            final DenseMatrix64F getAffineTransform() {
+//                return affineTransform;
+//            }
+//
+//            final DenseMatrix64F getConditionalVariance() {
+//                return Sbar;
+//            }
+//
+//            final DenseMatrix64F getConditionalPrecision() {
+//                if (SbarInv == null) {
+//                    SbarInv = new DenseMatrix64F(numMissing, numMissing);
+//                    CommonOps.invert(Sbar, SbarInv);
+//                }
+//                return SbarInv;
+//            }
+//
+//            final double[] getTemporageStorage() {
+//                return tempStorage;
+//            }
+//        }
+
+
+static class ConditionalVarianceAndTranform2 {
 
             /**
              * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
@@ -1223,7 +1693,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 return tempStorage;
             }
         }
-
 //        @Override
 //        protected void doDraw(final int nodeIndex, final double[] mean, final double totalPrecision, final int offsetSample) {
 //
@@ -1309,6 +1778,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                     offsetSample += dimTrait;
                 }
             }
+        }
+
+        @Override
+        protected void simulateNode(NodeOperation operation) {
+
         }
 
         private final ConjugateRootTraitPrior rootPrior;

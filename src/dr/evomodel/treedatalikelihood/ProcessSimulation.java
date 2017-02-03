@@ -85,19 +85,15 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
     private final void simulateTraits(final NodeRef targetNode) {
 
         if (targetNode == null) {
-            treeTraversalDelegate.updateAllNodes(); // TODO depends on targetNode
+            treeTraversalDelegate.updateAllNodes();
         } else {
-            throw new RuntimeException("Not yet implemented");
+            treeTraversalDelegate.updateAllNodes(); // TODO Fix - depends on targetNode
         }
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-
-        List<ProcessOnTreeDelegate.BranchNodeOperation> branchNodeOperations = treeTraversalDelegate.getBranchNodeOperations();
-
-
-
         final NodeRef root = tree.getRoot();
-        simulationDelegate.simulate(branchNodeOperations, root.getNumber());
+
+        simulationDelegate.simulate(treeTraversalDelegate, root.getNumber());
 
         treeTraversalDelegate.setAllNodesUpdated();
     }

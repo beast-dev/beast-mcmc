@@ -51,9 +51,13 @@ public interface ContinuousDiffusionIntegrator {
 
     void finalize() throws Throwable;
 
-    void setPartial(int bufferIndex, final double[] partial);
+    void setPostOrderPartial(int bufferIndex, final double[] partial);
 
-    void getPartial(int bufferIndex, final double[] partial);
+    void getPostOrderPartial(int bufferIndex, final double[] partial);
+
+    void setPreOrderPartial(int bufferIndex, final double[] partial);
+
+    void getPreOrderPartial(int bufferIndex, final double[] partial);
 
     void setWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts);
 
@@ -61,7 +65,9 @@ public interface ContinuousDiffusionIntegrator {
 
     void setDiffusionPrecision(int diffusionIndex, final double[] matrix, double logDeterminant);
 
-    void updatePartials(final int[] operations, int operationCount, boolean incrementOuterProducts);
+    void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts);
+
+    void updatePreOrderPartials(final int[] operations, int operationCount);
 
     InstanceDetails getDetails();
 
@@ -73,104 +79,8 @@ public interface ContinuousDiffusionIntegrator {
 
     boolean requireDataAugmentationForOuterProducts();
 
-//    class OuterProductProvider implements ContinuousDiffusionIntegrator {
-//
-//        private final ContinuousDiffusionIntegrator base;
-//        private final boolean useTwoIntegrators;
-//        private ContinuousDiffusionIntegrator op;
-//
-//        public OuterProductProvider(ContinuousDiffusionIntegrator base) {
-//            this.base = base;
-//            this.useTwoIntegrators = base instanceof Multivariate;
-//
-//            if (useTwoIntegrators) {
-////                op = new Basic((Basic)base);
-//            }
-//            System.err.println("useTwoIntegrators: " + useTwoIntegrators);
-//            System.err.println(base.getClass().getCanonicalName());
-////            System.exit(-1);
-//        }
-//
-//        @Override
-//        public void finalize() throws Throwable {
-//            base.finalize();
-//            if (useTwoIntegrators) op.finalize();
-//        }
-//
-//        @Override
-//        public void setPartial(int bufferIndex, double[] partial) {
-//            base.setPartial(bufferIndex, partial);
-//            if (useTwoIntegrators) op.setPartial(bufferIndex, partial);
-//        }
-//
-//        public void setPartialInOuterProductsOnly(int bufferIndex, double[] partial) {
-//            if (useTwoIntegrators) op.setPartial(bufferIndex, partial);
-//        }
-//
-//        @Override
-//        public void getPartial(int bufferIndex, double[] partial) {
-//            base.getPartial(bufferIndex, partial);
-//        }
-//
-//        @Override
-//        public void setWishartStatistics(int[] degreesOfFreedom, double[] outerProducts) {
-//            if (useTwoIntegrators) {
-//                op.setWishartStatistics(degreesOfFreedom, outerProducts);
-//            } else {
-//                base.setWishartStatistics(degreesOfFreedom, outerProducts);
-//            }
-//        }
-//
-//        @Override
-//        public void getWishartStatistics(int[] degreesOfFreedom, double[] outerProducts) {
-//            if (useTwoIntegrators) {
-//                op.getWishartStatistics(degreesOfFreedom, outerProducts);
-//            } else {
-//                base.getWishartStatistics(degreesOfFreedom, outerProducts);
-//            }
-//        }
-//
-//        @Override
-//        public void setDiffusionPrecision(int diffusionIndex, double[] matrix, double logDeterminant) {
-//            base.setDiffusionPrecision(diffusionIndex, matrix, logDeterminant);
-//            if (useTwoIntegrators) op.setDiffusionPrecision(diffusionIndex, matrix, logDeterminant);
-//        }
-//
-//        @Override
-//        public void updatePartials(int[] operations, int operationCount, boolean incrementOuterProducts) {
-//            if (useTwoIntegrators && incrementOuterProducts) {
-//                op.updatePartials(operations, operationCount, incrementOuterProducts);
-//            } else {
-//                base.updatePartials(operations, operationCount, incrementOuterProducts);
-//            }
-//        }
-//
-//        @Override
-//        public InstanceDetails getDetails() {
-//            return null;
-//        }
-//
-//        @Override
-//        public void updateDiffusionMatrices(int precisionIndex, int[] probabilityIndices, double[] edgeLengths, int updateCount) {
-//            base.updateDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, updateCount);
-//            if (useTwoIntegrators) op.updateDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, updateCount);
-//        }
-//
-//        @Override
-//        public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike, boolean incrementOuterProducts) {
-//            if (useTwoIntegrators && incrementOuterProducts) {
-//                base.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike, incrementOuterProducts);
-//            } else {
-//                base.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike, incrementOuterProducts);
-//            }
-//        }
-//
-//        @Override
-//        public boolean requireDataAugmentationForOuterProducts() {
-//            System.err.println("OOP.rDA = " + useTwoIntegrators);
-//            return useTwoIntegrators;
-//        }
-//    }
+    // TODO Only send a list of operations
+    void updatePreOrderPartial(int kp, int ip, int im, int jp, int jm);
 
     class Basic implements ContinuousDiffusionIntegrator {
 
@@ -235,7 +145,7 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         @Override
-        public void setPartial(int bufferIndex, final double[] partial) {
+        public void setPostOrderPartial(int bufferIndex, final double[] partial) {
             assert(partial.length == dimPartial);
             assert(partials != null);
 
@@ -243,11 +153,33 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         @Override
-        public void getPartial(int bufferIndex, final double[] partial) {
+        public void getPostOrderPartial(int bufferIndex, final double[] partial) {
             assert(partial.length == dimPartial);
             assert(partials != null);
 
             System.arraycopy(partials, dimPartial * bufferIndex, partial, 0, dimPartial);
+        }
+
+        @Override
+        public void setPreOrderPartial(int bufferIndex, final double[] partial) {
+
+            if (partial.length != dimPartial) {
+                System.err.println("pl = " + partial.length);
+                System.err.println("dp = " + dimPartial);
+            }
+
+            assert(partial.length == dimPartial);
+            assert(prePartials != null);
+
+            System.arraycopy(partial, 0, prePartials, dimPartial * bufferIndex, dimPartial);
+        }
+
+        @Override
+        public void getPreOrderPartial(int bufferIndex, final double[] partial) {
+            assert(partial.length == dimPartial);
+            assert(prePartials != null);
+
+            System.arraycopy(prePartials, dimPartial * bufferIndex, partial, 0, dimPartial);
         }
 
         @Override
@@ -365,7 +297,12 @@ public interface ContinuousDiffusionIntegrator {
         }
 
         @Override
-        public void updatePartials(final int[] operations, int operationCount, boolean incrementOuterProducts) {
+        public void updatePreOrderPartials(final int[] operations, int operationCount) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts) {
 
             if (DEBUG) {
                 System.err.println("Operations:");
@@ -431,12 +368,23 @@ public interface ContinuousDiffusionIntegrator {
         protected double[] determinants;
         protected int[] degreesOfFreedom;
         protected double[] outerProducts;
+        protected double[] prePartials;
 
         // Set during updateDiffusionMatrices() and used in updatePartials()
         protected int precisionOffset;
         protected double precisionLogDet;
 
         protected static final boolean INLINE = true;
+
+        @Override
+        public void updatePreOrderPartial(
+                final int kBuffer, // parent
+                final int iBuffer, // node
+                final int iMatrix,
+                final int jBuffer, // sibling
+                final int jMatrix) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         protected void updatePartial(
                 final int kBuffer,
@@ -641,6 +589,8 @@ public interface ContinuousDiffusionIntegrator {
 
             degreesOfFreedom = new int[numTraits];
             outerProducts = new double[dimTrait * dimTrait * numTraits];
+
+            prePartials = new double[dimPartial * bufferCount];
         }
 
         private String getOperationString(final int[] operations, final int offset) {
@@ -651,10 +601,12 @@ public interface ContinuousDiffusionIntegrator {
             return sb.toString();
         }
 
-        protected static boolean DEBUG = false;
+        private static boolean DEBUG = false;
     }
 
     class Multivariate extends Basic {
+
+        private static boolean DEBUG = false;
 
         public Multivariate(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
                             int diffusionCount) {
@@ -1049,6 +1001,108 @@ public interface ContinuousDiffusionIntegrator {
         @Override
         public boolean requireDataAugmentationForOuterProducts() {
             return true;
+        }
+
+        @Override
+        public void updatePreOrderPartial(
+                final int kBuffer, // parent
+                final int iBuffer, // node
+                final int iMatrix,
+                final int jBuffer, // sibling
+                final int jMatrix) {
+
+            // Determine buffer offsets
+            int kbo = dimPartial * kBuffer;
+            int ibo = dimPartial * iBuffer;
+            int jbo = dimPartial * jBuffer;
+
+            // Determine matrix offsets
+            final int imo = dimMatrix * iMatrix;
+            final int jmo = dimMatrix * jMatrix;
+
+            // Read variance increments along descendent branches of k
+            final double vi = variances[imo];
+            final double vj = variances[jmo];
+
+            final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
+
+            if (DEBUG) {
+                System.err.println("updatePreOrderPartial for node " + iBuffer);
+//                System.err.println("variance diffusion: " + Vd);
+                System.err.println("\tvi: " + vi + " vj: " + vj);
+//                System.err.println("precisionOffset = " + precisionOffset);
+            }
+
+            // For each trait // TODO in parallel
+            for (int trait = 0; trait < numTraits; ++trait) {
+
+                // A. Get current precision of k and j
+                final DenseMatrix64F Pk = wrap(prePartials, kbo + dimTrait, dimTrait, dimTrait);
+//                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+
+//                final DenseMatrix64F Vk = wrap(prePartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+                final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+
+                // B. Inflate variance along sibling branch using matrix inversion
+                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.add(Vj, vj, Vd, Vjp);
+
+                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
+                InversionResult cj = safeInvert(Vjp, Pjp, false);
+
+                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.add(Pk, Pjp, Pip);
+
+                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
+                InversionResult cip = safeInvert(Pip, Vip, false);
+
+                // C. Compute prePartial mean
+                final double[] tmp = new double[dimTrait];
+                for (int g = 0; g < dimTrait; ++g) {
+                    double sum = 0.0;
+                    for (int h = 0; h < dimTrait; ++h) {
+                        sum += Pk.unsafe_get(g, h) * prePartials[kbo + h]; // Read parent
+                        sum += Pjp.unsafe_get(g, h) * partials[jbo + h];   // Read sibling
+                    }
+                    tmp[g] = sum;
+                }
+                for (int g = 0; g < dimTrait; ++g) {
+                    double sum = 0.0;
+                    for (int h = 0; h < dimTrait; ++h) {
+                        sum += Vip.unsafe_get(g, h) * tmp[h];
+                    }
+                    prePartials[ibo + g] = sum; // Write node
+                }
+
+                // C. Inflate variance along node branch
+                final DenseMatrix64F Vi = Vip;
+                CommonOps.add(vi, Vd, Vip, Vi);
+
+                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
+                InversionResult ci = safeInvert(Vi, Pi, false);
+
+                // X. Store precision results for node
+                unwrap(Pi, prePartials, ibo + dimTrait);
+                unwrap(Vi, prePartials, ibo + dimTrait + dimTrait * dimTrait);
+
+                if (DEBUG) {
+                    System.err.println("trait: " + trait);
+                    System.err.println("pM: " + new WrappedVector.Raw(prePartials, kbo, dimTrait));
+                    System.err.println("pP: " + Pk);
+                    System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
+                    System.err.println("sV: " + Vj);
+                    System.err.println("sVp: " + Vjp);
+                    System.err.println("sPp: " + Pjp);
+                    System.err.println("Pip: " + Pip);
+                    System.err.println("cM: " + new WrappedVector.Raw(prePartials, ibo, dimTrait));
+                    System.err.println("cV: " + Vi);
+                }
+
+                // Get ready for next trait
+                kbo += dimPartialForTrait;
+                ibo += dimPartialForTrait;
+                jbo += dimPartialForTrait;
+            }
         }
 
         @Override

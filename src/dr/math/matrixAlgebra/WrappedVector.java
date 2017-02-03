@@ -31,10 +31,6 @@ import dr.inference.model.Parameter;
  * Created by msuchard on 1/27/17.
  */
 
-
-
-
-
 public interface WrappedVector {
 
     double get(final int i);
@@ -44,6 +40,8 @@ public interface WrappedVector {
     int getDim();
 
     double[] getBuffer();
+
+    int getOffset();
 
     abstract class Abstract implements  WrappedVector {
         final protected double[] buffer;
@@ -59,6 +57,8 @@ public interface WrappedVector {
         final public double[] getBuffer() {
             return buffer;
         }
+
+        final public int getOffset() { return offset; }
 
         final public int getDim() {
             return dim;

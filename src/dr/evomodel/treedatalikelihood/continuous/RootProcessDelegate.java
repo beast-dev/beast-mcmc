@@ -45,6 +45,8 @@ public interface RootProcessDelegate {
 
     double getPseudoObservations();
 
+    int getPriorBufferIndex();
+
 //    int getDegreesOfFreedom();
 
     abstract class Abstract implements RootProcessDelegate {
@@ -77,6 +79,9 @@ public interface RootProcessDelegate {
         }
 
         @Override
+        public int getPriorBufferIndex() { return priorBufferIndex; }
+
+        @Override
         public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
                                                final double[] logLike, boolean incrementOuterProducts) {
             cdi.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike, incrementOuterProducts);
@@ -103,7 +108,7 @@ public interface RootProcessDelegate {
                 offset += length;
             }
 
-            cdi.setPartial(priorBufferIndex, partial);
+            cdi.setPostOrderPartial(priorBufferIndex, partial);
         }
     }
 

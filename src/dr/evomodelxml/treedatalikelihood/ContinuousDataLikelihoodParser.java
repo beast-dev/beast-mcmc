@@ -145,6 +145,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
                 treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
 
+                ProcessSimulationDelegate fullConditionalDelegate = new ProcessSimulationDelegate.TipRealizedValuesViaFullConditionalDelegate(
+                        traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+
+                treeDataLikelihood.addTraits(new ProcessSimulation(("fc." + traitName), treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
+
 //                String partialTraitName = getPartiallyMissingTraitName(traitName);
 //
 //                ProcessSimulationDelegate parialSimulationDelegate = new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate(partialTraitName,

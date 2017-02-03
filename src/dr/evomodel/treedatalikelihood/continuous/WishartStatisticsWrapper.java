@@ -30,6 +30,9 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
@@ -39,13 +42,12 @@ import dr.xml.*;
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
-import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.getPartiallyMissingTraitName;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * @author Marc A. Suchard
  */
-public class WishartStatisticsWrapper extends AbstractModel implements ConjugateWishartStatisticsProvider {
+public class WishartStatisticsWrapper extends AbstractModel implements ConjugateWishartStatisticsProvider, Loggable {
 
     public static final String PARSER_NAME = "wishartStatistics";
     public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
@@ -68,6 +70,15 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         String partialTraitName = getTipTraitName(traitName);
         tipSampleTrait = dataLikelihood.getTreeTrait(partialTraitName);
+
+        tipFullConditionalTrait = dataLikelihood.getTreeTrait("fcd." + traitName);
+
+        for (TreeTrait t : dataLikelihood.getTreeTraits()) {
+            System.err.println(t.getTraitName());
+        }
+
+//        System.err.println("Found? " + (tipFullConditionalTrait == null ? "no" : "yes"));
+//        System.exit(-1);
 
         treeTraversalDelegate = new LikelihoodTreeTraversal(
                 dataLikelihood.getTree(),
@@ -98,6 +109,14 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     private void simulateMissingTraits() {
 
         likelihoodDelegate.fireModelChanged(); // Force new sample!
+
+//        ProcessSimulationDelegate.MeanAndVariance mv =
+//                (ProcessSimulationDelegate.MeanAndVariance) tipFullConditionalTrait.getTrait(
+//                        dataLikelihood.getTree(), dataLikelihood.getTree().getExternalNode(1));
+//
+//        System.err.println("DONE");
+//        System.exit(-1);
+
         double[] sample = (double[]) tipSampleTrait.getTrait(dataLikelihood.getTree(), null);
 
         if (DEBUG) {
@@ -268,6 +287,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     private final LikelihoodTreeTraversal treeTraversalDelegate;
     private final ContinuousRateTransformation rateTransformation;
     private final TreeTrait tipSampleTrait;
+    private final TreeTrait tipFullConditionalTrait;
 
     private final int dimTrait;
     private final int numTrait;
@@ -288,6 +308,66 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     private WishartSufficientStatistics wishartStatistics;
     private WishartSufficientStatistics savedWishartStatistics;
 
+    private double[] tipTraits;
+
     private static final boolean DEBUG = false;
 
+    @Override
+    public LogColumn[] getColumns() {
+
+        int sampleLength = 0;
+        if (tipSampleTrait != null) {
+            double[] sample = (double[]) tipSampleTrait.getTrait(dataLikelihood.getTree(), null);
+            sampleLength = sample.length;
+        }
+
+        LogColumn[] columns = new LogColumn[dimTrait * dimTrait + sampleLength];
+
+        int index = 0;
+        for (int i = 0; i < dimTrait; ++i) {
+            for (int j = 0; j < dimTrait; ++j) {
+                columns[index] =  new OuterProductColumn("OP" + (i + 1) + "" + (j + 1), index);
+                ++index;
+            }
+        }
+
+        for (int i = 0; i < sampleLength; ++i) {
+            columns[index] = new TipSampleColumn("TIP" + (i + 1), i);
+            ++index;
+        }
+
+        return columns;
+    }
+
+    private class OuterProductColumn extends NumberColumn {
+
+        private int index;
+
+        public OuterProductColumn(String label, int index) {
+            super(label);
+            this.index = index;
+        }
+
+        @Override
+        public double getDoubleValue() {
+            WishartSufficientStatistics ws = getWishartStatistics();
+            return ws.getScaleMatrix()[index];
+        }
+    }
+
+    private class TipSampleColumn extends NumberColumn {
+
+        private int index;
+
+        public TipSampleColumn(String label, int index) {
+            super(label);
+            this.index = index;
+        }
+
+        @Override
+        public double getDoubleValue() {
+            double[] sample = (double[]) tipSampleTrait.getTrait(dataLikelihood.getTree(), null);
+            return sample[index];
+        }
+    }
 }

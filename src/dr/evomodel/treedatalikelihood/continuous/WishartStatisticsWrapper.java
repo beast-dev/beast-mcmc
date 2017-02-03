@@ -71,12 +71,12 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         String partialTraitName = getTipTraitName(traitName);
         tipSampleTrait = dataLikelihood.getTreeTrait(partialTraitName);
 
-        tipFullConditionalTrait = dataLikelihood.getTreeTrait("fcd." + traitName);
-
-        for (TreeTrait t : dataLikelihood.getTreeTraits()) {
-            System.err.println(t.getTraitName());
-        }
-
+//        tipFullConditionalTrait = dataLikelihood.getTreeTrait("fcd." + traitName);
+//
+//        for (TreeTrait t : dataLikelihood.getTreeTraits()) {
+//            System.err.println(t.getTraitName());
+//        }
+//
 //        System.err.println("Found? " + (tipFullConditionalTrait == null ? "no" : "yes"));
 //        System.exit(-1);
 
@@ -287,7 +287,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     private final LikelihoodTreeTraversal treeTraversalDelegate;
     private final ContinuousRateTransformation rateTransformation;
     private final TreeTrait tipSampleTrait;
-    private final TreeTrait tipFullConditionalTrait;
+//    private final TreeTrait tipFullConditionalTrait;
 
     private final int dimTrait;
     private final int numTrait;

@@ -26,6 +26,7 @@
 package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.MultivariateTraitTree;
+import dr.evomodel.continuous.StandardizeTraits;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -389,6 +390,19 @@ public class TreeTraitParserUtilities {
                 if (warningLength == maxWarnings) {
                     Logger.getLogger("dr.evomodel.continuous").info("Warning: only first " + maxWarnings + " trait warnings were displayed\n");
                 }
+            }
+
+            // Standardize
+            if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
+
+                System.err.println(traitParameter.getClass().getCanonicalName());
+
+                System.err.println("Yes, standardize");
+
+                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter);
+                String message = st.doStandardization(false);
+
+                Logger.getLogger("dr.evomodel.continous").info(message);
             }
 
             // Find missing values

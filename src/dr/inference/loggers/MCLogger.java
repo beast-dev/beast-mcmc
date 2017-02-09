@@ -81,6 +81,16 @@ public class MCLogger implements Logger {
     }
 
     /**
+     * Additional constructor that does not add a provided Formatter
+     * @param performanceReport
+     * @param performanceReportDelay
+     */
+    public MCLogger(boolean performanceReport, int performanceReportDelay) {
+        this.performanceReport = performanceReport;
+        this.performanceReportDelay = performanceReportDelay;
+    }
+
+    /**
      * Constructor. Will log every logEvery.
      *
      * @param logEvery logging frequency

@@ -42,6 +42,7 @@ import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.model.Statistic;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.stats.DiscreteStatistics;
+import dr.util.HeapSort;
 import dr.xml.*;
 import org.jdom.Element;
 
@@ -64,6 +65,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String AVERAGE = "average";  // average over all branches
     public static final String WEIGHTED_AVERAGE = "weightedAverage"; // weighted average (=total distance/total time)
     public static final String COEFFICIENT_OF_VARIATION = "coefficientOfVariation"; // weighted average (=total distance/total time)
+    public static final String SPEARMAN_CORRELATION = "spearmanCorrelation"; // weighted average (=total distance/total time)
     public static final String STATISTIC = "statistic";
     public static final String TRAIT = "trait";
     public static final String TRAIT2DAREA = "trait2Darea";
@@ -137,8 +139,9 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         double maxBranchDistanceFromRoot = 0;
         double maxDistanceOverTimeFromRootWA = 0;  // can only be used when cumulative and not associated with discrete state (not based on the distances on the branches from the root up that point)
         double maxBranchDistanceOverTimeFromRootWA = 0;
-
         List<Double> rates = new ArrayList<Double>();
+        List<Double> distances = new ArrayList<Double>();
+        List<Double> times = new ArrayList<Double>();
         List<Double> traits = new ArrayList<Double>();
         List<double[]> traits2D = new ArrayList<double[]>();
         //double[] diffusionCoefficients =  null;
@@ -246,6 +249,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                 time = timeUp - timeLow;
                             }
                             treeLength += time;
+                            times.add(time);
 
                             //setting up continuous trait values for heights in discrete trait history
                             if (stateString != null) {
@@ -262,6 +266,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                 } else {
                                     distance = getGreatCircleDistance(traitLow, traitUp);
                                 }
+                                distances.add(distance);
 
                                 if (time > 0) {
                                     treeDistance += distance;
@@ -311,6 +316,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                 } else {
                                     distance = getNativeDistance(traitLow, traitUp);
                                 }
+                                distances.add(distance);
 
                                 if (time > 0) {
                                     treeDistance += distance;
@@ -407,6 +413,13 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         }  else if (summaryStat == summaryStatistic.DIFFUSION_DISTANCE)  {
             return treeDistance;
             //DIFFUSION_TIME
+        }  else if (summaryStat == summaryStatistic.SPEARMAN_CORRELATION)  {
+            //hash sort times and distances, and compute spearman
+            int[] timeRanks = new int[times.size()];
+            int[] distanceRanks = new int[distances.size()];
+            HeapSort.sort(convertDoubles(times), timeRanks);
+            HeapSort.sort(convertDoubles(distances), distanceRanks);
+            return getSpearmanRho(timeRanks,distanceRanks);
         }  else {
             return treeLength;
         }
@@ -806,6 +819,30 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return totalArea;
     }
 
+    private static double[] convertDoubles(List<Double> doubles) {
+        double[] ret = new double[doubles.size()];
+        Iterator<Double> iterator = doubles.iterator();
+        int i = 0;
+        while(iterator.hasNext())
+        {
+            ret[i] = iterator.next();
+            i++;
+        }
+        return ret;
+    }
+
+    private static double getSpearmanRho(int[] rank1, int[] rank2){
+        int counter = 0;
+        double d_i = 0;
+        while(counter < rank1.length){
+            d_i += Math.pow(rank1[counter] -  rank2[counter], 2);
+            counter ++;
+        }
+        return  (1 - (6*d_i)/(rank1.length*(Math.pow(rank1.length,2) - 1)));
+    }
+
+
+
 //    private int getStateInt(String state){
 //        int returnInt = -1;
 //        int counter = 0;
@@ -844,6 +881,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         WAVEFRONT_DISTANCE,
         WAVEFRONT_DISTANCE_PHYLO,
         WAVEFRONT_RATE,
+        SPEARMAN_CORRELATION
     }
 
     enum BranchSet {
@@ -918,6 +956,11 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
                     System.err.println(name+": mode = "+mode+" ignored for "+DIFFUSION_DISTANCE);
                 }
+            } else if (statistic.equals(SPEARMAN_CORRELATION)) {
+                summaryStat = summaryStatistic.SPEARMAN_CORRELATION;
+                if (!mode.equals(WEIGHTED_AVERAGE)) {
+                    System.err.println(name+": mode = "+mode+" ignored for "+SPEARMAN_CORRELATION);
+                }
             } else if (statistic.equals(WAVEFRONT_DISTANCE)) {
                 summaryStat = summaryStatistic.WAVEFRONT_DISTANCE;
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
@@ -958,6 +1001,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 summaryStat = summaryStatistic.WAVEFRONT_RATE;
             } else if (statistic.equals(DIFFUSION_COEFFICIENT)) {
                 summaryStat = summaryStatistic.DIFFUSION_COEFFICIENT;
+            } else if (statistic.equals(SPEARMAN_CORRELATION)) {
+                summaryStat = summaryStatistic.SPEARMAN_CORRELATION;
             } else {
                 System.err.println(name+": unknown statistic: "+statistic+". Reverting to diffusion rate.");
                 summaryStat = summaryStatistic.DIFFUSION_RATE;

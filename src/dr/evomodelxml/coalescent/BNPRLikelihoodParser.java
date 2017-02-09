@@ -209,17 +209,19 @@ public class BNPRLikelihoodParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("The " + BNPR_LIKELIHOOD + " has " +
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
-
-        if (xo.getChild(GRID_POINTS) != null) {
-            System.err.println("A");
-
-            return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
-                    lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                    lastObservedIndex, covPrecParam, betaList);
-        } else {
-            return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
-                    lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
-        }
+        return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
+                lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight,
+                cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0));
+//        if (xo.getChild(GRID_POINTS) != null) {
+//            System.err.println("A");
+//
+//            return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
+//                    lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
+//                    lastObservedIndex, covPrecParam, betaList);
+//        } else {
+//            return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
+//                    lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+//        }
     }
 
     //************************************************************************

@@ -7,10 +7,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
-import no.uib.cipr.matrix.BandCholesky;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.SymmTridiagMatrix;
-import no.uib.cipr.matrix.UpperSPDBandMatrix;
+import no.uib.cipr.matrix.*;
 
 import java.util.List;
 
@@ -28,6 +25,8 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
 
     BNPRLikelihood bnprField;
 
+    private double[] zeros;
+
     public static final double TWO_TIMES_PI =6.283185;
 
     public BNPRBlockUpdateOperator(BNPRLikelihood bnprLikelihood, double weight) {
@@ -43,6 +42,8 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         setWeight(weight);
 
         this.bnprField = bnprLikelihood;
+
+        this.zeros = new double[fieldLength];
     }
 
     private DenseVector ESS(DenseVector currentGamma, double currentLoglik) {
@@ -61,7 +62,7 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         DenseVector q = currentGamma.copy();
         q = (DenseVector) q.scale(Math.cos(t)).add(Math.sin(t), nu);
 
-        double l = bnprField.getLogLikelihoodSubGamma(q.getData()); // TODO: How to get likelihood for almost-proposed points?
+        double l = bnprField.getLogLikelihoodSubGamma(q.getData());
 
         while (l < logy) {
 
@@ -74,7 +75,7 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
             t = tMin + MathUtils.nextDouble() * (tMax - tMin);
             q = (DenseVector) q.scale(Math.cos(t)).add(Math.sin(t), nu);
 
-            l = bnprField.getLogLikelihoodSubGamma(q.getData()); // TODO: How to get likelihood for almost-proposed points?
+            l = bnprField.getLogLikelihoodSubGamma(q.getData());
         }
 
         return q;
@@ -94,6 +95,63 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         return returnValue;
     }
 
+    public DenseVector getMultiNormalMean(DenseVector CanonVector, BandCholesky Cholesky) {
+
+        DenseVector tempValue = new DenseVector(zeros);
+        DenseVector Mean = new DenseVector(zeros);
+
+        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+
+        // Assume Cholesky factorization of the precision matrix Q = LL^T
+
+        // 1. Solve L\omega = b
+
+        CholeskyUpper.transSolve(CanonVector, tempValue);
+
+        // 2. Solve L^T \mu = \omega
+
+        CholeskyUpper.solve(tempValue, Mean);
+
+        return Mean;
+    }
+
+    public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky) {
+
+        DenseVector returnValue = new DenseVector(zeros);
+
+        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+
+        // 3. Solve L^T v = z
+
+        CholeskyUpper.solve(StandNorm, returnValue);
+
+        // 4. Return x = \mu + v
+
+        returnValue.add(Mean);
+
+        return returnValue;
+    }
+
+
+    public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
+        int length = Mean.size();
+        DenseVector tempValue = new DenseVector(length);
+        DenseVector returnValue = new DenseVector(length);
+        UpperSPDDenseMatrix ab = Variance.copy();
+
+        for (int i = 0; i < returnValue.size(); i++)
+            tempValue.set(i, MathUtils.nextGaussian());
+
+        DenseCholesky chol = new DenseCholesky(length, true);
+        chol.factor(ab);
+
+        UpperTriangDenseMatrix x = chol.getU();
+
+        x.transMult(tempValue, returnValue);
+        returnValue.add(Mean);
+        return returnValue;
+    }
+
     public double doOperation() throws OperatorFailedException {
         double currentPrecision = precisionParameter.getParameterValue(0);
         double proposedPrecision = this.getNewPrecision(currentPrecision);
@@ -104,14 +162,14 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         precisionParameter.setParameterValue(0, proposedPrecision);
         //lambdaParameter.setParameterValue(0, proposedLambda);
 
-        DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
+        DenseVector currentGamma = new DenseVector(bnprField.getPopSizeParameter().getParameterValues());
         DenseVector proposedGamma;
 
-        SymmTridiagMatrix currentQ = gmrfField.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
-        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
+        SymmTridiagMatrix currentQ = bnprField.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
+        SymmTridiagMatrix proposedQ = bnprField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
 
-        double[] wNative = gmrfField.getSufficientStatistics();
-        double[] numCoalEv = gmrfField.getNumCoalEvents();
+        double[] wNative = bnprField.getSufficientStatistics();
+        double[] numCoalEv = bnprField.getNumCoalEvents();
 
         UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ, 1);
         UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ, 1);
@@ -122,11 +180,11 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         DenseVector diagonal1 = new DenseVector(fieldLength);
         DenseVector diagonal2 = new DenseVector(fieldLength);
         DenseVector diagonal3 = new DenseVector(fieldLength);
-        DenseVector ZBetaVector = getZBeta(covariates, betaParameter);
-        DenseVector QZBetaProp = new DenseVector(fieldLength);
-        DenseVector QZBetaCurrent = new DenseVector(fieldLength);
-        forwardQW.mult(ZBetaVector, QZBetaProp);
-        backwardQW.mult(ZBetaVector, QZBetaCurrent);
+        //DenseVector ZBetaVector = getZBeta(covariates, betaParameter);
+        //DenseVector QZBetaProp = new DenseVector(fieldLength);
+        //DenseVector QZBetaCurrent = new DenseVector(fieldLength);
+        //forwardQW.mult(ZBetaVector, QZBetaProp);
+        //backwardQW.mult(ZBetaVector, QZBetaCurrent);
 
         DenseVector modeForward = newtonRaphson(numCoalEv, wNative, currentGamma, proposedQ.copy(), ZBetaVector);
 
@@ -204,5 +262,29 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
 
     public final String getOperatorName() {
         return BNPRBlockUpdateOperatorParser.BNPR_BLOCK_OPERATOR;
+    }
+
+    public double getTargetAcceptanceProbability() {
+        return 0.234;
+    }
+
+    public double getMinimumAcceptanceLevel() {
+        return 0.1;
+    }
+
+    public double getMaximumAcceptanceLevel() {
+        return 0.4;
+    }
+
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.20;
+    }
+
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.30;
+    }
+
+    public final String getPerformanceSuggestion() {
+        return "This operator should not need tuning, and should accept with probability 1.";
     }
 }

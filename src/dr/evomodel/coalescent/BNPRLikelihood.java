@@ -1,10 +1,13 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.BNPRLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import no.uib.cipr.matrix.DenseVector;
+import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +19,9 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
 
     protected double cutOff;
     protected int numGridPoints;
+    protected int oldFieldLength;
+    protected double[] numCoalEvents;
+    protected double[] storedNumCoalEvents;
     protected double[] gridPoints;
 
     protected double precAlpha;
@@ -34,10 +40,10 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
                           Parameter groupParameter,
                           Parameter precParameter,
                           Parameter lambda,
-                          //Parameter beta,
+                          Parameter beta,
                           MatrixParameter dMatrix,
                           boolean timeAwareSmoothing,
-                          //boolean rescaleByRootHeight,
+                          boolean rescaleByRootHeight,
                           double cutOff,
                           int numGridPoints) {
 
@@ -47,10 +53,10 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         this.groupSizeParameter = groupParameter;
         this.precisionParameter = precParameter;
         this.lambdaParameter = lambda;
-        //this.betaParameter = beta;
+        this.betaParameter = beta;
         this.dMatrix = dMatrix;
         this.timeAwareSmoothing = timeAwareSmoothing;
-        //this.rescaleByRootHeight = rescaleByRootHeight;
+        this.rescaleByRootHeight = rescaleByRootHeight;
 
         this.cutOff = cutOff;
         this.numGridPoints = numGridPoints;
@@ -77,12 +83,19 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
             throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
         }
 
+        oldFieldLength = super.getCorrectFieldLength();
+
+        samplingTimes = getSamplingTimes();
+        samplingTimesKnown = true;
+
         // Field length must be set by this point
         wrapSetupIntervals();
-        coalescentIntervals = new double[fieldLength];
-        storedCoalescentIntervals = new double[fieldLength];
+        coalescentIntervals = new double[oldFieldLength];
+        storedCoalescentIntervals = new double[oldFieldLength];
         sufficientStatistics = new double[fieldLength];
         storedSufficientStatistics = new double[fieldLength];
+        numCoalEvents = new double[fieldLength];
+        storedNumCoalEvents = new double[fieldLength];
 
         setupGMRFWeights();
 
@@ -99,6 +112,26 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
 
     protected int getCorrectFieldLength() {
         return numGridPoints + 1;
+    }
+
+    protected void setTree(List<Tree> treeList) {
+        if (treeList.size() != 1) {
+            throw new RuntimeException("BNPRLikelihood only implemented for one tree");
+        }
+        this.tree = treeList.get(0);
+        this.treesSet = null;
+        if (tree instanceof TreeModel) {
+            addModel((TreeModel) tree);
+        }
+    }
+
+    public void initializationReport() {
+        System.out.println("Creating a BNPR model");
+        System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
+    }
+
+    public void wrapSetupIntervals() {
+        // Do nothing
     }
 
     protected void setupGridPoints() {
@@ -173,6 +206,51 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         }
 
         return result;
+    }
+
+    //***********************
+    // Calculate Likelihood
+    //***********************
+
+    public double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogCoalescentLikelihood();
+            logFieldLikelihood = calculateLogFieldLikelihood();
+            logSamplingLikelihood = calculateLogSamplingLikelihood();
+            likelihoodKnown = true;
+        }
+
+        return logLikelihood + logFieldLikelihood + logSamplingLikelihood;
+    }
+
+    public double getLogLikelihoodSubGamma(double[] gamma) {
+        double logLikelihood = calculateLogCoalescentLikelihoodSubGamma(gamma);
+        double logFieldLikelihood = calculateLogFieldLikelihoodSubGamma(gamma);
+        double logSamplingLikelihood = calculateLogSamplingLikelihoodSubGamma(gamma);
+
+        return logLikelihood + logFieldLikelihood + logSamplingLikelihood;
+    }
+
+
+    public double calculateLogCoalescentLikelihoodSubGamma(double[] gamma) {
+
+        if (!intervalsKnown) {
+            // intervalsKnown -> false when handleModelChanged event occurs in super.
+            wrapSetupIntervals();
+            setupSufficientStatistics();
+            intervalsKnown = true;
+        }
+
+        // Matrix operations taken from block update sampler to calculate data likelihood and field prior
+
+        double currentLike = 0;
+        double[] currentGamma = gamma;
+
+        for (int i = 0; i < fieldLength; i++) {
+            currentLike += -numCoalEvents[i] * currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
+        }
+
+        return currentLike;
     }
 
     public double calculateLogSamplingLikelihood() {
@@ -252,51 +330,65 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         return currentLike;
     }
 
-    public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogCoalescentLikelihood();
-            logFieldLikelihood = calculateLogFieldLikelihood();
-            logSamplingLikelihood = calculateLogSamplingLikelihood();
-            likelihoodKnown = true;
-        }
-
-        return logLikelihood + logFieldLikelihood + logSamplingLikelihood;
-    }
-
-    public double calculateLogCoalescentLikelihoodSubGamma(double[] gamma) {
+    public double calculateLogFieldLikelihood() {
 
         if (!intervalsKnown) {
-            // intervalsKnown -> false when handleModelChanged event occurs in super.
+            //intervalsKnown -> false when handleModelChanged event occurs in super.
             wrapSetupIntervals();
             setupSufficientStatistics();
             intervalsKnown = true;
         }
 
-        // Matrix operations taken from block update sampler to calculate data likelihood and field prior
+        DenseVector diagonal1 = new DenseVector(fieldLength);
+        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
 
-        double currentLike = 0;
-        double[] currentGamma = gamma;
+        //updateGammaWithCovariates(currentGamma);
 
-        for (int i = 0; i < fieldLength; i++) {
-            currentLike += -numCoalEvents[i] * currentGamma[i] + ploidySums[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
+        //double currentLike = handleMissingValues();
+        double currentLike = 0.0;
+
+        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
+        currentQ.mult(currentGamma, diagonal1);
+
+        currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
+        if (lambdaParameter.getParameterValue(0) == 1) {
+            currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
+        } else {
+            currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
         }
 
         return currentLike;
     }
 
+    // TODO: Potentially should be in a BNPRHelper class
     public double calculateLogFieldLikelihoodSubGamma(double[] gamma) {
 
-    }
-
-    public double getLogLikelihoodSubGamma(double[] gamma) {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogCoalescentLikelihoodSubGamma(gamma);
-            logFieldLikelihood = calculateLogFieldLikelihoodSubGamma(gamma);
-            logSamplingLikelihood = calculateLogSamplingLikelihoodSubGamma(gamma);
-            likelihoodKnown = true;
+        if (!intervalsKnown) {
+            //intervalsKnown -> false when handleModelChanged event occurs in super.
+            wrapSetupIntervals();
+            setupSufficientStatistics();
+            intervalsKnown = true;
         }
 
-        return logLikelihood + logFieldLikelihood + logSamplingLikelihood;
+        DenseVector diagonal1 = new DenseVector(fieldLength);
+        DenseVector currentGamma = new DenseVector(gamma);
+
+        //updateGammaWithCovariates(currentGamma);
+
+        //double currentLike = handleMissingValues();
+        double currentLike = 0.0;
+
+        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
+        currentQ.mult(currentGamma, diagonal1);
+
+        currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
+        if (lambdaParameter.getParameterValue(0) == 1) {
+            currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
+        } else {
+            currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
+        }
+
+        return currentLike;
     }
 
     public int getNumGridPoints() {

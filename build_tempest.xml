@@ -135,9 +135,9 @@
         <launch4j configFile="${Windows_dir}/tempest_launch4j.xml"
                   jar="${dist}/tempest.jar"
                   outfile="${Windows_package_dir}/${name} v${version}.exe"
-                  fileVersion="${version}.0.0"
+                  fileVersion="${version}.0"
                   txtFileVersion="${version}"
-                  productVersion="${version}.0.0"
+                  productVersion="${version}.0"
                   txtProductVersion="${version}"/>
 
         <zip destfile="${release_dir}/${name} v${version}.zip">

@@ -222,6 +222,7 @@ public class TreeLogger extends MCLogger {
                 Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
                         format, branchRates, treeTraitProviders, idMap, buffer);
             } else {
+                //System.out.println(treeTraitProviders.length);
                 Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.BranchLengthType.LENGTHS_AS_TIME,
                         format, null, treeTraitProviders, idMap, buffer);
             }
@@ -243,5 +244,17 @@ public class TreeLogger extends MCLogger {
 	public void setTree(Tree tree) {
 		this.tree = tree;
 	}
+
+	public TreeAttributeProvider[] getTreeAttributeProviders() {
+        return this.treeAttributeProviders;
+    }
+
+	public TreeTraitProvider[] getTreeTraitProviders() {
+        return this.treeTraitProviders;
+    }
+
+    public BranchRates getBranchRates() {
+        return this.branchRates;
+    }
 
 }

@@ -42,9 +42,10 @@ import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.model.Statistic;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.stats.DiscreteStatistics;
-import dr.util.HeapSort;
+import dr.stats.Regression;
 import dr.xml.*;
 import org.jdom.Element;
+import org.apache.commons.math.stat.ranking.NaturalRanking;
 
 import java.util.*;
 
@@ -65,7 +66,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String AVERAGE = "average";  // average over all branches
     public static final String WEIGHTED_AVERAGE = "weightedAverage"; // weighted average (=total distance/total time)
     public static final String COEFFICIENT_OF_VARIATION = "coefficientOfVariation"; // weighted average (=total distance/total time)
-    public static final String SPEARMAN_CORRELATION = "spearmanCorrelation"; // weighted average (=total distance/total time)
+    public static final String SPEARMAN = "spearman";
+    public static final String CORRELATION_COEFFICIENT = "correlationCoefficient";
+    public static final String DISTANCE_TIME_CORRELATION = "distanceTimeCorrelation";
+    public static final String R_SQUARED = "Rsquared";
     public static final String STATISTIC = "statistic";
     public static final String TRAIT = "trait";
     public static final String TRAIT2DAREA = "trait2Darea";
@@ -413,14 +417,17 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         }  else if (summaryStat == summaryStatistic.DIFFUSION_DISTANCE)  {
             return treeDistance;
             //DIFFUSION_TIME
-        }  else if (summaryStat == summaryStatistic.SPEARMAN_CORRELATION)  {
-            //hash sort times and distances, and compute spearman
-            int[] timeRanks = new int[times.size()];
-            int[] distanceRanks = new int[distances.size()];
-            HeapSort.sort(convertDoubles(times), timeRanks);
-            HeapSort.sort(convertDoubles(distances), distanceRanks);
-            return getSpearmanRho(timeRanks,distanceRanks);
-        }  else {
+        }  else if (summaryStat == summaryStatistic.DISTANCE_TIME_CORRELATION)  {
+            if (summaryMode == Mode.SPEARMAN) {
+                return getSpearmanRho(convertDoubles(times),convertDoubles(distances));
+            } else if (summaryMode == Mode.R_SQUARED) {
+                Regression r = new Regression(convertDoubles(times), convertDoubles(distances));
+                return r.getRSquared();
+            } else {
+                Regression r = new Regression(convertDoubles(times),convertDoubles(distances));
+                return r.getCorrelationCoefficient();
+            }
+         }  else {
             return treeLength;
         }
     }
@@ -831,14 +838,18 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return ret;
     }
 
-    private static double getSpearmanRho(int[] rank1, int[] rank2){
+    private static double getSpearmanRho(double[] data1, double[] data2){
+
+        double data1Ranks[] = new NaturalRanking().rank(data1);
+        double data2Ranks[] = new NaturalRanking().rank(data2);
+
         int counter = 0;
         double d_i = 0;
-        while(counter < rank1.length){
-            d_i += Math.pow(rank1[counter] -  rank2[counter], 2);
+        while(counter < data1Ranks.length){
+            d_i += Math.pow(data1Ranks[counter] -  data2Ranks[counter], 2);
             counter ++;
         }
-        return  (1 - (6*d_i)/(rank1.length*(Math.pow(rank1.length,2) - 1)));
+        return  (1 - (6*d_i)/(data1Ranks.length*(Math.pow(data1Ranks.length,2) - 1)));
     }
 
 
@@ -868,7 +879,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         AVERAGE,
         WEIGHTED_AVERAGE,
         MEDIAN,
-        COEFFICIENT_OF_VARIATION
+        COEFFICIENT_OF_VARIATION,
+        SPEARMAN,
+        CORRELATION_COEFFICIENT,
+        R_SQUARED
     }
 
     enum summaryStatistic {
@@ -881,7 +895,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         WAVEFRONT_DISTANCE,
         WAVEFRONT_DISTANCE_PHYLO,
         WAVEFRONT_RATE,
-        SPEARMAN_CORRELATION
+        DISTANCE_TIME_CORRELATION
     }
 
     enum BranchSet {
@@ -906,20 +920,26 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             String name = xo.getAttribute(NAME, xo.getId());
 
             boolean greatCircleDistances = xo.getAttribute(USE_GREATCIRCLEDISTANCES, false); // Default value is false
-            Mode averageMode;
+            Mode statMode;
             String mode = xo.getAttribute(MODE, WEIGHTED_AVERAGE);
 
             if (mode.equals(AVERAGE)) {
-                averageMode = Mode.AVERAGE;
+                statMode = Mode.AVERAGE;
             } else if (mode.equals(MEDIAN)) {
-                averageMode = Mode.MEDIAN;
+                statMode = Mode.MEDIAN;
             } else if (mode.equals(COEFFICIENT_OF_VARIATION)) {
-                averageMode = Mode.COEFFICIENT_OF_VARIATION;
+                statMode = Mode.COEFFICIENT_OF_VARIATION;
             } else if (mode.equals(WEIGHTED_AVERAGE)) {
-                averageMode = Mode.WEIGHTED_AVERAGE;
+                statMode = Mode.WEIGHTED_AVERAGE;
+            } else if (mode.equals(SPEARMAN)) {
+                statMode = Mode.SPEARMAN;
+            } else if (mode.equals(CORRELATION_COEFFICIENT)) {
+                statMode = Mode.CORRELATION_COEFFICIENT;
+            } else if (mode.equals(R_SQUARED)) {
+                statMode = Mode.R_SQUARED;
             } else {
                 System.err.println("Unknown mode: "+mode+". Reverting to weighted average for "+name);
-                averageMode = Mode.WEIGHTED_AVERAGE;
+                statMode = Mode.WEIGHTED_AVERAGE;
             }
 
             final double upperHeight = xo.getAttribute(HEIGHT_UPPER, Double.MAX_VALUE);
@@ -946,6 +966,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             int dimension = 1;
             if (statistic.equals(DIFFUSION_RATE)) {
                 summaryStat = summaryStatistic.DIFFUSION_RATE;
+                if (mode.equals(SPEARMAN) || mode.equals(R_SQUARED) || mode.equals(CORRELATION_COEFFICIENT)){
+                    System.err.println(name+": mode = "+mode+" ignored for "+DIFFUSION_TIME+", reverting to weighted average mode");
+                    statMode = Mode.WEIGHTED_AVERAGE;
+                }
             } else if (statistic.equals(DIFFUSION_TIME)) {
                 summaryStat = summaryStatistic.DIFFUSION_TIME;
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
@@ -956,10 +980,11 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
                     System.err.println(name+": mode = "+mode+" ignored for "+DIFFUSION_DISTANCE);
                 }
-            } else if (statistic.equals(SPEARMAN_CORRELATION)) {
-                summaryStat = summaryStatistic.SPEARMAN_CORRELATION;
-                if (!mode.equals(WEIGHTED_AVERAGE)) {
-                    System.err.println(name+": mode = "+mode+" ignored for "+SPEARMAN_CORRELATION);
+            } else if (statistic.equals(DISTANCE_TIME_CORRELATION)) {
+                summaryStat = summaryStatistic.DISTANCE_TIME_CORRELATION;
+                if (mode.equals(AVERAGE) || mode.equals(WEIGHTED_AVERAGE) || mode.equals(COEFFICIENT_OF_VARIATION) || mode.equals(MEDIAN)){
+                    System.err.println(name+": mode = "+mode+" ignored for "+DISTANCE_TIME_CORRELATION+", reverting to correlation coefficient mode");
+                    statMode = Mode.CORRELATION_COEFFICIENT;
                 }
             } else if (statistic.equals(WAVEFRONT_DISTANCE)) {
                 summaryStat = summaryStatistic.WAVEFRONT_DISTANCE;
@@ -975,7 +1000,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 summaryStat = summaryStatistic.TRAIT;
                 if (mode.equals(WEIGHTED_AVERAGE)) {
                     System.err.println(name + ": mode = " + mode + " ignored for " + TRAIT + ", resorting to " + AVERAGE);
-                    averageMode = Mode.AVERAGE;
+                    statMode = Mode.AVERAGE;
                 }
                 if (upperHeight < Double.MAX_VALUE) {
                     System.err.println(name + ": only " + HEIGHT_LOWER + " or " + HEIGHT_LOWER_SERIE + " are relevant for " + TRAIT);
@@ -1001,8 +1026,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 summaryStat = summaryStatistic.WAVEFRONT_RATE;
             } else if (statistic.equals(DIFFUSION_COEFFICIENT)) {
                 summaryStat = summaryStatistic.DIFFUSION_COEFFICIENT;
-            } else if (statistic.equals(SPEARMAN_CORRELATION)) {
-                summaryStat = summaryStatistic.SPEARMAN_CORRELATION;
+            } else if (statistic.equals(DISTANCE_TIME_CORRELATION)) {
+                summaryStat = summaryStatistic.DISTANCE_TIME_CORRELATION;
             } else {
                 System.err.println(name+": unknown statistic: "+statistic+". Reverting to diffusion rate.");
                 summaryStat = summaryStatistic.DIFFUSION_RATE;
@@ -1102,7 +1127,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
 
 
-            return new ContinuousDiffusionStatistic(name, traitLikelihoods, greatCircleDistances, averageMode, summaryStat, upperHeight, lowerHeight, lowerHeights, cumulative, trueNoise, dimension, taxonList, branchset, backboneTime, stateString, mjtl);
+            return new ContinuousDiffusionStatistic(name, traitLikelihoods, greatCircleDistances, statMode, summaryStat, upperHeight, lowerHeight, lowerHeights, cumulative, trueNoise, dimension, taxonList, branchset, backboneTime, stateString, mjtl);
         }
 
         //************************************************************************

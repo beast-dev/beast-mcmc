@@ -580,7 +580,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     @Override
-    public List<Operator> selectOperators(List<Operator> ops) {
+    public List<Operator> selectOperators(List<Operator> operators) {
+
+        List<Operator> ops = new ArrayList<Operator>();
 
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
@@ -772,7 +774,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 ops.add(getOperator("pInv"));
             }
         }
-        return ops;
+
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            // unless a custom mix has been chosen these operators should be off if AMTK is on
+            for (Operator op : ops) {
+                op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
+            }
+        }
+
+        operators.addAll(ops);
+
+        return operators;
     }
 
     private void addFrequencyOps(List<Operator> ops) {

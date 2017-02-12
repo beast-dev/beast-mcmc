@@ -28,6 +28,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.*;
 import dr.evolution.util.Taxa;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -281,7 +282,9 @@ public class PartitionClockModel extends PartitionOptions {
     }
 
     @Override
-    public List<Operator> selectOperators(List<Operator> ops) {
+    public List<Operator> selectOperators(List<Operator> operators) {
+        List<Operator> ops = new ArrayList<Operator>();
+
         if (options.hasData()) {
 
             switch (clockType) {
@@ -342,6 +345,16 @@ public class PartitionClockModel extends PartitionOptions {
             }
             ops.add(muOperator);
         }
+
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            // unless a custom mix has been chosen these operators should be off if AMTK is on
+            for (Operator op : ops) {
+                op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
+            }
+        }
+
+        operators.addAll(ops);
+
         return ops;
     }
 

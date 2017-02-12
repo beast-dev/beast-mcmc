@@ -204,7 +204,7 @@ public class Operator implements Serializable {
     }
 
     public boolean isParameterFixed() {
-        return parameter1.isFixed();
+        return parameter1 != null && parameter1.isFixed();
     }
 
     public Parameter getParameter1() {

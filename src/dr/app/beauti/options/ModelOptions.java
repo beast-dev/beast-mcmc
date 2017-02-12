@@ -214,7 +214,10 @@ public abstract class ModelOptions implements Serializable {
 
     public Operator createOperator(String key, String name, String description, String parameterName, OperatorType type,
                                    double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
+        Parameter parameter = null;
+        if (parameterName != null) {
+            parameter = getParameter(parameterName);
+        }
         return operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight).build()); // key != name
     }
 

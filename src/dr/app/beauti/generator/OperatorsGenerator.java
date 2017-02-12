@@ -723,15 +723,16 @@ public class OperatorsGenerator extends Generator {
         int startTransform = 0;
         for (Parameter parameter : options.selectParameters()) {
             if (parameter.isAdaptiveMultivariateCompatible) {
-                if (parameter.getLowerBound() == Double.NEGATIVE_INFINITY && parameter.getUpperBound() == Double.POSITIVE_INFINITY) {
-                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.NoTransform().getTransformName()),
+                if (parameter.isNonNegative) {
+                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.LogTransform().getTransformName()),
                             new Attribute.Default<Integer>(Transform.START, startTransform),
                             new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
                     }, true);
                     startTransform += parameter.getDimensionWeight();
                     System.out.println(parameter + ": " + parameter.getDimensionWeight());
-                } else if (parameter.getLowerBound() == 0.0 && parameter.getUpperBound() == Double.POSITIVE_INFINITY) {
-                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.LogTransform().getTransformName()),
+
+                } else { // -Inf to Inf
+                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.NoTransform().getTransformName()),
                             new Attribute.Default<Integer>(Transform.START, startTransform),
                             new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
                     }, true);

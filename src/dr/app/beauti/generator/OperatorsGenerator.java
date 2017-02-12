@@ -51,6 +51,7 @@ import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;
+import dr.util.Transform;
 import dr.xml.XMLParser;
 
 import java.util.List;
@@ -687,16 +688,26 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeAdaptiveMultivariateOperator(Operator operator, XMLWriter writer) {
+
+        //determine how many parameters will be part of the AVMVN transition kernel
+        int parameterCount = 0;
+        for (Parameter parameter : options.selectParameters()) {
+            parameterCount++;
+        }
+        //options set according to recommendations in AVMVN paper
+        int initial = 200*parameterCount;
+        int burnin = initial/2;
+
         writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
                 new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
                         new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
-                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, 5000),
-                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, 2500),
+                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
+                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
                         new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
                         new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
                         new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
-                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false),
-                        getWeightAttribute(operator.getWeight())
+                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
                 });
 
         // @todo Need to collate only the parameters being controlled by this here.
@@ -707,10 +718,31 @@ public class OperatorsGenerator extends Generator {
             }
         }
 
+        //set appropriate transformations for all parameters
+        //TODO: we should aggregate as best as possible the different transformation so as to have fewer attributes
+        int startTransform = 0;
+        for (Parameter parameter : options.selectParameters()) {
+            if (parameter.isAdaptiveMultivariateCompatible) {
+                if (parameter.getLowerBound() == Double.NEGATIVE_INFINITY && parameter.getUpperBound() == Double.POSITIVE_INFINITY) {
+                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.NoTransform().getTransformName()),
+                            new Attribute.Default<Integer>(Transform.START, startTransform),
+                            new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
+                    }, true);
+                    startTransform += parameter.getDimensionWeight();
+                    System.out.println(parameter + ": " + parameter.getDimensionWeight());
+                } else if (parameter.getLowerBound() == 0.0 && parameter.getUpperBound() == Double.POSITIVE_INFINITY) {
+                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.LogTransform().getTransformName()),
+                            new Attribute.Default<Integer>(Transform.START, startTransform),
+                            new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
+                    }, true);
+                    startTransform += parameter.getDimensionWeight();
+                    System.out.println(parameter + ": " + parameter.getDimensionWeight());
+                }
+            }
+        }
+
         writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
     }
-
-
 
     private Attribute getWeightAttribute(double weight) {
         if (weight == (int) weight) {

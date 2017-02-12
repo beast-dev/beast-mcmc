@@ -1,7 +1,7 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -61,6 +61,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String SKIP_RANK_CHECK = "skipRankCheck";
 
     public static final boolean DEBUG = false;
+    public static final boolean PRINT_FULL_MATRIX = false;
 
     private double scaleFactor;
     private double beta;
@@ -542,7 +543,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
+        String output = "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
+        if (PRINT_FULL_MATRIX) {
+            output += "\nMeans:\n";
+            for (int i = 0; i < dim; i++) {
+                output += newMeans[i] + " ";
+            }
+            output += "\nVariance-covariance matrix:\n";
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    output += empirical[i][j] + " ";
+                }
+                output += "\n";
+            }
+        }
+        return output;
     }
 
     public double getCoercableParameter() {

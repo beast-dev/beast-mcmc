@@ -688,7 +688,16 @@ public class OperatorsGenerator extends Generator {
 
     private void writeAdaptiveMultivariateOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
-                getWeightAttribute(operator.getWeight()));
+                new Attribute[]{
+                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
+                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, 5000),
+                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, 2500),
+                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
+                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
+                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
+                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false),
+                        getWeightAttribute(operator.getWeight())
+                });
 
         // @todo Need to collate only the parameters being controlled by this here.
 

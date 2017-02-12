@@ -28,10 +28,12 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
+import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -215,6 +217,9 @@ public class OperatorsGenerator extends Generator {
                 break;
             case NODE_REHIGHT:
                 writeSpeciesTreeOperator(operator, writer);
+                break;
+            case ADAPTIVE_MULTIVARIATE:
+                writeAdaptiveMultivariateOperator(operator, writer);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown operator type");
@@ -680,6 +685,23 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
     }
+
+    private void writeAdaptiveMultivariateOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
+                getWeightAttribute(operator.getWeight()));
+
+        // @todo Need to collate only the parameters being controlled by this here.
+
+        for (Parameter parameter : options.selectParameters()) {
+            if (parameter.isAdaptiveMultivariateCompatible) {
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+            }
+        }
+
+        writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
+    }
+
+
 
     private Attribute getWeightAttribute(double weight) {
         if (weight == (int) weight) {

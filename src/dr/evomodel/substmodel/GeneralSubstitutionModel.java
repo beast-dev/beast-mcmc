@@ -48,8 +48,8 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
     protected int ratesRelativeTo;
 
     public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
-                                    Parameter parameter, int relativeTo) {
-        this(name, dataType, freqModel, parameter, relativeTo, null);
+                                    Parameter ratesParameter, int relativeTo) {
+        this(name, dataType, freqModel, ratesParameter, relativeTo, null);
 
     }
 
@@ -59,11 +59,11 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      * @param dataType the data type
      */
     public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
-                                    Parameter parameter, int relativeTo, EigenSystem eigenSystem) {
+                                    Parameter ratesParameter, int relativeTo, EigenSystem eigenSystem) {
 
         super(name, dataType, freqModel, eigenSystem);
 
-        ratesParameter = parameter;
+        this.ratesParameter = ratesParameter;
         if (ratesParameter != null) {
             addVariable(ratesParameter);
             if (!(ratesParameter instanceof DuplicatedParameter))
@@ -72,19 +72,6 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
 
             setupDimensionNames(relativeTo);
         }
-        setRatesRelativeTo(relativeTo);
-    }
-
-    /**
-     * constructor
-     *
-     * @param dataType the data type
-     */
-    protected GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
-
-        super(name, dataType, freqModel,
-                null);
-
         setRatesRelativeTo(relativeTo);
     }
 
@@ -100,7 +87,7 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         for (int i = 0; i < rates.length; i++) {
             if (i == ratesRelativeTo) {
                 rates[i] = 1.0;
-            } else if (i < ratesRelativeTo) {
+            } else if (ratesRelativeTo < 0 || i < ratesRelativeTo) {
                 rates[i] = ratesParameter.getParameterValue(i);
             } else {
                 rates[i] = ratesParameter.getParameterValue(i - 1);

@@ -140,7 +140,7 @@ public class DebugUtils {
                     out.println("#edges");
                     out.println("#child-node parent-node");
 
-                    out.println(nodeCount-1);
+                    out.println(nodeCount);
                     for (int i = 0; i < nodeCount; i++) {
                         if (!((TreeModel) model).isRoot(((TreeModel) model).getNode(i))) {
                             out.print(((TreeModel) model).getNode(i).getNumber());
@@ -329,12 +329,19 @@ public class DebugUtils {
                         line = in.readLine();
                         line = in.readLine();
                         fields = line.split("\t");
+
                         int edgeCount = Integer.parseInt(fields[0]);
+
                         int[] parents = new int[edgeCount];
+                        for (int i = 0; i < edgeCount; i++){
+                            parents[i] = -1;
+                        }
                         for (int i = 0; i < edgeCount; i++) {
                             line = in.readLine();
-                            fields = line.split("\t");
-                            parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
+                            if (line != null) {
+                                fields = line.split("\t");
+                                parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
+                            }
                         }
 
                         //perform magic with the acquired information

@@ -99,14 +99,16 @@ public class ScaleOperator extends AbstractCoercableOperator {
             for (int i = 0; i < dim; i++) {
 
                 final double scaleOne = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
-                final double value = scaleOne * variable.getValue(i);
+                final double offset = bounds.getLowerLimit(i);
+
+                // scale offset by the lower bound
+                final double value = ((variable.getValue(i) - offset) * scaleOne) + offset;
 
                 logq -= Math.log(scaleOne);
 
-                if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
-//                  throw new OperatorFailedException("proposed value outside boundaries");
-                    // this used to throw an exception
-                    return Double.NEGATIVE_INFINITY;
+                if (value > bounds.getUpperLimit(i)) {
+                    // if bounded then perhaps this could be reflected.
+                    throw new RuntimeException("proposed value greater than upper bound");
                 }
 
                 variable.setValue(i, value);
@@ -125,15 +127,16 @@ public class ScaleOperator extends AbstractCoercableOperator {
             // Must first set all parameters first and check for boundaries later for the operator to work
             // correctly with dependent parameters such as tree node heights.
             for (int i = 0; i < dim; i++) {
-                variable.setValue(i, variable.getValue(i) * scale);
+                final double offset = bounds.getLowerLimit(i);
+
+                // scale offset by the lower bound
+                variable.setValue(i, ((variable.getValue(i) - offset) * scale) + offset);
             }
 
             for (int i = 0; i < dim; i++) {
-                if (variable.getValue(i) < variable.getBounds().getLowerLimit(i) ||
-                        variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
-//                  throw new OperatorFailedException("proposed value outside boundaries");
-                    // this used to throw an exception
-                    return Double.NEGATIVE_INFINITY;
+                if (variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
+                    // if bounded then perhaps this could be reflected.
+                    throw new RuntimeException("proposed value greater than upper bound");
                 }
             }
         } else {
@@ -175,6 +178,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
             }
 
             final double oldValue = variable.getValue(index);
+            final double offset = bounds.getLowerLimit(index);
 
             if (oldValue == 0) {
                 Logger.getLogger("dr.inference").severe("The " + ScaleOperatorParser.SCALE_OPERATOR +
@@ -185,12 +189,11 @@ public class ScaleOperator extends AbstractCoercableOperator {
                         variable.getVariableName() + " to be a positive real number"
                 );
             }
-            final double newValue = scale * oldValue;
+            final double newValue = ((oldValue - offset) * scale) + offset;
 
-            if (newValue < bounds.getLowerLimit(index) || newValue > bounds.getUpperLimit(index)) {
-//                throw new OperatorFailedException("proposed value outside boundaries");
-                // this used to throw an exception
-                return Double.NEGATIVE_INFINITY;
+            if (newValue > bounds.getUpperLimit(index)) {
+                // if bounded then perhaps this could be reflected.
+                throw new RuntimeException("proposed value greater than upper bound");
             }
 
             variable.setValue(index, newValue);

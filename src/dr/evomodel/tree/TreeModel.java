@@ -1,7 +1,7 @@
 /*
  * TreeModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -689,6 +689,27 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
 
         //Tree donor has no rates nor traits, only heights
 
+    }
+
+    /**
+     * Modifies the current tree by adopting the provided collection of edges.
+     * Edges are provided as index: child number; parent: array entry
+     */
+    public void adoptTreeStructure(int[] edges) {
+        if ((this.nodeCount-1) != edges.length) {
+            throw new RuntimeException("Incorrect number of edges provided: " + edges.length + " versus " + this.nodeCount + " nodes.");
+        }
+        //first remove all the child nodes of the internal nodes
+        for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
+            int childCount = nodes[i].getChildCount();
+            for (int j = 0; j < childCount; j++) {
+                nodes[i].removeChild(j);
+            }
+        }
+        //now add the parent-child links again to ALL the nodes
+        for (int i = 0; i < edges.length; i++) {
+            nodes[edges[i]].addChild(nodes[i]);
+        }
     }
 
     /**

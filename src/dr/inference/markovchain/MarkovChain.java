@@ -234,6 +234,12 @@ public final class MarkovChain implements Serializable {
             }
 
             // assert Profiler.stopProfile("Operate");
+            if (hastingsRatio == Double.NEGATIVE_INFINITY) {
+                // Should the evaluation be short-cutted?
+                // Previously this was set to false if OperatorFailedException was thrown.
+                // Now a -Inf HR is returned.
+                operatorSucceeded = false;
+            }
 
             if (PROFILE) {
                 long duration = System.currentTimeMillis() - elaspedTime;

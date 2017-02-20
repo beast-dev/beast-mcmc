@@ -60,6 +60,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String COEFFICIENT = "coefficient";
     public static final String SKIP_RANK_CHECK = "skipRankCheck";
 
+    public static final String PARAMETERS = "parameters";
+    public static final String TRANSFORM = "transform";
+
     public static final boolean DEBUG = false;
     public static final boolean PRINT_FULL_MATRIX = false;
 
@@ -651,6 +654,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 throw new XMLParseException("scaleFactor must be greater than 0.0");
             }
 
+            for (XMLObject cxo : xo.getAllChildren(PARAMETERS)) {
+                Transform.Type type = null;
+                if (cxo.hasAttribute(TRANSFORM)) {
+                    type = Transform.Type.valueOf(cxo.getStringAttribute(TRANSFORM));
+                }
+                Transform transform = Transform.NONE;
+                if (type != null) {
+                    transform = type.getTransform();
+                }
+
+                for (Parameter parameter : cxo.getAllChildren(Parameter.class)) {
+                    // todo add the parameter to the transform parameter set...
+                }
+            }
+
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
@@ -799,8 +817,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
                 AttributeRule.newBooleanRule(SKIP_RANK_CHECK, true),
-                new ElementRule(Parameter.class),
-                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
+                new ElementRule(Parameter.class, true),
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
+                new ElementRule(PARAMETERS, new XMLSyntaxRule[] {
+                        AttributeRule.newStringRule(TRANSFORM, true),
+                        new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+                }, 0, Integer.MAX_VALUE)
         };
 
     };

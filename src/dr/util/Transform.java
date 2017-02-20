@@ -342,13 +342,8 @@ public interface Transform {
             Transform thisTransform = Transform.NONE;
             String name = (String) xo.getAttribute(TYPE);
             System.err.println("name: " + name);
-            for (Transform type : Transform.transformList) {
-                if (name.equals(type.getTransformName())) {
-                    System.err.println(name + " --- " + type.getTransformName());
-                    thisTransform = type;
-                    break;
-                }
-            }
+
+            thisTransform = Type.valueOf(name).transform;
 
             ParsedTransform transform = new ParsedTransform();
             transform.transform = thisTransform;
@@ -392,14 +387,35 @@ public interface Transform {
         }
     }
 
-    public static final LogTransform LOG = new LogTransform();
-    public static final LogitTransform LOGIT = new LogitTransform();
     public static final NoTransform NONE = new NoTransform();
-    public static final FisherZTransform FISHER_Z = new FisherZTransform();
+    public static final LogTransform LOG = new LogTransform();
     public static final LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
+    public static final LogitTransform LOGIT = new LogitTransform();
+    public static final FisherZTransform FISHER_Z = new FisherZTransform();
 
-    public static final Transform[] transformList = {LOG, LOG_CONSTRAINED_SUM, LOGIT, NONE, FISHER_Z};
+    public enum Type {
+        NONE("none", new NoTransform()),
+        LOG("log", new LogTransform()),
+        LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
+        LOGIT("logit", new LogitTransform()),
+        FISHER_Z("fisherZ",new FisherZTransform());
 
+        Type(String name, Transform transform) {
+            this.name = name;
+            this.transform = transform;
+        }
+
+        public Transform getTransform() {
+            return transform;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        private Transform transform;
+              private String name;
+    }
     public static final String TRANSFORM = "transform";
     public static final String TYPE = "type";
     public static final String START = "start";

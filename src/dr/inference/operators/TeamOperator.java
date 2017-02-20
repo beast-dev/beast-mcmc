@@ -165,7 +165,7 @@ public class TeamOperator extends SimpleMCMCOperator /*implements CoercableMCMCO
          }
      }
 
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         choose();
 
@@ -173,12 +173,7 @@ public class TeamOperator extends SimpleMCMCOperator /*implements CoercableMCMCO
 
         for(int k = 0; k < nPick; ++k) {
             MCMCOperator operation = currentRound[k];
-            try {
-                logP += operation.operate();
-            } catch (OperatorFailedException ofe) {
-                nToReject = k+1;
-                throw ofe;
-            }
+            logP += operation.operate();
         }
         nToReject = nPick;
 

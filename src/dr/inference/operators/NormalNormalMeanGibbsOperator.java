@@ -84,7 +84,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
      * @return the hastings ratio
      * @throws OperatorFailedException if operator fails and should be rejected
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double priorPrecision = 1.0 / prior.variance();
         double priorMean = prior.mean();

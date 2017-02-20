@@ -63,7 +63,7 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
      * This operator changes the variance but maintains the order
      * of the scalars.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         double total = 0.0;
 
@@ -78,7 +78,8 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
 
             double newScalar = (parameter.getParameterValue(i) - mean) * scaleFactor + mean;
             if (newScalar < parameter.getBounds().getLowerLimit(i) || newScalar > parameter.getBounds().getUpperLimit(i)) {
-                throw new OperatorFailedException("Proposed value out of bounds");
+//                throw new OperatorFailedException("Proposed value out of bounds");
+                return Double.NEGATIVE_INFINITY;
             }
             parameter.setParameterValue(i, newScalar);
         }

@@ -80,7 +80,7 @@ public class RandomWalkOnMapOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         // a random dimension to perturb
 
@@ -102,7 +102,8 @@ public class RandomWalkOnMapOperator extends AbstractCoercableOperator {
 
         if (map != null) {
             if (!map.isValidPoint(newX, newY)) {
-                throw new OperatorFailedException("proposed value outside boundaries");
+//                throw new OperatorFailedException("proposed value outside boundaries");
+                return Double.NEGATIVE_INFINITY;
             }
         }
 

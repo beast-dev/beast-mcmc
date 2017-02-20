@@ -72,7 +72,7 @@ public class NodeHeightScaleOperator extends AbstractCoercableOperator {
     /**
      * scale the rates of a subtree and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 

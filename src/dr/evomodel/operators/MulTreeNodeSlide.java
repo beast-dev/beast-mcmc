@@ -31,7 +31,6 @@ import dr.evomodel.speciation.MulSpeciesTreeModel;
 import dr.evomodel.speciation.MulSpeciesBindings;
 import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.inference.model.Parameter;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import jebl.util.FixedBitSet;
@@ -78,14 +77,14 @@ public class MulTreeNodeSlide extends SimpleMCMCOperator {
         return TreeNodeSlideParser.TREE_NODE_REHEIGHT + "(" + multree.getId() + "," + species.getId() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         operateOneNode(0.0);
         return 0;
     }
 
 
 
-    public void operateOneNode(final double factor) throws OperatorFailedException {
+    public void operateOneNode(final double factor) {
 
 //            #print "operate: tree", ut.treerep(t)
      //   if( verbose)  System.out.println("  Mau at start: " + tree.getSimpleTree());

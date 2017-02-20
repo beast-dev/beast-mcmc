@@ -60,7 +60,7 @@ public class SwapParameterOperator extends SimpleMCMCOperator {
     /**
      * swap all values in two random parameters.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         int i = MathUtils.nextInt(parameterList.size());
         int j = i;
@@ -82,7 +82,8 @@ public class SwapParameterOperator extends SimpleMCMCOperator {
 
             // Check bk outside of aBounds or ak outside of bBounds
             if (isOutside(aBounds, bk, k) || isOutside(bBounds, ak, k)) {
-                throw new OperatorFailedException("proposed value outside boundaries");
+//                throw new OperatorFailedException("proposed value outside boundaries");
+                return Double.NEGATIVE_INFINITY;
             }
 
             // Swap

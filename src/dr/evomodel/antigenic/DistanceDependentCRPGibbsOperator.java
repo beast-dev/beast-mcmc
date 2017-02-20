@@ -32,12 +32,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.GammaFunction;
 import dr.math.MathUtils;
-import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.distributions.WishartDistribution;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
 
 
@@ -131,7 +126,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	    }
   */
 	    /**
-	     * change the parameter and return the hastings ratio.
+		 * change the parameter and return the hastings ratio.
 	     */
 	    public final double doOperation() {
 

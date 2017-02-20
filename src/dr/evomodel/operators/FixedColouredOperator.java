@@ -29,7 +29,6 @@ import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -59,7 +58,7 @@ public class FixedColouredOperator implements CoercableMCMCOperator {
         this.innerOperator = operator;
     }
 
-    public final double operate() throws OperatorFailedException {
+    public final double operate() {
 
         colouringModel.invalidateProposalProbability();
 

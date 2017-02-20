@@ -31,7 +31,6 @@ import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.inference.model.Statistic;
 

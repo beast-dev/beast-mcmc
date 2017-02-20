@@ -2,7 +2,6 @@ package dr.inference.operators;
 
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
-import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 
@@ -81,7 +80,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         if(callCount < BASE_SIZE){
             performOperation();
         }
@@ -191,12 +190,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         if(sparsityPrior != null)
             sparsityPrior.acceptModelState();
 
+        iterate();
 
-        try {
-            iterate();
-        } catch (OperatorFailedException e) {
-            e.printStackTrace();
-        }
         outpu = "";
 //        for (int i = 0; i <storedFactors.getDimension() ; i++) {
 //            outpu += storedFactors.getParameterValue(i);
@@ -297,7 +292,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         }
     }
 
-    private void iterate() throws OperatorFailedException {
+    private void iterate() {
         if(factorOperator != null)
             factorOperator.setPathParameter(sizeParam);
         if(loadingsOperator instanceof GibbsOperator)

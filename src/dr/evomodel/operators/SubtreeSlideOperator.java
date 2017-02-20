@@ -25,7 +25,6 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -79,7 +78,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logq;
 
@@ -269,11 +268,12 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
         }
 
-        if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
+        // just return -Inf
+        //if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
         if (scaledDirichletBranches) {
             if (oldTreeHeight != tree.getNodeHeight(tree.getRoot()))
-                throw new OperatorFailedException("Temporarily disabled."); // TODO calculate Hastings ratio
+                throw new UnsupportedOperationException("Temporarily disabled."); // TODO calculate Hastings ratio
         }
 
         return logq;

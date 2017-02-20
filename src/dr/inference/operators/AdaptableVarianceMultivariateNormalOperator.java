@@ -176,7 +176,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         iterations++;
 

@@ -27,7 +27,6 @@ package dr.evomodel.operators;
 
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import jebl.math.Random;
 
@@ -49,7 +48,7 @@ public class PatternWeightIncrementOperator extends SimpleMCMCOperator implement
 //        treeLikelihood.setPatternWeights(weights);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if (allPatternsAdded) {
             return 0.0;

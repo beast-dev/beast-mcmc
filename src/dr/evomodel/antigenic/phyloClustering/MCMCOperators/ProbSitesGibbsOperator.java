@@ -2,16 +2,10 @@ package dr.evomodel.antigenic.phyloClustering.MCMCOperators;
 
 import cern.jet.random.Beta;
 import dr.evomodel.antigenic.phyloClustering.TreeClusteringVirusesPrior;
-import dr.evomodel.antigenic.phyloClustering.misc.obsolete.AGLikelihoodTreeCluster;
-import dr.evomodel.antigenic.phyloClustering.misc.obsolete.TreeClusterGibbsOperator;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.MCMCOperator.Utils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -51,8 +45,8 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
     }
     
 
-	public double doOperation() throws OperatorFailedException { 
-		
+	public double doOperation() {
+
 //		clusterPrior.sampleCausativeStates();
        int[] causalCount = clusterPrior.getCausalCount();
        int[] nonCausalCount = clusterPrior.getNonCausalCount();

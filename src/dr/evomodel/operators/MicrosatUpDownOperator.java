@@ -72,7 +72,7 @@ public class MicrosatUpDownOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));

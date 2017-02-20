@@ -28,7 +28,6 @@ package dr.evomodel.arg.operators;
 import dr.evomodel.arg.ARGModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -68,7 +67,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     }
 
 
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
         double logq = 0;
 
         final int len = partitioningParameters.getParameterCount();
@@ -80,7 +79,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         boolean[] updatePartition = new boolean[arg.getNumberOfPartitions()];
 
         if(tossAll){
-        	for(int i = 0 ; i < len; i++){
+            for(int i = 0 ; i < len; i++){
         		logq += doFlip(i,updatePartition);
             }	
         }else{
@@ -91,7 +90,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         return logq;
     }
     
-    private double doFlip(int i, boolean[] updatePartition) throws OperatorFailedException {
+    private double doFlip(int i, boolean[] updatePartition) {
     	if (isRecombination) {
             return doRecombination(partitioningParameters.getParameter(i),updatePartition);
         } 
@@ -101,7 +100,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     }
 
 
-    private double doRecombination(Parameter partition, boolean[] updatePartition) throws OperatorFailedException {
+    private double doRecombination(Parameter partition, boolean[] updatePartition) {
 
         assert checkValidRecombinationPartition(partition);
 
@@ -125,7 +124,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         }
 
         if (!checkValidRecombinationPartition(partition)) {
-            throw new OperatorFailedException("");
+            return Double.NEGATIVE_INFINITY;
         }
 
 
@@ -142,7 +141,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     }
 
 
-    private double doReassortment(Parameter partition, boolean[] updatePartition) throws OperatorFailedException {
+    private double doReassortment(Parameter partition, boolean[] updatePartition) {
 
         assert checkValidReassortmentPartition(partition);
 
@@ -167,7 +166,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         
         
         if (!checkValidReassortmentPartition(partition)) {
-            throw new OperatorFailedException("");
+            return Double.NEGATIVE_INFINITY;
         }
 
         return 0;

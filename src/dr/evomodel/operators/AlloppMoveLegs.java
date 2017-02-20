@@ -28,7 +28,6 @@ package dr.evomodel.operators;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 import dr.evomodelxml.operators.AlloppMoveLegsParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 
 
@@ -63,7 +62,7 @@ public class AlloppMoveLegs extends SimpleMCMCOperator {
 	}
 
 	@Override
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		apspnet.beginNetworkEdit();
 		apspnet.moveLegs();		
 		apspnet.endNetworkEdit();

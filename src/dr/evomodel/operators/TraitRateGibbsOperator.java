@@ -35,7 +35,6 @@ import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
@@ -127,7 +126,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
         branchRateModel.setBranchRate(treeModel, child, 1.0 / newValue);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
 

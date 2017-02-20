@@ -33,7 +33,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.oldevomodel.substmodel.SubstitutionModel;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -69,7 +68,7 @@ public class IstvanOperator extends SimpleMCMCOperator {
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         Tree tree = likelihood.getTreeModel();
         alignment = likelihood.getAlignment();

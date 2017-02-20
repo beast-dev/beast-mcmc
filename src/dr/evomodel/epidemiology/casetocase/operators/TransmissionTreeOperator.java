@@ -37,11 +37,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * An operator that wraps a (phylogenetic) tree operator and adjusts the transmission tree accordingly. Only works
@@ -73,7 +71,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         this(c2cLikelihood,operator,CoercionMode.COERCION_OFF);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         TreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         AbstractCase[] newBranchMap = branchMap.getArrayCopy();
@@ -126,9 +124,9 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                         }
                     }
                 }
-                if(movedNode == -1 || oldChild == -1 || newChild == -1){
-                    throw new OperatorFailedException("Failed to establish relationship between relocated node and" +
-                            " others");
+                if(movedNode == -1 || oldChild == -1 || newChild == -1) {
+                    // is this a bug or should the move be rejected (i.e., return -Inf HR)?
+                    throw new RuntimeException("Failed to establish relationship between relocated node and others");
                 }
                 NodeRef movedNodeObject = tree.getNode(movedNode);
                 NodeRef oldChildObject = tree.getNode(oldChild);
@@ -161,7 +159,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                 }
             } else {
                 //I don't know what this is
-                throw new OperatorFailedException("Operator class "+innerOperator.getOperatorName()+" not yet " +
+                throw new UnsupportedOperationException("Operator class "+innerOperator.getOperatorName()+" not yet " +
                         "supported");
             }
         }

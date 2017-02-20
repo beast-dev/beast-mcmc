@@ -62,7 +62,7 @@ public class MsatSingleAncestralStateGibbsOperator extends SimpleMCMCOperator im
         setWeight(weight);
     }
 
-    public double doOperation(){
+    public double doOperation() {
         TreeModel tree = msatSamplerTreeModel.getTreeModel();
 
         

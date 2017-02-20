@@ -33,7 +33,6 @@ import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -65,7 +64,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         proposeTree();
         if (c2cLikelihood.getTreeModel().getExternalNodeCount() != tipCount) {
             int newCount = c2cLikelihood.getTreeModel().getExternalNodeCount();
@@ -76,7 +75,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         return logq;
     }
 
-    public void proposeTree() throws OperatorFailedException {
+    public void proposeTree() {
         PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         NodeRef i;
@@ -114,10 +113,10 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         }
 
         if (iP == tree.getRoot() || j == tree.getRoot()) {
-            throw new OperatorFailedException("Root changes not allowed!");
+            throw new RuntimeException("Root changes not allowed!");
         }
 
-        if (jP == iP || j == iP || jP == i) throw new OperatorFailedException("Move failed");
+        if (jP == iP || j == iP || jP == i) throw new RuntimeException("Move failed");
 
         final NodeRef CiP = getOtherChild(tree, iP, i);
         NodeRef PiP = tree.getParent(iP);

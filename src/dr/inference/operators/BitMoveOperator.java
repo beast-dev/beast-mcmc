@@ -54,7 +54,7 @@ public class BitMoveOperator extends SimpleMCMCOperator {
     /**
      * Pick a random k ones in the vector and move them to a random k zero positions.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         final int dim = bitsParameter.getDimension();
         List<Integer> ones = new ArrayList<Integer>();
@@ -86,7 +86,7 @@ public class BitMoveOperator extends SimpleMCMCOperator {
                 }
 
             }
-        } else throw new OperatorFailedException("Not enough bits to move!");
+        } else throw new RuntimeException("Not enough bits to move!");
 
         return 0.0;
     }

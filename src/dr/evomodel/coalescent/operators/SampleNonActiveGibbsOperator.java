@@ -28,7 +28,6 @@ package dr.evomodel.coalescent.operators;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -57,7 +56,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
         return "SampleNonActive(" + indicators.getId() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         final int idim = indicators.getDimension();
 
         final int offset = (data.getDimension() - 1) == idim ? 1 : 0;
@@ -82,12 +81,13 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
                 data.setParameterValue(index, val);
             } catch (Exception e) {
                 // some distributions fail on extreme values - currently gamma
-               throw new OperatorFailedException(e.getMessage());
+               return Double.NEGATIVE_INFINITY;
             }
         } else {
-            throw new OperatorFailedException("no non-active indicators");
+//            throw new OperatorFailedException("no non-active indicators");
+            return Double.NEGATIVE_INFINITY;
         }
-        return 0;
+        return 0.0;
     }
 
     public int getStepCount() {

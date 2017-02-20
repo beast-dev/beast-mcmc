@@ -174,7 +174,7 @@ public class NimbleAdaptableVarianceMultivariateNormalOperator extends AbstractC
         return matrix;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         iterations++;
         timesRan++;

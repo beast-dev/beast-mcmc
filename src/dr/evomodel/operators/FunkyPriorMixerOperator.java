@@ -58,7 +58,7 @@ public class FunkyPriorMixerOperator extends
         setWeight(weight);
     }
 
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
 //        // a random dimension to perturb
 //        int index;

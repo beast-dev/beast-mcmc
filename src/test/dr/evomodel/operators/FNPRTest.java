@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 
+import dr.inference.operators.*;
 import junit.framework.TestSuite;
 import junit.framework.Test;
 
@@ -15,12 +16,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.operators.FNPR;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.ScaleOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.operators.UniformOperator;
 
 /**
  * @author shhn001
@@ -33,7 +28,7 @@ public class FNPRTest extends OperatorAssert{
     }
     
 	/**
-	 * Test method for {@link dr.evomodel.operators.ImportanceSubtreeSwap#doOperation()}.
+	 * Test method for {@link SimpleMCMCOperator#doOperation()}.
 	 * @throws ImportException 
 	 * @throws IOException 
 	 */
@@ -58,22 +53,17 @@ public class FNPRTest extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5);
-                FNPR operator = new FNPR(treeModel, 1);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            FNPR operator = new FNPR(treeModel, 1);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = Tree.Utils.newickNoLengths(treeModel);
 //System.out.println(tree);
-                if (!trees.containsKey(tree)){
-                	trees.put(tree, true);
-                }
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-                e.printStackTrace();
+            if (!trees.containsKey(tree)){
+                trees.put(tree, true);
+            }
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }

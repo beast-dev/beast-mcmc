@@ -34,7 +34,6 @@ import dr.evomodel.arg.operators.ARGPartitioningOperator.PartitionChangedEvent;
 
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;

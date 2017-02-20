@@ -25,13 +25,11 @@
 
 package dr.evomodel.antigenic;
 
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 /**

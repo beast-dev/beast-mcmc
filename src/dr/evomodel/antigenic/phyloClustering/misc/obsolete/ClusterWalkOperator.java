@@ -6,7 +6,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 
@@ -66,8 +65,8 @@ public class ClusterWalkOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
-    	System.out.println("Walking cluster");
+    public final double doOperation() {
+        System.out.println("Walking cluster");
 
         // a random dimension to perturb
         int index;
@@ -88,7 +87,8 @@ public class ClusterWalkOperator extends AbstractCoercableOperator {
         if (condition == BoundaryCondition.reflecting) {
             newValue = reflectValue(newValue, lower, upper);
         } else if (newValue < lower || newValue > upper) {
-            throw new OperatorFailedException("proposed value outside boundaries");
+//            throw new OperatorFailedException("proposed value outside boundaries");
+            return Double.NEGATIVE_INFINITY;
         }
 
         parameter.setParameterValue(index, newValue);

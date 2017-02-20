@@ -27,7 +27,6 @@ package dr.evomodel.operators;
 
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 import dr.math.MathUtils;
@@ -64,7 +63,7 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
         return "msatModelSwitch(" + parameter.getParameterName() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logq = 0.0;
         double[] bitVec = new double[parameter.getDimension()];
@@ -88,8 +87,8 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
             int dependentInd = (int)dependencies.getParameterValue(i);
             if(dependentInd > NO_DEPENDENCY){
                 if(bitVec[dependentInd] == ABSENT && bitVec[i]==PRESENT){
-                    throw new OperatorFailedException("");
-                    //newVal = oldVal;
+                    //throw new OperatorFailedException("");
+                    return Double.NEGATIVE_INFINITY;
                 }
             }
 

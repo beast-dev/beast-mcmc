@@ -74,7 +74,7 @@ public class DeltaMixOperator extends AbstractCoercableOperator {
      * performs a delta exchange operation between two scalars in the vector
      * and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         // get two dimensions
         final int dim = parameter.getDimension();

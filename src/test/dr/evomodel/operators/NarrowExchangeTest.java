@@ -15,7 +15,6 @@ import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.ScaleOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
@@ -49,19 +48,14 @@ public class NarrowExchangeTest  extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5);
-                ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = Tree.Utils.newickNoLengths(treeModel);
 
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-                e.printStackTrace();
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }

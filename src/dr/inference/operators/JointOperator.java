@@ -63,25 +63,15 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
         }
     }
 
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         double logP = 0;
 
-        boolean failed = false;
-        OperatorFailedException failure = null;
-
         for (SimpleMCMCOperator operation : operatorList) {
 
-            try {
-                logP += operation.doOperation();
-            } catch (OperatorFailedException ofe) {
-                failed = true;
-                failure = ofe;
-            }
+            logP += operation.doOperation();
             // todo After a failure, should not have to complete remaining operations, need to fake their operate();
         }
-        if (failed)
-            throw failure;
 
         return logP;
     }

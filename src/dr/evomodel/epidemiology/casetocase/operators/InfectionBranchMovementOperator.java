@@ -28,7 +28,6 @@ package dr.evomodel.epidemiology.casetocase.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.*;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -63,7 +62,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
     /*  Switch the partition of a randomly selected internal node from the painting of one of its children to the
     * painting of the other, and adjust the rest of the tree to ensure the result still obeys partition rules.*/
 
-    public double doOperation() throws OperatorFailedException{
+    public double doOperation() {
 
         PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
@@ -88,8 +87,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
     }
 
 
-    private double adjustTree(PartitionedTreeModel tree, NodeRef node)
-            throws OperatorFailedException{
+    private double adjustTree(PartitionedTreeModel tree, NodeRef node) {
         double out;
 
         BranchMapModel map = tree.getBranchMap();
@@ -110,7 +108,8 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         } else if(downIsPossible){
             out = moveDown(tree, node);
         } else {
-            throw new OperatorFailedException("Chosen infection event cannot be adjusted in this tree");
+//            throw new OperatorFailedException("Chosen infection event cannot be adjusted in this tree");
+            return Double.NEGATIVE_INFINITY;
         }
 
         if(DEBUG){

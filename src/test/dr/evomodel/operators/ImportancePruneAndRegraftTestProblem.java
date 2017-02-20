@@ -5,6 +5,7 @@ package test.dr.evomodel.operators;
 
 import java.io.IOException;
 
+import dr.inference.operators.*;
 import junit.framework.TestSuite;
 import junit.framework.Test;
 
@@ -15,12 +16,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.operators.ImportancePruneAndRegraft;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.ScaleOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.operators.UniformOperator;
 
 
 /**
@@ -34,7 +29,7 @@ public class ImportancePruneAndRegraftTestProblem extends OperatorAssert{
     }
 	
 	/**
-	 * Test method for {@link dr.evomodel.operators.ImportanceSubtreeSwap#doOperation()}.
+	 * Test method for {@link SimpleMCMCOperator#doOperation()}.
 	 * @throws ImportException 
 	 * @throws IOException 
 	 */
@@ -58,19 +53,14 @@ public class ImportancePruneAndRegraftTestProblem extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5);
-                ImportancePruneAndRegraft operator = new ImportancePruneAndRegraft(treeModel, 1.0, 0);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            ImportancePruneAndRegraft operator = new ImportancePruneAndRegraft(treeModel, 1.0, 0);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = Tree.Utils.newickNoLengths(treeModel);
 
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-                e.printStackTrace();
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }
@@ -106,19 +96,14 @@ public class ImportancePruneAndRegraftTestProblem extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5_2);
-                ImportancePruneAndRegraft operator = new ImportancePruneAndRegraft(treeModel, 1.0, 1);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5_2);
+            ImportancePruneAndRegraft operator = new ImportancePruneAndRegraft(treeModel, 1.0, 1);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = Tree.Utils.newickNoLengths(treeModel);
 
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-                e.printStackTrace();
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }

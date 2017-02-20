@@ -1,7 +1,7 @@
 /*
  * TreeModel.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -696,8 +696,11 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      * Edges are provided as index: child number; parent: array entry
      */
     public void adoptTreeStructure(int[] edges) {
-        if ((this.nodeCount-1) != edges.length) {
+        if (this.nodeCount != edges.length) {
             throw new RuntimeException("Incorrect number of edges provided: " + edges.length + " versus " + this.nodeCount + " nodes.");
+        }
+        for (int i = 0; i < edges.length; i++) {
+            System.out.println(i + ": " + edges[i]);
         }
         //first remove all the child nodes of the internal nodes
         for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
@@ -706,10 +709,37 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
                 nodes[i].removeChild(j);
             }
         }
+
+        //int newRootIndex = -1;
         //now add the parent-child links again to ALL the nodes
         for (int i = 0; i < edges.length; i++) {
-            nodes[edges[i]].addChild(nodes[i]);
+            if (edges[i] != -1) {
+                nodes[edges[i]].addChild(nodes[i]);
+            } else {
+                //now found the root, but it's not set as the root yet
+                //swap this node with the last node, which is currently the root
+                //newRootIndex = i;
+                //System.out.println("new root index = " + newRootIndex);
+            }
         }
+
+        /*double newRootHeight = getNodeHeight(nodes[newRootIndex]);
+        System.out.println("new root height = " + newRootHeight);
+
+        int oldRootIndex = getRoot().getNumber();
+        double oldRootHeight = getNodeHeight(getRoot());
+        System.out.println("old root index = " + oldRootIndex);
+        System.out.println("old root height = " + oldRootHeight);
+
+        setNodeHeight(getRoot(), newRootHeight);
+        setNodeHeight(nodes[newRootIndex], oldRootHeight);
+
+        setRoot(nodes[newRootIndex]);
+
+        System.out.println("node heights:");
+        for (int i = 0; i < nodes.length; i++) {
+            System.out.println(nodes[i].getNumber() + ": " + nodes[i].getHeight());
+        }*/
     }
 
     /**

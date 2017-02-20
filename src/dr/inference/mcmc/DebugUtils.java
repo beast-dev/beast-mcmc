@@ -103,6 +103,8 @@ public class DebugUtils {
             out.println(lnL);
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+                out.print("parameter");
+                out.print("\t");
                 out.print(parameter.getParameterName());
                 out.print("\t");
                 out.print(parameter.getDimension());
@@ -115,6 +117,8 @@ public class DebugUtils {
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
                 MCMCOperator operator = operatorSchedule.getOperator(i);
+                out.print("operator");
+                out.print("\t");
                 out.print(operator.getOperatorName());
                 out.print("\t");
                 out.print(operator.getAcceptCount());
@@ -129,18 +133,48 @@ public class DebugUtils {
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
+                    out.print("tree");
+                    out.print("\t");
                     out.print(model.getModelName());
                     out.print("\t");
 
-                    //TODO This should be commented out at some point
-                    out.println(((TreeModel) model).getNewick());
+                    //replace Newick format by printing general graph structure
+                    //out.println(((TreeModel) model).getNewick());
+
+                    out.println("#nodes");
+                    int nodeCount = ((TreeModel) model).getNodeCount();
+                    out.println(nodeCount);
+                    for (int i = 0; i < nodeCount; i++) {
+                        out.print(((TreeModel) model).getNode(i).getNumber());
+                        out.print("\t");
+                        out.print(((TreeModel) model).getNodeHeight(((TreeModel) model).getNode(i)));
+                        if (((TreeModel) model).isExternal(((TreeModel) model).getNode(i))) {
+                            out.print("\t");
+                            out.print(((TreeModel) model).getNodeTaxon(((TreeModel) model).getNode(i)).getId());
+                        }
+                        out.println();
+                    }
+
+                    out.println("#edges");
+                    out.println("#parent-node child-node");
+                    //TODO add rateCategory as an actual parameter so it becomes part of the connected set
+                    //out.println("#parent node child node rateCategory");
+
+                    out.println(nodeCount-1);
+                    for (int i = 0; i < nodeCount; i++) {
+                        if (!((TreeModel) model).isRoot(((TreeModel) model).getNode(i))) {
+                            out.print(((TreeModel) model).getParent(((TreeModel) model).getNode(i)).getNumber());
+                            out.print("\t");
+                            out.println(((TreeModel) model).getNode(i).getNumber());
+                        }
+                    }
 
                     //make sure each TreeDebugLogger writes to a different file
-                    for (Logger treeOutput : loggers) {
+                    /*for (Logger treeOutput : loggers) {
                         if (treeOutput instanceof TreeDebugLogger) {
                             ((TreeDebugLogger) treeOutput).writeToFile(state);
                         }
-                    }
+                    }*/
                 }
 
             }

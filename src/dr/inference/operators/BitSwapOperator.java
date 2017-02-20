@@ -84,10 +84,10 @@ public class BitSwapOperator extends SimpleMCMCOperator {
         return "bitSwap(" + data.getParameterName() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         final int dim = indicators.getDimension();
         if (dim < 2) {
-            throw new OperatorFailedException("no swaps possible");
+            throw new RuntimeException("no swaps possible");
         }
         int nLoc = 0;
         int[] loc = new int[2 * dim];
@@ -107,7 +107,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
             }
 
             if (nOnes == 0 || nOnes == dim) {
-                throw new OperatorFailedException("no swaps possible");  //??
+                throw new RuntimeException("no swaps possible");  //??
                 //return 0;
             }
 
@@ -118,7 +118,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
             direction -= radius - (direction < radius ? 0 : 1);
             for (int i = direction > 0 ? pos + 1 : pos + direction; i < (direction > 0 ? pos + direction + 1 : pos); i++) {
                 if (i < 0 || i >= dim || indicators.getStatisticValue(i) > 0) {
-                    throw new OperatorFailedException("swap faild");
+                    throw new RuntimeException("swap faild");
                 }
             }
         } else {

@@ -109,7 +109,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 //		System.err.println("Starting AddRemove Operation");
 
         double logq = 0;
@@ -118,14 +118,14 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
                 logq = AddOperation();
             else
                 logq = RemoveOperation();
-        } catch (OperatorFailedException ofe) {
+        } catch (ARGOperatorFailedException ofe) {
             if (ofe.getMessage().compareTo("No reassortment nodes to remove.") != 0) {
                 System.err.println("Catch: " + ofe.getMessage());
 //            System.exit(-1);
             }
         }
         if (arg.isBifurcationDoublyLinked(arg.getRoot()))
-            throw new OperatorFailedException("trouble with double-rooted root");
+            throw new RuntimeException("trouble with double-rooted root");
         return logq;
     }
 
@@ -230,7 +230,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
         }
     */
 
-    private double RemoveOperation() throws OperatorFailedException {
+    private double RemoveOperation() throws ARGOperatorFailedException {
         double logq = 0;
 
 //	    System.err.println("Starting remove ARG operation.");
@@ -241,7 +241,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
 
         int totalPotentials = findCurrentReassortmentNodes(potentialNodes);
         if (totalPotentials == 0)
-            throw new OperatorFailedException("No reassortment nodes to remove.");
+            throw new ARGOperatorFailedException("No reassortment nodes to remove.");
         Node recNode = (Node) potentialNodes.get(MathUtils.nextInt(totalPotentials));
         logq += Math.log(totalPotentials);
 
@@ -287,7 +287,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
 //                    throw new RuntimeException(ite.toString() + "\n" + arg.toString()
 //                            + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 //                }
-                throw new OperatorFailedException("Not reversible deletion.");
+                throw new ARGOperatorFailedException("Not reversible deletion.");
             }
             if (!recParent1.bifurcation || recParent1.isRoot()) { // One orientation is valid
                 recParent1 = recNode.rightParent;
@@ -644,7 +644,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
     }
 
 
-    private double AddOperation() throws OperatorFailedException {
+    private double AddOperation() throws ARGOperatorFailedException {
         double logq = 0;
 
 //	    System.err.println("Starting add ARG operation. ... "+arg.getReassortmentNodeCount());
@@ -655,7 +655,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
         if (totalPotentials == 0) {
             System.err.println("Should never get here AA");
             System.exit(-1);
-            throw new OperatorFailedException("No more nodes to recombine.");
+            throw new ARGOperatorFailedException("No more nodes to recombine.");
         }
         Node recNode = (Node) potentialNodes.get(MathUtils
                 .nextInt(totalPotentials));
@@ -677,7 +677,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
 //            System.err.println("Should never get here AB");
 //            System.exit(-1);
 
-            throw new OperatorFailedException("no more attachment points for this recomb");
+            throw new ARGOperatorFailedException("no more attachment points for this recomb");
         }
         Node sisNode = (Node) attachments.get(MathUtils
                 .nextInt(totalAttachments));

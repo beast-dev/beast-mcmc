@@ -118,7 +118,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         if (!burnin) {
             if (sampleCount < samples * SAMPLE_EVERY) {
                 sampleCount++;
@@ -141,7 +141,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
         }
     }
 
-    private double doUnguidedOperation() throws OperatorFailedException {
+    private double doUnguidedOperation() {
         int index = schedule.getNextOperatorIndex();
         SimpleMCMCOperator operator = (SimpleMCMCOperator) schedule.getOperator(index);
 
@@ -153,7 +153,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
      *
      * @throws InvalidTreeException
      */
-    private double importanceExchange() throws OperatorFailedException {
+    private double importanceExchange() {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -286,7 +286,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
         try {
             tree.checkTreeIsValid();
         } catch (InvalidTreeException e) {
-            throw new OperatorFailedException(e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
 
 
@@ -303,8 +303,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
     }
 
     /* exchange subtrees whose root are i and j */
-    private void swap(TreeModel tree, NodeRef i, NodeRef j)
-            throws OperatorFailedException {
+    private void swap(TreeModel tree, NodeRef i, NodeRef j) {
 
         NodeRef iP = tree.getParent(i);
         NodeRef jP = tree.getParent(j);

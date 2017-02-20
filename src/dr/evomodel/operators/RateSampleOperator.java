@@ -29,7 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.RateSampleOperatorParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -57,7 +56,7 @@ public class RateSampleOperator extends SimpleMCMCOperator {
     /**
      * sample the rates of a subtree and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         int index;
         if (sampleAll) {

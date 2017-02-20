@@ -77,7 +77,7 @@ public class GenericIndependentSampler extends SimpleMCMCOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logq = 0;
 
@@ -94,7 +94,8 @@ public class GenericIndependentSampler extends SimpleMCMCOperator {
                 logq += randomGenerator.logPdf(currentValue) - randomGenerator.logPdf(newValue);
 
                 if (newValue < bounds.getLowerLimit(i) || newValue > bounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("Proposed value outside boundaries");
+//                    throw new OperatorFailedException("Proposed value outside boundaries");
+                    return Double.NEGATIVE_INFINITY;
                 }
             } else {
                 double[] currentValue = new double[generatorLength];
@@ -111,7 +112,8 @@ public class GenericIndependentSampler extends SimpleMCMCOperator {
                     final int index = i * generatorLength + j;
 
                     if (newValue[j] < bounds.getLowerLimit(index) || newValue[j] > bounds.getUpperLimit(index)) {
-                        throw new OperatorFailedException("Proposed value outside boundaries");
+//                        throw new OperatorFailedException("Proposed value outside boundaries");
+                        return Double.NEGATIVE_INFINITY;
                     }
                     variable.setValue(index, newValue[j]);
                 }

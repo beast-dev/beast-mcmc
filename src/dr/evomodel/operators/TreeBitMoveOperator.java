@@ -27,7 +27,6 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -56,7 +55,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
      * Pick a parent-child node pair involving a single rate change and swap the rate change location
      * and corresponding rate parameters.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         NodeRef root = tree.getRoot();
 
@@ -77,7 +76,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
             }
         }
 
-        if (candidates.size() == 0) throw new OperatorFailedException("No suitable pairs!");
+        if (candidates.size() == 0) throw new RuntimeException("No suitable pairs!");
 
         NodeRef node = candidates.get(MathUtils.nextInt(candidates.size()));
         NodeRef parent = tree.getParent(node);

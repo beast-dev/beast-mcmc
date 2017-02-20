@@ -51,7 +51,7 @@ public class MicrosatelliteModelSelectOperator extends SimpleMCMCOperator {
         return "no suggestions available";
     }
 
-    public double doOperation(){
+    public double doOperation() {
         int index = MathUtils.nextInt(indicators.length);
         //System.out.println(index);
         Parameter newModel = indicators[index];

@@ -110,7 +110,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 //		System.err.println("Starting AddRemove Operation");
 
         double logq = 0;
@@ -157,7 +157,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
         return count;
     }
 
-    private double RemoveOperation() throws OperatorFailedException {
+    private double RemoveOperation() throws ARGOperatorFailedException {
         double logq = 0;
 
 //	    System.err.println("Starting remove ARG operation.");
@@ -169,7 +169,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
 
         int totalPotentials = findPotentialNodesToRemove(potentialNodes);
         if (totalPotentials == 0)
-            throw new OperatorFailedException("No reassortment nodes to remove.");
+            throw new ARGOperatorFailedException("No reassortment nodes to remove.");
 //	    System.err.println("potentials exist!");
         Node recNode = (Node) potentialNodes.get(MathUtils.nextInt(totalPotentials));
 //        logq += Math.log(totalPotentials);
@@ -420,7 +420,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
     }
 
 
-    private double AddOperation() throws OperatorFailedException {
+    private double AddOperation() throws ARGOperatorFailedException {
 
         double logq = 0;
 

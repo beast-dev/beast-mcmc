@@ -35,7 +35,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 import java.util.HashMap;
@@ -201,10 +200,10 @@ public class ImportanceNarrowExchange extends AbstractTreeOperator implements Tr
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         int k = getNode();
         if( k < 0 ) {
-            throw new OperatorFailedException("no node found");
+            throw new RuntimeException("no node found");
         }
 
         final NodeRef p = tree.getInternalNode(k);

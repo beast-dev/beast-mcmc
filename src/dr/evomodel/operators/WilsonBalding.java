@@ -25,11 +25,9 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.WilsonBaldingParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 /**
@@ -51,7 +49,7 @@ public class WilsonBalding extends AbstractTreeOperator {
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         proposeTree();
         if (tree.getExternalNodeCount() != tipCount) {
@@ -67,7 +65,7 @@ public class WilsonBalding extends AbstractTreeOperator {
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void proposeTree() throws OperatorFailedException {
+    public void proposeTree() {
 
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
@@ -97,10 +95,10 @@ public class WilsonBalding extends AbstractTreeOperator {
 
         // disallow moves that change the root.
         if (j == tree.getRoot() || iP == tree.getRoot()) {
-            throw new OperatorFailedException("Root changes not allowed!");
+            throw new RuntimeException("Root changes not allowed!");
         }
 
-        if (k == iP || j == iP || k == i) throw new OperatorFailedException("move failed");
+        if (k == iP || j == iP || k == i) throw new RuntimeException("move failed");
 
         final NodeRef CiP = getOtherChild(tree, iP, i);
         NodeRef PiP = tree.getParent(iP);

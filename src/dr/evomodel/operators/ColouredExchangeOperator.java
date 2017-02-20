@@ -25,11 +25,9 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -69,7 +67,7 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logP = colouringModel.getTreeColouringWithProbability().getLogProbabilityDensity();
 
@@ -98,7 +96,7 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void narrow() throws OperatorFailedException {
+    public void narrow() {
 
         NodeRef i = null, iP = null, j = null, jP = null;
         int tries = 0;
@@ -131,13 +129,13 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
 
             tree.pushTreeChangedEvent(iP);
             tree.pushTreeChangedEvent(jP);
-        } else throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
+        } else throw new RuntimeException("Couldn't find valid narrow move on this tree!!");
     }
 
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void wide() throws OperatorFailedException {
+    public void wide() {
 
         NodeRef i = null, iP = null, j = null, jP = null;
         int tries = 0;
@@ -171,7 +169,7 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
         if (tries < MAX_TRIES) {
             eupdate(i, j, iP, jP);
         } else {
-            throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
+            throw new RuntimeException("Couldn't find valid wide move on this tree!");
         }
     }
 
@@ -187,7 +185,7 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
         throw new RuntimeException("not implemented");
     }
 
-    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws OperatorFailedException {
+    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP)  {
 
         tree.beginTreeEdit();
         tree.removeChild(iP, i);

@@ -1,24 +1,11 @@
 package dr.evomodel.antigenic.phyloClustering.MCMCOperators;
 
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.MCMCOperator.Utils;
-import dr.math.MathUtils;
-import dr.math.distributions.MultivariateNormalDistribution;
-import dr.util.DataTable;
 import dr.xml.*;
 
 
@@ -73,7 +60,7 @@ public class randomWalkSerumDriftAndMu extends SimpleMCMCOperator  {
 
     	
     	int rootNode  = treeModel.getRoot().getNumber();
-    	//perform proposal
+        //perform proposal
     	
     	//random walk serum drift 1
 		double change = Math.random()*maxWalkSize- maxWalkSize/2 ; 

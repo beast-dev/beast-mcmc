@@ -29,7 +29,6 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.TreeUniformParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 /**
@@ -54,9 +53,9 @@ public class TreeUniform extends AbstractTreeOperator {
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         if( tree.getInternalNodeCount() < 2 ) {
-            throw new OperatorFailedException("no node found");
+            throw new RuntimeException("no node found");
         }
 
         tree.beginTreeEdit();
@@ -72,7 +71,7 @@ public class TreeUniform extends AbstractTreeOperator {
         try {
             tree.checkTreeIsValid();
         } catch( MutableTree.InvalidTreeException ite ) {
-            throw new OperatorFailedException(ite.toString());
+            throw new RuntimeException(ite.toString());
         }
 
         return 0;

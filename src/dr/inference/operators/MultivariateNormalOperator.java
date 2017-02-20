@@ -111,7 +111,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
         return inverse;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[] x = parameter.getParameterValues();
         double[] epsilon = new double[dim];

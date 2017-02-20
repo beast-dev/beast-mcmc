@@ -33,7 +33,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.GibbsPruneAndRegraftParser;
 import dr.inference.model.Likelihood;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMetropolizedGibbsOperator;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
@@ -76,17 +75,15 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 	 * .Prior, dr.inference.model.Likelihood)
 	 */
 	@Override
-	public double doOperation(Prior prior, Likelihood likelihood)
-			throws OperatorFailedException {
+	public double doOperation(Prior prior, Likelihood likelihood) {
 		if (pruned) {
 			return prunedGibbsProposal(prior, likelihood);
 		} else {
-			return GibbsProposal(prior, likelihood);
+			return gibbsProposal(prior, likelihood);
 		}
 	}
 
-	private double GibbsProposal(Prior prior, Likelihood likelihood)
-			throws OperatorFailedException {
+	private double gibbsProposal(Prior prior, Likelihood likelihood) {
 
 		final int nodeCount = tree.getNodeCount();
 		final NodeRef root = tree.getRoot();
@@ -135,7 +132,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 			// hack
 			// the proposals have such a small likelihood that they can be
 			// neglected
-			throw new OperatorFailedException(
+			throw new RuntimeException(
 					"Couldn't find another proposal with a decent likelihood.");
 		}
 
@@ -161,8 +158,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 		return hastingsRatio;
 	}
 
-	private double prunedGibbsProposal(Prior prior, Likelihood likelihood)
-			throws OperatorFailedException {
+	private double prunedGibbsProposal(Prior prior, Likelihood likelihood) {
 		final int nodeCount = tree.getNodeCount();
 		final NodeRef root = tree.getRoot();
 
@@ -216,7 +212,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 			// hack
 			// the proposals have such a small likelihood that they can be
 			// neglected
-			throw new OperatorFailedException(
+			throw new RuntimeException(
 					"Couldn't find another proposal with a decent likelihood.");
 		}
 
@@ -301,8 +297,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 		return evaluate(likelihood, prior, 1.0);
 	}
 
-	private void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef iP,
-			NodeRef j, NodeRef jP) throws OperatorFailedException {
+	private void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef iP, NodeRef j, NodeRef jP) {
 		tree.beginTreeEdit();
 
 		// the grandfather

@@ -27,7 +27,6 @@ package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -281,7 +280,7 @@ public class LoadingsIndependenceOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         int size = LFM.getLoadings().getColumnDimension();
         if (!randomScan) {

@@ -64,7 +64,7 @@ public class MVOUCovarianceOperator extends AbstractCoercableOperator {
         Iinv = new Matrix(I).inverse();
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[][] draw = WishartDistribution.nextWishart(priorDf, I);
 //		double[][] good = varMatrix.getParameterAsMatrix();
@@ -123,8 +123,11 @@ public class MVOUCovarianceOperator extends AbstractCoercableOperator {
 //				WishartDistribution.computeNormalizationConstant(Iinv,priorDf,dim));
                 0);
 
-        if (bProb == Double.NEGATIVE_INFINITY)
-            throw new OperatorFailedException("Not reversible");
+        if (bProb == Double.NEGATIVE_INFINITY) {
+//            throw new OperatorFailedException("Not reversible");
+            // not clear if this means a HR of -Inf or a RuntimeException
+            return Double.NEGATIVE_INFINITY;
+        }
 
         double fProb = WishartDistribution.logPdf(forwardDrawMatrix, Iinv, priorDf, dim,
 //				WishartDistribution.computeNormalizationConstant(Iinv,priorDf,dim));

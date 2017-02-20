@@ -88,7 +88,7 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
         return OPERATOR_NAME;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         // Select boundary to update, 0 => btw partition 0 and 1,  1 => btw partition 1 and 2, etc.
         int whichBoundary = MathUtils.nextInt(breakPoints.getDimension());

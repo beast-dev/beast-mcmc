@@ -1,22 +1,12 @@
 package dr.evomodel.antigenic.phyloClustering.MCMCOperators;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.LinkedList;
-
-import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.MCMCOperator.Utils;
 import dr.math.MathUtils;
-import dr.util.DataTable;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -52,10 +42,10 @@ public class muMeanTranslateInactiveMu1Operator extends AbstractCoercableOperato
 	
 	
 
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
        System.out.println("run here stop");
        System.exit(0);
-		//unbounded walk
+        //unbounded walk
         double change = (2.0 * MathUtils.nextDouble() - 1.0) * windowSize;
         
 		//change mu1Scale

@@ -39,7 +39,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
 import dr.util.AlloppMisc;
 import dr.util.Author;
@@ -1104,7 +1103,7 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
     // grj need to use a different operator
     static private MulTreeNodeSlide internalTreeOP = null;
 
-    public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
+    public int scale(double scaleFactor, int nDims) {
         assert scaleFactor > 0;
         if (nDims <= 0) {
             // actually when in an up down with operators on the gene trees the flags
@@ -1121,7 +1120,7 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
             return count;
         } else {
             if (nDims != 1) {
-                throw new OperatorFailedException("not implemented for count != 1");
+                throw new UnsupportedOperationException("not implemented for count != 1");
             }
             if (internalTreeOP == null) {
                 internalTreeOP = new MulTreeNodeSlide(this, mulspb, 1);

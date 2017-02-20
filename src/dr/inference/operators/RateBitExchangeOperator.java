@@ -48,7 +48,7 @@ public class RateBitExchangeOperator extends SimpleMCMCOperator {
         this.maxTries = maxTries;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         int dim = rateParameter.getDimension() / 2;
         int tries = 0;
 
@@ -61,7 +61,8 @@ public class RateBitExchangeOperator extends SimpleMCMCOperator {
                 (tries < maxTries) );
 
         if (tries >= maxTries) {
-            throw new OperatorFailedException("Too many attempts");
+//            throw new RuntimeException("Too many attempts");
+            return Double.NEGATIVE_INFINITY;
         }
 
         // Swap (bit,rate) values

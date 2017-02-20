@@ -28,7 +28,6 @@ package dr.evomodel.operators;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 import dr.evomodelxml.operators.AlloppHybPopSizesScaleParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -61,7 +60,7 @@ public class AlloppHybPopSizesScale  extends SimpleMCMCOperator {
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         apspnet.beginNetworkEdit();
         double b = (1.0-scalingFactor) * (1.0-scalingFactor) / scalingFactor;
         double c = scalingFactor / (1.0-scalingFactor);

@@ -25,10 +25,8 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -55,7 +53,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         int tipCount = tree.getExternalNodeCount();
 
@@ -71,7 +69,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void narrow() throws OperatorFailedException {
+    public void narrow() {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
@@ -107,7 +105,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
         }
         //System.out.println("tries = " + tries);
 
-        throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
+        throw new RuntimeException("Couldn't find valid narrow move on this tree!!");
     }
 
     public String getOperatorName() {
@@ -115,7 +113,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
     }
 
     /* exchange subtrees whose root are i and j */
-    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP, NodeRef iS) throws OperatorFailedException {
+    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP, NodeRef iS) {
 
         tree.beginTreeEdit();
         tree.removeChild(iP, i);

@@ -35,7 +35,6 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 
-import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 
 
@@ -73,7 +72,7 @@ public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
     }
 
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
        int max = findMax(assignments);
 

@@ -220,24 +220,20 @@ public final class MarkovChain implements Serializable {
                 elaspedTime = System.currentTimeMillis();
             }
 
-            try {
-                // The new model is proposed
-                // assert Profiler.startProfile("Operate");
+            // The new model is proposed
+            // assert Profiler.startProfile("Operate");
 
-                if (DEBUG) {
-                    System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
-                }
-
-                if (mcmcOperator instanceof GeneralOperator) {
-                    hastingsRatio = ((GeneralOperator) mcmcOperator).operate(prior, likelihood);
-                } else {
-                    hastingsRatio = mcmcOperator.operate();
-                }
-
-                // assert Profiler.stopProfile("Operate");
-            } catch (OperatorFailedException e) {
-                operatorSucceeded = false;
+            if (DEBUG) {
+                System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
             }
+
+            if (mcmcOperator instanceof GeneralOperator) {
+                hastingsRatio = ((GeneralOperator) mcmcOperator).operate(prior, likelihood);
+            } else {
+                hastingsRatio = mcmcOperator.operate();
+            }
+
+            // assert Profiler.stopProfile("Operate");
 
             if (PROFILE) {
                 long duration = System.currentTimeMillis() - elaspedTime;

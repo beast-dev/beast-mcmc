@@ -38,7 +38,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
 import dr.math.MathUtils;
 import dr.util.Author;
@@ -477,7 +476,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
     // Scalable implementation. Stretches/squeezes whole network.
     @Override
-    public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
+    public int scale(double scaleFactor, int nDims) {
         assert scaleFactor > 0;
         assert nDims <= 0;
         if (nDims <= 0) {
@@ -491,7 +490,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         } else {
             //  grjtodo-oneday JH also has a internalTreeOP for nDims==1 case
             if (nDims != 1) {
-                throw new OperatorFailedException("not implemented for count != 1");
+                throw new UnsupportedOperationException("not implemented for count != 1");
             }
             fireModelChanged(this, 1);
             return nDims;

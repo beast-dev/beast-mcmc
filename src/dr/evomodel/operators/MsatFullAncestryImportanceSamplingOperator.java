@@ -64,7 +64,7 @@ public class MsatFullAncestryImportanceSamplingOperator extends SimpleMCMCOperat
         setWeight(weight);
     }
 
-    public double doOperation(){
+    public double doOperation() {
         TreeModel tree = msatSamplerTreeModel.getTreeModel();
 
         //get postOrder

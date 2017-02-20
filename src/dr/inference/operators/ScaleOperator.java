@@ -84,7 +84,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
@@ -104,7 +104,9 @@ public class ScaleOperator extends AbstractCoercableOperator {
                 logq -= Math.log(scaleOne);
 
                 if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
+//                  throw new OperatorFailedException("proposed value outside boundaries");
+                    // this used to throw an exception
+                    return Double.NEGATIVE_INFINITY;
                 }
 
                 variable.setValue(i, value);
@@ -129,7 +131,9 @@ public class ScaleOperator extends AbstractCoercableOperator {
             for (int i = 0; i < dim; i++) {
                 if (variable.getValue(i) < variable.getBounds().getLowerLimit(i) ||
                         variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
+//                  throw new OperatorFailedException("proposed value outside boundaries");
+                    // this used to throw an exception
+                    return Double.NEGATIVE_INFINITY;
                 }
             }
         } else {
@@ -162,7 +166,8 @@ public class ScaleOperator extends AbstractCoercableOperator {
                     final int rand = MathUtils.nextInt(nLoc);
                     index = loc[rand];
                 } else {
-                    throw new OperatorFailedException("no active indicators");
+                    // this used to throw an exception
+                    return Double.NEGATIVE_INFINITY;
                 }
             } else {
                 // any is good
@@ -172,19 +177,20 @@ public class ScaleOperator extends AbstractCoercableOperator {
             final double oldValue = variable.getValue(index);
 
             if (oldValue == 0) {
-                Logger.getLogger("dr.inference").warning("The " + ScaleOperatorParser.SCALE_OPERATOR +
+                Logger.getLogger("dr.inference").severe("The " + ScaleOperatorParser.SCALE_OPERATOR +
                         " for " +
                         variable.getVariableName()
                         + " has failed since the parameter has a value of 0.0." +
                         "\nTo fix this problem, initalize the value of " +
                         variable.getVariableName() + " to be a positive real number"
                 );
-                throw new OperatorFailedException("");
             }
             final double newValue = scale * oldValue;
 
             if (newValue < bounds.getLowerLimit(index) || newValue > bounds.getUpperLimit(index)) {
-                throw new OperatorFailedException("proposed value outside boundaries");
+//                throw new OperatorFailedException("proposed value outside boundaries");
+                // this used to throw an exception
+                return Double.NEGATIVE_INFINITY;
             }
 
             variable.setValue(index, newValue);

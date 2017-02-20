@@ -64,7 +64,7 @@ public class RegressionGibbsPrecisionOperator extends SimpleMCMCOperator impleme
         return 1;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[] Y = linearModel.getTransformedDependentParameter();
         double[] xBeta = linearModel.getXBeta();

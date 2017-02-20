@@ -4,9 +4,7 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.model.*;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
-import java.util.Random;
 
 /**
  * Created by max on 12/2/15.
@@ -107,7 +105,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
 
 

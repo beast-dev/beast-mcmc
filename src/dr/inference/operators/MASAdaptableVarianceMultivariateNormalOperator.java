@@ -149,7 +149,7 @@ public class MASAdaptableVarianceMultivariateNormalOperator extends AbstractCoer
 
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         iterations++;
         //System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());

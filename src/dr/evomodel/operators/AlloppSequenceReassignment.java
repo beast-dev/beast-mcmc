@@ -30,7 +30,6 @@ import dr.evomodel.speciation.AlloppLeggedTree;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 import dr.evomodelxml.operators.AlloppSequenceReassignmentParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -68,7 +67,7 @@ public class AlloppSequenceReassignment extends SimpleMCMCOperator {
 	}
 
 	@Override
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 		apspnet.beginNetworkEdit();
 
         if (MathUtils.nextInt(10) == 0) {

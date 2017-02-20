@@ -30,7 +30,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -65,7 +64,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 		setWeight(weight);
 	}
 
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 
 		double logHastings = 0.0;
 		int tipCount = tree.getExternalNodeCount();
@@ -171,7 +170,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 	/**
 	 * WARNING: Assumes strictly bifurcating tree.
 	 */
-	public double narrow() throws OperatorFailedException {
+	public double narrow() {
 
 		NodeRef i = null, iP = null, j = null, jP = null;
 		int tries = 0;
@@ -210,11 +209,18 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 
 		//Eupdate
 		if (tries < MAX_TRIES) {
-			eupdateARG(i, j, iP, jP);
+			try {
+				eupdateARG(i, j, iP, jP);
+			} catch (ARGOperatorFailedException e) {
+				return Double.NEGATIVE_INFINITY;
+			}
 
 			tree.pushTreeChangedEvent(iP);
 			tree.pushTreeChangedEvent(jP);
-		} else throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
+		} else {
+			//throw new ARGOperatorFailedException("Couldn't find valid narrow move on this tree!!");
+			return Double.NEGATIVE_INFINITY;
+		}
 
 		return Math.log((double) beforeMoves / getAllValidNarrowMoves());
 	}
@@ -222,7 +228,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 	/**
 	 * WARNING: Assumes strictly bifurcating tree.
 	 */
-	public double wide() throws OperatorFailedException {
+	public double wide() {
 
 		NodeRef i = null, iP = null, j = null, jP = null;
 		int tries = 0;
@@ -254,8 +260,15 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 
 		//Eupdate
 		if (tries < MAX_TRIES) {
-			eupdateARG(i, j, iP, jP);
-		} else throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
+			try {
+				eupdateARG(i, j, iP, jP);
+			} catch (ARGOperatorFailedException e) {
+				return Double.NEGATIVE_INFINITY;
+			}
+		} else {
+//			throw new ARGOperatorFailedException("Couldn't find valid wide move on this tree!");
+			return Double.NEGATIVE_INFINITY;
+		}
 		return 0.0;
 	}
 
@@ -267,7 +280,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 		return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange";
 	}
 
-	private void eupdateARG(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws OperatorFailedException {
+	private void eupdateARG(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws ARGOperatorFailedException {
 
 		// There are three different cases:
 		// 1) neither i nor j are reassortments, 2) either i or j are reassortments, 3) both i and j are reassortments
@@ -311,7 +324,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 		try {
             tree.checkTreeIsValid();
 		} catch (MutableTree.InvalidTreeException ite) {
-			throw new OperatorFailedException(ite.toString());
+			throw new ARGOperatorFailedException(ite.toString());
 		}
 	}
 

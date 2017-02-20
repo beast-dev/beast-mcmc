@@ -165,11 +165,11 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         String fileName = System.getProperty(SAVE_DUMP_FILE, null);
         if (System.getProperty(DUMP_STATE) != null) {
             long debugWriteState = Long.parseLong(System.getProperty(DUMP_STATE));
-            mc.addMarkovChainListener(new DebugChainListener(this, loggers, debugWriteState, false, fileName));
+            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteState, false, fileName));
         }
         if (System.getProperty(DUMP_EVERY) != null) {
             long debugWriteEvery = Long.parseLong(System.getProperty(DUMP_EVERY));
-            mc.addMarkovChainListener(new DebugChainListener(this, loggers, debugWriteEvery, true, fileName));
+            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteEvery, true, fileName));
         }
 
     }
@@ -239,18 +239,13 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             if (dumpStateFile != null) {
                 double[] savedLnL = new double[1];
 
-                loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), loggers, getOperatorSchedule(), savedLnL);
+                loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), getOperatorSchedule(), savedLnL);
 
                 mc.setCurrentLength(loadedState);
 
                 double lnL = mc.evaluate();
 
-                //TODO if multiple TreeLoggers exist, they may all have to be passed on to DebugUtils
-                //TODO example: TreeLogger 1 stores rateCategories; TreeLogger 2 stores ancestral states
-
-                //TODO create TreeDebugLogger(s) here and pass on to DebugUtils.writeStateToFile
-
-                DebugUtils.writeStateToFile(new File("tmp.dump"), loggers, loadedState, lnL, getOperatorSchedule());
+                DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL, getOperatorSchedule());
 
                 //first perform a simple check for equality of two doubles
                 //when this test fails, go over the digits

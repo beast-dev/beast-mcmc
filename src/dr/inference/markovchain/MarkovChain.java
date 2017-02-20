@@ -225,6 +225,7 @@ public final class MarkovChain implements Serializable {
                 // assert Profiler.startProfile("Operate");
 
                 if (DEBUG) {
+                    System.out.println("\n>> Iteration: " + currentState);
                     System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
                 }
 

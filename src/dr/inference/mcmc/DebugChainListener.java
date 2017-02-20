@@ -39,46 +39,19 @@ package dr.inference.mcmc;
  * $LastChangedRevision$
  */
 
-import dr.evomodel.tree.TreeDebugLogger;
-import dr.evomodel.tree.TreeLogger;
-import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 
 public class DebugChainListener implements MarkovChainListener {
 
     private MCMC mcmc;
 
-    public DebugChainListener(MCMC mcmc, Logger[] loggers, final long writeState, final boolean isRepeating, final String fileName) {
+    public DebugChainListener(MCMC mcmc, final long writeState, final boolean isRepeating, final String fileName) {
         this.mcmc = mcmc;
-        this.loggers = loggers;
-
-        //add TreeLoggers using TreeDebugLoggers
-        int counter = 0;
-        ArrayList<TreeDebugLogger> additionalLoggers = new ArrayList<TreeDebugLogger>();
-        for (int i = 0; i < loggers.length; i++) {
-            if (loggers[i] instanceof TreeLogger) {
-                additionalLoggers.add(new TreeDebugLogger(fileName + ".tree." + counter, (TreeLogger) loggers[i]));
-                counter++;
-            }
-        }
-
-        Logger[] newLoggers = new Logger[this.loggers.length+additionalLoggers.size()];
-        for (int i = 0; i < this.loggers.length; i++) {
-            newLoggers[i] = this.loggers[i];
-        }
-        counter = 0;
-        for (int i = this.loggers.length; i < newLoggers.length; i++) {
-            newLoggers[i] = additionalLoggers.get(counter);
-            counter++;
-        }
-        this.loggers = newLoggers;
-
         this.writeState = writeState;
         this.isRepeating = isRepeating;
         this.fileName = fileName;
@@ -96,7 +69,7 @@ public class DebugChainListener implements MarkovChainListener {
             double lnL = mcmc.getMarkovChain().getCurrentScore();
 
             String fileName = (this.fileName != null ? this.fileName : "beast_debug_" + timeStamp);
-            DebugUtils.writeStateToFile(new File(fileName), loggers, state, lnL, mcmc.getOperatorSchedule());
+            DebugUtils.writeStateToFile(new File(fileName), state, lnL, mcmc.getOperatorSchedule());
         }
     }
 
@@ -115,5 +88,4 @@ public class DebugChainListener implements MarkovChainListener {
     private final long writeState;
     private final boolean isRepeating;
     private final String fileName;
-    private Logger[] loggers;
 }

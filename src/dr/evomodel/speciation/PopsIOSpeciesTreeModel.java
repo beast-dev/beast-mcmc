@@ -659,7 +659,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     // for Scalable.
     /*******************************************************************************/
     @Override
-    public int scale(double factor, int nDims) {
+    public int scale(double factor, int nDims, boolean testBounds) {
         int n = scaleAllHeights(factor);
         stree = makeSimpleTree();
         return n;

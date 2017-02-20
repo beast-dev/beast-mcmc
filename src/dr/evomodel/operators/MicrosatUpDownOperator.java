@@ -80,13 +80,13 @@ public class MicrosatUpDownOperator extends AbstractCoercableOperator {
 
         if( upParameter != null ) {
             for( Scalable.Default up : upParameter ) {
-                goingUp += up.scaleAllAndNotify(scale, -1);
+                goingUp += up.scaleAllAndNotify(scale, -1, false);
             }
         }
 
         if( downParameter != null ) {
             for(Scalable.Default dn : downParameter ) {
-                goingDown += dn.scaleAllAndNotify(1.0 / scale, -1);
+                goingDown += dn.scaleAllAndNotify(1.0 / scale, -1, false);
             }
         }
 

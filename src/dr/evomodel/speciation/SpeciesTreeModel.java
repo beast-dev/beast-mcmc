@@ -989,7 +989,7 @@ public class SpeciesTreeModel extends AbstractModel implements
 
     static private TreeNodeSlide internalTreeOP = null;
 
-    public int scale(double scaleFactor, int nDims) {
+    public int scale(double scaleFactor, int nDims, boolean testBounds) {
         assert scaleFactor > 0;
         if (nDims <= 0) {
             // actually when in an up down with operators on the gene trees the flags

@@ -58,14 +58,14 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
         final int tipCount = tree.getExternalNodeCount();
 
-        double hastingsRatio = 0;
+        double hastingsRatio;
 
         switch( mode ) {
             case NARROW:
-                narrow();
+                hastingsRatio = (narrow() ? 0.0 : Double.NEGATIVE_INFINITY);
                 break;
             case WIDE:
-                wide();
+                hastingsRatio = (wide() ? 0.0 : Double.NEGATIVE_INFINITY);
                 break;
             default:
                 throw new IllegalArgumentException("Unknow Exchange Mode");
@@ -80,7 +80,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void narrow() {
+    public boolean narrow() {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
@@ -106,15 +106,16 @@ public class ExchangeOperator extends AbstractTreeOperator {
             // exchangeNodes generates the events
             //tree.pushTreeChangedEvent(iParent);
             //tree.pushTreeChangedEvent(iGrandParent);
-        } else {
-          throw new RuntimeException("Couldn't find valid narrow move on this tree!!");
+            return true;
         }
+
+        return false;
     }
 
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void wide() {
+    public boolean wide() {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -138,10 +139,10 @@ public class ExchangeOperator extends AbstractTreeOperator {
                 && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
             exchangeNodes(tree, i, j, iP, jP);
             // System.out.println("tries = " + tries+1);
-            return;
+            return true;
         }
 
-        throw new RuntimeException("Couldn't find valid wide move on this tree!");
+        return false;
     }
 
     /* why not use Arrays.asList(a).indexOf(n) ? */

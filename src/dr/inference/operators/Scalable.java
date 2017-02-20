@@ -44,7 +44,7 @@ public interface Scalable {
      * @param nDims
      * @return Number of dimentions.
      */
-    int scale(double factor, int nDims);
+    int scale(double factor, int nDims, boolean testBounds);
 
     /**
      * @return Name for display purposes.
@@ -58,26 +58,28 @@ public interface Scalable {
             this.parameter = p;
         }
 
-        public int scale(double factor, int nDims) {
+        public int scale(double factor, int nDims, boolean testBounds) {
             assert nDims <= 0;
             final int dimension = parameter.getDimension();
 
-            final Bounds<Double> bounds = parameter.getBounds();
 
             for (int i = 0; i < dimension; ++i) {
-                final double offset = bounds.getLowerLimit(i);
-
                 // scale offset by the lower bound
-                parameter.setParameterValue(i, ((parameter.getParameterValue(i) - offset) * factor) + offset);
+                parameter.setParameterValue(i, (parameter.getParameterValue(i)) * factor);
             }
 
-            for (int i = 0; i < dimension; i++) {
-                final double value = parameter.getParameterValue(i);
+            if (testBounds) {
+                final Bounds<Double> bounds = parameter.getBounds();
 
-                if (value > bounds.getUpperLimit(i)) {
-                    throw new RuntimeException("proposed value outside upper bound");
+                for (int i = 0; i < dimension; i++) {
+                    final double value = parameter.getParameterValue(i);
+
+                    if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+                        throw new RuntimeException("proposed value outside bounds");
+                    }
                 }
             }
+
             return dimension;
         }
 
@@ -93,27 +95,27 @@ public interface Scalable {
          * only ONE parameter is changed.
          *
          */
-        public int scaleAllAndNotify(double factor, int nDims) {
+        public int scaleAllAndNotify(double factor, int nDims, boolean testBounds) {
 
             assert nDims <= 0;
             final int dimension = parameter.getDimension();
             final int dimMinusOne = dimension-1;
 
-            final Bounds<Double> bounds = parameter.getBounds();
-
             for(int i = 0; i < dimMinusOne; ++i) {
-                final double offset = bounds.getLowerLimit(i);
                 // scale offset by the lower bound
-                parameter.setParameterValueQuietly(i, ((parameter.getParameterValue(i) - offset) * factor) + offset);
+                parameter.setParameterValueQuietly(i, parameter.getParameterValue(i) * factor);
             }
 
-            final double offset = bounds.getLowerLimit(dimMinusOne);
-            parameter.setParameterValueNotifyChangedAll(dimMinusOne,  ((parameter.getParameterValue(dimMinusOne) - offset) * factor) + offset);
+            parameter.setParameterValueNotifyChangedAll(dimMinusOne,  parameter.getParameterValue(dimMinusOne) * factor);
 
-            for(int i = 0; i < dimension; i++) {
-                final double value = parameter.getParameterValue(i);
-                if (value > bounds.getUpperLimit(i)) {
-                    throw new RuntimeException("proposed value outside upper bound");
+            if (testBounds) {
+                final Bounds<Double> bounds = parameter.getBounds();
+
+                for (int i = 0; i < dimension; i++) {
+                    final double value = parameter.getParameterValue(i);
+                    if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+                        throw new RuntimeException("proposed value outside bounds");
+                    }
                 }
             }
             return dimension;

@@ -61,6 +61,7 @@ public class NegativeBinomialDistribution implements Distribution {
     	// TB - I'm having trouble implementing this
     	// LM - A first stab using simple minimisation to invert the function (under absolute loss)
     	// Implementation based on the qnbinom.c function used in R
+    	 final double stdev = Math.sqrt(mean + (mean * mean * alpha));
     	 final double r = -1 * (mean*mean) / (mean - stdev*stdev);
          final double p = mean / (stdev*stdev);
          final double prob = y;
@@ -143,19 +144,13 @@ public class NegativeBinomialDistribution implements Distribution {
 
     public static void main(String[] args) {
         System.out.println("Test negative binomial");
-<<<<<<< HEAD
-        System.out.println("Mean 5, sd 5, x 5, pdf 0.074487, logPdf -2.59713");
-
         double mean = 5;
         double stdev = 5;
 //         double r = -1 * (mean*mean) / (mean - stdev*stdev);
         double alpha = (stdev * stdev - mean) / (mean * mean);
 
         NegativeBinomialDistribution dist = new NegativeBinomialDistribution(5, alpha);
-=======
         System.out.println("Mean 5, sd 5, x 5, pdf 0.074487, logPdf -2.59713, median 4");
-        NegativeBinomialDistribution dist = new NegativeBinomialDistribution(5, 5);
->>>>>>> a2b54c7c4912924d0f940102d24ccce8541adcdc
         System.out.println("pdf = " + dist.pdf(5));
         System.out.println("quantile(0.5) aka median = " + dist.quantile(0.5));
         System.out.println("logPdf = " + dist.logPdf(5));

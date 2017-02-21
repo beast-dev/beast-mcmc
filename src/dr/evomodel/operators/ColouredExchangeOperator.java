@@ -43,6 +43,8 @@ import org.w3c.dom.Element;
  * <p/>
  * KNOWN BUGS: WIDE operator cannot be used on trees with 4 or less tips!
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ColouredExchangeOperator extends SimpleMCMCOperator {
 
     public static final String NARROW_EXCHANGE = "colouredNarrowExchange";

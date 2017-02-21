@@ -44,6 +44,8 @@ import java.util.*;
 /**
  * @author Sebastian Hoehna
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public abstract class AbstractImportanceDistributionOperator extends
         SimpleMCMCOperator implements GeneralOperator {
 

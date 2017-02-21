@@ -47,6 +47,8 @@ import java.util.Arrays;
  *  @author Joseph Heled, Graham Jones
  *         Date: 21/12/2011
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class MulTreeNodeSlide extends SimpleMCMCOperator {
 
     private final MulSpeciesTreeModel multree;

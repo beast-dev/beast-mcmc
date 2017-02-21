@@ -46,6 +46,8 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: ColouredSubtreeSlideOperator.java,v 1.4 2006/09/11 09:33:01 gerton Exp $
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
     public static final String SUBTREE_SLIDE = "colouredSubtreeSlide";

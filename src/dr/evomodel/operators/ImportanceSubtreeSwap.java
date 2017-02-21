@@ -48,6 +48,8 @@ import java.util.List;
  *         importance of the new tree. The importance are calculated by the
  *         multiplied clade probabilities.
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
     public final int SAMPLE_EVERY = 10;

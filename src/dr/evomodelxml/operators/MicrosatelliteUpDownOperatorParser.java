@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.operators;
 
-import dr.evomodel.operators.MicrosatUpDownOperator;
+import dr.evomodel.operators.MicrosatelliteUpDownOperator;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.inferencexml.operators.ScaleOperatorParser;
@@ -34,7 +34,7 @@ import dr.xml.*;
 
 /**
  */
-public class MicrosatUpDownOperatorParser extends AbstractXMLObjectParser {
+public class MicrosatelliteUpDownOperatorParser extends AbstractXMLObjectParser {
 
     public static final String MICROSAT_UP_DOWN_OPERATOR = "microsatUpDownOperator";
     public static final String UP = UpDownOperatorParser.UP;
@@ -69,7 +69,7 @@ public class MicrosatUpDownOperatorParser extends AbstractXMLObjectParser {
         final Scalable.Default[] upArgs = getArgs(xo.getChild(UP));
         final Scalable.Default[] dnArgs = getArgs(xo.getChild(DOWN));
 
-        return new MicrosatUpDownOperator(upArgs, dnArgs, scaleFactor, weight, mode);
+        return new MicrosatelliteUpDownOperator(upArgs, dnArgs, scaleFactor, weight, mode);
     }
 
     public String getParserDescription() {
@@ -79,7 +79,7 @@ public class MicrosatUpDownOperatorParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return MicrosatUpDownOperator.class;
+        return MicrosatelliteUpDownOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

@@ -38,6 +38,8 @@ import dr.math.MathUtils;
  *
  *  @author  Joseph Heled
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class TreeUniform extends AbstractTreeOperator {
 
     private final int nodesToMove;

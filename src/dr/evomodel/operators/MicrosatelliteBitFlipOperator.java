@@ -37,7 +37,7 @@ import dr.math.MathUtils;
  *  This operator performs bitflip operation on the bit vector representing the model.
  * 
  */
-public class MsatBitFlipOperator extends SimpleMCMCOperator {
+public class MicrosatelliteBitFlipOperator extends SimpleMCMCOperator {
     private Parameter parameter;
     private Parameter dependencies;
     private int[] variableIndices;
@@ -49,7 +49,7 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
     public static final String VARIABLE_INDICES = "variableIndices";
 
 
-    public MsatBitFlipOperator(Parameter parameter, Parameter dependencies, double weight, int[] variableIndices){
+    public MicrosatelliteBitFlipOperator(Parameter parameter, Parameter dependencies, double weight, int[] variableIndices){
         this.parameter = parameter;
         this.dependencies = dependencies;
         this.variableIndices = variableIndices;
@@ -126,7 +126,7 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
                 variableIndices = new int[]{0, 1, 2, 3, 4, 5};
             }
 
-            return new MsatBitFlipOperator(modelChoose, dependencies, weight, variableIndices);
+            return new MicrosatelliteBitFlipOperator(modelChoose, dependencies, weight, variableIndices);
         }
 
         //************************************************************************

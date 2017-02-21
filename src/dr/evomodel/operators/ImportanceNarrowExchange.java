@@ -45,6 +45,8 @@ import java.util.Map;
  * @version 1.0
  */
 @SuppressWarnings({"ConstantConditions"})
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ImportanceNarrowExchange extends AbstractTreeOperator implements TreeLogger.LogUpon {
 
     private TreeModel tree = null;

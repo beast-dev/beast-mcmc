@@ -31,7 +31,7 @@ import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.math.MathUtils;
 
 /**
- * Implements the unweighted wilson-balding brach swapping move.
+ * Implements the unweighted wilson-balding branch swapping move.
  *
  * @author Alexei Drummond
  * @version $Id: WilsonBalding.java,v 1.38 2005/06/14 10:40:34 rambaut Exp $

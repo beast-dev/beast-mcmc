@@ -42,6 +42,8 @@ import org.w3c.dom.Element;
  * @author Alexei Drummond
  * @version $Id: FixedColouredOperator.java,v 1.1 2006/08/12 12:55:44 gerton Exp $
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class FixedColouredOperator implements CoercableMCMCOperator {
 
     public static final double ACCEPTANCE_FACTOR = 0.5;

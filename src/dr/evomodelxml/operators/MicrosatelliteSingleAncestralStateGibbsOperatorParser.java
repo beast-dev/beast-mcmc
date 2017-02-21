@@ -26,7 +26,7 @@
 package dr.evomodelxml.operators;
 
 import dr.inference.operators.MCMCOperator;
-import dr.evomodel.operators.MsatSingleAncestralStateGibbsOperator;
+import dr.evomodel.operators.MicrosatelliteSingleAncestralStateGibbsOperator;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
@@ -36,9 +36,9 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 /**
  * @author Chieh-Hsi Wu
  */
-public class MsatSingleAncestralStateGibbsOperatorParser extends AbstractXMLObjectParser {
+public class MicrosatelliteSingleAncestralStateGibbsOperatorParser extends AbstractXMLObjectParser {
     public String getParserName(){
-        return MsatSingleAncestralStateGibbsOperator.MSAT_SINGLE_ANCESTAL_STATE_GIBBS_OPERATOR;
+        return MicrosatelliteSingleAncestralStateGibbsOperator.MSAT_SINGLE_ANCESTAL_STATE_GIBBS_OPERATOR;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -48,7 +48,7 @@ public class MsatSingleAncestralStateGibbsOperatorParser extends AbstractXMLObje
         final MicrosatelliteModel msatModel = (MicrosatelliteModel)xo.getChild(MicrosatelliteModel.class);
         final BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-        return new MsatSingleAncestralStateGibbsOperator(parameter, msatSamplerTreeModel, msatModel, branchRateModel,weight);
+        return new MicrosatelliteSingleAncestralStateGibbsOperator(parameter, msatSamplerTreeModel, msatModel, branchRateModel,weight);
     }
 
     public String getParserDescription() {
@@ -56,7 +56,7 @@ public class MsatSingleAncestralStateGibbsOperatorParser extends AbstractXMLObje
     }
 
     public Class getReturnType(){
-        return MsatSingleAncestralStateGibbsOperator.class;
+        return MicrosatelliteSingleAncestralStateGibbsOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

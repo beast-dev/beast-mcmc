@@ -44,6 +44,8 @@ import java.util.List;
  * @author Sebastian Hoehna
  *
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
 
     private int MAX_DISTANCE = 10;

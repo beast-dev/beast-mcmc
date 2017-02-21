@@ -28,7 +28,6 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
@@ -147,7 +146,7 @@ public class OperatorsGenerator extends Generator {
                 writeUpDownOperator(UpDownOperatorParser.UP_DOWN_OPERATOR, operator, writer);
                 break;
             case MICROSAT_UP_DOWN:
-                writeUpDownOperator(MicrosatUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
+                writeUpDownOperator(MicrosatelliteUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
                 break;
             case UP_DOWN_ALL_RATES_HEIGHTS:
                 writeUpDownOperatorAllRatesTrees(operator, writer);

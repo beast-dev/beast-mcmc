@@ -28,14 +28,14 @@ package dr.evomodelxml.operators;
 import dr.xml.*;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
-import dr.evomodel.operators.MsatBitFlipOperator;
+import dr.evomodel.operators.MicrosatelliteBitFlipOperator;
 
 /**
  * @author Chieh-Hsi Wu
  *
- * Parser for MicrosatelliteAveragingOperatorParser
+ * Parser for MicrosatelliteBitFlipOperator
  */
-public class MsatBitFlipOperatorParser extends AbstractXMLObjectParser{
+public class MicrosatelliteBitFlipOperatorParser extends AbstractXMLObjectParser{
     public static final String MODEL_CHOOSE = "modelChoose";
     public static final String DEPENDENCIES = "dependencies";
     public static final String VARIABLE_INDICES = "variableIndices";
@@ -60,7 +60,7 @@ public class MsatBitFlipOperatorParser extends AbstractXMLObjectParser{
                 variableIndices = new int[]{0, 1, 2, 3, 4, 5};
             }
 
-            return new MsatBitFlipOperator(modelChoose, dependencies, weight, variableIndices);
+            return new MicrosatelliteBitFlipOperator(modelChoose, dependencies, weight, variableIndices);
     }
          //************************************************************************
     // AbstractXMLObjectParser implementation

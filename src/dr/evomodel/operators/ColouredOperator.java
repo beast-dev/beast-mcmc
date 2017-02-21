@@ -40,6 +40,8 @@ import org.w3c.dom.Element;
  * @author Alexei Drummond
  * @version $Id: ColouredOperator.java,v 1.10 2006/07/28 11:41:23 rambaut Exp $
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ColouredOperator implements CoercableMCMCOperator {
 
     public static final double ACCEPTANCE_FACTOR = 0.5;

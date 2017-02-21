@@ -35,6 +35,8 @@ import dr.math.MathUtils;
  * @author Graham Jones
  * Date: 03/08/12
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class AlloppHybPopSizesScale  extends SimpleMCMCOperator {
 
     private final AlloppSpeciesNetworkModel apspnet;

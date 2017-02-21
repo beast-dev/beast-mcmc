@@ -40,14 +40,14 @@ import dr.math.MathUtils;
  *
  *
  */
-public class MsatSingleAncestralStateGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class MicrosatelliteSingleAncestralStateGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     public static final String MSAT_SINGLE_ANCESTAL_STATE_GIBBS_OPERATOR = "MsatSingleAncestralStateGibbsOperator";
     private Parameter parameter;
     private MicrosatelliteSamplerTreeModel msatSamplerTreeModel;
     private MicrosatelliteModel msatModel;
     private BranchRateModel branchRateModel;
 
-    public MsatSingleAncestralStateGibbsOperator (
+    public MicrosatelliteSingleAncestralStateGibbsOperator(
             Parameter parameter,
             MicrosatelliteSamplerTreeModel msatSamplerTreeModel,
             MicrosatelliteModel msatModel,

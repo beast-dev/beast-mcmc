@@ -39,6 +39,8 @@ import dr.inference.operators.SimpleMCMCOperator;
 
 
 // 2012-07 ood
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class AlloppMoveLegs extends SimpleMCMCOperator {
 
 	private final AlloppSpeciesNetworkModel apspnet;

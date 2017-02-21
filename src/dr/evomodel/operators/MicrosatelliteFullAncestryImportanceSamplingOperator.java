@@ -40,7 +40,7 @@ import dr.math.MathUtils;
  *
  * Produce an importance sample of the ancestry given a msat pattern and a tree.
  */
-public class MsatFullAncestryImportanceSamplingOperator extends SimpleMCMCOperator {
+public class MicrosatelliteFullAncestryImportanceSamplingOperator extends SimpleMCMCOperator {
 
     public static final String MSAT_FULL_ANCESTRY_IMPORTANCE_SAMPLING_OPERATOR = "MsatFullAncestryImportanceSamplingOperator";
     private Parameter parameter;
@@ -49,7 +49,7 @@ public class MsatFullAncestryImportanceSamplingOperator extends SimpleMCMCOperat
     private BranchRateModel branchRateModel;
 
 
-    public MsatFullAncestryImportanceSamplingOperator(
+    public MicrosatelliteFullAncestryImportanceSamplingOperator(
             Parameter parameter,
             MicrosatelliteSamplerTreeModel msatSamplerTreeModel,
             MicrosatelliteModel msatModel,

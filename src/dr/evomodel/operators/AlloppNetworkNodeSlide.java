@@ -55,6 +55,8 @@ import java.util.ArrayList;
  */
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 
     private final AlloppSpeciesNetworkModel apspnet;

@@ -41,6 +41,8 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class NodeHeightScaleOperator extends AbstractCoercableOperator {
 
     public static final String NODE_HEIGHT_SCALE_OPERATOR = "nodeHeightScaleOperator";

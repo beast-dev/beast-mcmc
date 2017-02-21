@@ -32,9 +32,11 @@ import dr.math.MathUtils;
  * A generic operator for use with a sum-constrained vector parameter.
  *
  * @author Alexei Drummond
- * @author Andrew Rambaut
  * @version $Id: CenteredScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
+
+// AR - I don't see how this can work...
+@Deprecated
 public class CenteredScaleOperator extends AbstractCoercableOperator {
 
     public CenteredScaleOperator(Parameter parameter) {

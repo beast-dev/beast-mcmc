@@ -41,6 +41,8 @@ import dr.math.MathUtils;
 import jebl.util.FixedBitSet;
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class PopsIOTreeNodeSlide  extends SimpleMCMCOperator {
     PopsIOSpeciesTreeModel piostm;
     PopsIOSpeciesBindings piosb ;

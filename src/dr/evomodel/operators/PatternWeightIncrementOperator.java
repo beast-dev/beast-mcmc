@@ -33,6 +33,8 @@ import jebl.math.Random;
 /**
  * @author Andrew Rambaut
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class PatternWeightIncrementOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     public static final String PATTERN_WEIGHT_INCREMENT_OPERATOR = "patternWeightIncrementOperator";

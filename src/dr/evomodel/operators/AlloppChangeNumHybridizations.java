@@ -43,6 +43,8 @@ import jebl.util.FixedBitSet;
 
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
 
     private final AlloppSpeciesNetworkModel apspnet;

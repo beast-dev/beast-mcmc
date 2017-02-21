@@ -39,6 +39,8 @@ import dr.math.MathUtils;
  * @author Marc A. Suchard
  * @author John J. Welch
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class FunkyPriorMixerOperator extends
         SimpleMCMCOperator {
 //        AbstractCoercableOperator {

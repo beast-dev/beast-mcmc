@@ -42,6 +42,8 @@ import dr.math.MathUtils;
  */
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class MulTreeSequenceReassignment extends SimpleMCMCOperator {
 
 	private final MulSpeciesTreeModel multree;

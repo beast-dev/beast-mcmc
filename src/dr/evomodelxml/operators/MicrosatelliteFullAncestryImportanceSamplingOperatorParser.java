@@ -26,7 +26,7 @@
 package dr.evomodelxml.operators;
 
 import dr.xml.*;
-import dr.evomodel.operators.MsatFullAncestryImportanceSamplingOperator;
+import dr.evomodel.operators.MicrosatelliteFullAncestryImportanceSamplingOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.model.Parameter;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
@@ -36,11 +36,11 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 /**
  * @author Chieh-Hsi Wu
  *
- * Parser for MsatFullAncestryGibbsOperator
+ * Parser for MicrosatelliteFullAncestryImportanceSamplingOperator
  */
-public class MsatFullAncestryImportanceSamplingOperatorParser extends AbstractXMLObjectParser {
+public class MicrosatelliteFullAncestryImportanceSamplingOperatorParser extends AbstractXMLObjectParser {
     public String getParserName(){
-        return MsatFullAncestryImportanceSamplingOperator.MSAT_FULL_ANCESTRY_IMPORTANCE_SAMPLING_OPERATOR;
+        return MicrosatelliteFullAncestryImportanceSamplingOperator.MSAT_FULL_ANCESTRY_IMPORTANCE_SAMPLING_OPERATOR;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -50,7 +50,7 @@ public class MsatFullAncestryImportanceSamplingOperatorParser extends AbstractXM
         final MicrosatelliteModel msatModel = (MicrosatelliteModel)xo.getChild(MicrosatelliteModel.class);
         final BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-        return new MsatFullAncestryImportanceSamplingOperator(parameter, msatSamplerTreeModel, msatModel, branchRateModel,weight);
+        return new MicrosatelliteFullAncestryImportanceSamplingOperator(parameter, msatSamplerTreeModel, msatModel, branchRateModel,weight);
     }
 
     public String getParserDescription() {
@@ -58,7 +58,7 @@ public class MsatFullAncestryImportanceSamplingOperatorParser extends AbstractXM
     }
 
     public Class getReturnType(){
-        return MsatFullAncestryImportanceSamplingOperator.class;
+        return MicrosatelliteFullAncestryImportanceSamplingOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

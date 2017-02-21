@@ -43,6 +43,8 @@ import java.util.List;
 /**
  * @author Sebastian Hoehna
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
     public final int SAMPLE_EVERY = 10;

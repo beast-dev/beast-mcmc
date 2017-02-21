@@ -37,17 +37,17 @@ import dr.math.MathUtils;
  * This is almost the same as UpDownOperator, except it uses scaleAllAndNotify method instead of scale.
  *
  */
-public class MicrosatUpDownOperator extends AbstractCoercableOperator {
+public class MicrosatelliteUpDownOperator extends AbstractCoercableOperator {
 
     private Scalable.Default[] upParameter = null;
     private Scalable.Default[] downParameter = null;
     private double scaleFactor;
 
-    public MicrosatUpDownOperator(Scalable.Default[] upParameter,
-                                  Scalable.Default[] downParameter,
-                                  double scale,
-                                  double weight,
-                                  CoercionMode mode) {
+    public MicrosatelliteUpDownOperator(Scalable.Default[] upParameter,
+                                        Scalable.Default[] downParameter,
+                                        double scale,
+                                        double weight,
+                                        CoercionMode mode) {
 
         super(mode);
         setWeight(weight);

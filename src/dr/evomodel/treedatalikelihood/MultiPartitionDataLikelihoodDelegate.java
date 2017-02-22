@@ -144,6 +144,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         recomputeScaleFactors = new boolean[partitionCount];
         everUnderflowed = new boolean[partitionCount];
         flip = new boolean[partitionCount];
+        for (int i = 0; i < partitionCount; i++) {
+            flip[i] = true;
+        }
 
         underflowHandling = new int[partitionCount];
 

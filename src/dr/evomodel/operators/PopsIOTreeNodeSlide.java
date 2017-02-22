@@ -31,11 +31,11 @@ package dr.evomodel.operators;
  */
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.SlidableTree;
+import dr.evomodel.alloppnet.tree.SlidableTree;
 import dr.evolution.util.Taxon;
-import dr.evomodel.speciation.PopsIOSpeciesBindings;
-import dr.evomodel.speciation.PopsIOSpeciesTreeModel;
-import dr.evomodelxml.operators.PopsIOTreeNodeSlideParser;
+import dr.evomodel.alloppnet.speciation.PopsIOSpeciesBindings;
+import dr.evomodel.alloppnet.speciation.PopsIOSpeciesTreeModel;
+import dr.evomodel.alloppnet.parsers.PopsIOTreeNodeSlideParser;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import jebl.util.FixedBitSet;

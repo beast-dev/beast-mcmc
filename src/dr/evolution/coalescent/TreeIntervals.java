@@ -357,8 +357,9 @@ public class TreeIntervals implements IntervalList {
 
     /**
      * extract coalescent times and tip information into array times from tree.
+     * MK: Made protected for GriddedTreeIntervals
      */
-    private static void collectTimes(Tree tree, double[] times, int[] childCounts) {
+    protected static void collectTimes(Tree tree, double[] times, int[] childCounts) {
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
@@ -450,45 +451,46 @@ public class TreeIntervals implements IntervalList {
         return sb.toString();
     }
 
-    private int[] indices;
-    private int[] storedIndices;
+    // MK: made protected for GriddedTreeIntervals
+    protected int[] indices;
+    protected int[] storedIndices;
 
-    private double[] times;
-    private double[] storedTimes;
+    protected double[] times;
+    protected double[] storedTimes;
 
     /**
      * The tree.
      */
-    private Tree tree = null;
+    protected Tree tree = null;
 
     /**
      * The widths of the intervals.
      */
-    private double[] intervals;
-    private double[] storedIntervals;
+    protected double[] intervals;
+    protected double[] storedIntervals;
 
     /**
      * The number of uncoalesced lineages within a particular interval.
      */
-    private int[] lineageCounts;
-    private int[] storedLineageCounts;
+    protected int[] lineageCounts;
+    protected int[] storedLineageCounts;
 
     /**
      * The lineages in each interval (stored by node ref).
      */
-    private List<NodeRef>[] lineagesAdded;
-    private List<NodeRef>[] lineagesRemoved;
-    private List[] lineages;
+    protected List<NodeRef>[] lineagesAdded;
+    protected List<NodeRef>[] lineagesRemoved;
+    protected List[] lineages;
 
-    private int intervalCount = 0;
+    protected int intervalCount = 0;
 
     /**
      * are the intervals known?
      */
-    private boolean intervalsKnown = false;
-    private boolean storedIntervalsKnown;
-	
-	private double multifurcationLimit = -1.0;
+    protected boolean intervalsKnown = false;
+    protected boolean storedIntervalsKnown;
 
-    private static final boolean superStore = true;
+    protected double multifurcationLimit = -1.0;
+
+    protected static final boolean superStore = true;
 }

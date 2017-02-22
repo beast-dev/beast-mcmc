@@ -123,6 +123,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         } else {
             logger.info("\nUsing Multi-Partition Data Likelihood Delegate");
         }
+        setId(patternLists.get(0).getId());
 
         this.dataType = patternLists.get(0).getDataType();
         stateCount = dataType.getStateCount();
@@ -143,6 +144,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         recomputeScaleFactors = new boolean[partitionCount];
         everUnderflowed = new boolean[partitionCount];
         flip = new boolean[partitionCount];
+        for (int i = 0; i < partitionCount; i++) {
+            flip[i] = true;
+        }
 
         underflowHandling = new int[partitionCount];
 
@@ -183,7 +187,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE * partitionCount];
         }
 
-        firstRescaleAttempt = true;
+        rescalingCount = new int[partitionCount];
+        rescalingCountInner = new int[partitionCount];
+        firstRescaleAttempt = new boolean[partitionCount];
+        for (int i = 0; i < partitionCount; i++) {
+            firstRescaleAttempt[i] = true;
+        }
 
         try {
 
@@ -650,45 +659,48 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
                     useScaleFactors[i] = true;
 
-                    if (rescalingCount > rescalingFrequency) {
+                    if (rescalingCount[i] > rescalingFrequency) {
                         if (DEBUG) {
                             System.out.println("rescalingCount > rescalingFrequency");
                         }
-                        rescalingCount = 0;
-                        rescalingCountInner = 0;
+                        rescalingCount[i] = 0;
+                        rescalingCountInner[i] = 0;
                     }
 
                     if (DEBUG) {
-                        System.out.println("rescalingCountInner = " + rescalingCountInner);
+                        System.out.println("rescalingCountInner = " + rescalingCountInner[i]);
                     }
 
-                    if (rescalingCountInner < RESCALE_TIMES) {
+                    if (rescalingCountInner[i] < RESCALE_TIMES) {
                         if (DEBUG) {
                             System.out.println("rescalingCountInner < RESCALE_TIMES");
                         }
 
                         recomputeScaleFactors[i] = true;
 
-                        rescalingCountInner++;
+                        rescalingCountInner[i]++;
 
                         throw new LikelihoodRescalingException();
 
                     }
 
-                    if (underflowHandling[i] < 1) {
-                        underflowHandling[i]++;
-                        if (DEBUG) {
-                            System.out.println("underflowHandling < 1");
+                    if (initialEvaluation) {
+                        if (underflowHandling[i] < 1) {
+                            underflowHandling[i]++;
+                            if (DEBUG) {
+                                System.out.println("underflowHandling < 1");
+                            }
+                        } else if (underflowHandling[i] == 1) {
+                            if (DEBUG) {
+                                System.out.println("underflowHandling == 1");
+                            }
+                            recomputeScaleFactors[i] = true;
+                            underflowHandling[i]++;
+                            initialEvaluation = false;
                         }
-                    } else if (underflowHandling[i] == 1) {
-                        if (DEBUG) {
-                            System.out.println("underflowHandling == 1");
-                        }
-                        recomputeScaleFactors[i] = true;
-                        underflowHandling[i]++;
                     }
 
-                    rescalingCount++;
+                    rescalingCount[i]++;
                 }
             }
         }
@@ -908,11 +920,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     scaleBufferHelper[i].flipOffset(internalNodeCount);
                     cumulateScaleBufferIndex = scaleBufferHelper[i].getOffsetIndex(internalNodeCount);
                     if (useBeagle3) {
-                        /*boolean updateAllPartitions = true;
-                        if (updateAllPartitions) {
-                            beagle.resetScaleFactors(cumulateScaleBufferIndex);
-                            beagle.accumulateScaleFactors(scaleBufferIndices[i], internalNodeCount, cumulateScaleBufferIndex);
-                        } else {*/
                         //TODO: check with Daniel if calling these methods using an iteration can be done more efficiently
                         for (int j = 0; j < partitionCount; j++) {
                             beagle.resetScaleFactorsByPartition(cumulateScaleBufferIndex, j);
@@ -928,15 +935,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 }
             } else if (useAutoScaling) {
                 if (useBeagle3) {
-                    /*boolean updateAllPartitions = true;
-                    if (updateAllPartitions) {
-                        beagle.accumulateScaleFactors(scaleBufferIndices[i], internalNodeCount, Beagle.NONE);
-                    } else {*/
-                        //TODO: check with Daniel if calling these methods using an iteration can be done more efficiently
-                        for (int j = 0; j < partitionCount; j++) {
-                            beagle.accumulateScaleFactorsByPartition(scaleBufferIndices[j], internalNodeCount, Beagle.NONE, j);
-                        }
-                    //}
+                    //TODO: check with Daniel if calling these methods using an iteration can be done more efficiently
+                    for (int j = 0; j < partitionCount; j++) {
+                        beagle.accumulateScaleFactorsByPartition(scaleBufferIndices[j], internalNodeCount, Beagle.NONE, j);
+                    }
                 } else {
                     beagle.accumulateScaleFactors(scaleBufferIndices[i], internalNodeCount, Beagle.NONE);
                 }
@@ -958,6 +960,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         double[] sumLogLikelihoods = new double[1];
         double[] sumLogLikelihoodsByPartition = new double[partitionCount];
+
+        if (DEBUG) {
+            for (int i = 0; i < partitionCount; i++) {
+                System.out.println("useScaleFactors=" + useScaleFactors[i] + " recomputeScaleFactors=" + recomputeScaleFactors[i] + " (partition: " + i + ")");
+            }
+        }
 
         if (useBeagle3) {
 
@@ -1014,6 +1022,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         double logL = sumLogLikelihoods[0];
 
+        if (DEBUG) {
+            for (int i = 0; i < partitionCount; i++) {
+                System.out.println("partition " + i + ": " + sumLogLikelihoodsByPartition[i]);
+            }
+        }
+
         // If these are needed...
 //        if (patternLogLikelihoods == null) {
 //            patternLogLikelihoods = new double[totalPatternCount];
@@ -1039,38 +1053,41 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             logL = Double.NEGATIVE_INFINITY;
 
-            if (firstRescaleAttempt && (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
-                if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount == 0)) {
-                    // show a message but only every 1000 rescales
-                    if (rescalingMessageCount % 1000 == 0) {
-                        if (rescalingMessageCount > 0) {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
-                        } else {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+            for (int i = 0; i < partitionCount; i++) {
+                if (firstRescaleAttempt[i] && (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
+                    if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount[i] == 0)) {
+                        // show a message but only every 1000 rescales
+                        if (rescalingMessageCount % 1000 == 0) {
+                            if (rescalingMessageCount > 0) {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
+                            } else {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            }
                         }
+                        rescalingMessageCount += 1;
                     }
-                    rescalingMessageCount += 1;
-                }
 
-                for (int i = 0; i < partitionCount; i++) {
                     if (Double.isNaN(sumLogLikelihoodsByPartition[i]) || Double.isInfinite(sumLogLikelihoodsByPartition[i])) {
                         useScaleFactors[i] = true;
                         recomputeScaleFactors[i] = true;
+                        if (DEBUG) {
+                            System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (partition index: " + i + ")");
+                        }
                     }
+
+                    firstRescaleAttempt[i] = false; // Only try to rescale once
+
+                    rescalingCount[i]--;
                 }
-
-                firstRescaleAttempt = false; // Only try to rescale once
-
-                rescalingCount--;
             }
 
             throw new LikelihoodUnderflowException();
 
         } else {
 
-            firstRescaleAttempt = true;
             //TODO: probably better to only switch back those booleans that were actually altered
             for (int i = 0; i < partitionCount; i++) {
+                firstRescaleAttempt[i] = true;
                 recomputeScaleFactors[i] = false;
                 flip[i] = true;
             }
@@ -1229,10 +1246,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     //keep track of underflow on a per partition basis
     private boolean[] everUnderflowed;
 
-    private int rescalingCount = 0;
-    private int rescalingCountInner = 0;
+    private int[] rescalingCount;
+    private int[] rescalingCountInner;
 
-    private boolean firstRescaleAttempt = false;
+    private boolean[] firstRescaleAttempt;
     private int rescalingMessageCount = 0;
 
     //integer to keep track of setting recomputeScaleFactors correctly after an underflow
@@ -1324,5 +1341,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * Flag to specify that the site model has changed
      */
     private final boolean[] updateSiteRateModels;
+
+    /**
+     * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
+     */
+    private boolean initialEvaluation = true;
 
 }

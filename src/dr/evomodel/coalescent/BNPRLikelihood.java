@@ -1,14 +1,20 @@
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervals;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.operators.BNPRBlockUpdateOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.BNPRLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.math.MathUtils;
+import no.uib.cipr.matrix.BandCholesky;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
+import no.uib.cipr.matrix.UpperSPDBandMatrix;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,6 +22,7 @@ import java.util.List;
  * Created by mkarcher on 9/15/16.
  */
 public class BNPRLikelihood extends GMRFSkyrideLikelihood {
+    public static final double NUGGET = 0.0001;
 
     protected double cutOff;
     protected int numGridPoints;
@@ -23,6 +30,8 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
     protected double[] numCoalEvents;
     protected double[] storedNumCoalEvents;
     protected double[] gridPoints;
+    protected double[] midPoints;
+
 
     protected double precAlpha;
     protected double precBeta;
@@ -32,6 +41,7 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
     protected double logSamplingLikelihood;
     protected double storedLogSamplingLikelihood;
 
+    protected boolean samplingAware;
     protected double[] samplingTimes;
     protected boolean samplingTimesKnown;
 
@@ -45,7 +55,8 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
                           boolean timeAwareSmoothing,
                           boolean rescaleByRootHeight,
                           double cutOff,
-                          int numGridPoints) {
+                          int numGridPoints,
+                          boolean samplingAware) {
 
         super(BNPRLikelihoodParser.BNPR_LIKELIHOOD);
 
@@ -60,16 +71,7 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
 
         this.cutOff = cutOff;
         this.numGridPoints = numGridPoints;
-        setupGridPoints();
-
-        addVariable(popSizeParameter);
-        addVariable(precisionParameter);
-        addVariable(lambdaParameter);
-        //if (betaParameter != null) {
-        //    addVariable(betaParameter);
-        //}
-
-        setTree(treeList);
+        this.samplingAware = samplingAware;
 
         int correctFieldLength = getCorrectFieldLength();
 
@@ -82,6 +84,18 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         if (correctFieldLength != fieldLength) {
             throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
         }
+
+        setupGridPoints();
+        setupMidPoints();
+
+        addVariable(popSizeParameter);
+        addVariable(precisionParameter);
+        addVariable(lambdaParameter);
+        //if (betaParameter != null) {
+        //    addVariable(betaParameter);
+        //}
+
+        setTree(treeList);
 
         oldFieldLength = super.getCorrectFieldLength();
 
@@ -97,7 +111,7 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         numCoalEvents = new double[fieldLength];
         storedNumCoalEvents = new double[fieldLength];
 
-        setupGMRFWeights();
+        setupGPWeights();
 
         addStatistic(new DeltaStatistic());
 
@@ -131,7 +145,7 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
     }
 
     public void wrapSetupIntervals() {
-        // Do nothing
+        setupIntervals();
     }
 
     protected void setupGridPoints() {
@@ -142,8 +156,22 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         }
 
         for (int pt = 0; pt < numGridPoints; pt++) {
-            gridPoints[pt] = (pt + 1) * (cutOff / numGridPoints);
+            gridPoints[pt] = pt * cutOff / (numGridPoints - 1);
         }
+    }
+
+    private void setupMidPoints() {
+        if (gridPoints == null) {
+            setupGridPoints();
+        }
+
+        midPoints = new double[fieldLength];
+
+        midPoints[0] = 0;
+        for (int i = 1; i < fieldLength - 1; i++) {
+            midPoints[i] = (gridPoints[i-1] + gridPoints[i]) / 2.0;
+        }
+        midPoints[fieldLength - 1] = gridPoints[numGridPoints - 1];
     }
 
     protected double[] getSamplingTimes() {
@@ -216,11 +244,34 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         if (!likelihoodKnown) {
             logLikelihood = calculateLogCoalescentLikelihood();
             logFieldLikelihood = calculateLogFieldLikelihood();
-            logSamplingLikelihood = calculateLogSamplingLikelihood();
+
+            if (samplingAware)
+                logSamplingLikelihood = calculateLogSamplingLikelihood();
+
             likelihoodKnown = true;
         }
 
-        return logLikelihood + logFieldLikelihood + logSamplingLikelihood;
+        double ll = logLikelihood + logFieldLikelihood;
+        if (samplingAware)
+            ll += logSamplingLikelihood;
+
+        return ll;
+    }
+
+    protected double calculateLogCoalescentLikelihood() {
+//        makeIntervalsKnown();
+
+        // Matrix operations taken from block update sampler to calculate data likelihood and field prior
+
+        double currentLike = 0;
+        double[] currentGamma = popSizeParameter.getParameterValues();
+
+        for (int i = 0; i < fieldLength; i++) {
+            System.out.println("Sufficient statistic " + i + ": " + sufficientStatistics[i]);
+            currentLike += -currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
+        }
+
+        return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
     }
 
     public double getLogLikelihoodSubGamma(double[] gamma) {
@@ -391,6 +442,49 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
         return currentLike;
     }
 
+    protected void setupSufficientStatistics() {
+        int index = 0;
+
+        double length = 0;
+        double weight = 0;
+        for (int i = 0; i < getIntervalCount(); i++) {
+            length += getInterval(i);
+            weight += getInterval(i) * getLineageCount(i) * (getLineageCount(i) - 1);
+            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+                coalescentIntervals[index] = length;
+                sufficientStatistics[index] = weight / 2.0;
+                index++;
+                length = 0;
+                weight = 0;
+            }
+        }
+    }
+
+    protected void setupGPWeights() { // TODO: Switch to Gaussian Process weights
+
+        setupSufficientStatistics();
+
+        //Set up the weight Matrix
+        double[] offdiag = new double[fieldLength - 1];
+        double[] diag = new double[fieldLength];
+
+        //First set up the offdiagonal entries;
+
+        for (int i = 0; i < fieldLength - 1; i++) {
+            offdiag[i] = -1.0 / (midPoints[i+1] - midPoints[i]);
+        }
+
+        //Then set up the diagonal entries;
+        for (int i = 1; i < fieldLength - 1; i++)
+            diag[i] = -(offdiag[i] + offdiag[i - 1]);
+
+        //Take care of the endpoints
+        diag[0] = -offdiag[0] + NUGGET;
+        diag[fieldLength - 1] = -offdiag[fieldLength - 2];
+
+        weightMatrix = new SymmTridiagMatrix(diag, offdiag);
+    }
+
     public int getNumGridPoints() {
         return this.gridPoints.length;
     }
@@ -413,5 +507,80 @@ public class BNPRLikelihood extends GMRFSkyrideLikelihood {
 
     public Parameter getSamplingBetas() {
         return samplingBetas;
+    }
+
+    // Main function for testing
+
+    public static void main(String[] args) throws Exception {
+        NewickImporter importer = new NewickImporter("((((5:0.5,1:0.2):0.5,0:1):0.2,2:0.8):0.2,3:1.4)");
+        Tree tree = importer.importNextTree();
+        List<Tree> treeList = wrapTree(tree);
+
+        System.out.println("Got here A");
+
+        BNPRLikelihood bnprLikelihood = new BNPRLikelihood(treeList, new Parameter.Default(1.0),
+                null, new Parameter.Default(1.0),
+                new Parameter.Default(1.0), new Parameter.Default(1.0), null,
+                true, true, 1.4, 5, false);
+
+        System.out.println("Got here B");
+
+        double ll = bnprLikelihood.calculateLogCoalescentLikelihood();
+        System.out.println("Log-likelihood: " + ll);
+
+        System.out.println("Grid: " + Arrays.toString(bnprLikelihood.gridPoints));
+        System.out.println("Midpoints: " + Arrays.toString(bnprLikelihood.midPoints));
+
+        System.out.println("Got here C");
+
+//        System.out.println("Q matrix:");
+//
+//        SymmTridiagMatrix Qmat = bnprLikelihood.getScaledWeightMatrix(1);
+//        System.out.println(Qmat);
+//
+//        System.out.println("Got here D");
+//
+//        BandCholesky chol = BandCholesky.factorize(new UpperSPDBandMatrix(Qmat, 1));
+//        DenseVector randNorm = BNPRBlockUpdateOperator.getMultiNormal(new DenseVector(bnprLikelihood.midPoints.length), chol);
+//
+//        System.out.println("Randnorm: " + Arrays.toString(randNorm.getData()));
+
+        System.out.println("Got here E");
+
+        int intervalCount = bnprLikelihood.getIntervalCount();
+        System.out.println("Interval count: " + intervalCount);
+        for (int i = 0; i < intervalCount; i++) {
+            System.out.printf("Num lineages %d: %d\n", i, bnprLikelihood.getLineageCount(i));
+            System.out.printf("Interval %d: %.2f\n", i, bnprLikelihood.getInterval(i));
+        }
+
+        System.out.println("Got here F");
+
+        System.out.println("Tree root: " + bnprLikelihood.tree.getNodeHeight(bnprLikelihood.tree.getRoot()));
+
+    }
+
+    private static List<Tree> wrapTree(Tree tree) {
+        List<Tree> treeList = new ArrayList<Tree>();
+        treeList.add(tree);
+        return treeList;
+    }
+
+    public class GriddedTreeIntervals extends TreeIntervals {
+        protected double[] grid;
+        protected IntervalType[] eventTypes;
+
+        public GriddedTreeIntervals() {
+            super();
+        }
+
+        public GriddedTreeIntervals(Tree tree) {
+            super(tree);
+        }
+
+        public void setGrid(double[] grid) {
+            this.grid = grid.clone();
+            // TODO: Propagate new grid to intervals, event types, etc.
+        }
     }
 }

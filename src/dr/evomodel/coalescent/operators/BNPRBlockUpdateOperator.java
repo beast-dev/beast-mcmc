@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Created by mkarcher on 9/15/16.
  */
-public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class BNPRBlockUpdateOperator extends SimpleMCMCOperator { // implements GibbsOperator
 
     private int fieldLength;
 
@@ -34,8 +34,8 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         popSizeParameter = bnprLikelihood.getPopSizeParameter();
         precisionParameter = bnprLikelihood.getPrecisionParameter();
 
-        betaParameter = bnprLikelihood.getBetaListParameter();
-        covariates = bnprLikelihood.getCovariates();
+//        betaParameter = bnprLikelihood.getBetaListParameter();
+//        covariates = bnprLikelihood.getCovariates();
 
         fieldLength = popSizeParameter.getDimension();
 
@@ -46,9 +46,15 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         this.zeros = new double[fieldLength];
     }
 
-    private DenseVector ESS(DenseVector currentGamma, double currentLoglik) {
+    public DenseVector ESS() {
+        DenseVector currentPopSize = new DenseVector(bnprField.getPopSizeParameter().getParameterValues());
+        double currentLoglik = bnprField.getLogLikelihood();
+
         // Choose ellipse
-        DenseVector nu = new DenseVector(bnprField.getNumGridPoints()); // TODO: Implement!
+        SymmTridiagMatrix currentQ = bnprField.getScaledWeightMatrix(precisionParameter.getParameterValue(0));
+        BandCholesky chol = BandCholesky.factorize(new UpperSPDBandMatrix(currentQ, 1));
+        DenseVector nu = getMultiNormal(new DenseVector(zeros), chol);
+//        DenseVector nu = new DenseVector(fieldLength);
 
         // Log-likelihood threshold
         double u = MathUtils.nextDouble();
@@ -59,7 +65,7 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         double tMin = t - TWO_TIMES_PI;
         double tMax = t;
 
-        DenseVector q = currentGamma.copy();
+        DenseVector q = currentPopSize.copy();
         q = (DenseVector) q.scale(Math.cos(t)).add(Math.sin(t), nu);
 
         double l = bnprField.getLogLikelihoodSubGamma(q.getData());
@@ -81,7 +87,7 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         return q;
     }
 
-    private double getNewPrecision(double currentValue) {
+    public double getNewPrecision(double currentValue) {
         //double length = scaleFactor - 1 / scaleFactor;
         double returnValue;
         double shape, scale;
@@ -95,49 +101,65 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         return returnValue;
     }
 
-    public DenseVector getMultiNormalMean(DenseVector CanonVector, BandCholesky Cholesky) {
+    public DenseVector getMultiNormalMean(DenseVector canonVector, BandCholesky cholesky) {
 
         DenseVector tempValue = new DenseVector(zeros);
-        DenseVector Mean = new DenseVector(zeros);
+        DenseVector mean = new DenseVector(zeros);
 
-        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+        UpperTriangBandMatrix CholeskyUpper = cholesky.getU();
 
         // Assume Cholesky factorization of the precision matrix Q = LL^T
 
         // 1. Solve L\omega = b
 
-        CholeskyUpper.transSolve(CanonVector, tempValue);
+        CholeskyUpper.transSolve(canonVector, tempValue);
 
         // 2. Solve L^T \mu = \omega
 
-        CholeskyUpper.solve(tempValue, Mean);
+        CholeskyUpper.solve(tempValue, mean);
 
-        return Mean;
+        return mean;
     }
 
-    public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky) {
+    public DenseVector getMultiNormal(DenseVector standNorm, DenseVector mean, BandCholesky cholesky) {
 
         DenseVector returnValue = new DenseVector(zeros);
 
-        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+        UpperTriangBandMatrix CholeskyUpper = cholesky.getU();
 
         // 3. Solve L^T v = z
 
-        CholeskyUpper.solve(StandNorm, returnValue);
+        CholeskyUpper.solve(standNorm, returnValue);
 
         // 4. Return x = \mu + v
 
-        returnValue.add(Mean);
+        returnValue.add(mean);
 
         return returnValue;
     }
 
-
-    public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
+    public static DenseVector getMultiNormal(DenseVector Mean, BandCholesky cholesky) {
         int length = Mean.size();
         DenseVector tempValue = new DenseVector(length);
+
+        for (int i = 0; i < length; i++)
+            tempValue.set(i, MathUtils.nextGaussian());
+
+        DenseVector returnValue = new DenseVector(Mean.size());
+        UpperTriangBandMatrix CholeskyUpper = cholesky.getU();
+
+        // 3. Solve L^T v = z
+        CholeskyUpper.solve(tempValue, returnValue);
+        // 4. Return x = \mu + v
+        returnValue.add(Mean);
+        return returnValue;
+    }
+
+    public static DenseVector getMultiNormal(DenseVector mean, UpperSPDDenseMatrix variance) {
+        int length = mean.size();
+        DenseVector tempValue = new DenseVector(length);
         DenseVector returnValue = new DenseVector(length);
-        UpperSPDDenseMatrix ab = Variance.copy();
+        UpperSPDDenseMatrix ab = variance.copy();
 
         for (int i = 0; i < returnValue.size(); i++)
             tempValue.set(i, MathUtils.nextGaussian());
@@ -148,7 +170,7 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         UpperTriangDenseMatrix x = chol.getU();
 
         x.transMult(tempValue, returnValue);
-        returnValue.add(Mean);
+        returnValue.add(mean);
         return returnValue;
     }
 
@@ -163,97 +185,14 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
         //lambdaParameter.setParameterValue(0, proposedLambda);
 
         DenseVector currentGamma = new DenseVector(bnprField.getPopSizeParameter().getParameterValues());
-        DenseVector proposedGamma;
-
-        SymmTridiagMatrix currentQ = bnprField.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
-        SymmTridiagMatrix proposedQ = bnprField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
-
-        double[] wNative = bnprField.getSufficientStatistics();
-        double[] numCoalEv = bnprField.getNumCoalEvents();
-
-        UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ, 1);
-        UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ, 1);
-
-        BandCholesky forwardCholesky = new BandCholesky(wNative.length, 1, true);
-        BandCholesky backwardCholesky = new BandCholesky(wNative.length, 1, true);
-
-        DenseVector diagonal1 = new DenseVector(fieldLength);
-        DenseVector diagonal2 = new DenseVector(fieldLength);
-        DenseVector diagonal3 = new DenseVector(fieldLength);
-        //DenseVector ZBetaVector = getZBeta(covariates, betaParameter);
-        //DenseVector QZBetaProp = new DenseVector(fieldLength);
-        //DenseVector QZBetaCurrent = new DenseVector(fieldLength);
-        //forwardQW.mult(ZBetaVector, QZBetaProp);
-        //backwardQW.mult(ZBetaVector, QZBetaCurrent);
-
-        DenseVector modeForward = newtonRaphson(numCoalEv, wNative, currentGamma, proposedQ.copy(), ZBetaVector);
-
-        for (int i = 0; i < fieldLength; i++) {
-            diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
-            diagonal2.set(i, modeForward.get(i) + 1);
-
-            forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
-            //diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-            diagonal1.set(i, QZBetaProp.get(i) + diagonal1.get(i) * diagonal2.get(i) - numCoalEv[i]);
-        }
-
-        forwardCholesky.factor(forwardQW.copy());
-
-        DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
-
-        DenseVector stand_norm = new DenseVector(zeros);
-
-        for (int i = 0; i < zeros.length; i++)
-            stand_norm.set(i, MathUtils.nextGaussian());
-
-        proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
-
-        /*
-        double hRatio = 0;
-        for (int i = 0; i < fieldLength; i++) {
-            diagonal1.set(i, proposedGamma.get(i) - forwardMean.get(i));
-        }
-        diagonal3.zero();
-        forwardQW.mult(diagonal1, diagonal3);
-
-        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * diagonal1.dot(diagonal3);
-        */
+        DenseVector proposedGamma = new DenseVector(ESS());
 
         for (int i = 0; i < fieldLength; i++)
             popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
 
         ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
 
-
-        double hRatio = 0;
-
-        diagonal1.zero();
-        diagonal2.zero();
-        diagonal3.zero();
-
-        DenseVector modeBackward = newtonRaphson(numCoalEv, wNative, proposedGamma, currentQ.copy(), ZBetaVector);
-
-        for (int i = 0; i < fieldLength; i++) {
-            diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
-            diagonal2.set(i, modeBackward.get(i) + 1);
-
-            backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
-            //diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-            diagonal1.set(i, QZBetaCurrent.get(i) + diagonal1.get(i) * diagonal2.get(i) - numCoalEv[i]);
-        }
-
-        backwardCholesky.factor(backwardQW.copy());
-
-        DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
-
-        for (int i = 0; i < fieldLength; i++) {
-            diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
-        }
-
-        backwardQW.mult(diagonal1, diagonal3);
-
-        hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
+        double hRatio = 0; // This step always accepts.
 
         return hRatio;
     }
@@ -286,5 +225,11 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator implements Gibbs
 
     public final String getPerformanceSuggestion() {
         return "This operator should not need tuning, and should accept with probability 1.";
+    }
+
+    // Main function for testing
+
+    public static void main(String[] args) {
+
     }
 }

@@ -211,7 +211,7 @@ public class BNPRLikelihoodParser extends AbstractXMLObjectParser {
 
         return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
                 lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight,
-                cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0));
+                cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), false);
 //        if (xo.getChild(GRID_POINTS) != null) {
 //            System.err.println("A");
 //

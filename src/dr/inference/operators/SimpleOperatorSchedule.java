@@ -33,6 +33,7 @@ import dr.math.MathUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 /**
  * This class implements a simple operator schedule.
@@ -42,37 +43,49 @@ import java.util.Vector;
  */
 public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
-	List<MCMCOperator> operators = null;
-	double totalWeight = 0;
-	int current = 0;
-	boolean sequential = false;
-	OptimizationTransform optimizationSchedule = OptimizationTransform.DEFAULT;
+	private final List<MCMCOperator> operators = new ArrayList<MCMCOperator>();
+	private final List<Integer> availableOperators = new ArrayList<Integer>();
+	private double totalWeight = 0;
+	private int current = 0;
+	private boolean sequential = false;
+	private OptimizationTransform optimizationSchedule = OptimizationTransform.DEFAULT;
+
+	int operatorUseThreshold = 1000; // operator use threshold over which an operator may get turned off if ...
+	double operatorAcceptanceThreshold = 0.05; // acceptance rate threshold under which an operator gets turned off
 
 	public SimpleOperatorSchedule() {
-		operators = new Vector<MCMCOperator>();
 	}
 
 	public void addOperators(List<MCMCOperator> operators) {
 		for (MCMCOperator operator : operators) {
 			this.operators.add(operator);
-			totalWeight += operator.getWeight();
+			this.availableOperators.add(this.operators.size() - 1);
 		}
+
+		totalWeight = calculateTotalWeight();
+
 	}
 
 	public void operatorsHasBeenUpdated() {
-		totalWeight = 0.0;
-		for (MCMCOperator operator : operators) {
-			totalWeight += operator.getWeight();
-		}
+		totalWeight = calculateTotalWeight();
 	}
 
 	public void addOperator(MCMCOperator op) {
 		operators.add(op);
-		totalWeight += op.getWeight();
+		availableOperators.add(operators.size() - 1);
+		totalWeight = calculateTotalWeight();
 	}
 
-	public double getWeight(int index) {
-		return operators.get(index).getWeight();
+	private double getWeight(int index) {
+		return operators.get(availableOperators.get(index)).getWeight();
+	}
+
+	private double calculateTotalWeight() {
+		double totalWeight = 0.0;
+		for (int i : availableOperators) {
+			totalWeight += operators.get(i).getWeight();
+		}
+		return totalWeight;
 	}
 
 	public int getNextOperatorIndex() {
@@ -91,8 +104,8 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
         return getWeightedOperatorIndex(v * totalWeight);
 	}
 
-	public void setSequential(boolean seq) {
-		sequential = seq;
+	public void setSequential(boolean sequential) {
+		this.sequential = sequential;
 	}
 
 	private int getWeightedOperatorIndex(double q) {
@@ -106,11 +119,32 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	}
 
 	public MCMCOperator getOperator(int index) {
-		return operators.get(index);
+		return operators.get(availableOperators.get(index));
 	}
 
 	public int getOperatorCount() {
-		return operators.size();
+		checkOperatorAcceptanceRates();
+
+		return availableOperators.size();
+	}
+
+	private void checkOperatorAcceptanceRates() {
+		List<Integer> toRemove = new ArrayList<Integer>();
+
+		for (int i : availableOperators) {
+			MCMCOperator op = operators.get(i);
+			if (op.getCount() > operatorUseThreshold) {
+				double acceptanceRate = ((double)op.getAcceptCount()) / op.getCount();
+				if (acceptanceRate < operatorAcceptanceThreshold) {
+					toRemove.add(i);
+					Logger.getLogger("dr.app.beast").info("Operator " + op.getOperatorName() +
+							" turned off with an acceptance rate of " + acceptanceRate + ", after " + op.getCount() + " tries.");
+
+				}
+			}
+		}
+
+		availableOperators.removeAll(toRemove);
 	}
 
 	public double getOptimizationTransform(double d) {

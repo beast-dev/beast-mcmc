@@ -100,11 +100,6 @@ public interface AlloppNode {
 			}
 		}
 
-
-
-
-
-
         public static String subtreeAsText(AlloppNode node, String s, Stack<Integer> x, int depth, String b) {
             Integer[] y = x.toArray(new Integer[x.size()]);
             StringBuffer indent = new StringBuffer();
@@ -130,32 +125,6 @@ public interface AlloppNode {
             return s + subs;
         }
 
-
-
-        /* For PopsIOSpeciesTreeModel, to restore state after MCMC move
-           * Recursively copies the topology from subtree rooted at node into
-           * tree implemented as array nodes[]. Fills in the unions at the tips:
-           * using piosb which converts species name into union.
-           */
-        static int simpletree2piotree(PopsIOSpeciesBindings piosb, AlloppNode[] nodes, int nextn,
-                                      SimpleNode snode) {
-            if (snode.isExternal()) {
-                Taxon tx = snode.getTaxon();
-                nodes[nextn].setTaxon(tx.getId());
-                nodes[nextn].setUnion(piosb.tipUnionFromTaxon(tx));
-            } else {
-                nextn = simpletree2piotree(piosb, nodes, nextn, snode.getChild(0));
-                int c0 = nextn - 1;
-                nextn = simpletree2piotree(piosb, nodes, nextn, snode.getChild(1));
-                int c1 = nextn - 1;
-                nodes[nextn].addChildren(nodes[c0], nodes[c1]);
-            }
-            nodes[nextn].setAnc(null);
-            nodes[nextn].setHeight(snode.getHeight());
-            nextn++;
-            return nextn;
-        }
-		
 	}
 
 

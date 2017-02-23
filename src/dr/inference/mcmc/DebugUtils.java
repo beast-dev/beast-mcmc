@@ -142,7 +142,7 @@ public class DebugUtils {
 
                     out.println(nodeCount);
                     for (int i = 0; i < nodeCount; i++) {
-                        if (!((TreeModel) model).isRoot(((TreeModel) model).getNode(i))) {
+                        if (((TreeModel) model).getParent(((TreeModel) model).getNode(i)) != null) {
                             out.print(((TreeModel) model).getNode(i).getNumber());
                             out.print("\t");
                             out.println(((TreeModel) model).getParent(((TreeModel) model).getNode(i)).getNumber());
@@ -319,9 +319,11 @@ public class DebugUtils {
                         fields = line.split("\t");
                         //read number of nodes
                         int nodeCount = Integer.parseInt(fields[0]);
+                        double[] nodeHeights = new double[nodeCount];
                         for (int i = 0; i < nodeCount; i++) {
                             line = in.readLine();
-
+                            fields = line.split("\t");
+                            nodeHeights[i] = Double.parseDouble(fields[1]);
                         }
 
                         //on to reading edge information
@@ -348,7 +350,7 @@ public class DebugUtils {
 
                         //adopt the loaded tree structure; this does not yet copy the traits on the branches
                         ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(parents);
+                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights);
                         ((TreeModel) model).endTreeEdit();
 
                         expectedTreeModelNames.remove(model.getModelName());

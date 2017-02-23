@@ -193,7 +193,7 @@ public class DebugUtils {
     public static long readStateFromFile(File file, OperatorSchedule operatorSchedule, double[] lnL) {
         long state = -1;
 
-        TreeParameterModel backup = null;
+        ArrayList<TreeParameterModel> traitModels = new ArrayList<TreeParameterModel>();
 
         try {
             FileReader fileIn = new FileReader(file);
@@ -307,6 +307,7 @@ public class DebugUtils {
             // which may not be associated with the right node
             Set<String> expectedTreeModelNames = new HashSet<String>();
             for (Model model : Model.CONNECTED_MODEL_SET) {
+
                 if (model instanceof TreeModel) {
                     if (DEBUG) {
                         System.out.println("model " + model.getModelName());
@@ -318,6 +319,11 @@ public class DebugUtils {
                         }
                     }
                 }
+
+                if (model instanceof TreeParameterModel) {
+                    traitModels.add((TreeParameterModel)model);
+                }
+
             }
 
             line = in.readLine();
@@ -347,6 +353,9 @@ public class DebugUtils {
 
                         int edgeCount = Integer.parseInt(fields[0]);
 
+                        //create data matrix of doubles to store information from list of TreeParameterModels
+                        double[][] traitValues = new double[traitModels.size()][edgeCount];
+
                         int[] parents = new int[edgeCount];
                         for (int i = 0; i < edgeCount; i++){
                             parents[i] = -1;
@@ -356,6 +365,9 @@ public class DebugUtils {
                             if (line != null) {
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
+                                for (int j = 0; j < traitModels.size(); j++) {
+                                    traitValues[j][i] = Double.parseDouble(fields[2+j]);
+                                }
                             }
                         }
 

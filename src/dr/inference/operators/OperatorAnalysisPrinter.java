@@ -42,14 +42,14 @@ import java.io.PrintStream;
  */
 public class OperatorAnalysisPrinter {
 
-    private final OperatorSchedule schedule;
-    private final NumberFormatter formatter = new NumberFormatter(8);
+    private static final NumberFormatter formatter = new NumberFormatter(8);
 
-    public OperatorAnalysisPrinter(OperatorSchedule schedule) {
-        this.schedule = schedule;
-    }
-
-    public void showOperatorAnalysis(PrintStream out) {
+    /**
+     * Writes ano operator analysis to the provided print stream
+     *
+     * @param out the print stream to write operator analysis to
+     */
+    public static void showOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useCoercion) {
         out.println();
         out.println("Operator analysis");
         out.println(formatter.formatToFieldWidth("Operator", 50) +
@@ -58,7 +58,7 @@ public class OperatorAnalysisPrinter {
                 formatter.formatToFieldWidth("Time", 9) +
                 formatter.formatToFieldWidth("Time/Op", 9) +
                 formatter.formatToFieldWidth("Pr(accept)", 11) +
-                " Performance suggestion");
+                (useCoercion ? "" : " Performance suggestion"));
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
@@ -67,32 +67,34 @@ public class OperatorAnalysisPrinter {
                 JointOperator jointOp = (JointOperator) op;
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
-                            + formattedParameterString(jointOp.getSubOperator(k))
-                            + formattedCountString(op)
-                            + formattedTimeString(op)
-                            + formattedTimePerOpString(op)
-                            + formattedProbString(jointOp)
-                            + formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)));
+                                    + formattedParameterString(jointOp.getSubOperator(k))
+                                    + formattedCountString(op)
+                                    + formattedTimeString(op)
+                                    + formattedTimePerOpString(op)
+                                    + formattedProbString(jointOp)
+                                    + (useCoercion ? "" : formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)))
+                    );
                 }
             } else {
                 out.println(formattedOperatorName(op.getOperatorName())
-                        + formattedParameterString(op)
-                        + formattedCountString(op)
-                        + formattedTimeString(op)
-                        + formattedTimePerOpString(op)
-                        + formattedProbString(op)
-                        + formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)));
+                                + formattedParameterString(op)
+                                + formattedCountString(op)
+                                + formattedTimeString(op)
+                                + formattedTimePerOpString(op)
+                                + formattedProbString(op)
+                                + (useCoercion ? "" : formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)))
+                );
             }
 
         }
         out.println();
     }
 
-    private String formattedOperatorName(String operatorName) {
+    private static String formattedOperatorName(String operatorName) {
         return formatter.formatToFieldWidth(operatorName, 50);
     }
 
-    private String formattedParameterString(MCMCOperator op) {
+    private static String formattedParameterString(MCMCOperator op) {
         String pString = "        ";
         if (op instanceof CoercableMCMCOperator && ((CoercableMCMCOperator) op).getMode() != CoercionMode.COERCION_OFF) {
             pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator) op).getRawParameter(), 3), 8);
@@ -100,27 +102,27 @@ public class OperatorAnalysisPrinter {
         return pString;
     }
 
-    private String formattedCountString(MCMCOperator op) {
+    private static String formattedCountString(MCMCOperator op) {
         final int count = op.getCount();
         return formatter.formatToFieldWidth(Integer.toString(count), 10) + " ";
     }
 
-    private String formattedTimeString(MCMCOperator op) {
+    private static String formattedTimeString(MCMCOperator op) {
         final long time = op.getTotalEvaluationTime();
         return formatter.formatToFieldWidth(Long.toString(time), 8) + " ";
     }
 
-    private String formattedTimePerOpString(MCMCOperator op) {
+    private static String formattedTimePerOpString(MCMCOperator op) {
         final double time = op.getMeanEvaluationTime();
         return formatter.formatToFieldWidth(formatter.formatDecimal(time, 2), 8) + " ";
     }
 
-    private String formattedProbString(MCMCOperator op) {
+    private static String formattedProbString(MCMCOperator op) {
         final double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
         return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
     }
 
-    private String formattedDiagnostics(MCMCOperator op, double acceptanceProb) {
+    private static String formattedDiagnostics(MCMCOperator op, double acceptanceProb) {
 
         String message = "good";
         if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {

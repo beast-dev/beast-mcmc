@@ -25,6 +25,7 @@
 
 package dr.inference.mcmc;
 
+import com.sun.tools.javac.util.Options;
 import dr.inference.loggers.Logger;
 import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
@@ -116,7 +117,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
             mc.runChain(chainLength, false);
 
             if (SHOW_OPERATOR_ANALYSIS) {
-            	(new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
             }
             ((CombinedOperatorSchedule) schedule).reset();
         }
@@ -397,7 +398,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
          */
         public void finished(long chainLength) {
             currentState = chainLength;
-            (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
 //            logger.log(currentState);
             for (MCLogger logger : loggers) {
                 logger.stopLogging();

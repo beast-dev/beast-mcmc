@@ -244,6 +244,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 mc.setCurrentLength(loadedState);
 
                 double lnL = mc.evaluate();
+                mc.getLikelihood().makeDirty();
 
                 DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL, getOperatorSchedule());
 

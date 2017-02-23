@@ -66,8 +66,8 @@ public class DebugChainListener implements MarkovChainListener {
         if (state == writeState || (isRepeating && state > 0 && (state % writeState == 0))) {
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
             mcmc.getMarkovChain().getLikelihood().makeDirty();
-            double lnL = mcmc.getMarkovChain().getLikelihood().getLogLikelihood();
-            //double lnL = mcmc.getMarkovChain().getCurrentScore();
+            //double lnL = mcmc.getMarkovChain().getLikelihood().getLogLikelihood();
+            double lnL = mcmc.getMarkovChain().getCurrentScore();
 
             String fileName = (this.fileName != null ? this.fileName : "beast_debug_" + timeStamp);
             DebugUtils.writeStateToFile(new File(fileName), state, lnL, mcmc.getOperatorSchedule());

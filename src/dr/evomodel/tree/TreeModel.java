@@ -1,7 +1,7 @@
 /*
  * TreeModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -710,7 +710,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             }
         }
 
-        //int newRootIndex = -1;
+        int newRootIndex = -1;
         //now add the parent-child links again to ALL the nodes
         for (int i = 0; i < edges.length; i++) {
             if (edges[i] != -1) {
@@ -718,8 +718,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             } else {
                 //now found the root, but it's not set as the root yet
                 //swap this node with the last node, which is currently the root
-                //newRootIndex = i;
-                //System.out.println("new root index = " + newRootIndex);
+                newRootIndex = i;
+                System.out.println("new root index = " + newRootIndex);
             }
         }
 
@@ -734,12 +734,74 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         setNodeHeight(getRoot(), newRootHeight);
         setNodeHeight(nodes[newRootIndex], oldRootHeight);
 
-        setRoot(nodes[newRootIndex]);
+        setRoot(nodes[newRootIndex]);*/
 
         System.out.println("node heights:");
         for (int i = 0; i < nodes.length; i++) {
             System.out.println(nodes[i].getNumber() + ": " + nodes[i].getHeight());
-        }*/
+        }
+
+        swapParameterObjects(nodes[newRootIndex],nodes[nodes.length-1]);
+
+        System.out.println("node heights:");
+        for (int i = 0; i < nodes.length; i++) {
+            System.out.println(nodes[i].getNumber() + ": " + nodes[i].getHeight());
+        }
+
+    }
+
+    /**
+     * Modifies the current tree by adopting the provided collection of edges.
+     * Also sets the node heights to the provided values.
+     * Edges are provided as index: child number; parent: array entry
+     */
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights) {
+
+        //TODO: Remove duplicated code with method above
+        if (this.nodeCount != edges.length) {
+            throw new RuntimeException("Incorrect number of edges provided: " + edges.length + " versus " + this.nodeCount + " nodes.");
+        }
+        for (int i = 0; i < edges.length; i++) {
+            System.out.println(i + ": " + edges[i]);
+        }
+        //first remove all the child nodes of the internal nodes
+        for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
+            int childCount = nodes[i].getChildCount();
+            for (int j = 0; j < childCount; j++) {
+                nodes[i].removeChild(j);
+            }
+        }
+
+        //set the node heights
+        for (int i = 0; i < nodeHeights.length; i++) {
+            setNodeHeight(nodes[i], nodeHeights[i]);
+        }
+
+        int newRootIndex = -1;
+        //now add the parent-child links again to ALL the nodes
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] != -1) {
+                nodes[edges[i]].addChild(nodes[i]);
+            } else {
+                newRootIndex = i;
+            }
+        }
+
+        System.out.println("node heights:");
+        for (int i = 0; i < nodes.length; i++) {
+            System.out.println(nodes[i].getNumber() + ": " + nodes[i].getHeight());
+        }
+
+        for (int i = 0; i < nodeCount; i++) {
+            pushTreeChangedEvent(nodes[i]);
+        }
+
+        this.setRoot(nodes[newRootIndex]);
+
+        for (int i = 0; i < nodeCount; i++) {
+            pushTreeChangedEvent(nodes[i]);
+        }
+
     }
 
     /**

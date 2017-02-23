@@ -50,10 +50,15 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	private boolean sequential = false;
 	private OptimizationTransform optimizationSchedule = OptimizationTransform.DEFAULT;
 
-	int operatorUseThreshold = 1000; // operator use threshold over which an operator may get turned off if ...
-	double operatorAcceptanceThreshold = 0.05; // acceptance rate threshold under which an operator gets turned off
+	int operatorUseThreshold = Integer.MAX_VALUE; // operator use threshold over which an operator may get turned off if ...
+	double operatorAcceptanceThreshold = 0.0; // acceptance rate threshold under which an operator gets turned off
 
 	public SimpleOperatorSchedule() {
+	}
+
+	public SimpleOperatorSchedule(int operatorUseThreshold, double operatorAcceptanceThreshold) {
+		this.operatorUseThreshold = operatorUseThreshold;
+		this.operatorAcceptanceThreshold = operatorAcceptanceThreshold;
 	}
 
 	public void addOperators(List<MCMCOperator> operators) {
@@ -90,6 +95,8 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 	public int getNextOperatorIndex() {
 
+		checkOperatorAcceptanceRates();
+
 		if (sequential) {
 			int index = getWeightedOperatorIndex(current);
 			current += 1;
@@ -123,8 +130,6 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	}
 
 	public int getOperatorCount() {
-		checkOperatorAcceptanceRates();
-
 		return availableOperators.size();
 	}
 
@@ -144,7 +149,10 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			}
 		}
 
-		availableOperators.removeAll(toRemove);
+		if (!toRemove.isEmpty()) {
+			availableOperators.removeAll(toRemove);
+			totalWeight = calculateTotalWeight();
+		}
 	}
 
 	public double getOptimizationTransform(double d) {

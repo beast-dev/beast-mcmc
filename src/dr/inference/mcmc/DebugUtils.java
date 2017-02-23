@@ -50,6 +50,7 @@ import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -70,6 +71,8 @@ public class DebugUtils {
         try {
             fileOut = new FileOutputStream(file);
             PrintStream out = new PrintStream(fileOut);
+
+            ArrayList<TreeParameterModel> traitModels = new ArrayList<TreeParameterModel>();
 
             int[] rngState = MathUtils.getRandomState();
             out.print("rng");
@@ -115,6 +118,7 @@ public class DebugUtils {
             }
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
+
                 if (model instanceof TreeModel) {
                     out.print("tree");
                     out.print("\t");
@@ -123,7 +127,7 @@ public class DebugUtils {
                     //replace Newick format by printing general graph structure
                     //out.println(((TreeModel) model).getNewick());
 
-                    out.println("#nodes");
+                    out.println("#node height taxon");
                     int nodeCount = ((TreeModel) model).getNodeCount();
                     out.println(nodeCount);
                     for (int i = 0; i < nodeCount; i++) {
@@ -145,10 +149,19 @@ public class DebugUtils {
                         if (((TreeModel) model).getParent(((TreeModel) model).getNode(i)) != null) {
                             out.print(((TreeModel) model).getNode(i).getNumber());
                             out.print("\t");
-                            out.println(((TreeModel) model).getParent(((TreeModel) model).getNode(i)).getNumber());
+                            out.print(((TreeModel) model).getParent(((TreeModel) model).getNode(i)).getNumber());
+
+                            for (TreeParameterModel tpm : traitModels) {
+                                out.print("\t");
+                                out.println(tpm.getNodeValue((TreeModel)model, ((TreeModel) model).getNode(i)));
+                            }
                         }
                     }
 
+                }
+
+                if (model instanceof TreeParameterModel) {
+                    traitModels.add((TreeParameterModel)model);
                 }
 
             }

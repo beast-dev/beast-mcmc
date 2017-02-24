@@ -751,11 +751,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
     /**
-     * Modifies the current tree by adopting the provided collection of edges.
-     * Also sets the node heights to the provided values.
-     * Edges are provided as index: child number; parent: array entry
+     * Modifies the current tree by adopting the provided collection of edges
+     * @param edges Edges are provided as index: child number; parent: array entry
+     * @param nodeHeights Also sets the node heights to the provided values
+     * @param childOrder Array that contains whether a child node is left or right child
      */
-    public void adoptTreeStructure(int[] edges, double[] nodeHeights) {
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder) {
 
         //TODO: Remove duplicated code with method above
         if (this.nodeCount != edges.length) {
@@ -787,20 +788,42 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             }
         }
 
-        System.out.println("node heights:");
-        for (int i = 0; i < nodes.length; i++) {
-            System.out.println(nodes[i].getNumber() + ": " + nodes[i].getHeight());
+        //not possible to determine correct ordering of child nodes in the loop where they're being assigned
+        //hence perform possible swaps in a separate loop
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] != -1) {
+                //System.out.println(i + " " + nodes[edges[i]] + " " + childOrder[edges[i]]);
+                if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
+                    //swap child nodes
+                    //System.out.println("swapping");
+                    Node childOne = nodes[edges[i]].removeChild(0);
+                    Node childTwo = nodes[edges[i]].removeChild(1);
+                    //System.out.println("original:");
+                    //System.out.println(childOne);
+                    //System.out.println(childTwo);
+                    nodes[edges[i]].addChild(childTwo);
+                    nodes[edges[i]].addChild(childOne);
+                    //System.out.println("result:");
+                    //System.out.println(nodes[edges[i]].getChild(0));
+                    //System.out.println(nodes[edges[i]].getChild(1));
+                }
+            }
         }
 
-        for (int i = 0; i < nodeCount; i++) {
+        /*System.out.println("node heights:");
+        for (int i = 0; i < nodes.length; i++) {
+            System.out.println(nodes[i].getNumber() + ": " + nodes[i].getHeight());
+        }*/
+
+        /*for (int i = 0; i < nodeCount; i++) {
             pushTreeChangedEvent(nodes[i]);
-        }
+        }*/
 
         this.setRoot(nodes[newRootIndex]);
 
-        for (int i = 0; i < nodeCount; i++) {
+        /*for (int i = 0; i < nodeCount; i++) {
             pushTreeChangedEvent(nodes[i]);
-        }
+        }*/
 
     }
 

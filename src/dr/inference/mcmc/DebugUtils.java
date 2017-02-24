@@ -39,6 +39,7 @@ package dr.inference.mcmc;
  * $LastChangedRevision$
  */
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.Likelihood;
@@ -142,19 +143,32 @@ public class DebugUtils {
                     }
 
                     out.println("#edges");
-                    out.println("#child-node parent-node");
+                    out.println("#child-node parent-node L/R-child traits");
 
                     out.println(nodeCount);
                     for (int i = 0; i < nodeCount; i++) {
-                        if (((TreeModel) model).getParent(((TreeModel) model).getNode(i)) != null) {
+                        NodeRef parent = ((TreeModel) model).getParent(((TreeModel) model).getNode(i));
+                        if (parent != null) {
                             out.print(((TreeModel) model).getNode(i).getNumber());
                             out.print("\t");
                             out.print(((TreeModel) model).getParent(((TreeModel) model).getNode(i)).getNumber());
+                            out.print("\t");
+
+                            if ((((TreeModel) model).getChild(parent, 0) == ((TreeModel) model).getNode(i))) {
+                                //left child
+                                out.print(0);
+                            } else if ((((TreeModel) model).getChild(parent, 1) == ((TreeModel) model).getNode(i))) {
+                                //right child
+                                out.print(1);
+                            } else {
+                                throw new RuntimeException("Operation currently only supported for nodes with 2 children.");
+                            }
 
                             for (TreeParameterModel tpm : traitModels) {
                                 out.print("\t");
-                                out.println(tpm.getNodeValue((TreeModel)model, ((TreeModel) model).getNode(i)));
+                                out.print(tpm.getNodeValue((TreeModel)model, ((TreeModel) model).getNode(i)));
                             }
+                            out.println();
                         }
                     }
 
@@ -356,6 +370,13 @@ public class DebugUtils {
                         //create data matrix of doubles to store information from list of TreeParameterModels
                         double[][] traitValues = new double[traitModels.size()][edgeCount];
 
+                        //create array to store whether a node is left or right child of its parent
+                        //can be important for certain tree transition kernels
+                        int[] childOrder = new int[edgeCount];
+                        for (int i = 0; i < childOrder.length; i++) {
+                            childOrder[i] = -1;
+                        }
+
                         int[] parents = new int[edgeCount];
                         for (int i = 0; i < edgeCount; i++){
                             parents[i] = -1;
@@ -365,8 +386,9 @@ public class DebugUtils {
                             if (line != null) {
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
+                                childOrder[i] = Integer.parseInt(fields[2]);
                                 for (int j = 0; j < traitModels.size(); j++) {
-                                    traitValues[j][i] = Double.parseDouble(fields[2+j]);
+                                    traitValues[j][i] = Double.parseDouble(fields[3+j]);
                                 }
                             }
                         }
@@ -375,7 +397,7 @@ public class DebugUtils {
 
                         //adopt the loaded tree structure; this does not yet copy the traits on the branches
                         ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights);
+                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder);
                         ((TreeModel) model).endTreeEdit();
 
                         expectedTreeModelNames.remove(model.getModelName());

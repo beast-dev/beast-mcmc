@@ -155,6 +155,10 @@ public class BeastMain {
                 }
             }
 
+            // Install the checkpointer. This creates a factory that returns
+            // appropriate savers and loaders according to the user's options.
+            new BeastCheckpointer();
+
             if (!useMC3) {
                 // just parse the file running all threads...
 

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.mcmc;
+package dr.app.checkpoint;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;

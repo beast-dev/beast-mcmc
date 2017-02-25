@@ -1,5 +1,5 @@
 /*
- * DebugUtils.java
+ * BeastCheckpointer.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,25 +23,17 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.mcmc;
-
-/**
- * ${CLASS_NAME}
- *
- * @author Andrew Rambaut
- * @author Guy Baele
- * @version $Id$
- *
- * $HeadURL$
- *
- * $LastChangedBy$
- * $LastChangedDate$
- * $LastChangedRevision$
- */
+package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.state.StateSaverChainListener;
+import dr.inference.state.Factory;
+import dr.inference.state.StateLoader;
+import dr.inference.state.StateSaver;
+import dr.inference.markovchain.MarkovChain;
+import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -51,23 +43,112 @@ import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-public class DebugUtils {
-
+/**
+ * A state loader / saver
+ */
+public class BeastCheckpointer implements StateLoader, StateSaver {
     private static final boolean DEBUG = false;
 
-    /**
-     * Writes out the current state in a human readable format to help debugging.
-     * If it fails, then returns false but does not stop.
-     * @param file the file
-     * @param state the current state number
-     * @param operatorSchedule
-     * @return success
-     */
-    public static boolean writeStateToFile(File file, long state, double lnL, OperatorSchedule operatorSchedule) {
+    // A debugging flag to do a check that the state gives the same likelihood after loading
+    private static final boolean CHECK_LOAD_STATE = false;
+
+    public final static String LOAD_STATE_FILE = "load.state.file";
+    public final static String SAVE_STATE_FILE = "save.state.file";
+    public final static String SAVE_STATE_AT = "save.state.at";
+    public final static String SAVE_STATE_EVERY = "save.state.every";
+
+    private final String loadStateFileName;
+    private final String saveStateFileName;
+
+    public BeastCheckpointer() {
+        loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
+        saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+
+        final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
+
+        if (System.getProperty(SAVE_STATE_AT) != null) {
+            final long saveStateAt = Long.parseLong(System.getProperty(SAVE_STATE_AT));
+            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateAt,false));
+        }
+        if (System.getProperty(SAVE_STATE_EVERY) != null) {
+            final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
+            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
+        }
+
+        Factory.INSTANCE = new Factory() {
+            @Override
+            public StateLoader getInitialStateLoader() {
+                return null;
+            }
+
+            @Override
+            public MarkovChainListener[] getStateSaverChainListeners() {
+                return listeners.toArray(new MarkovChainListener[0]);
+            }
+        };
+
+
+    }
+
+    @Override
+    public boolean saveState(MarkovChain markovChain, long state, double lnL) {
+        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
+        String fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
+
+        return writeStateToFile(new File(fileName), state, lnL, markovChain);
+    }
+
+    @Override
+    public long loadState(MarkovChain markovChain, double[] savedLnL) {
+        return readStateFromFile(new File(loadStateFileName), markovChain, savedLnL);
+    }
+
+    @Override
+    public void checkLoadState(double savedLnL, double lnL) {
+        if (CHECK_LOAD_STATE) {
+            //first perform a simple check for equality of two doubles
+            //when this test fails, go over the digits
+            if (lnL != savedLnL) {
+
+                //15 is the floor value for the number of decimal digits when representing a double
+                //checking for 15 identical digits below
+                String originalString = Double.toString(savedLnL);
+                String restoredString = Double.toString(lnL);
+                System.out.println(lnL + "    " + originalString);
+                System.out.println(savedLnL + "    " + restoredString);
+                //assume values will be nearly identical
+                int digits = 0;
+                for (int i = 0; i < Math.max(originalString.length(), restoredString.length()); i++) {
+                    if (originalString.charAt(i) == restoredString.charAt(i)) {
+                        if (!(originalString.charAt(i) == '-' || originalString.charAt(i) == '.')) {
+                            digits++;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                //System.err.println("digits = " + digits);
+
+                if (digits < 15) {
+                    throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                            ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")");
+                }
+
+            } else {
+                System.out.println("IDENTICAL LIKELIHOODS");
+                System.out.println("lnL" + " = " + lnL);
+                System.out.println("savedLnL[0]" + " = " + savedLnL);
+            }
+
+        }
+    }
+
+    private boolean writeStateToFile(File file, long state, double lnL, MarkovChain markovChain) {
+        OperatorSchedule operatorSchedule = markovChain.getSchedule();
+
         OutputStream fileOut = null;
         try {
             fileOut = new FileOutputStream(file);
@@ -196,15 +277,9 @@ public class DebugUtils {
         return true;
     }
 
-    /**
-     * Attempts to read the current state from a state dump file. This should be a state
-     * dump created using the same XML file (some rudimentary checking of this is done).
-     * If it fails then it will throw a RuntimeException. If successful it will return the
-     * current state number.
-     * @param file the file
-     * @return the state number
-     */
-    public static long readStateFromFile(File file, OperatorSchedule operatorSchedule, double[] lnL) {
+    private long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
+        OperatorSchedule operatorSchedule = markovChain.getSchedule();
+
         long state = -1;
 
         ArrayList<TreeParameterModel> traitModels = new ArrayList<TreeParameterModel>();
@@ -434,9 +509,11 @@ public class DebugUtils {
 
             in.close();
             fileIn.close();
-            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
-                likelihood.makeDirty();
-            }
+
+            // This shouldn't be necessary and if it is then it might be hiding a bug...
+//            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+//                likelihood.makeDirty();
+//            }
         } catch (IOException ioe) {
             throw new RuntimeException("Unable to read file: " + ioe.getMessage());
         }

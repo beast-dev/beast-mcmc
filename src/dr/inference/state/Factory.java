@@ -27,22 +27,22 @@ package dr.inference.state;
 
 import dr.inference.markovchain.MarkovChainListener;
 
-public interface Factory {
+public abstract class Factory {
 
     /**
      * Get an instance of StateLoader that will provide the initial state for the
      * chain. This is likely to be a previously saved state.
-     * @return
+     * @return the StateLoader
      */
-    StateLoader getInitialStateLoader();
+    public abstract StateLoader getInitialStateLoader();
 
     /**
-     * Get a MarkovChainListener that will save the state at a particular point or
+     * Get a list of MarkovChainListeners that will save the state at a particular point or
      * on a regular interval.
-     * @return
+     * @return the array
      */
-    MarkovChainListener getStateSaverChainListener();
+    public abstract MarkovChainListener[] getStateSaverChainListeners();
 
     // Set this to a concrete instance to provide these classes to the MarkovChain
-    Factory INSTANCE = null;
+    public static Factory INSTANCE;
 }

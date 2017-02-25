@@ -36,11 +36,10 @@ public class StateSaverChainListener implements MarkovChainListener {
 
     private StateSaver stateSaver;
 
-    public StateSaverChainListener(StateSaver stateSaver, final long writeState, final boolean isRepeating, final String fileName) {
+    public StateSaverChainListener(StateSaver stateSaver, final long writeState, final boolean isRepeating) {
         this.stateSaver = stateSaver;
         this.writeState = writeState;
         this.isRepeating = isRepeating;
-        this.fileName = fileName;
     }
 
     // MarkovChainListener interface *******************************************
@@ -51,12 +50,11 @@ public class StateSaverChainListener implements MarkovChainListener {
     @Override
     public void currentState(long state, MarkovChain markovChain, Model currentModel) {
         if (state == writeState || (isRepeating && state > 0 && (state % writeState == 0))) {
-            String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
-            markovChain.getLikelihood().makeDirty();
-            //double lnL = mcmc.getMarkovChain().getLikelihood().getLogLikelihood();
-            double lnL = markovChain.getCurrentScore();
 
-            String fileName = (this.fileName != null ? this.fileName : "beast_debug_" + timeStamp);
+            // This shouldn't be necessary but if it is then it may be masking a bug
+//            markovChain.getLikelihood().makeDirty();
+
+            double lnL = markovChain.getCurrentScore();
 
             stateSaver.saveState(markovChain, state, lnL);
         }
@@ -78,5 +76,4 @@ public class StateSaverChainListener implements MarkovChainListener {
 
     private final long writeState;
     private final boolean isRepeating;
-    private final String fileName;
 }

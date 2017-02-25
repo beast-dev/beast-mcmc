@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
+import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
@@ -404,7 +405,15 @@ public class BeastMain {
         List<String> additionalParsers = new ArrayList<String>();
 
         final boolean verbose = arguments.hasOption("verbose");
-        final boolean parserWarning = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
+        if (verbose) {
+            System.setProperty("verbose_output", Boolean.toString(true));
+        }
+
+        final boolean warnings = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
+        if (warnings) {
+            System.setProperty("show_warnings", Boolean.toString(true));
+        }
+
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options") || (argumentCount == 0);
@@ -548,22 +557,22 @@ public class BeastMain {
 
         if (arguments.hasOption("load_dump")) {
             String debugStateFile = arguments.getStringOption("load_dump");
-            System.setProperty(MCMC.LOAD_DUMP_FILE, debugStateFile);
+            System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, debugStateFile);
         }
 
         if (arguments.hasOption("dump_state")) {
             long debugWriteState = arguments.getLongOption("dump_state");
-            System.setProperty(MCMC.DUMP_STATE, Long.toString(debugWriteState));
+            System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(debugWriteState));
         }
 
         if (arguments.hasOption("dump_every")) {
             long debugWriteEvery = arguments.getLongOption("dump_every");
-            System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
+            System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, Long.toString(debugWriteEvery));
         }
 
         if (arguments.hasOption("save_dump")) {
             String debugStateFile = arguments.getStringOption("save_dump");
-            System.setProperty(MCMC.SAVE_DUMP_FILE, debugStateFile);
+            System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, debugStateFile);
         }
 
         if (arguments.hasOption("citations_file")) {
@@ -782,7 +791,7 @@ public class BeastMain {
         System.out.println("Random number seed: " + seed);
 
         try {
-            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             rte.printStackTrace(System.err);
             if (window) {

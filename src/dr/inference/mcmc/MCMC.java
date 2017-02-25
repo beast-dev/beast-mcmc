@@ -107,7 +107,9 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         currentState = 0;
 
         if (Factory.INSTANCE != null) {
-            mc.addMarkovChainListener(Factory.INSTANCE.getStateSaverChainListener());
+            for (MarkovChainListener listener : Factory.INSTANCE.getStateSaverChainListeners()) {
+                mc.addMarkovChainListener(listener);
+            }
         }
 
     }

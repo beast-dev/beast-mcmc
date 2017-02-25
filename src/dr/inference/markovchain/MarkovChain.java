@@ -549,56 +549,38 @@ public final class MarkovChain implements Serializable {
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {
-        listeners.add(listener);
+        if (listener != null) {
+            listeners.add(listener);
+        }
     }
 
     public void removeMarkovChainListener(MarkovChainListener listener) {
         listeners.remove(listener);
     }
 
-    public void addMarkovChainDelegate(MarkovChainDelegate delegate) {
-        delegates.add(delegate);
-    }
-
-    public void removeMarkovChainDelegate(MarkovChainDelegate delegate) {
-        delegates.remove(delegate);
-    }
-
 
     private void fireBestModel(long state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
-            listener.bestState(state, bestModel);
+            listener.bestState(state, this, bestModel);
         }
     }
 
     private void fireCurrentModel(long state, Model currentModel) {
         for (MarkovChainListener listener : listeners) {
-            listener.currentState(state, currentModel);
-        }
-
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.currentState(state);
+            listener.currentState(state, this, currentModel);
         }
     }
 
     private void fireFinished(long chainLength) {
 
         for (MarkovChainListener listener : listeners) {
-            listener.finished(chainLength);
-        }
-
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.finished(chainLength);
+            listener.finished(chainLength, this);
         }
     }
 
     private void fireEndCurrentIteration(long state) {
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.currentStateEnd(state);
-        }
     }
 
     private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
-    private final ArrayList<MarkovChainDelegate> delegates = new ArrayList<MarkovChainDelegate>();
 }

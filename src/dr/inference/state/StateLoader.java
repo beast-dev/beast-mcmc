@@ -1,7 +1,7 @@
 /*
- * MarkovChainListener.java
+ * Checkpointer.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,26 +23,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.markovchain;
+package dr.inference.state;
 
-import dr.inference.model.Model;
-
-import java.io.Serializable;
+import dr.inference.markovchain.MarkovChain;
 
 /**
- * An interface for facilitating listening to events in an MCMC chain.
+ * Checkpointer
  *
- * @author Alexei Drummond
  * @author Andrew Rambaut
- *
- * @version $Id: MarkovChainListener.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
- *
  */
-public interface MarkovChainListener extends Serializable {
+public interface StateLoader {
 
-    void bestState(long state, MarkovChain markovChain, Model bestModel);
+    /**
+     * Attempts to load the current state from a state dump. This should be a state
+     * dump created using the same XML file (some rudimentary checking of this is done).
+     * If it fails then it will throw a RuntimeException. If successful it will return the
+     * current state number.
+     * @param markovChain the MarkovChain object
+     * @return the state number
+     */
+    boolean loadState(MarkovChain markovChain, double savedLnL[]);
 
-    void currentState(long state, MarkovChain markovChain, Model currentModel);
-
-	void finished(long chainLength, MarkovChain markovChain);
+    void checkLoadState(double savedLnL, double lnL);
 }

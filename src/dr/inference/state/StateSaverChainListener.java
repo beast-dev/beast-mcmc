@@ -23,35 +23,21 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.mcmc;
+package dr.inference.state;
 
-/**
- * ${CLASS_NAME}
- *
- * @author Andrew Rambaut
- * @author Guy Baele
- * @version $Id$
- *
- * $HeadURL$
- *
- * $LastChangedBy$
- * $LastChangedDate$
- * $LastChangedRevision$
- */
-
+import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public class DebugChainListener implements MarkovChainListener {
+public class StateSaverChainListener implements MarkovChainListener {
 
-    private MCMC mcmc;
+    private StateSaver stateSaver;
 
-    public DebugChainListener(MCMC mcmc, final long writeState, final boolean isRepeating, final String fileName) {
-        this.mcmc = mcmc;
+    public StateSaverChainListener(StateSaver stateSaver, final long writeState, final boolean isRepeating, final String fileName) {
+        this.stateSaver = stateSaver;
         this.writeState = writeState;
         this.isRepeating = isRepeating;
         this.fileName = fileName;
@@ -62,28 +48,32 @@ public class DebugChainListener implements MarkovChainListener {
     /**
      * Called to update the current model keepEvery states.
      */
-    public void currentState(long state, Model currentModel) {
+    @Override
+    public void currentState(long state, MarkovChain markovChain, Model currentModel) {
         if (state == writeState || (isRepeating && state > 0 && (state % writeState == 0))) {
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
-            mcmc.getMarkovChain().getLikelihood().makeDirty();
+            markovChain.getLikelihood().makeDirty();
             //double lnL = mcmc.getMarkovChain().getLikelihood().getLogLikelihood();
-            double lnL = mcmc.getMarkovChain().getCurrentScore();
+            double lnL = markovChain.getCurrentScore();
 
             String fileName = (this.fileName != null ? this.fileName : "beast_debug_" + timeStamp);
-            DebugUtils.writeStateToFile(new File(fileName), state, lnL, mcmc.getOperatorSchedule());
+
+            stateSaver.saveState(markovChain, state, lnL);
         }
     }
 
     /**
      * Called when a new new best posterior state is found.
      */
-    public void bestState(long state, Model bestModel) { }
+    @Override
+    public void bestState(long state, MarkovChain markovChain, Model bestModel) { }
 
     /**
      * Cleans up when the chain finishes (possibly early).
      */
-    public void finished(long chainLength) {
-        currentState(chainLength, null);
+    @Override
+    public void finished(long chainLength, MarkovChain markovChain) {
+        currentState(chainLength, markovChain,null);
     }
 
     private final long writeState;

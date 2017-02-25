@@ -1,7 +1,7 @@
 /*
- * MarkovChainListener.java
+ * CheckPointDelegateFactory.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,26 +23,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.markovchain;
+package dr.inference.state;
 
-import dr.inference.model.Model;
+import dr.inference.markovchain.MarkovChainListener;
 
-import java.io.Serializable;
+public interface Factory {
 
-/**
- * An interface for facilitating listening to events in an MCMC chain.
- *
- * @author Alexei Drummond
- * @author Andrew Rambaut
- *
- * @version $Id: MarkovChainListener.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
- *
- */
-public interface MarkovChainListener extends Serializable {
+    /**
+     * Get an instance of StateLoader that will provide the initial state for the
+     * chain. This is likely to be a previously saved state.
+     * @return
+     */
+    StateLoader getInitialStateLoader();
 
-    void bestState(long state, MarkovChain markovChain, Model bestModel);
+    /**
+     * Get a MarkovChainListener that will save the state at a particular point or
+     * on a regular interval.
+     * @return
+     */
+    MarkovChainListener getStateSaverChainListener();
 
-    void currentState(long state, MarkovChain markovChain, Model currentModel);
-
-	void finished(long chainLength, MarkovChain markovChain);
+    // Set this to a concrete instance to provide these classes to the MarkovChain
+    Factory INSTANCE = null;
 }

@@ -1,7 +1,7 @@
 /*
- * MarkovChainDelegate.java
+ * StateSaver.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,24 +23,22 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.markovchain;
+package dr.inference.state;
 
-import dr.inference.mcmc.MCMCOptions;
-import dr.inference.operators.OperatorSchedule;
+import dr.inference.markovchain.MarkovChain;
 
 /**
- * An interface for facilitating delegating of tasks in an MCMC chain.
+ * StateSaver
  *
- * @author Wai Lok Sibon Li
- *
+ * @author Andrew Rambaut
  */
-public interface MarkovChainDelegate {
-
-    void setup(MCMCOptions options, OperatorSchedule schedule, MarkovChain markovChain);
-
-    void currentState(long state);
-
-    void currentStateEnd(long state);
-
-	void finished(long chainLength);
+public interface StateSaver {
+    /**
+     * Saves the current state to a file or similar.
+     * If it fails, then returns false but does not stop.
+     * @param state the current state number
+     * @param markovChain the MarkovChain object
+     * @return success
+     */
+    boolean saveState(MarkovChain markovChain, long state, double lnL);
 }

@@ -25,11 +25,12 @@
 
 package dr.inference.mcmc;
 
+import dr.inference.state.Factory;
+import dr.inference.state.StateLoader;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
-import dr.inference.markovchain.MarkovChainDelegate;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -53,17 +54,6 @@ import java.io.PrintStream;
  */
 public class MCMC implements Identifiable, Spawnable, Loggable {
 
-    public final static String LOAD_DUMP_FILE = "load.dump.file";
-    public final static String SAVE_DUMP_FILE = "save.dump.file";
-    public final static String DUMP_STATE = "dump.state";
-    public final static String DUMP_EVERY = "dump.every";
-
-    // Experimental
-    public final static boolean TEST_CLONING = false;
-    // additional boolean to continue analysis after data has been added or removed
-    public final static boolean ALTERED_DATA = false;
-
-
     public MCMC(String id) {
         this.id = id;
     }
@@ -82,26 +72,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             OperatorSchedule schedule,
             Logger[] loggers) {
 
-        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers, new MarkovChainDelegate[0]);
-    }
-
-    /**
-     * Must be called before calling chain.
-     *
-     * @param options    the options for this MCMC analysis
-     * @param schedule   operator schedule to be used in chain.
-     * @param likelihood the likelihood for this MCMC
-     * @param loggers    an array of loggers to record output of this MCMC run
-     * @param delegates    an array of delegates to handle tasks related to the MCMC
-     */
-    public void init(
-            MCMCOptions options,
-            Likelihood likelihood,
-            OperatorSchedule schedule,
-            Logger[] loggers,
-            MarkovChainDelegate[] delegates) {
-
-        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers, delegates);
+        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
     }
 
     /**
@@ -120,27 +91,6 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             OperatorSchedule schedule,
             Logger[] loggers) {
 
-        init(options, likelihood, prior, schedule, loggers, new MarkovChainDelegate[0]);
-    }
-
-    /**
-     * Must be called before calling chain.
-     *
-     * @param options    the options for this MCMC analysis
-     * @param prior      the prior disitrbution on the model parameters.
-     * @param schedule   operator schedule to be used in chain.
-     * @param likelihood the likelihood for this MCMC
-     * @param loggers    an array of loggers to record output of this MCMC run
-     * @param delegates    an array of delegates to handle tasks related to the MCMC
-     */
-    public void init(
-            MCMCOptions options,
-            Likelihood likelihood,
-            Prior prior,
-            OperatorSchedule schedule,
-            Logger[] loggers,
-            MarkovChainDelegate[] delegates) {
-
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(options.getTemperature());
 
@@ -156,20 +106,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         //initialize transients
         currentState = 0;
 
-        for(MarkovChainDelegate delegate : delegates) {
-            delegate.setup(options, schedule, mc);
-        }
-        this.delegates = delegates;
-
-        dumpStateFile = System.getProperty(LOAD_DUMP_FILE);
-        String fileName = System.getProperty(SAVE_DUMP_FILE, null);
-        if (System.getProperty(DUMP_STATE) != null) {
-            long debugWriteState = Long.parseLong(System.getProperty(DUMP_STATE));
-            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteState, false, fileName));
-        }
-        if (System.getProperty(DUMP_EVERY) != null) {
-            long debugWriteEvery = Long.parseLong(System.getProperty(DUMP_EVERY));
-            mc.addMarkovChainListener(new DebugChainListener(this, debugWriteEvery, true, fileName));
+        if (Factory.INSTANCE != null) {
+            mc.addMarkovChainListener(Factory.INSTANCE.getStateSaverChainListener());
         }
 
     }
@@ -236,62 +174,22 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             long loadedState = 0;
 
-            if (dumpStateFile != null) {
-                double[] savedLnL = new double[1];
+            if (Factory.INSTANCE != null) {
+                StateLoader initialStateLoader = Factory.INSTANCE.getInitialStateLoader();
+                if (initialStateLoader != null) {
+                    double[] savedLnL = new double[1];
 
-                loadedState = DebugUtils.readStateFromFile(new File(dumpStateFile), getOperatorSchedule(), savedLnL);
+                    initialStateLoader.loadState(mc, savedLnL);
 
-                mc.setCurrentLength(loadedState);
+                    mc.setCurrentLength(loadedState);
 
-                double lnL = mc.evaluate();
-                mc.getLikelihood().makeDirty();
+                    double lnL = mc.evaluate();
 
-                DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL, getOperatorSchedule());
-
-                //first perform a simple check for equality of two doubles
-                //when this test fails, go over the digits
-                if (lnL != savedLnL[0]) {
-
-                    //15 is the floor value for the number of decimal digits when representing a double
-                    //checking for 15 identical digits below
-                    String originalString = Double.toString(savedLnL[0]);
-                    String restoredString = Double.toString(lnL);
-                    System.out.println(lnL + "    " + originalString);
-                    System.out.println(savedLnL[0] + "    " + restoredString);
-                    //assume values will be nearly identical
-                    int digits = 0;
-                    for (int i = 0; i < Math.max(originalString.length(), restoredString.length()); i++) {
-                        if (originalString.charAt(i) == restoredString.charAt(i)) {
-                            if (!(originalString.charAt(i) == '-' || originalString.charAt(i) == '.')) {
-                                digits++;
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-                    //System.err.println("digits = " + digits);
-
-                    if (digits < 15 && !ALTERED_DATA) {
-                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
-                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
-                    }
-
-                } else {
-                    System.out.println("IDENTICAL LIKELIHOODS");
-                    System.out.println("lnL" + " = " + lnL);
-                    System.out.println("savedLnL[0]" + " = " + savedLnL[0]);
+                    initialStateLoader.checkLoadState(savedLnL[0], lnL);
                 }
-
-//                for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
-//                    System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
-//                }
             }
 
             mc.addMarkovChainListener(chainListener);
-
-            for(MarkovChainDelegate delegate : delegates) {
-                mc.addMarkovChainDelegate(delegate);
-            }
 
             long chainLength = getChainLength();
 
@@ -306,12 +204,12 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             }
 
             //if (coercionDelay > 0) {
-                // Run the chain for coercionDelay steps with coercion disabled
-                //mc.runChain(coercionDelay, true);
-                //chainLength -= coercionDelay;
+            // Run the chain for coercionDelay steps with coercion disabled
+            //mc.runChain(coercionDelay, true);
+            //chainLength -= coercionDelay;
 
-                // reset operator acceptance levels
-                //GB: we are now restoring these; commenting out for now
+            // reset operator acceptance levels
+            //GB: we are now restoring these; commenting out for now
                 /*for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
                 }*/
@@ -323,9 +221,6 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             mc.removeMarkovChainListener(chainListener);
 
-            for(MarkovChainDelegate delegate : delegates) {
-                mc.removeMarkovChainDelegate(delegate);
-            }
         }
         timer.stop();
     }
@@ -367,7 +262,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         /**
          * Called to update the current model keepEvery states.
          */
-        public void currentState(long state, Model currentModel) {
+        @Override
+        public void currentState(long state, MarkovChain markovChain, Model currentModel) {
 
             currentState = state;
 
@@ -381,14 +277,14 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         /**
          * Called when a new new best posterior state is found.
          */
-        public void bestState(long state, Model bestModel) {
-            currentState = state;
-        }
+        @Override
+        public void bestState(long state, MarkovChain markovChain, Model bestModel) { }
 
         /**
          * cleans up when the chain finishes (possibly early).
          */
-        public void finished(long chainLength) {
+        @Override
+        public void finished(long chainLength, MarkovChain markovChain) {
             currentState = chainLength;
 
             if (loggers != null) {
@@ -533,8 +429,6 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
     // PRIVATE TRANSIENTS
 
-    private String dumpStateFile = null;
-
     //private FileLogger operatorLogger = null;
     protected final boolean isAdapting = true;
     protected boolean stopping = false;
@@ -557,7 +451,6 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
     protected Logger[] loggers;
     protected OperatorSchedule schedule;
-    private MarkovChainDelegate[] delegates;
 
     private String id = null;
 }

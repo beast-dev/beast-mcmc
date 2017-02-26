@@ -1,6 +1,5 @@
 package dr.inference.operators;
 
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.GibbsSampleFromTreeInterface;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
@@ -51,7 +50,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         if(randomScan){
             int column = MathUtils.nextInt(factors.getColumnDimension());
             MultivariateNormalDistribution mvn = getMVN(column);

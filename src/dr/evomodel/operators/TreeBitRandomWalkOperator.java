@@ -28,7 +28,6 @@ package dr.evomodel.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.TreeBitRandomWalkOperatorParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -63,7 +62,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
      * Pick a parent-child node pair involving a single rate change and swap the rate change location
      * and corresponding rate parameters.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         // 1. collect nodes that form a pair with parent such that
         // one of them has a one and one has a zero
@@ -74,7 +73,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
             if (tree.getNodeTrait(node, indicatorTrait) == 1.0) candidates.add(node);
         }
 
-        if (candidates.size() == 0) throw new OperatorFailedException("No suitable bits!");
+        if (candidates.size() == 0) throw new RuntimeException("No suitable bits!");
 
         NodeRef node = candidates.get(MathUtils.nextInt(candidates.size()));
 
@@ -92,7 +91,11 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
         }
 
         // this shortcut avoids unnecessary likelihood calculations
-        if (node == newNode) throw new OperatorFailedException("Moving to same node!");
+        if (node == newNode) {
+            // this used to throw a OperatorFailedException which would have rejected
+            // the move. This has been deprecated to returning a logq of -Inf.
+            return Double.NEGATIVE_INFINITY;
+        }
 
         double nodeTrait, newTrait;
         double nodeRate, newRate;

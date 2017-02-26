@@ -36,12 +36,13 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.speciation.PopsIOSpeciesBindings;
 import dr.evomodel.speciation.PopsIOSpeciesTreeModel;
 import dr.evomodelxml.operators.PopsIOTreeNodeSlideParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import jebl.util.FixedBitSet;
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class PopsIOTreeNodeSlide  extends SimpleMCMCOperator {
     PopsIOSpeciesTreeModel piostm;
     PopsIOSpeciesBindings piosb ;
@@ -63,7 +64,7 @@ public class PopsIOTreeNodeSlide  extends SimpleMCMCOperator {
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         operateOneNodeInTree();
         return 0.0;
     }

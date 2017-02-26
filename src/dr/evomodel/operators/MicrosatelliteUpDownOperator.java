@@ -37,17 +37,17 @@ import dr.math.MathUtils;
  * This is almost the same as UpDownOperator, except it uses scaleAllAndNotify method instead of scale.
  *
  */
-public class MicrosatUpDownOperator extends AbstractCoercableOperator {
+public class MicrosatelliteUpDownOperator extends AbstractCoercableOperator {
 
     private Scalable.Default[] upParameter = null;
     private Scalable.Default[] downParameter = null;
     private double scaleFactor;
 
-    public MicrosatUpDownOperator(Scalable.Default[] upParameter,
-                                  Scalable.Default[] downParameter,
-                                  double scale,
-                                  double weight,
-                                  CoercionMode mode) {
+    public MicrosatelliteUpDownOperator(Scalable.Default[] upParameter,
+                                        Scalable.Default[] downParameter,
+                                        double scale,
+                                        double weight,
+                                        CoercionMode mode) {
 
         super(mode);
         setWeight(weight);
@@ -72,7 +72,7 @@ public class MicrosatUpDownOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
@@ -80,13 +80,13 @@ public class MicrosatUpDownOperator extends AbstractCoercableOperator {
 
         if( upParameter != null ) {
             for( Scalable.Default up : upParameter ) {
-                goingUp += up.scaleAllAndNotify(scale, -1);
+                goingUp += up.scaleAllAndNotify(scale, -1, false);
             }
         }
 
         if( downParameter != null ) {
             for(Scalable.Default dn : downParameter ) {
-                goingDown += dn.scaleAllAndNotify(1.0 / scale, -1);
+                goingDown += dn.scaleAllAndNotify(1.0 / scale, -1, false);
             }
         }
 

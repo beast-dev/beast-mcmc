@@ -59,8 +59,8 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
                     final Scalable s = (Scalable) xo.getChild(Scalable.class);
                     args[k] = new Scalable() {
 
-                        public int scale(double factor, int nDims) throws OperatorFailedException {
-                            return s.scale(factor, count);
+                        public int scale(double factor, int nDims, boolean testBounds) {
+                            return s.scale(factor, count, testBounds);
                         }
 
                         public String getName() {
@@ -73,8 +73,8 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
                     final Scalable s = (Scalable) xo.getChild(Scalable.class);
                     args[k] = new Scalable() {
 
-                        public int scale(double factor, int nDims) throws OperatorFailedException {
-                            s.scale(factor, -1);
+                        public int scale(double factor, int nDims, boolean testBounds) {
+                            s.scale(factor, -1, testBounds);
                             return df;
                         }
 

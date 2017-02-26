@@ -46,7 +46,7 @@ public class ValuesPoolSwapOperator extends SimpleMCMCOperator {
         return ValuesPoolSwapOperatorParser.VALUESPOOL_OPERATOR + "(" + pool.getModelName() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         final Variable<Double> selector = pool.getSelector();
         final int[] ints = SelectorOperator.intVals(selector);
         int[] c = SelectorOperator.counts_used_m2(ints);
@@ -59,7 +59,7 @@ public class ValuesPoolSwapOperator extends SimpleMCMCOperator {
         }
 
         if( n == 0 ) {
-            throw new OperatorFailedException("No moves");
+            throw new RuntimeException("No moves");
         }
 
         int j = MathUtils.nextInt(n);

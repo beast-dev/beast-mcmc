@@ -67,6 +67,7 @@ public class Parameter implements Serializable {
     public final boolean isNonNegative;
     public final boolean isZeroOne;
     public final boolean isCached;
+    public final boolean isAdaptiveMultivariateCompatible;
     public boolean isCalibratedYule = false;
 //    public final double lower;
 //    public final double upper;
@@ -128,6 +129,8 @@ public class Parameter implements Serializable {
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private boolean isPriorFixed = false;
 
+        private boolean isAdaptiveMultivariateCompatible = false;
+
         private double initial = Double.NaN;
         //        private double upper = Double.NaN;
 //        private double lower = Double.NaN;
@@ -168,6 +171,7 @@ public class Parameter implements Serializable {
             options = source.options;
             priorType = source.priorType;
             isPriorFixed = source.isPriorFixed;
+            isAdaptiveMultivariateCompatible = source.isAdaptiveMultivariateCompatible;
             initial = source.initial;
             isTruncated = source.isTruncated;
             truncationUpper = source.truncationUpper;
@@ -251,6 +255,11 @@ public class Parameter implements Serializable {
             }
             return this;
         }
+        public Builder isAdaptiveMultivariateCompatible(boolean isAdaptiveMultivariateCompatible) {
+            this.isAdaptiveMultivariateCompatible = isAdaptiveMultivariateCompatible;
+            return this;
+        }
+
 
         public Builder isCMTCRate(boolean isCMTCRate) {
             this.isCMTCRate = isCMTCRate;
@@ -353,6 +362,8 @@ public class Parameter implements Serializable {
         isNonNegative = builder.isNonNegative;
         isZeroOne = builder.isZeroOne;
         isPriorFixed = builder.isPriorFixed;
+        isAdaptiveMultivariateCompatible = builder.isAdaptiveMultivariateCompatible;
+
 //        upper = builder.upper;
 //        lower = builder.lower;
         isTruncated = builder.isTruncated;

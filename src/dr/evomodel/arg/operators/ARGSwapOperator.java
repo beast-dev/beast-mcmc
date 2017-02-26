@@ -29,7 +29,6 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -68,7 +67,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 	}
 
 
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 
 		if (mode.equals(NARROW_SWAP)) {
 			return narrowSwap();
@@ -109,7 +108,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 		return 0;
 	}
 
-	private double narrowSwap() throws OperatorFailedException {
+	private double narrowSwap() {
 		ArrayList<NarrowSwap> possibleSwaps = new ArrayList<NarrowSwap>(arg.getNodeCount());
 		findAllNarrowSwaps(possibleSwaps);
 		int possibleSwapsBefore = possibleSwaps.size();

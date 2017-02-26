@@ -27,7 +27,7 @@ public class NegationOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         int number = MathUtils.nextInt(data.getDimension());
         double setTo = -data.getParameterValue(number);
         data.setParameterValue(number, setTo);

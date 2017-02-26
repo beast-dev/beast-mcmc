@@ -27,19 +27,15 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Implements branch exchange operations that also exchange entire subtrees of the transmission tree. As this already
@@ -63,7 +59,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         TreeModel tree = c2cLikelihood.getTreeModel();
 
@@ -76,7 +72,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         return hr;
     }
 
-    public double exchange() throws OperatorFailedException{
+    public double exchange(){
         TreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
@@ -100,7 +96,8 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         int candidateCount = candidates.size();
 
         if(candidateCount==0){
-            throw new OperatorFailedException("No valid exchanges for this node");
+//            throw new OperatorFailedException("No valid exchanges for this node");
+            return Double.NEGATIVE_INFINITY;
         }
 
         NodeRef j = candidates.get(MathUtils.nextInt(candidates.size()));

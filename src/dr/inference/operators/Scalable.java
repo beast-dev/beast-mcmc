@@ -43,9 +43,8 @@ public interface Scalable {
      * @param factor scaling factor
      * @param nDims
      * @return Number of dimentions.
-     * @throws OperatorFailedException
      */
-    int scale(double factor, int nDims) throws OperatorFailedException;
+    int scale(double factor, int nDims, boolean testBounds);
 
     /**
      * @return Name for display purposes.
@@ -59,22 +58,28 @@ public interface Scalable {
             this.parameter = p;
         }
 
-        public int scale(double factor, int nDims) throws OperatorFailedException {
+        public int scale(double factor, int nDims, boolean testBounds) {
             assert nDims <= 0;
             final int dimension = parameter.getDimension();
 
+
             for (int i = 0; i < dimension; ++i) {
-                parameter.setParameterValue(i, parameter.getParameterValue(i) * factor);
+                // scale offset by the lower bound
+                parameter.setParameterValue(i, (parameter.getParameterValue(i)) * factor);
             }
 
-            final Bounds<Double> bounds = parameter.getBounds();
+            if (testBounds) {
+                final Bounds<Double> bounds = parameter.getBounds();
 
-            for (int i = 0; i < dimension; i++) {
-                final double value = parameter.getParameterValue(i);
-                if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
+                for (int i = 0; i < dimension; i++) {
+                    final double value = parameter.getParameterValue(i);
+
+                    if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+                        throw new RuntimeException("proposed value outside bounds");
+                    }
                 }
             }
+
             return dimension;
         }
 
@@ -90,24 +95,27 @@ public interface Scalable {
          * only ONE parameter is changed.
          *
          */
-        public int scaleAllAndNotify(double factor, int nDims) throws OperatorFailedException {
+        public int scaleAllAndNotify(double factor, int nDims, boolean testBounds) {
 
             assert nDims <= 0;
             final int dimension = parameter.getDimension();
             final int dimMinusOne = dimension-1;
 
             for(int i = 0; i < dimMinusOne; ++i) {
+                // scale offset by the lower bound
                 parameter.setParameterValueQuietly(i, parameter.getParameterValue(i) * factor);
             }
 
-            parameter.setParameterValueNotifyChangedAll(dimMinusOne, parameter.getParameterValue(dimMinusOne) * factor);
+            parameter.setParameterValueNotifyChangedAll(dimMinusOne,  parameter.getParameterValue(dimMinusOne) * factor);
 
-            final Bounds<Double> bounds = parameter.getBounds();
+            if (testBounds) {
+                final Bounds<Double> bounds = parameter.getBounds();
 
-            for(int i = 0; i < dimension; i++) {
-                final double value = parameter.getParameterValue(i);
-                if( value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i) ) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
+                for (int i = 0; i < dimension; i++) {
+                    final double value = parameter.getParameterValue(i);
+                    if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+                        throw new RuntimeException("proposed value outside bounds");
+                    }
                 }
             }
             return dimension;

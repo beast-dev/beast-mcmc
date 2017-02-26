@@ -1,23 +1,13 @@
 
 package dr.evomodel.antigenic.phyloClustering.MCMCOperators;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.LinkedList;
-
-import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.MCMCOperator.Utils;
 import dr.math.MathUtils;
-import dr.util.DataTable;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -51,13 +41,13 @@ public class muPrecisionInactiveMuOperator extends AbstractCoercableOperator {
 	
 	
 
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 
 		
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
  
 		double original_muPrec_Val = muPrecision.getParameterValue(0);
-		double new_muPrec_Val = scale * original_muPrec_Val;
+        double new_muPrec_Val = scale * original_muPrec_Val;
 	   
 	   
 		muPrecision.setParameterValue(0, new_muPrec_Val);

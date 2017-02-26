@@ -157,7 +157,7 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
 
     public double[][] getLastPrecision() { return precision; }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if (mean == null)
             mean = new double[dim];

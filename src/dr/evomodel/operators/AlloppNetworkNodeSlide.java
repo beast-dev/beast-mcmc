@@ -32,7 +32,6 @@ import dr.evomodel.speciation.AlloppLeggedTree;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 import dr.evomodelxml.operators.AlloppNetworkNodeSlideParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import jebl.util.FixedBitSet;
@@ -56,6 +55,8 @@ import java.util.ArrayList;
  */
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 
     private final AlloppSpeciesNetworkModel apspnet;
@@ -78,7 +79,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         operateOneNodeInNet(0.0);
         return 0;
     }
@@ -144,8 +145,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 
 
 
-    private void operateOneNodeInNet(double factor)
-            throws OperatorFailedException {
+    private void operateOneNodeInNet(double factor) {
         assert apspnet.getDiploidHistory().diphistOK(apspnet.getDiploidRootIsRoot());
         NodeHeightInNetIndex nhi = randomnode();
         if (nhi.doHybheight) {

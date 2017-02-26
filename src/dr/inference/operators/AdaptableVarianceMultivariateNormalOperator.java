@@ -1,7 +1,7 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -60,7 +60,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String COEFFICIENT = "coefficient";
     public static final String SKIP_RANK_CHECK = "skipRankCheck";
 
+    public static final String PARAMETERS = "parameters";
+    public static final String TRANSFORM = "transform";
+
     public static final boolean DEBUG = false;
+    public static final boolean PRINT_FULL_MATRIX = false;
 
     private double scaleFactor;
     private double beta;
@@ -175,7 +179,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         iterations++;
 
@@ -542,7 +546,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
+        String output = "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
+        if (PRINT_FULL_MATRIX) {
+            output += "\nMeans:\n";
+            for (int i = 0; i < dim; i++) {
+                output += newMeans[i] + " ";
+            }
+            output += "\nVariance-covariance matrix:\n";
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    output += empirical[i][j] + " ";
+                }
+                output += "\n";
+            }
+        }
+        return output;
     }
 
     public double getCoercableParameter() {
@@ -634,6 +652,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             if (scaleFactor <= 0.0) {
                 throw new XMLParseException("scaleFactor must be greater than 0.0");
+            }
+
+            for (XMLObject cxo : xo.getAllChildren(PARAMETERS)) {
+                Transform.Type type = null;
+                if (cxo.hasAttribute(TRANSFORM)) {
+                    type = Transform.Type.valueOf(cxo.getStringAttribute(TRANSFORM));
+                }
+                Transform transform = Transform.NONE;
+                if (type != null) {
+                    transform = type.getTransform();
+                }
+
+                for (Parameter parameter : cxo.getAllChildren(Parameter.class)) {
+                    // todo add the parameter to the transform parameter set...
+                }
             }
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
@@ -784,8 +817,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
                 AttributeRule.newBooleanRule(SKIP_RANK_CHECK, true),
-                new ElementRule(Parameter.class),
-                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
+                new ElementRule(Parameter.class, true),
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
+                new ElementRule(PARAMETERS, new XMLSyntaxRule[] {
+                        AttributeRule.newStringRule(TRANSFORM, true),
+                        new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+                }, 0, Integer.MAX_VALUE)
         };
 
     };

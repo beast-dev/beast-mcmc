@@ -32,7 +32,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -90,7 +89,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	}// END: getVariable
 
 	@Override
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 
 		try {
 

@@ -31,7 +31,6 @@ import java.util.ArrayList;
 
 import dr.evomodel.speciation.*;
 import dr.evomodelxml.operators.AlloppChangeNumHybridizationsParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 
 import dr.math.MathUtils;
@@ -44,6 +43,8 @@ import jebl.util.FixedBitSet;
 
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
 
     private final AlloppSpeciesNetworkModel apspnet;
@@ -69,7 +70,7 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         if (apspnet.getOneHybridization()) {
             throw new RuntimeException("oneHybridization is true but changeNumHybridizations() called");
         }

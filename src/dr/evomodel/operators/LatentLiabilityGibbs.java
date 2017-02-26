@@ -42,7 +42,6 @@ import dr.evomodel.continuous.LatentTruncation;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -169,7 +168,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     }
 
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
 
 //        doPostOrderTraversal(treeModel.getRoot());

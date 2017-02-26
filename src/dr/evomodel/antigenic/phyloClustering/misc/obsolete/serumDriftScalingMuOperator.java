@@ -1,24 +1,14 @@
 
 package dr.evomodel.antigenic.phyloClustering.misc.obsolete;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.LinkedList;
-
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.antigenic.phyloClustering.MCMCOperators.serumDriftActiveScaledMu1Operator;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.MCMCOperator.Utils;
 import dr.math.MathUtils;
-import dr.util.DataTable;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -53,7 +43,7 @@ public class serumDriftScalingMuOperator extends AbstractCoercableOperator {
 	
 	
 
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 
 		
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
@@ -61,7 +51,7 @@ public class serumDriftScalingMuOperator extends AbstractCoercableOperator {
      //   System.out.println("serumDriftScaling operator ran");
       //  System.out.println("scale=" + scale);
         //changing serum drift
-		serumDrift.setParameterValue(0, scale *serumDrift.getParameterValue(0) );
+        serumDrift.setParameterValue(0, scale *serumDrift.getParameterValue(0) );
 		
 		//changing mu
 		//System.out.println("dimension=" + mu.getColumnDimension());

@@ -107,7 +107,7 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if (!randomScan) for (int i = 0; i < LFM.getColumnPrecision().getColumnDimension(); i++) {
             if (LFM.getContinuous().getParameterValue(i) != 0)

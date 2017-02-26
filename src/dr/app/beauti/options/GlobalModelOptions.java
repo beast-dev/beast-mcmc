@@ -1,7 +1,7 @@
 /*
- * ClockModelOptions.java
+ * SiteModelOptions.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,63 +25,64 @@
 
 package dr.app.beauti.options;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.UPGMATree;
-import dr.evolution.util.Taxa;
-import dr.stats.DiscreteStatistics;
+import dr.app.beauti.types.OperatorSetType;
+import dr.app.beauti.types.OperatorType;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-
 
 /**
- * Is this necessary - is likely redundant?
- *
- * @author Alexei Drummond
  * @author Andrew Rambaut
- * @author Walter Xie
- * @version $Id$
  */
-public class ClockModelOptions extends ModelOptions {
+public class GlobalModelOptions extends ModelOptions {
+    private static final long serialVersionUID = -3347506415688390314L;
 
-    private static final long serialVersionUID = 3544930558477534541L;
     // Instance variables
     private final BeautiOptions options;
 
-    public ClockModelOptions(BeautiOptions options) {
+
+    public GlobalModelOptions(BeautiOptions options) {
         this.options = options;
 
         initModelParametersAndOpererators();
     }
 
-    /**
-     * return a list of parameters that are required
-     */
 
     @Override
     public void initModelParametersAndOpererators() {
+        createOperator("dataLikelihoodMultivariate", "Multiple", "Adaptive Multivariate Normal", null,
+                OperatorType.ADAPTIVE_MULTIVARIATE, 1.0, treeWeights);
+//        createOperator("treePriorMultivariate", "Multiple", "Adaptive Multivariate Normal", null,
+//                OperatorType.ADAPTIVE_MULTIVARIATE, 1.0, treeWeights);
 
     }
 
     @Override
     public List<Parameter> selectParameters(List<Parameter> params) {
-        return null;
+        return params;
     }
 
     @Override
-    public List<Operator> selectOperators(List<Operator> ops) {
-        return null;
+    public List<Operator> selectOperators(List<Operator> operators) {
+        List<Operator> ops = new ArrayList<Operator>();
+
+        ops.add(getOperator("dataLikelihoodMultivariate"));
+//        ops.add(getOperator("treePriorMultivariate"));
+
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            for (Operator op : ops) {
+                op.setUsed(options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE);
+            }
+        }
+
+        operators.addAll(ops);
+
+        return operators;
     }
 
     @Override
     public String getPrefix() {
         return null;
-    }
-
-
-    public boolean isTipCalibrated() {
-        return options.maximumTipHeight > 0;
     }
 
 }

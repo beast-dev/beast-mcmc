@@ -26,7 +26,6 @@
 package dr.evomodel.operators;
 
 import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -47,7 +46,7 @@ public class TipTraitSwapOperator extends SimpleMCMCOperator {
     private int index1;
     private int index2;
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         int tipCount = traitLikelihood.getTreeModel().getExternalNodeCount();
 

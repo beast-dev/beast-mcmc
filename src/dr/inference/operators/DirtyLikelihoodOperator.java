@@ -46,7 +46,7 @@ public class DirtyLikelihoodOperator extends SimpleMCMCOperator implements Gibbs
         return DirtyLikelihoodOperatorParser.TOUCH_OPERATOR;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         likelihood.makeDirty();
         return 0;
     }

@@ -145,7 +145,7 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         setupParameters();
         getPrecision(precision);
         double[][] variance = (new SymmetricMatrix(precision)).inverse().toComponents();

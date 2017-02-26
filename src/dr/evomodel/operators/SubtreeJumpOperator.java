@@ -69,7 +69,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         double logq;
 
         final double alpha =  (arctanTransform ? Math.atan(bias) * SCALE_ALPHA : Math.log(bias) );
@@ -102,7 +102,8 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         destinations = getIntersectingEdges(tree, height);
 
         if (destinations.size() == 0) {
-            throw new OperatorFailedException("No destinations found");
+            // should this throw a RTE or return HR of -Inf? Depends if this ever happens or is a bug check?
+            throw new RuntimeException("No destinations found");
         }
 
         double[] pdf = getDestinationProbabilities(tree, i, height, maxHeight, destinations, alpha);

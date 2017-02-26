@@ -25,7 +25,6 @@
 
 package dr.inference.operators;
 
-import cern.jet.random.Gamma;
 import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
@@ -112,7 +111,7 @@ public class GibbsIndependentJointNormalGammaOperator extends SimpleMCMCOperator
     /**
      * change the parameter and return the hastings ratio.
      */
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 		
 		//double logq = 0;
 		
@@ -141,7 +140,7 @@ public class GibbsIndependentJointNormalGammaOperator extends SimpleMCMCOperator
                 }
 
                 if (newValue < precBounds.getLowerLimit(i) || newValue > precBounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value from gamma distribution outside boundaries");
+                    throw new RuntimeException("proposed value from gamma distribution outside boundaries");
                 }
 
                 precision.setValue(i, newValue);
@@ -165,7 +164,7 @@ public class GibbsIndependentJointNormalGammaOperator extends SimpleMCMCOperator
 				//logq += (model.logPdf(currentValue) - model.logPdf(newValue));
 				
 				if (newValue < meanBounds.getLowerLimit(i) || newValue > meanBounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value from normal distribution outside boundaries");
+                    throw new RuntimeException("proposed value from normal distribution outside boundaries");
                 }
 				
 				mean.setValue(i, newValue);

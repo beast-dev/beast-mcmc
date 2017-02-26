@@ -181,7 +181,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 "The origin of the infection, x0 > tree.rootHeight", PriorScaleType.ORIGIN_SCALE,
                 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
         createParameterLognormalPrior(BirthDeathEpidemiologyModelParser.R0, "R0",
-                PriorScaleType.NONE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.NONE, 2.0, 1.0, 1.25, 0.0);
         createNonNegativeParameterUniformPrior(BirthDeathEpidemiologyModelParser.RECOVERY_RATE,
                 "recoveryRate", PriorScaleType.NONE,
                 0.05, 0.0, 100.0);

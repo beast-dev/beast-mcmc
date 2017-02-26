@@ -27,7 +27,6 @@ package dr.evomodel.operators;
 
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 import dr.math.MathUtils;
@@ -38,7 +37,7 @@ import dr.math.MathUtils;
  *  This operator performs bitflip operation on the bit vector representing the model.
  * 
  */
-public class MsatBitFlipOperator extends SimpleMCMCOperator {
+public class MicrosatelliteBitFlipOperator extends SimpleMCMCOperator {
     private Parameter parameter;
     private Parameter dependencies;
     private int[] variableIndices;
@@ -50,7 +49,7 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
     public static final String VARIABLE_INDICES = "variableIndices";
 
 
-    public MsatBitFlipOperator(Parameter parameter, Parameter dependencies, double weight, int[] variableIndices){
+    public MicrosatelliteBitFlipOperator(Parameter parameter, Parameter dependencies, double weight, int[] variableIndices){
         this.parameter = parameter;
         this.dependencies = dependencies;
         this.variableIndices = variableIndices;
@@ -64,7 +63,7 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
         return "msatModelSwitch(" + parameter.getParameterName() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logq = 0.0;
         double[] bitVec = new double[parameter.getDimension()];
@@ -88,8 +87,8 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
             int dependentInd = (int)dependencies.getParameterValue(i);
             if(dependentInd > NO_DEPENDENCY){
                 if(bitVec[dependentInd] == ABSENT && bitVec[i]==PRESENT){
-                    throw new OperatorFailedException("");
-                    //newVal = oldVal;
+                    //throw new OperatorFailedException("");
+                    return Double.NEGATIVE_INFINITY;
                 }
             }
 
@@ -127,7 +126,7 @@ public class MsatBitFlipOperator extends SimpleMCMCOperator {
                 variableIndices = new int[]{0, 1, 2, 3, 4, 5};
             }
 
-            return new MsatBitFlipOperator(modelChoose, dependencies, weight, variableIndices);
+            return new MicrosatelliteBitFlipOperator(modelChoose, dependencies, weight, variableIndices);
         }
 
         //************************************************************************

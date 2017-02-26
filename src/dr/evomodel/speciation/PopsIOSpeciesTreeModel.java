@@ -36,7 +36,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
 import dr.util.AlloppMisc;
 import dr.util.Author;
@@ -660,7 +659,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     // for Scalable.
     /*******************************************************************************/
     @Override
-    public int scale(double factor, int nDims) throws OperatorFailedException {
+    public int scale(double factor, int nDims, boolean testBounds) {
         int n = scaleAllHeights(factor);
         stree = makeSimpleTree();
         return n;

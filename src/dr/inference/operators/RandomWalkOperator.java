@@ -91,11 +91,11 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         // a random dimension to perturb
         if (parameter.getDimension() <= 0) {
-            throw new OperatorFailedException("Illegal Dimension");
+            throw new RuntimeException("Illegal Dimension");
         }
 
         int index;
@@ -115,11 +115,10 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
         if (condition == BoundaryCondition.reflecting) {
             newValue = reflectValue(newValue, lower, upper);
-        } else if(condition == BoundaryCondition.absorbing && (newValue < lower || newValue > upper)){
+        } else if (condition == BoundaryCondition.absorbing && (newValue < lower || newValue > upper)) {
             return 0.0;
-        }
-        else if (newValue < lower || newValue > upper) {
-            throw new OperatorFailedException("proposed value outside boundaries");
+        } else if (newValue < lower || newValue > upper) {
+            return Double.NEGATIVE_INFINITY;
         }
 
         parameter.setParameterValue(index, newValue);

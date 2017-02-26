@@ -71,7 +71,7 @@ public class LogRandomWalkOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
         final int dim = parameter.getDimension();
         final Bounds<Double> bounds = parameter.getBounds();
         double hastingsRatio = 0;
@@ -102,7 +102,8 @@ public class LogRandomWalkOperator extends AbstractCoercableOperator {
         for(int i = checkStart; i < checkEnd; i++) {
             final double value = parameter.getParameterValue(i);
             if( value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i) ) {
-                throw new OperatorFailedException("proposed value outside boundaries");
+//                throw new OperatorFailedException("proposed value outside boundaries");
+                return Double.NEGATIVE_INFINITY;
             }
         }
         return hastingsRatio;

@@ -67,7 +67,7 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
         return variable;
     }
 
-    public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
+    public double doOperation(Prior prior, Likelihood likelihood) {
         double logPosterior = evaluate(likelihood, prior, 1.0);
         double cutoffDensity = logPosterior + MathUtils.randomLogDouble();
         sliceInterval.drawFromInterval(prior, likelihood, cutoffDensity, width);
@@ -109,11 +109,7 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
         double variance = 0;
 
         for(int i = 0; i < length; i++) {
-            try {
-                sliceSampler.doOperation(null, posterior);
-            } catch (OperatorFailedException e) {
-                System.err.println(e.getMessage());
-            }
+            sliceSampler.doOperation(null, posterior);
             double x = meanParameter.getValue(0);
             mean += x;
             variance += x*x;

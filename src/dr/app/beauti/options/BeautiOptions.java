@@ -143,7 +143,7 @@ public class BeautiOptions extends ModelOptions {
         operatorAnalysis = false;
         operatorAnalysisFileName = null;
 
-        siteModelOptions = new SiteModelOptions(this);
+        globalModelOptions = new GlobalModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
         treeModelOptions = new TreeModelOptions(this);
 //        priorOptions = new PriorOptions(this);
@@ -250,6 +250,8 @@ public class BeautiOptions extends ModelOptions {
     @Override
     public List<Parameter> selectParameters(List<Parameter> parameters) {
 
+        globalModelOptions.selectParameters(parameters);
+
         selectTaxonSetsStatistics(parameters); // have to be before clockModelOptions.selectParameters(parameters);
 
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
@@ -334,10 +336,11 @@ public class BeautiOptions extends ModelOptions {
 
     @Override
     public List<Operator> selectOperators(List<Operator> ops) {
+        globalModelOptions.selectOperators(ops);
+
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             model.selectOperators(ops);
         }
-//        substitutionModelOptions.selectOperators(ops);
 
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectOperators(ops);
@@ -1421,7 +1424,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean operatorAnalysis = true;
     public String operatorAnalysisFileName = null;
 
-    public SiteModelOptions siteModelOptions = new SiteModelOptions(this);
+    public GlobalModelOptions globalModelOptions = new GlobalModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
 

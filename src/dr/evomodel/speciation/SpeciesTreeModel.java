@@ -38,7 +38,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
 import dr.util.Author;
 import dr.util.Citable;
@@ -990,7 +989,7 @@ public class SpeciesTreeModel extends AbstractModel implements
 
     static private TreeNodeSlide internalTreeOP = null;
 
-    public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
+    public int scale(double scaleFactor, int nDims, boolean testBounds) {
         assert scaleFactor > 0;
         if (nDims <= 0) {
             // actually when in an up down with operators on the gene trees the flags
@@ -1007,7 +1006,7 @@ public class SpeciesTreeModel extends AbstractModel implements
             return count;
         } else {
             if (nDims != 1) {
-                throw new OperatorFailedException("not implemented for count != 1");
+                throw new UnsupportedOperationException("not implemented for count != 1");
             }
             if (internalTreeOP == null) {
                 internalTreeOP = new TreeNodeSlide(this, species, 1);

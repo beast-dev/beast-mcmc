@@ -27,7 +27,6 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 /**
@@ -41,7 +40,6 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
     public static final int NARROW = 0;
     public static final int WIDE = 1;
-    public static final int INTERMEDIATE = 2;
 
     private static final int MAX_TRIES = 100;
 
@@ -56,22 +54,21 @@ public class ExchangeOperator extends AbstractTreeOperator {
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         final int tipCount = tree.getExternalNodeCount();
 
-        double hastingsRatio = 0;
+        double hastingsRatio;
 
         switch( mode ) {
             case NARROW:
-                narrow();
+                hastingsRatio = (narrow() ? 0.0 : Double.NEGATIVE_INFINITY);
                 break;
             case WIDE:
-                wide();
+                hastingsRatio = (wide() ? 0.0 : Double.NEGATIVE_INFINITY);
                 break;
-            case INTERMEDIATE:
-                hastingsRatio = intermediate();
-                break;
+            default:
+                throw new IllegalArgumentException("Unknow Exchange Mode");
         }
 
         assert tree.getExternalNodeCount() == tipCount :
@@ -83,7 +80,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void narrow() throws OperatorFailedException {
+    public boolean narrow() {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
@@ -109,15 +106,16 @@ public class ExchangeOperator extends AbstractTreeOperator {
             // exchangeNodes generates the events
             //tree.pushTreeChangedEvent(iParent);
             //tree.pushTreeChangedEvent(iGrandParent);
-        } else {
-          throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
+            return true;
         }
+
+        return false;
     }
 
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void wide() throws OperatorFailedException {
+    public boolean wide() {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -141,87 +139,10 @@ public class ExchangeOperator extends AbstractTreeOperator {
                 && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
             exchangeNodes(tree, i, j, iP, jP);
             // System.out.println("tries = " + tries+1);
-            return;
+            return true;
         }
 
-        throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
-    }
-
-    /**
-     * @deprecated WARNING: SHOULD NOT BE USED!
-     *             WARNING: Assumes strictly bifurcating tree.
-     */
-    public double intermediate() throws OperatorFailedException {
-
-        final int nodeCount = tree.getNodeCount();
-        final NodeRef root = tree.getRoot();
-
-        for(int tries = 0; tries < MAX_TRIES; ++tries) {
-            NodeRef i, j;
-            NodeRef[] possibleNodes;
-            do {
-
-                // get a random node
-                i = root; // tree.getNode(MathUtils.nextInt(nodeCount));
-                // if (root != i) {
-                // possibleNodes = tree.getNodes();
-                // }
-
-                // check if we got the root
-                while( root == i ) {
-                    // if so get another one till we haven't got anymore the
-                    // root
-                    i = tree.getNode(MathUtils.nextInt(nodeCount));
-                    // if (root != i) {
-                    // possibleNodes = tree.getNodes();
-                    // }
-                }
-                possibleNodes = tree.getNodes();
-
-                // get another random node
-                // NodeRef j = tree.getNode(MathUtils.nextInt(nodeCount));
-                j = getRandomNode(possibleNodes, i);
-                // check if they are the same and if the new node is the root
-            } while( j == null || j == i || j == root );
-
-            double forward = getWinningChance(indexOf(possibleNodes, j));
-
-            // possibleNodes = getPossibleNodes(j);
-            calcDistances(possibleNodes, j);
-            forward += getWinningChance(indexOf(possibleNodes, i));
-
-            // get the parent of both of them
-            final NodeRef iP = tree.getParent(i);
-            final NodeRef jP = tree.getParent(j);
-
-            // check if both parents are equal -> we are siblings :) (this
-            // wouldnt effect a change on topology)
-            // check if I m your parent or vice versa (this would destroy the
-            // tree)
-            // check if you are younger then my father
-            // check if I m younger then your father
-            if( (iP != jP) && (i != jP) && (j != iP)
-                    && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-                    && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
-                // if 1 & 2 are false and 3 & 4 are true then we found a valid
-                // candidate
-                exchangeNodes(tree, i, j, iP, jP);
-
-                // possibleNodes = getPossibleNodes(i);
-                calcDistances(possibleNodes, i);
-                double backward = getWinningChance(indexOf(possibleNodes, j));
-
-                // possibleNodes = getPossibleNodes(j);
-                calcDistances(possibleNodes, j);
-                backward += getWinningChance(indexOf(possibleNodes, i));
-
-                // System.out.println("tries = " + tries+1);
-                return Math.log(Math.min(1, (backward) / (forward)));
-                // return 0.0;
-            }
-        }
-
-        throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
+        return false;
     }
 
     /* why not use Arrays.asList(a).indexOf(n) ? */

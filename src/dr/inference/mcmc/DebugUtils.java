@@ -29,6 +29,7 @@ package dr.inference.mcmc;
  * ${CLASS_NAME}
  *
  * @author Andrew Rambaut
+ * @author Guy Baele
  * @version $Id$
  *
  * $HeadURL$
@@ -38,10 +39,8 @@ package dr.inference.mcmc;
  * $LastChangedRevision$
  */
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -55,6 +54,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class DebugUtils {
+
+    private static final boolean DEBUG = false;
 
     /**
      * Writes out the current state in a human readable format to help debugging.
@@ -85,6 +86,8 @@ public class DebugUtils {
             out.println(lnL);
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+                out.print("parameter");
+                out.print("\t");
                 out.print(parameter.getParameterName());
                 out.print("\t");
                 out.print(parameter.getDimension());
@@ -97,6 +100,8 @@ public class DebugUtils {
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
                 MCMCOperator operator = operatorSchedule.getOperator(i);
+                out.print("operator");
+                out.print("\t");
                 out.print(operator.getOperatorName());
                 out.print("\t");
                 out.print(operator.getAcceptCount());
@@ -111,10 +116,41 @@ public class DebugUtils {
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
-                    out.print(model.getModelName());
+                    out.print("tree");
                     out.print("\t");
-                    out.println(((TreeModel) model).getNewick());
+                    out.println(model.getModelName());
+
+                    //replace Newick format by printing general graph structure
+                    //out.println(((TreeModel) model).getNewick());
+
+                    out.println("#nodes");
+                    int nodeCount = ((TreeModel) model).getNodeCount();
+                    out.println(nodeCount);
+                    for (int i = 0; i < nodeCount; i++) {
+                        out.print(((TreeModel) model).getNode(i).getNumber());
+                        out.print("\t");
+                        out.print(((TreeModel) model).getNodeHeight(((TreeModel) model).getNode(i)));
+                        if (((TreeModel) model).isExternal(((TreeModel) model).getNode(i))) {
+                            out.print("\t");
+                            out.print(((TreeModel) model).getNodeTaxon(((TreeModel) model).getNode(i)).getId());
+                        }
+                        out.println();
+                    }
+
+                    out.println("#edges");
+                    out.println("#child-node parent-node");
+
+                    out.println(nodeCount);
+                    for (int i = 0; i < nodeCount; i++) {
+                        if (!((TreeModel) model).isRoot(((TreeModel) model).getNode(i))) {
+                            out.print(((TreeModel) model).getNode(i).getNumber());
+                            out.print("\t");
+                            out.println(((TreeModel) model).getParent(((TreeModel) model).getNode(i)).getNumber());
+                        }
+                    }
+
                 }
+
             }
 
             out.close();
@@ -124,9 +160,11 @@ public class DebugUtils {
             return false;
         }
 
-//        for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
-//            System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
-//        }
+        if (DEBUG) {
+            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+                System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
+            }
+        }
 
         return true;
     }
@@ -141,6 +179,8 @@ public class DebugUtils {
      */
     public static long readStateFromFile(File file, OperatorSchedule operatorSchedule, double[] lnL) {
         long state = -1;
+
+        TreeParameterModel backup = null;
 
         try {
             FileReader fileIn = new FileReader(file);
@@ -189,12 +229,13 @@ public class DebugUtils {
             }
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+
                 line = in.readLine();
                 fields = line.split("\t");
-//                if (!fields[0].equals(parameter.getParameterName())) {
-//                    System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
-//                }
-                int dimension = Integer.parseInt(fields[1]);
+                //if (!fields[0].equals(parameter.getParameterName())) {
+                //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
+                //}
+                int dimension = Integer.parseInt(fields[2]);
 
                 if (dimension != parameter.getDimension()) {
                     System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
@@ -205,13 +246,25 @@ public class DebugUtils {
                     System.err.println();
                 }
 
-                if (fields[0].equals("branchRates.categories.rootNodeNumber")) {
+                if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
                     // System.out.println("eek");
-                    double value = Double.parseDouble(fields[2]);
+                    double value = Double.parseDouble(fields[3]);
                     parameter.setParameterValue(0, value);
+                    if (DEBUG) {
+                        System.out.println("restoring " + fields[1] + " with value " + value);
+                    }
                 } else {
+                    if (DEBUG) {
+                        System.out.print("restoring " + fields[1] + " with values ");
+                    }
                     for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 2]));
+                        parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
+                        if (DEBUG) {
+                            System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                        }
+                    }
+                    if (DEBUG) {
+                        System.out.println();
                     }
                 }
 
@@ -221,19 +274,19 @@ public class DebugUtils {
                 MCMCOperator operator = operatorSchedule.getOperator(i);
                 line = in.readLine();
                 fields = line.split("\t");
-                if (!fields[0].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match operator: " + fields[0]);
+                if (!fields[1].equals(operator.getOperatorName())) {
+                    throw new RuntimeException("Unable to match operator: " + fields[1]);
                 }
-                if (fields.length < 3) {
-                    throw new RuntimeException("Operator missing values: " + fields[0]);
+                if (fields.length < 4) {
+                    throw new RuntimeException("Operator missing values: " + fields[1]);
                 }
-                operator.setAcceptCount(Integer.parseInt(fields[1]));
-                operator.setRejectCount(Integer.parseInt(fields[2]));
+                operator.setAcceptCount(Integer.parseInt(fields[2]));
+                operator.setRejectCount(Integer.parseInt(fields[3]));
                 if (operator instanceof CoercableMCMCOperator) {
-                    if (fields.length != 4) {
-                        throw new RuntimeException("Coercable operator missing parameter: " + fields[0]);
+                    if (fields.length != 5) {
+                        throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
-                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[3]));
+                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[4]));
                 }
             }
 
@@ -242,30 +295,70 @@ public class DebugUtils {
             Set<String> expectedTreeModelNames = new HashSet<String>();
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
+                    if (DEBUG) {
+                        System.out.println("model " + model.getModelName());
+                    }
                     expectedTreeModelNames.add(model.getModelName());
+                    if (DEBUG) {
+                        for (String s : expectedTreeModelNames) {
+                            System.out.println(s);
+                        }
+                    }
                 }
             }
 
-            // Read in all (possibly more than one) tree
-            while((line = in.readLine()) != null) {
-                fields = line.split("\t");
-                boolean treeFound = false;
+            line = in.readLine();
+            fields = line.split("\t");
+            // Read in all (possibly more than one) trees
+            while (fields[0].equals("tree")) {
 
                 for (Model model : Model.CONNECTED_MODEL_SET) {
-                    if (model instanceof TreeModel && fields[0].equals(model.getModelName())) {
-                        treeFound = true;
-                        NewickImporter importer = new NewickImporter(fields[1]);
-                        Tree tree = importer.importNextTree();
+                    if (model instanceof TreeModel && fields[1].equals(model.getModelName())) {
+                        line = in.readLine();
+                        line = in.readLine();
+                        fields = line.split("\t");
+                        //read number of nodes
+                        int nodeCount = Integer.parseInt(fields[0]);
+                        for (int i = 0; i < nodeCount; i++) {
+                            line = in.readLine();
+
+                        }
+
+                        //on to reading edge information
+                        line = in.readLine();
+                        line = in.readLine();
+                        line = in.readLine();
+                        fields = line.split("\t");
+
+                        int edgeCount = Integer.parseInt(fields[0]);
+
+                        int[] parents = new int[edgeCount];
+                        for (int i = 0; i < edgeCount; i++){
+                            parents[i] = -1;
+                        }
+                        for (int i = 0; i < edgeCount; i++) {
+                            line = in.readLine();
+                            if (line != null) {
+                                fields = line.split("\t");
+                                parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
+                            }
+                        }
+
+                        //perform magic with the acquired information
+
+                        //adopt the loaded tree structure; this does not yet copy the traits on the branches
                         ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(tree);
+                        ((TreeModel) model).adoptTreeStructure(parents);
                         ((TreeModel) model).endTreeEdit();
 
                         expectedTreeModelNames.remove(model.getModelName());
+
                     }
                 }
 
-                if (!treeFound) {
-                    throw new RuntimeException("Unable to match state parameter: " + fields[0]);
+                line = in.readLine();
+                if (line != null) {
+                    fields = line.split("\t");
                 }
             }
 
@@ -275,6 +368,15 @@ public class DebugUtils {
                     sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
                 }
                 throw new RuntimeException(sb.toString());
+            }
+
+            if (DEBUG) {
+                System.out.println("\nDouble checking:");
+                for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+                    if (parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
+                        System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
+                    }
+                }
             }
 
             if (rngState != null) {
@@ -288,12 +390,9 @@ public class DebugUtils {
             }
         } catch (IOException ioe) {
             throw new RuntimeException("Unable to read file: " + ioe.getMessage());
-        } catch (Importer.ImportException ie) {
-            throw new RuntimeException("Unable to import tree: " + ie.getMessage());
         }
 
         return state;
     }
-
 
 }

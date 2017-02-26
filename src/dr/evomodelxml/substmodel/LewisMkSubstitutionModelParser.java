@@ -118,7 +118,7 @@ public class LewisMkSubstitutionModelParser extends AbstractXMLObjectParser {
             throw (new XMLParseException("The state transitions form a disconnected graph! This model is not suited for this case."));
         }
 
-        return new GeneralSubstitutionModel(LEWIS_MK_MODEL, dataType, freqModel, ratesParameter, 0);
+        return new GeneralSubstitutionModel(LEWIS_MK_MODEL, dataType, freqModel, ratesParameter, -1);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

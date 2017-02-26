@@ -29,7 +29,6 @@ package dr.evomodel.operators;
 import dr.evomodel.speciation.MulSpeciesBindings;
 import dr.evomodel.speciation.MulSpeciesTreeModel;
 import dr.evomodelxml.operators.MulTreeSequenceReassignmentParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -43,6 +42,8 @@ import dr.math.MathUtils;
  */
 
 
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class MulTreeSequenceReassignment extends SimpleMCMCOperator {
 
 	private final MulSpeciesTreeModel multree;
@@ -67,7 +68,7 @@ public class MulTreeSequenceReassignment extends SimpleMCMCOperator {
 	}
 
 	@Override
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		multree.beginTreeEdit();
 		if (MathUtils.nextInt(2) == 0) {
 			mulspb.permuteOneSpeciesOneIndivForOneGene();

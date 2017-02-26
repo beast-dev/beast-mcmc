@@ -31,7 +31,6 @@ import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.inference.model.Parameter;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import jebl.util.FixedBitSet;
@@ -47,6 +46,8 @@ import java.util.Arrays;
  *  @author Joseph Heled
  *         Date: 29/05/2008
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class TreeNodeSlide extends SimpleMCMCOperator {
 
     private final SpeciesTreeModel tree;
@@ -84,7 +85,7 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
         return TreeNodeSlideParser.TREE_NODE_REHEIGHT + "(" + tree.getId() + "," + species.getId() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         operateOneNode(0.0);
         return 0;
     }
@@ -116,7 +117,7 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
        }
     }
 
-    public void operateOneNode(final double factor) throws OperatorFailedException {
+    public void operateOneNode(final double factor) {
 
 //            #print "operate: tree", ut.treerep(t)
      //   if( verbose)  System.out.println("  Mau at start: " + tree.getSimpleTree());

@@ -85,9 +85,9 @@ public class GibbsIndependentGammaOperator extends SimpleMCMCOperator implements
     }
 
     /**
-     * change the parameter and return the hastings ratio.
+	 * change the parameter and return the hastings ratio.
      */
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		
 		//double logq = 0;
 		
@@ -113,7 +113,7 @@ public class GibbsIndependentGammaOperator extends SimpleMCMCOperator implements
 				//logq += (gamma.logPdf(currentValue) - gamma.logPdf(newValue));
 				
 				if (newValue < bounds.getLowerLimit(i) || newValue > bounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
+                    throw new RuntimeException("proposed value outside boundaries");
                 }
 				
 				variable.setValue(i, newValue);

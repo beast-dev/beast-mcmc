@@ -30,7 +30,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.RateScaleOperatorParser;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 
@@ -62,7 +61,7 @@ public class RateScaleOperator extends AbstractCoercableOperator {
     /**
      * scale the rates of a subtree and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 

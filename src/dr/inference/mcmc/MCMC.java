@@ -61,7 +61,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     // Experimental
     public final static boolean TEST_CLONING = false;
     // additional boolean to continue analysis after data has been added or removed
-    public final static boolean ALTERED_DATA = true;
+    public final static boolean ALTERED_DATA = false;
 
 
     public MCMC(String id) {
@@ -255,8 +255,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                     //checking for 15 identical digits below
                     String originalString = Double.toString(savedLnL[0]);
                     String restoredString = Double.toString(lnL);
-                    //System.out.println(lnL + "    " + originalString);
-                    //System.out.println(savedLnL[0] + "    " + restoredString);
+                    System.out.println(lnL + "    " + originalString);
+                    System.out.println(savedLnL[0] + "    " + restoredString);
                     //assume values will be nearly identical
                     int digits = 0;
                     for (int i = 0; i < Math.max(originalString.length(), restoredString.length()); i++) {
@@ -268,22 +268,18 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                             break;
                         }
                     }
-                    //System.out.println("digits = " + digits);
+                    //System.err.println("digits = " + digits);
 
                     if (digits < 15 && !ALTERED_DATA) {
                         throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
                                 ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
                     }
 
+                } else {
+                    System.out.println("IDENTICAL LIKELIHOODS");
+                    System.out.println("lnL" + " = " + lnL);
+                    System.out.println("savedLnL[0]" + " = " + savedLnL[0]);
                 }
-
-                //convert to BigDecimal to fix to 16 digits; solves issue with log likelihood mismatch at the last digit
-                //BigDecimal original = new BigDecimal(savedLnL[0], MathContext.DECIMAL64);
-                //BigDecimal restored = new BigDecimal(lnL, MathContext.DECIMAL64);
-                /*if (Math.abs(original.doubleValue() - restored.doubleValue()) > 1E-9) {
-                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + original.doubleValue() +
-                                ", recomputed lnL: " + restored.doubleValue() + " (difference " + (original.doubleValue() - restored.doubleValue()) + ")");
-                }*/
 
 //                for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
 //                    System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());

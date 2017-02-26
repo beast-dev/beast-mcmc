@@ -1,7 +1,7 @@
 /*
  * DebugChainListener.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,6 +29,7 @@ package dr.inference.mcmc;
  * ${CLASS_NAME}
  *
  * @author Andrew Rambaut
+ * @author Guy Baele
  * @version $Id$
  *
  * $HeadURL$

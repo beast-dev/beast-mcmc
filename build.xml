@@ -30,7 +30,8 @@
         $Id$
     </description>
 
-    <property name="JDK_VERSION" value="1.7"/>
+    <property name="JDK_SOURCE_VERSION" value="1.6"/>
+    <property name="JDK_TARGET_VERSION" value="1.7"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
@@ -73,7 +74,7 @@
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
-        <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="${src}" destdir="${build}"
+        <javac source="${JDK_SOURCE_VERSION}" target="${JDK_TARGET_VERSION}" srcdir="${src}" destdir="${build}"
                classpathref="classpath"
                fork="true"
                memoryinitialsize="256m"

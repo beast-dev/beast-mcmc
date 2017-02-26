@@ -25,6 +25,7 @@
 
 package dr.evolution.coalescent;
 
+import dr.app.tools.NexusExporter;
 import dr.evolution.tree.*;
 import dr.evolution.util.*;
 import dr.evolution.util.Date;
@@ -252,7 +253,7 @@ public class CoalescentSimulator {
 	private final ArrayList<SimpleNode> nodeList = new ArrayList<SimpleNode>();
 	private int activeNodeCount = 0;
 
-	public static void main(String[] args) {
+	public static void main1(String[] args) {
 
 		double[] samplingTimes = {
 				0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0
@@ -287,6 +288,34 @@ public class CoalescentSimulator {
 			System.out.println(j + "\t" + heights.get(j));
 		}
 
+	}
+
+	public static void main(String[] args) {
+
+		int N = 10;
+
+		double[] samplingTimes = {
+				0.0, 0.0, 0.0, 0.0, 0.0
+		};
+
+		ConstantPopulation constantPopulation = new ConstantPopulation(Units.Type.YEARS);
+		constantPopulation.setN0(1);
+
+		Taxa taxa = new Taxa();
+		int i = 1;
+		for (double time : samplingTimes) {
+			Taxon taxon = new Taxon("tip" + i);
+			taxon.setAttribute("date", new Date(time, Units.Type.YEARS, true));
+			i++;
+			taxa.addTaxon(taxon);
+		}
+		CoalescentSimulator simulator = new CoalescentSimulator();
+
+		NexusExporter exporter =  new NexusExporter(System.out);
+		for (i = 0; i < N; i++) {
+		Tree tree = simulator.simulateTree(taxa, constantPopulation);
+			exporter.exportTree(tree);
+		}
 	}
 
 }

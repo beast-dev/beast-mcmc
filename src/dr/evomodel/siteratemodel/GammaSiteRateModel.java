@@ -50,6 +50,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     public GammaSiteRateModel(String name) {
         this(   name,
                 null,
+                1.0,
                 null,
                 0,
                 null);
@@ -58,6 +59,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     public GammaSiteRateModel(String name, double alpha, int categoryCount) {
         this(   name,
                 null,
+                1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
                 null);
@@ -66,6 +68,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     public GammaSiteRateModel(String name, double pInvar) {
         this(   name,
                 null,
+                1.0,
                 null,
                 0,
                 new Parameter.Default(pInvar));
@@ -74,18 +77,28 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     public GammaSiteRateModel(String name, double alpha, int categoryCount, double pInvar) {
         this(   name,
                 null,
+                1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
                 new Parameter.Default(pInvar));
     }
 
-    /**
-     * Constructor for gamma+invar distributed sites. Either shapeParameter or
-     * invarParameter (or both) can be null to turn off that feature.
-     */
     public GammaSiteRateModel(
             String name,
             Parameter muParameter,
+            Parameter shapeParameter, int gammaCategoryCount,
+            Parameter invarParameter) {
+        this(name, muParameter, 1.0, shapeParameter, gammaCategoryCount, invarParameter);
+    }
+
+        /**
+         * Constructor for gamma+invar distributed sites. Either shapeParameter or
+         * invarParameter (or both) can be null to turn off that feature.
+         */
+    public GammaSiteRateModel(
+            String name,
+            Parameter muParameter,
+            double muWeight,
             Parameter shapeParameter, int gammaCategoryCount,
             Parameter invarParameter) {
 
@@ -96,6 +109,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             addVariable(muParameter);
             muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         }
+        this.muWeight = muWeight;
 
         this.shapeParameter = shapeParameter;
         if (shapeParameter != null) {
@@ -272,7 +286,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
         if (muParameter != null) { // Moved multiplication by mu to here; it also
                                    // needed by double[] getCategoryRates() -- previously ignored
-            double mu = muParameter.getParameterValue(0);
+            double mu = muParameter.getParameterValue(0) * muWeight;
              for (int i=0; i < categoryCount; i++)
                 categoryRates[i] *= mu;
         }
@@ -320,6 +334,8 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
      * mutation rate parameter
      */
     private Parameter muParameter;
+
+    private double muWeight;
 
     /**
      * shape parameter

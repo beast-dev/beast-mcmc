@@ -114,8 +114,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private TraitThroughTimeDialog traitThroughTimeDialog = null;
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
-    private BayesFactorsDialog bayesFactorsDialog = null;
-
 //    private FilterDialog filterDialog;
 
     public TracerFrame(String title) {
@@ -440,7 +438,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         getGMRFSkyrideAction().setEnabled(enabled);
         getSkyGridAction().setEnabled(enabled);
         getLineagesThroughTimeAction().setEnabled(enabled);
-        getBayesFactorsAction().setEnabled(enabled);
         getCreateTemporalAnalysisAction().setEnabled(enabled);
         getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
         getAddBayesianSkylineAction().setEnabled(enabled && temporalAnalysisFrame != null);
@@ -1407,20 +1404,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         timeDensityDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
     }
 
-    private void doCalculateBayesFactors() {
-        if (bayesFactorsDialog == null) {
-            bayesFactorsDialog = new BayesFactorsDialog(this);
-        }
-
-        if (bayesFactorsDialog.showDialog(allTraceLists) == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
-
-        bayesFactorsDialog.createBayesFactorsFrame(allTraceLists, this);
-
-    }
-
-
     private void doFindConditionalPosteriorDistributions() {
 //        if (filterDialog == null) {
 //        FilterDialog filterDialog = new FilterDialog(this);
@@ -1634,7 +1617,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return exportPDFAction;
     }
 
-
     public Action getRemoveTraceAction() {
         return removeTraceAction;
     }
@@ -1685,10 +1667,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     public Action getAddTimeDensityAction() {
         return addTimeDensity;
-    }
-
-    public Action getBayesFactorsAction() {
-        return bayesFactorsAction;
     }
 
     public Action getConditionalPosteriorDistAction() {
@@ -1764,12 +1742,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction addTimeDensity = new AbstractAction(AnalysisMenuFactory.ADD_TIME_DENSITY) {
         public void actionPerformed(ActionEvent ae) {
             doAddTimeDensity();
-        }
-    };
-
-    private final AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.MODEL_COMPARISON) {
-        public void actionPerformed(ActionEvent ae) {
-            doCalculateBayesFactors();
         }
     };
 

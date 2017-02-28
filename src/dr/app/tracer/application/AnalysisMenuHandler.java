@@ -58,7 +58,5 @@ public interface AnalysisMenuHandler {
 
     Action getAddTimeDensityAction();
 
-    Action getBayesFactorsAction();
-
     Action getConditionalPosteriorDistAction();
 }

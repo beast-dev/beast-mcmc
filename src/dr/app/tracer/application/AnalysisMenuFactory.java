@@ -51,8 +51,6 @@ public class AnalysisMenuFactory implements MenuFactory {
     public static final String ADD_EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION = "Add Extended Bayesian Skyline Reconstruction...";
     public static final String ADD_TIME_DENSITY = "Add Time Density...";
 
-    public static final String MODEL_COMPARISON = "Model Comparison...";
-
     public static final String CONDITIONAL_POST_DIST = "Find Conditional Posterior Distributions...";
 
     public String getMenuName() {
@@ -99,11 +97,6 @@ public class AnalysisMenuFactory implements MenuFactory {
 //            menu.add(item);
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getAddTimeDensityAction());
-            menu.add(item);
-
-            menu.addSeparator();
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesFactorsAction());
             menu.add(item);
 
             menu.addSeparator();
@@ -155,12 +148,6 @@ public class AnalysisMenuFactory implements MenuFactory {
 //            menu.add(item);
 
             item = new JMenuItem(ADD_TIME_DENSITY);
-            item.setEnabled(false);
-            menu.add(item);
-
-            menu.addSeparator();
-
-            item = new JMenuItem(MODEL_COMPARISON);
             item.setEnabled(false);
             menu.add(item);
 

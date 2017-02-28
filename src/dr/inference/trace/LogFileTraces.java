@@ -426,8 +426,13 @@ public class LogFileTraces extends AbstractTraceList {
     private boolean addState(long stateNumber) {
         if (firstState < 0) {
             firstState = stateNumber;
+        } else if (secondState < 0) {
+            secondState = stateNumber;
         } else if (stepSize < 0) {
-            stepSize = (int) (stateNumber - firstState);
+            // delay setting of the stepSize until the step between
+            // the second and third step in case the first step is
+            // 1 (i.e., MrBayes) and the stepsize is 1.
+            stepSize = (int) (stateNumber - secondState);
         } else {
             int step = (int) (stateNumber - lastState);
             if (step != stepSize) {
@@ -457,6 +462,7 @@ public class LogFileTraces extends AbstractTraceList {
 
     private int burnIn = -1;
     private long firstState = -1;
+    private long secondState = -1;
     private long lastState = -1;
     private int stepSize = -1;
 

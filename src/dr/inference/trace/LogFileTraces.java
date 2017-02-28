@@ -230,7 +230,7 @@ public class LogFileTraces extends AbstractTraceList {
 
         int traceCount = getTraceCount();
 
-        boolean firstState = true;
+        int num_samples = 0;
 
         tokens = reader.tokenizeLine();
         while (tokens != null && tokens.hasMoreTokens()) {
@@ -246,15 +246,15 @@ public class LogFileTraces extends AbstractTraceList {
                     throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
                 }
 
-                if (firstState) {
+                if (num_samples < 1) {
                     // MrBayes puts 1 as the first state, BEAST puts 0
                     // In order to get the same gap between subsequent samples,
                     // we force this to 0.
                     if (state == 1) state = 0;
-                    firstState = false;
                 }
+                num_samples += 1;
 
-                if (!addState(state)) {
+                if (!addState(state, num_samples)) {
                     throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
                 }
 
@@ -421,10 +421,11 @@ public class LogFileTraces extends AbstractTraceList {
      * between stateNumbers should remain constant.
      *
      * @param stateNumber the state
+     * @param num_samples the number of samples (rows)
      * @return false if the state number is inconsistent
      */
-    private boolean addState(long stateNumber) {
-        if (firstState < 0) {
+    private boolean addState(long stateNumber, int num_samples) {
+        if (firstState < 0) { // it can use num_samples==1 to replace firstState < 0
             firstState = stateNumber;
         } else if (secondState < 0) {
             secondState = stateNumber;
@@ -436,11 +437,11 @@ public class LogFileTraces extends AbstractTraceList {
         } else {
             int step = (int) (stateNumber - lastState);
             if (step != stepSize) {
-                //System.out.println("stateNumber: " + stateNumber + " lastState: " + lastState);
-                //System.out.println("step: " + step + " != " + stepSize);
+                System.out.println("step: " + step + " != " + stepSize);
                 return false;
             }
         }
+        System.out.println(num_samples + ": stateNumber=" + stateNumber + " lastState=" + lastState + " firstState=" + firstState + " stepSize=" + stepSize);
         lastState = stateNumber;
         return true;
     }

@@ -3,6 +3,6 @@ package dr.inference.model;
 /**
  * @author Max Tolkoff
  */
-public interface LikelihoodDerivativeInterface {
+public interface PotentialDerivativeInterface {
     double[] getDerivative();
 }

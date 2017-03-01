@@ -1,7 +1,7 @@
 package dr.inferencexml.operators;
 
 import dr.inference.model.Likelihood;
-import dr.inference.model.LikelihoodDerivativeInterface;
+import dr.inference.model.PotentialDerivativeInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.HMCOperator;
@@ -31,7 +31,7 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
 
-        LikelihoodDerivativeInterface derivative = (LikelihoodDerivativeInterface) xo.getChild(LikelihoodDerivativeInterface.class);
+        PotentialDerivativeInterface derivative = (PotentialDerivativeInterface) xo.getChild(PotentialDerivativeInterface.class);
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
@@ -52,7 +52,7 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             new ElementRule(Parameter.class),
             new ElementRule(Likelihood.class),
-            new ElementRule(LikelihoodDerivativeInterface.class),
+            new ElementRule(PotentialDerivativeInterface.class),
     };
 
     @Override

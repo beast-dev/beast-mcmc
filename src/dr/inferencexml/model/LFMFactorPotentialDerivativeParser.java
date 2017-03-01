@@ -7,8 +7,8 @@ import dr.xml.*;
 /**
  * @author Max Tolkoff
  */
-public class LogLFMFactorPotentialDerivativeParser extends AbstractXMLObjectParser {
-    public final static String LFM_FACTOR_DERIVATIVE = "logLFMFactorDerivative";
+public class LFMFactorPotentialDerivativeParser extends AbstractXMLObjectParser {
+    public final static String LFM_FACTOR_DERIVATIVE = "LFMFactorPotentialDerivative";
 
     @Override
     public String getParserName() {

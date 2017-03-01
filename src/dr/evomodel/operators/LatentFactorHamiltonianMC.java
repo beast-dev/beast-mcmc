@@ -75,7 +75,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             for (int j = 0; j < ntraits; j++) {
                 for (int k = 0; k < ntaxa; k++) {
                     if(missingIndicator == null || missingIndicator.getParameterValue(k * ntraits + j) != 1){
-                        answer[i][k] += loadings.getParameterValue(j, i) * Precision.getParameterValue(j, j) *
+                        answer[i][k] -= loadings.getParameterValue(j, i) * Precision.getParameterValue(j, j) *
                             residual[k * ntraits + j];
                     }
                 }
@@ -155,8 +155,8 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             }
             factors.fireParameterChangedEvent();
 
-            if(i!=nSteps){
-                derivative=getGradient(mean, precfactor);
+            if(i != nSteps){
+                derivative = getGradient(mean, precfactor);
 
                 for (int j = 0; j < lfm.getFactorDimension() ; j++) {
                     for (int k = 0; k < ntaxa; k++) {

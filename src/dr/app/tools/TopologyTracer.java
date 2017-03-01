@@ -35,6 +35,10 @@ import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeMetrics;
 import dr.util.Version;
+import jebl.evolution.treemetrics.BilleraMetric;
+import jebl.evolution.treemetrics.CladeHeightMetric;
+import jebl.evolution.treemetrics.RobinsonsFouldMetric;
+import jebl.evolution.trees.RootedTree;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -49,7 +53,11 @@ public class TopologyTracer {
 
     private static final String STATE = "state";
     private static final String RFDISTANCE = "RFdistance";
+    private static final String JEBLRFDISTANCE = "jeblRFdistance";
+    private static final String BILLERA = "BilleraMetric";
+    private static final String CLADEHEIGHT = "cladeHeight";
 
+    //TODO Nothing is being done with the burnin argument as of yet
     public TopologyTracer(int burnin, String treeFile, String outputFile) {
 
         try {
@@ -68,13 +76,21 @@ public class TopologyTracer {
             //pick first tree as focal tree
             Tree focalTree = importer.importNextTree();
 
-            ArrayList<Double> distances = new ArrayList<Double>();
-            ArrayList<String> treeIds = new ArrayList<String>();
             ArrayList<Long> treeStates = new ArrayList<Long>();
+            ArrayList<String> treeIds = new ArrayList<String>();
+
+            ArrayList<Double> rfDistances = new ArrayList<Double>();
+            ArrayList<Double> jeblRFDistances = new ArrayList<Double>();
+            ArrayList<Double> billeraMetric = new ArrayList<Double>();
+            ArrayList<Double> cladeHeightMetric = new ArrayList<Double>();
 
             //take into account first distance of focal tree to itself
-            distances.add(0.0);
             treeStates.add((long)0);
+
+            rfDistances.add(TreeMetrics.getRobinsonFouldsDistance(focalTree, focalTree));
+            jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
+            billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
+            cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
 
             while (importer.hasTree()) {
 
@@ -82,7 +98,14 @@ public class TopologyTracer {
                 Tree tree = importer.importNextTree();
                 treeIds.add(tree.getId());
                 treeStates.add(Long.parseLong(tree.getId().split("_")[1]));
-                distances.add(TreeMetrics.getRobinsonFouldsDistance(focalTree, tree));
+                //TODO Does the BEAST/JEBL code report half the RF distance?
+                rfDistances.add(TreeMetrics.getRobinsonFouldsDistance(focalTree, tree));
+
+                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+
+                billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+
+                cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
 
                 //TODO Last tree is not being processed?
                 //System.out.println(tree.getId());
@@ -96,10 +119,14 @@ public class TopologyTracer {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
             BeastVersion version = new BeastVersion();
             writer.write("# BEAST " + version.getVersionString() + "\n");
-            writer.write(STATE + "\t" + RFDISTANCE + "\n");
+            writer.write(STATE + "\t" + RFDISTANCE + "\t" + JEBLRFDISTANCE + "\t" + BILLERA + "\t" + CLADEHEIGHT + "\n");
 
             for (int i = 0; i < treeStates.size(); i++) {
-                writer.write(treeStates.get(i) + "\t" + distances.get(i) + "\n");
+                writer.write(treeStates.get(i) + "\t");
+                writer.write(rfDistances.get(i) + "\t");
+                writer.write(jeblRFDistances.get(i) + "\t");
+                writer.write(billeraMetric.get(i) + "\t");
+                writer.write(cladeHeightMetric.get(i) + "\n");
             }
 
             writer.flush();

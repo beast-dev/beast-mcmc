@@ -31,8 +31,9 @@ package dr.app.beauti.types;
 public enum OperatorSetType {
 
     DEFAULT("classic operator mix"),
-    NEW_TREE_MIX("new experimental mix"),
-    FIXED_TREE_TOPOLOGY("fixed tree topology");
+    FIXED_TREE_TOPOLOGY("fixed tree topology"),
+    NEW_TREE_MIX("new tree operator mix"),
+    CUSTOM("custom operator mix");
 
     OperatorSetType(String displayName) {
         this.displayName = displayName;

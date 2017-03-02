@@ -77,72 +77,41 @@ public class SubstitutionModelGenerator extends Generator {
 
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
-                // Jukes-Cantor model
-                if (model.getNucSubstitutionModel() == NucModelType.JC) {
-                    String prefix = model.getPrefix();
-                    writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
-                    writer.writeOpenTag(NucModelType.HKY.getXMLName(),
-                            new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "jc")}
-                    );
-                    writer.writeOpenTag(HKYParser.FREQUENCIES);
-                    writer.writeOpenTag(
-                            FrequencyModelParser.FREQUENCY_MODEL,
-                            new Attribute[]{
-                                    new Attribute.Default<String>("dataType", dataTypeDescription)
-                            }
-                    );
-                    writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-                    writer.writeTag(
-                            ParameterParser.PARAMETER,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                                    new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25"),
-                                    new Attribute.Default<String>(ParameterParser.LOWER, "0.0"),
-                                    new Attribute.Default<String>(ParameterParser.UPPER, "1.0")
-                            },
-                            true
-                    );
-                    writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
-
-                    writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
-                    writer.writeCloseTag(HKYParser.FREQUENCIES);
-
-                    writer.writeOpenTag(HKYParser.KAPPA);
-                    writeParameter("jc.kappa", 1, 1.0, Double.NaN, Double.NaN, writer);
-                    writer.writeCloseTag(HKYParser.KAPPA);
-                    writer.writeCloseTag(NucModelType.HKY.getXMLName());
-
-                } else {
-                    // Hasegawa Kishino and Yano 85 model
-                    if (model.getNucSubstitutionModel() == NucModelType.HKY) {
-                        if (model.isUnlinkedSubstitutionModel()) {
-                            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                if (model.isUnlinkedSubstitutionModel()) {
+                    for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                        switch (model.getNucSubstitutionModel()) {
+                            case JC:
+                                writeJCModel(i, writer, model);
+                                break;
+                            case HKY:
                                 writeHKYModel(i, writer, model);
-                            }
-                        } else {
-                            writeHKYModel(-1, writer, model);
-                        }
-
-                    } else if (model.getNucSubstitutionModel() == NucModelType.TN93) {
-                        if (model.isUnlinkedSubstitutionModel()) {
-                            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                                break;
+                            case TN93:
                                 writeTN93Model(i, writer, model);
-                            }
-                        } else {
+                                break;
+                            case GTR:
+                                writeGTRModel(i, writer, model);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("unknown substition model type");
+                        }
+                    }
+                } else {
+                    switch (model.getNucSubstitutionModel()) {
+                        case JC:
+                            writeJCModel(-1, writer, model);
+                            break;
+                        case HKY:
+                            writeHKYModel(-1, writer, model);
+                            break;
+                        case TN93:
                             writeTN93Model(-1, writer, model);
-                        }
-
-                    } else {
-                        // General time reversible model
-                        if (model.getNucSubstitutionModel() == NucModelType.GTR) {
-                            if (model.isUnlinkedSubstitutionModel()) {
-                                for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                                    writeGTRModel(i, writer, model);
-                                }
-                            } else {
-                                writeGTRModel(-1, writer, model);
-                            }
-                        }
+                            break;
+                        case GTR:
+                            writeGTRModel(-1, writer, model);
+                            break;
+                        default:
+                            throw new IllegalArgumentException("unknown substition model type");
                     }
                 }
 
@@ -202,6 +171,32 @@ public class SubstitutionModelGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
+    }
+
+    /**
+     * Write the JC model XML block.
+     *
+     * @param num    the model number
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
+     */
+    public void writeJCModel(int num, XMLWriter writer, PartitionSubstitutionModel model) {
+
+        String prefix = model.getPrefix(num);
+
+        writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
+        writer.writeOpenTag(NucModelType.HKY.getXMLName(),
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "jc")}
+        );
+        writer.writeOpenTag(HKYParser.FREQUENCIES);
+        writeFrequencyModelDNA(writer, model, num);
+        writer.writeCloseTag(HKYParser.FREQUENCIES);
+
+        writer.writeOpenTag(HKYParser.KAPPA);
+        writeParameter("", 1, 1.0, Double.NaN, Double.NaN, writer);
+        writer.writeCloseTag(HKYParser.KAPPA);
+
+        writer.writeCloseTag(NucModelType.HKY.getXMLName());
     }
 
     /**

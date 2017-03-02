@@ -215,6 +215,11 @@ public final class MarkovChain implements Serializable {
 
             logr[0] = -Double.MAX_VALUE;
 
+            long elaspedTime = 0;
+            if (PROFILE) {
+                elaspedTime = System.currentTimeMillis();
+            }
+
             try {
                 // The new model is proposed
                 // assert Profiler.startProfile("Operate");
@@ -232,6 +237,21 @@ public final class MarkovChain implements Serializable {
                 // assert Profiler.stopProfile("Operate");
             } catch (OperatorFailedException e) {
                 operatorSucceeded = false;
+            }
+
+            if (hastingsRatio == Double.NEGATIVE_INFINITY) {
+                // Should the evaluation be short-cutted?
+                // Previously this was set to false if OperatorFailedException was thrown.
+                // Now a -Inf HR is returned.
+                operatorSucceeded = false;
+            }
+
+            if (PROFILE) {
+                long duration = System.currentTimeMillis() - elaspedTime;
+                if (DEBUG) {
+                    System.out.println("Time: " + duration);
+                }
+                mcmcOperator.addEvaluationTime(duration);
             }
 
             double score = Double.NaN;
@@ -526,7 +546,9 @@ public final class MarkovChain implements Serializable {
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {
-        listeners.add(listener);
+        if (listener != null) {
+            listeners.add(listener);
+        }
     }
 
     public void removeMarkovChainListener(MarkovChainListener listener) {

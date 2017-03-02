@@ -156,7 +156,7 @@ public class TreeAnnotator {
         if (targetOption != Target.USER_TARGET_TREE) {
             cladeSystem = new CladeSystem();
             FileReader fileReader = new FileReader(inputFileName);
-            TreeImporter importer = new NexusImporter(fileReader);
+            TreeImporter importer = new NexusImporter(fileReader, true);
             try {
                 totalTrees = 0;
                 while (importer.hasTree()) {
@@ -376,7 +376,7 @@ public class TreeAnnotator {
 
         int counter = 0;
         int bestTreeNumber = 0;
-        TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
+        TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
         try {
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
@@ -1534,7 +1534,7 @@ public class TreeAnnotator {
         if (reportStepSize < 1) reportStepSize = 1;
 
         final FileReader fileReader = new FileReader(inputFileName);
-        final NexusImporter importer = new NexusImporter(fileReader);
+        final NexusImporter importer = new NexusImporter(fileReader, true);
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below

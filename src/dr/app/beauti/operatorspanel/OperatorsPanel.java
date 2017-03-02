@@ -63,8 +63,9 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[] {
             OperatorSetType.DEFAULT,
+            OperatorSetType.FIXED_TREE_TOPOLOGY,
             OperatorSetType.NEW_TREE_MIX,
-            OperatorSetType.FIXED_TREE_TOPOLOGY
+            OperatorSetType.CUSTOM
     });
 
     public List<Operator> operators = new ArrayList<Operator>();
@@ -227,6 +228,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             switch (col) {
                 case 0:
                     op.setUsed((Boolean) aValue);
+                    operatorSetCombo.setSelectedItem(OperatorSetType.CUSTOM);
                     break;
                 case 3:
                     op.setTuning((Double) aValue);

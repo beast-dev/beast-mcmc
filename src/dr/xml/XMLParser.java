@@ -105,7 +105,7 @@ public class XMLParser {
 
     public void storeObject(String name, Object object) {
 
-        XMLObject xo = new XMLObject(null /*, objectStore*/);
+        XMLObject xo = new XMLObject(null, null /*, objectStore*/);
         xo.setNativeObject(object);
         objectStore.put(name, xo);
     }
@@ -139,7 +139,7 @@ public class XMLParser {
         if (e.getTagName().equals("beast")) {
 
             concurrent = false;
-            return convert(e, target, false, true);
+            return convert(e, target, null, false, true);
 
         } else {
             throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
@@ -163,7 +163,7 @@ public class XMLParser {
         if (e.getTagName().equals("beast")) {
 
             concurrent = false;
-            root = (XMLObject) convert(e, null, run, true);
+            root = (XMLObject) convert(e, null, null, run, true);
 
         } else {
             throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
@@ -201,7 +201,7 @@ public class XMLParser {
         return root;
     }
 
-    private Object convert(Element e, Class target, boolean run, boolean doParse) throws XMLParseException {
+    private Object convert(Element e, Class target, XMLObject parent, boolean run, boolean doParse) throws XMLParseException {
 
         int index = -1;
 
@@ -217,7 +217,7 @@ public class XMLParser {
             }
 
 
-            XMLObject restoredXMLObject = (XMLObject) objectStore.get(idref);
+            XMLObject restoredXMLObject = objectStore.get(idref);
             if (index != -1) {
 
                 if (restoredXMLObject.getNativeObject() instanceof List) {
@@ -266,7 +266,7 @@ public class XMLParser {
                 repeats = Integer.parseInt(e.getAttribute("count"));
             }
 
-            XMLObject xo = new XMLObject(e);
+            XMLObject xo = new XMLObject(e, parent);
 
             final XMLObjectParser parser = doParse ? parserStore.get(xo.getName()) : null;
 
@@ -284,7 +284,7 @@ public class XMLParser {
 
                         // don't parse elements that may be legal here with global parsers
                         final boolean parseIt = parser == null || !parser.isAllowed(tag);
-                        Object xoc = convert(element, target, run, parseIt);
+                        Object xoc = convert(element, target, xo, run, parseIt);
                         xo.addChild(xoc);
 
                         if (target != null && xoc instanceof XMLObject) {

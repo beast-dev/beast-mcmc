@@ -25,18 +25,9 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
-import dr.math.MathUtils;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
-
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author Andrew Rambaut

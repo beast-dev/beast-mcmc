@@ -31,12 +31,14 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MLEDialog;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MLEGSSDialog;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
+import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
@@ -63,10 +65,10 @@ public class MCMCPanel extends BeautiPanel {
 
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
     JComboBox performMLECombo = new JComboBox(new String[] {"None", "path sampling/stepping-stone sampling", "generalized stepping-stone sampling"});
-//    JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
+    //    JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
     JButton buttonMLE = new JButton("Settings");
     //    JCheckBox performMLEGSS = new JCheckBox("Perform marginal likelihood estimation (MLE) using generalized stepping-stone sampling");
-  //  JButton buttonMLEGSS = new JButton("Settings");
+    //  JButton buttonMLEGSS = new JButton("Settings");
 
     public static final String DEFAULT_FILE_NAME_STEM = "untitled";
     JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
@@ -289,6 +291,22 @@ public class MCMCPanel extends BeautiPanel {
                     buttonMLE.setEnabled(true);
                     updateMLEFileNameStem();
                 } else if (performMLECombo.getSelectedIndex() == 2) {
+                    // Generalized stepping-stone sampling
+                    for (AbstractPartitionData partition : options.getDataPartitions()) {
+                        if (partition.getDataType().getType() != DataType.NUCLEOTIDES) {
+                            JOptionPane.showMessageDialog(frame,
+                                    "Generalized stepping-stone sampling is not currently\n" +
+                                            "compatible with substitution models other than those\n" +
+                                            "for nucleotide data. \n\n" +
+                                            "Use path sampling/stepping-stone sampling instead",
+                                    "Warning",
+                                    JOptionPane.WARNING_MESSAGE);
+
+                            performMLECombo.setSelectedIndex(1);
+                            return;
+
+                        }
+                    }
                     mleOptions.performMLE = false;
                     mleOptions.performMLEGSS = true;
                     //set to true because product of exponentials is the default option
@@ -311,7 +329,7 @@ public class MCMCPanel extends BeautiPanel {
                 int result = -1;
 
                 if (performMLECombo.getSelectedIndex() == 1) {
-                   result  = mleDialog.showDialog();
+                    result  = mleDialog.showDialog();
                 } else if (performMLECombo.getSelectedIndex() == 2) {
                     result = mleGssDialog.showDialog();
                 }

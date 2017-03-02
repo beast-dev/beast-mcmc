@@ -95,7 +95,7 @@ public class BeastParser extends XMLParser {
             if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
                 // load the development parsers
                 if (parsers.equalsIgnoreCase(DEV)) {
-                    System.out.println("\nLoading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
+                    System.out.println("Loading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
                             + ", which is additional set of parsers only available for development version ...");
                 }
                 loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, true);
@@ -204,7 +204,7 @@ public class BeastParser extends XMLParser {
 
     @Override
     protected void executingRunnable() {
-        Logger.getLogger("dr.apps.beast").info("\n\nCitations for this analysis: ");
+        Logger.getLogger("dr.apps.beast").info("\nCitations for this analysis: ");
 
         Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
 

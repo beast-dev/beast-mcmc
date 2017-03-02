@@ -39,7 +39,7 @@ import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,7 +78,7 @@ public class ParameterPriorGenerator extends Generator {
             writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
         }
 
-        ArrayList<Parameter> parameters = options.selectParameters();
+        List<Parameter> parameters = options.selectParameters();
 
         if (useStarBEAST) {
             for (Parameter parameter : parameters) {

@@ -206,7 +206,6 @@ public class PartitionClockModel extends PartitionOptions {
                             params.add(getParameter(ClockType.UCLD_STDEV));
                             break;
                         case GAMMA:
-                            params.add(getParameter(ClockType.UCGD_MEAN));
                             params.add(getParameter(ClockType.UCGD_SHAPE));
                             break;
                         case CAUCHY:

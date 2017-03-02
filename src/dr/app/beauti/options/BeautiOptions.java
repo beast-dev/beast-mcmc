@@ -237,9 +237,9 @@ public class BeautiOptions extends ModelOptions {
      *
      * @return the parameter list
      */
-    public ArrayList<Parameter> selectParameters() {
+    public List<Parameter> selectParameters() {
 
-        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        List<Parameter> parameters = new ArrayList<Parameter>();
 
         selectTaxonSetsStatistics(parameters); // have to be before clockModelOptions.selectParameters(parameters);
 

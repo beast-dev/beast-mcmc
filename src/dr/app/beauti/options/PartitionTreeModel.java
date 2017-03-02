@@ -162,36 +162,34 @@ public class PartitionTreeModel extends PartitionOptions {
 
         operators.add(getOperator("subtreeLeap"));
 
-        boolean defaultInUse;
-        boolean branchesInUse;
-        boolean newMixInUse;
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            // do nothing
+            boolean defaultInUse = false;
+            boolean branchesInUse = false;
+            boolean newTreeOperatorsInUse = false;
 
-        // if not a fixed tree then sample tree space
-        if (options.operatorSetType == OperatorSetType.DEFAULT) {
-            defaultInUse = true;
-            branchesInUse = true;
-            newMixInUse = false;
-        } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-            defaultInUse = false;
-            branchesInUse = false;
-            newMixInUse = true;
-        } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
-            defaultInUse = false;
-            branchesInUse = true;
-            newMixInUse = false;
-        } else {
-            throw new IllegalArgumentException("Unknown operator set type");
+            // if not a fixed tree then sample tree space
+            if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                defaultInUse = true;
+                branchesInUse = true;
+            } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
+                newTreeOperatorsInUse = true;
+            } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
+                branchesInUse = true;
+            } else {
+                throw new IllegalArgumentException("Unknown operator set type");
+            }
+
+            getOperator("subtreeSlide").setUsed(defaultInUse);
+            getOperator("narrowExchange").setUsed(defaultInUse);
+            getOperator("wideExchange").setUsed(defaultInUse);
+            getOperator("wilsonBalding").setUsed(defaultInUse);
+
+            getOperator("treeModel.rootHeight").setUsed(branchesInUse);
+            getOperator("uniformHeights").setUsed(branchesInUse);
+
+            getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
         }
-
-        getOperator("subtreeSlide").setUsed(defaultInUse);
-        getOperator("narrowExchange").setUsed(defaultInUse);
-        getOperator("wideExchange").setUsed(defaultInUse);
-        getOperator("wilsonBalding").setUsed(defaultInUse);
-
-        getOperator("treeModel.rootHeight").setUsed(branchesInUse);
-        getOperator("uniformHeights").setUsed(branchesInUse);
-
-        getOperator("subtreeLeap").setUsed(newMixInUse);
     }
 
     /////////////////////////////////////////////////////////////
@@ -233,10 +231,17 @@ public class PartitionTreeModel extends PartitionOptions {
         this.hasTipCalibrations = hasTipCalibrations;
     }
 
+    public boolean hasTipCalibrations() {
+        return hasTipCalibrations;
+    }
+
     public void setNodeCalibrations(boolean hasNodeCalibrations) {
         this.hasNodeCalibrations = hasNodeCalibrations;
     }
 
+    public boolean hasNodeCalibrations() {
+        return hasNodeCalibrations;
+    }
 
     public void setPloidyType(PloidyType ploidyType) {
         this.ploidyType = ploidyType;

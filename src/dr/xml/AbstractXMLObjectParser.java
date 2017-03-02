@@ -45,10 +45,26 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             final XMLSyntaxRule[] rules = getSyntaxRules();
             for (XMLSyntaxRule rule : rules) {
                 if (!rule.isSatisfied(xo)) {
-                    throw new XMLParseException("The '<" + getParserName() +
-                            ">' element with id, '" + id +
-                            "', is incorrectly constructed.\nThe following was expected:\n" +
-                            rule.ruleString(xo));
+                    if (id != null) {
+                        throw new XMLParseException("The '<" + getParserName() +
+                                ">' element, with id, '" + id +
+                                "', is incorrectly constructed.\nThe following was expected:\n" +
+                                rule.ruleString(xo));
+                    } else {
+                        String parentId = null;
+                        XMLObject xop = xo;
+                        while (parentId == null && xop != null) {
+                            xop = xop.getParent();
+                            if (xop != null && xop.hasId()) {
+                                parentId = xop.getId();
+                            }
+                        }
+
+                        throw new XMLParseException("The '<" + getParserName() +
+                                ">' element, nested within an element with id, '" + parentId +
+                                "', is incorrectly constructed.\nThe following was expected:\n" +
+                                rule.ruleString(xo));
+                    }
                 }
             }
 

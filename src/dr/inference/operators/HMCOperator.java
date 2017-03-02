@@ -59,9 +59,9 @@ public class HMCOperator extends AbstractCoercableOperator{
 
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j < momentum.length; j++) {
-                    parameter.setParameterValueQuietly(j, parameter.getParameterValue(j) + functionalStepSize * momentum[j] / (Math.pow(drawDistribution.getSD() , 2)));
+                    parameter.setParameterValue(j, parameter.getParameterValue(j) + functionalStepSize * momentum[j] / (Math.pow(drawDistribution.getSD() , 2)));
             }
-            parameter.fireParameterChangedEvent();
+//            parameter.fireParameterChangedEvent();
 
             HMCDerivative = derivative.getDerivative();
 

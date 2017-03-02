@@ -32,10 +32,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.BranchScoreMetric;
-import dr.evolution.tree.KCPathDifferenceMetric;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeMetrics;
+import dr.evolution.tree.*;
 import dr.util.Version;
 import jebl.evolution.treemetrics.BilleraMetric;
 import jebl.evolution.treemetrics.CladeHeightMetric;
@@ -90,14 +87,11 @@ public class TopologyTracer {
             ArrayList<Double> billeraMetric = new ArrayList<Double>();
             ArrayList<Double> cladeHeightMetric = new ArrayList<Double>();
             ArrayList<Double> branchScoreMetric = new ArrayList<Double>();
-
+            ArrayList<Double> pathDifferenceMetric = new ArrayList<Double>();
             ArrayList<ArrayList<Double>> kcMetrics = new ArrayList();
             for (int i = 0; i < lambdaValues.size(); i++) {
                 kcMetrics.add(new ArrayList<Double>());
             }
-
-            //TODO Still need mean path difference metric?
-            //ArrayList<Double> pathDifferences = new ArrayList<Double>();
 
             //take into account first distance of focal tree to itself
             treeStates.add((long)0);
@@ -106,11 +100,10 @@ public class TopologyTracer {
             billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
             cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
             branchScoreMetric.add(new BranchScoreMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
-
-            //kcMetric.add();
-            ArrayList<Double> metrics = (new KCPathDifferenceMetric().getMetric(focalTree, focalTree, lambdaValues));
-            for (int i = 0; i < metrics.size(); i++) {
-                kcMetrics.get(i).add(metrics.get(i));
+            pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, focalTree));
+            ArrayList<Double> allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, focalTree, lambdaValues));
+            for (int i = 0; i < allKCMetrics.size(); i++) {
+                kcMetrics.get(i).add(allKCMetrics.get(i));
             }
 
             int numberOfTrees = 1;
@@ -124,16 +117,13 @@ public class TopologyTracer {
 
                 //TODO Does the BEAST/JEBL code report half the RF distance?
                 jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
-
                 billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
-
                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
-
                 branchScoreMetric.add(new BranchScoreMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
-
-                metrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
-                for (int i = 0; i < metrics.size(); i++) {
-                    kcMetrics.get(i).add(metrics.get(i));
+                pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, tree));
+                allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
+                for (int i = 0; i < allKCMetrics.size(); i++) {
+                    kcMetrics.get(i).add(allKCMetrics.get(i));
                 }
 
                 //TODO Last tree is not being processed?
@@ -158,7 +148,7 @@ public class TopologyTracer {
             for (Double l : lambdaValues) {
                 writer.write(KC_METRIC + "-" + l + "\t");
             }
-            writer.write("\n");
+            writer.write(PATH_DIFFERENCE + "\n");
 
             for (int i = 0; i < treeStates.size(); i++) {
                 writer.write(treeStates.get(i) + "\t");
@@ -169,7 +159,7 @@ public class TopologyTracer {
                 for (int j = 0; j < lambdaValues.size(); j++) {
                     writer.write(kcMetrics.get(j).get(i) + "\t");
                 }
-                writer.write("\n");
+                writer.write(pathDifferenceMetric.get(i) + "\n");
             }
 
             progressStream.println("Done.");

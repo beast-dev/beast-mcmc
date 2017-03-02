@@ -10,18 +10,16 @@ import dr.math.distributions.NormalDistribution;
  */
 public class HMCOperator extends AbstractCoercableOperator{
     PotentialDerivativeInterface derivative;
-    Likelihood likelihood;
     Parameter parameter;
     double stepSize;
     int nSteps;
     NormalDistribution drawDistribution;
 
 
-    public HMCOperator(CoercionMode mode, double weight, PotentialDerivativeInterface derivative, Likelihood likelihood, Parameter parameter, double stepSize, int nSteps, double drawVariance) {
+    public HMCOperator(CoercionMode mode, double weight, PotentialDerivativeInterface derivative, Parameter parameter, double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
         this.derivative = derivative;
-        this.likelihood = likelihood;
         this.parameter = parameter;
         this.stepSize = stepSize;
         this.nSteps = nSteps;

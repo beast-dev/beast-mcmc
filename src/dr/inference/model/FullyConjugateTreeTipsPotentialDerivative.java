@@ -19,7 +19,7 @@ public class FullyConjugateTreeTipsPotentialDerivative implements PotentialDeriv
         int ntaxa = traitParameter.getDimension() / dimTraits;
         double[] derivative = new double[traitParameter.getDimension()];
         double[][] mean = treeLikelihood.getConditionalMeans();
-        double[] precfactor = treeLikelihood.getPrecisionFactors();
+        double[] precfactor = treeLikelihood.getPrecisionFactors(); //TODO need to be flexible to handle diagonal case and dense case. Right now just diagonal.
 
 
         for (int i = 0; i < dimTraits; i++) {

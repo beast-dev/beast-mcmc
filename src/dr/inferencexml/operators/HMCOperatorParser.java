@@ -32,12 +32,11 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
 
         PotentialDerivativeInterface derivative = (PotentialDerivativeInterface) xo.getChild(PotentialDerivativeInterface.class);
-        Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
 
 
-        return new HMCOperator(CoercionMode.DEFAULT, weight, derivative, likelihood, parameter,stepSize, nSteps, drawVariance);
+        return new HMCOperator(CoercionMode.DEFAULT, weight, derivative, parameter,stepSize, nSteps, drawVariance);
     }
 
     @Override
@@ -51,7 +50,6 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             new ElementRule(Parameter.class),
-            new ElementRule(Likelihood.class),
             new ElementRule(PotentialDerivativeInterface.class),
     };
 

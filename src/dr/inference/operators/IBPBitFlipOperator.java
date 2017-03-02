@@ -22,7 +22,6 @@ public class IBPBitFlipOperator extends BitFlipOperator {
         return super.doOperation(prior, likelihood);
     }
 
-    @Override
     protected double sum(int pos) {
         double sum = 0;
         int column = pos / sparsity.getRowDimension();

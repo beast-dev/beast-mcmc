@@ -238,6 +238,23 @@
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
         </jar>
 
+        <!-- Put everything in ${build} into the trace.jar file -->
+        <jar jarfile="${dist}/trace.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/util/*.class"/>
+                <include name="dr/evolution/coalescent/*.class"/>
+                <include name="dr/evolution/util/*.class"/>
+                <include name="dr/inference/trace/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+            </fileset>
+        </jar>
+
     </target>
 
     <!-- run beast.jar -->

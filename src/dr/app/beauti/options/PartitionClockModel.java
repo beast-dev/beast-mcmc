@@ -410,4 +410,9 @@ public class PartitionClockModel extends PartitionOptions {
         return prefix;
     }
 
+    public void copyFrom(PartitionClockModel source) {
+        clockType = source.clockType;
+        clockDistributionType = source.clockDistributionType;
+        continuousQuantile = source.continuousQuantile;
+    }
 }

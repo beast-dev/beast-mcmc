@@ -72,19 +72,19 @@ public class BitFlipOperator extends SimpleMCMCOperator {
      * equiprobable, unless usesPriorOnSum = false then all configurations are equiprobable
      */
     public final double doOperation() {
-        final int dim = parameter.getDimension();
+        final int dim = getDimension();
         //  final int dim = bitFlipHelper.getDim(parameter.getDimension());
+
+        // make it so pos never corresponds to external nodes when used for drift diffusion model
+        final int pos = MathUtils.nextInt(dim);
+
+
         double sum = 0.0;
         // double sumNeg = 0.0;
         // double temp;
 
         if(usesPriorOnSum) {
-            for (int i = 0; i < dim; i++) {
-                //   if(parameter.getParameterValue(i)<0) {
-                //     System.err.println(parameter.getParameterValue(i));
-                // }
-                sum += Math.abs(parameter.getParameterValue(i));
-            }
+            sum = sum(pos);
 // AR - removed a debugging printf
 //            if (sum > 103) {
 //                System.err.println("sum: " + sum);
@@ -102,8 +102,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             }
             */
         }
-        // make it so pos never corresponds to external nodes when used for drift diffusion model
-        final int pos = MathUtils.nextInt(dim);
+
 
         final int value = (int) parameter.getParameterValue(pos);
         double logq = 0.0;
@@ -139,6 +138,21 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 
         // hastings ratio is designed to make move symmetric on sum of 1's
         return logq;
+    }
+
+    protected double sum(int pos){
+        double sum = 0.0;
+        for (int i = 0; i < getParameter().getDimension(); i++) {
+            //   if(parameter.getParameterValue(i)<0) {
+            //     System.err.println(parameter.getParameterValue(i));
+            // }
+            sum += Math.abs(parameter.getParameterValue(i));
+        }
+        return sum;
+    }
+
+    protected int getDimension(){
+        return parameter.getDimension();
     }
 
     class BitFlipHelper {

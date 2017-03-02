@@ -8,7 +8,7 @@ import dr.xml.*;
  * @author Max Tolkoff
  */
 public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXMLObjectParser {
-    public final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE = "fullyConjugateTreeTipsPotential";
+    public final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE = "fullyConjugateTreeTipsPotentialDerivative";
 
 
     @Override

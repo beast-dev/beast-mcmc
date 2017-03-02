@@ -35,7 +35,7 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(PotentialDerivativeInterface.class),
+            new ElementRule(PotentialDerivativeInterface.class, 1, Integer.MAX_VALUE),
     };
 
     @Override

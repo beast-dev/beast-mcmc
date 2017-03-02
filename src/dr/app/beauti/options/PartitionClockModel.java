@@ -28,6 +28,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.*;
 import dr.evolution.util.Taxa;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -389,4 +390,9 @@ public class PartitionClockModel extends PartitionOptions {
         return prefix;
     }
 
+    public void copyFrom(PartitionClockModel source) {
+        clockType = source.clockType;
+        clockDistributionType = source.clockDistributionType;
+        continuousQuantile = source.continuousQuantile;
+    }
 }

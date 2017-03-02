@@ -46,7 +46,7 @@ public class KCPathDifferenceMetric {
         double[] smallMTwo = new double[dim];
         double[] largeMTwo = new double[dim];
 
-        //TODO Check if taxon lists are in the same order!!
+        //check if taxon lists are in the same order!!
         if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
             throw new RuntimeException("Different number of taxa in both trees.");
         } else {
@@ -58,24 +58,26 @@ public class KCPathDifferenceMetric {
         }
 
         int index = 0;
-        for (int i = 0; i < tree1.getExternalNodeCount()-1; i++) {
-            //get two leaf nodes
-            NodeRef nodeOne = tree1.getExternalNode(i);
-            NodeRef nodeTwo = tree1.getExternalNode(i+1);
+        for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
+            for (int j = i+1; j < tree1.getExternalNodeCount(); j++) {
+                //get two leaf nodes
+                NodeRef nodeOne = tree1.getExternalNode(i);
+                NodeRef nodeTwo = tree1.getExternalNode(j);
 
-            //get common ancestor of 2 leaf nodes
-            NodeRef MRCA = Tree.Utils.getCommonAncestor(tree1, nodeOne, nodeTwo);
+                //get common ancestor of 2 leaf nodes
+                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree1, nodeOne, nodeTwo);
 
-            int edges = 0;
-            double branchLengths = 0.0;
-            while (MRCA != tree1.getRoot()) {
-                edges++;
-                branchLengths += tree1.getNodeHeight(tree1.getRoot()) - tree1.getNodeHeight(MRCA);
-                MRCA = tree1.getParent(MRCA);
+                int edges = 0;
+                double branchLengths = 0.0;
+                while (MRCA != tree1.getRoot()) {
+                    edges++;
+                    branchLengths += tree1.getNodeHeight(tree1.getRoot()) - tree1.getNodeHeight(MRCA);
+                    MRCA = tree1.getParent(MRCA);
+                }
+                smallMOne[index] = edges;
+                largeMOne[index] = branchLengths;
+                index++;
             }
-            smallMOne[index] = edges;
-            largeMOne[index] = branchLengths;
-            index++;
         }
 
         //fill out arrays further
@@ -87,24 +89,26 @@ public class KCPathDifferenceMetric {
         }
 
         index = 0;
-        for (int i = 0; i < tree2.getExternalNodeCount()-1; i++) {
-            //get two leaf nodes
-            NodeRef nodeOne = tree2.getExternalNode(i);
-            NodeRef nodeTwo = tree2.getExternalNode(i+1);
+        for (int i = 0; i < tree2.getExternalNodeCount(); i++) {
+            for (int j = i; j < tree2.getExternalNodeCount(); j++) {
+                //get two leaf nodes
+                NodeRef nodeOne = tree2.getExternalNode(i);
+                NodeRef nodeTwo = tree2.getExternalNode(j);
 
-            //get common ancestor of 2 leaf nodes
-            NodeRef MRCA = Tree.Utils.getCommonAncestor(tree2, nodeOne, nodeTwo);
+                //get common ancestor of 2 leaf nodes
+                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree2, nodeOne, nodeTwo);
 
-            int edges = 0;
-            double branchLengths = 0.0;
-            while (MRCA != tree2.getRoot()) {
-                edges++;
-                branchLengths += tree2.getNodeHeight(tree2.getRoot()) - tree2.getNodeHeight(MRCA);
-                MRCA = tree2.getParent(MRCA);
+                int edges = 0;
+                double branchLengths = 0.0;
+                while (MRCA != tree2.getRoot()) {
+                    edges++;
+                    branchLengths += tree2.getNodeHeight(tree2.getRoot()) - tree2.getNodeHeight(MRCA);
+                    MRCA = tree2.getParent(MRCA);
+                }
+                smallMTwo[index] = edges;
+                largeMTwo[index] = branchLengths;
+                index++;
             }
-            smallMTwo[index] = edges;
-            largeMTwo[index] = branchLengths;
-            index++;
         }
 
         //fill out arrays further

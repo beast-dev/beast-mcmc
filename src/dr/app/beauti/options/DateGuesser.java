@@ -132,15 +132,18 @@ public class DateGuesser implements Serializable {
             }
 
             double d = values[0];
-            if (offset > 0) {
-                if (unlessLessThan > 0) {
-                    if (d < unlessLessThan) {
-                        d += offset2;
+
+            if (!parseCalendarDates && !parseCalendarDatesAndPrecision) {
+                if (offset > 0) {
+                    if (unlessLessThan > 0) {
+                        if (d < unlessLessThan) {
+                            d += offset2;
+                        } else {
+                            d += offset;
+                        }
                     } else {
                         d += offset;
                     }
-                } else {
-                    d += offset;
                 }
             }
 

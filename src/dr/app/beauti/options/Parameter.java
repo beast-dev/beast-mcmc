@@ -65,6 +65,7 @@ public class Parameter implements Serializable {
     public final boolean isHierarchical;
     public final boolean isCMTCRate;
     public final boolean isNonNegative;
+    public final boolean isMaintainedMean;
     public final boolean isZeroOne;
     public final boolean isCached;
     public final boolean isAdaptiveMultivariateCompatible;
@@ -121,6 +122,7 @@ public class Parameter implements Serializable {
         private boolean isCMTCRate = false;
         private boolean isNonNegative = false;
         private boolean isZeroOne = false;
+        private boolean isMaintainedMean = false;
         private boolean isStatistic = false;
         private boolean isCached = false;
 
@@ -166,6 +168,7 @@ public class Parameter implements Serializable {
             isCMTCRate = source.isCMTCRate;
             isNonNegative = source.isNonNegative;
             isZeroOne = source.isZeroOne;
+            isMaintainedMean = source.isMaintainedMean;
             isStatistic = source.isStatistic;
             isCached = source.isCached;
             options = source.options;
@@ -255,6 +258,12 @@ public class Parameter implements Serializable {
             }
             return this;
         }
+
+        public Builder isMaintainedMean(boolean isMaintainedMean) {
+            this.isMaintainedMean = isMaintainedMean;
+            return this;
+        }
+
         public Builder isAdaptiveMultivariateCompatible(boolean isAdaptiveMultivariateCompatible) {
             this.isAdaptiveMultivariateCompatible = isAdaptiveMultivariateCompatible;
             return this;
@@ -361,6 +370,7 @@ public class Parameter implements Serializable {
         isCMTCRate = builder.isCMTCRate;
         isNonNegative = builder.isNonNegative;
         isZeroOne = builder.isZeroOne;
+        isMaintainedMean = builder.isMaintainedMean;
         isPriorFixed = builder.isPriorFixed;
         isAdaptiveMultivariateCompatible = builder.isAdaptiveMultivariateCompatible;
 

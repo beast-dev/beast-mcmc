@@ -25,7 +25,12 @@
 
 package dr.evolution.tree;
 
+import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
 import jebl.evolution.trees.RootedTree;
+
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * @author Guy Baele
@@ -39,7 +44,7 @@ public class SPPathDifferenceMetric {
 
     public double getMetric(Tree tree1, Tree tree2) {
 
-        int dim = tree1.getExternalNodeCount()*(tree1.getExternalNodeCount()-1);
+        int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1);
 
         double[] pathOne = new double[dim];
         double[] pathTwo = new double[dim];
@@ -49,15 +54,15 @@ public class SPPathDifferenceMetric {
             throw new RuntimeException("Different number of taxa in both trees.");
         } else {
             for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-                if (tree1.getNodeTaxon(tree1.getExternalNode(i)) != tree2.getNodeTaxon(tree2.getExternalNode(i))) {
-                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)) + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)));
+                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
+                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
                 }
             }
         }
 
         int index = 0;
         for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-            for (int j = i; j < tree1.getExternalNodeCount(); j++) {
+            for (int j = i+1; j < tree1.getExternalNodeCount(); j++) {
                 //get two leaf nodes
                 NodeRef nodeOne = tree1.getExternalNode(i);
                 NodeRef nodeTwo = tree1.getExternalNode(j);
@@ -80,9 +85,14 @@ public class SPPathDifferenceMetric {
             }
         }
 
+        /*for (int i = 0; i < pathOne.length; i++) {
+            System.out.print(pathOne[i] + " ");
+        }
+        System.out.println();*/
+
         index = 0;
         for (int i = 0; i < tree2.getExternalNodeCount(); i++) {
-            for (int j = i; j < tree2.getExternalNodeCount(); j++) {
+            for (int j = i+1; j < tree2.getExternalNodeCount(); j++) {
                 //get two leaf nodes
                 NodeRef nodeOne = tree2.getExternalNode(i);
                 NodeRef nodeTwo = tree2.getExternalNode(j);
@@ -105,6 +115,11 @@ public class SPPathDifferenceMetric {
             }
         }
 
+        /*for (int i = 0; i < pathTwo.length; i++) {
+            System.out.print(pathTwo[i] + " ");
+        }
+        System.out.println();*/
+
         double metric = 0.0;
         for (int i = 0; i < dim; i++) {
             metric += Math.pow(pathOne[i] - pathTwo[i],2);
@@ -112,6 +127,29 @@ public class SPPathDifferenceMetric {
         metric = Math.sqrt(metric);
 
         return metric;
+    }
+
+    public static void main(String[] args) {
+
+        try {
+            NewickImporter importer = new NewickImporter("(('A':1.2,'B':0.8):0.5,('C':0.8,'D':1.0):1.1)");
+            Tree treeOne = importer.importNextTree();
+            System.out.println("tree 1: " + treeOne);
+
+            importer = new NewickImporter("((('A':0.8,'B':1.4):0.3,'C':0.7):0.9,'D':1.0)");
+            Tree treeTwo = importer.importNextTree();
+            System.out.println("tree 2: " + treeTwo + "\n");
+
+            double metric = (new SPPathDifferenceMetric().getMetric(treeOne, treeTwo));
+
+            System.out.println("path difference = " + metric);
+
+        } catch(Importer.ImportException ie) {
+            System.err.println(ie);
+        } catch(IOException ioe) {
+            System.err.println(ioe);
+        }
+
     }
 
 }

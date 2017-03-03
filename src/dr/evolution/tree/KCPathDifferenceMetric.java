@@ -25,6 +25,10 @@
 
 package dr.evolution.tree;
 
+import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -39,7 +43,7 @@ public class KCPathDifferenceMetric {
 
     public ArrayList<Double> getMetric(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
 
-        int dim = tree1.getExternalNodeCount()*tree1.getExternalNodeCount();
+        int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1)+tree1.getExternalNodeCount();
 
         double[] smallMOne = new double[dim];
         double[] largeMOne = new double[dim];
@@ -51,8 +55,8 @@ public class KCPathDifferenceMetric {
             throw new RuntimeException("Different number of taxa in both trees.");
         } else {
             for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-                if (tree1.getNodeTaxon(tree1.getExternalNode(i)) != tree2.getNodeTaxon(tree2.getExternalNode(i))) {
-                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)) + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)));
+                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
+                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
                 }
             }
         }
@@ -71,7 +75,7 @@ public class KCPathDifferenceMetric {
                 double branchLengths = 0.0;
                 while (MRCA != tree1.getRoot()) {
                     edges++;
-                    branchLengths += tree1.getNodeHeight(tree1.getRoot()) - tree1.getNodeHeight(MRCA);
+                    branchLengths += tree1.getNodeHeight(tree1.getParent(MRCA)) - tree1.getNodeHeight(MRCA);
                     MRCA = tree1.getParent(MRCA);
                 }
                 smallMOne[index] = edges;
@@ -82,15 +86,24 @@ public class KCPathDifferenceMetric {
 
         //fill out arrays further
         index = 0;
-        for (int i = tree1.getExternalNodeCount()*(tree1.getExternalNodeCount()-1); i < dim; i++) {
+        for (int i = (tree1.getExternalNodeCount()-1)*(tree1.getExternalNodeCount()-2); i < dim; i++) {
             smallMOne[i] = 1.0;
-            largeMOne[i] = tree1.getNodeHeight(tree1.getExternalNode(index));
+            largeMOne[i] = tree1.getNodeHeight(tree1.getParent(tree1.getExternalNode(index))) - tree1.getNodeHeight(tree1.getExternalNode(index));
             index++;
         }
 
+        /*for (int i = 0; i < smallMOne.length; i++) {
+            System.out.print(smallMOne[i] + " ");
+        }
+        System.out.println();
+        for (int i = 0; i < largeMOne.length; i++) {
+            System.out.print(largeMOne[i] + " ");
+        }
+        System.out.println("\n");*/
+
         index = 0;
         for (int i = 0; i < tree2.getExternalNodeCount(); i++) {
-            for (int j = i; j < tree2.getExternalNodeCount(); j++) {
+            for (int j = i+1; j < tree2.getExternalNodeCount(); j++) {
                 //get two leaf nodes
                 NodeRef nodeOne = tree2.getExternalNode(i);
                 NodeRef nodeTwo = tree2.getExternalNode(j);
@@ -102,7 +115,7 @@ public class KCPathDifferenceMetric {
                 double branchLengths = 0.0;
                 while (MRCA != tree2.getRoot()) {
                     edges++;
-                    branchLengths += tree2.getNodeHeight(tree2.getRoot()) - tree2.getNodeHeight(MRCA);
+                    branchLengths += tree2.getNodeHeight(tree2.getParent(MRCA)) - tree2.getNodeHeight(MRCA);
                     MRCA = tree2.getParent(MRCA);
                 }
                 smallMTwo[index] = edges;
@@ -113,11 +126,20 @@ public class KCPathDifferenceMetric {
 
         //fill out arrays further
         index = 0;
-        for (int i = tree2.getExternalNodeCount()*(tree2.getExternalNodeCount()-1); i < dim; i++) {
+        for (int i = (tree2.getExternalNodeCount()-1)*(tree2.getExternalNodeCount()-2); i < dim; i++) {
             smallMTwo[i] = 1.0;
-            largeMTwo[i] = tree2.getNodeHeight(tree2.getExternalNode(index));
+            largeMTwo[i] = tree2.getNodeHeight(tree2.getParent(tree2.getExternalNode(index))) - tree2.getNodeHeight(tree2.getExternalNode(index));
             index++;
         }
+
+        /*for (int i = 0; i < smallMTwo.length; i++) {
+            System.out.print(smallMTwo[i] + " ");
+        }
+        System.out.println();
+        for (int i = 0; i < largeMTwo.length; i++) {
+            System.out.print(largeMTwo[i] + " ");
+        }
+        System.out.println("\n");*/
 
         double[] vArrayOne = new double[dim];
         double[] vArrayTwo = new double[dim];
@@ -137,6 +159,35 @@ public class KCPathDifferenceMetric {
         }
 
         return results;
+    }
+
+    public static void main(String[] args) {
+
+        try {
+            NewickImporter importer = new NewickImporter("(('A':1.2,'B':0.8):0.5,('C':0.8,'D':1.0):1.1)");
+            Tree treeOne = importer.importNextTree();
+            System.out.println("tree 1: " + treeOne);
+
+            importer = new NewickImporter("((('A':0.8,'B':1.4):0.3,'C':0.7):0.9,'D':1.0)");
+            Tree treeTwo = importer.importNextTree();
+            System.out.println("tree 2: " + treeTwo + "\n");
+
+            ArrayList<Double> lambdaValues = new ArrayList<Double>();
+            lambdaValues.add(0.0);
+            lambdaValues.add(0.5);
+            lambdaValues.add(1.0);
+            ArrayList<Double> metric = (new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues));
+
+            System.out.println("lambda (0.0) = " + metric.get(0));
+            System.out.println("lambda (0.5) = " + metric.get(1));
+            System.out.println("lambda (1.0) = " + metric.get(2));
+
+        } catch(Importer.ImportException ie) {
+            System.err.println(ie);
+        } catch(IOException ioe) {
+            System.err.println(ioe);
+        }
+
     }
 
 }

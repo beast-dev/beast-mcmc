@@ -277,10 +277,16 @@ public class BeautiOptions extends ModelOptions {
             if (relativeRateParameters.size() > 1) {
                 Parameter allMus = model.getParameter(NEW_OPERATORS ? "allNus" : "allMus" );
                 allMus.clearSubParameters();
+
+                int totalWeight = 0;
                 for (Parameter mu : relativeRateParameters) {
                     allMus.addSubParameter(mu);
+                    totalWeight += mu.getDimensionWeight();
                 }
                 parameters.add(allMus);
+
+                // add the total weight of all mus/nus to the allMus parameter
+                allMus.setDimensionWeight(totalWeight);
             }
 
             model.selectParameters(parameters);

@@ -592,7 +592,7 @@ public class ClockModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeAllMus(PartitionClockModel model, XMLWriter writer) {
-        String parameterName = options.operatorSetType == OperatorSetType.NEW_TREE_MIX ? "allNus" : "allMus";
+        String parameterName = options.NEW_OPERATORS ? "allNus" : "allMus";
 
         Parameter allMus = model.getParameter(parameterName);
         if (allMus.getSubParameters().size() > 1) {

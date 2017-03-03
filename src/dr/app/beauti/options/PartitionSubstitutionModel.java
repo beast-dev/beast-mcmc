@@ -50,7 +50,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     // Instance variables
 
-    public static final String GTR_RATE = "gtr";
+    public static final String GTR_RATES = "gtr.rates";
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
 
@@ -202,13 +202,13 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         // create the relative rate parameters for the GTR rate matrix
 
         if (options.NEW_OPERATORS) {
-            createNonNegativeParameterDirichletPrior(GTR_RATE, "GTR transition rates parameter",
+            createNonNegativeParameterDirichletPrior(GTR_RATES, "GTR transition rates parameter",
                     this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
             for (int i = 1; i <= 3; i++) {
-                createNonNegativeParameterDirichletPrior("CP" + i + "." + GTR_RATE, "GTR transition rates parameter",
+                createNonNegativeParameterDirichletPrior("CP" + i + "." + GTR_RATES, "GTR transition rates parameter",
                         this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
             }
-            createNonNegativeParameterDirichletPrior("CP1+2." + GTR_RATE, "GTR transition rates parameter",
+            createNonNegativeParameterDirichletPrior("CP1+2." + GTR_RATES, "GTR transition rates parameter",
                     this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         } else {
             for (int j = 0; j < 5; j++) {
@@ -314,17 +314,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         if (options.NEW_OPERATORS) {
             createOperator("deltaGTR", "deltaGTR",
                     "Change GTR transition rates relative to each other maintaining mean",
-                    GTR_RATE,
+                    GTR_RATES,
                     OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
             for (int j = 1; j <= 3; j++) {
                 createOperator("CP" + j + ".deltaGTR", "CP" + j + ".deltaGTR",
                         "Change GTR transition rates relative to each other maintaining mean",
-                        "CP" + j + "." + GTR_RATE,
+                        "CP" + j + "." + GTR_RATES,
                         OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
             }
             createOperator("CP1+2.deltaGTR", "CP1+2.deltaGTR",
                     "Change GTR transition rates relative to each other maintaining mean",
-                    "CP1+2." + GTR_RATE,
+                    "CP1+2." + GTR_RATES,
                     OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
         } else {
             for (String rateName : GTR_RATE_NAMES) {
@@ -397,7 +397,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                     break;
                                 case GTR:
                                     if (options.NEW_OPERATORS) {
-                                        params.add(getParameter("CP" + i + "." + GTR_RATE));
+                                        params.add(getParameter("CP" + i + "." + GTR_RATES));
                                     } else {
                                         for (String rateName : GTR_RATE_NAMES) {
                                             params.add(getParameter("CP" + i + "." + rateName));
@@ -426,8 +426,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 break;
                             case GTR:
                                 if (options.NEW_OPERATORS) {
-                                    params.add(getParameter("CP1+2." + GTR_RATE));
-                                    params.add(getParameter("CP3." + GTR_RATE));
+                                    params.add(getParameter("CP1+2." + GTR_RATES));
+                                    params.add(getParameter("CP3." + GTR_RATES));
                                 } else {
                                     for (String rateName : GTR_RATE_NAMES) {
                                         params.add(getParameter("CP1+2." + rateName));

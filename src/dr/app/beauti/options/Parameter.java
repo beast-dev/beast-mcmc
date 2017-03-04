@@ -79,6 +79,7 @@ public class Parameter implements Serializable {
 
     public final boolean isPriorFixed;
     public PriorType priorType;
+    private Parameter parent;
 
     public double getInitial() {
         return initial;
@@ -563,7 +564,16 @@ public class Parameter implements Serializable {
         this.dimensionWeight = dimensionWeight;
     }
 
+    public void setParent(Parameter parent) {
+        this.parent = parent;
+    }
+
+    public Parameter getParent() {
+        return parent;
+    }
+
     public void addSubParameter(Parameter parameter) {
+        parameter.setParent(this);
         subParameters.add(parameter);
     }
 

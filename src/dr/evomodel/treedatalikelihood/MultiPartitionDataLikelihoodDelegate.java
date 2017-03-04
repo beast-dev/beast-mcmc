@@ -860,21 +860,19 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         //double[] rootPartials = new double[totalPatternCount * stateCount];
         //beagle.getPartials(rootIndex, 0, rootPartials);
 
-        int cumulateScaleBufferIndex = Beagle.NONE;
+        int[] cumulativeScaleIndices  = new int[partitionCount];
         for (int i = 0; i < partitionCount; i++) {
             if (updatePartition[i]) {
-
+                cumulativeScaleIndices[i] = Beagle.NONE;
                 if (useScaleFactors[i]) {
                     if (recomputeScaleFactors[i]) {
                         scaleBufferHelper[i].flipOffset(internalNodeCount);
-                        cumulateScaleBufferIndex = scaleBufferHelper[i].getOffsetIndex(internalNodeCount);
+                        cumulativeScaleIndices[i] = scaleBufferHelper[i].getOffsetIndex(internalNodeCount);
                         //TODO: check with Daniel if calling these methods using an iteration can be done more efficiently
-                        for (int j = 0; j < partitionCount; j++) {
-                            beagle.resetScaleFactorsByPartition(cumulateScaleBufferIndex, j);
-                            beagle.accumulateScaleFactorsByPartition(scaleBufferIndices[j], internalNodeCount, cumulateScaleBufferIndex, j);
-                        }
+                        beagle.resetScaleFactorsByPartition(cumulativeScaleIndices[i], i);
+                        beagle.accumulateScaleFactorsByPartition(scaleBufferIndices[i], internalNodeCount, cumulativeScaleIndices[i], i);
                     } else {
-                        cumulateScaleBufferIndex = scaleBufferHelper[i].getOffsetIndex(internalNodeCount);
+                        cumulativeScaleIndices[i] = scaleBufferHelper[i].getOffsetIndex(internalNodeCount);
                     }
                 } else if (useAutoScaling) {
                     //TODO: check with Daniel if calling these methods using an iteration can be done more efficiently
@@ -915,13 +913,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         int[] rootIndices             = new int[partitionCount];
         int[] categoryWeightsIndices  = new int[partitionCount];
         int[] stateFrequenciesIndices = new int[partitionCount];
-        int[] cumulativeScaleIndices  = new int[partitionCount];
 
         for (int i = 0; i < partitionCount; i++) {
             rootIndices            [i]  = partialBufferHelper[i].getOffsetIndex(rootNodeNumber);
             categoryWeightsIndices [i]  = i % siteRateModels.size();
             stateFrequenciesIndices[i]  = i % siteRateModels.size();
-            cumulativeScaleIndices [i]  = cumulateScaleBufferIndex;
+            cumulativeScaleIndices [i]  = cumulativeScaleIndices[i];
         }
 
         //TODO: check these arguments with Daniel
@@ -965,16 +962,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             for (int i = 0; i < partitionCount; i++) {
                 if (Double.isNaN(sumLogLikelihoodsByPartition[i]) || Double.isInfinite(sumLogLikelihoodsByPartition[i])) {
                     everUnderflowed[i] = true;
-                    // turn off double buffer flipping so the next call overwrites the
-                    // underflowed buffers. Flip will be turned on again in storeState for
-                    // next step
-                    flip[i] = false;
                     underflowHandling[i] = 0;
                 }
             }
 
             logL = Double.NEGATIVE_INFINITY;
 
+            boolean anyPartitionUnderflowed = false;
             for (int i = 0; i < partitionCount; i++) {
                 if (firstRescaleAttempt[i] && (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
                     if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount[i] == 0)) {
@@ -992,6 +986,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     if (Double.isNaN(sumLogLikelihoodsByPartition[i]) || Double.isInfinite(sumLogLikelihoodsByPartition[i])) {
                         useScaleFactors[i] = true;
                         recomputeScaleFactors[i] = true;
+                        anyPartitionUnderflowed = true;
                         if (DEBUG) {
                             System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (partition index: " + i + ")");
                         }
@@ -1000,6 +995,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     firstRescaleAttempt[i] = false; // Only try to rescale once
 
                     rescalingCount[i]--;
+                }
+            }
+
+            if (anyPartitionUnderflowed) {
+                // turn off double buffer flipping so the next call overwrites the
+                // underflowed buffers. Flip will be turned on again in storeState for
+                // next step
+                for (int i = 0; i < partitionCount; i++) {
+                    flip[i] = false;
                 }
             }
 

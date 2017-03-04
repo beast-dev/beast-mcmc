@@ -143,7 +143,7 @@ public class PartitionClockModel extends PartitionOptions {
         createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         createOperator("deltaMus", "allMus",
                 "Change partition rates relative to each other maintaining mean", "allMus",
-                OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
+                OperatorType.WEIGHTED_DELTA_EXCHANGE, 0.75, 3.0);
 
     }
 

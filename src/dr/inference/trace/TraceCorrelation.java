@@ -65,8 +65,12 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
             analyseCorrelationContinuous(doubleValues, stepSize);
 
         } else if (getTraceType() == TraceType.CATEGORICAL) {
-            throw new UnsupportedOperationException("should not be categorical");
-
+            //todo Do not know how to calculate
+            stdErrorOfMean = Double.NaN;
+            ACT = Double.NaN;
+            ESS = Double.NaN;
+            stdErrOfACT = Double.NaN;
+//            throw new UnsupportedOperationException("should not be categorical");
         } else {
             throw new RuntimeException("Trace type is not recognized");
         }

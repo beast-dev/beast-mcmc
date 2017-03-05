@@ -372,7 +372,7 @@ public class LogFileTraces extends AbstractTraceList {
         if (traceType.isNumber()) {
             return new Trace<Double>(name, traceType);
         } else {
-            return new Trace<String>(name, TraceType.ORDINAL);
+            return new Trace<String>(name, TraceType.CATEGORICAL);
         }
     }
 
@@ -441,7 +441,7 @@ public class LogFileTraces extends AbstractTraceList {
                 return false;
             }
         }
-        System.out.println(num_samples + ": stateNumber=" + stateNumber + " lastState=" + lastState + " firstState=" + firstState + " stepSize=" + stepSize);
+//        System.out.println(num_samples + ": stateNumber=" + stateNumber + " lastState=" + lastState + " firstState=" + firstState + " stepSize=" + stepSize);
         lastState = stateNumber;
         return true;
     }

@@ -186,12 +186,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-        // too crowded on the toolbar  - just double click to show
-//            button = new JButton(showAction);
-//            showAction.setEnabled(false);
-//            PanelUtils.setupComponent(button);
-//            toolBar1.add(button);
-
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(importDataAction);
         actionPanel1.setRemoveAction(removeDataAction);
@@ -220,7 +214,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        //add(panel1, BorderLayout.NORTH);
+        add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 

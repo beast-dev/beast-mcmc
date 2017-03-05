@@ -91,8 +91,17 @@ public abstract class ModelOptions implements Serializable {
                 .initial(initial).isZeroOne(true).isAdaptiveMultivariateCompatible(amtk).build(parameters);
     }
 
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options, double initial, boolean amtk) {
+        return new Parameter.Builder(name, description).prior(PriorType.DIRICHLET_PRIOR)
+                .isNonNegative(true).isMaintainedMean(true)
+                .isAdaptiveMultivariateCompatible(amtk)
+                .partitionOptions(options).initial(initial).build(parameters);
+    }
+
     public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial, boolean amtk) {
-        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR).isNonNegative(true).isAdaptiveMultivariateCompatible(amtk)
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR)
+                .isNonNegative(true).isMaintainedMean(true)
+                .isAdaptiveMultivariateCompatible(amtk)
                 .partitionOptions(options).initial(initial).build(parameters);
     }
 

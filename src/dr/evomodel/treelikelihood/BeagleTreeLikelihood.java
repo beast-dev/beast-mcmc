@@ -815,6 +815,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 recomputeScaleFactors = true;
             } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
                 useScaleFactors = true;
+                if (DEBUG) {
+                    System.out.println("rescalingCount = " + rescalingCount);
+                    System.out.println("rescalingCountInner = " + rescalingCountInner);
+                }
 
                 if (rescalingCount > rescalingFrequency) {
                     if (DEBUG) {
@@ -949,12 +953,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             logL = sumLogLikelihoods[0];
 
-            /*if (DEBUG) {
+            if (DEBUG) {
                 System.out.println(logL);
-                if (logL > -90000) {
-                    System.exit(0);
-                }
-            }*/
+                // if (logL > -90000) {
+                //     System.exit(0);
+                // }
+            }
 
             beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 

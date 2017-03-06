@@ -663,22 +663,13 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         if (options.NEW_OPERATORS) {
+            Parameter parameter;
             if (model.hasCodonPartitions()) {
-                Parameter parameter = model.getParameter(model.getPrefixCodon(num) + "nu");
-                int dim = parameter.getParent().getSubParameters().size();
-                double weight = ((double)parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
-                writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
-                        new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
-                writeParameter(prefix + "nu", 1, parameter.getInitial() / dim, 0.0, Double.NaN, writer);
-                writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
-
+                parameter = model.getParameter(model.getPrefixCodon(num) + "nu");
             } else {
-                Parameter parameter = model.getParameter("nu");
-                writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
-                        new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + parameter.getDimensionWeight()));
-                writeParameter(prefix + "nu", parameter, writer);
-                writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
+                parameter = model.getParameter("nu");
             }
+            writeNuRelativeRateBlock(writer, prefix, parameter);
         } else {
             if (model.hasCodonPartitions()) {
                 writeParameter(num, dr.oldevomodelxml.sitemodel.GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
@@ -686,6 +677,7 @@ public class SubstitutionModelGenerator extends Generator {
                 writeParameter(dr.oldevomodelxml.sitemodel.GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
             }
         }
+
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(
@@ -759,7 +751,13 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        if (options.NEW_OPERATORS) {
+            Parameter parameter = model.getParameter("nu");
+            String prefix1 = options.getPrefix();
+            writeNuRelativeRateBlock(writer, prefix1, parameter);
+        } else {
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        }
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
@@ -794,8 +792,13 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
-
+        if (options.NEW_OPERATORS) {
+            Parameter parameter = model.getParameter("nu");
+            String prefix1 = options.getPrefix();
+            writeNuRelativeRateBlock(writer, prefix1, parameter);
+        } else {
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        }
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
@@ -810,6 +813,20 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+    }
+
+    /**
+     * Write the relative rate block for site model XML block.
+     *
+     * @param writer the writer
+     */
+    private void writeNuRelativeRateBlock(XMLWriter writer, String prefix, Parameter parameter) {
+        int dim = parameter.getParent().getSubParameters().size();
+        double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
+        writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
+                new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
+        writeParameter(prefix + "nu", 1, parameter.getInitial() / dim, 0.0, Double.NaN, writer);
+        writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
     }
 
     private void writeMicrosatSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {

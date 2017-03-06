@@ -68,6 +68,11 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
      */
     double getStatisticValue(int dim);
 
+    /**
+     * @return the sum of all the elements
+     */
+    double getValueSum();
+
 
     /**
      * Abstract base class for Statistics
@@ -84,6 +89,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
             this.name = name;
         }
 
+        @Override
         public String getStatisticName() {
             if (name != null) {
                 return name;
@@ -94,6 +100,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
             }
         }
 
+        @Override
         public String getDimensionName(int dim) {
             if (getDimension() == 1) {
                 return getStatisticName();
@@ -102,11 +109,22 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
             }
         }
 
+        @Override
         public void setDimensionNames(String[] names) {
             // do nothing
         }
 
-      public String toString() {
+        @Override
+        public double getValueSum() {
+            double sum = 0.0;
+            for (int i = 0; i < getDimension(); i++) {
+                sum += getStatisticValue(i);
+            }
+            return sum;
+        }
+
+        @Override
+        public String toString() {
             StringBuffer buffer = new StringBuffer(String.valueOf(getStatisticValue(0)));
 
             for (int i = 1; i < getDimension(); i++) {
@@ -119,10 +137,12 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         // Attribute IMPLEMENTATION
         // **************************************************************
 
+        @Override
         public final String getAttributeName() {
             return getStatisticName();
         }
 
+        @Override
         public double[] getAttributeValue() {
             double[] stats = new double[getDimension()];
             for (int i = 0; i < stats.length; i++) {
@@ -141,6 +161,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         /**
          * @return the id.
          */
+        @Override
         public String getId() {
             return id;
         }
@@ -148,6 +169,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         /**
          * Sets the id.
          */
+        @Override
         public void setId(String id) {
             this.id = id;
         }
@@ -159,6 +181,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         /**
          * @return the log columns.
          */
+        @Override
         public LogColumn[] getColumns() {
             LogColumn[] columns = new LogColumn[getDimension()];
             for (int i = 0; i < getDimension(); i++) {
@@ -177,6 +200,6 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
 
             public double getDoubleValue() {
                 return getStatisticValue(dim); }
-		}
-	}
+        }
+    }
 }

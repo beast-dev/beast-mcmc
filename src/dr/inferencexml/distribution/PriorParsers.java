@@ -756,13 +756,15 @@ public class PriorParsers {
 
             List<Statistic> data = new ArrayList<Statistic>();
             int dim = 0;
+            double sum = 0;
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     Statistic statistic = (Statistic) xo.getChild(j);
                     dim += statistic.getDimension();
+                    sum += statistic.getValueSum();
                     data.add(statistic);
                 } else {
-                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    throw new XMLParseException("Illegal element in " + xo.getName() + " element.");
                 }
             }
 
@@ -778,13 +780,16 @@ public class PriorParsers {
             } else {
                 counts = xo.getDoubleArrayAttribute(COUNTS);
                 if (counts.length != dim) {
-                    throw new XMLParseException("counts attribute in " + xo.getName() + " should have the same dimension as the data");
+                    throw new XMLParseException("Counts attribute in " + xo.getName() + " should have the same dimension as the data.");
                 }
             }
 
             double sumsTo = 1.0;
             if (xo.hasAttribute(SUMS_TO)) {
                 sumsTo = xo.getDoubleAttribute(SUMS_TO);
+            }
+            if (Math.abs(sumsTo - sum) > DirichletDistribution.ACCURACY_THRESHOLD) {
+                throw new XMLParseException("The starting values of the data should sum to " + sumsTo + " (actually sums to " + sum + ").");
             }
 
             MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new DirichletDistribution(counts, sumsTo));

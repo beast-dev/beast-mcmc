@@ -407,6 +407,15 @@ public class MultivariateOUModel extends GeneralizedLinearModel implements Stati
         return 0;
     }
 
+    @Override
+    public double getValueSum() {
+        double sum = 0.0;
+        for (int i = 0; i < getDimension(); i++) {
+            sum += getStatisticValue(i);
+        }
+        return sum;
+    }
+
     public String getAttributeName() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

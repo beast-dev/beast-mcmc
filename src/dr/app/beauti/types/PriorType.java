@@ -356,7 +356,7 @@ public enum PriorType {
                     LOGNORMAL_HPM_PRIOR,
                     NORMAL_HPM_PRIOR};
         }
-        if (parameter.isMaintainedMean) {
+        if (parameter.isMaintainedSum) {
             return new PriorType[]{
                     NONE_FIXED,
                     NONE_IMPROPER,

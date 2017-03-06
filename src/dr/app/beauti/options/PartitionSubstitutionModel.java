@@ -146,11 +146,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         //Substitution model parameters
         if (options.NEW_OPERATORS) {
-            createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 0.25, true);
-            createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 0.25, true);
-            createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 0.25, true);
-            createNonNegativeParameterDirichletPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", this, 0.25, true);
-            createNonNegativeParameterDirichletPrior("CP3.frequencies", "base frequencies for codon position 3", this, 0.25, true);
+            createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP3.frequencies", "base frequencies for codon position 3", this, 1.0, true);
         } else {
             createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25, true);
             createZeroOneParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1", 0.25, true);
@@ -203,13 +203,13 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         if (options.NEW_OPERATORS) {
             createNonNegativeParameterDirichletPrior(GTR_RATES, "GTR transition rates parameter",
-                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
             for (int i = 1; i <= 3; i++) {
                 createNonNegativeParameterDirichletPrior("CP" + i + "." + GTR_RATES, "GTR transition rates parameter",
-                        this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+                        this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
             }
             createNonNegativeParameterDirichletPrior("CP1+2." + GTR_RATES, "GTR transition rates parameter",
-                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
         } else {
             for (int j = 0; j < 5; j++) {
                 if (j == 1) { // ag
@@ -315,17 +315,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             createOperator("deltaGTR", "deltaGTR",
                     "Change GTR transition rates relative to each other maintaining mean",
                     GTR_RATES,
-                    OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
+                    OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
             for (int j = 1; j <= 3; j++) {
                 createOperator("CP" + j + ".deltaGTR", "CP" + j + ".deltaGTR",
                         "Change GTR transition rates relative to each other maintaining mean",
                         "CP" + j + "." + GTR_RATES,
-                        OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
+                        OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
             }
             createOperator("CP1+2.deltaGTR", "CP1+2.deltaGTR",
                     "Change GTR transition rates relative to each other maintaining mean",
                     "CP1+2." + GTR_RATES,
-                    OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
+                    OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         } else {
             for (String rateName : GTR_RATE_NAMES) {
                 createScaleOperator(rateName, demoTuning, substWeights);

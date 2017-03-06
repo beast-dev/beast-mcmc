@@ -26,6 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.options.*;
+import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.types.FrequencyPolicyType;
@@ -271,13 +272,17 @@ public class SubstitutionModelGenerator extends Generator {
         if (options.NEW_OPERATORS) {
             Parameter parameter = model.getParameter(model.getPrefixCodon(num) + PartitionSubstitutionModel.GTR_RATES);
             String prefix1 = model.getPrefix(num);
-            writeParameter(prefix1 + PartitionSubstitutionModel.GTR_RATES, 6, parameter.getInitial(), 0.0, Double.NaN, writer);
+            writer.writeOpenTag(GTRParser.RATES);
+            // fix the initial value to give maintained sum
+            double initialValue = parameter.maintainedSum / parameter.getParent().getDimensionWeight();
+            writeParameter(prefix1 + PartitionSubstitutionModel.GTR_RATES, 6, initialValue, 0.0, Double.NaN, writer);
+            writer.writeCloseTag(GTRParser.RATES);
         } else {
-            writeParameter(num, GTRParser.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
-            writeParameter(num, GTRParser.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
-            writeParameter(num, GTRParser.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
-            writeParameter(num, GTRParser.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
-            writeParameter(num, GTRParser.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+            writeParameter(num, GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+            writeParameter(num, GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+            writeParameter(num, GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+            writeParameter(num, GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+            writeParameter(num, GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
         }
 
         writer.writeCloseTag(GTRParser.GTR_MODEL);
@@ -660,10 +665,11 @@ public class SubstitutionModelGenerator extends Generator {
         if (options.NEW_OPERATORS) {
             if (model.hasCodonPartitions()) {
                 Parameter parameter = model.getParameter(model.getPrefixCodon(num) + "nu");
+                int dim = parameter.getParent().getSubParameters().size();
                 double weight = ((double)parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
                 writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
                         new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
-                writeParameter(prefix + "nu", parameter, writer);
+                writeParameter(prefix + "nu", 1, parameter.getInitial() / dim, 0.0, Double.NaN, writer);
                 writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
 
             } else {

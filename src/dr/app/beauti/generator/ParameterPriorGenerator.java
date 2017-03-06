@@ -86,7 +86,7 @@ public class ParameterPriorGenerator extends Generator {
                 if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
-                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
                     } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
                         writeParameterPrior(parameter, writer);
                     }
@@ -101,7 +101,7 @@ public class ParameterPriorGenerator extends Generator {
                         parameter.priorType == PriorType.NONE_STATISTIC)) {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
-                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
                     } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
                         writeParameterPrior(parameter, writer);
                     }
@@ -271,15 +271,18 @@ public class ParameterPriorGenerator extends Generator {
                 // Do nothing, densities are already in a distributionLikelihood
                 break;
             case DIRICHLET_PRIOR:
-                int dimensions = parameter.getParameterDimensionWeights().length;
-                String counts = "1.0";
-                for (int i = 1; i < dimensions; i++) {
-                   counts += " 1.0";
-                }
+                // at the moment I don't think we want anything other than Dirichlet(1, ..., 1)
+//                int dimensions = parameter.getParameterDimensionWeights().length;
+//                String counts = "1.0";
+//                for (int i = 1; i < dimensions; i++) {
+//                    counts += " 1.0";
+//                }
                 writer.writeOpenTag(PriorParsers.DIRICHLET_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.COUNTS, counts),
-                        });
+                                new Attribute.Default<String>(PriorParsers.ALPHA, "1.0"),
+                                new Attribute.Default<Double>(PriorParsers.SUMS_TO, parameter.maintainedSum)
+                        }
+                );
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.DIRICHLET_PRIOR);
                 break;

@@ -91,18 +91,20 @@ public abstract class ModelOptions implements Serializable {
                 .initial(initial).isZeroOne(true).isAdaptiveMultivariateCompatible(amtk).build(parameters);
     }
 
-    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options, double initial, boolean amtk) {
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
+                                                              double maintainedSum, boolean amtk) {
         return new Parameter.Builder(name, description).prior(PriorType.DIRICHLET_PRIOR)
-                .isNonNegative(true).isMaintainedMean(true)
+                .isNonNegative(true).maintainedSum(maintainedSum)
                 .isAdaptiveMultivariateCompatible(amtk)
-                .partitionOptions(options).initial(initial).build(parameters);
+                .partitionOptions(options).build(parameters);
     }
 
-    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial, boolean amtk) {
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
+                                                              PriorScaleType scaleType, double maintainedSum, boolean amtk) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR)
-                .isNonNegative(true).isMaintainedMean(true)
+                .isNonNegative(true).maintainedSum(maintainedSum)
                 .isAdaptiveMultivariateCompatible(amtk)
-                .partitionOptions(options).initial(initial).build(parameters);
+                .partitionOptions(options).build(parameters);
     }
 
     public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {

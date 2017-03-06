@@ -25,7 +25,6 @@
 
 package dr.app.beauti.options;
 
-import cern.colt.bitvector.QuickBitVector;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.math.distributions.Distribution;
@@ -65,7 +64,7 @@ public class Parameter implements Serializable {
     public final boolean isHierarchical;
     public final boolean isCMTCRate;
     public final boolean isNonNegative;
-    public final boolean isMaintainedMean;
+    public final boolean isMaintainedSum;
     public final boolean isZeroOne;
     public final boolean isCached;
     public final boolean isAdaptiveMultivariateCompatible;
@@ -92,6 +91,7 @@ public class Parameter implements Serializable {
     // Editable fields
     private boolean isFixed;
     private double initial;
+    public double maintainedSum;
     public boolean isTruncated;
     public double truncationUpper;
     public double truncationLower;
@@ -123,7 +123,7 @@ public class Parameter implements Serializable {
         private boolean isCMTCRate = false;
         private boolean isNonNegative = false;
         private boolean isZeroOne = false;
-        private boolean isMaintainedMean = false;
+        private boolean isMaintainedSum = false;
         private boolean isStatistic = false;
         private boolean isCached = false;
 
@@ -134,6 +134,7 @@ public class Parameter implements Serializable {
 
         private boolean isAdaptiveMultivariateCompatible = false;
 
+        private double maintainedSum = 1.0;
         private double initial = Double.NaN;
         //        private double upper = Double.NaN;
 //        private double lower = Double.NaN;
@@ -169,7 +170,7 @@ public class Parameter implements Serializable {
             isCMTCRate = source.isCMTCRate;
             isNonNegative = source.isNonNegative;
             isZeroOne = source.isZeroOne;
-            isMaintainedMean = source.isMaintainedMean;
+            isMaintainedSum = source.isMaintainedSum;
             isStatistic = source.isStatistic;
             isCached = source.isCached;
             options = source.options;
@@ -177,6 +178,7 @@ public class Parameter implements Serializable {
             isPriorFixed = source.isPriorFixed;
             isAdaptiveMultivariateCompatible = source.isAdaptiveMultivariateCompatible;
             initial = source.initial;
+            maintainedSum = source.maintainedSum;
             isTruncated = source.isTruncated;
             truncationUpper = source.truncationUpper;
             truncationLower = source.truncationLower;
@@ -200,6 +202,12 @@ public class Parameter implements Serializable {
 
         public Builder initial(double initial) {
             this.initial = initial;
+            return this;
+        }
+
+        public Builder maintainedSum(double maintainedSum) {
+            this.maintainedSum = maintainedSum;
+            this.isMaintainedSum = true;
             return this;
         }
 
@@ -260,8 +268,8 @@ public class Parameter implements Serializable {
             return this;
         }
 
-        public Builder isMaintainedMean(boolean isMaintainedMean) {
-            this.isMaintainedMean = isMaintainedMean;
+        public Builder isMaintainedSum(boolean isMaintainedMean) {
+            this.isMaintainedSum = isMaintainedMean;
             return this;
         }
 
@@ -359,6 +367,7 @@ public class Parameter implements Serializable {
         description = builder.description;
         scaleType = builder.scaleType;
         initial = builder.initial;
+        maintainedSum = builder.maintainedSum;
         taxaId = builder.taxaId;
         isNodeHeight = builder.isNodeHeight;
         isStatistic = builder.isStatistic;
@@ -371,7 +380,7 @@ public class Parameter implements Serializable {
         isCMTCRate = builder.isCMTCRate;
         isNonNegative = builder.isNonNegative;
         isZeroOne = builder.isZeroOne;
-        isMaintainedMean = builder.isMaintainedMean;
+        isMaintainedSum = builder.isMaintainedSum;
         isPriorFixed = builder.isPriorFixed;
         isAdaptiveMultivariateCompatible = builder.isAdaptiveMultivariateCompatible;
 

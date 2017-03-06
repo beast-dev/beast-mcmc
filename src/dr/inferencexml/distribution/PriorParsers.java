@@ -32,6 +32,9 @@ import dr.inference.model.Statistic;
 import dr.math.distributions.*;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  */
 public class PriorParsers {
@@ -63,7 +66,9 @@ public class PriorParsers {
     public static final String UNINFORMATIVE = "uninformative";
     public static final String HALF_T_PRIOR = "halfTPrior";
     public static final String DIRICHLET_PRIOR = "dirichletPrior";
+    public static final String ALPHA = "alpha";
     public static final String COUNTS = "counts";
+    public static final String SUMS_TO = "sumsTo";
 
 
     /**
@@ -104,8 +109,8 @@ public class PriorParsers {
                     }
                     likelihood.addData((Statistic) xo.getChild(j));
                     if (DEBUG) {
-                    	likelihood.calculateLogLikelihood();
-                    	System.out.println("likelihood: " + likelihood.getLogLikelihood());
+                        likelihood.calculateLogLikelihood();
+                        System.out.println("likelihood: " + likelihood.getLogLikelihood());
                     }
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element");
@@ -163,8 +168,8 @@ public class PriorParsers {
                 }
                 if (xo.getChild(j) instanceof Statistic) {
                     if (DEBUG) {
-                    	System.out.println("scale: " + scale);
-                    	System.out.println("offset: " + offset);
+                        System.out.println("scale: " + scale);
+                        System.out.println("offset: " + offset);
                         //System.out.println((Statistic) xo.getChild(j));
                         Statistic test = (Statistic) xo.getChild(j);
                         System.out.println(test.getDimension());
@@ -175,9 +180,9 @@ public class PriorParsers {
                     }
                     likelihood.addData((Statistic) xo.getChild(j));
                     if (DEBUG) {
-                    	likelihood.makeDirty();
-                    	likelihood.calculateLogLikelihood();
-                    	System.out.println("likelihood: " + likelihood.getLogLikelihood());
+                        likelihood.makeDirty();
+                        likelihood.calculateLogLikelihood();
+                        System.out.println("likelihood: " + likelihood.getLogLikelihood());
                     }
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element");
@@ -749,15 +754,43 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double[] counts = xo.getDoubleArrayAttribute(COUNTS);
-
-            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new DirichletDistribution(counts, false));
+            List<Statistic> data = new ArrayList<Statistic>();
+            int dim = 0;
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
-                    likelihood.addData((Statistic) xo.getChild(j));
+                    Statistic statistic = (Statistic) xo.getChild(j);
+                    dim += statistic.getDimension();
+                    data.add(statistic);
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element");
                 }
+            }
+
+            double[] counts;
+
+            if (xo.hasAttribute(ALPHA)) {
+                // alpha is for when the Dirichlet distribution is symmetrical
+                double alpha = xo.getDoubleAttribute(ALPHA);
+                counts  = new double[dim];
+                for (int i = 0; i < dim; i++) {
+                    counts[i] = alpha;
+                }
+            } else {
+                counts = xo.getDoubleArrayAttribute(COUNTS);
+                if (counts.length != dim) {
+                    throw new XMLParseException("counts attribute in " + xo.getName() + " should have the same dimension as the data");
+                }
+            }
+
+            double sumsTo = 1.0;
+            if (xo.hasAttribute(SUMS_TO)) {
+                sumsTo = xo.getDoubleAttribute(SUMS_TO);
+            }
+
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new DirichletDistribution(counts, sumsTo));
+
+            for (Statistic statistic : data) {
+                likelihood.addData(statistic);
             }
 
             return likelihood;
@@ -768,7 +801,11 @@ public class PriorParsers {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleArrayRule(COUNTS),
+                new XORRule(
+                        AttributeRule.newDoubleArrayRule(ALPHA),
+                        AttributeRule.newDoubleArrayRule(COUNTS)
+                ),
+                AttributeRule.newDoubleRule(SUMS_TO, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

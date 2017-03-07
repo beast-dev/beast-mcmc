@@ -36,7 +36,7 @@ import java.io.IOException;
 public class SPPathDifferenceMetric {
 
     private Tree focalTree;
-    private int dim;
+    private int dim, externalNodeCount;
     private double[] focalPath;
 
     public SPPathDifferenceMetric() {
@@ -45,12 +45,13 @@ public class SPPathDifferenceMetric {
 
     public SPPathDifferenceMetric(Tree focalTree) {
         this.focalTree = focalTree;
-        this.dim = (focalTree.getExternalNodeCount()-2)*(focalTree.getExternalNodeCount()-1);
+        this.externalNodeCount = focalTree.getExternalNodeCount();
+        this.dim = (externalNodeCount-2)*(externalNodeCount-1);
         this.focalPath = new double[dim];
 
         int index = 0;
-        for (int i = 0; i < focalTree.getExternalNodeCount(); i++) {
-            for (int j = i+1; j < focalTree.getExternalNodeCount(); j++) {
+        for (int i = 0; i < externalNodeCount; i++) {
+            for (int j = i+1; j < externalNodeCount; j++) {
                 //get two leaf nodes
                 NodeRef nodeOne = focalTree.getExternalNode(i);
                 NodeRef nodeTwo = focalTree.getExternalNode(j);

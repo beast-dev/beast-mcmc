@@ -787,9 +787,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         }
 
-if (DEBUG) {
-    int[] debugOperationCount = new int[partitionCount];
-}
 
         int operationCount = 0;
         k = 0;
@@ -866,7 +863,6 @@ if (DEBUG) {
                             System.out.println("write = " + writeScale[i] + "; read = " + readScale[i] + "; parent = " + operations[k] + ", k = " + k + ", i = " + i);
                         }
 
-                        debugOperationCount[i]++;
                     }
 
                     k += Beagle.PARTITION_OPERATION_TUPLE_SIZE;
@@ -876,11 +872,6 @@ if (DEBUG) {
             }
         }
 
-if (DEBUG) {
-    for (int i = 0; i < partitionCount; i++) {
-        System.out.println("operationCount["+i+"] = " + debugOperationCount[i]);
-    }
-}
 
         beagle.updatePartialsByPartition(operations, operationCount);
 
@@ -960,11 +951,6 @@ if (DEBUG) {
 
         double logL = sumLogLikelihoods[0];
 
-for (int i = 0; i < partitionCount; i++) {
-    if (updatePartition[i] || updateAllPartitions) {
-        System.out.println(sumLogLikelihoodsByPartition[i]);
-    }
-}
         if (DEBUG) {
             for (int i = 0; i < partitionCount; i++) {
                 System.out.println("partition " + i + ": " + sumLogLikelihoodsByPartition[i] +

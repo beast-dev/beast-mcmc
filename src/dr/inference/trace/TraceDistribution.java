@@ -251,6 +251,7 @@ public class TraceDistribution<T> {
         }
 
         for (T value : new TreeSet<T>(freqCounterMap.keySet())) {
+            // frequency / total size
             double prob = freqCounterMap.get(value).doubleValue() / (double) values.size();
             if (prob < (1 - proportion)) {
                 inCredibleSet.add(value);
@@ -259,7 +260,7 @@ public class TraceDistribution<T> {
             }
         }
         calculateMode();
-        isValid = true; // what purpose?
+        isValid = true; // todo what purpose?
     }
 
 
@@ -320,8 +321,9 @@ public class TraceDistribution<T> {
 //    }
 
     private boolean contains(Set<T> aSet, int valueORIndex) {
-        if (traceType == TraceType.ORDINAL) {
-            return aSet.contains(valueORIndex);
+        if (traceType.isNumber()) {
+            // T is either Double or Integer
+            return aSet.contains((double) valueORIndex);
         } else { // String
             String valueString = null;
             int i = -1;

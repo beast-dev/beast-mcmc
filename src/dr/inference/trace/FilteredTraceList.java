@@ -48,14 +48,15 @@ public abstract class FilteredTraceList implements TraceList {
 
         for (int i=0; i < getTraceCount(); i++) {
             Trace trace = getTrace(i);
-            if (trace.getFilter() != null) {
+            Filter filter = trace.getFilter();
+            if (filter != null) {
                 if (trace.getValueCount() != filtered.length)
                     throw new RuntimeException("Invalid value size in Trace " + getTraceName(i));
 
                 for (int j = 0; j < trace.getValueCount(); j++) {
-                    if (trace.getFilter().isIn(i)) { // filtered
-                        filtered[i] = true;
-                    }
+                    // filter values not in
+                    if ( ! filter.isIn(trace.getValue(j)) )
+                        filtered[j] = true;
                 }
             }
         }

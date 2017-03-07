@@ -81,10 +81,6 @@ public class Trace<T> { // TODO get rid of generic to make things easy
     }
 
     public T getValue(int index) {
-//        TODO filtered ?
-//        if (getFilter() != null && !getFilter().isIn(index)) {
-//           return null; // filtered
-//        }
         return values.get(index);
     }
 
@@ -126,7 +122,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
             throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
                     + "; List size = " + getValueCount() + "; in Trace " + name);
 
-        if (filtered == null) {
+        if (filtered == null || filtered.length < 1) {
             return values.subList(fromIndex, toIndex);
         } else {
             List<T> valuesList = new ArrayList<T>();

@@ -154,14 +154,24 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
+    /**
+     * Use the flag boolean[] filtered in FilteredTraceList
+     * to determine whether to remove filtered values,
+     * when filtered != null
+     * @param index       the index of trace
+     * @param fromIndex   low endpoint (inclusive) of the subList.
+     * @param toIndex     high endpoint (exclusive) of the subList.
+     * @return
+     */
     public List getValues(int index, int fromIndex, int toIndex) {
-        List newList = null;
+        List values = null;
         try {
-            newList = getTrace(index).getValues(fromIndex, toIndex);
-        } catch (Exception e) {
+            Trace trace = getTrace(index);
+            values = trace.getValues(fromIndex, toIndex, super.filtered);
+        } catch (IndexOutOfBoundsException e) {
             System.err.println("getValues error: trace index = " + index);
         }
-        return newList;
+        return values;
     }
 
     public List getValues(int index) {

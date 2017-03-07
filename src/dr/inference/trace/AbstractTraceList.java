@@ -37,17 +37,16 @@ public abstract class AbstractTraceList extends FilteredTraceList {
 
     public TraceCorrelation getCorrelationStatistics(int index) {
         Trace trace = getTrace(index);
-        if (trace == null) {
-            return null;
-        }
-        return trace.getTraceStatistics();
+        if (trace != null)
+            return trace.getTraceStatistics();
+        return null;
     }
 
     public void analyseTrace(int index) {
         int start = (getBurnIn() / getStepSize());
 
         Trace trace = getTrace(index);
-        List values = trace.getValues(start, trace.getValueCount(), filtered);
+        List values = trace.getValues(start, trace.getValueCount(), super.filtered);
         TraceCorrelation traceCorrelation = new TraceCorrelation(values, trace.getTraceType(), getStepSize());
         trace.setTraceStatistics(traceCorrelation);
 

@@ -318,23 +318,22 @@ public class KCPathDifferenceMetric {
 
     private void processTree(Tree tree, double[] smallM, double[] largeM, int dim) {
 
-        Map<NodeRef, Integer> permutationMap = new HashMap<NodeRef, Integer>();
+        Map<Pair<NodeRef, NodeRef>, NodeRef> permutationMap = new HashMap<Pair<NodeRef, NodeRef>, NodeRef>();
         traverse(tree, tree.getRoot(), permutationMap);
 
         int index = 0;
 
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            NodeRef MRCA = tree.getInternalNode(i);
-            int permutations = permutationMap.get(MRCA);
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            for (int j = i+1; j < tree.getExternalNodeCount(); j++) {
+                NodeRef MRCA = permutationMap.get(new Pair<NodeRef, NodeRef>(tree.getExternalNode(i), tree.getExternalNode(j)));
 
-            int edges = 0;
-            double branchLengths = 0.0;
-            while (MRCA != tree.getRoot()) {
-                edges++;
-                branchLengths += tree.getNodeHeight(tree.getParent(MRCA)) - tree.getNodeHeight(MRCA);
-                MRCA = tree.getParent(MRCA);
-            }
-            for (int j = 0; j < permutations; j++) {
+                int edges = 0;
+                double branchLengths = 0.0;
+                while (MRCA != tree.getRoot()) {
+                    edges++;
+                    branchLengths += tree.getNodeHeight(tree.getParent(MRCA)) - tree.getNodeHeight(MRCA);
+                    MRCA = tree.getParent(MRCA);
+                }
                 smallM[index] = edges;
                 largeM[index] = branchLengths;
                 index++;
@@ -363,34 +362,50 @@ public class KCPathDifferenceMetric {
         }
     }
 
-    private int[] traverse(Tree tree, NodeRef node, Map<NodeRef, Integer> permutationMap) {
+    private Set<NodeRef> traverse(Tree tree, NodeRef node, Map<Pair<NodeRef, NodeRef>, NodeRef> permutationMap) {
         NodeRef left = tree.getChild(node, 0);
         NodeRef right = tree.getChild(node, 1);
 
-        int[] counts = new int[2];
+
+        Set<NodeRef> leftSet = null;
+        Set<NodeRef> rightSet = null;
 
         if (!tree.isExternal(left)) {
-            int[] leftCounts = traverse(tree, left, permutationMap);
-            counts[0] += leftCounts[0] + leftCounts[1];
+            leftSet = traverse(tree, left, permutationMap);
         } else {
-            counts[0] = 1;
+            leftSet = Collections.singleton(left);
         }
         if (!tree.isExternal(right)) {
-            int[] rightCounts = traverse(tree, right, permutationMap);
-            counts[1] += rightCounts[0] + rightCounts[1];
+            rightSet = traverse(tree, right, permutationMap);
         } else {
-            counts[1] = 1;
+            rightSet = Collections.singleton(right);
         }
 
-        int permutations = (counts[0] - 1) * counts[1] / 2;
+        for (NodeRef tip1 : leftSet) {
+            for (NodeRef tip2 : rightSet) {
+                permutationMap.put(new Pair<NodeRef, NodeRef>(tip1, tip2), node);
+            }
+        }
 
-        permutationMap.put(node, permutations);
+        Set<NodeRef> tips = new HashSet<NodeRef>();
+        tips.addAll(leftSet);
+        tips.addAll(rightSet);
 
-        return counts;
+        return tips;
     }
 
 
     public static void main(String[] args) {
+//        tree 1: ((A:1.2,B:0.8):0.5,(C:0.8,D:1.0):1.1);
+//        tree 2: (((A:0.8,B:1.3999999999999997):0.30000000000000004,C:0.7000000000000002):0.8999999999999999,D:1.0);
+//
+//        lambda (0.0) = 2.0
+//        lambda (0.5) = 1.9397164741270823
+//        lambda (1.0) = 1.962141687034858
+//        lambda (0.0) = 2.0
+//        lambda (0.5) = 1.9397164741270823
+//        lambda (1.0) = 1.962141687034858
+
 
         try {
             NewickImporter importer = new NewickImporter("(('A':1.2,'B':0.8):0.5,('C':0.8,'D':1.0):1.1)");
@@ -406,10 +421,11 @@ public class KCPathDifferenceMetric {
             lambdaValues.add(0.5);
             lambdaValues.add(1.0);
             ArrayList<Double> metric = (new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues));
+            ArrayList<Double> metric_old = (new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues));
 
-            System.out.println("lambda (0.0) = " + metric.get(0));
-            System.out.println("lambda (0.5) = " + metric.get(1));
-            System.out.println("lambda (1.0) = " + metric.get(2));
+            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
+            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
+            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
 
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree

@@ -100,10 +100,10 @@ public class TopologyTracer {
             //take into account first distance of focal tree to itself
             treeStates.add((long)0);
 
-            jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
-            billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
-            cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
-            branchScoreMetric.add(new BranchScoreMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
+            jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+            billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+            cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+            branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
             SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
             pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
             KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
@@ -126,22 +126,22 @@ public class TopologyTracer {
 
                 //TODO Does the BEAST/JEBL code report half the RF distance?
                 beforeTime = System.currentTimeMillis();
-                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
                 afterTime = System.currentTimeMillis();
                 timings[0] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+                billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
                 afterTime = System.currentTimeMillis();
                 timings[1] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+                cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
                 afterTime = System.currentTimeMillis();
                 timings[2] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                branchScoreMetric.add(new BranchScoreMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+                branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
                 afterTime = System.currentTimeMillis();
                 timings[3] += afterTime - beforeTime;
 

@@ -32,8 +32,6 @@ import dr.evolution.util.Date;
 import dr.math.MathUtils;
 import dr.util.HeapSort;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -88,7 +86,7 @@ public class CoalescentSimulator {
 	public SimpleNode simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic) {
         // sanity check - disjoint trees
 
-        if( ! Tree.Utils.allDisjoint(nodes) ) {
+        if( ! TreeUtils.allDisjoint(nodes) ) {
             throw new RuntimeException("subtrees' taxa overlap");
         }
 

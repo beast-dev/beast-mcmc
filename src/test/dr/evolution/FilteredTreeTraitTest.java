@@ -52,7 +52,7 @@ public class FilteredTreeTraitTest extends TraceCorrelationAssert {
 
         StringBuffer buffer = new StringBuffer();
 
-        Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+        TreeUtils.newick(tree, tree.getRoot(), false, TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
                 null, // format
                 null, // branchRates,
                 new TreeTraitProvider[]{treeTraitProvider},
@@ -81,7 +81,7 @@ public class FilteredTreeTraitTest extends TraceCorrelationAssert {
 
         StringBuffer buffer = new StringBuffer();
 
-        Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+        TreeUtils.newick(tree, tree.getRoot(), false, TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
                 null, // format
                 null, // branchRates,
                 new TreeTraitProvider[]{treeTraitProvider},

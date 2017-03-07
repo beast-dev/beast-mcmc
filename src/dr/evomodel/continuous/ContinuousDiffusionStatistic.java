@@ -25,6 +25,7 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.app.util.Arguments;
 import dr.evolution.tree.MultivariateTraitTree;
@@ -181,7 +182,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                     if  (branchset.equals(BranchSet.CLADE)){
                         try{
                             testNode = inClade(tree, node, taxonList);
-                        } catch (Tree.MissingTaxonException mte) {
+                        } catch (TreeUtils.MissingTaxonException mte) {
                             throw new RuntimeException(mte.toString());
                         }
                     }  else if (branchset.equals(BranchSet.BACKBONE)) {
@@ -190,7 +191,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                         } else {
                             try{
                                 testNode = onAncestralPathTaxa(tree, node, taxonList);
-                            } catch (Tree.MissingTaxonException mte) {
+                            } catch (TreeUtils.MissingTaxonException mte) {
                                 throw new RuntimeException(mte.toString());
                             }
                         }
@@ -712,14 +713,14 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     }
 
 
-    public boolean inClade(MultivariateTraitTree tree, NodeRef node, TaxonList taxonList) throws Tree.MissingTaxonException {
+    public boolean inClade(MultivariateTraitTree tree, NodeRef node, TaxonList taxonList) throws TreeUtils.MissingTaxonException {
 
         Set leafSubSet;
-        leafSubSet = Tree.Utils.getLeavesForTaxa(tree, taxonList);
-        NodeRef mrca = Tree.Utils.getCommonAncestorNode(tree, leafSubSet);
-        Set mrcaLeafSet =  Tree.Utils.getDescendantLeaves(tree,mrca);
+        leafSubSet = TreeUtils.getLeavesForTaxa(tree, taxonList);
+        NodeRef mrca = TreeUtils.getCommonAncestorNode(tree, leafSubSet);
+        Set mrcaLeafSet =  TreeUtils.getDescendantLeaves(tree,mrca);
 
-        Set nodeLeafSet =  Tree.Utils.getDescendantLeaves(tree,node);
+        Set nodeLeafSet =  TreeUtils.getDescendantLeaves(tree,node);
 
         if (!nodeLeafSet.isEmpty()){
             nodeLeafSet.removeAll(mrcaLeafSet);
@@ -732,14 +733,14 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         }
         return false;
     }
-    private static boolean onAncestralPathTaxa(Tree tree, NodeRef node, TaxonList taxonList) throws Tree.MissingTaxonException {
+    private static boolean onAncestralPathTaxa(Tree tree, NodeRef node, TaxonList taxonList) throws TreeUtils.MissingTaxonException {
 
         if (tree.isExternal(node)) return false;
 
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
         int size = leafSet.size();
 
-        Set targetSet = Tree.Utils.getLeavesForTaxa(tree, taxonList);
+        Set targetSet = TreeUtils.getLeavesForTaxa(tree, taxonList);
         leafSet.retainAll(targetSet);
 
         if (leafSet.size() > 0) {
@@ -747,7 +748,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             // if all leaves below are in target then check just above.
             if (leafSet.size() == size) {
 
-                Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                Set superLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
                 superLeafSet.removeAll(targetSet);
 
                 // the branch is on ancestral path if the super tree has some non-targets in it
@@ -763,8 +764,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
         double maxDescendentTime = 0;
 
-        Set leafSet = Tree.Utils.getExternalNodes(tree, node);
-        Set nodeSet = Tree.Utils.getExternalNodes(tree, node);
+        Set leafSet = TreeUtils.getExternalNodes(tree, node);
+        Set nodeSet = TreeUtils.getExternalNodes(tree, node);
 
         Iterator iter = leafSet.iterator();
 

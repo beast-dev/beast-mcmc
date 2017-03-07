@@ -26,16 +26,12 @@
 package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
-import dr.app.phylogeography.tools.DiscreteTreeToKML;
 import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
 import dr.geo.contouring.ContourPath;
@@ -1566,7 +1562,7 @@ public class TreeAnnotator {
             final Tree tree = importer.importNextTree();
 
             if (counter >= burnin) {
-                Tree.Utils.preOrderTraversalList(tree, postOrderList);
+                TreeUtils.preOrderTraversalList(tree, postOrderList);
                 cladeSystem.getTreeCladeCodes(tree, ctree);
                 for (int k = 0; k < nClades; ++k) {
                     int j = postOrderList[k];

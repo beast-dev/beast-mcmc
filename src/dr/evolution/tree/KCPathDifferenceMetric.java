@@ -60,7 +60,7 @@ public class KCPathDifferenceMetric {
                 NodeRef nodeTwo = focalTree.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
 
                 int edges = 0;
                 double branchLengths = 0.0;
@@ -108,7 +108,7 @@ public class KCPathDifferenceMetric {
                 NodeRef nodeTwo = tree.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(tree, nodeOne, nodeTwo);
 
                 int edges = 0;
                 double branchLengths = 0.0;
@@ -188,7 +188,7 @@ public class KCPathDifferenceMetric {
                 NodeRef nodeTwo = tree1.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree1, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(tree1, nodeOne, nodeTwo);
 
                 int edges = 0;
                 double branchLengths = 0.0;
@@ -228,7 +228,7 @@ public class KCPathDifferenceMetric {
                 NodeRef nodeTwo = tree2.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree2, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(tree2, nodeOne, nodeTwo);
 
                 int edges = 0;
                 double branchLengths = 0.0;

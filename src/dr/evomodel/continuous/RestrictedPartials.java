@@ -26,7 +26,7 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -45,7 +45,7 @@ public class RestrictedPartials extends AbstractModel {
     public RestrictedPartials(String name,
                               TreeModel treeModel,
                               TaxonList taxonList, Parameter meanParameter,
-                              Parameter priorSampleSize) throws Tree.MissingTaxonException {
+                              Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
         this(name, treeModel, taxonList, meanParameter, priorSampleSize, null, -1);
     }
 
@@ -53,7 +53,7 @@ public class RestrictedPartials extends AbstractModel {
                               TreeModel treeModel,
                               TaxonList taxonList, Parameter meanParameter,
                               Parameter priorSampleSize,
-                              NodeRef node, int index) throws Tree.MissingTaxonException {
+                              NodeRef node, int index) throws TreeUtils.MissingTaxonException {
         super(name);
         this.treeModel = treeModel;
         this.taxonList = taxonList;
@@ -62,8 +62,8 @@ public class RestrictedPartials extends AbstractModel {
         this.index = index;
         this.node = node;
 
-        this.tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
-        this.tipBitSet = Tree.Utils.getTipsBitSetForTaxa(treeModel, taxonList);
+        this.tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
+        this.tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
 
         addVariable(meanParameter);
         addVariable(priorSampleSize);

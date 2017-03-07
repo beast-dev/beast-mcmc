@@ -27,10 +27,10 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
-import dr.math.Polynomial;
 
 import java.util.Set;
 
@@ -44,7 +44,7 @@ import java.util.Set;
 public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic {
 
     public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean absoluteTime, boolean forParent)
-            throws Tree.MissingTaxonException {
+            throws TreeUtils.MissingTaxonException {
         super(name);
         this.tree = tree;
         if (absoluteTime && Taxon.getMostRecentDate() != null) {
@@ -54,7 +54,7 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
             mostRecentTipTime = Double.NaN;
         }
         if (taxa != null) {
-            this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+            this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxa);
         } else {
             // if no taxa are given then use the root of the tree
             this.leafSet = null;
@@ -81,7 +81,7 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 
         NodeRef node;
         if (leafSet != null) {
-            node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+            node = TreeUtils.getCommonAncestorNode(tree, leafSet);
             if (forParent && !tree.isRoot(node)) {
                 node = tree.getParent(node);
             }

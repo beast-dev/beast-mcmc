@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.continuous;
 
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -33,14 +33,9 @@ import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.RestrictedPartials;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
-import dr.evoxml.TaxaParser;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
-import dr.inference.model.SumParameter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by msuchard on 6/4/16.
@@ -64,7 +59,7 @@ public class RestrictedPartialsParser extends AbstractXMLObjectParser {
 
         try {
             rp =  new RestrictedPartials(name, tree, taxa, meanParameter, priorSampleSize);
-        } catch (Tree.MissingTaxonException e) {
+        } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxa for " + xo.getId());
         }
 

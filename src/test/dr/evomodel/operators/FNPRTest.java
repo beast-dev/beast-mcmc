@@ -7,12 +7,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 
+import dr.evolution.tree.TreeUtils;
 import dr.inference.operators.*;
 import junit.framework.TestSuite;
 import junit.framework.Test;
 
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.tree.Tree;
 import dr.evomodel.operators.FNPR;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -57,7 +57,7 @@ public class FNPRTest extends OperatorAssert{
             FNPR operator = new FNPR(treeModel, 1);
             operator.doOperation();
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 //System.out.println(tree);
             if (!trees.containsKey(tree)){
                 trees.put(tree, true);

@@ -33,6 +33,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.geo.color.ChannelColorScheme;
 import dr.geo.color.ColorScheme;
 import dr.geo.math.SphericalPolarCoordinates;
@@ -218,7 +219,7 @@ public class Branch2dRateToGrid {
         Object o = treeTime.getAttribute(PRECISION_STRING);
         double treeNormalization = 1; // None
         if (normalize == Normalization.LENGTH) {
-            treeNormalization = Tree.Utils.getTreeLength(treeTime, treeTime.getRoot());
+            treeNormalization = TreeUtils.getTreeLength(treeTime, treeTime.getRoot());
         } else if (normalize == Normalization.HEIGHT) {
             treeNormalization = treeTime.getNodeHeight(treeTime.getRoot());
         }
@@ -235,7 +236,7 @@ public class Branch2dRateToGrid {
             }
         }
 
-        treeLengths.add(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot()));
+        treeLengths.add(TreeUtils.getTreeLength(treeTime, treeTime.getRoot()));
 
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 

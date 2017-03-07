@@ -57,7 +57,7 @@ public class SPPathDifferenceMetric {
                 NodeRef nodeTwo = focalTree.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
 
                 double pathLength = 0.0;
                 while (nodeOne != MRCA) {
@@ -99,7 +99,7 @@ public class SPPathDifferenceMetric {
                 NodeRef nodeTwo = tree.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(tree, nodeOne, nodeTwo);
 
                 double pathLength = 0.0;
                 while (nodeOne != MRCA) {
@@ -159,7 +159,7 @@ public class SPPathDifferenceMetric {
                 NodeRef nodeTwo = tree1.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree1, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(tree1, nodeOne, nodeTwo);
 
                 double pathLength = 0.0;
                 while (nodeOne != MRCA) {
@@ -189,7 +189,7 @@ public class SPPathDifferenceMetric {
                 NodeRef nodeTwo = tree2.getExternalNode(j);
 
                 //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree2, nodeOne, nodeTwo);
+                NodeRef MRCA = TreeUtils.getCommonAncestor(tree2, nodeOne, nodeTwo);
 
                 double pathLength = 0.0;
                 while (nodeOne != MRCA) {

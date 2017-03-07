@@ -5,13 +5,13 @@ package test.dr.evomodel.operators;
 
 import java.io.IOException;
 
+import dr.evolution.tree.TreeUtils;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 //import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
 //import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
 import dr.evomodel.operators.GibbsSubtreeSwap;
 //import dr.evomodel.operators.ImportanceSubtreeSwap;
 import dr.evomodel.tree.TreeModel;
@@ -35,7 +35,7 @@ public class GibbsSubtreeSwapTestProblem extends OperatorAssert{
     }
 
     /**
-     * Test method for {@link dr.evomodel.operators.GibbsSubtreeSwap#doOperation()}.
+     * Test method for {@link dr.evomodel.operators.GibbsSubtreeSwap}.
      * @throws ImportException
      * @throws IOException
      */
@@ -78,7 +78,7 @@ public class GibbsSubtreeSwapTestProblem extends OperatorAssert{
             GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
             double hr = operator.operate(null, null);
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
             if (tree.equals(treeMatch)) {
 //                	System.out.println("Expected Hastings ratio = " + 5.0/6.0 + " in log = " + Math.log(5.0/6.0));

@@ -25,12 +25,12 @@
 
 package dr.evomodel.operators;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.oldevomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Parameter;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -69,7 +69,7 @@ public class MicrosatelliteFullAncestryImportanceSamplingOperator extends Simple
 
         //get postOrder
         int[] postOrder = new int[tree.getNodeCount()];
-        Tree.Utils.postOrderTraversalList(tree,postOrder);
+        TreeUtils.postOrderTraversalList(tree,postOrder);
 
         int extNodeCount = tree.getExternalNodeCount();
         double logq=0.0;

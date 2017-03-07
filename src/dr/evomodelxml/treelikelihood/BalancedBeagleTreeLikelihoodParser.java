@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treelikelihood;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -36,7 +37,6 @@ import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
@@ -147,8 +147,8 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
             TaxonList taxonList = (TaxonList) cxo.getChild(TaxonList.class);
 //            Parameter parameter = (Parameter) cxo.getChild(Parameter.class);
             try {
-                Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
-            } catch (Tree.MissingTaxonException e) {
+                TreeUtils.getLeavesForTaxa(treeModel, taxonList);
+            } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to parse taxon list: " + e.getMessage());
             }
             throw new XMLParseException("Restricting internal nodes is not yet implemented.  Contact Marc");

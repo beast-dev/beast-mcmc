@@ -31,6 +31,7 @@ package dr.evomodel.tree;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class TreeSpaceLogger {
             int maxIsland = 0;
             for (int i = 0; i < trees.size(); i++) {
                 Tree tree = trees.get(i);
-                String newick = Tree.Utils.uniqueNewick(tree, tree.getRoot());
+                String newick = TreeUtils.uniqueNewick(tree, tree.getRoot());
                 this.trees[i] = newick;
                 this.islands[i] = islands.get(i) - 1;
                 if (islands.get(i) > maxIsland) {
@@ -118,7 +119,7 @@ public class TreeSpaceLogger {
     }
 
     public void log(Tree tree) {
-        String currentTree = Tree.Utils.uniqueNewick(tree, tree.getRoot());
+        String currentTree = TreeUtils.uniqueNewick(tree, tree.getRoot());
 
         if (lastKnownTree == null || lastKnownTree.equals("")) {
             // check if we ended up at another known tree

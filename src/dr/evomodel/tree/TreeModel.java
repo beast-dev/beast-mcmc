@@ -112,7 +112,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         root = node;
 
         do {
-            node = (Node) Tree.Utils.postorderSuccessor(this, node);
+            node = (Node) TreeUtils.postorderSuccessor(this, node);
 
             if (node.isExternal()) {
                 node.number = i;
@@ -1069,7 +1069,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      * @return a string containing a newick representation of the tree
      */
     public final String getNewick() {
-        return Tree.Utils.newick(this);
+        return TreeUtils.newick(this);
     }
 
     /**

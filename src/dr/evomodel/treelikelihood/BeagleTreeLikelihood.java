@@ -27,6 +27,7 @@ package dr.evomodel.treelikelihood;
 
 import beagle.*;
 import dr.evolution.datatype.HiddenDataType;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
@@ -1087,7 +1088,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private void computeNodeToRestrictionMap() {
         Arrays.fill(partialsMap, null);
         for (Set<String> taxonNames : partialsRestrictions.keySet()) {
-            NodeRef node = Tree.Utils.getCommonAncestorNode(treeModel, taxonNames);
+            NodeRef node = TreeUtils.getCommonAncestorNode(treeModel, taxonNames);
             partialsMap[node.getNumber()] = partialsRestrictions.get(taxonNames);
         }
     }

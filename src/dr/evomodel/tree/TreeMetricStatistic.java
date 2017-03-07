@@ -28,6 +28,7 @@ package dr.evomodel.tree;
 import dr.evolution.tree.BranchScoreMetric;
 import dr.evolution.tree.CladeMetric;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.model.Statistic;
 import jebl.evolution.treemetrics.BilleraMetric;
 import jebl.evolution.treemetrics.CladeHeightMetric;
@@ -65,11 +66,11 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
 
         switch (method) {
             case TOPOLOGY: {
-                this.referenceNewick = Tree.Utils.uniqueNewick(reference, reference.getRoot());
+                this.referenceNewick = TreeUtils.uniqueNewick(reference, reference.getRoot());
                 break;
             }
             default: {
-                jreference = Tree.Utils.asJeblTree(reference);
+                jreference = TreeUtils.asJeblTree(reference);
                 break;
             }
         }
@@ -114,11 +115,11 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
             return compareTreesByTopology();
         }
 
-        return metric.getMetric(jreference, Tree.Utils.asJeblTree(target));
+        return metric.getMetric(jreference, TreeUtils.asJeblTree(target));
     }
 
     private double compareTreesByTopology() {
-        final String tar = Tree.Utils.uniqueNewick(target, target.getRoot());
+        final String tar = TreeUtils.uniqueNewick(target, target.getRoot());
         return tar.equals(referenceNewick) ? 0.0 : 1.0;
     }
 

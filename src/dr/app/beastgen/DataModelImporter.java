@@ -29,7 +29,6 @@ import dr.app.beauti.options.*;
 import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer;
@@ -40,14 +39,12 @@ import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import jebl.evolution.io.NewickExporter;
 import org.jdom.JDOMException;
 
-import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -301,7 +298,7 @@ public class DataModelImporter {
         }
 
         if (tree != null) {
-            dataModel.put("tree", Tree.Utils.newick(tree));
+            dataModel.put("tree", TreeUtils.newick(tree));
         }
 
         return dataModel;

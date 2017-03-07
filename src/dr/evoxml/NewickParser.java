@@ -213,7 +213,7 @@ public class NewickParser extends AbstractXMLObjectParser {
 
         if (xo.hasAttribute(RESCALE_LENGTH)) {
             double rescaleLength = xo.getDoubleAttribute(RESCALE_LENGTH);
-            double scale = rescaleLength / Tree.Utils.getTreeLength(tree, tree.getRoot());
+            double scale = rescaleLength / TreeUtils.getTreeLength(tree, tree.getRoot());
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                 NodeRef n = tree.getInternalNode(i);
                 tree.setNodeHeight(n, tree.getNodeHeight(n) * scale);

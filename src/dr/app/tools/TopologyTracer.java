@@ -106,7 +106,8 @@ public class TopologyTracer {
             branchScoreMetric.add(new BranchScoreMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
             SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
             pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
-            ArrayList<Double> allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, focalTree, lambdaValues));
+            KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
+            ArrayList<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
             for (int i = 0; i < allKCMetrics.size(); i++) {
                 kcMetrics.get(i).add(allKCMetrics.get(i));
             }
@@ -151,7 +152,8 @@ public class TopologyTracer {
                 timings[4] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
+                //allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
+                allKCMetrics = KCPathFocal.getMetric(tree, lambdaValues);
                 for (int i = 0; i < allKCMetrics.size(); i++) {
                     kcMetrics.get(i).add(allKCMetrics.get(i));
                 }

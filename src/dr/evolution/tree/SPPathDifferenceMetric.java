@@ -125,6 +125,13 @@ public class SPPathDifferenceMetric {
 
     }
 
+    /**
+     * This method bypasses the constructor entirely, computing the metric on the two provided trees
+     * and ignoring the internally stored tree.
+     * @param tree1 Focal tree that will be used for computing the metric
+     * @param tree2 Provided tree that will be compared to the focal tree
+     * @return
+     */
     public double getMetric(Tree tree1, Tree tree2) {
 
         int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1);
@@ -210,6 +217,7 @@ public class SPPathDifferenceMetric {
         metric = Math.sqrt(metric);
 
         return metric;
+
     }
 
     public static void main(String[] args) {

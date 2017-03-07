@@ -38,7 +38,7 @@ import java.util.ArrayList;
 public class KCPathDifferenceMetric {
 
     private Tree focalTree;
-    private int dim;
+    private int dim, externalNodeCount;
     private double[] focalSmallM, focalLargeM;
 
     public KCPathDifferenceMetric() {
@@ -47,13 +47,14 @@ public class KCPathDifferenceMetric {
 
     public KCPathDifferenceMetric(Tree focalTree) {
         this.focalTree = focalTree;
-        this.dim = (focalTree.getExternalNodeCount()-2)*(focalTree.getExternalNodeCount()-1)+focalTree.getExternalNodeCount();
+        this.externalNodeCount = focalTree.getExternalNodeCount();
+        this.dim = (externalNodeCount-2)*(externalNodeCount-1)+externalNodeCount;
         this.focalSmallM = new double[dim];
         this.focalLargeM = new double[dim];
 
         int index = 0;
-        for (int i = 0; i < focalTree.getExternalNodeCount(); i++) {
-            for (int j = i+1; j < focalTree.getExternalNodeCount(); j++) {
+        for (int i = 0; i < externalNodeCount; i++) {
+            for (int j = i+1; j < externalNodeCount; j++) {
                 //get two leaf nodes
                 NodeRef nodeOne = focalTree.getExternalNode(i);
                 NodeRef nodeTwo = focalTree.getExternalNode(j);
@@ -76,7 +77,7 @@ public class KCPathDifferenceMetric {
 
         //fill out arrays further
         index = 0;
-        for (int i = (focalTree.getExternalNodeCount()-1)*(focalTree.getExternalNodeCount()-2); i < dim; i++) {
+        for (int i = (externalNodeCount-1)*(externalNodeCount-2); i < dim; i++) {
             focalSmallM[i] = 1.0;
             focalLargeM[i] = focalTree.getNodeHeight(focalTree.getParent(focalTree.getExternalNode(index))) - focalTree.getNodeHeight(focalTree.getExternalNode(index));
             index++;

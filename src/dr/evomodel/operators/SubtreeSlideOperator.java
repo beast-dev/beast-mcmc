@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class SubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private TreeModel tree = null;
     private double size = 1.0;

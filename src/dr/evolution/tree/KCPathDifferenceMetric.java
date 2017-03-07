@@ -37,10 +37,128 @@ import java.util.ArrayList;
  */
 public class KCPathDifferenceMetric {
 
+    private Tree focalTree;
+    private int dim;
+    private double[] focalSmallM, focalLargeM;
+
     public KCPathDifferenceMetric() {
 
     }
 
+    public KCPathDifferenceMetric(Tree focalTree) {
+        this.focalTree = focalTree;
+        this.dim = (focalTree.getExternalNodeCount()-2)*(focalTree.getExternalNodeCount()-1)+focalTree.getExternalNodeCount();
+        this.focalSmallM = new double[dim];
+        this.focalLargeM = new double[dim];
+
+        int index = 0;
+        for (int i = 0; i < focalTree.getExternalNodeCount(); i++) {
+            for (int j = i+1; j < focalTree.getExternalNodeCount(); j++) {
+                //get two leaf nodes
+                NodeRef nodeOne = focalTree.getExternalNode(i);
+                NodeRef nodeTwo = focalTree.getExternalNode(j);
+
+                //get common ancestor of 2 leaf nodes
+                NodeRef MRCA = Tree.Utils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
+
+                int edges = 0;
+                double branchLengths = 0.0;
+                while (MRCA != focalTree.getRoot()) {
+                    edges++;
+                    branchLengths += focalTree.getNodeHeight(focalTree.getParent(MRCA)) - focalTree.getNodeHeight(MRCA);
+                    MRCA = focalTree.getParent(MRCA);
+                }
+                focalSmallM[index] = edges;
+                focalLargeM[index] = branchLengths;
+                index++;
+            }
+        }
+
+        //fill out arrays further
+        index = 0;
+        for (int i = (focalTree.getExternalNodeCount()-1)*(focalTree.getExternalNodeCount()-2); i < dim; i++) {
+            focalSmallM[i] = 1.0;
+            focalLargeM[i] = focalTree.getNodeHeight(focalTree.getParent(focalTree.getExternalNode(index))) - focalTree.getNodeHeight(focalTree.getExternalNode(index));
+            index++;
+        }
+    }
+
+    public ArrayList<Double> getMetric(Tree tree, ArrayList<Double> lambda) {
+
+        //check if taxon lists are in the same order!!
+        if (focalTree.getExternalNodeCount() != tree.getExternalNodeCount()) {
+            throw new RuntimeException("Different number of taxa in both trees.");
+        } else {
+            for (int i = 0; i < focalTree.getExternalNodeCount(); i++) {
+                if (!focalTree.getNodeTaxon(focalTree.getExternalNode(i)).getId().equals(tree.getNodeTaxon(tree.getExternalNode(i)).getId())) {
+                    throw new RuntimeException("Mismatch between taxa in both trees: " + focalTree.getNodeTaxon(focalTree.getExternalNode(i)).getId() + " vs. " + tree.getNodeTaxon(tree.getExternalNode(i)).getId());
+                }
+            }
+        }
+
+        double[] smallMTwo = new double[dim];
+        double[] largeMTwo = new double[dim];
+
+        int index = 0;
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            for (int j = i+1; j < tree.getExternalNodeCount(); j++) {
+                //get two leaf nodes
+                NodeRef nodeOne = tree.getExternalNode(i);
+                NodeRef nodeTwo = tree.getExternalNode(j);
+
+                //get common ancestor of 2 leaf nodes
+                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree, nodeOne, nodeTwo);
+
+                int edges = 0;
+                double branchLengths = 0.0;
+                while (MRCA != tree.getRoot()) {
+                    edges++;
+                    branchLengths += tree.getNodeHeight(tree.getParent(MRCA)) - tree.getNodeHeight(MRCA);
+                    MRCA = tree.getParent(MRCA);
+                }
+                smallMTwo[index] = edges;
+                largeMTwo[index] = branchLengths;
+                index++;
+            }
+        }
+
+        //fill out arrays further
+        index = 0;
+        for (int i = (tree.getExternalNodeCount()-1)*(tree.getExternalNodeCount()-2); i < dim; i++) {
+            smallMTwo[i] = 1.0;
+            largeMTwo[i] = tree.getNodeHeight(tree.getParent(tree.getExternalNode(index))) - tree.getNodeHeight(tree.getExternalNode(index));
+            index++;
+        }
+
+        double[] vArrayOne = new double[dim];
+        double[] vArrayTwo = new double[dim];
+
+        ArrayList<Double> results = new ArrayList<Double>();
+
+        for (Double l : lambda) {
+            double distance = 0.0;
+            //calculate Euclidean distance for this lambda value
+            for (int i = 0; i < dim; i++) {
+                vArrayOne[i] = (1.0 - l)*focalSmallM[i] + l*focalLargeM[i];
+                vArrayTwo[i] = (1.0 - l)*smallMTwo[i] + l*largeMTwo[i];
+                distance += Math.pow(vArrayOne[i] - vArrayTwo[i],2);
+            }
+            distance = Math.sqrt(distance);
+            results.add(distance);
+        }
+
+        return results;
+
+    }
+
+    /**
+     * This method bypasses the constructor entirely, computing the metric on the two provided trees
+     * and ignoring the internally stored tree.
+     * @param tree1 Focal tree that will be used for computing the metric
+     * @param tree2 Provided tree that will be compared to the focal tree
+     * @param lambda Collection of lambda values for which to compute the metric
+     * @return
+     */
     public ArrayList<Double> getMetric(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
 
         int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1)+tree1.getExternalNodeCount();
@@ -181,6 +299,16 @@ public class KCPathDifferenceMetric {
             System.out.println("lambda (0.0) = " + metric.get(0));
             System.out.println("lambda (0.5) = " + metric.get(1));
             System.out.println("lambda (1.0) = " + metric.get(2));
+
+
+            //Additional test for comparing a collection of trees against a (fixed) focal tree
+            KCPathDifferenceMetric focalMetric = new KCPathDifferenceMetric(treeOne);
+            metric = focalMetric.getMetric(treeTwo, lambdaValues);
+
+            System.out.println("lambda (0.0) = " + metric.get(0));
+            System.out.println("lambda (0.5) = " + metric.get(1));
+            System.out.println("lambda (1.0) = " + metric.get(2));
+
 
         } catch(Importer.ImportException ie) {
             System.err.println(ie);

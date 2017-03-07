@@ -282,6 +282,14 @@ public class KCPathDifferenceMetric {
         return results;
     }
 
+    /**
+     * This method bypasses the constructor entirely, computing the metric on the two provided trees
+     * and ignoring the internally stored tree.
+     * @param tree1 Focal tree that will be used for computing the metric
+     * @param tree2 Provided tree that will be compared to the focal tree
+     * @param lambda Collection of lambda values for which to compute the metric
+     * @return
+     */
     public ArrayList<Double> getMetric(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
 
         checkTreeTaxa(tree1, tree2);
@@ -427,7 +435,6 @@ public class KCPathDifferenceMetric {
             System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
             System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
 
-
             //Additional test for comparing a collection of trees against a (fixed) focal tree
             KCPathDifferenceMetric focalMetric = new KCPathDifferenceMetric(treeOne);
             metric = focalMetric.getMetric(treeTwo, lambdaValues);
@@ -436,6 +443,17 @@ public class KCPathDifferenceMetric {
             System.out.println("lambda (0.5) = " + metric.get(1));
             System.out.println("lambda (1.0) = " + metric.get(2));
 
+            long startTime = System.currentTimeMillis();
+            for (int i = 0; i < 1000000; i++) {
+                 new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);
+            }
+            System.out.println("Old algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
+
+            startTime = System.currentTimeMillis();
+            for (int i = 0; i < 1000000; i++) {
+                new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues);
+            }
+            System.out.println("New algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
 
         } catch(Importer.ImportException ie) {
             System.err.println(ie);

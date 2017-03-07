@@ -873,6 +873,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null, true);
 
+        if (DEBUG) {
+            System.out.println("operationCount = " + operationCount[operationListCount]);
+        }
+
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             substitutionModelDelegate.updateSubstitutionModels(beagle);
 

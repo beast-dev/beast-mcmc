@@ -192,12 +192,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             partialBufferHelper = new BufferIndexHelper[partitionCount];
             scaleBufferHelper = new BufferIndexHelper[partitionCount];
+            categoryRateBufferHelper = new BufferIndexHelper[partitionCount];
             for (int i = 0; i < partitionCount; i++) {
                 // one partials buffer for each tip and two for each internal node (for store restore)
                 partialBufferHelper[i] = new BufferIndexHelper(nodeCount, tipCount);
 
                 // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
                 scaleBufferHelper[i] = new BufferIndexHelper(getScaleBufferCount(), 0);
+
+                categoryRateBufferHelper[i] = new BufferIndexHelper(1, 0);
             }
 
             int eigenBufferCount = 0;
@@ -707,7 +710,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         for (SiteRateModel siteRateModel : siteRateModels) {
             if (updateSiteRateModels[k]) {
                 double[] categoryRates = siteRateModel.getCategoryRates();
-                beagle.setCategoryRatesWithIndex(k, categoryRates);
+
+                if (flip[k]) {
+                    categoryRateBufferHelper[k].flipOffset(0);
+                }
+
+                beagle.setCategoryRatesWithIndex(categoryRateBufferHelper[k].getOffsetIndex(0), categoryRates);
                 updatePartition[k] = true;
                 if (DEBUG) {
                     System.out.println("updateSiteRateModels, updatePartition["+k+"] = " + updatePartition[k]);
@@ -743,7 +751,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
                     for (int i = 0; i < branchUpdateCount; i++) {
                         eigenDecompositionIndices[op] = evolutionaryProcessDelegate.getEigenIndex(0);
-                        categoryRateIndices[op] = partition % siteRateModels.size();
+                        categoryRateIndices[op] = categoryRateBufferHelper[partition].getOffsetIndex(0);
                         probabilityIndices[op] = evolutionaryProcessDelegate.getMatrixIndex(branchUpdateIndices[i]);
                         edgeLengths[op] = branchLengths[i];
                         op++;
@@ -771,12 +779,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
                 if (flip[i]) {
                     // Flip all the buffers to be written to first...
+
                     for (NodeOperation op : nodeOperations) {
                         partialBufferHelper[i].flipOffset(op.getNodeNumber());
                     }
                 }
             }
         }
+
+if (DEBUG) {
+    int[] debugOperationCount = new int[partitionCount];
+}
 
         int operationCount = 0;
         k = 0;
@@ -848,12 +861,26 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     //TODO: we don't know the cumulateScaleBufferIndex here yet (see below)
                     operations[k + 8] = Beagle.NONE;
 
+                    if (DEBUG) {
+                        if (k == 0 || (k == Beagle.PARTITION_OPERATION_TUPLE_SIZE)) {
+                            System.out.println("write = " + writeScale[i] + "; read = " + readScale[i] + "; parent = " + operations[k] + ", k = " + k + ", i = " + i);
+                        }
+
+                        debugOperationCount[i]++;
+                    }
+
                     k += Beagle.PARTITION_OPERATION_TUPLE_SIZE;
                     operationCount++;
                 }
 
             }
         }
+
+if (DEBUG) {
+    for (int i = 0; i < partitionCount; i++) {
+        System.out.println("operationCount["+i+"] = " + debugOperationCount[i]);
+    }
+}
 
         beagle.updatePartialsByPartition(operations, operationCount);
 
@@ -933,6 +960,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         double logL = sumLogLikelihoods[0];
 
+for (int i = 0; i < partitionCount; i++) {
+    if (updatePartition[i] || updateAllPartitions) {
+        System.out.println(sumLogLikelihoodsByPartition[i]);
+    }
+}
         if (DEBUG) {
             for (int i = 0; i < partitionCount; i++) {
                 System.out.println("partition " + i + ": " + sumLogLikelihoodsByPartition[i] +
@@ -953,6 +985,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
 
             updatePartition[i] = false;
+            recomputeScaleFactors[i] = false;
+
         }
         updateSubstitutionModels(false);
         updateSiteRateModels(false);
@@ -973,20 +1007,21 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             logL = Double.NEGATIVE_INFINITY;
 
             if (firstRescaleAttempt) {
+                if (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED) {
+                    // show a message but only every 1000 rescales
+                    if (rescalingMessageCount % 1000 == 0) {
+                        if (rescalingMessageCount > 0) {
+                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
+                        } else {
+                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                        }
+                    }
+                    rescalingMessageCount += 1;
+
+                }
+
                 for (int i = 0; i < partitionCount; i++) {
                     if (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED) {
-                        if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount[i] == 0)) {
-                            // show a message but only every 1000 rescales
-                            if (rescalingMessageCount % 1000 == 0) {
-                                if (rescalingMessageCount > 0) {
-                                    Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
-                                } else {
-                                    Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
-                                }
-                            }
-                            rescalingMessageCount += 1;
-                        }
-
                         if (Double.isNaN(sumLogLikelihoodsByPartition[i]) || Double.isInfinite(sumLogLikelihoodsByPartition[i])) {
                             useScaleFactors[i] = true;
                             recomputeScaleFactors[i] = true;
@@ -1078,6 +1113,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     public void storeState() {
         for (int i = 0; i < partitionCount; i++) {
             partialBufferHelper[i].storeState();
+            categoryRateBufferHelper[i].storeState();
         }
         for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
             evolutionaryProcessDelegate.storeState();
@@ -1100,10 +1136,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      */
     @Override
     public void restoreState() {
-        updateSiteRateModels(); // this is required to upload the categoryRates to BEAGLE after the restore
 
         for (int i = 0; i < partitionCount; i++) {
             partialBufferHelper[i].restoreState();
+            categoryRateBufferHelper[i].restoreState();
         }
         for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
             evolutionaryProcessDelegate.restoreState();
@@ -1170,6 +1206,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private boolean[] flip;
     private BufferIndexHelper[] partialBufferHelper;
     private BufferIndexHelper[] scaleBufferHelper;
+    private BufferIndexHelper[] categoryRateBufferHelper;
 
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;

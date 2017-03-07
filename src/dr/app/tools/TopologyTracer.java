@@ -49,6 +49,8 @@ public class TopologyTracer {
 
     private final static Version version = new BeastVersion();
 
+    private final static boolean PROFILE = true;
+
     private static final String STATE = "state";
     private static final String RFDISTANCE = "RFdistance (pseudo)";
     private static final String BILLERA_METRIC = "BilleraMetric";
@@ -63,6 +65,8 @@ public class TopologyTracer {
     public TopologyTracer(int burnin, String treeFile, String outputFile, ArrayList<Double> lambdaValues) {
 
         try {
+
+            long startTime = System.currentTimeMillis();
 
             progressStream.println("Reading & processing trees ...");
 
@@ -100,13 +104,17 @@ public class TopologyTracer {
             billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
             cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
             branchScoreMetric.add(new BranchScoreMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(focalTree)));
-            pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, focalTree));
+            SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
+            pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
             ArrayList<Double> allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, focalTree, lambdaValues));
             for (int i = 0; i < allKCMetrics.size(); i++) {
                 kcMetrics.get(i).add(allKCMetrics.get(i));
             }
 
             int numberOfTrees = 1;
+
+            long[] timings = new long[6];
+            long beforeTime, afterTime;
 
             while (importer.hasTree()) {
 
@@ -116,15 +124,39 @@ public class TopologyTracer {
                 treeStates.add(Long.parseLong(tree.getId().split("_")[1]));
 
                 //TODO Does the BEAST/JEBL code report half the RF distance?
+                beforeTime = System.currentTimeMillis();
                 jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+                afterTime = System.currentTimeMillis();
+                timings[0] += afterTime - beforeTime;
+
+                beforeTime = System.currentTimeMillis();
                 billeraMetric.add(new BilleraMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+                afterTime = System.currentTimeMillis();
+                timings[1] += afterTime - beforeTime;
+
+                beforeTime = System.currentTimeMillis();
                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
+                afterTime = System.currentTimeMillis();
+                timings[2] += afterTime - beforeTime;
+
+                beforeTime = System.currentTimeMillis();
                 branchScoreMetric.add(new BranchScoreMetric().getMetric(Tree.Utils.asJeblTree(focalTree), Tree.Utils.asJeblTree(tree)));
-                pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, tree));
+                afterTime = System.currentTimeMillis();
+                timings[3] += afterTime - beforeTime;
+
+                beforeTime = System.currentTimeMillis();
+                //pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, tree));
+                pathDifferenceMetric.add(SPPathFocal.getMetric(tree));
+                afterTime = System.currentTimeMillis();
+                timings[4] += afterTime - beforeTime;
+
+                beforeTime = System.currentTimeMillis();
                 allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
                 for (int i = 0; i < allKCMetrics.size(); i++) {
                     kcMetrics.get(i).add(allKCMetrics.get(i));
                 }
+                afterTime = System.currentTimeMillis();
+                timings[5] += afterTime - beforeTime;
 
                 //TODO Last tree is not being processed?
                 //System.out.println(tree.getId());
@@ -163,6 +195,20 @@ public class TopologyTracer {
             }
 
             progressStream.println("Done.");
+
+            long endTime = System.currentTimeMillis();
+
+            progressStream.println("\nAnalyzed " + treeStates.size() + " trees, took " + (endTime-startTime)/1000.0 + " seconds.\n");
+
+            if (PROFILE) {
+                progressStream.println("RF distance calculation took " + timings[0]/1000.0 + " seconds.");
+                progressStream.println("Billera metric calculation took " + timings[1]/1000.0 + " seconds.");
+                progressStream.println("Clade height metric calculation took " + timings[2]/1000.0 + " seconds.");
+                progressStream.println("Branch score metric calculation took " + timings[3]/1000.0 + " seconds.");
+                progressStream.println("Path difference metric (Steel & Penny, 1993) took " + timings[4]/1000.0 + " seconds.");
+                progressStream.println("Path difference metric (Kendall & Colijn, 2015) took " + timings[5]/1000.0 + " seconds.");
+            }
+
             progressStream.flush();
             progressStream.close();
 

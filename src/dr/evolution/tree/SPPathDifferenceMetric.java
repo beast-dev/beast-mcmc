@@ -59,17 +59,21 @@ public class SPPathDifferenceMetric {
                 //get common ancestor of 2 leaf nodes
                 NodeRef MRCA = TreeUtils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
 
-                double pathLength = 0.0;
-                while (nodeOne != MRCA) {
-                    pathLength += focalTree.getNodeHeight(focalTree.getParent(nodeOne)) - focalTree.getNodeHeight(nodeOne);
-                    nodeOne = focalTree.getParent(nodeOne);
-                }
-                while (nodeTwo != MRCA) {
-                    pathLength += focalTree.getNodeHeight(focalTree.getParent(nodeTwo)) - focalTree.getNodeHeight(nodeTwo);
-                    nodeTwo = focalTree.getParent(nodeTwo);
-                }
+//                double pathLength = 0.0;
+//                while (nodeOne != MRCA) {
+//                    pathLength += focalTree.getNodeHeight(focalTree.getParent(nodeOne)) - focalTree.getNodeHeight(nodeOne);
+//                    nodeOne = focalTree.getParent(nodeOne);
+//                }
+//                while (nodeTwo != MRCA) {
+//                    pathLength += focalTree.getNodeHeight(focalTree.getParent(nodeTwo)) - focalTree.getNodeHeight(nodeTwo);
+//                    nodeTwo = focalTree.getParent(nodeTwo);
+//                }
+//
+//                focalPath[index] = pathLength;
 
-                focalPath[index] = pathLength;
+                focalPath[index] = focalTree.getNodeHeight(MRCA) * 2
+                        - focalTree.getNodeHeight(nodeOne)
+                        - focalTree.getNodeHeight(nodeTwo);
                 index++;
             }
         }
@@ -101,17 +105,21 @@ public class SPPathDifferenceMetric {
                 //get common ancestor of 2 leaf nodes
                 NodeRef MRCA = TreeUtils.getCommonAncestor(tree, nodeOne, nodeTwo);
 
-                double pathLength = 0.0;
-                while (nodeOne != MRCA) {
-                    pathLength += tree.getNodeHeight(tree.getParent(nodeOne)) - tree.getNodeHeight(nodeOne);
-                    nodeOne = tree.getParent(nodeOne);
-                }
-                while (nodeTwo != MRCA) {
-                    pathLength += tree.getNodeHeight(tree.getParent(nodeTwo)) - tree.getNodeHeight(nodeTwo);
-                    nodeTwo = tree.getParent(nodeTwo);
-                }
+//                double pathLength = 0.0;
+//                while (nodeOne != MRCA) {
+//                    pathLength += tree.getNodeHeight(tree.getParent(nodeOne)) - tree.getNodeHeight(nodeOne);
+//                    nodeOne = tree.getParent(nodeOne);
+//                }
+//                while (nodeTwo != MRCA) {
+//                    pathLength += tree.getNodeHeight(tree.getParent(nodeTwo)) - tree.getNodeHeight(nodeTwo);
+//                    nodeTwo = tree.getParent(nodeTwo);
+//                }
+//
+//                pathTwo[index] = pathLength;
 
-                pathTwo[index] = pathLength;
+                pathTwo[index] = tree.getNodeHeight(MRCA) * 2
+                        - tree.getNodeHeight(nodeOne)
+                        - tree.getNodeHeight(nodeTwo);
                 index++;
             }
         }
@@ -161,17 +169,21 @@ public class SPPathDifferenceMetric {
                 //get common ancestor of 2 leaf nodes
                 NodeRef MRCA = TreeUtils.getCommonAncestor(tree1, nodeOne, nodeTwo);
 
-                double pathLength = 0.0;
-                while (nodeOne != MRCA) {
-                    pathLength += tree1.getNodeHeight(tree1.getParent(nodeOne)) - tree1.getNodeHeight(nodeOne);
-                    nodeOne = tree1.getParent(nodeOne);
-                }
-                while (nodeTwo != MRCA) {
-                    pathLength += tree1.getNodeHeight(tree1.getParent(nodeTwo)) - tree1.getNodeHeight(nodeTwo);
-                    nodeTwo = tree1.getParent(nodeTwo);
-                }
+//                double pathLength = 0.0;
+//                while (nodeOne != MRCA) {
+//                    pathLength += tree1.getNodeHeight(tree1.getParent(nodeOne)) - tree1.getNodeHeight(nodeOne);
+//                    nodeOne = tree1.getParent(nodeOne);
+//                }
+//                while (nodeTwo != MRCA) {
+//                    pathLength += tree1.getNodeHeight(tree1.getParent(nodeTwo)) - tree1.getNodeHeight(nodeTwo);
+//                    nodeTwo = tree1.getParent(nodeTwo);
+//                }
+//
+//                pathOne[index] = pathLength;
 
-                pathOne[index] = pathLength;
+                pathOne[index] = tree1.getNodeHeight(MRCA) * 2
+                        - tree1.getNodeHeight(nodeOne)
+                        - tree1.getNodeHeight(nodeTwo);
                 index++;
             }
         }
@@ -191,17 +203,20 @@ public class SPPathDifferenceMetric {
                 //get common ancestor of 2 leaf nodes
                 NodeRef MRCA = TreeUtils.getCommonAncestor(tree2, nodeOne, nodeTwo);
 
-                double pathLength = 0.0;
-                while (nodeOne != MRCA) {
-                    pathLength += tree2.getNodeHeight(tree2.getParent(nodeOne)) - tree2.getNodeHeight(nodeOne);
-                    nodeOne = tree2.getParent(nodeOne);
-                }
-                while (nodeTwo != MRCA) {
-                    pathLength += tree2.getNodeHeight(tree2.getParent(nodeTwo)) - tree2.getNodeHeight(nodeTwo);
-                    nodeTwo = tree2.getParent(nodeTwo);
-                }
+                pathTwo[index] = tree2.getNodeHeight(MRCA) * 2
+                        - tree2.getNodeHeight(nodeOne)
+                        - tree2.getNodeHeight(nodeTwo);
+//                while (nodeOne != MRCA) {
+//                    pathLength += tree2.getNodeHeight(tree2.getParent(nodeOne)) - tree2.getNodeHeight(nodeOne);
+//                    nodeOne = tree2.getParent(nodeOne);
+//                }
+//                while (nodeTwo != MRCA) {
+//                    pathLength += tree2.getNodeHeight(tree2.getParent(nodeTwo)) - tree2.getNodeHeight(nodeTwo);
+//                    nodeTwo = tree2.getParent(nodeTwo);
+//                }
+//
+//                pathTwo[index] = pathLength;
 
-                pathTwo[index] = pathLength;
                 index++;
             }
         }

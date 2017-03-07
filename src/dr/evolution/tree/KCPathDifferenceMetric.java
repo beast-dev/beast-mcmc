@@ -27,9 +27,10 @@ package dr.evolution.tree;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
+import dr.util.Pair;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author Guy Baele
@@ -279,6 +280,153 @@ public class KCPathDifferenceMetric {
 
         return results;
     }
+
+    public ArrayList<Double> getMetric2(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
+
+        int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1)+tree1.getExternalNodeCount();
+
+        double[] smallMOne = new double[dim];
+        double[] largeMOne = new double[dim];
+        double[] smallMTwo = new double[dim];
+        double[] largeMTwo = new double[dim];
+
+        //check if taxon lists are in the same order!!
+        if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
+            throw new RuntimeException("Different number of taxa in both trees.");
+        } else {
+            for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
+                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
+                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
+                }
+            }
+        }
+
+        Map<NodeRef, Integer> permutationMap = new HashMap<NodeRef, Integer>();
+        traverse(tree1, tree1.getRoot(), permutationMap);
+
+        int index = 0;
+
+        for (int i = 0; i < tree1.getInternalNodeCount(); i++) {
+            NodeRef MRCA = tree1.getInternalNode(i);
+            int permutations = permutationMap.get(MRCA);
+
+            int edges = 0;
+            double branchLengths = 0.0;
+            while (MRCA != tree1.getRoot()) {
+                edges++;
+                branchLengths += tree1.getNodeHeight(tree1.getParent(MRCA)) - tree1.getNodeHeight(MRCA);
+                MRCA = tree1.getParent(MRCA);
+            }
+            for (int j = 0; j < permutations; j++) {
+                smallMOne[index] = edges;
+                largeMOne[index] = branchLengths;
+                index++;
+            }
+        }
+
+        //fill out arrays further
+        index = 0;
+        for (int i = (tree1.getExternalNodeCount()-1)*(tree1.getExternalNodeCount()-2); i < dim; i++) {
+            smallMOne[i] = 1.0;
+            largeMOne[i] = tree1.getNodeHeight(tree1.getParent(tree1.getExternalNode(index))) - tree1.getNodeHeight(tree1.getExternalNode(index));
+            index++;
+        }
+
+        /*for (int i = 0; i < smallMOne.length; i++) {
+            System.out.print(smallMOne[i] + " ");
+        }
+        System.out.println();
+        for (int i = 0; i < largeMOne.length; i++) {
+            System.out.print(largeMOne[i] + " ");
+        }
+        System.out.println("\n");*/
+
+        permutationMap.clear();
+        traverse(tree2, tree2.getRoot(), permutationMap);
+
+        index = 0;
+
+        for (int i = 0; i < tree2.getInternalNodeCount(); i++) {
+            NodeRef MRCA = tree2.getInternalNode(i);
+            int permutations = permutationMap.get(MRCA);
+
+            int edges = 0;
+            double branchLengths = 0.0;
+            while (MRCA != tree2.getRoot()) {
+                edges++;
+                branchLengths += tree2.getNodeHeight(tree2.getParent(MRCA)) - tree2.getNodeHeight(MRCA);
+                MRCA = tree2.getParent(MRCA);
+            }
+            for (int j = 0; j < permutations; j++) {
+                smallMOne[index] = edges;
+                largeMOne[index] = branchLengths;
+                index++;
+            }
+        }
+
+
+        //fill out arrays further
+        index = 0;
+        for (int i = (tree2.getExternalNodeCount()-1)*(tree2.getExternalNodeCount()-2); i < dim; i++) {
+            smallMTwo[i] = 1.0;
+            largeMTwo[i] = tree2.getNodeHeight(tree2.getParent(tree2.getExternalNode(index))) - tree2.getNodeHeight(tree2.getExternalNode(index));
+            index++;
+        }
+
+        /*for (int i = 0; i < smallMTwo.length; i++) {
+            System.out.print(smallMTwo[i] + " ");
+        }
+        System.out.println();
+        for (int i = 0; i < largeMTwo.length; i++) {
+            System.out.print(largeMTwo[i] + " ");
+        }
+        System.out.println("\n");*/
+
+        double[] vArrayOne = new double[dim];
+        double[] vArrayTwo = new double[dim];
+
+        ArrayList<Double> results = new ArrayList<Double>();
+
+        for (Double l : lambda) {
+            double distance = 0.0;
+            //calculate Euclidean distance for this lambda value
+            for (int i = 0; i < dim; i++) {
+                vArrayOne[i] = (1.0 - l)*smallMOne[i] + l*largeMOne[i];
+                vArrayTwo[i] = (1.0 - l)*smallMTwo[i] + l*largeMTwo[i];
+                distance += Math.pow(vArrayOne[i] - vArrayTwo[i],2);
+            }
+            distance = Math.sqrt(distance);
+            results.add(distance);
+        }
+
+        return results;
+    }
+    private int[] traverse(Tree tree, NodeRef node, Map<NodeRef, Integer> permutationMap) {
+        NodeRef left = tree.getChild(node, 0);
+        NodeRef right = tree.getChild(node, 1);
+
+        int[] counts = new int[2];
+
+        if (tree.isExternal(left)) {
+            int[] leftCounts = traverse(tree, left, permutationMap);
+            counts[0] += leftCounts[0] + leftCounts[1];
+        } else {
+            counts[0] = 1;
+        }
+        if (tree.isExternal(right)) {
+            int[] rightCounts = traverse(tree, right, permutationMap);
+            counts[1] += rightCounts[0] + rightCounts[1];
+        } else {
+            counts[1] = 1;
+        }
+
+        int permutations = (counts[0] - 1) * counts[1] / 2;
+
+        permutationMap.put(node, permutations);
+
+        return counts;
+    }
+
 
     public static void main(String[] args) {
 

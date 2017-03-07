@@ -369,13 +369,13 @@ public class KCPathDifferenceMetric {
 
         int[] counts = new int[2];
 
-        if (tree.isExternal(left)) {
+        if (!tree.isExternal(left)) {
             int[] leftCounts = traverse(tree, left, permutationMap);
             counts[0] += leftCounts[0] + leftCounts[1];
         } else {
             counts[0] = 1;
         }
-        if (tree.isExternal(right)) {
+        if (!tree.isExternal(right)) {
             int[] rightCounts = traverse(tree, right, permutationMap);
             counts[1] += rightCounts[0] + rightCounts[1];
         } else {

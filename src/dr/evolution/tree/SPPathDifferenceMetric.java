@@ -27,10 +27,7 @@ package dr.evolution.tree;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
-import jebl.evolution.trees.RootedTree;
-
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * @author Guy Baele
@@ -38,7 +35,93 @@ import java.util.ArrayList;
  */
 public class SPPathDifferenceMetric {
 
+    private Tree focalTree;
+    private int dim;
+    private double[] focalPath;
+
     public SPPathDifferenceMetric() {
+
+    }
+
+    public SPPathDifferenceMetric(Tree focalTree) {
+        this.focalTree = focalTree;
+        this.dim = (focalTree.getExternalNodeCount()-2)*(focalTree.getExternalNodeCount()-1);
+        this.focalPath = new double[dim];
+
+        int index = 0;
+        for (int i = 0; i < focalTree.getExternalNodeCount(); i++) {
+            for (int j = i+1; j < focalTree.getExternalNodeCount(); j++) {
+                //get two leaf nodes
+                NodeRef nodeOne = focalTree.getExternalNode(i);
+                NodeRef nodeTwo = focalTree.getExternalNode(j);
+
+                //get common ancestor of 2 leaf nodes
+                NodeRef MRCA = Tree.Utils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
+
+                double pathLength = 0.0;
+                while (nodeOne != MRCA) {
+                    pathLength += focalTree.getNodeHeight(focalTree.getParent(nodeOne)) - focalTree.getNodeHeight(nodeOne);
+                    nodeOne = focalTree.getParent(nodeOne);
+                }
+                while (nodeTwo != MRCA) {
+                    pathLength += focalTree.getNodeHeight(focalTree.getParent(nodeTwo)) - focalTree.getNodeHeight(nodeTwo);
+                    nodeTwo = focalTree.getParent(nodeTwo);
+                }
+
+                focalPath[index] = pathLength;
+                index++;
+            }
+        }
+
+    }
+
+    public double getMetric(Tree tree) {
+
+        //check if taxon lists are in the same order!!
+        if (focalTree.getExternalNodeCount() != tree.getExternalNodeCount()) {
+            throw new RuntimeException("Different number of taxa in both trees.");
+        } else {
+            for (int i = 0; i < focalTree.getExternalNodeCount(); i++) {
+                if (!focalTree.getNodeTaxon(focalTree.getExternalNode(i)).getId().equals(tree.getNodeTaxon(tree.getExternalNode(i)).getId())) {
+                    throw new RuntimeException("Mismatch between taxa in both trees: " + focalTree.getNodeTaxon(focalTree.getExternalNode(i)).getId() + " vs. " + tree.getNodeTaxon(tree.getExternalNode(i)).getId());
+                }
+            }
+        }
+
+        double[] pathTwo = new double[dim];
+
+        int index = 0;
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            for (int j = i+1; j < tree.getExternalNodeCount(); j++) {
+                //get two leaf nodes
+                NodeRef nodeOne = tree.getExternalNode(i);
+                NodeRef nodeTwo = tree.getExternalNode(j);
+
+                //get common ancestor of 2 leaf nodes
+                NodeRef MRCA = Tree.Utils.getCommonAncestor(tree, nodeOne, nodeTwo);
+
+                double pathLength = 0.0;
+                while (nodeOne != MRCA) {
+                    pathLength += tree.getNodeHeight(tree.getParent(nodeOne)) - tree.getNodeHeight(nodeOne);
+                    nodeOne = tree.getParent(nodeOne);
+                }
+                while (nodeTwo != MRCA) {
+                    pathLength += tree.getNodeHeight(tree.getParent(nodeTwo)) - tree.getNodeHeight(nodeTwo);
+                    nodeTwo = tree.getParent(nodeTwo);
+                }
+
+                pathTwo[index] = pathLength;
+                index++;
+            }
+        }
+
+        double metric = 0.0;
+        for (int i = 0; i < dim; i++) {
+            metric += Math.pow(focalPath[i] - pathTwo[i],2);
+        }
+        metric = Math.sqrt(metric);
+
+        return metric;
 
     }
 
@@ -132,6 +215,7 @@ public class SPPathDifferenceMetric {
     public static void main(String[] args) {
 
         try {
+
             NewickImporter importer = new NewickImporter("(('A':1.2,'B':0.8):0.5,('C':0.8,'D':1.0):1.1)");
             Tree treeOne = importer.importNextTree();
             System.out.println("tree 1: " + treeOne);
@@ -141,6 +225,13 @@ public class SPPathDifferenceMetric {
             System.out.println("tree 2: " + treeTwo + "\n");
 
             double metric = (new SPPathDifferenceMetric().getMetric(treeOne, treeTwo));
+
+            System.out.println("path difference = " + metric);
+
+
+            //Additional test for comparing a collection of trees against a (fixed) focal tree
+            SPPathDifferenceMetric fixed = new SPPathDifferenceMetric(treeOne);
+            metric = fixed.getMetric(treeTwo);
 
             System.out.println("path difference = " + metric);
 

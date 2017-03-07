@@ -294,7 +294,7 @@ public class KCPathDifferenceMetric {
         double[] largeMTwo = new double[dim];
 
         processTree(tree1, smallMOne, largeMOne, dim);
-        processTree(tree1, smallMTwo, largeMTwo, dim);
+        processTree(tree2, smallMTwo, largeMTwo, dim);
 
         double[] vArrayOne = new double[dim];
         double[] vArrayTwo = new double[dim];

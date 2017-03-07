@@ -331,23 +331,6 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-//    public Trace<?> assignTraceType(String name, int numberOfLines) {
-//        Trace<?> trace = null;
-//        if (tracesType != null) {
-//            if (tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
-//                trace = new DiscreteTrace(name, numberOfLines);
-////                trace.setTraceType(TraceType.INTEGER);
-//            } else if (tracesType.get(name) == TraceFactory.TraceType.STRING) {
-//                trace = new CategoryTrace(name, numberOfLines);
-////                trace.setTraceType(TraceType.STRING);
-//            }
-//        } else {
-//            trace = new ContinuousTrace(name, numberOfLines); // default DOUBLE
-//        }
-//        return trace;
-//    }
-
-
     //************************************************************************
     // private methods
     //************************************************************************
@@ -493,35 +476,5 @@ public class LogFileTraces extends AbstractTraceList {
         private int lineNumber = 0;
     }
 
-//    public class D extends LogFileTraces implements TraceList.D {
-//
-//        public D(String name, File file) {
-//            super(name, file);
-//        }
-//
-//        public Double[] getValues(int index, int length) {
-//            return this.getValues(index, length, 0);
-//        }
-//
-//        public Double[] getValues(int index, int length, int offset) {
-//            Double[] destination = null;
-//            try {
-//                destination = ((Trace.D) getTrace(index)).getValues(length, getBurninStateCount(), offset, selected);
-//            } catch (Exception e) {
-//                System.err.println("getValues error: trace index = " + index);
-//            }
-//            return destination;
-//        }
-//
-//        public Double[] getBurninValues(int index, int length) {
-//            Double[] destination = null;
-//            try {
-//                destination = (Double[]) getTrace(index).getValues(length, 0, 0, getBurninStateCount(), selected);
-//            } catch (Exception e) {
-//                System.err.println("getValues error: trace index = " + index);
-//            }
-//            return destination;
-//        }
-//    }
 }
 

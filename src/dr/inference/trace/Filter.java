@@ -36,19 +36,19 @@ public class Filter {
 
     public Filter(String[] in, TraceType traceType) {
         if (traceType.isNumber() && in.length != 2)
-            throw new IllegalArgumentException("Double or integer filter should have 2 bounds ! trace type = " + traceType);
+            throw new IllegalArgumentException("Numeric filter must have both lower and upper ! trace type = " + traceType);
         setIn(in);
         this.traceType = traceType;
     }
 
     public boolean isIn(Object value) {
-        if (traceType.isNumber()) {
-            // double or integer
+        if (traceType==TraceType.REAL) {
+            // ClassCastException, casting Integer to Double
             return ( (Double)value >= Double.parseDouble(in[0]) && (Double)value <= Double.parseDouble(in[1]));
-         }
-//        else if (traceType == TraceFactory.TraceType.INTEGER) {
-//            return ( (Integer)value >= Integer.parseInt(in[0]) && (Integer)value <= Integer.parseInt(in[1]));
-//        }
+         } else if (traceType==TraceType.ORDINAL) {
+            return ( (Integer)value >= Integer.parseInt(in[0]) && (Integer)value <= Integer.parseInt(in[1]));
+        }
+        // String
         for (Object t : in) {
             if (t.toString().equals(value.toString())) {
                 return true;

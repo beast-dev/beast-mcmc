@@ -62,7 +62,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
             for (int i = 0; i < values.size(); i++) {
                 doubleValues[i] = ((Number) values.get(i)).doubleValue();
             }
-            analyseCorrelationContinuous(doubleValues, stepSize);
+            analyseCorrelationNumeric(doubleValues, stepSize);
 
         } else if (getTraceType() == TraceType.CATEGORICAL) {
             //todo Do not know how to calculate
@@ -82,7 +82,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
      * @param values   the values
      * @param stepSize the sampling frequency of the values
      */
-    private void analyseCorrelationContinuous(double[] values, int stepSize) {
+    private void analyseCorrelationNumeric(double[] values, int stepSize) {
 
         final int samples = values.length;
         int maxLag = Math.min(samples - 1, MAX_LAG);

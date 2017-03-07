@@ -49,11 +49,12 @@ public class KCPathDifferenceMetric {
     public KCPathDifferenceMetric(Tree focalTree) {
         this.focalTree = focalTree;
         this.externalNodeCount = focalTree.getExternalNodeCount();
-        this.dim = (externalNodeCount-2)*(externalNodeCount-1)+externalNodeCount;
+        //this.dim = (externalNodeCount-2)*(externalNodeCount-1)+externalNodeCount;
+        this.dim = externalNodeCount * externalNodeCount;
         this.focalSmallM = new double[dim];
         this.focalLargeM = new double[dim];
 
-        processTree(focalTree, focalSmallM, focalLargeM, dim);
+        traverse(focalTree, focalTree.getRoot(), 0.0, 0, focalLargeM, focalSmallM);
     }
 
     public ArrayList<Double> getMetric_old(Tree tree, ArrayList<Double> lambda) {
@@ -131,7 +132,7 @@ public class KCPathDifferenceMetric {
         double[] smallMTwo = new double[dim];
         double[] largeMTwo = new double[dim];
 
-        processTree(tree, smallMTwo, largeMTwo, dim);
+        traverse(tree, tree.getRoot(), 0.0, 0, largeMTwo, smallMTwo);
 
         double[] vArrayOne = new double[dim];
         double[] vArrayTwo = new double[dim];
@@ -294,15 +295,16 @@ public class KCPathDifferenceMetric {
 
         checkTreeTaxa(tree1, tree2);
 
-        int dim = (tree1.getExternalNodeCount() - 2) * (tree1.getExternalNodeCount() - 1) + tree1.getExternalNodeCount();
+//        int dim = (tree1.getExternalNodeCount() - 2) * (tree1.getExternalNodeCount() - 1) + tree1.getExternalNodeCount();
+        int dim = tree1.getExternalNodeCount() * tree1.getExternalNodeCount();
 
         double[] smallMOne = new double[dim];
         double[] largeMOne = new double[dim];
         double[] smallMTwo = new double[dim];
         double[] largeMTwo = new double[dim];
 
-        processTree(tree1, smallMOne, largeMOne, dim);
-        processTree(tree2, smallMTwo, largeMTwo, dim);
+        traverse(tree1, tree1.getRoot(), 0.0, 0, largeMOne, smallMOne);
+        traverse(tree2, tree2.getRoot(), 0.0, 0, largeMTwo, smallMTwo);
 
         double[] vArrayOne = new double[dim];
         double[] vArrayTwo = new double[dim];
@@ -324,25 +326,6 @@ public class KCPathDifferenceMetric {
         return results;
     }
 
-    private void processTree(Tree tree, double[] smallM, double[] largeM, int dim) {
-
-        double[][] lengths = new double[tree.getExternalNodeCount()][tree.getExternalNodeCount()];
-        int[][] edges = new int[tree.getExternalNodeCount()][tree.getExternalNodeCount()];
-
-        traverse(tree, tree.getRoot(), 0.0, 0, lengths, edges);
-
-        int index = 0;
-
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            for (int j = i; j < tree.getExternalNodeCount(); j++) {
-                // should work directly from 2d array
-                smallM[index] = edges[i][j];
-                largeM[index] = lengths[i][j];
-                index++;
-            }
-        }
-    }
-
     private void checkTreeTaxa(Tree tree1, Tree tree2) {
         //check if taxon lists are in the same order!!
         if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
@@ -356,7 +339,7 @@ public class KCPathDifferenceMetric {
         }
     }
 
-    private Set<NodeRef> traverse(Tree tree, NodeRef node, double lengthFromRoot, int branchesFromRoot, double[][] lengths, int[][] edges) {
+    private Set<NodeRef> traverse(Tree tree, NodeRef node, double lengthFromRoot, int edgesFromRoot, double[] lengths, double[] edges) {
         NodeRef left = tree.getChild(node, 0);
         NodeRef right = tree.getChild(node, 1);
 
@@ -365,29 +348,33 @@ public class KCPathDifferenceMetric {
         Set<NodeRef> rightSet = null;
 
         if (!tree.isExternal(left)) {
-            leftSet = traverse(tree, left, lengthFromRoot + tree.getBranchLength(left), branchesFromRoot + 1, lengths, edges);
+            leftSet = traverse(tree, left, lengthFromRoot + tree.getBranchLength(left), edgesFromRoot + 1, lengths, edges);
         } else {
             leftSet = Collections.singleton(left);
-            lengths[left.getNumber()][left.getNumber()] = tree.getBranchLength(left);
-            edges[left.getNumber()][left.getNumber()] = 1;
+            int index = (left.getNumber() * tree.getExternalNodeCount()) + left.getNumber();
+            lengths[index] = tree.getBranchLength(left);
+            edges[index] = 1;
         }
         if (!tree.isExternal(right)) {
-            rightSet = traverse(tree, right, lengthFromRoot + tree.getBranchLength(right), branchesFromRoot + 1, lengths, edges);
+            rightSet = traverse(tree, right, lengthFromRoot + tree.getBranchLength(right), edgesFromRoot + 1, lengths, edges);
         } else {
             rightSet = Collections.singleton(right);
-            lengths[right.getNumber()][right.getNumber()] = tree.getBranchLength(right);
-            edges[right.getNumber()][right.getNumber()] = 1;
+            int index = (right.getNumber() * tree.getExternalNodeCount()) + right.getNumber();
+            lengths[index] = tree.getBranchLength(right);
+            edges[index] = 1;
         }
 
         for (NodeRef tip1 : leftSet) {
             for (NodeRef tip2 : rightSet) {
+                int index;
                 if (tip1.getNumber() < tip2.getNumber()) {
-                    lengths[tip1.getNumber()][tip2.getNumber()] = lengthFromRoot;
-                    edges[tip1.getNumber()][tip2.getNumber()] = branchesFromRoot;
+                    index = (tip1.getNumber() * tree.getExternalNodeCount()) + tip2.getNumber();
                 } else {
-                    lengths[tip2.getNumber()][tip1.getNumber()] = lengthFromRoot;
-                    edges[tip2.getNumber()][tip1.getNumber()] = branchesFromRoot;
+                    index = (tip2.getNumber() * tree.getExternalNodeCount()) + tip1.getNumber();
                 }
+                lengths[index] = lengthFromRoot;
+                edges[index] = edgesFromRoot;
+
             }
         }
 
@@ -441,7 +428,7 @@ public class KCPathDifferenceMetric {
 
             long startTime = System.currentTimeMillis();
             for (int i = 0; i < 1000000; i++) {
-                 new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);
+                new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);
             }
             System.out.println("Old algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
 

@@ -53,39 +53,10 @@ public class KCPathDifferenceMetric {
         this.focalSmallM = new double[dim];
         this.focalLargeM = new double[dim];
 
-        int index = 0;
-        for (int i = 0; i < externalNodeCount; i++) {
-            for (int j = i+1; j < externalNodeCount; j++) {
-                //get two leaf nodes
-                NodeRef nodeOne = focalTree.getExternalNode(i);
-                NodeRef nodeTwo = focalTree.getExternalNode(j);
-
-                //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = TreeUtils.getCommonAncestor(focalTree, nodeOne, nodeTwo);
-
-                int edges = 0;
-                double branchLengths = 0.0;
-                while (MRCA != focalTree.getRoot()) {
-                    edges++;
-                    branchLengths += focalTree.getNodeHeight(focalTree.getParent(MRCA)) - focalTree.getNodeHeight(MRCA);
-                    MRCA = focalTree.getParent(MRCA);
-                }
-                focalSmallM[index] = edges;
-                focalLargeM[index] = branchLengths;
-                index++;
-            }
-        }
-
-        //fill out arrays further
-        index = 0;
-        for (int i = (externalNodeCount-1)*(externalNodeCount-2); i < dim; i++) {
-            focalSmallM[i] = 1.0;
-            focalLargeM[i] = focalTree.getNodeHeight(focalTree.getParent(focalTree.getExternalNode(index))) - focalTree.getNodeHeight(focalTree.getExternalNode(index));
-            index++;
-        }
+        processTree(focalTree, focalSmallM, focalLargeM, dim);
     }
 
-    public ArrayList<Double> getMetric(Tree tree, ArrayList<Double> lambda) {
+    public ArrayList<Double> getMetric_old(Tree tree, ArrayList<Double> lambda) {
 
         //check if taxon lists are in the same order!!
         if (focalTree.getExternalNodeCount() != tree.getExternalNodeCount()) {
@@ -153,6 +124,36 @@ public class KCPathDifferenceMetric {
 
     }
 
+    public ArrayList<Double> getMetric(Tree tree, ArrayList<Double> lambda) {
+
+        checkTreeTaxa(focalTree, tree);
+
+        double[] smallMTwo = new double[dim];
+        double[] largeMTwo = new double[dim];
+
+        processTree(tree, smallMTwo, largeMTwo, dim);
+
+        double[] vArrayOne = new double[dim];
+        double[] vArrayTwo = new double[dim];
+
+        ArrayList<Double> results = new ArrayList<Double>();
+
+        for (Double l : lambda) {
+            double distance = 0.0;
+            //calculate Euclidean distance for this lambda value
+            for (int i = 0; i < dim; i++) {
+                vArrayOne[i] = (1.0 - l)*focalSmallM[i] + l*focalLargeM[i];
+                vArrayTwo[i] = (1.0 - l)*smallMTwo[i] + l*largeMTwo[i];
+                distance += Math.pow(vArrayOne[i] - vArrayTwo[i],2);
+            }
+            distance = Math.sqrt(distance);
+            results.add(distance);
+        }
+
+        return results;
+
+    }
+
     /**
      * This method bypasses the constructor entirely, computing the metric on the two provided trees
      * and ignoring the internally stored tree.
@@ -161,7 +162,7 @@ public class KCPathDifferenceMetric {
      * @param lambda Collection of lambda values for which to compute the metric
      * @return
      */
-    public ArrayList<Double> getMetric(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
+    public ArrayList<Double> getMetric_old(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
 
         int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1)+tree1.getExternalNodeCount();
 
@@ -281,106 +282,19 @@ public class KCPathDifferenceMetric {
         return results;
     }
 
-    public ArrayList<Double> getMetric2(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
+    public ArrayList<Double> getMetric(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
 
-        int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1)+tree1.getExternalNodeCount();
+        checkTreeTaxa(tree1, tree2);
+
+        int dim = (tree1.getExternalNodeCount() - 2) * (tree1.getExternalNodeCount() - 1) + tree1.getExternalNodeCount();
 
         double[] smallMOne = new double[dim];
         double[] largeMOne = new double[dim];
         double[] smallMTwo = new double[dim];
         double[] largeMTwo = new double[dim];
 
-        //check if taxon lists are in the same order!!
-        if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
-            throw new RuntimeException("Different number of taxa in both trees.");
-        } else {
-            for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
-                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
-                }
-            }
-        }
-
-        Map<NodeRef, Integer> permutationMap = new HashMap<NodeRef, Integer>();
-        traverse(tree1, tree1.getRoot(), permutationMap);
-
-        int index = 0;
-
-        for (int i = 0; i < tree1.getInternalNodeCount(); i++) {
-            NodeRef MRCA = tree1.getInternalNode(i);
-            int permutations = permutationMap.get(MRCA);
-
-            int edges = 0;
-            double branchLengths = 0.0;
-            while (MRCA != tree1.getRoot()) {
-                edges++;
-                branchLengths += tree1.getNodeHeight(tree1.getParent(MRCA)) - tree1.getNodeHeight(MRCA);
-                MRCA = tree1.getParent(MRCA);
-            }
-            for (int j = 0; j < permutations; j++) {
-                smallMOne[index] = edges;
-                largeMOne[index] = branchLengths;
-                index++;
-            }
-        }
-
-        //fill out arrays further
-        index = 0;
-        for (int i = (tree1.getExternalNodeCount()-1)*(tree1.getExternalNodeCount()-2); i < dim; i++) {
-            smallMOne[i] = 1.0;
-            largeMOne[i] = tree1.getNodeHeight(tree1.getParent(tree1.getExternalNode(index))) - tree1.getNodeHeight(tree1.getExternalNode(index));
-            index++;
-        }
-
-        /*for (int i = 0; i < smallMOne.length; i++) {
-            System.out.print(smallMOne[i] + " ");
-        }
-        System.out.println();
-        for (int i = 0; i < largeMOne.length; i++) {
-            System.out.print(largeMOne[i] + " ");
-        }
-        System.out.println("\n");*/
-
-        permutationMap.clear();
-        traverse(tree2, tree2.getRoot(), permutationMap);
-
-        index = 0;
-
-        for (int i = 0; i < tree2.getInternalNodeCount(); i++) {
-            NodeRef MRCA = tree2.getInternalNode(i);
-            int permutations = permutationMap.get(MRCA);
-
-            int edges = 0;
-            double branchLengths = 0.0;
-            while (MRCA != tree2.getRoot()) {
-                edges++;
-                branchLengths += tree2.getNodeHeight(tree2.getParent(MRCA)) - tree2.getNodeHeight(MRCA);
-                MRCA = tree2.getParent(MRCA);
-            }
-            for (int j = 0; j < permutations; j++) {
-                smallMOne[index] = edges;
-                largeMOne[index] = branchLengths;
-                index++;
-            }
-        }
-
-
-        //fill out arrays further
-        index = 0;
-        for (int i = (tree2.getExternalNodeCount()-1)*(tree2.getExternalNodeCount()-2); i < dim; i++) {
-            smallMTwo[i] = 1.0;
-            largeMTwo[i] = tree2.getNodeHeight(tree2.getParent(tree2.getExternalNode(index))) - tree2.getNodeHeight(tree2.getExternalNode(index));
-            index++;
-        }
-
-        /*for (int i = 0; i < smallMTwo.length; i++) {
-            System.out.print(smallMTwo[i] + " ");
-        }
-        System.out.println();
-        for (int i = 0; i < largeMTwo.length; i++) {
-            System.out.print(largeMTwo[i] + " ");
-        }
-        System.out.println("\n");*/
+        processTree(tree1, smallMOne, largeMOne, dim);
+        processTree(tree1, smallMTwo, largeMTwo, dim);
 
         double[] vArrayOne = new double[dim];
         double[] vArrayTwo = new double[dim];
@@ -401,6 +315,54 @@ public class KCPathDifferenceMetric {
 
         return results;
     }
+
+    private void processTree(Tree tree, double[] smallM, double[] largeM, int dim) {
+
+        Map<NodeRef, Integer> permutationMap = new HashMap<NodeRef, Integer>();
+        traverse(tree, tree.getRoot(), permutationMap);
+
+        int index = 0;
+
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef MRCA = tree.getInternalNode(i);
+            int permutations = permutationMap.get(MRCA);
+
+            int edges = 0;
+            double branchLengths = 0.0;
+            while (MRCA != tree.getRoot()) {
+                edges++;
+                branchLengths += tree.getNodeHeight(tree.getParent(MRCA)) - tree.getNodeHeight(MRCA);
+                MRCA = tree.getParent(MRCA);
+            }
+            for (int j = 0; j < permutations; j++) {
+                smallM[index] = edges;
+                largeM[index] = branchLengths;
+                index++;
+            }
+        }
+
+        //fill out arrays further
+        index = 0;
+        for (int i = (tree.getExternalNodeCount()-1)*(tree.getExternalNodeCount()-2); i < dim; i++) {
+            smallM[i] = 1.0;
+            largeM[i] = tree.getNodeHeight(tree.getParent(tree.getExternalNode(index))) - tree.getNodeHeight(tree.getExternalNode(index));
+            index++;
+        }
+    }
+
+    private void checkTreeTaxa(Tree tree1, Tree tree2) {
+        //check if taxon lists are in the same order!!
+        if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
+            throw new RuntimeException("Different number of taxa in both trees.");
+        } else {
+            for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
+                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
+                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
+                }
+            }
+        }
+    }
+
     private int[] traverse(Tree tree, NodeRef node, Map<NodeRef, Integer> permutationMap) {
         NodeRef left = tree.getChild(node, 0);
         NodeRef right = tree.getChild(node, 1);

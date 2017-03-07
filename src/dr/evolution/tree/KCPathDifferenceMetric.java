@@ -326,34 +326,20 @@ public class KCPathDifferenceMetric {
 
     private void processTree(Tree tree, double[] smallM, double[] largeM, int dim) {
 
-        Map<Pair<NodeRef, NodeRef>, NodeRef> permutationMap = new HashMap<Pair<NodeRef, NodeRef>, NodeRef>();
-        traverse(tree, tree.getRoot(), permutationMap);
+        double[][] lengths = new double[tree.getExternalNodeCount()][tree.getExternalNodeCount()];
+        int[][] edges = new int[tree.getExternalNodeCount()][tree.getExternalNodeCount()];
+
+        traverse(tree, tree.getRoot(), 0.0, 0, lengths, edges);
 
         int index = 0;
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            for (int j = i+1; j < tree.getExternalNodeCount(); j++) {
-                NodeRef MRCA = permutationMap.get(new Pair<NodeRef, NodeRef>(tree.getExternalNode(i), tree.getExternalNode(j)));
-
-                int edges = 0;
-                double branchLengths = 0.0;
-                while (MRCA != tree.getRoot()) {
-                    edges++;
-                    branchLengths += tree.getNodeHeight(tree.getParent(MRCA)) - tree.getNodeHeight(MRCA);
-                    MRCA = tree.getParent(MRCA);
-                }
-                smallM[index] = edges;
-                largeM[index] = branchLengths;
+            for (int j = i; j < tree.getExternalNodeCount(); j++) {
+                // should work directly from 2d array
+                smallM[index] = edges[i][j];
+                largeM[index] = lengths[i][j];
                 index++;
             }
-        }
-
-        //fill out arrays further
-        index = 0;
-        for (int i = (tree.getExternalNodeCount()-1)*(tree.getExternalNodeCount()-2); i < dim; i++) {
-            smallM[i] = 1.0;
-            largeM[i] = tree.getNodeHeight(tree.getParent(tree.getExternalNode(index))) - tree.getNodeHeight(tree.getExternalNode(index));
-            index++;
         }
     }
 
@@ -370,7 +356,7 @@ public class KCPathDifferenceMetric {
         }
     }
 
-    private Set<NodeRef> traverse(Tree tree, NodeRef node, Map<Pair<NodeRef, NodeRef>, NodeRef> permutationMap) {
+    private Set<NodeRef> traverse(Tree tree, NodeRef node, double lengthFromRoot, int branchesFromRoot, double[][] lengths, int[][] edges) {
         NodeRef left = tree.getChild(node, 0);
         NodeRef right = tree.getChild(node, 1);
 
@@ -379,19 +365,29 @@ public class KCPathDifferenceMetric {
         Set<NodeRef> rightSet = null;
 
         if (!tree.isExternal(left)) {
-            leftSet = traverse(tree, left, permutationMap);
+            leftSet = traverse(tree, left, lengthFromRoot + tree.getBranchLength(left), branchesFromRoot + 1, lengths, edges);
         } else {
             leftSet = Collections.singleton(left);
+            lengths[left.getNumber()][left.getNumber()] = tree.getBranchLength(left);
+            edges[left.getNumber()][left.getNumber()] = 1;
         }
         if (!tree.isExternal(right)) {
-            rightSet = traverse(tree, right, permutationMap);
+            rightSet = traverse(tree, right, lengthFromRoot + tree.getBranchLength(right), branchesFromRoot + 1, lengths, edges);
         } else {
             rightSet = Collections.singleton(right);
+            lengths[right.getNumber()][right.getNumber()] = tree.getBranchLength(right);
+            edges[right.getNumber()][right.getNumber()] = 1;
         }
 
         for (NodeRef tip1 : leftSet) {
             for (NodeRef tip2 : rightSet) {
-                permutationMap.put(new Pair<NodeRef, NodeRef>(tip1, tip2), node);
+                if (tip1.getNumber() < tip2.getNumber()) {
+                    lengths[tip1.getNumber()][tip2.getNumber()] = lengthFromRoot;
+                    edges[tip1.getNumber()][tip2.getNumber()] = branchesFromRoot;
+                } else {
+                    lengths[tip2.getNumber()][tip1.getNumber()] = lengthFromRoot;
+                    edges[tip2.getNumber()][tip1.getNumber()] = branchesFromRoot;
+                }
             }
         }
 

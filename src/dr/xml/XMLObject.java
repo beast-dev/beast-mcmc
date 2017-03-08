@@ -103,6 +103,20 @@ public class XMLObject {
     }
 
     /**
+     * @return all children with or empty list if no children.
+     */
+    public List<Object> getChildren() {
+
+        List<Object> allChildren = new ArrayList<Object>();
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+                allChildren.add(child);
+
+        }
+        return allChildren;
+    }
+
+    /**
      * @param c the class of the children to return
      * @return all children with a native format of the given class, or null if no such child exists.
      */

@@ -391,13 +391,15 @@ public class KCPathDifferenceMetric {
 
 
         try {
+
+            //4-taxa example
             NewickImporter importer = new NewickImporter("(('A':1.2,'B':0.8):0.5,('C':0.8,'D':1.0):1.1)");
             Tree treeOne = importer.importNextTree();
-            System.out.println("tree 1: " + treeOne);
+            System.out.println("4-taxa tree 1: " + treeOne);
 
             importer = new NewickImporter("((('A':0.8,'B':1.4):0.3,'C':0.7):0.9,'D':1.0)");
             Tree treeTwo = importer.importNextTree();
-            System.out.println("tree 2: " + treeTwo + "\n");
+            System.out.println("4-taxa tree 2: " + treeTwo + "\n");
 
             ArrayList<Double> lambdaValues = new ArrayList<Double>();
             lambdaValues.add(0.0);
@@ -420,6 +422,40 @@ public class KCPathDifferenceMetric {
             System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
             System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
 
+
+            //5-taxa example
+            importer = new NewickImporter("(((('A':0.6,'B':0.6):0.1,'C':0.5):0.4,'D':0.7):0.1,'E':1.3)");
+            treeOne = importer.importNextTree();
+            System.out.println("5-taxa tree 1: " + treeOne);
+
+            importer = new NewickImporter("((('A':0.8,'B':1.4):0.1,'C':0.7):0.2,('D':1.0,'E':0.9):1.3)");
+            treeTwo = importer.importNextTree();
+            System.out.println("5-taxa tree 2: " + treeTwo + "\n");
+
+            //lambda = 0.0 should yield: sqrt(7) = 2.6457513110645907162
+            //lambda = 1.0 should yield: sqrt(2.96) = 1.7204650534085252911
+
+            lambdaValues = new ArrayList<Double>();
+            lambdaValues.add(0.0);
+            lambdaValues.add(0.5);
+            lambdaValues.add(1.0);
+            metric = (new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues));
+
+            System.out.println("\nPaired trees:");
+            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
+            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
+            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
+
+            //Additional test for comparing a collection of trees against a (fixed) focal tree
+            metric = new KCPathDifferenceMetric(treeOne).getMetric(treeTwo, lambdaValues);
+
+            System.out.println("\nFocal trees:");
+            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
+            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
+            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
+
+
+            //timings
             long startTime = System.currentTimeMillis();
             for (int i = 0; i < 1000000; i++) {
                 new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);

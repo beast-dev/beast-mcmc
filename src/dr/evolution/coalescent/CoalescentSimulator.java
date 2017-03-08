@@ -322,11 +322,11 @@ public class CoalescentSimulator {
         Tree tree = simulator.simulateTree(taxa, constantPopulation);
         Map<String, Integer> idMap = exporter.writeNexusHeader(tree);
         out.println("\t\t;");
-        exporter.writeNexusTree(tree, "TREE_" + 1, true, idMap);
+        exporter.writeNexusTree(tree, "TREE_" + 0, true, idMap);
 
 		for (i = 1; i < N; i++) {
             tree = simulator.simulateTree(taxa, constantPopulation);
-            exporter.writeNexusTree(tree, "TREE_" + (i + 1), true, idMap);
+            exporter.writeNexusTree(tree, "TREE_" + i, true, idMap);
 		}
         out.println("End;");
     }

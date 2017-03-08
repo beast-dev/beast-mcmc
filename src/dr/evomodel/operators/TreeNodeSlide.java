@@ -27,6 +27,7 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodelxml.operators.TreeNodeSlideParser;
@@ -91,8 +92,8 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
     }
 
     private void ptree(SpeciesTreeModel tree, NodeRef[] order, int[] preOrderIndex) {
-        System.err.println(Tree.Utils.uniqueNewick(tree, tree.getRoot()));
-        System.err.println(Tree.Utils.newick(tree));
+        System.err.println(TreeUtils.uniqueNewick(tree, tree.getRoot()));
+        System.err.println(TreeUtils.newick(tree));
         ptreenode(tree, tree.getRoot(), preOrderIndex, "");
         for(NodeRef anOrder : order) {
             System.err.print(anOrder.getNumber() + " ");

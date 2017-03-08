@@ -25,6 +25,8 @@
 
 package dr.inference.trace;
 
+import java.util.List;
+
 /**
  * @author Alexei Drummond
  */
@@ -35,32 +37,21 @@ public abstract class AbstractTraceList extends FilteredTraceList {
 
     public TraceCorrelation getCorrelationStatistics(int index) {
         Trace trace = getTrace(index);
-        if (trace == null) {
-            return null;
-        }
-        return trace.getTraceStatistics();
+        if (trace != null)
+            return trace.getTraceStatistics();
+        return null;
     }
 
     public void analyseTrace(int index) {
         int start = (getBurnIn() / getStepSize());
 
-//        if (traceStatistics == null) {
-//            traceStatistics = new TraceCorrelation[getTraceCount()];
-//            initFilters();
-//        }
-
-        Trace trace = getTrace(index);        
-        TraceCorrelation traceCorrelation = new TraceCorrelation(
-                trace.getValues(start, trace.getValueCount()),
-                trace.getTraceType(), getStepSize());
+        Trace trace = getTrace(index);
+        List values = trace.getValues(start, trace.getValueCount(), super.filtered);
+        TraceCorrelation traceCorrelation = new TraceCorrelation(values, trace.getTraceType(), getStepSize());
         trace.setTraceStatistics(traceCorrelation);
 
 //        System.out.println("index = " + index + " :  " + trace.getName() + "     " + trace.getTraceType());
     }
-
-//    public void setBurnIn(int burnIn) {
-//        traceStatistics = null;
-//    }
 
 //    abstract Trace getTrace(int index);
 

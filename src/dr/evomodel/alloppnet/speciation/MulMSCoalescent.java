@@ -28,7 +28,7 @@ package dr.evomodel.alloppnet.speciation;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ScaledDemographic;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -217,7 +217,7 @@ public class MulMSCoalescent extends Likelihood.Abstract implements Units {
         FixedBitSet subspeciesSet = spTree.spSet(node);
 
         if( verbose ) {
-            System.err.println(Tree.Utils.uniqueNewick(spTree, node) + " nl " + nLineages
+            System.err.println(TreeUtils.uniqueNewick(spTree, node) + " nl " + nLineages
                     + " " + subspeciesSet + " t0 - st " + t0 + " - " + stopTime);
         }
 
@@ -264,7 +264,7 @@ public class MulMSCoalescent extends Likelihood.Abstract implements Units {
         info[0] = nLineages;
         info[1] = indexInClist;
         if( verbose ) {
-            System.err.println(Tree.Utils.uniqueNewick(spTree, node) + " stopTime " + stopTime +
+            System.err.println(TreeUtils.uniqueNewick(spTree, node) + " stopTime " + stopTime +
                     " nl " + nLineages + " icl " + indexInClist);
         }
         return like;

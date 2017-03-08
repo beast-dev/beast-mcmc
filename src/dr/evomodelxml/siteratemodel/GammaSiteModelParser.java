@@ -52,6 +52,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
+    public static final String WEIGHT = "weight";
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String GAMMA_CATEGORIES = "gammaCategories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
@@ -65,6 +66,8 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         String msg = "";
         SubstitutionModel substitutionModel = null;
 
+        double muWeight = 1.0;
+
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
             muParam = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATE);
@@ -75,9 +78,13 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
             msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
         } else if (xo.hasChildNamed(RELATIVE_RATE)) {
-            muParam = (Parameter) xo.getElementFirstChild(RELATIVE_RATE);
-
+            XMLObject cxo = xo.getChild(RELATIVE_RATE);
+            muParam = (Parameter) cxo.getChild(Parameter.class);
             msg += "\n  with initial relative rate = " + muParam.getParameterValue(0);
+            if (cxo.hasAttribute(WEIGHT)) {
+                muWeight = cxo.getDoubleAttribute(WEIGHT);
+                msg += " with weight: " + muWeight;
+            }
         }
 
         Parameter shapeParam = null;
@@ -102,7 +109,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
         }
 
-        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, muWeight, shapeParam, catCount, invarParam);
 
         if (xo.hasChildNamed(SUBSTITUTION_MODEL)) {
 
@@ -149,6 +156,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
                             })
                     ),
                     new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[]{
+                            AttributeRule.newDoubleRule(WEIGHT, true),
                             new ElementRule(Parameter.class)
                     }), true
             ),

@@ -81,10 +81,6 @@ public class Trace<T> { // TODO get rid of generic to make things easy
     }
 
     public T getValue(int index) {
-//        TODO filtered ?
-//        if (getFilter() != null && !getFilter().isIn(index)) {
-//           return null; // filtered
-//        }
         return values.get(index);
     }
 
@@ -118,23 +114,24 @@ public class Trace<T> { // TODO get rid of generic to make things easy
      * @return The list of values (which are selected values if filter applied)
      */
     public List<T> getValues(int fromIndex, int toIndex) {
+        return getValues(fromIndex, toIndex, null);
+    }
+
+    public List<T> getValues(int fromIndex, int toIndex, boolean[] filtered) {
         if (toIndex > getValueCount() || fromIndex > toIndex)
             throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
                     + "; List size = " + getValueCount() + "; in Trace " + name);
 
-        if (getFilter() == null) {
+        if (filtered == null || filtered.length < 1) {
             return values.subList(fromIndex, toIndex);
         } else {
-//            if (filter.selected.length != getValuesSize())
-//                throw new IllegalArgumentException("Trace " + name + " size of values is different with filter selected[] ! ");
-
             List<T> valuesList = new ArrayList<T>();
             for (int i = fromIndex; i < toIndex; i++) {
-                if (getFilter().isIn(values.get(i)))
+                if (!filtered[i])
                     valuesList.add(values.get(i));
             }
-
-            if (valuesList.size() < 1) throw new RuntimeException("There is no value left after applying filter !");
+            if (valuesList.size() < 1)
+                throw new RuntimeException("There is no value left after all filters are applied !");
 
             return valuesList;
         }
@@ -184,107 +181,5 @@ public class Trace<T> { // TODO get rid of generic to make things easy
     public Filter getFilter() {
         return filter;
     }
-
-    //******************** Trace Double ****************************
-/*    public class D extends Trace<Double> {
-
-        public D(String name, int initialSize) {
-            super.name = name;
-            super.values = new Double[initialSize];
-//            values[0] = initValue; // make getTraceType() working
-        }
-
-        public D(String name, Double[] values) {
-            this(name, values.length);
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public Double[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public Double[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            Double[] destination = new Double[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
-            }
-        }
-    }
-
-    //******************** Trace Integer ****************************
-    public class I extends Trace<Integer> {
-
-        public I(String name, int initialSize) {
-            super.name = name;
-            super.values = new Integer[initialSize];
-//            values[0] = initValue; // make getTraceType() working
-        }
-
-        public I(String name, Integer[] values) {
-            this(name, values.length);
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public Integer[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public Integer[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            Integer[] destination = new Integer[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
-            }
-        }
-    }
-
-    //******************** Trace String ****************************
-    public class S extends Trace<String> {
-
-        public S(String name, int initialSize, String initValue) {
-            super.name = name;
-            if (initialSize > 0) {
-                super.values = new String[initialSize];
-            }
-            values[0] = initValue; // make getTraceType() working
-        }
-
-        public S(String name, String[] values) {
-            super.name = name;
-            super.values = new String[values.length];
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public String[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public String[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            String[] destination = new String[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
-            }
-        }
-    } */
 
 }

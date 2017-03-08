@@ -8,6 +8,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.trace.TraceException;
 import dr.util.Version;
 
@@ -329,7 +330,7 @@ public class GetNSCountsFromTrees {
 
         if (tree.isExternal(node)) return false;
 
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
         int size = leafSet.size();
 
         leafSet.retainAll(targetSet);
@@ -339,7 +340,7 @@ public class GetNSCountsFromTrees {
             // if all leaves below are in target then check just above.
             if (leafSet.size() == size) {
 
-                Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                Set superLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
                 superLeafSet.removeAll(targetSet);
 
                 // the branch is on ancestral path if the super tree has some non-targets in it
@@ -352,7 +353,7 @@ public class GetNSCountsFromTrees {
 
     private static boolean inClade(Tree tree, NodeRef node, Set targetSet, boolean includeStem) {
 
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
 
         leafSet.removeAll(targetSet);
 
@@ -361,7 +362,7 @@ public class GetNSCountsFromTrees {
             if (includeStem){
                 return true;
             }  else {
-                Set parentLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                Set parentLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
                 parentLeafSet.removeAll(targetSet);
                 if (parentLeafSet.size() == 0){
                     return true;

@@ -8,6 +8,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
@@ -142,7 +143,7 @@ public abstract class OperatorAssert extends TestCase {
         while (importer.hasTree()) {
         	sampleSize++;
             Tree t = importer.importNextTree();
-            String uniqueNewick = Tree.Utils.uniqueNewick(t, t.getRoot());
+            String uniqueNewick = TreeUtils.uniqueNewick(t, t.getRoot());
             String topology = uniqueNewick.replaceAll("\\w+", "X");
             if (!uniqueTrees.contains(uniqueNewick)){
             	uniqueTrees.add(uniqueNewick);

@@ -105,7 +105,6 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
             final double d = MathUtils.nextDouble() * delta;
             scalar1 -= d;
             if (parameterWeights[dim1] != parameterWeights[dim2]) {
-                // todo - just don't understand this - the mean will drift off 1?
                 scalar2 += d * (double) parameterWeights[dim1] / (double) parameterWeights[dim2];
             } else {
                 scalar2 += d;

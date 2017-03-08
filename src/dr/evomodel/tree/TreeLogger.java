@@ -219,11 +219,11 @@ public class TreeLogger extends MCLogger {
             buffer.append(" = [&R] ");
 
             if (substitutions) {
-                Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
+                TreeUtils.newick(tree, tree.getRoot(), false, TreeUtils.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
                         format, branchRates, treeTraitProviders, idMap, buffer);
             } else {
                 //System.out.println(treeTraitProviders.length);
-                Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.BranchLengthType.LENGTHS_AS_TIME,
+                TreeUtils.newick(tree, tree.getRoot(), !mapNames, TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
                         format, null, treeTraitProviders, idMap, buffer);
             }
 

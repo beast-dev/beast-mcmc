@@ -5,11 +5,12 @@ package test.dr.evomodel.operators;
 
 //import static org.junit.Assert.*;
 import java.io.IOException;
+
+import dr.evolution.tree.TreeUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.tree.Tree;
 import dr.evomodel.operators.ExchangeOperator;
 //import dr.evomodel.operators.NNI;
 import dr.evomodel.tree.TreeModel;
@@ -52,7 +53,7 @@ public class NarrowExchangeTest  extends OperatorAssert{
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1);
             operator.doOperation();
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
             if (tree.equals(treeMatch)) {
                 count += 1;

@@ -5,7 +5,7 @@ import java.io.IOException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -62,7 +62,7 @@ public class ExchangeOperatorTest extends OperatorAssert {
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
             if (tree.equals(treeMatch)) {
                 count += 1;
@@ -119,7 +119,7 @@ public class ExchangeOperatorTest extends OperatorAssert {
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
             if (tree.equals(treeMatch)) {
                 count += 1;

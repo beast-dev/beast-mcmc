@@ -27,6 +27,7 @@ package dr.evomodelxml.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -283,7 +284,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 //        treeModel.setupHeightBounds();
         //System.err.println("done constructing treeModel");
 
-        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
         return treeModel;
     }

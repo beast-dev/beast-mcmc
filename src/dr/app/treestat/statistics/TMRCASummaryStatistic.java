@@ -27,6 +27,7 @@ package dr.app.treestat.statistics;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.*;
 
 import java.util.*;
@@ -52,11 +53,11 @@ public class TMRCASummaryStatistic extends AbstractTreeSummaryStatistic {
             return new double[] { tree.getNodeHeight(tree.getRoot()) };
         }
 		try {
-			Set<String> leafSet = Tree.Utils.getLeavesForTaxa(tree, taxonList);
-			NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+			Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, taxonList);
+			NodeRef node = TreeUtils.getCommonAncestorNode(tree, leafSet);
 			if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
 			return new double[] { tree.getNodeHeight(node) };
-		} catch (Tree.MissingTaxonException e) {
+		} catch (TreeUtils.MissingTaxonException e) {
 			throw new RuntimeException("Missing taxon!");
 		}
 	}

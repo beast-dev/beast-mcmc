@@ -25,16 +25,12 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.MultivariateTraitTree;
-import dr.evolution.tree.MutableTreeListener;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
-import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -61,7 +57,7 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
     }
 
     public String toString() {
-        return Tree.Utils.newick(this);
+        return TreeUtils.newick(this);
     }
 
     public double getNodeHeight(NodeRef node) {

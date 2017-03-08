@@ -37,6 +37,7 @@ import dr.evolution.sequence.Sequences;
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.*;
 import dr.util.Attributable;
 
@@ -1488,9 +1489,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 if (index % sampleFrequency == 0) {
                     if (includeBranchLengths) {
-                        System.out.println(Tree.Utils.newick(tree));
+                        System.out.println(TreeUtils.newick(tree));
                     } else {
-                        System.out.println(Tree.Utils.newickNoLengths(tree));
+                        System.out.println(TreeUtils.newickNoLengths(tree));
                         count += 1;
                     }
                 }

@@ -159,7 +159,7 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
         spTree = compatibleUninformedSpeciesTree(startTree);
 
         // some of the code is generic but some parts assume a binary tree.
-        assert Tree.Utils.isBinary(spTree);
+        assert TreeUtils.isBinary(spTree);
 
         final int nNodes = spTree.getNodeCount();
         heights = new double[nNodes];
@@ -1202,7 +1202,7 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
     String previousTopology = null;
 
     public boolean logNow(long state) {
-        final String curTop = Tree.Utils.uniqueNewick(spTree, spTree.getRoot());
+        final String curTop = TreeUtils.uniqueNewick(spTree, spTree.getRoot());
         if (state == 0 || !curTop.equals(previousTopology)) {
             previousTopology = curTop;
             return true;

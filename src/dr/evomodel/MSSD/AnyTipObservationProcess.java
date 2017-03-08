@@ -25,10 +25,10 @@
 
 package dr.evomodel.MSSD;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -68,7 +68,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
             p[i] = 1.0 - getNodeSurvivalProbability(i, averageRate);
         }
 
-        Tree.Utils.postOrderTraversalList(treeModel, postOrderNodeList);
+        TreeUtils.postOrderTraversalList(treeModel, postOrderNodeList);
 
         for (int postOrderIndex = 0; postOrderIndex < nodeCount; postOrderIndex++) {
 
@@ -136,7 +136,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
         }
 
         // Determine post-order traversal
-        Tree.Utils.postOrderTraversalList(treeModel, postOrderNodeList);
+        TreeUtils.postOrderTraversalList(treeModel, postOrderNodeList);
 
         // Do post-order traversal
         for (int postOrderIndex = 0; postOrderIndex < nodeCount; postOrderIndex++) {

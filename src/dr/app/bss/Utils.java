@@ -52,6 +52,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import dr.evolution.tree.TreeUtils;
 import org.apache.commons.math.random.MersenneTwister;
 
 import dr.app.bss.test.AncestralSequenceTrait;
@@ -1426,10 +1427,10 @@ public class Utils {
 				sequencesMap, dataType);
 		TreeTraitProvider[] treeTraitProviders = new TreeTraitProvider[] { ancestralSequence };
 
-		Tree.Utils.newick(treeModel, //
+		TreeUtils.newick(treeModel, //
 				treeModel.getRoot(), //
 				useTipLabels, //
-				Tree.BranchLengthType.LENGTHS_AS_TIME, //
+				TreeUtils.BranchLengthType.LENGTHS_AS_TIME, //
 				format, //
 				null, //
 				treeTraitProviders, //

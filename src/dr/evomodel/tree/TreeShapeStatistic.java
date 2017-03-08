@@ -27,6 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeShape;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.model.Statistic;
 
 
@@ -41,7 +42,7 @@ public class TreeShapeStatistic extends Statistic.Abstract implements TreeStatis
     public TreeShapeStatistic(String name, TreeModel target) {
         super(name);
         this.target = target;
-        ultrametric = Tree.Utils.isUltrametric(target);
+        ultrametric = TreeUtils.isUltrametric(target);
     }
 
     public void setTree(Tree tree) {

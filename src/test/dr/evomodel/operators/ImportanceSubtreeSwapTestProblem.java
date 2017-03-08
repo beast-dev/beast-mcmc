@@ -6,6 +6,7 @@ package test.dr.evomodel.operators;
 
 import java.io.IOException;
 
+import dr.evolution.tree.TreeUtils;
 import dr.inference.operators.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -13,7 +14,6 @@ import junit.framework.TestSuite;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
 import dr.evomodel.operators.ImportanceSubtreeSwap;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -58,7 +58,7 @@ public class ImportanceSubtreeSwapTestProblem extends OperatorAssert{
             ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
             operator.doOperation();
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
             if (tree.equals(treeMatch)) {
                 count += 1;
@@ -101,7 +101,7 @@ public class ImportanceSubtreeSwapTestProblem extends OperatorAssert{
             ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
             operator.doOperation();
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
             if (tree.equals(treeMatch)) {
                 count += 1;

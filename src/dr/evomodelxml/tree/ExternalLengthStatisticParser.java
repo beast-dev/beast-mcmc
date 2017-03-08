@@ -26,6 +26,7 @@
 package dr.evomodelxml.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.ExternalLengthStatistic;
@@ -52,7 +53,7 @@ public class ExternalLengthStatisticParser extends AbstractXMLObjectParser {
 
         try {
             return new ExternalLengthStatistic(name, tree, taxa);
-        } catch (Tree.MissingTaxonException mte) {
+        } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
         }
     }

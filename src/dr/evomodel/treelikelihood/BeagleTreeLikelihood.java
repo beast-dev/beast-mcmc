@@ -27,6 +27,7 @@ package dr.evomodel.treelikelihood;
 
 import beagle.*;
 import dr.evolution.datatype.HiddenDataType;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
@@ -815,6 +816,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 recomputeScaleFactors = true;
             } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
                 useScaleFactors = true;
+                if (DEBUG) {
+                    System.out.println("rescalingCount = " + rescalingCount);
+                    System.out.println("rescalingCountInner = " + rescalingCountInner);
+                }
 
                 if (rescalingCount > rescalingFrequency) {
                     if (DEBUG) {
@@ -867,6 +872,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null, true);
+
+        if (DEBUG) {
+            System.out.println("operationCount = " + operationCount[operationListCount]);
+        }
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             substitutionModelDelegate.updateSubstitutionModels(beagle);
@@ -949,12 +958,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             logL = sumLogLikelihoods[0];
 
-            /*if (DEBUG) {
+            if (DEBUG) {
                 System.out.println(logL);
-                if (logL > -90000) {
-                    System.exit(0);
-                }
-            }*/
+                // if (logL > -90000) {
+                //     System.exit(0);
+                // }
+            }
 
             beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 
@@ -1083,7 +1092,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private void computeNodeToRestrictionMap() {
         Arrays.fill(partialsMap, null);
         for (Set<String> taxonNames : partialsRestrictions.keySet()) {
-            NodeRef node = Tree.Utils.getCommonAncestorNode(treeModel, taxonNames);
+            NodeRef node = TreeUtils.getCommonAncestorNode(treeModel, taxonNames);
             partialsMap[node.getNumber()] = partialsRestrictions.get(taxonNames);
         }
     }

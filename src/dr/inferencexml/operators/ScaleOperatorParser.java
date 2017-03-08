@@ -25,6 +25,7 @@
 
 package dr.inferencexml.operators;
 
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
@@ -63,6 +64,12 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         }
 
         final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+        Bounds<Double> bounds = parameter.getBounds();
+        for (int dim = 0; dim < parameter.getDimension(); dim++) {
+            if (bounds.getLowerLimit(dim) < 0.0) {
+                throw new XMLParseException("Scale operator can only be used on parameters with a lower bound of zero");
+            }
+        }
 
         Parameter indicator = null;
         double indicatorOnProb = 1.0;

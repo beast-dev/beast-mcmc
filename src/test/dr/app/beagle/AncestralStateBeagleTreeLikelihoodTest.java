@@ -1,10 +1,10 @@
 package test.dr.app.beagle;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
@@ -114,7 +114,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
 
 //        Tree.Utils.newick(treeModel, treeModel.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
 //                null, null, new NodeAttributeProvider[]{treeLikelihood}, null, null, buffer);
-        Tree.Utils.newick(treeModel, treeModel.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+        TreeUtils.newick(treeModel, treeModel.getRoot(), false, TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
                 null, null, new TreeTraitProvider[] { treeLikelihood }, null, buffer);
 
         System.out.println(buffer);

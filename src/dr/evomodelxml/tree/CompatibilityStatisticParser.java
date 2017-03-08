@@ -26,6 +26,7 @@
 package dr.evomodelxml.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.CompatibilityStatistic;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -52,7 +53,7 @@ public class CompatibilityStatisticParser extends AbstractXMLObjectParser {
 
         try {
             return new CompatibilityStatistic(name, tree1, tree2);
-        } catch (Tree.MissingTaxonException mte) {
+        } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was in the source tree but not the constraints tree.");
         }
     }

@@ -27,19 +27,12 @@ package dr.evomodel.arg;
 
 import dr.evolution.colouring.TreeColouring;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
-import dr.inference.loggers.MLLogger;
-import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
-import dr.xml.*;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 
 /**
  * A logger that logs tree and clade frequencies.
@@ -178,10 +171,10 @@ public class OldTreeLogger extends MCLogger {
             Tree printTree = getPrintTree();
 
             if (substitutions) {
-                Tree.Utils.newick(printTree, printTree.getRoot(), useTaxonLabels(), Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
+                TreeUtils.newick(printTree, printTree.getRoot(), useTaxonLabels(), TreeUtils.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
                         null, branchRateModel, null, null, buffer);
             } else {
-                Tree.Utils.newick(printTree, printTree.getRoot(), useTaxonLabels(), Tree.BranchLengthType.LENGTHS_AS_TIME,
+                TreeUtils.newick(printTree, printTree.getRoot(), useTaxonLabels(), TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
                         null, branchRateModel, null, null, buffer);
             }
 

@@ -27,8 +27,11 @@ package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.GTR;
+import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.xml.*;
+
+import static dr.evomodel.substmodel.nucleotide.GTR.*;
 
 /**
  * @author Alexei Drummond
@@ -37,14 +40,8 @@ import dr.xml.*;
 public class GTRParser extends AbstractXMLObjectParser {
     public static final String GTR_MODEL = "gtrModel";
 
-    public static final String A_TO_C = "rateAC";
-    public static final String A_TO_G = "rateAG";
-    public static final String A_TO_T = "rateAT";
-    public static final String C_TO_G = "rateCG";
-    public static final String C_TO_T = "rateCT";
-    public static final String G_TO_T = "rateGT";
-
     public static final String FREQUENCIES = "frequencies";
+    public static final String RATES = "rates";
 
     public String getParserName() {
         return GTR_MODEL;
@@ -52,44 +49,59 @@ public class GTRParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = xo.getChild(FREQUENCIES);
-        FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FREQUENCIES);
 
-        Variable<Double> rateACVariable = null;
-        if (xo.hasChildNamed(A_TO_C)) {
-            rateACVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_C);
-        }
-        Variable<Double> rateAGVariable = null;
-        if (xo.hasChildNamed(A_TO_G)) {
-            rateAGVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_G);
-        }
-        Variable<Double> rateATVariable = null;
-        if (xo.hasChildNamed(A_TO_T)) {
-            rateATVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_T);
-        }
-        Variable<Double> rateCGVariable = null;
-        if (xo.hasChildNamed(C_TO_G)) {
-            rateCGVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_G);
-        }
-        Variable<Double> rateCTVariable = null;
-        if (xo.hasChildNamed(C_TO_T)) {
-            rateCTVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_T);
-        }
-        Variable<Double> rateGTVariable = null;
-        if (xo.hasChildNamed(G_TO_T)) {
-            rateGTVariable = (Variable<Double>) xo.getElementFirstChild(G_TO_T);
-        }
-        int countNull = 0;
-        if (rateACVariable == null) countNull++;
-        if (rateAGVariable == null) countNull++;
-        if (rateATVariable == null) countNull++;
-        if (rateCGVariable == null) countNull++;
-        if (rateCTVariable == null) countNull++;
-        if (rateGTVariable == null) countNull++;
+        Parameter rates = null;
 
-        if (countNull != 1)
-            throw new XMLParseException("Only five parameters may be specified in GTR, leave exactly one out, the others will be specifed relative to the one left out.");
-        return new GTR(rateACVariable, rateAGVariable, rateATVariable, rateCGVariable, rateCTVariable, rateGTVariable, freqModel);
+        if (xo.hasChildNamed(RATES)) {
+            rates = (Parameter) xo.getElementFirstChild(RATES);
+            rates.setDimensionNames(new String[] {
+                    rates.getId() + A_TO_C,
+                    rates.getId() + A_TO_G,
+                    rates.getId() + A_TO_T,
+                    rates.getId() + C_TO_G,
+                    rates.getId() + C_TO_T,
+                    rates.getId() + G_TO_T});
+
+            return new GTR(rates, freqModel);
+        } else {
+
+            Variable<Double> rateACVariable = null;
+            if (xo.hasChildNamed(A_TO_C)) {
+                rateACVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_C);
+            }
+            Variable<Double> rateAGVariable = null;
+            if (xo.hasChildNamed(A_TO_G)) {
+                rateAGVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_G);
+            }
+            Variable<Double> rateATVariable = null;
+            if (xo.hasChildNamed(A_TO_T)) {
+                rateATVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_T);
+            }
+            Variable<Double> rateCGVariable = null;
+            if (xo.hasChildNamed(C_TO_G)) {
+                rateCGVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_G);
+            }
+            Variable<Double> rateCTVariable = null;
+            if (xo.hasChildNamed(C_TO_T)) {
+                rateCTVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_T);
+            }
+            Variable<Double> rateGTVariable = null;
+            if (xo.hasChildNamed(G_TO_T)) {
+                rateGTVariable = (Variable<Double>) xo.getElementFirstChild(G_TO_T);
+            }
+            int countNull = 0;
+            if (rateACVariable == null) countNull++;
+            if (rateAGVariable == null) countNull++;
+            if (rateATVariable == null) countNull++;
+            if (rateCGVariable == null) countNull++;
+            if (rateCTVariable == null) countNull++;
+            if (rateGTVariable == null) countNull++;
+
+            if (countNull != 1)
+                throw new XMLParseException("Only five parameters may be specified in GTR, leave exactly one out, the others will be specifed relative to the one left out.");
+            return new GTR(rateACVariable, rateAGVariable, rateATVariable, rateCGVariable, rateCTVariable, rateGTVariable, freqModel);
+        }
     }
 
     //************************************************************************
@@ -128,6 +140,8 @@ public class GTRParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
+            new ElementRule(RATES,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(A_TO_C,
                     new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true),
             new ElementRule(A_TO_G,

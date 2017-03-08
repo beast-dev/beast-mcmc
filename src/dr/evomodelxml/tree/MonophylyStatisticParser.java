@@ -26,6 +26,7 @@
 package dr.evomodelxml.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -79,7 +80,7 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
 
         try {
             return new MonophylyStatistic(name, tree, taxa, ignore, inverse);
-        } catch (Tree.MissingTaxonException mte) {
+        } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
         }
     }

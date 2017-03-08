@@ -6,12 +6,12 @@ package test.dr.evomodel.operators;
 
 import java.io.IOException;
 
+import dr.evolution.tree.TreeUtils;
 import dr.inference.operators.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.tree.Tree;
 import dr.evomodel.operators.NNI;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -49,7 +49,7 @@ public class NNITest extends OperatorAssert{
             NNI operator = new NNI(treeModel, 1);
             operator.doOperation();
 
-            String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
             if (tree.equals(treeMatch)) {
                 count += 1;

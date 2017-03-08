@@ -25,6 +25,7 @@
 
 package dr.app.treestat;
 
+import dr.evolution.tree.TreeUtils;
 import jam.framework.Application;
 import jam.framework.DocumentFrame;
 import jam.util.IconUtils;
@@ -40,8 +41,6 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.Tree;
 import dr.app.treestat.statistics.TreeSummaryStatistic;
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceException;
 
 public class TreeStatFrame extends DocumentFrame {
 
@@ -191,7 +190,7 @@ public class TreeStatFrame extends DocumentFrame {
             tree = importer.importTree(null);
         }
 
-        treeStatData.allTaxa = Tree.Utils.getLeafSet(tree);
+        treeStatData.allTaxa = TreeUtils.getLeafSet(tree);
         statusLabel.setText(Integer.toString(treeStatData.allTaxa.size()) + " taxa loaded.");
         reader.close();
 
@@ -269,8 +268,8 @@ public class TreeStatFrame extends DocumentFrame {
         }
 
         final Tree firstTree = importer.importNextTree();
-        boolean isUltrametric = Tree.Utils.isUltrametric(firstTree);
-        boolean isBinary = Tree.Utils.isBinary(firstTree);
+        boolean isUltrametric = TreeUtils.isUltrametric(firstTree);
+        boolean isBinary = TreeUtils.isBinary(firstTree);
         boolean stop = false;
 
         // check that the trees conform with the requirements of the selected statistics

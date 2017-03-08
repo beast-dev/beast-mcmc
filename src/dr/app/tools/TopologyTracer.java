@@ -40,6 +40,7 @@ import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -107,7 +108,7 @@ public class TopologyTracer {
             SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
             pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
             KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
-            ArrayList<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
+            List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
             for (int i = 0; i < allKCMetrics.size(); i++) {
                 kcMetrics.get(i).add(allKCMetrics.get(i));
             }

@@ -377,20 +377,18 @@ public class LogFileTraces extends AbstractTraceList {
         if (trace.getTraceType() != newType) {
             Trace newTrace = null;
             try {
-                if (trace.getTraceType() == TraceType.CATEGORICAL) {
-                    if (newType == TraceType.REAL) {
-                        newTrace = createTrace(trace.getName(), newType);
-                    }
+                if (trace.getTraceType() == TraceType.CATEGORICAL && newType.isNumber()) {
+                    newTrace = createTrace(trace.getName(), newType);
                     for (int i = 0; i < trace.getValueCount(); i++) { // String => Double
                         newTrace.add(Double.parseDouble(trace.getValue(i).toString()));
                     }
-                } else if (newType == TraceType.CATEGORICAL) {
+                } else if (trace.getTraceType().isNumber() && newType == TraceType.CATEGORICAL) {
                     newTrace = createTrace(trace.getName(), TraceType.CATEGORICAL);
                     for (int i = 0; i < trace.getValueCount(); i++) { // Double => String
                         newTrace.add(trace.getValue(i).toString());
                     }
                 } else {
-                    newTrace = createTrace(trace.getName(), newType); // not need to copy values, because they are both Double
+                    trace.setTraceType(newType); // change between numeric
                 }
             } catch (Exception e) {
                 throw new TraceException("Type change is failed, when parsing " + trace.getTraceType()

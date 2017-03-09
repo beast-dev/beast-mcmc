@@ -80,17 +80,17 @@ public class LogFileTraces extends AbstractTraceList {
      * @return the number of states in the burnin
      */
     public int getBurninStateCount() {
-        return (getBurnIn() / stepSize);
+        return (int) (getBurnIn() / stepSize);
     }
 
     /**
      * @return the size of the step between states
      */
-    public int getStepSize() {
+    public long getStepSize() {
         return stepSize;
     }
 
-    public int getBurnIn() {
+    public long getBurnIn() {
         return burnIn;
     }
 
@@ -137,7 +137,7 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     public double getStateValue(int trace, int index) {
-        return (Double) getTrace(trace).getValue(index + (burnIn / stepSize));
+        return (Double) getTrace(trace).getValue(index + (int) (burnIn / stepSize));
     }
 
     /**
@@ -148,7 +148,7 @@ public class LogFileTraces extends AbstractTraceList {
      * @param offset      first trace index
      */
     public void getStateValues(int nState, double[] destination, int offset) {
-        final int index1 = nState + (burnIn / stepSize);
+        final int index1 = nState + (int) (burnIn / stepSize);
         for (int k = 0; k < destination.length; ++k) {
             destination[k] = (Double) getTrace(k + offset).getValue(index1);
         }
@@ -240,7 +240,7 @@ public class LogFileTraces extends AbstractTraceList {
 
         int traceCount = getTraceCount();
 
-        int num_samples = 0;
+        long num_samples = 0;
 
         tokens = reader.tokenizeLine();
         while (tokens != null && tokens.hasMoreTokens()) {
@@ -294,7 +294,7 @@ public class LogFileTraces extends AbstractTraceList {
             tokens = reader.tokenizeLine();
         }
 
-        burnIn = (int) (0.1 * lastState);
+        burnIn =  lastState / 10;
     }
 
     /**
@@ -417,7 +417,7 @@ public class LogFileTraces extends AbstractTraceList {
      * @param num_samples the number of samples (rows)
      * @return false if the state number is inconsistent
      */
-    private boolean addState(long stateNumber, int num_samples) {
+    private boolean addState(long stateNumber, long num_samples) {
         if (firstState < 0) { // it can use num_samples==1 to replace firstState < 0
             firstState = stateNumber;
         } else if (secondState < 0) {
@@ -426,9 +426,9 @@ public class LogFileTraces extends AbstractTraceList {
             // delay setting of the stepSize until the step between
             // the second and third step in case the first step is
             // 1 (i.e., MrBayes) and the stepsize is 1.
-            stepSize = (int) (stateNumber - secondState);
+            stepSize = stateNumber - secondState;
         } else {
-            int step = (int) (stateNumber - lastState);
+            long step = stateNumber - lastState;
             if (step != stepSize) {
                 System.out.println("step: " + step + " != " + stepSize);
                 return false;
@@ -454,11 +454,11 @@ public class LogFileTraces extends AbstractTraceList {
     // tracesType only save INTEGER and STRING, and only use during loading files
     private TreeMap<String, TraceType> tracesType = new TreeMap<String, TraceType>();
 
-    private int burnIn = -1;
+    private long burnIn = -1;
     private long firstState = -1;
     private long secondState = -1;
     private long lastState = -1;
-    private int stepSize = -1;
+    private long stepSize = -1;
 
     public static class TrimLineReader extends BufferedReader {
 

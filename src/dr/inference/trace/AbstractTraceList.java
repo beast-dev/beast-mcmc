@@ -43,7 +43,7 @@ public abstract class AbstractTraceList extends FilteredTraceList {
     }
 
     public void analyseTrace(int index) {
-        int start = (getBurnIn() / getStepSize());
+        int start = (int) (getBurnIn() / getStepSize());
 
         Trace trace = getTrace(index);
         List values = trace.getValues(start, trace.getValueCount(), super.filtered);

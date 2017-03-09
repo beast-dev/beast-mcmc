@@ -35,9 +35,9 @@ import java.util.List;
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
 public class TraceCorrelation<T> extends TraceDistribution<T> {
-    final int stepSize;
+    final long stepSize;
 
-    public TraceCorrelation(List<T> values, TraceType traceType, int stepSize) {
+    public TraceCorrelation(List<T> values, TraceType traceType, long stepSize) {
         super(values, traceType, stepSize);
         this.stepSize = stepSize;
 
@@ -54,7 +54,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         return ACT;
     }
 
-    private void analyseCorrelation(List<T> values, int stepSize) {
+    private void analyseCorrelation(List<T> values, long stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
         if (getTraceType().isNumber()) {
@@ -82,7 +82,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
      * @param values   the values
      * @param stepSize the sampling frequency of the values
      */
-    private void analyseCorrelationNumeric(double[] values, int stepSize) {
+    private void analyseCorrelationNumeric(double[] values, long stepSize) {
 
         final int samples = values.length;
         int maxLag = Math.min(samples - 1, MAX_LAG);

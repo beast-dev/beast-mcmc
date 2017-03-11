@@ -762,9 +762,9 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         if (this.nodeCount != edges.length) {
             throw new RuntimeException("Incorrect number of edges provided: " + edges.length + " versus " + this.nodeCount + " nodes.");
         }
-        for (int i = 0; i < edges.length; i++) {
+        /*for (int i = 0; i < edges.length; i++) {
             System.out.println(i + ": " + edges[i]);
-        }
+        }*/
         //first remove all the child nodes of the internal nodes
         for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
             int childCount = nodes[i].getChildCount();

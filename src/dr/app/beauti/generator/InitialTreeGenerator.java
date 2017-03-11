@@ -32,6 +32,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
@@ -313,7 +314,7 @@ public class InitialTreeGenerator extends Generator {
                         new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
                 }
         );
-        writer.writeText(Tree.Utils.newick(tree));
+        writer.writeText(TreeUtils.newick(tree));
         writer.writeCloseTag(NewickParser.NEWICK);
     }
 

@@ -36,9 +36,9 @@ public class ArrayTraceList extends AbstractTraceList {
 
     String name;
     Map<String, Integer> traceIndex = new HashMap<String, Integer>();
-    int burnin = 0;
+    long burnin = 0;
     List<Trace> traces;
-    int stepSize;
+    long stepSize;
 
     public ArrayTraceList(String name, List<Trace> traces, int burnin) {
         this.name = name;
@@ -74,7 +74,7 @@ public class ArrayTraceList extends AbstractTraceList {
     /**
      * @return the burn-in for this trace list (the number of sampled states to discard)
      */
-    public int getBurnIn() {
+    public long getBurnIn() {
         return burnin;
     }
 
@@ -89,10 +89,10 @@ public class ArrayTraceList extends AbstractTraceList {
      * @return the number of states in the burnin
      */
     public int getBurninStateCount() {
-        return (getBurnIn() / stepSize);
+        return (int) (getBurnIn() / (long) stepSize);
     }
 
-    public int getStepSize() {
+    public long getStepSize() {
         return stepSize;
     }
 

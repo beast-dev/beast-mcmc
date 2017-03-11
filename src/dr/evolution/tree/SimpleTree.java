@@ -63,7 +63,7 @@ public class SimpleTree implements MutableTree {
 
         SimpleNode node = root;
         do {
-            node = (SimpleNode)Tree.Utils.postorderSuccessor(this, node);
+            node = (SimpleNode) TreeUtils.postorderSuccessor(this, node);
             if ((node.getNumber() >= externalNodeCount && node.isExternal()) ||
                 (node.getNumber() < externalNodeCount && !node.isExternal())) {
                 throw new RuntimeException("Error cloning tree: node numbers are incompatible");
@@ -98,7 +98,7 @@ public class SimpleTree implements MutableTree {
         root = node;
 
         do {
-            node = (SimpleNode)Tree.Utils.postorderSuccessor(this, node);
+            node = (SimpleNode) TreeUtils.postorderSuccessor(this, node);
             if (node.isExternal()) {
                 externalNodeCount++;
             } else
@@ -115,7 +115,7 @@ public class SimpleTree implements MutableTree {
         int j = externalNodeCount;
 
         do {
-            node = (SimpleNode)Tree.Utils.postorderSuccessor(this, node);
+            node = (SimpleNode) TreeUtils.postorderSuccessor(this, node);
             if (node.isExternal()) {
                 node.setNumber(i);
                 nodes[i] = node;
@@ -528,7 +528,7 @@ public class SimpleTree implements MutableTree {
      * @return a string containing a newick representation of the tree
      */
     public String toString() {
-        return Tree.Utils.newick(this);
+        return TreeUtils.newick(this);
     }
 
     /**
@@ -538,7 +538,7 @@ public class SimpleTree implements MutableTree {
         if (!(obj instanceof Tree)) {
             throw new IllegalArgumentException("SimpleTree.equals can only compare instances of Tree");
         }
-        return Tree.Utils.equal(this, (Tree)obj);
+        return TreeUtils.equal(this, (Tree)obj);
     }
 
     // **************************************************************

@@ -141,7 +141,7 @@ public class SkylineReconstructor {
         }
 
         double delta = maxHeight / (binCount - 1);
-        int skip = burnin / traces.getStepSize();
+        int skip = (int) (burnin / traces.getStepSize());
         int state = 0;
 
         while (importer.hasTree() && state < skip) {

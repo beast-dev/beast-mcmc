@@ -2,7 +2,7 @@ package test.dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.GTR;
@@ -51,7 +51,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         String expectedNewickTree = "((((human:0.024003,(chimp:0.010772,bonobo:0.010772):0.013231):0.012035," +
                 "gorilla:0.036038):0.033087,orangutan:0.069125):0.030457,siamang:0.099582);";
         
-        assertEquals("Fail to covert the correct tree !!!", expectedNewickTree, Tree.Utils.newick(treeModel, 6));
+        assertEquals("Fail to covert the correct tree !!!", expectedNewickTree, TreeUtils.newick(treeModel, 6));
     }
 
 

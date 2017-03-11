@@ -32,6 +32,7 @@ import dr.evolution.util.Date;
 import dr.math.MathUtils;
 import dr.util.HeapSort;
 
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -85,7 +86,7 @@ public class CoalescentSimulator {
 	public SimpleNode simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic) {
         // sanity check - disjoint trees
 
-        if( ! Tree.Utils.allDisjoint(nodes) ) {
+        if( ! TreeUtils.allDisjoint(nodes) ) {
             throw new RuntimeException("subtrees' taxa overlap");
         }
 
@@ -292,7 +293,7 @@ public class CoalescentSimulator {
 
 	public static void main(String[] args) {
 
-		int N = 10;
+		int N = 100000000;
 
 		double[] samplingTimes = {
 				0.0, 0.0, 0.0, 0.0, 0.0
@@ -311,11 +312,24 @@ public class CoalescentSimulator {
 		}
 		CoalescentSimulator simulator = new CoalescentSimulator();
 
-		NexusExporter exporter =  new NexusExporter(System.out);
-		for (i = 0; i < N; i++) {
-		Tree tree = simulator.simulateTree(taxa, constantPopulation);
-			exporter.exportTree(tree);
+        PrintStream out = System.out;
+//        try {
+//             out = new PrintStream(new File("out.nex"));
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+        NexusExporter exporter =  new NexusExporter(out);
+        Tree tree = simulator.simulateTree(taxa, constantPopulation);
+        Map<String, Integer> idMap = exporter.writeNexusHeader(tree);
+        out.println("\t\t;");
+        exporter.writeNexusTree(tree, "TREE_" + 0, true, idMap);
+
+		for (i = 1; i < N; i++) {
+            tree = simulator.simulateTree(taxa, constantPopulation);
+            exporter.writeNexusTree(tree, "TREE_" + i, true, idMap);
 		}
-	}
+        out.println("End;");
+    }
+
 
 }

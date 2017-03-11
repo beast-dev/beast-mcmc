@@ -80,17 +80,17 @@ public class LogFileTraces extends AbstractTraceList {
      * @return the number of states in the burnin
      */
     public int getBurninStateCount() {
-        return (getBurnIn() / stepSize);
+        return (int) (getBurnIn() / stepSize);
     }
 
     /**
      * @return the size of the step between states
      */
-    public int getStepSize() {
+    public long getStepSize() {
         return stepSize;
     }
 
-    public int getBurnIn() {
+    public long getBurnIn() {
         return burnIn;
     }
 
@@ -137,7 +137,7 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     public double getStateValue(int trace, int index) {
-        return (Double) getTrace(trace).getValue(index + (burnIn / stepSize));
+        return (Double) getTrace(trace).getValue(index + (int) (burnIn / stepSize));
     }
 
     /**
@@ -148,20 +148,30 @@ public class LogFileTraces extends AbstractTraceList {
      * @param offset      first trace index
      */
     public void getStateValues(int nState, double[] destination, int offset) {
-        final int index1 = nState + (burnIn / stepSize);
+        final int index1 = nState + (int) (burnIn / stepSize);
         for (int k = 0; k < destination.length; ++k) {
             destination[k] = (Double) getTrace(k + offset).getValue(index1);
         }
     }
 
+    /**
+     * Use the flag boolean[] filtered in FilteredTraceList
+     * to determine whether to remove filtered values,
+     * when filtered != null
+     * @param index       the index of trace
+     * @param fromIndex   low endpoint (inclusive) of the subList.
+     * @param toIndex     high endpoint (exclusive) of the subList.
+     * @return
+     */
     public List getValues(int index, int fromIndex, int toIndex) {
-        List newList = null;
+        List values = null;
         try {
-            newList = getTrace(index).getValues(fromIndex, toIndex);
-        } catch (Exception e) {
+            Trace trace = getTrace(index);
+            values = trace.getValues(fromIndex, toIndex, super.filtered);
+        } catch (IndexOutOfBoundsException e) {
             System.err.println("getValues error: trace index = " + index);
         }
-        return newList;
+        return values;
     }
 
     public List getValues(int index) {
@@ -230,7 +240,7 @@ public class LogFileTraces extends AbstractTraceList {
 
         int traceCount = getTraceCount();
 
-        boolean firstState = true;
+        long num_samples = 0;
 
         tokens = reader.tokenizeLine();
         while (tokens != null && tokens.hasMoreTokens()) {
@@ -246,15 +256,15 @@ public class LogFileTraces extends AbstractTraceList {
                     throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
                 }
 
-                if (firstState) {
+                if (num_samples < 1) {
                     // MrBayes puts 1 as the first state, BEAST puts 0
                     // In order to get the same gap between subsequent samples,
                     // we force this to 0.
                     if (state == 1) state = 0;
-                    firstState = false;
                 }
+                num_samples += 1;
 
-                if (!addState(state)) {
+                if (!addState(state, num_samples)) {
                     throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
                 }
 
@@ -284,7 +294,7 @@ public class LogFileTraces extends AbstractTraceList {
             tokens = reader.tokenizeLine();
         }
 
-        burnIn = (int) (0.1 * lastState);
+        burnIn =  lastState / 10;
     }
 
     /**
@@ -331,23 +341,6 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-//    public Trace<?> assignTraceType(String name, int numberOfLines) {
-//        Trace<?> trace = null;
-//        if (tracesType != null) {
-//            if (tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
-//                trace = new DiscreteTrace(name, numberOfLines);
-////                trace.setTraceType(TraceType.INTEGER);
-//            } else if (tracesType.get(name) == TraceFactory.TraceType.STRING) {
-//                trace = new CategoryTrace(name, numberOfLines);
-////                trace.setTraceType(TraceType.STRING);
-//            }
-//        } else {
-//            trace = new ContinuousTrace(name, numberOfLines); // default DOUBLE
-//        }
-//        return trace;
-//    }
-
-
     //************************************************************************
     // private methods
     //************************************************************************
@@ -372,7 +365,7 @@ public class LogFileTraces extends AbstractTraceList {
         if (traceType.isNumber()) {
             return new Trace<Double>(name, traceType);
         } else {
-            return new Trace<String>(name, TraceType.ORDINAL);
+            return new Trace<String>(name, TraceType.CATEGORICAL);
         }
     }
 
@@ -384,20 +377,18 @@ public class LogFileTraces extends AbstractTraceList {
         if (trace.getTraceType() != newType) {
             Trace newTrace = null;
             try {
-                if (trace.getTraceType() == TraceType.CATEGORICAL) {
-                    if (newType == TraceType.REAL) {
-                        newTrace = createTrace(trace.getName(), newType);
-                    }
+                if (trace.getTraceType() == TraceType.CATEGORICAL && newType.isNumber()) {
+                    newTrace = createTrace(trace.getName(), newType);
                     for (int i = 0; i < trace.getValueCount(); i++) { // String => Double
                         newTrace.add(Double.parseDouble(trace.getValue(i).toString()));
                     }
-                } else if (newType == TraceType.CATEGORICAL) {
+                } else if (trace.getTraceType().isNumber() && newType == TraceType.CATEGORICAL) {
                     newTrace = createTrace(trace.getName(), TraceType.CATEGORICAL);
                     for (int i = 0; i < trace.getValueCount(); i++) { // Double => String
                         newTrace.add(trace.getValue(i).toString());
                     }
                 } else {
-                    newTrace = createTrace(trace.getName(), newType); // not need to copy values, because they are both Double
+                    trace.setTraceType(newType); // change between numeric
                 }
             } catch (Exception e) {
                 throw new TraceException("Type change is failed, when parsing " + trace.getTraceType()
@@ -421,21 +412,27 @@ public class LogFileTraces extends AbstractTraceList {
      * between stateNumbers should remain constant.
      *
      * @param stateNumber the state
+     * @param num_samples the number of samples (rows)
      * @return false if the state number is inconsistent
      */
-    private boolean addState(long stateNumber) {
-        if (firstState < 0) {
+    private boolean addState(long stateNumber, long num_samples) {
+        if (firstState < 0) { // it can use num_samples==1 to replace firstState < 0
             firstState = stateNumber;
+        } else if (secondState < 0) {
+            secondState = stateNumber;
         } else if (stepSize < 0) {
-            stepSize = (int) (stateNumber - firstState);
+            // delay setting of the stepSize until the step between
+            // the second and third step in case the first step is
+            // 1 (i.e., MrBayes) and the stepsize is 1.
+            stepSize = stateNumber - secondState;
         } else {
-            int step = (int) (stateNumber - lastState);
+            long step = stateNumber - lastState;
             if (step != stepSize) {
-                //System.out.println("stateNumber: " + stateNumber + " lastState: " + lastState);
-                //System.out.println("step: " + step + " != " + stepSize);
+                System.out.println("step: " + step + " != " + stepSize);
                 return false;
             }
         }
+//        System.out.println(num_samples + ": stateNumber=" + stateNumber + " lastState=" + lastState + " firstState=" + firstState + " stepSize=" + stepSize);
         lastState = stateNumber;
         return true;
     }
@@ -455,10 +452,11 @@ public class LogFileTraces extends AbstractTraceList {
     // tracesType only save INTEGER and STRING, and only use during loading files
     private TreeMap<String, TraceType> tracesType = new TreeMap<String, TraceType>();
 
-    private int burnIn = -1;
+    private long burnIn = -1;
     private long firstState = -1;
+    private long secondState = -1;
     private long lastState = -1;
-    private int stepSize = -1;
+    private long stepSize = -1;
 
     public static class TrimLineReader extends BufferedReader {
 
@@ -486,35 +484,5 @@ public class LogFileTraces extends AbstractTraceList {
         private int lineNumber = 0;
     }
 
-//    public class D extends LogFileTraces implements TraceList.D {
-//
-//        public D(String name, File file) {
-//            super(name, file);
-//        }
-//
-//        public Double[] getValues(int index, int length) {
-//            return this.getValues(index, length, 0);
-//        }
-//
-//        public Double[] getValues(int index, int length, int offset) {
-//            Double[] destination = null;
-//            try {
-//                destination = ((Trace.D) getTrace(index)).getValues(length, getBurninStateCount(), offset, selected);
-//            } catch (Exception e) {
-//                System.err.println("getValues error: trace index = " + index);
-//            }
-//            return destination;
-//        }
-//
-//        public Double[] getBurninValues(int index, int length) {
-//            Double[] destination = null;
-//            try {
-//                destination = (Double[]) getTrace(index).getValues(length, 0, 0, getBurninStateCount(), selected);
-//            } catch (Exception e) {
-//                System.err.println("getValues error: trace index = " + index);
-//            }
-//            return destination;
-//        }
-//    }
 }
 

@@ -28,6 +28,7 @@ package dr.evomodel.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeNodeFilter;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -53,8 +54,8 @@ public class BackboneNodeFilter extends AbstractModel implements TreeNodeFilter 
         backboneSet = new HashSet<NodeRef>();
 
         try {
-            tipSet = Tree.Utils.getTipsBitSetForTaxa(this.tree, taxonList);
-        } catch (Tree.MissingTaxonException e) {
+            tipSet = TreeUtils.getTipsBitSetForTaxa(this.tree, taxonList);
+        } catch (TreeUtils.MissingTaxonException e) {
             e.printStackTrace();
         }
 

@@ -34,11 +34,8 @@ import java.util.Formatter;
 import java.util.Locale;
 import java.util.Stack;
 
-import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.*;
 import jebl.util.FixedBitSet;
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.evomodel.alloppnet.util.AlloppMisc;
@@ -503,7 +500,7 @@ public class AlloppMulLabTree  {
 
 
     String mullabTreeAsNewick() {
-        String s = Tree.Utils.uniqueNewick(simptree, simptree.getRoot());
+        String s = TreeUtils.uniqueNewick(simptree, simptree.getRoot());
         return s;
     }
 

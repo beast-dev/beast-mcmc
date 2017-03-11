@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.LocalClockModelParser;
@@ -72,8 +73,8 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
 
     }
 
-    public void addExternalBranchClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate) throws Tree.MissingTaxonException {
-        Set<Integer> tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
+    public void addExternalBranchClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate) throws TreeUtils.MissingTaxonException {
+        Set<Integer> tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, ClockType.EXTERNAL);
         for (int i : tips) {
             localTipClocks.put(i, clock);
@@ -81,20 +82,20 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         addVariable(rateParameter);
     }
 
-    public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate, double stemProportion, boolean excludeClade) throws Tree.MissingTaxonException {
-        Set<Integer> tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
-        BitSet tipBitSet = Tree.Utils.getTipsBitSetForTaxa(treeModel, taxonList);
+    public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate, double stemProportion, boolean excludeClade) throws TreeUtils.MissingTaxonException {
+        Set<Integer> tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
+        BitSet tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, stemProportion, excludeClade);
         localCladeClocks.put(tipBitSet, clock);
         addVariable(rateParameter);
     }
 
-    public void addTrunkClock(TaxonList taxonList, Parameter rateParameter, Parameter indexParameter, boolean isRelativeRate) throws Tree.MissingTaxonException {
+    public void addTrunkClock(TaxonList taxonList, Parameter rateParameter, Parameter indexParameter, boolean isRelativeRate) throws TreeUtils.MissingTaxonException {
         if (trunkClock != null) {
             throw new RuntimeException("Trunk already defined for this LocalClockModel");
         }
 
-        List<Integer> tipList = new ArrayList<Integer>(Tree.Utils.getTipsForTaxa(treeModel, taxonList));
+        List<Integer> tipList = new ArrayList<Integer>(TreeUtils.getTipsForTaxa(treeModel, taxonList));
         trunkClock = new LocalClock(rateParameter, indexParameter, isRelativeRate, tipList, ClockType.TRUNK);
         addVariable(rateParameter);
         if (indexParameter != null) {

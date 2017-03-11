@@ -40,9 +40,6 @@ import java.util.List;
 public class PartitionClockModel extends PartitionOptions {
     private static final long serialVersionUID = -6904595851602060488L;
 
-    private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = true;
-    private static final boolean USE_DIRICHLET_PRIOR_FOR_MUS = true;
-
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean continuousQuantile = false;
@@ -90,47 +87,25 @@ public class PartitionClockModel extends PartitionOptions {
     public void initModelParametersAndOpererators() {
         double rate = 1.0;
 
-        if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR || dataLength <= 10) { // TODO Discuss threshold
-            new Parameter.Builder("clock.rate", "substitution rate")
-                    .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
+        new Parameter.Builder("clock.rate", "substitution rate")
+                .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-            new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
-                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
+        new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-            new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
-                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
+        new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-            new Parameter.Builder(ClockType.UCGD_MEAN, "uncorrelated gamma relaxed clock mean").
-                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
-        } else {
-            new Parameter.Builder("clock.rate", "substitution rate").
-                    prior(PriorType.UNDEFINED).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
-
-            new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
-                    prior(PriorType.UNDEFINED).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
-
-            new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
-                    prior(PriorType.UNDEFINED).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
-
-            new Parameter.Builder(ClockType.UCGD_MEAN, "uncorrelated gamma relaxed clock mean").
-                    prior(PriorType.UNDEFINED).initial(rate)
-                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                    .isAdaptiveMultivariateCompatible(true).build(parameters);
-        }
+        new Parameter.Builder(ClockType.UCGD_MEAN, "uncorrelated gamma relaxed clock mean").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
 
         new Parameter.Builder(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev").
                 scaleType(PriorScaleType.LOG_STDEV_SCALE).prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
@@ -160,17 +135,15 @@ public class PartitionClockModel extends PartitionOptions {
 
         // A vector of relative rates across all partitions...
 
-        if (USE_DIRICHLET_PRIOR_FOR_MUS) {
-            createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
-            createOperator("scaleMus", "allMus",
-                    "Scale partition rates relative to each other", "allMus",
-                    OperatorType.SCALE_INDEPENDENTLY, 0.75, 3.0);
-        } else {
-            createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
-            createOperator("deltaMus", "allMus",
-                    "Scale partition rates relative to each other maintaining mean", "allMus",
-                    OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
-        }
+        createNonNegativeParameterDirichletPrior("allNus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createOperator("deltaNus", "allNus",
+                "Change partition rates relative to each other maintaining mean", "allNus",
+                OperatorType.DELTA_EXCHANGE, 0.01, 3.0);
+
+        createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createOperator("deltaMus", "allMus",
+                "Change partition rates relative to each other maintaining mean", "allMus",
+                OperatorType.WEIGHTED_DELTA_EXCHANGE, 0.01, 3.0);
 
     }
 
@@ -344,15 +317,13 @@ public class PartitionClockModel extends PartitionOptions {
             }
         }
 
-        Parameter allMus = getParameter("allMus");
+        Parameter allMus = getParameter(options.NEW_OPERATORS ? "allNus" : "allMus");
+
         if (allMus.getSubParameters().size() > 1) {
             Operator muOperator;
 
-            if (USE_DIRICHLET_PRIOR_FOR_MUS) {
-                muOperator = getOperator("scaleMus");
-            } else {
-                muOperator = getOperator("deltaMus");
-            }
+            muOperator = getOperator(options.NEW_OPERATORS ? "deltaNus" : "deltaMus");
+
             ops.add(muOperator);
         }
 
@@ -410,4 +381,9 @@ public class PartitionClockModel extends PartitionOptions {
         return prefix;
     }
 
+    public void copyFrom(PartitionClockModel source) {
+        clockType = source.clockType;
+        clockDistributionType = source.clockDistributionType;
+        continuousQuantile = source.continuousQuantile;
+    }
 }

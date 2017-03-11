@@ -27,6 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.model.BooleanStatistic;
 
 import java.util.BitSet;
@@ -41,7 +42,7 @@ import java.util.Set;
  */
 public class CompatibilityStatistic extends BooleanStatistic implements TreeStatistic {
 
-    public CompatibilityStatistic(String name, Tree tree1, Tree tree2) throws Tree.MissingTaxonException {
+    public CompatibilityStatistic(String name, Tree tree1, Tree tree2) throws TreeUtils.MissingTaxonException {
 
         super(name);
         this.tree = tree1;
@@ -53,7 +54,7 @@ public class CompatibilityStatistic extends BooleanStatistic implements TreeStat
         for (int i = 0; i < tree1.getTaxonCount(); i++) {
             String id = tree1.getTaxonId(i);
             if (tree2.getTaxonIndex(id) == -1) {
-                throw new Tree.MissingTaxonException(tree1.getTaxon(i));
+                throw new TreeUtils.MissingTaxonException(tree1.getTaxon(i));
             }
         }
     }

@@ -25,7 +25,6 @@
 
 package dr.app.beauti.options;
 
-import cern.colt.bitvector.QuickBitVector;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.math.distributions.Distribution;
@@ -65,6 +64,7 @@ public class Parameter implements Serializable {
     public final boolean isHierarchical;
     public final boolean isCMTCRate;
     public final boolean isNonNegative;
+    public final boolean isMaintainedSum;
     public final boolean isZeroOne;
     public final boolean isCached;
     public final boolean isAdaptiveMultivariateCompatible;
@@ -78,6 +78,7 @@ public class Parameter implements Serializable {
 
     public final boolean isPriorFixed;
     public PriorType priorType;
+    private Parameter parent;
 
     public double getInitial() {
         return initial;
@@ -90,6 +91,7 @@ public class Parameter implements Serializable {
     // Editable fields
     private boolean isFixed;
     private double initial;
+    public double maintainedSum;
     public boolean isTruncated;
     public double truncationUpper;
     public double truncationLower;
@@ -121,6 +123,7 @@ public class Parameter implements Serializable {
         private boolean isCMTCRate = false;
         private boolean isNonNegative = false;
         private boolean isZeroOne = false;
+        private boolean isMaintainedSum = false;
         private boolean isStatistic = false;
         private boolean isCached = false;
 
@@ -131,6 +134,7 @@ public class Parameter implements Serializable {
 
         private boolean isAdaptiveMultivariateCompatible = false;
 
+        private double maintainedSum = 1.0;
         private double initial = Double.NaN;
         //        private double upper = Double.NaN;
 //        private double lower = Double.NaN;
@@ -166,6 +170,7 @@ public class Parameter implements Serializable {
             isCMTCRate = source.isCMTCRate;
             isNonNegative = source.isNonNegative;
             isZeroOne = source.isZeroOne;
+            isMaintainedSum = source.isMaintainedSum;
             isStatistic = source.isStatistic;
             isCached = source.isCached;
             options = source.options;
@@ -173,6 +178,7 @@ public class Parameter implements Serializable {
             isPriorFixed = source.isPriorFixed;
             isAdaptiveMultivariateCompatible = source.isAdaptiveMultivariateCompatible;
             initial = source.initial;
+            maintainedSum = source.maintainedSum;
             isTruncated = source.isTruncated;
             truncationUpper = source.truncationUpper;
             truncationLower = source.truncationLower;
@@ -196,6 +202,12 @@ public class Parameter implements Serializable {
 
         public Builder initial(double initial) {
             this.initial = initial;
+            return this;
+        }
+
+        public Builder maintainedSum(double maintainedSum) {
+            this.maintainedSum = maintainedSum;
+            this.isMaintainedSum = true;
             return this;
         }
 
@@ -255,6 +267,12 @@ public class Parameter implements Serializable {
             }
             return this;
         }
+
+        public Builder isMaintainedSum(boolean isMaintainedMean) {
+            this.isMaintainedSum = isMaintainedMean;
+            return this;
+        }
+
         public Builder isAdaptiveMultivariateCompatible(boolean isAdaptiveMultivariateCompatible) {
             this.isAdaptiveMultivariateCompatible = isAdaptiveMultivariateCompatible;
             return this;
@@ -349,6 +367,7 @@ public class Parameter implements Serializable {
         description = builder.description;
         scaleType = builder.scaleType;
         initial = builder.initial;
+        maintainedSum = builder.maintainedSum;
         taxaId = builder.taxaId;
         isNodeHeight = builder.isNodeHeight;
         isStatistic = builder.isStatistic;
@@ -361,6 +380,7 @@ public class Parameter implements Serializable {
         isCMTCRate = builder.isCMTCRate;
         isNonNegative = builder.isNonNegative;
         isZeroOne = builder.isZeroOne;
+        isMaintainedSum = builder.isMaintainedSum;
         isPriorFixed = builder.isPriorFixed;
         isAdaptiveMultivariateCompatible = builder.isAdaptiveMultivariateCompatible;
 
@@ -553,7 +573,16 @@ public class Parameter implements Serializable {
         this.dimensionWeight = dimensionWeight;
     }
 
+    public void setParent(Parameter parent) {
+        this.parent = parent;
+    }
+
+    public Parameter getParent() {
+        return parent;
+    }
+
     public void addSubParameter(Parameter parameter) {
+        parameter.setParent(this);
         subParameters.add(parameter);
     }
 

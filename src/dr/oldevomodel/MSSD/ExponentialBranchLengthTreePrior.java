@@ -25,7 +25,7 @@
 
 package dr.oldevomodel.MSSD;
 
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -113,7 +113,7 @@ public class ExponentialBranchLengthTreePrior extends AbstractModelLikelihood {
     public double calculateLogLikelihood() {
         int L = treeModel.getNodeCount();
 
-        double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
+        double totalTreeTime = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
 
 //        if(ctmcScale != null){ //
 //            double ab=ctmcScale.getParameterValue(0);

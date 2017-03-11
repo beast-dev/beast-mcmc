@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+@Deprecated
 public class DataLikelihoodTester2 {
 
     public static void main(String[] args) {
@@ -89,7 +90,7 @@ public class DataLikelihoodTester2 {
 //        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteRateModel");
         siteRateModel.setSubstitutionModel(hky);
         Parameter mu = new Parameter.Default(GammaSiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteRateModel.setMutationRateParameter(mu);
+        siteRateModel.setRelativeRateParameter(mu);
 
         FrequencyModel f2 = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         Parameter kappa2 = new Parameter.Default(HKYParser.KAPPA, 10.0, 0, 100);
@@ -97,7 +98,7 @@ public class DataLikelihoodTester2 {
 
         GammaSiteRateModel siteRateModel2 = new GammaSiteRateModel("gammaModel", alpha, 4);
         siteRateModel2.setSubstitutionModel(hky2);
-        siteRateModel2.setMutationRateParameter(mu);
+        siteRateModel2.setRelativeRateParameter(mu);
 
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
@@ -371,11 +372,11 @@ public class DataLikelihoodTester2 {
 
         siteRateModel = new GammaSiteRateModel("gammaModel");
         siteRateModel.setSubstitutionModel(hky);
-        siteRateModel.setMutationRateParameter(mu);
+        siteRateModel.setRelativeRateParameter(mu);
 
         siteRateModel2 = new GammaSiteRateModel("gammaModel2");
         siteRateModel2.setSubstitutionModel(hky2);
-        siteRateModel2.setMutationRateParameter(mu);
+        siteRateModel2.setRelativeRateParameter(mu);
 
         siteRateModels = new ArrayList<SiteRateModel>();
         siteRateModels.add(siteRateModel);

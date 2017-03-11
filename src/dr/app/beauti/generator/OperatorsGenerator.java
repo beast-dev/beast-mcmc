@@ -161,7 +161,10 @@ public class OperatorsGenerator extends Generator {
                 writeCenteredOperator(operator, writer);
                 break;
             case DELTA_EXCHANGE:
-                writeDeltaOperator(operator, writer);
+                writeDeltaOperator(operator, false, writer);
+                break;
+            case WEIGHTED_DELTA_EXCHANGE:
+                writeDeltaOperator(operator, true, writer);
                 break;
             case INTEGER_DELTA_EXCHANGE:
                 writeIntegerDeltaOperator(operator, writer);
@@ -356,12 +359,12 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(CenteredScaleOperatorParser.CENTERED_SCALE);
     }
 
-    private void writeDeltaOperator(Operator operator, XMLWriter writer) {
+    private void writeDeltaOperator(Operator operator, boolean weighted, XMLWriter writer) {
 
         int[] parameterWeights = operator.getParameter1().getParameterDimensionWeights();
         Attribute[] attributes;
 
-        if (parameterWeights != null && parameterWeights.length > 1) {
+        if (weighted && parameterWeights != null && parameterWeights.length > 1) {
             String pw = "" + parameterWeights[0];
             for (int i = 1; i < parameterWeights.length; i++) {
                 pw += " " + parameterWeights[i];
@@ -371,7 +374,6 @@ public class OperatorsGenerator extends Generator {
                     new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
                     getWeightAttribute(operator.getWeight())
             };
-
         } else {
             attributes = new Attribute[]{
                     new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.getTuning()),

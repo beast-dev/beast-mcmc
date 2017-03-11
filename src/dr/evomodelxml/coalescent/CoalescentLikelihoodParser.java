@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentLikelihood;
@@ -108,7 +108,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
         if (treeModel != null) {
             try {
                 return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);
-            } catch (Tree.MissingTaxonException mte) {
+            } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
             }
         } else {

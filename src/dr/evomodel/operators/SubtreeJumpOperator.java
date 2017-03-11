@@ -27,6 +27,7 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
 import dr.inference.operators.*;
@@ -174,7 +175,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         for (NodeRef node1 : intersectingEdges) {
             assert(node1 != node0);
 
-            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+            double age = tree.getNodeHeight(TreeUtils.getCommonAncestor(tree, node0, node1)) - height;
             age = age/maxAge;
             weights[i] = getJumpWeight(age, alpha);
             sum += weights[i];
@@ -196,7 +197,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         for (NodeRef node1 : intersectingEdges) {
             assert(node1 != targetNode);
 
-            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
+            double age = tree.getNodeHeight(TreeUtils.getCommonAncestor(tree, targetNode, node1)) - height;
             age = age/maxAge;
             weights[i] = getJumpWeight(age, alpha);
             sum += weights[i];

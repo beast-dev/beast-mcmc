@@ -26,6 +26,7 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
 
@@ -41,11 +42,11 @@ import java.util.Set;
  */
 public class ParsimonyStatistic extends Statistic.Abstract implements TreeStatistic {
 
-    public ParsimonyStatistic(String name, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+    public ParsimonyStatistic(String name, Tree tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
 
         super(name);
         this.tree = tree;
-        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+        this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxa);
     }
 
     public void setTree(Tree tree) {
@@ -65,7 +66,7 @@ public class ParsimonyStatistic extends Statistic.Abstract implements TreeStatis
      */
     public double getStatisticValue(int dim) {
 
-        return Tree.Utils.getParsimonySteps(tree, leafSet);
+        return TreeUtils.getParsimonySteps(tree, leafSet);
     }
 
     private Tree tree = null;

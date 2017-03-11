@@ -30,6 +30,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import jam.framework.DocumentFrame;
@@ -303,7 +304,7 @@ public class CoalGenFrame extends DocumentFrame {
 
             Tree tree = simulator.simulateTree(data.taxonList, demo);
 
-            writer.println(count + "\t" + Tree.Utils.newick(tree));
+            writer.println(count + "\t" + TreeUtils.newick(tree));
             count += 1;
         }
 

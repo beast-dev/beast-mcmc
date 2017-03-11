@@ -28,6 +28,7 @@ package dr.evomodel.arg;
 import dr.evolution.tree.MutableTreeListener;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.ARGModel.Node;
@@ -127,7 +128,7 @@ public class ARGTree implements Tree {
 		nodes = new Node[nodeCount];
 
 		do {
-			node = (Node) Tree.Utils.postorderSuccessor(this, node);
+			node = (Node) TreeUtils.postorderSuccessor(this, node);
 			if (node.isExternal()) {
                                   // keep same order as ARG, so do not need to reload tipStates/Partials
                                   nodes[node.number] = node;
@@ -502,11 +503,11 @@ public class ARGTree implements Tree {
 	 * @return a string containing a newick representation of the tree
 	 */
 	public final String getNewick() {
-		return Tree.Utils.newick(this);
+		return TreeUtils.newick(this);
 	}
 
 	public final String getUniqueNewick(){
-		return Tree.Utils.uniqueNewick(this,this.getRoot());
+		return TreeUtils.uniqueNewick(this,this.getRoot());
 	}
 
 	/**

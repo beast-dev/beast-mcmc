@@ -248,20 +248,40 @@ public class GuessDatesDialog {
         group.add(calendar2Radio);
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                offsetCheck.setEnabled(numericalRadio.isSelected());
-                offsetText.setEnabled(numericalRadio.isSelected() && offsetCheck.isSelected());
-                unlessCheck.setEnabled(numericalRadio.isSelected() && offsetCheck.isSelected());
-                unlessText.setEnabled(numericalRadio.isSelected() && offsetCheck.isSelected() && unlessCheck.isSelected());
-                offset2Label.setEnabled(numericalRadio.isSelected() && offsetCheck.isSelected() && unlessCheck.isSelected());
-                offset2Text.setEnabled(numericalRadio.isSelected() && offsetCheck.isSelected() && unlessCheck.isSelected());
-                dateFormatLabel.setEnabled(calendarRadio.isSelected());
-                dateFormatText.setEnabled(calendarRadio.isSelected());
+                boolean nrs = numericalRadio.isSelected();
+                boolean ocs = offsetCheck.isSelected();
+                boolean ucs = unlessCheck.isSelected();
+                boolean crs = calendarRadio.isSelected();
+                offsetCheck.setEnabled(nrs);
+                offsetText.setEnabled(nrs && ocs);
+                unlessCheck.setEnabled(nrs && ocs);
+                unlessText.setEnabled(nrs && ocs && ucs);
+                offset2Label.setEnabled(nrs && ocs && ucs);
+                offset2Text.setEnabled(nrs && ocs && ucs);
+                dateFormatLabel.setEnabled(crs);
+                dateFormatText.setEnabled(crs);
 
             }
         };
         numericalRadio.addItemListener(listener);
         calendarRadio.addItemListener(listener);
         calendar2Radio.addItemListener(listener);
+
+        offsetCheck.setSelected(defaultOffsetCheckOption);
+        offsetText.setText(defaultOffsetText);
+        unlessCheck.setSelected(defaultUnlessCheckOption);
+        unlessText.setText(defaultUnlessText);
+        offset2Text.setText(defaultOffset2Text);
+
+        dateFormatText.setText(defaultDateFormatText);
+
+        orderCombo.setSelectedIndex(defaultOrderCombo);
+        prefixText.setText(defaultPrefixText);
+        regexText.setText(defaultRegexText);
+
+        orderCombo.setSelectedIndex(defaultOrderCombo);
+        prefixText.setText(defaultPrefixText);
+        regexText.setText(defaultRegexText);
 
         // set from preferences defaults...
         switch (defaultDelimitRadioOption) {
@@ -272,10 +292,6 @@ public class GuessDatesDialog {
             default: throw new IllegalArgumentException("unknown radio option");
         }
 
-        orderCombo.setSelectedIndex(defaultOrderCombo);
-        prefixText.setText(defaultPrefixText);
-        regexText.setText(defaultRegexText);
-
         switch (defaultParseRadioOption) {
             case 0: numericalRadio.setSelected(true); break;
             case 1: calendarRadio.setSelected(true); break;
@@ -283,13 +299,6 @@ public class GuessDatesDialog {
             default: throw new IllegalArgumentException("unknown radio option");
         }
 
-        offsetCheck.setSelected(defaultOffsetCheckOption);
-        offsetText.setText(defaultOffsetText);
-        unlessCheck.setSelected(defaultUnlessCheckOption);
-        unlessText.setText(defaultUnlessText);
-        offset2Text.setText(defaultOffset2Text);
-
-        dateFormatText.setText(defaultDateFormatText);
     }
 
     public int showDialog() {

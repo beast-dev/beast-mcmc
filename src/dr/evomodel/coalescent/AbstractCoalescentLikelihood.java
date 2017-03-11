@@ -30,6 +30,7 @@ import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.Intervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
@@ -55,14 +56,14 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
             String name,
             Tree tree,
             TaxonList includeSubtree,
-            List<TaxonList> excludeSubtrees) throws Tree.MissingTaxonException {
+            List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
         super(name);
 
         this.tree = tree;
 
         if (includeSubtree != null) {
-            includedLeafSet = Tree.Utils.getLeavesForTaxa(tree, includeSubtree);
+            includedLeafSet = TreeUtils.getLeavesForTaxa(tree, includeSubtree);
         } else {
             includedLeafSet = null;
         }
@@ -70,7 +71,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         if (excludeSubtrees != null) {
             excludedLeafSets = new Set[excludeSubtrees.size()];
             for (int i = 0; i < excludeSubtrees.size(); i++) {
-                excludedLeafSets[i] = Tree.Utils.getLeavesForTaxa(tree, excludeSubtrees.get(i));
+                excludedLeafSets[i] = TreeUtils.getLeavesForTaxa(tree, excludeSubtrees.get(i));
             }
         } else {
             excludedLeafSets = new Set[0];
@@ -181,7 +182,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
      */
     protected NodeRef getIncludedMRCA(Tree tree) {
         if (includedLeafSet != null) {
-            return Tree.Utils.getCommonAncestorNode(tree, includedLeafSet);
+            return TreeUtils.getCommonAncestorNode(tree, includedLeafSet);
         } else {
             return tree.getRoot();
         }
@@ -197,7 +198,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
         Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
         for (Set<String> excludedLeafSet : excludedLeafSets) {
-            excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSet));
+            excludeNodesBelow.add(TreeUtils.getCommonAncestorNode(tree, excludedLeafSet));
         }
         return excludeNodesBelow;
     }

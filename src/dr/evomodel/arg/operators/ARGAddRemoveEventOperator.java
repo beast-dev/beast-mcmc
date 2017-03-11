@@ -36,7 +36,7 @@ package dr.evomodel.arg.operators;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.ARGPartitionLikelihood;
@@ -797,7 +797,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             arg.checkTreeIsValid();
         } catch (MutableTree.InvalidTreeException ite) {
             throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+                    + "\n" + TreeUtils.uniqueNewick(arg, arg.getRoot()));
         }
 
         //Do all the backwards stuff now. :(
@@ -1128,7 +1128,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             arg.checkTreeIsValid();
         } catch (MutableTree.InvalidTreeException ite) {
             throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+                    + "\n" + TreeUtils.uniqueNewick(arg, arg.getRoot()));
         }
 
         assert nodeCheck() : arg.toARGSummary();

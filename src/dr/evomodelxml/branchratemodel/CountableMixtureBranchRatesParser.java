@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.AbstractBranchRateModel;
@@ -104,7 +104,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
                         int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
                         try {
                             cm.setClade(taxonList, rateCategory, includeStem, excludeClade, false);
-                        } catch (Tree.MissingTaxonException e) {
+                        } catch (TreeUtils.MissingTaxonException e) {
                             throw new XMLParseException("Unable to find taxon for clade in countable mixture model: " + e.getMessage());
                         }
                     }  else if (xoc.getName().equals(LocalClockModelParser.TRUNK)) {
@@ -115,7 +115,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
                         int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
                         try {
                             cm.setClade(taxonList, rateCategory, includeStem, excludeClade, true);
-                        } catch (Tree.MissingTaxonException e) {
+                        } catch (TreeUtils.MissingTaxonException e) {
                             throw new XMLParseException("Unable to find taxon for trunk in countable mixture model: " + e.getMessage());
                         }
                     }

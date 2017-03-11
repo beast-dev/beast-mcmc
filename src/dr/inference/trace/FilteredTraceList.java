@@ -30,21 +30,45 @@ package dr.inference.trace;
  */
 public abstract class FilteredTraceList implements TraceList {
 
-//    protected boolean[] selected; // length = values[].length = getValuesSize, all must be true initially
+    // length = values[].size; the flag of which row is filtered,
+    // where there is at least one column (parameter) having the value not in a selected range.
+    // used in AbstractTraceList trace.getValues
+    protected boolean[] filtered;
 
-//    private void createSelected() { // will init in updateSelected()
-//        if (getTrace(0) != null) {
-//            selected = new boolean[getTrace(0).getValuesSize()];
-//        } else {
-//            throw new RuntimeException("Cannot initial filters ! getTrace(0) failed !");
-//        }
-//    }
+    protected void initFlag() {
+        if (getTrace(0) != null) {
+            filtered = new boolean[getTrace(0).getValueCount()];
+        } else {
+            throw new RuntimeException("Cannot initial filters ! getTrace(0) failed !");
+        }
+    }
 
-//    private void initSelected() {
-//        for (int i = 0; i < selected.length; i++) {
-//            selected[i] = true;
-//        }
-//    }
+    protected void updateFlag() {
+        if (filtered == null) initFlag();
+
+        for (int i=0; i < getTraceCount(); i++) {
+            Trace trace = getTrace(i);
+            Filter filter = trace.getFilter();
+            if (filter != null) {
+                if (trace.getValueCount() != filtered.length)
+                    throw new RuntimeException("Invalid value size in Trace " + getTraceName(i));
+
+                for (int j = 0; j < trace.getValueCount(); j++) {
+                    // filter values not in
+                    if ( ! filter.isIn(trace.getValue(j)) )
+                        filtered[j] = true;
+                }
+            }
+        }
+    }
+
+    public boolean hasAnyFilter() {
+        for (int i=0; i < getTraceCount(); i++) {
+            if (getTrace(i).getFilter() != null)
+                return true;
+        }
+        return false;
+    }
 
     public boolean hasFilter(int traceIndex) {
 //        if (selected == null) return false;
@@ -52,14 +76,16 @@ public abstract class FilteredTraceList implements TraceList {
     }
 
     public void setFilter(int traceIndex, Filter filter) {
-//        if (selected == null) createSelected();
+        if (filtered == null) initFlag();
         getTrace(traceIndex).setFilter(filter);
         refreshStatistics();
     }
 
     public Filter getFilter(int traceIndex) {
-//        if (selected == null) return null;
-        return getTrace(traceIndex).getFilter();
+        Filter filter = getTrace(traceIndex).getFilter();
+        if (filtered == null && filter != null)
+            throw new RuntimeException("The filter applied, but flag filtered[] is null ! " + getTraceName(traceIndex));
+        return filter;
     }
 
     public void removeFilter(int traceIndex) {
@@ -71,34 +97,15 @@ public abstract class FilteredTraceList implements TraceList {
         for (int i = 0; i < getTraceCount(); i++) {
             getTrace(i).setFilter(null);
         }
-//        selected = null;
-        refreshStatistics();// must be after "selected = null"
+        filtered = null; // clean the flag
+        refreshStatistics();
     }
 
     protected void refreshStatistics() {
-//        updateSelected();
+        updateFlag();
+        // must update filtered[] before analyseTrace
         for (int i = 0; i < getTraceCount(); i++) {
             analyseTrace(i);
         }
     }
-
-//    private void updateSelected() {
-//        if (selected != null) {
-//            initSelected();
-//            for (int traceIndex = 0; traceIndex < getTraceCount(); traceIndex++) {
-//                if (getFilter(traceIndex) != null) {
-//                    Trace trace = getTrace(traceIndex);
-//                    if (trace.getValuesSize() != selected.length)
-//                        throw new RuntimeException("updateSelected: length of values[] is different with selected[] in Trace "
-//                                + getTraceName(traceIndex));
-//
-//                    for (int i = 0; i < trace.getValuesSize(); i++) {
-//                        if (!trace.isIn(i)) { // not selected
-//                            selected[i] = false;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 }

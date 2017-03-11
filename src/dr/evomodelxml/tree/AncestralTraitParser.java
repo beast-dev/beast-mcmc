@@ -28,6 +28,7 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.AncestralTrait;
@@ -74,7 +75,7 @@ public class AncestralTraitParser extends AbstractXMLObjectParser {
         }
         try {
             return new AncestralTrait(name, trait, tree, taxa);
-        } catch (Tree.MissingTaxonException mte) {
+        } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
         }
     }

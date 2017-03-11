@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.AbstractModelLikelihood;
@@ -95,7 +95,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
         addVariable(offsets);
 
         numdata = traitParameter.getParameterCount();
-        this.allTips=Tree.Utils.getExternalNodes(treeModel,treeModel.getRoot());
+        this.allTips= TreeUtils.getExternalNodes(treeModel,treeModel.getRoot());
 
 
 
@@ -612,7 +612,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 	        Set<String> leafNames = new HashSet<String>();
 	        leafNames.add(treeModel.getTaxonId(iTip));
 	        leafNames.add(treeModel.getTaxonId(jTip));
-	        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+	        return TreeUtils.getCommonAncestorNode(treeModel, leafNames);
 	    }
 
 

@@ -69,6 +69,9 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
             if (bounds.getLowerLimit(dim) < 0.0) {
                 throw new XMLParseException("Scale operator can only be used on parameters with a lower bound of zero");
             }
+            if (!Double.isInfinite(bounds.getUpperLimit(dim))) {
+                throw new XMLParseException("Scale operator can't be used on parameters with a finite upper bound (use a RandomWalk)");
+            }
         }
 
         Parameter indicator = null;

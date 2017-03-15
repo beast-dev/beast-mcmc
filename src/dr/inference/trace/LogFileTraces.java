@@ -369,39 +369,43 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
+    private final int MAX_UNIQUE_VALUE = 50;
     // TODO get rid of generic to make things easy
     // TODO change to String only, and parse to double, int or string in getValues according to trace type
     public void changeTraceType(int id, TraceType newType) throws TraceException {
-        if (id >= getTraceCount() || id < 0) throw new TraceException("trace id is invaild " + id);
+        if (id >= getTraceCount() || id < 0)
+            throw new TraceException("Invalid trace id : " + id + ", which should 0 < and >= " + getTraceCount());
         Trace trace = traces.get(id);
         if (trace.getTraceType() != newType) {
-            Trace newTrace = null;
-            try {
-                if (trace.getTraceType() == TraceType.CATEGORICAL && newType.isNumber()) {
-                    newTrace = createTrace(trace.getName(), newType);
-                    for (int i = 0; i < trace.getValueCount(); i++) { // String => Double
-                        newTrace.add(Double.parseDouble(trace.getValue(i).toString()));
-                    }
-                } else if (trace.getTraceType().isNumber() && newType == TraceType.CATEGORICAL) {
-                    newTrace = createTrace(trace.getName(), TraceType.CATEGORICAL);
-                    for (int i = 0; i < trace.getValueCount(); i++) { // Double => String
-                        newTrace.add(trace.getValue(i).toString());
-                    }
-                } else {
-                    trace.setTraceType(newType); // change between numeric
-                }
-            } catch (Exception e) {
-                throw new TraceException("Type change is failed, when parsing " + trace.getTraceType()
-                        + " to " + newType + " in trace " + trace.getName());
-            }
+            Trace newTrace = createTrace(trace.getName(), newType);
+            int uniqueValue = trace.getUniqueVauleCount();
+            if (uniqueValue > MAX_UNIQUE_VALUE)
+                throw new TraceException("Type change is failed, because too many unique values (>" +
+                        MAX_UNIQUE_VALUE + ") are found !");
 
             if (trace.getTraceType() == TraceType.CATEGORICAL || newType == TraceType.CATEGORICAL) {
+                try {
+                    if (newType.isNumber()) { // trace.getTraceType() == TraceType.CATEGORICAL &&
+                        for (int i = 0; i < trace.getValueCount(); i++) {
+                            newTrace.add(Double.parseDouble(trace.getValue(i).toString())); // String => Double
+                        }
+                    } else if (trace.getTraceType().isNumber()) { // && newType == TraceType.CATEGORICAL
+                        for (int i = 0; i < trace.getValueCount(); i++) {
+                            newTrace.add(trace.getValue(i).toString()); // Double => String
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new TraceException("Type change is failed, when parsing " + trace.getTraceType() +
+                            " to " + newType + " in trace " + trace.getName());
+                }
+
                 if (newTrace.getValueCount() != trace.getValueCount())
                     throw new TraceException("Type change is failed, because values size is different after copy !");
 
                 traces.set(id, newTrace);
+
             } else {
-                trace.setTraceType(newType);
+                trace.setTraceType(newType); // change between numeric
             }
         }
     }

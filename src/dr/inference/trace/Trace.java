@@ -80,6 +80,11 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         return values.size();
     }
 
+    public int getUniqueVauleCount() {
+        Set<T> uniqueValues = new HashSet<T>(values);
+        return uniqueValues.size();
+    }
+
     public T getValue(int index) {
         return values.get(index);
     }
@@ -181,5 +186,4 @@ public class Trace<T> { // TODO get rid of generic to make things easy
     public Filter getFilter() {
         return filter;
     }
-
 }

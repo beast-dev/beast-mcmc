@@ -1,5 +1,5 @@
 /*
- * TopologyTracer.java
+ * CheckPointUpdater.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -28,8 +28,19 @@ package dr.app.realtime;
 import dr.app.beast.BeastParser;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.util.Arguments;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.distance.F84DistanceMatrix;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
+import dr.inference.model.Likelihood;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;
@@ -39,6 +50,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Locale;
 
 /**
@@ -50,12 +63,27 @@ public class CheckPointUpdater {
     private final boolean PARSER_WARNINGS = true;
     private final boolean STRICT_XML = false;
 
+    //TODO Currently unused
+    private enum UpdateChoice {
+        JC69DISTANCE("JC69Distance"),F84DISTANCE("F84Distance");
+
+        UpdateChoice(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        private String name;
+    }
+
     /**
      * The goal is to modify and existing checkpoint file with additional information and generate a novel checkpoint file.
      * Running the MCMC chain after parsing the file(s) should not happen.
      * @param beastXMLFileName
      */
-    public CheckPointUpdater(String beastXMLFileName, String debugStateFile, FileWriter fw) {
+    public CheckPointUpdater(String beastXMLFileName, String debugStateFile, UpdateChoice choice, FileWriter fw) {
         //no additional parsers, we don't need BEAGLE at the moment just yet
         XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML);
         try {
@@ -73,29 +101,96 @@ public class CheckPointUpdater {
             BeastCheckpointer checkpoint = new BeastCheckpointer();
 
             //load the stored checkpoint file
-            checkpoint.loadState(mc, new double[]{Double.NaN});
+            long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 
-
-
-
-            /*Iterator iter = parser.getParsers();
-            while (iter.hasNext()) {
-                Object nextParser = iter.next();
-                if (nextParser instanceof AlignmentParser) {
-                    System.out.println("Alignment parser found!");
-                    AlignmentParser alParser = (AlignmentParser) nextParser;
-
-                    Map<String, XMLObject> map = alParser.getStore();
-                    System.out.println(map.size());
+            //check the Tree(Data)Likelihoods in the connected set of likelihoods
+            //focus on TreeDataLikelihood, which has getTree() to get the tree for each likelihood
+            //also get the DataLikelihoodDelegate from TreeDataLikelihood
+            ArrayList<TreeDataLikelihood> likelihoods = new ArrayList<TreeDataLikelihood>();
+            ArrayList<Tree> trees = new ArrayList<Tree>();
+            ArrayList<DataLikelihoodDelegate> delegates = new ArrayList<DataLikelihoodDelegate>();
+            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+                if (likelihood instanceof TreeDataLikelihood) {
+                    likelihoods.add((TreeDataLikelihood)likelihood);
+                    trees.add(((TreeDataLikelihood) likelihood).getTree());
+                    delegates.add(((TreeDataLikelihood) likelihood).getDataLikelihoodDelegate());
                 }
-            }*/
+            }
 
+            //suggested to go through TreeDataLikelihoodParser and give it an extra option to create a HashMap
+            //keyed by the tree; am currently not overly fond of this approach
+            ArrayList<PatternList> patternLists = new ArrayList<PatternList>();
+            for (DataLikelihoodDelegate del : delegates) {
+                if (del instanceof BeagleDataLikelihoodDelegate) {
+                    patternLists.add(((BeagleDataLikelihoodDelegate) del).getPatternList());
+                } else if (del instanceof MultiPartitionDataLikelihoodDelegate) {
+                    //TODO complete code
+                }
+            }
 
+            //aggregate all patterns to create distance matrix
+            //TODO What about different trees for different partitions?
+            Patterns patterns = new Patterns(patternLists.get(0));
+            if (patternLists.size() > 1) {
+                for (int i = 1; i < patternLists.size(); i++) {
+                    patterns.addPatterns(patternLists.get(i));
+                }
+            }
 
+            //identify the additional taxa/sequences
+            int taxonCount = patterns.getTaxonCount();
 
+            //TODO Could be multiple trees (for multiple partitions)
+            Tree currentTree = trees.get(0);
+            int treeTaxa = currentTree.getExternalNodeCount();
+
+            if (taxonCount > treeTaxa) {
+                System.out.println("Additional taxa found:");
+                //list to contain the taxa being added
+                ArrayList<Taxon> additionalTaxa = new ArrayList<Taxon>();
+
+                Iterator<Taxon> iterator = patterns.iterator();
+                while (iterator.hasNext()) {
+                    Taxon taxon = iterator.next();
+                    boolean taxonFound = false;
+                    for (int i = 0; i < currentTree.getExternalNodeCount(); i++) {
+                        if (currentTree.getNodeTaxon(currentTree.getExternalNode(i)) == taxon) {
+                            taxonFound = true;
+                        }
+                    }
+                    if (!taxonFound) {
+                        additionalTaxa.add(taxon);
+                    }
+                }
+
+                for (Taxon tax : additionalTaxa) {
+                    System.out.println(tax);
+                }
+
+                if (choice == UpdateChoice.JC69DISTANCE) {
+                    //build a distance matrix according to JC69
+                    JukesCantorDistanceMatrix jcDistanceMatrix = new JukesCantorDistanceMatrix(patterns);
+                    new GeneticDistanceTree(currentTree).addTaxa(additionalTaxa,jcDistanceMatrix);
+                } else if (choice == UpdateChoice.F84DISTANCE) {
+                    //build a distance matrix according to F84
+                    F84DistanceMatrix f84DistanceMatrix = new F84DistanceMatrix(patterns);
+                    new GeneticDistanceTree(currentTree).addTaxa(additionalTaxa,f84DistanceMatrix);
+                } else {
+                    throw new RuntimeException("Invalid update option provided.");
+                }
+
+            } else {
+                throw new RuntimeException("Removing taxa from previous analysis currently not supported.");
+            }
+
+            mc.getLikelihood().makeDirty();
+            double logL = mc.evaluate();
+
+            System.out.println("new logLikelihood value = " + logL);
+
+            checkpoint.saveState(mc, state, logL);
 
             //TODO .log and .trees files are being created; not necessary here as we're not running an analysis
-
 
             fileReader.close();
 
@@ -124,6 +219,7 @@ public class CheckPointUpdater {
                         new Arguments.StringOption("BEAST_XML", "FILENAME", "Specify a BEAST XML file"),
                         new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
                         new Arguments.StringOption("output_file", "FILENAME", "Specify a filename for the output file"),
+                        new Arguments.StringOption("update_choice", "UPDATECHOICE", "Specify a function by which to update the tree"),
                         new Arguments.Option("help", "Print this information and stop")
                 });
 
@@ -154,6 +250,13 @@ public class CheckPointUpdater {
             throw new RuntimeException("No dump file specified.");
         }
 
+        UpdateChoice choice = null;
+        if (arguments.hasOption("update_choice")) {
+            choice = UpdateChoice.valueOf(arguments.getStringOption("update_choice"));
+        } else {
+            throw new RuntimeException("Update mechanism needs to be specified.");
+        }
+
         FileWriter fw = null;
         if (arguments.hasOption("output_file")) {
             String output = arguments.getStringOption("output_file");
@@ -162,7 +265,7 @@ public class CheckPointUpdater {
             throw new RuntimeException("No output file specified.");
         }
 
-        new CheckPointUpdater(inputFile, debugStateFile, fw);
+        new CheckPointUpdater(inputFile, debugStateFile, choice, fw);
 
         fw.flush();
         fw.close();

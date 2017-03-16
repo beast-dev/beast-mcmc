@@ -112,6 +112,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         setId(patternList.getId());
 
         this.dataType = patternList.getDataType();
+        this.patternList = patternList;
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
 
@@ -390,7 +391,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public int getTraitDim() {
-        return  patternCount;
+        return patternCount;
+    }
+
+    public PatternList getPatternList() {
+        return this.patternList;
     }
 
     private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
@@ -935,6 +940,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     /**
      * the patternList
+     */
+    private final PatternList patternList;
+
+    /**
+     * the data type
      */
     private final DataType dataType;
 

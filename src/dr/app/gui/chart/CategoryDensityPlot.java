@@ -35,8 +35,8 @@ import java.util.List;
 public class CategoryDensityPlot extends FrequencyPlot {
     private int barCount = 0;
     private int barId;
-    // for string[], passing the int[] storing the index of string[]
 
+    // for string[], passing the int[] storing the index of string[]
     public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
                                int barCount, int barId) {
         super(traceDistribution);
@@ -47,10 +47,10 @@ public class CategoryDensityPlot extends FrequencyPlot {
     }
 
     /**
-     * Set data
+     * Set data, all integers
      */
-    public void setData(Variate data, int minimumBinCount) {
-        raw = data;
+    public void setData(Variate.D data, int minimumBinCount) {
+        setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
         Variate.D xData = new Variate.D();
@@ -72,37 +72,72 @@ public class CategoryDensityPlot extends FrequencyPlot {
         setData(xData, yData);
     }
 
+    protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
+        double min = (Double) data.getMin();
+        double max = (Double) data.getMax();
+
+        if (min == max) {
+            if (min == 0) {
+                min = -1.0;
+            } else {
+                min -= 1;
+            }
+            if (max == 0) {
+                max = 1.0;
+            } else {
+                max += 1;
+            }
+        }
+
+        Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+        axis.setRange(min, max);
+
+        int majorTickCount = axis.getMajorTickCount();
+        axis.setPrefNumTicks(majorTickCount, 4);
+
+        double binSize = axis.getMinorTickSpacing();
+        int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
+
+        double start = Math.floor(axis.getMinAxis()); // to convert x-axis into integer
+        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
+
+        for (int i = 0; i < raw.getCount(); i++) {
+            frequency.addValue((Double) raw.get(i));
+        }
+
+        return frequency;
+    }
+
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.D xData, Variate.D yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         double x1, y1, x2, y2, x;
 
         int n = xData.getCount();
 
-        g2.setStroke(lineStroke);
         for (int i = 0; i < n; i += 2) {
-
-
-               x1 = xData.get(i);
-               x2 = xData.get(i + 1);
-               x = x2 - x1;
+            x1 = (Double) xData.get(i);
+            x2 = (Double) xData.get(i + 1);
+            x = x2 - x1;
 
             if (barCount > 1) {
                 x1 = x1 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
                 x2 = x2 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
             }
 
-            y1 = yData.get(i);
-            y2 = yData.get(i + 1);
+            y1 = (Double) yData.get(i);
+            y2 = (Double) yData.get(i + 1);
 
 
             if (y1 != y2) {
                 if (linePaint != null) {
                     Paint fillPaint = new Color(
-                    ((Color) linePaint).getRed(),
-                    ((Color) linePaint).getGreen(),
-                    ((Color) linePaint).getBlue(), 125);
+                            ((Color) linePaint).getRed(),
+                            ((Color) linePaint).getGreen(),
+                            ((Color) linePaint).getBlue(), 125);
+                    if (barId==0)
+                        fillPaint = new Color(124, 164, 221, 125);
                     g2.setPaint(fillPaint);
                     fillRect(g2, x1, y1, x2, y2);
                 }
@@ -116,22 +151,6 @@ public class CategoryDensityPlot extends FrequencyPlot {
         }
     }
 
-//    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE && numOfBars > 0) {
-//            super.fillRect(g2, x1 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y2);
-//        } else {
-//            super.fillRect(g2, x1, y1, x2, y2);
-//        }
-//    }
-//
-//    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE && numOfBars > 0) {
-////            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
-//           super.fillRect(g2, x1 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y2);
-//        } else {
-//            super.drawRect(g2, x1, y1, x2, y2);
-//        }
-//    }
 }
 
 

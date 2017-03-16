@@ -632,6 +632,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         if (updateSiteModel) {
             double[] categoryRates = this.siteRateModel.getCategoryRates();
+            if (categoryRates == null) {
+                // If this returns null then there was a numerical error calculating the category rates
+                // (probably a very small alpha) so reject the move.
+                return Double.NEGATIVE_INFINITY;
+            }
             beagle.setCategoryRates(categoryRates);
         }
 

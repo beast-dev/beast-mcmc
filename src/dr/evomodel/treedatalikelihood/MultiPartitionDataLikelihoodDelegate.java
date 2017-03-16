@@ -710,6 +710,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         for (SiteRateModel siteRateModel : siteRateModels) {
             if (updateSiteRateModels[k]) {
                 double[] categoryRates = siteRateModel.getCategoryRates();
+                if (categoryRates == null) {
+                    // If this returns null then there was a numerical error calculating the category rates
+                    // (probably a very small alpha) so reject the move.
+                    return Double.NEGATIVE_INFINITY;
+                }
 
                 if (flip[k]) {
                     categoryRateBufferHelper[k].flipOffset(0);

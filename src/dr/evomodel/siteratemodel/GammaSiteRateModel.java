@@ -115,6 +115,8 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             this.categoryCount = gammaCategoryCount;
 
             addVariable(shapeParameter);
+//            shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 1E-3, 1));
+            // removing the bounds on the alpha parameter - to make the prior more explicit
             shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         } else {
             this.categoryCount = 1;
@@ -209,6 +211,14 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             }
         }
 
+        for (int i = (invarParameter != null ? 1 : 0); i < categoryRates.length; i++) {
+            // If a gamma rate is zero then the quantitization has failed numerically so return null.
+            // This allows the likelihood to return -Inf and reject this state.
+            if (categoryRates[i] == 0.0) {
+                return null;
+            }
+        }
+
         return categoryRates;
     }
 
@@ -268,6 +278,11 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             for (int i = 0; i < gammaCatCount; i++) {
 
                 categoryRates[i + cat] = GammaDistribution.quantile((2.0 * i + 1.0) / (2.0 * gammaCatCount), a, 1.0 / a);
+
+//                if (categoryRates[i + cat] == 0.0) {
+//                    throw new RuntimeException("Alpha parameter for discrete gamma distribution is too small and causing numerical errors.");
+//                }
+
                 mean += categoryRates[i + cat];
 
                 categoryProportions[i + cat] = propVariable / gammaCatCount;

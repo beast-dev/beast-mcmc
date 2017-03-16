@@ -237,7 +237,6 @@ public class LogFileTraces extends AbstractTraceList {
             addTraceAndType(labels[i]);
         }
 
-
         int traceCount = getTraceCount();
 
         long num_samples = 0;
@@ -276,7 +275,7 @@ public class LogFileTraces extends AbstractTraceList {
                 if (tokens.hasMoreTokens()) {
                     String value = tokens.nextToken();
 
-                    if (state == 0) assignTraceTypeAccordingValue(value);
+                    if (state == 0) assignTraceTypeAccordingValue(i, value);
 
                     try {
 //                        values[i] = Double.parseDouble(tokens.nextToken());
@@ -315,8 +314,34 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-    private void assignTraceTypeAccordingValue(String value) {
-        //todo
+
+    /**
+     * Auto assign ORDINAL or CATEGORICAL type to traces
+     * according their values in the first line.
+     * Default type is REAL.
+     *
+     * @param nTrace
+     * @param value
+     */
+    private void assignTraceTypeAccordingValue(int nTrace, String value) throws TraceException {
+        String name = getTraceName(nTrace);
+        TraceType type = TraceType.REAL;
+        if (NumberUtils.isNumber(value)) { // Double or Integer
+            if (! NumberUtils.hasDecimalPoint(value)) { // Integer
+                type = TraceType.ORDINAL;
+                // change tracesType map for
+                tracesType.put(name, type);
+                changeTraceType(nTrace, type);
+            }
+
+        } else { // String
+            type = TraceType.CATEGORICAL;
+            tracesType.put(name, type);
+            changeTraceType(nTrace, type);
+        }
+
+        if (type != TraceType.REAL)
+            System.out.println("Assign " + type + " type to trace " + name + " at " + nTrace);
     }
 
     /**
@@ -453,7 +478,7 @@ public class LogFileTraces extends AbstractTraceList {
         tracesType.put(newTName, TraceType.REAL);
     }
 
-    // tracesType only save INTEGER and STRING, and only use during loading files
+    // store INTEGER or STRING predefined at the top of log file, only used during loading files
     private TreeMap<String, TraceType> tracesType = new TreeMap<String, TraceType>();
 
     private long burnIn = -1;

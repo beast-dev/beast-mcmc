@@ -208,7 +208,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      */
     public void setInCredibleSet(TraceDistribution traceD) {
         this.traceDistribution = traceD;
-        hasIncredibleSet = traceD.inCredibleSet.size() > 0;
+        hasIncredibleSet = traceD.credibleSet != null && traceD.credibleSet.getIncredibleSet().size() > 0;
     }
 
     /**
@@ -272,7 +272,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                             fillRect(g2, x1, y1, x2, y2);
                         }
                     } else if (hasIncredibleSet) {
-                        if (traceDistribution.inCredibleSetContains((int) x1) || traceDistribution.inCredibleSetContains((int) x2)) {
+                        if (traceDistribution.incredibleSetContains((int) x1) || traceDistribution.incredibleSetContains((int) x2)) {
                             g2.setPaint(quantilePaint);
                         } else {
                             g2.setPaint(barPaint);

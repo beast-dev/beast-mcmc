@@ -182,22 +182,58 @@ public class LogFileTraces extends AbstractTraceList {
         return this.getValues(index, 0, getBurninStateCount());
     }
 
+    /**
+     * Use the {@link #loadTraces(File) loadTraces} method,
+     * where <code>File</code> is defined from the constructor.
+     *
+     * @throws TraceException
+     * @throws IOException
+     */
     public void loadTraces() throws TraceException, IOException {
-        FileReader reader = new FileReader(file);
+        loadTraces(file);
+    }
+
+    /**
+     * Read through <code>File</code> created from a log file,
+     * fill in <code>traces</code> list, and set <code>TraceType</code>.
+     *
+     * @param file <code>File</code>
+     * @throws TraceException
+     * @throws IOException
+     */
+    public void loadTraces(File file) throws TraceException, IOException {
+        final Reader reader = new FileReader(file);
         loadTraces(reader);
         reader.close();
     }
 
     /**
-     * Walter: Please comment what the extra arguments mean
+     * Read through <code>InputStream</code> created from a log file,
+     * fill in <code>traces</code> list, and set <code>TraceType</code>.
      *
-     * @param r
+     * @param in <code>InputStream</code>
+     * @throws TraceException
+     * @throws IOException
+     */
+    public void loadTraces(InputStream in) throws TraceException, IOException {
+        final Reader reader = new InputStreamReader(in);
+        loadTraces(reader);
+        reader.close();
+    }
+
+    /**
+     * Read through either <code>FileReader</code> or <code>InputStreamReader</code>
+     * created from a log file,
+     * fill in <code>traces</code> list, and set <code>TraceType</code>.
+     *
+     * @param r The input for <code>TrimLineReader</code>.
+     *          Use either <code>FileReader</code> or <code>InputStreamReader</code>
      * @throws TraceException
      * @throws java.io.IOException
      */
-    public void loadTraces(Reader r) throws TraceException, java.io.IOException {
+    private void loadTraces(Reader r) throws TraceException, java.io.IOException {
 
-        TrimLineReader reader = new LogFileTraces.TrimLineReader(r);
+        final TrimLineReader reader = new LogFileTraces.TrimLineReader(r);
 
         // Read through to first token
         StringTokenizer tokens = reader.tokenizeLine();
@@ -345,7 +381,9 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     /**
-     * todo I would have thought this would read the type across the header for each trace
+     * @deprecated should be replaced by
+     * {@link #assignTraceTypeAccordingValue(int, String) assignTraceTypeAccordingValue} method
+     *
      * @param firstToken
      * @param tokens
      */
@@ -478,7 +516,11 @@ public class LogFileTraces extends AbstractTraceList {
         tracesType.put(newTName, TraceType.REAL);
     }
 
-    // store INTEGER or STRING predefined at the top of log file, only used during loading files
+    /**
+     * store INTEGER or STRING predefined at the top of log file, only used during loading files
+     * @deprecated should be replaced by
+     * {@link #assignTraceTypeAccordingValue(int, String) assignTraceTypeAccordingValue} method
+     */
     private TreeMap<String, TraceType> tracesType = new TreeMap<String, TraceType>();
 
     private long burnIn = -1;

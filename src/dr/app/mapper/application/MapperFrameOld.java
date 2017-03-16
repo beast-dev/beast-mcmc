@@ -624,12 +624,12 @@ public class MapperFrameOld extends DocumentFrame {
                 in.getProgressMonitor().setMillisToDecideToPopup(0);
                 in.getProgressMonitor().setMillisToPopup(0);
 
-                final Reader reader = new InputStreamReader(in);
+//                final Reader reader = new InputStreamReader(in);
 
                 Thread readThread = new Thread() {
                     public void run() {
                         try {
-                            traces.loadTraces(reader);
+                            traces.loadTraces(in);
 
                             EventQueue.invokeLater(
                                     new Runnable() {
@@ -693,8 +693,8 @@ public class MapperFrameOld extends DocumentFrame {
                 public void run() {
                     try {
                         for (final LogFileTraces traces : tracesArray) {
-                            final Reader reader = new FileReader(traces.getFile());
-                            traces.loadTraces(reader);
+//                            final Reader reader = new FileReader(traces.getFile());
+                            traces.loadTraces();
 
                             EventQueue.invokeLater(
                                     new Runnable() {

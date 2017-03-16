@@ -63,7 +63,7 @@ public class TopologyTracer {
     // output to stdout
     private static PrintStream progressStream = System.out;
 
-    public TopologyTracer(int burnin, String treeFile, String outputFile, ArrayList<Double> lambdaValues) {
+    public TopologyTracer(int burnin, String treeFile, String userProvidedTreeFile, String outputFile, ArrayList<Double> lambdaValues) {
 
         try {
 
@@ -82,8 +82,22 @@ public class TopologyTracer {
                 importer = new NewickImporter(reader);
             }
 
-            //pick first tree as focal tree
-            Tree focalTree = importer.importNextTree();
+            Tree focalTree = null;
+            if (!userProvidedTreeFile.equals("")) {
+                //get tree from user provided tree file
+                BufferedReader focalReader = new BufferedReader(new FileReader(userProvidedTreeFile));
+                TreeImporter userImporter;
+                String userLine = focalReader.readLine();
+                if (userLine.toUpperCase().startsWith("#NEXUS")) {
+                    userImporter = new NexusImporter(focalReader);
+                } else {
+                    userImporter = new NewickImporter(focalReader);
+                }
+                focalTree = userImporter.importNextTree();
+            } else {
+                //pick first tree as focal tree
+                focalTree = importer.importNextTree();
+            }
 
             ArrayList<Long> treeStates = new ArrayList<Long>();
             ArrayList<String> treeIds = new ArrayList<String>();
@@ -244,6 +258,7 @@ public class TopologyTracer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.StringOption("tree", "tree file name", "a focal tree provided by the user [default = first tree in .trees file]"),
                         new Arguments.RealOption("lambda", "the lambda value to be used for the 'Kendall-Colijn metric' [default = {0,0.5,1}]"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -271,6 +286,11 @@ public class TopologyTracer {
             lambdaValues.add(arguments.getRealOption("lambda"));
         }
 
+        String providedFileName = "";
+        if (arguments.hasOption("tree")) {
+            providedFileName = arguments.getStringOption("tree");
+        }
+
         String inputFileName = null;
         String outputFileName = null;
 
@@ -296,7 +316,7 @@ public class TopologyTracer {
             inputFileName = Utils.getLoadFileName("TopologyTracer " + version.getVersionString() + " - Select log file to analyse");
         }
 
-        new TopologyTracer(burnin, inputFileName, outputFileName, lambdaValues);
+        new TopologyTracer(burnin, inputFileName, providedFileName, outputFileName, lambdaValues);
 
         System.exit(0);
 

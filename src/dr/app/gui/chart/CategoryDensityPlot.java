@@ -27,6 +27,7 @@ package dr.app.gui.chart;
 
 import dr.inference.trace.TraceDistribution;
 import dr.stats.Variate;
+import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.util.List;
@@ -34,8 +35,8 @@ import java.util.List;
 public class CategoryDensityPlot extends FrequencyPlot {
     private int barCount = 0;
     private int barId;
-    // for string[], passing the int[] storing the index of string[]
 
+    // for string[], passing the int[] storing the index of string[]
     public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
                                int barCount, int barId) {
         super(traceDistribution);
@@ -45,31 +46,67 @@ public class CategoryDensityPlot extends FrequencyPlot {
         setData(new Variate.D(data), minimumBinCount);
     }
 
-//    /**
-//     * Set data
-//     */
-//    public void setData(Variate data, int minimumBinCount) {
-//        raw = data;
-//        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
-//
-//        Variate.D xData = new Variate.D();
-//        Variate.D yData = new Variate.D();
-//
-//        double x = frequency.getLowerBound();
-//
-//        for (int i = 0; i < frequency.getBinCount(); i++) {
-//
-//            xData.add(x);
-//            yData.add(0.0);
-//
-//            x += frequency.getBinSize();
-//
-//            xData.add(x);
-//            yData.add(frequency.getProbability(i));
-//
-//        }
-//        setData(xData, yData);
-//    }
+    /**
+     * Set data, all integers
+     */
+    public void setData(Variate.D data, int minimumBinCount) {
+        setRawData(data);
+        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
+
+        Variate.D xData = new Variate.D();
+        Variate.D yData = new Variate.D();
+
+        double x = frequency.getLowerBound();
+
+        for (int i = 0; i < frequency.getBinCount(); i++) {
+
+            xData.add(x);
+            yData.add(0.0);
+
+            x += frequency.getBinSize();
+
+            xData.add(x);
+            yData.add(frequency.getProbability(i));
+
+        }
+        setData(xData, yData);
+    }
+
+    protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
+        double min = (Double) data.getMin();
+        double max = (Double) data.getMax();
+
+        if (min == max) {
+            if (min == 0) {
+                min = -1.0;
+            } else {
+                min -= 1;
+            }
+            if (max == 0) {
+                max = 1.0;
+            } else {
+                max += 1;
+            }
+        }
+
+        Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+        axis.setRange(min, max);
+
+        int majorTickCount = axis.getMajorTickCount();
+        axis.setPrefNumTicks(majorTickCount, 4);
+
+        double binSize = axis.getMinorTickSpacing();
+        int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
+
+        double start = Math.floor(axis.getMinAxis()); // to convert x-axis into integer
+        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
+
+        for (int i = 0; i < raw.getCount(); i++) {
+            frequency.addValue((Double) raw.get(i));
+        }
+
+        return frequency;
+    }
 
     /**
      * Paint data series

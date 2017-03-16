@@ -175,7 +175,10 @@ public class FrequencyPlot extends Plot.AbstractPlot {
             }
         }
 
-        FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
+        double start = axis.getMinAxis();
+        if (minimumBinCount < 0)
+            start = Math.floor(start); // to convert x-axis into integer
+        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {
             frequency.addValue((Double) raw.get(i));

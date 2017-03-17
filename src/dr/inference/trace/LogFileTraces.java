@@ -73,14 +73,14 @@ public class LogFileTraces extends AbstractTraceList {
     public int getStateCount() {
         // This is done as two integer divisions to ensure the same rounding for
         // the burnin...
-        return (int) (((lastState - firstState) / stepSize) - (getBurnIn() / stepSize) + 1);
+        return (int) (((lastState - firstState) / stepSize) - (burnIn / stepSize) + 1);
     }
 
     /**
      * @return the number of states in the burnin
      */
     public int getBurninStateCount() {
-        return (int) (getBurnIn() / stepSize);
+        return (int) (burnIn / stepSize);
     }
 
     /**
@@ -288,7 +288,8 @@ public class LogFileTraces extends AbstractTraceList {
                     // Changed this to parseDouble because LAMARC uses scientific notation for the state number
                     state = (long) Double.parseDouble(stateString);
                 } catch (NumberFormatException nfe) {
-                    throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
+                    throw new TraceException("Unable to parse state number in column 1 (Line " +
+                            reader.getLineNumber() + ")");
                 }
 
                 if (num_samples < 1) {
@@ -300,7 +301,8 @@ public class LogFileTraces extends AbstractTraceList {
                 num_samples += 1;
 
                 if (!addState(state, num_samples)) {
-                    throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
+                    throw new TraceException("State " + state + " is not consistent with previous spacing (Line " +
+                            reader.getLineNumber() + ")");
                 }
 
             } catch (NumberFormatException nfe) {
@@ -317,8 +319,9 @@ public class LogFileTraces extends AbstractTraceList {
 //                        values[i] = Double.parseDouble(tokens.nextToken());
                         addParsedValue(i, value);
                     } catch (NumberFormatException nfe) {
-                        throw new TraceException("State " + state + ": Expected correct number type (Double, Integer or String) in column "
-                                + (i + 1) + " (Line " + reader.getLineNumber() + ")");
+                        throw new TraceException("State " + state + ": Expected correct data type " +
+                                "(Double, Integer or String) in column " + (i + 1) +
+                                " (Line " + reader.getLineNumber() + ")");
                     }
 
                 } else {
@@ -330,6 +333,10 @@ public class LogFileTraces extends AbstractTraceList {
         }
 
         burnIn =  lastState / 10;
+
+        if (burnIn < stepSize)
+            throw new TraceException("Inadequate sample size (" + num_samples + ") causes burn in " +
+                    burnIn + " < step size " + stepSize + " !");
     }
 
     /**

@@ -181,9 +181,6 @@ public class TopologyTracer {
                 afterTime = System.currentTimeMillis();
                 timings[5] += afterTime - beforeTime;
 
-                //TODO Last tree is not being processed?
-                //System.out.println(tree.getId());
-
                 numberOfTrees++;
 
                 if (numberOfTrees % 25 == 0) {

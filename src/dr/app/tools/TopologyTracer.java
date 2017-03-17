@@ -83,7 +83,10 @@ public class TopologyTracer {
             }
 
             Tree focalTree = null;
+            boolean userProvidedTree = false;
             if (!userProvidedTreeFile.equals("")) {
+                userProvidedTree = true;
+                progressStream.println("User-provided focal tree.");
                 //get tree from user provided tree file
                 BufferedReader focalReader = new BufferedReader(new FileReader(userProvidedTreeFile));
                 TreeImporter userImporter;
@@ -112,19 +115,22 @@ public class TopologyTracer {
                 kcMetrics.add(new ArrayList<Double>());
             }
 
-            //take into account first distance of focal tree to itself
-            treeStates.add((long)0);
-
-            jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-            billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-            cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-            branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
             SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
-            pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
             KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
             List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
-            for (int i = 0; i < allKCMetrics.size(); i++) {
-                kcMetrics.get(i).add(allKCMetrics.get(i));
+
+            if (!userProvidedTree) {
+                //take into account first distance of focal tree to itself
+                treeStates.add((long) 0);
+
+                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
+                for (int i = 0; i < allKCMetrics.size(); i++) {
+                    kcMetrics.get(i).add(allKCMetrics.get(i));
+                }
             }
 
             int numberOfTrees = 1;

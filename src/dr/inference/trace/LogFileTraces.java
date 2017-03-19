@@ -331,6 +331,8 @@ public class LogFileTraces extends AbstractTraceList {
 
             tokens = reader.tokenizeLine();
         }
+        if (num_samples < 3)
+            throw new TraceException("Inadequate sample size (" + num_samples + ") will cause incorrect statistical summary !");
 
         burnIn =  lastState / 10;
 

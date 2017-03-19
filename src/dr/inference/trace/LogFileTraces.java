@@ -73,14 +73,14 @@ public class LogFileTraces extends AbstractTraceList {
     public int getStateCount() {
         // This is done as two integer divisions to ensure the same rounding for
         // the burnin...
-        return (int) (((lastState - firstState) / stepSize) - (burnIn / stepSize) + 1);
+        return (int) (((lastState - firstState) / stepSize) - (getBurnIn() / stepSize) + 1);
     }
 
     /**
      * @return the number of states in the burnin
      */
     public int getBurninStateCount() {
-        return (int) (burnIn / stepSize);
+        return (int) (getBurnIn() / stepSize);
     }
 
     /**
@@ -137,7 +137,7 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     public double getStateValue(int trace, int index) {
-        return (Double) getTrace(trace).getValue(index + (int) (burnIn / stepSize));
+        return (Double) getTrace(trace).getValue(index + (int) (getBurnIn() / stepSize));
     }
 
     /**
@@ -148,7 +148,7 @@ public class LogFileTraces extends AbstractTraceList {
      * @param offset      first trace index
      */
     public void getStateValues(int nState, double[] destination, int offset) {
-        final int index1 = nState + (int) (burnIn / stepSize);
+        final int index1 = nState + (int) (getBurnIn() / stepSize);
         for (int k = 0; k < destination.length; ++k) {
             destination[k] = (Double) getTrace(k + offset).getValue(index1);
         }

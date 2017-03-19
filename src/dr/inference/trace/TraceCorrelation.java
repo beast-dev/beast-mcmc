@@ -28,7 +28,9 @@ package dr.inference.trace;
 import java.util.List;
 
 /**
- * A class that stores the correlation statistics for a trace
+ * A class that stores the correlation statistics for a trace.
+ * The difference to TraceDistribution is mainly to add ACT and ESS
+ * which require stepSize.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -38,7 +40,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     final long stepSize;
 
     public TraceCorrelation(List<T> values, TraceType traceType, long stepSize) {
-        super(values, traceType, stepSize);
+        super(values, traceType);
         this.stepSize = stepSize;
 
         if (isValid) {
@@ -53,6 +55,22 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     public double getACT() {
         return ACT;
     }
+
+    public double getESS() {
+        return ESS;
+    }
+
+    //************************************************************************
+    // private methods
+    //************************************************************************
+
+    protected double stdErrorOfMean;
+    protected double stdErrorOfVariance;
+    protected double ACT;
+    protected double stdErrOfACT;
+    protected double ESS;
+
+    private static final int MAX_LAG = 2000;
 
     private void analyseCorrelation(List<T> values, long stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
@@ -130,7 +148,10 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         ACT = stepSize * varStat / gammaStat[0];
 
         // effective sample size
-        ESS = (stepSize * samples) / ACT;
+        if (ACT==0)
+            ESS=0;
+        else
+            ESS = (stepSize * samples) / ACT;
 
         // standard deviation of autocorrelation time
         stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * stepSize);
@@ -138,14 +159,4 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         isValid = true;
     }
 
-    //************************************************************************
-    // private methods
-    //************************************************************************
-
-    protected double stdErrorOfMean;
-    protected double stdErrorOfVariance;
-    protected double ACT;
-    protected double stdErrOfACT;
-
-    private static final int MAX_LAG = 2000;
 }

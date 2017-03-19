@@ -48,10 +48,11 @@ public class TraceDistribution<T> {
         initStatistics(values, 0.95);
     }
 
-    public TraceDistribution(List<T> values, TraceType traceType, double ESS) {
-        this(values, traceType);
-        this.ESS = ESS;
-    }
+//    @Deprecated
+//    public TraceDistribution(List<T> values, TraceType traceType, double ESS) {
+//        this(values, traceType);
+//        this.ESS = ESS; // // move to TraceCorrelation
+//    }
 
     public TraceType getTraceType() {
         return traceType;
@@ -104,10 +105,6 @@ public class TraceDistribution<T> {
 
     public double getUpperCPD() {
         return cpdUpper;
-    }
-
-    public double getESS() {
-        return ESS;
     }
 
     public double getMinimum() {
@@ -174,7 +171,7 @@ public class TraceDistribution<T> {
         cpdLower = DiscreteStatistics.quantile(0.025, values, indices);
         cpdUpper = DiscreteStatistics.quantile(0.975, values, indices);
         calculateHPDInterval(proportion, values, indices);
-        ESS = values.length;
+//        ESS = values.length; // move to TraceCorrelation
         calculateHPDIntervalCustom(0.5, values, indices);
 
         isValid = true;
@@ -208,7 +205,6 @@ public class TraceDistribution<T> {
     protected double variance;
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double hpdLowerCustom, hpdUpperCustom;
-    protected double ESS;
 
     //************************************************************************
     // new types

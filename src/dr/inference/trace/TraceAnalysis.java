@@ -110,7 +110,7 @@ public class TraceAnalysis {
         int warning = 0;
         for (int i = 0; i < traces.getTraceCount(); i++) {
             traces.analyseTrace(i);
-            TraceDistribution distribution = traces.getDistributionStatistics(i);
+            TraceCorrelation distribution = traces.getCorrelationStatistics(i);
 
             double ess = distribution.getESS();
             System.out.print(traces.getTraceName(i));
@@ -203,7 +203,7 @@ public class TraceAnalysis {
         int id = traces.getTraceIndex(traceName);
 
         traces.analyseTrace(id);
-        TraceDistribution distribution = traces.getDistributionStatistics(id);
+        TraceCorrelation distribution = traces.getCorrelationStatistics(id);
 
         double ess = distribution.getESS();
 //            System.out.print(traces.getTraceName(id) + "\t");

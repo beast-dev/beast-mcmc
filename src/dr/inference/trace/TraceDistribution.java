@@ -236,8 +236,6 @@ public class TraceDistribution<T> {
         frequencyCounter = new FrequencyCounter<T>(values);
         mode = frequencyCounter.getMode();
         credibleSet = frequencyCounter.getCredibleSet(proportion);
-
-        isValid = true; // todo what purpose?
     }
 
     //************ Used by panels or FrequencyPlot *************

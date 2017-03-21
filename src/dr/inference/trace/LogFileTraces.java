@@ -277,7 +277,9 @@ public class LogFileTraces extends AbstractTraceList {
 
         long num_samples = 0;
 
-        tokens = reader.tokenizeLine();
+        String line = reader.readLine();
+        tokens = reader.getStringTokenizer(line);
+        String lastLine = line;
         while (tokens != null && tokens.hasMoreTokens()) {
 
             String stateString = tokens.nextToken();
@@ -328,8 +330,11 @@ public class LogFileTraces extends AbstractTraceList {
                     throw new TraceException("State " + state + ": missing values at line " + reader.getLineNumber());
                 }
             }
-
-            tokens = reader.tokenizeLine();
+            // used to keep the last valid line
+            lastLine = line;
+//            tokens = reader.tokenizeLine();
+            line = reader.readLine();
+            tokens = reader.getStringTokenizer(line);
         }
         if (num_samples < 3)
             throw new TraceException("Inadequate sample size (" + num_samples + ") will cause incorrect statistical summary !");
@@ -339,6 +344,23 @@ public class LogFileTraces extends AbstractTraceList {
         if (burnIn < stepSize)
             throw new TraceException("Inadequate sample size (" + num_samples + ") causes burn in " +
                     burnIn + " < step size " + stepSize + " !");
+
+        validateTraceType(lastLine);
+    }
+
+    // validate TraceType at the last value of trace,
+    // in case integer is logged for double values in the first (even several) row.
+    // it must use original line, because the data type of values in traces are changed
+    private void validateTraceType(String lastLine) throws TraceException {
+        String[] values = lastLine.split("\\t");
+        // the 1st is state
+        for (int i=1; i < values.length; i++) {
+            int traceId = i-1;
+            Trace trace = getTrace(traceId);
+            // avoid to assign integer to double incorrectly
+            if (trace.getTraceType() == TraceType.ORDINAL && NumberUtils.hasDecimalPoint(values[i]))
+                changeTraceType(traceId, TraceType.REAL);
+        }
     }
 
     /**
@@ -376,17 +398,16 @@ public class LogFileTraces extends AbstractTraceList {
                 type = TraceType.ORDINAL;
                 // change tracesType map for
                 tracesType.put(name, type);
+                System.out.println("Auto detect " + type + " type for trace " + name + " at " + nTrace);
                 changeTraceType(nTrace, type);
             }
 
         } else { // String
             type = TraceType.CATEGORICAL;
             tracesType.put(name, type);
+            System.out.println("Auto detect " + type + " type for trace " + name + " at " + nTrace);
             changeTraceType(nTrace, type);
         }
-
-        if (type != TraceType.REAL)
-            System.out.println("Assign " + type + " type to trace " + name + " at " + nTrace);
     }
 
     /**
@@ -447,27 +468,29 @@ public class LogFileTraces extends AbstractTraceList {
     public void changeTraceType(int id, TraceType newType) throws TraceException {
         if (id >= getTraceCount() || id < 0)
             throw new TraceException("Invalid trace id : " + id + ", which should 0 < and >= " + getTraceCount());
-        Trace trace = traces.get(id);
-        if (trace.getTraceType() != newType) {
+        Trace trace = getTrace(id);
+        TraceType oldType = trace.getTraceType();
+        if (oldType != newType) {
             Trace newTrace = createTrace(trace.getName(), newType);
-            int uniqueValue = trace.getUniqueVauleCount();
-            if (uniqueValue > MAX_UNIQUE_VALUE)
-                throw new TraceException("Type change is failed, because too many unique values (>" +
-                        MAX_UNIQUE_VALUE + ") are found !");
 
-            if (trace.getTraceType() == TraceType.CATEGORICAL || newType == TraceType.CATEGORICAL) {
+            if (oldType == TraceType.CATEGORICAL || newType == TraceType.CATEGORICAL) {
+                int uniqueValue = trace.getUniqueVauleCount();
+                if (uniqueValue > MAX_UNIQUE_VALUE)
+                    throw new TraceException("Type change is failed, because too many unique values (>" +
+                            MAX_UNIQUE_VALUE + ") are found !");
+
                 try {
-                    if (newType.isNumber()) { // trace.getTraceType() == TraceType.CATEGORICAL &&
+                    if (newType.isNumber()) { // oldType == TraceType.CATEGORICAL &&
                         for (int i = 0; i < trace.getValueCount(); i++) {
                             newTrace.add(Double.parseDouble(trace.getValue(i).toString())); // String => Double
                         }
-                    } else if (trace.getTraceType().isNumber()) { // && newType == TraceType.CATEGORICAL
+                    } else if (oldType.isNumber()) { // && newType == TraceType.CATEGORICAL
                         for (int i = 0; i < trace.getValueCount(); i++) {
                             newTrace.add(trace.getValue(i).toString()); // Double => String
                         }
                     }
                 } catch (Exception e) {
-                    throw new TraceException("Type change is failed, when parsing " + trace.getTraceType() +
+                    throw new TraceException("Type change is failed, when parsing " + oldType +
                             " to " + newType + " in trace " + trace.getName());
                 }
 
@@ -479,6 +502,7 @@ public class LogFileTraces extends AbstractTraceList {
             } else {
                 trace.setTraceType(newType); // change between numeric
             }
+            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
         }
     }
 
@@ -553,6 +577,10 @@ public class LogFileTraces extends AbstractTraceList {
 
         public StringTokenizer tokenizeLine() throws java.io.IOException {
             String line = readLine();
+            return getStringTokenizer(line);
+        }
+
+        public StringTokenizer getStringTokenizer(String line) {
             if (line == null) return null;
             return new StringTokenizer(line, "\t");
         }

@@ -81,6 +81,11 @@ public class FrequencyCounter<T> {
         return uniqueValues(true);
     }
 
+    public String uniqueValuesToString() {
+        return Utils.setToString(uniqueValues());
+    }
+
+
     /**
      * sort the key of frequency counter, and return the index of a given key,
      * if not exist, return -1.
@@ -138,6 +143,21 @@ public class FrequencyCounter<T> {
      */
     public CredibleSet<T> getCredibleSet(double probability) {
         return new CredibleSet<T>(this, probability);
+    }
+
+    static class Utils {
+        public static <T> String setToString(Set<T> aSet) {
+            String line = "{";
+            for (T value : aSet) {
+                line = line + value + ", ";
+            }
+            if (line.endsWith(", ")) {
+                line = line.substring(0, line.lastIndexOf(", ")) + "}";
+            } else {
+                line = "{}";
+            }
+            return line;
+        }
     }
 
 }

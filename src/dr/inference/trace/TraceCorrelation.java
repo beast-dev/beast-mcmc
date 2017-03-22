@@ -43,9 +43,9 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         super(values, traceType);
         this.stepSize = stepSize;
 
-        if (isValid) {
+//        if (isMultipleValues) {
             analyseCorrelation(values, stepSize);
-        }
+//        }
     }
 
     public double getStdErrorOfMean() {
@@ -95,7 +95,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     }
 
     /**
-     * Analyze trace
+     * Analyze trace for numeric values
      *
      * @param values   the values
      * @param stepSize the sampling frequency of the values
@@ -145,18 +145,21 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         stdErrorOfMean = Math.sqrt(varStat / samples);
 
         // auto correlation time
-        ACT = stepSize * varStat / gammaStat[0];
+        if (gammaStat[0]==0)
+            ACT = 0;
+        else
+            ACT = stepSize * varStat / gammaStat[0];
 
         // effective sample size
         if (ACT==0)
-            ESS=0;
+            ESS=1;
         else
             ESS = (stepSize * samples) / ACT;
 
         // standard deviation of autocorrelation time
         stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * stepSize);
 
-        isValid = true;
+//        isMultipleValues = true;
     }
 
 }

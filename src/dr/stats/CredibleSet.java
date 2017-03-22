@@ -67,24 +67,10 @@ public class CredibleSet<T> {
     }
 
     public String toStringCredibleSet() {
-        return toString(credibleSet);
+        return FrequencyCounter.Utils.setToString(credibleSet);
     }
 
     public String toStringIncredibleSet() {
-        return toString(incredibleSet);
+        return FrequencyCounter.Utils.setToString(incredibleSet);
     }
-
-    protected String toString(Set<T> aSet) {
-        String line = "{";
-        for (T value : aSet) {
-            line = line + value + ", ";
-        }
-        if (line.endsWith(", ")) {
-            line = line.substring(0, line.lastIndexOf(", ")) + "}";
-        } else {
-            line = "{}";
-        }
-        return line;
-    }
-
 }

@@ -62,8 +62,12 @@ public class TraceDistribution<T> {
         this.traceType = traceType;
     }
 
-    public boolean isValid() {
-        return isValid;
+    public boolean isMultipleValues() {
+        return isMultipleValues;
+    }
+
+    public int getSize() {
+        return size;
     }
 
     public double getMean() {
@@ -143,6 +147,7 @@ public class TraceDistribution<T> {
     private void analyseDistributionNumeric(double[] values, double proportion) {
 //        this.values = values;   // move to TraceDistribution(T[] values)
 
+        size = values.length;
         mean = DiscreteStatistics.mean(values);
         stdError = DiscreteStatistics.stdev(values);
         variance = DiscreteStatistics.variance(values);
@@ -161,7 +166,7 @@ public class TraceDistribution<T> {
         }
 
         if (maximum == minimum) {
-            isValid = false;
+            isMultipleValues = false;
             return;
         }
 
@@ -174,7 +179,7 @@ public class TraceDistribution<T> {
 //        ESS = values.length; // move to TraceCorrelation
         calculateHPDIntervalCustom(0.5, values, indices);
 
-        isValid = true;
+        isMultipleValues = true;
     }
 
     /**
@@ -194,9 +199,10 @@ public class TraceDistribution<T> {
         hpdUpperCustom = hpd[1];
     }
 
-    protected boolean isValid = false;
+    protected boolean isMultipleValues = false;
     protected boolean hasGeometricMean = false;
 
+    protected int size = 0;
     protected double minimum, maximum;
     protected double mean;
     protected double median;
@@ -233,6 +239,8 @@ public class TraceDistribution<T> {
 
     // init FrequencyCounter used for Integer and String
     private void analyseDistributionDiscrete(List<T> values, double proportion) {
+        if (size == 0)
+            size = values.size();
         frequencyCounter = new FrequencyCounter<T>(values);
         mode = frequencyCounter.getMode();
         credibleSet = frequencyCounter.getCredibleSet(proportion);

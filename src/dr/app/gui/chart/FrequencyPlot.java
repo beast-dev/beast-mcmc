@@ -106,7 +106,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      */
     public void setData(Variate.D data, int minimumBinCount) {
 
-        this.raw = data;
+        setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
         Variate.D xData = new Variate.D();
@@ -177,7 +177,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 
         double start = axis.getMinAxis();
         if (minimumBinCount < 0)
-            start = Math.floor(start); // to convert x-axis into integer
+            start = Math.round(start); // to convert x-axis into integer
         FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {

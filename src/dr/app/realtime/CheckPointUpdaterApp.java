@@ -32,8 +32,10 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
@@ -41,6 +43,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;
@@ -57,7 +60,7 @@ import java.util.Locale;
 /**
  * @author Guy Baele
  */
-public class CheckPointUpdater {
+public class CheckPointUpdaterApp {
 
     private final boolean VERBOSE = true;
     private final boolean PARSER_WARNINGS = true;
@@ -83,7 +86,7 @@ public class CheckPointUpdater {
      * Running the MCMC chain after parsing the file(s) should not happen.
      * @param beastXMLFileName
      */
-    public CheckPointUpdater(String beastXMLFileName, String debugStateFile, UpdateChoice choice, FileWriter fw) {
+    public CheckPointUpdaterApp(String beastXMLFileName, String debugStateFile, String choice, FileWriter fw) {
         //no additional parsers, we don't need BEAGLE at the moment just yet
         XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML);
         try {
@@ -98,11 +101,23 @@ public class CheckPointUpdater {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            BeastCheckpointer checkpoint = new BeastCheckpointer();
+            //BeastCheckpointer checkpoint = new BeastCheckpointer();
+
+            //TODO Decide on adjusting BeastCheckPointer or create/use CheckPointModifier
+            CheckPointModifier checkpoint = new CheckPointModifier();
 
             //load the stored checkpoint file
             long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 
+
+            System.exit(0);
+
+
+
+
+
+
+            //TODO Move most of the code below to the CheckPointModifier class and keep the app code simple?
             //check the Tree(Data)Likelihoods in the connected set of likelihoods
             //focus on TreeDataLikelihood, which has getTree() to get the tree for each likelihood
             //also get the DataLikelihoodDelegate from TreeDataLikelihood
@@ -114,6 +129,13 @@ public class CheckPointUpdater {
                     likelihoods.add((TreeDataLikelihood)likelihood);
                     trees.add(((TreeDataLikelihood) likelihood).getTree());
                     delegates.add(((TreeDataLikelihood) likelihood).getDataLikelihoodDelegate());
+                }
+            }
+
+            BranchRates rateModel = null;
+            for (Model model : Model.CONNECTED_MODEL_SET) {
+                if (model instanceof BranchRates) {
+                    rateModel = (BranchRates) model;
                 }
             }
 
@@ -167,17 +189,20 @@ public class CheckPointUpdater {
                     System.out.println(tax);
                 }
 
-                if (choice == UpdateChoice.JC69DISTANCE) {
+                TreeModel newTreeModel = null;
+                if (choice.equals(UpdateChoice.JC69DISTANCE.getName())) {
                     //build a distance matrix according to JC69
                     JukesCantorDistanceMatrix jcDistanceMatrix = new JukesCantorDistanceMatrix(patterns);
-                    new GeneticDistanceTree(currentTree).addTaxa(additionalTaxa,jcDistanceMatrix);
-                } else if (choice == UpdateChoice.F84DISTANCE) {
+                    //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,jcDistanceMatrix);
+                } else if (choice.equals(UpdateChoice.F84DISTANCE.getName())) {
                     //build a distance matrix according to F84
                     F84DistanceMatrix f84DistanceMatrix = new F84DistanceMatrix(patterns);
-                    new GeneticDistanceTree(currentTree).addTaxa(additionalTaxa,f84DistanceMatrix);
+                    //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,f84DistanceMatrix);
                 } else {
                     throw new RuntimeException("Invalid update option provided.");
                 }
+
+
 
             } else {
                 throw new RuntimeException("Removing taxa from previous analysis currently not supported.");
@@ -250,9 +275,9 @@ public class CheckPointUpdater {
             throw new RuntimeException("No dump file specified.");
         }
 
-        UpdateChoice choice = null;
+        String choice = "";
         if (arguments.hasOption("update_choice")) {
-            choice = UpdateChoice.valueOf(arguments.getStringOption("update_choice"));
+            choice = arguments.getStringOption("update_choice");
         } else {
             throw new RuntimeException("Update mechanism needs to be specified.");
         }
@@ -265,7 +290,7 @@ public class CheckPointUpdater {
             throw new RuntimeException("No output file specified.");
         }
 
-        new CheckPointUpdater(inputFile, debugStateFile, choice, fw);
+        new CheckPointUpdaterApp(inputFile, debugStateFile, choice, fw);
 
         fw.flush();
         fw.close();

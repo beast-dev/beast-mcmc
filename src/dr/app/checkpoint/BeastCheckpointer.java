@@ -84,7 +84,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         Factory.INSTANCE = new Factory() {
             @Override
             public StateLoader getInitialStateLoader() {
-                return getStateLoaderObject();
+                if (loadStateFileName == null) {
+                    return null;
+                } else {
+                    return getStateLoaderObject();
+                }
             }
 
             @Override

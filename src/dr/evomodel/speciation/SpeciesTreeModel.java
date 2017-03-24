@@ -1018,6 +1018,11 @@ public class SpeciesTreeModel extends AbstractModel implements
         }
     }
 
+    @Override
+    public boolean testBounds() {
+        return true;
+    }
+
     private final boolean verbose = false;
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {

@@ -36,22 +36,36 @@ public class CategoryDensityPlot extends FrequencyPlot {
     private int barCount = 0;
     private int barId;
 
-    // for string[], passing the int[] storing the index of string[]
     public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
                                int barCount, int barId) {
         super(traceDistribution);
         this.barCount = barCount;
         this.barId = barId;
 
-        setData(new Variate.D(data), minimumBinCount);
+        setData(new Variate.D(data));
+    }
+
+    // for string
+    public CategoryDensityPlot(List<String> data, TraceDistribution traceDistribution,
+                               int barCount, int barId) {
+        super(traceDistribution);
+        this.barCount = barCount;
+        this.barId = barId;
+
+        if (!traceDistribution.getTraceType().isCategorical())
+            throw new IllegalArgumentException("Categorical value is required for frequency plot !");
+
+        List<Double> intData = traceDistribution.indexingData(data);
+        // set data by index of unique categorical values
+        setData(new Variate.D(intData));
     }
 
     /**
      * Set data, all integers
      */
-    public void setData(Variate.D data, int minimumBinCount) {
+    public void setData(Variate.D data) {
         setRawData(data);
-        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
+        FrequencyDistribution frequency = getFrequencyDistribution(data);
 
         Variate.D xData = new Variate.D();
         Variate.D yData = new Variate.D();
@@ -72,7 +86,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
         setData(xData, yData);
     }
 
-    protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
+    protected FrequencyDistribution getFrequencyDistribution(Variate data) {
         double min = (Double) data.getMin();
         double max = (Double) data.getMax();
 

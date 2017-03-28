@@ -34,7 +34,8 @@ import java.util.Map;
  */
 public class DiscreteJChart extends JChart {
 
-    private Map<Integer, String> categoryDataMap;
+    // todo merge with dr.stats.FrequencyCounter
+    protected Map<Integer, String> categoryDataMap;
 
     public DiscreteJChart(Axis xAxis, Axis yAxis) {
         super(xAxis, yAxis);

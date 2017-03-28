@@ -52,6 +52,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 //    private TraceDistribution.CredibleSet credSet;
 
     protected TraceDistribution traceDistribution = null;
+    // for categorical only
 
     protected FrequencyPlot(TraceDistribution traceDistribution) {
         super();
@@ -63,35 +64,20 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<Double> data, int minimumBinCount) {
-        super();
-        setData(data, minimumBinCount);
-    }
-
     public FrequencyPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution) {
         this(traceDistribution);
         setData(data, minimumBinCount);
     }
 
-//    public FrequencyPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD) {
-//        this(traceD);
-//        Double[] doubleData = new Double[data.length];
-//        for (int i = 0; i < data.length; i++) {
-//            doubleData[i] = data[i].doubleValue();
-//        }
-//        setData(doubleData, minimumBinCount);
-//    }
+    public FrequencyPlot(List<String> data, TraceDistribution traceDistribution) {
+        this(traceDistribution);
+        if (!traceDistribution.getTraceType().isCategorical())
+            throw new IllegalArgumentException("Categorical value is required for frequency plot !");
 
-//    public FrequencyPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
-//        this(traceD);
-//        categoryDataMap.clear();
-//        double[] doubleData = new double[data.length];
-//        for (int i = 0; i < data.length; i++) {
-//            doubleData[i] = (double) traceD.getIndex(data[i]);
-//            categoryDataMap.put(doubleData[i], data[i]);
-//        }
-//        setData(doubleData, minimumBinCount);
-//    }
+        List<Double> intData = traceDistribution.indexingData(data);
+        // set data by index of unique categorical values
+        setData(intData, -1);
+    }
 
     /**
      * Set data

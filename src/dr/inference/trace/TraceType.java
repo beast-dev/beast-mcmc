@@ -76,7 +76,7 @@ public enum TraceType {
      * @return
      */
     public boolean isDiscrete() {
-        return isOrdinal() || isCatorical();
+        return isOrdinal() || isCategorical();
     }
 
     /**
@@ -91,7 +91,7 @@ public enum TraceType {
      * is the datatype categorical
      * @return
      */
-    public boolean isCatorical() {
+    public boolean isCategorical() {
         return getTypeClass() == String.class;
     }
 

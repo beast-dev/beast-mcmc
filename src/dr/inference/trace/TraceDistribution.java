@@ -251,6 +251,55 @@ public class TraceDistribution<T> {
         return frequencyCounter.getKeyIndex(value);
     }
 
+    protected Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+    /**
+     * Convert a categorical value to the index of unique values,
+     * and put it into a map <code>Map<Integer, String></code>.
+     * Key is the index of unique values, value of map is that unique value.
+     *
+     * @return
+     */
+    public Map<Integer, String> getIndexMap() {
+        if (frequencyCounter != null && categoryDataMap.size() == 0) {
+            categoryDataMap.clear();
+            int i = -1;
+            for (Object key : frequencyCounter.uniqueValues()) {
+                i++;
+                categoryDataMap.put(i, key.toString());
+            }
+        }
+        return categoryDataMap;
+    }
+
+    /**
+     * Convert a list of categorical values into a list of indices of their unique values,
+     * given the map <code>categoryDataMap</code>.
+     * Key is the index of unique values, value of map is that unique value
+     *
+     * @param values
+     * @return
+     */
+    public List<Double> indexingData(List<String> values) {
+        List<Double> intData = new ArrayList<Double>();
+        Map<Integer, String> categoryDataMap = getIndexMap();
+        if (categoryDataMap.size() < 1) return intData;
+
+        for (int v = 0; v < values.size(); v++) {
+            for (Map.Entry<Integer, String> entry : categoryDataMap.entrySet()) {
+                if (values.get(v).equals(entry.getValue())) {
+                    // add index
+                    intData.add(v, (double) entry.getKey());
+                    break;
+                }
+            }
+
+        }
+        if (intData.size() > 0 && values.size() != intData.size())
+            System.err.println("values.size(" + values.size() + ") != intData.size(" + intData.size() + ") !");
+
+        return intData;
+    }
+
     public boolean credibleSetContains(int valueORIndex) {
         return contains(credibleSet.getCredibleSet(), valueORIndex);
     }

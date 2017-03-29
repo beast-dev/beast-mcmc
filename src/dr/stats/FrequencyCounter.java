@@ -50,9 +50,9 @@ public class FrequencyCounter<T> {
         }
 
         // limit the counter size, avoid expensive computation
-        if (frequencyCounter.size() > MAX_COUNTER_SIZE)
-            throw new IllegalArgumentException("Fail to create frequency counter: " +
-                    "number of unique values must <=" + MAX_COUNTER_SIZE + " !");
+//        if (frequencyCounter.size() > MAX_COUNTER_SIZE)
+//            throw new IllegalArgumentException("Fail to create frequency counter: " +
+//                    "number of unique values must <=" + MAX_COUNTER_SIZE + " !");
     }
 
     public Map<T, Integer> getFrequencyCounter() {
@@ -124,6 +124,24 @@ public class FrequencyCounter<T> {
             tot += count;
         }
         return tot;
+    }
+
+    /**
+     * the min and max count in the frequency counter
+     *
+     * @return <code>int[]</code>, 1st is min, 2nd is max.
+     */
+    public int[] getMinMaxCount() {
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+        for (Map.Entry<T, Integer> entry : frequencyCounter.entrySet()) {
+            Integer count = entry.getValue();
+            if (min > count)
+                min = count;
+            if (max < count)
+                max = count;
+        }
+        return new int[]{min, max};
     }
 
     /**

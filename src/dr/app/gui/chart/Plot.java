@@ -210,7 +210,7 @@ public interface Plot {
 
         private final Rectangle2D bounds = null;
 
-        private double xScale, yScale, xOffset, yOffset;
+        protected double xScale, yScale, xOffset, yOffset;
 
         private String name;
 

@@ -42,7 +42,7 @@ public class KMLRenderer implements Lattice {
     int[][] lattice;
     Rectangle2D bounds;
 
-    java.util.List<Polygon2D> polygons;
+    java.util.List<AbstractPolygon2D> polygons;
     java.util.List<Shape> shapes;
 
     ViewTransform viewTransform;
@@ -65,7 +65,7 @@ public class KMLRenderer implements Lattice {
 
         shapes = new ArrayList<Shape>();
 
-        for (Polygon2D p : polygons) {
+        for (AbstractPolygon2D p : polygons) {
 
             Shape shape = p.getShape();
 

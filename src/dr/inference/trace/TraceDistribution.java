@@ -251,7 +251,6 @@ public class TraceDistribution<T> {
         return frequencyCounter.getKeyIndex(value);
     }
 
-    protected Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
     /**
      * Convert a categorical value to the index of unique values,
      * and put it into a map <code>Map<Integer, String></code>.
@@ -260,8 +259,8 @@ public class TraceDistribution<T> {
      * @return
      */
     public Map<Integer, String> getIndexMap() {
+        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
         if (frequencyCounter != null && categoryDataMap.size() == 0) {
-            categoryDataMap.clear();
             int i = -1;
             for (Object key : frequencyCounter.uniqueValues()) {
                 i++;
@@ -349,8 +348,12 @@ public class TraceDistribution<T> {
             int i = -1;
             for (T v : frequencyCounter.uniqueValues()) {
                 i++;
-                if (i == valueORIndex) valueString = v.toString();
+                if (i == valueORIndex) {
+                    valueString = v.toString();
+                    break;
+                }
             }
+            if (valueString == null) return false;
             return aSet.contains(valueString);
         }
     }

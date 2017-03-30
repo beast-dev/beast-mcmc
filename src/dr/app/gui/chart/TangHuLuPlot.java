@@ -104,69 +104,6 @@ public class TangHuLuPlot extends ScatterPlot {
         setData(xd, yd);
     }
 
-
-    /**
-     * Draw a mark transforming co-ordinates to each axis
-     */
-    protected void drawMark(Graphics2D g2, float x, float y, Color color) {
-
-        Rectangle2D bounds = mark.getBounds2D();
-        float w = (float) bounds.getWidth();
-        float h = (float) bounds.getHeight();
-        x = x - (w / 2);
-        y = y - (h / 2);
-
-        g2.translate(x, y);
-
-        if (color == null) {
-            if (markFillPaint != null) {
-                g2.setPaint(markFillPaint);
-                g2.fill(mark);
-            }
-        } else {
-            g2.setPaint(color);
-            g2.fill(mark);
-        }
-
-        g2.setPaint(markPaint);
-        g2.setStroke(markStroke);
-        g2.draw(mark);
-
-        g2.translate(-x, -y);
-
-        Rectangle2D rect = new Rectangle2D.Float(x, y, w, h);
-        markBounds.add(rect);
-    }
-
-
-    /**
-     * Draw a mark transforming co-ordinates to each axis
-     */
-    protected void drawMarkHilighted(Graphics2D g2, float x, float y) {
-
-        Rectangle2D bounds = mark.getBounds2D();
-        float w = (float) bounds.getWidth();
-        float h = (float) bounds.getHeight();
-        x = x - (w / 2);
-        y = y - (h / 2);
-
-        g2.translate(x, y);
-
-        if (hilightedMarkFillPaint != null) {
-            g2.setPaint(hilightedMarkFillPaint);
-            g2.fill(mark);
-        }
-
-        g2.setPaint(hilightedMarkPaint);
-        g2.setStroke(hilightedMarkStroke);
-        g2.draw(mark);
-
-        g2.translate(-x, -y);
-
-        Rectangle2D rect = new Rectangle2D.Float(x, y, w, h);
-        markBounds.add(rect);
-    }
-
     /**
      * Paint data series.
      * The maximum circle size is the smaller major tick space in x or y

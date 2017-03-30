@@ -42,32 +42,20 @@ public class DiscreteJChart extends JChart {
     }
 
     public void setXAxis(boolean isInteger, Map<Integer, String> categoryDataMap) {
-        if (categoryDataMap.isEmpty()) {
-            if (isInteger) {
-                super.setXAxis(new DiscreteAxis(true, true));
-            } else {
-                super.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS));
-            }
-
-        } else {
+        if (isInteger || (categoryDataMap != null && !categoryDataMap.isEmpty())) {
             super.setXAxis(new DiscreteAxis(true, true));
+        } else {
+            super.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS));
         }
-
         this.categoryDataMap = categoryDataMap;
     }
 
     public void setYAxis(boolean isInteger, Map<Integer, String> categoryDataMap) {
-        if (categoryDataMap.isEmpty()) {
-            if (isInteger) {
-                super.setYAxis(new DiscreteAxis(true, true));
-            } else {
-                super.setYAxis(new LinearAxis());
-            }
-
-        } else {
+        if (isInteger || (categoryDataMap != null && !categoryDataMap.isEmpty())) {
             super.setYAxis(new DiscreteAxis(true, true));
+        } else {
+            super.setYAxis(new LinearAxis());
         }
-
         this.categoryDataMap = categoryDataMap;
     }
 

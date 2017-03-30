@@ -34,28 +34,40 @@ import java.util.TreeSet;
  *
  * @author Walter Xie
  */
-public class CredibleSet<T> {
+public class CredibleSetAnalysis<T> {
     protected double probability;
     protected Set<T> credibleSet = new TreeSet<T>();
 
     protected Set<T> incredibleSet = new TreeSet<T>();
 
-    public CredibleSet(FrequencyCounter<T> frequencyCounter, double probability) {
+    public CredibleSetAnalysis(FrequencyCounter<T> frequencyCounter, double probability) {
         calculateCredibleSet(frequencyCounter, probability);
     }
 
     private void calculateCredibleSet(FrequencyCounter<T> frequencyCounter, double probability) {
         this.probability = probability;
 
-        for (T key : frequencyCounter.uniqueValues()) {
+        if (! frequencyCounter.isSortedByCounts())
+            frequencyCounter.sortCounterByCounts();
+
+        double totPr = 0;
+        for (T key : frequencyCounter.uniqueValues(false)) { // use the original ordering of unique values
             // frequency / total size
-            double prob = (double) frequencyCounter.getCount(key) / (double) frequencyCounter.getTotalCount();
-            if (prob < (1 - probability)) {
-                incredibleSet.add(key);
-            } else {
+            double prob = frequencyCounter.getProbability(key);
+            // include the last one to make totPr >= probability
+            if (totPr < probability) {
                 credibleSet.add(key);
+            } else {
+                incredibleSet.add(key);
             }
+            totPr += prob;
         }
+
+        // totPr = 1.0000000000000002
+        totPr = (double) Math.round(totPr * 1000000.0) / 1000000.0;
+
+        if (totPr != 1)
+            throw new IllegalArgumentException("Probability NOT sums to 1 in credibility set analysis ! totPr = " + totPr);
     }
 
     public Set<T> getCredibleSet() {

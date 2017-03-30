@@ -25,7 +25,7 @@
 
 package dr.inference.trace;
 
-import dr.stats.CredibleSet;
+import dr.stats.CredibleSetAnalysis;
 import dr.stats.DiscreteStatistics;
 import dr.stats.FrequencyCounter;
 import dr.stats.Mode;
@@ -219,7 +219,7 @@ public class TraceDistribution<T> {
     // frequency counter for T = Integer and String
     public FrequencyCounter<T> frequencyCounter;
     protected Mode<T> mode;
-    public CredibleSet<T> credibleSet;
+    public CredibleSetAnalysis<T> credibleSetAnalysis;
 
     public void initStatistics(List<T> values, double proportion) {
         if (values.size() < 1) throw new RuntimeException("There is no value sent to statistics calculation !");
@@ -241,9 +241,9 @@ public class TraceDistribution<T> {
     private void analyseDistributionDiscrete(List<T> values, double proportion) {
         if (size == 0)
             size = values.size();
-        frequencyCounter = new FrequencyCounter<T>(values);
+        frequencyCounter = new FrequencyCounter<T>(values, false);
         mode = frequencyCounter.getMode();
-        credibleSet = frequencyCounter.getCredibleSet(proportion);
+        credibleSetAnalysis = frequencyCounter.getCredibleSetAnalysis(proportion);
     }
 
     //************ Used by panels or FrequencyPlot *************
@@ -301,19 +301,19 @@ public class TraceDistribution<T> {
     }
 
     public boolean credibleSetContains(int valueORIndex) {
-        return contains(credibleSet.getCredibleSet(), valueORIndex);
+        return contains(credibleSetAnalysis.getCredibleSet(), valueORIndex);
     }
 
     public boolean incredibleSetContains(int valueORIndex) {
-        return contains(credibleSet.getIncredibleSet(), valueORIndex);
+        return contains(credibleSetAnalysis.getIncredibleSet(), valueORIndex);
     }
 
     public String printCredibleSet() {
-        return credibleSet.toStringCredibleSet();
+        return credibleSetAnalysis.toStringCredibleSet();
     }
 
     public String printIncredibleSet() {
-        return credibleSet.toStringIncredibleSet();
+        return credibleSetAnalysis.toStringIncredibleSet();
     }
 
     public T getMode() {

@@ -25,6 +25,7 @@
 
 package dr.app.gui.chart;
 
+import dr.stats.CredibleSetAnalysis;
 import dr.stats.FrequencyCounter;
 import dr.stats.Variate;
 
@@ -34,14 +35,37 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Create a string of bubbles to visualise the joint probability
+ * between two ordinal random variables.
+ * The size of circle is proportional to the joint probability,
+ * the blue coloured circle is in the credible set of
+ * given a probability threshold default to 0.95,
+ * the red is in the incredible set.
+ * TangHuLu is a traditional Chinese snack of candied fruit
+ * normally sugar-coated hawthorns on a stick.
+ *
+ * @author Walter Xie
+ */
 public class TangHuLuPlot extends ScatterPlot {
 
-    protected List<Integer> counts;
+    private Paint circlePaint = new Color(124, 164, 221);
+    private Paint incrediblePaint = new Color(232, 114, 103);
+
+    private final double MIN_CIRCLE_SIZE = 5;
+
+    protected List<XY> uniqueXYList; // todo duplicate to xData yData, but it is used for key of FrequencyCounter
+    protected FrequencyCounter<XY> xyFC;
+
+    protected double credProb = 0.95;
 
     public TangHuLuPlot(List<Double> xData, List<Double> yData) {
         super(xData, yData);
     }
 
+    public void setPrThreshold(double credProb){
+        this.credProb = credProb;
+    }
 
     /**
      * Set data
@@ -60,16 +84,17 @@ public class TangHuLuPlot extends ScatterPlot {
 //              System.out.println(i + "  :  " + x + "  " + y);
             xyList.add(new XY(x,y));
         }
+
         // find unique pairs
-        FrequencyCounter<XY> xyFC = new FrequencyCounter<XY>(xyList);
+        xyFC = new FrequencyCounter<XY>(xyList, false);
 
         List<Double> xUnique = new ArrayList<Double>();
         List<Double> yUnique = new ArrayList<Double>();
-        counts = new ArrayList<Integer>();
+        uniqueXYList = new ArrayList<XY>();
         for (XY xy : xyFC.uniqueValues()) {
             xUnique.add(xy.x);
             yUnique.add(xy.y);
-            counts.add(xyFC.getCount(xy)); // store counts for circle size
+            uniqueXYList.add(xy); // store counts for circle size
         }
 
         Variate.D xd = new Variate.D(xUnique);
@@ -147,44 +172,60 @@ public class TangHuLuPlot extends ScatterPlot {
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         float x, y;
 
+        // remove ?
         markBounds = new java.util.Vector<Rectangle2D>();
 
         // what is selectedPoints?
         Set<Integer> selectedPoints = getSelectedPoints();
 
         int n = xData.getCount();
-        double circleSize = 20;
+
+        double maxCircleSize = MIN_CIRCLE_SIZE * 2;
         if (n > 1) {
             double xGap = Math.abs(xAxis.getMajorTickSpacing() * xScale);
             double yGap = Math.abs(yAxis.getMajorTickSpacing() * yScale);
-            circleSize = Math.min(xGap, yGap) * 0.9;
+            // take the smaller gap to fit in circles
+            double maxCS = Math.min(xGap, yGap);
+            if (maxCS > maxCircleSize)
+                maxCircleSize = maxCS;
         }
 
-        for (int i = 0; i < n; i++) {
-            x = (float) transformX(((Number) xData.get(i)).doubleValue());
-            y = (float) transformY(((Number) yData.get(i)).doubleValue());
+//        if (xyFC != null) {
+            for (int i = 0; i < n; i++) {
+                x = (float) transformX(((Number) xData.get(i)).doubleValue());
+                y = (float) transformY(((Number) yData.get(i)).doubleValue());
 
-            if (selectedPoints.contains(i)) {
+                XY xy = uniqueXYList.get(i);
+                double circleSize = maxCircleSize * xyFC.getFreqScaledMaxTo1(xy);
+                if (circleSize < MIN_CIRCLE_SIZE)
+                    circleSize = MIN_CIRCLE_SIZE;
 
-                setHilightedMarkStyle(new BasicStroke(1),
-                        Color.black, Color.blue);
 
-                drawMarkHilighted(g2, x, y);
+                CredibleSetAnalysis credibleSetAnalysis = xyFC.getCredibleSetAnalysis(credProb);
+                Set incredibleSet = credibleSetAnalysis.getIncredibleSet();
+                Paint currentPaint = circlePaint;
+                if (incredibleSet.contains(xy))
+                    currentPaint = incrediblePaint;
 
-            } else {
-//counts.get(i)
-                // cred set colour
-                setMarkStyle(CIRCLE_MARK, circleSize, new BasicStroke(1),
-                        Color.black, Color.yellow);
+                if (selectedPoints.contains(i)) {
 
-                if (colours != null && colours.size() == n)
-                    drawMark(g2, x, y, colours.get(i));
-                else
+                    setHilightedMarkStyle(new BasicStroke(1), currentPaint, currentPaint);
+                    drawMarkHilighted(g2, x, y);
+
+                } else {
+
+                    // cred set colour
+                    setMarkStyle(CIRCLE_MARK, circleSize, new BasicStroke(1),
+                            currentPaint, currentPaint);
+
+//                    if (colours != null && colours.size() == n)
+//                        drawMark(g2, x, y, colours.get(i));
+//                    else
                     drawMark(g2, x, y, null);
+                }
             }
-        }
+//        }
     }
-
 }
 
 

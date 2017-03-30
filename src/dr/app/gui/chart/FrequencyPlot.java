@@ -49,7 +49,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     private double lowerInterval = 0.0;
 
     private boolean hasIncredibleSet = false;
-//    private TraceDistribution.CredibleSet credSet;
+//    private TraceDistribution.CredibleSetAnalysis credSet;
 
     protected TraceDistribution traceDistribution = null;
     // for categorical only
@@ -197,7 +197,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      */
     public void setInCredibleSet(TraceDistribution traceD) {
         this.traceDistribution = traceD;
-        hasIncredibleSet = traceD.credibleSet != null && traceD.credibleSet.getIncredibleSet().size() > 0;
+        hasIncredibleSet = traceD.credibleSetAnalysis != null && traceD.credibleSetAnalysis.getIncredibleSet().size() > 0;
     }
 
     /**

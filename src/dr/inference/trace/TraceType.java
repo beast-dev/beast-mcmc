@@ -87,6 +87,10 @@ public enum TraceType {
         return this == BINARY;
     }
 
+    public boolean isOrdinalOrBinary() {
+        return isOrdinal() || isBinary();
+    }
+
     /**
      * is the datatype categorical
      * @return

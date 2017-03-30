@@ -104,7 +104,7 @@ public class DiscreteJChart extends JChart {
     }
 
     protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis) {
-        if ((!categoryDataMap.isEmpty()) && axis.getIsDiscrete()) {
+        if (categoryDataMap != null && (!categoryDataMap.isEmpty()) && axis.getIsDiscrete()) {
             int n1 = axis.getMajorTickCount();
             int n2, i, j;
 

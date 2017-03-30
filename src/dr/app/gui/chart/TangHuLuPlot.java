@@ -52,6 +52,7 @@ public class TangHuLuPlot extends ScatterPlot {
     private Paint circlePaint = new Color(124, 164, 221);
     private Paint incrediblePaint = new Color(232, 114, 103);
 
+    // set min circle size to avoid the circle too small to see
     private final double MIN_CIRCLE_SIZE = 5;
 
     protected List<XY> uniqueXYList; // todo duplicate to xData yData, but it is used for key of FrequencyCounter
@@ -167,7 +168,9 @@ public class TangHuLuPlot extends ScatterPlot {
     }
 
     /**
-     * Paint data series
+     * Paint data series.
+     * The maximum circle size is the smaller major tick space in x or y
+     * multiplying with <code>xScale</code> or <code>yScale</code>.
      */
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         float x, y;

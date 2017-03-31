@@ -30,6 +30,7 @@ import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.tree.BranchRates;
@@ -66,19 +67,31 @@ public class CheckPointUpdaterApp {
     private final boolean PARSER_WARNINGS = true;
     private final boolean STRICT_XML = false;
 
-    //TODO Currently unused
-    private enum UpdateChoice {
-        JC69DISTANCE("JC69Distance"),F84DISTANCE("F84Distance");
+    public static final String JC69DISTANCE = "JC69Distance";
+    public static final String F84DISTANCE = "F84Distance";
 
-        UpdateChoice(String name) {
+    public enum UpdateChoice {
+        JC69DISTANCE("JC69Distance", new JukesCantorDistanceMatrix()), F84DISTANCE("F84Distance", new F84DistanceMatrix());
+
+        private String name;
+        private DistanceMatrix matrix;
+
+        UpdateChoice(String name, DistanceMatrix matrix) {
             this.name = name;
+            this.matrix = matrix;
+        }
+
+        public void setPatterns(PatternList patterns) {
+            this.matrix.setPatterns(patterns);
         }
 
         public String getName() {
             return this.name;
         }
 
-        private String name;
+        public String toString() {
+            return this.name;
+        }
     }
 
     /**
@@ -86,7 +99,7 @@ public class CheckPointUpdaterApp {
      * Running the MCMC chain after parsing the file(s) should not happen.
      * @param beastXMLFileName
      */
-    public CheckPointUpdaterApp(String beastXMLFileName, String debugStateFile, String choice, FileWriter fw) {
+    public CheckPointUpdaterApp(String beastXMLFileName, String debugStateFile, UpdateChoice choice, FileWriter fw) {
         //no additional parsers, we don't need BEAGLE at the moment just yet
         XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML);
         try {
@@ -101,13 +114,30 @@ public class CheckPointUpdaterApp {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            //BeastCheckpointer checkpoint = new BeastCheckpointer();
+            // BeastCheckpointer checkpoint = new BeastCheckpointer();
 
-            //TODO Decide on adjusting BeastCheckPointer or create/use CheckPointModifier
             CheckPointModifier checkpoint = new CheckPointModifier();
 
             //load the stored checkpoint file
             long state = checkpoint.loadState(mc, new double[]{Double.NaN});
+
+            //probably don't need this but it's good to check
+            double lnL = mc.evaluate();
+            System.out.println("likelihood = " + lnL);
+            mc.getLikelihood().makeDirty();
+            lnL = mc.evaluate();
+            System.out.println("likelihood = " + lnL);
+
+            checkpoint.extendLoadState(choice);
+
+            lnL = mc.evaluate();
+            System.out.println("likelihood = " + lnL);
+            mc.getLikelihood().makeDirty();
+            lnL = mc.evaluate();
+            System.out.println("likelihood = " + lnL);
+
+
+
 
 
             System.exit(0);
@@ -190,11 +220,11 @@ public class CheckPointUpdaterApp {
                 }
 
                 TreeModel newTreeModel = null;
-                if (choice.equals(UpdateChoice.JC69DISTANCE.getName())) {
+                if (choice.equals(JC69DISTANCE)) {
                     //build a distance matrix according to JC69
                     JukesCantorDistanceMatrix jcDistanceMatrix = new JukesCantorDistanceMatrix(patterns);
                     //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,jcDistanceMatrix);
-                } else if (choice.equals(UpdateChoice.F84DISTANCE.getName())) {
+                } else if (choice.equals(F84DISTANCE)) {
                     //build a distance matrix according to F84
                     F84DistanceMatrix f84DistanceMatrix = new F84DistanceMatrix(patterns);
                     //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,f84DistanceMatrix);
@@ -281,6 +311,16 @@ public class CheckPointUpdaterApp {
         } else {
             throw new RuntimeException("Update mechanism needs to be specified.");
         }
+        UpdateChoice chosen = null;
+        for (UpdateChoice ch : UpdateChoice.values()) {
+            if (choice.equals(ch.getName())) {
+                chosen = ch;
+                break;
+            }
+        }
+        if (chosen == null) {
+            throw new RuntimeException("Incorrect update mechanism specified.");
+        }
 
         FileWriter fw = null;
         if (arguments.hasOption("output_file")) {
@@ -290,7 +330,7 @@ public class CheckPointUpdaterApp {
             throw new RuntimeException("No output file specified.");
         }
 
-        new CheckPointUpdaterApp(inputFile, debugStateFile, choice, fw);
+        new CheckPointUpdaterApp(inputFile, debugStateFile, chosen, fw);
 
         fw.flush();
         fw.close();

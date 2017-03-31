@@ -48,6 +48,8 @@ public class CheckPointModifier extends BeastCheckpointer {
 
     private static final boolean DEBUG = false;
 
+    private CheckPointTreeModifier modifyTree;
+
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
 
@@ -227,7 +229,6 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                         //first read in all the data from the checkpoint file
 
-                        //TODO Take into account differences in dimension ???
                         line = in.readLine();
                         line = in.readLine();
                         fields = line.split("\t");
@@ -280,7 +281,8 @@ public class CheckPointModifier extends BeastCheckpointer {
                         }
 
                         //perform magic with the acquired information
-                        CheckPointTreeModifier modifyTree = new CheckPointTreeModifier((TreeModel) model);
+                        //CheckPointTreeModifier modifyTree = new CheckPointTreeModifier((TreeModel) model);
+                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         modifyTree.adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
 
                         //adopt the loaded tree structure; this does not yet copy the traits on the branches
@@ -300,8 +302,6 @@ public class CheckPointModifier extends BeastCheckpointer {
 
             }
 
-            System.exit(0);
-
             if (expectedTreeModelNames.size() > 0) {
                 StringBuilder sb = new StringBuilder();
                 for (String notFoundName : expectedTreeModelNames) {
@@ -318,6 +318,10 @@ public class CheckPointModifier extends BeastCheckpointer {
         }
 
         return state;
+    }
+
+    public void extendLoadState(CheckPointUpdaterApp.UpdateChoice choice) {
+        modifyTree.incorporateAdditionalTaxa(choice);
     }
 
     @Override

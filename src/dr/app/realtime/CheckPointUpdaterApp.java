@@ -67,9 +67,6 @@ public class CheckPointUpdaterApp {
     private final boolean PARSER_WARNINGS = true;
     private final boolean STRICT_XML = false;
 
-    public static final String JC69DISTANCE = "JC69Distance";
-    public static final String F84DISTANCE = "F84Distance";
-
     public enum UpdateChoice {
         JC69DISTANCE("JC69Distance", new JukesCantorDistanceMatrix()), F84DISTANCE("F84Distance", new F84DistanceMatrix());
 
@@ -83,6 +80,24 @@ public class CheckPointUpdaterApp {
 
         public void setPatterns(PatternList patterns) {
             this.matrix.setPatterns(patterns);
+        }
+
+        public Taxon getClosestTaxon(Taxon taxon) {
+            if (matrix == null) {
+                throw new RuntimeException("Patterns need to be set first.");
+            }
+            int taxonIndex = matrix.getTaxonIndex(taxon);
+            int closestIndex = 0;
+            double minimumDistance = Double.MAX_VALUE;
+            for (int i = 0; i < matrix.getColumnCount(); i++) {
+                if (i != taxonIndex) {
+                    if (matrix.getElement(taxonIndex, i) < minimumDistance) {
+                        minimumDistance = matrix.getElement(taxonIndex, i);
+                        closestIndex = i;
+                    }
+                }
+            }
+            return matrix.getTaxon(closestIndex);
         }
 
         public String getName() {
@@ -220,19 +235,17 @@ public class CheckPointUpdaterApp {
                 }
 
                 TreeModel newTreeModel = null;
-                if (choice.equals(JC69DISTANCE)) {
+                if (choice.equals(UpdateChoice.JC69DISTANCE)) {
                     //build a distance matrix according to JC69
                     JukesCantorDistanceMatrix jcDistanceMatrix = new JukesCantorDistanceMatrix(patterns);
                     //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,jcDistanceMatrix);
-                } else if (choice.equals(F84DISTANCE)) {
+                } else if (choice.equals(UpdateChoice.F84DISTANCE)) {
                     //build a distance matrix according to F84
                     F84DistanceMatrix f84DistanceMatrix = new F84DistanceMatrix(patterns);
                     //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,f84DistanceMatrix);
                 } else {
                     throw new RuntimeException("Invalid update option provided.");
                 }
-
-
 
             } else {
                 throw new RuntimeException("Removing taxa from previous analysis currently not supported.");

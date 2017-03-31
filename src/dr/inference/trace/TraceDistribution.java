@@ -95,6 +95,14 @@ public class TraceDistribution<T> {
         return median;
     }
 
+    public double getQ1() {
+        return q1;
+    }
+
+    public double getQ3() {
+        return q3;
+    }
+
     public double getLowerHPD() {
         return hpdLower;
     }
@@ -175,6 +183,8 @@ public class TraceDistribution<T> {
         median = DiscreteStatistics.quantile(0.5, values, indices);
         cpdLower = DiscreteStatistics.quantile(0.025, values, indices);
         cpdUpper = DiscreteStatistics.quantile(0.975, values, indices);
+        q1 = DiscreteStatistics.quantile(0.25, values, indices);
+        q3 = DiscreteStatistics.quantile(0.75, values, indices);
         calculateHPDInterval(proportion, values, indices);
 //        ESS = values.length; // move to TraceCorrelation
         calculateHPDIntervalCustom(0.5, values, indices);
@@ -205,7 +215,7 @@ public class TraceDistribution<T> {
     protected int size = 0;
     protected double minimum, maximum;
     protected double mean;
-    protected double median;
+    protected double median, q1, q3;
     protected double geometricMean;
     protected double stdError, meanSquaredError;
     protected double variance;

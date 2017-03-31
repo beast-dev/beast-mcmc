@@ -1,6 +1,8 @@
 package dr.app.gui.chart;
 
 /**
+ * make x and y together as the key of map
+ *
  * @author Walter Xie
  */
 public class XY implements Comparable<XY> {

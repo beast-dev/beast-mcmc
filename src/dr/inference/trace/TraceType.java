@@ -55,6 +55,10 @@ public enum TraceType {
         return type;
     }
 
+    public boolean isContinuous() {
+        return getTypeClass() == Double.class;
+    }
+
     /**
      * is the data type numerical
      * @return

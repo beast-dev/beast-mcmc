@@ -106,6 +106,11 @@ public class FrequencyCounter<T> {
             return frequencyCounter.keySet();
     }
 
+    /**
+     * default to sort unique values (keys).
+     *
+     * @return
+     */
     public Set<T> uniqueValues() {
         return uniqueValues(true);
     }
@@ -207,7 +212,7 @@ public class FrequencyCounter<T> {
      *
      * @return
      */
-    public Mode<T> getMode() {
+    public Mode<T> getModeStats() {
         return new Mode<T>(this);
     }
 

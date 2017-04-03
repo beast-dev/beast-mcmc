@@ -252,7 +252,7 @@ public class TraceDistribution<T> {
         if (size == 0)
             size = values.size();
         frequencyCounter = new FrequencyCounter<T>(values, false);
-        mode = frequencyCounter.getMode();
+        mode = frequencyCounter.getModeStats();
         credibleSetAnalysis = frequencyCounter.getCredibleSetAnalysis(proportion);
     }
 

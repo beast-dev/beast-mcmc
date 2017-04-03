@@ -62,8 +62,8 @@ public class TraceDistribution<T> {
         this.traceType = traceType;
     }
 
-    public boolean isMultipleValues() {
-        return isMultipleValues;
+    public boolean isMinEqualToMax() {
+        return minEqualToMax;
     }
 
     public int getSize() {
@@ -174,7 +174,7 @@ public class TraceDistribution<T> {
         }
 
         if (maximum == minimum) {
-            isMultipleValues = false;
+            minEqualToMax = false;
             return;
         }
 
@@ -189,7 +189,7 @@ public class TraceDistribution<T> {
 //        ESS = values.length; // move to TraceCorrelation
         calculateHPDIntervalCustom(0.5, values, indices);
 
-        isMultipleValues = true;
+        minEqualToMax = true;
     }
 
     /**
@@ -209,7 +209,7 @@ public class TraceDistribution<T> {
         hpdUpperCustom = hpd[1];
     }
 
-    protected boolean isMultipleValues = false;
+    protected boolean minEqualToMax = false;
     protected boolean hasGeometricMean = false;
 
     protected int size = 0;

@@ -43,7 +43,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         super(values, traceType);
         this.stepSize = stepSize;
 
-//        if (isMultipleValues) {
+//        if (minEqualToMax) {
             analyseCorrelation(values, stepSize);
 //        }
     }
@@ -159,7 +159,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         // standard deviation of autocorrelation time
         stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * stepSize);
 
-//        isMultipleValues = true;
+//        minEqualToMax = true;
     }
 
 }

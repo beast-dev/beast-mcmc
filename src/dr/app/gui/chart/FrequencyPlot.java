@@ -143,6 +143,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         }
 
         Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
+        if (minimumBinCount <= 0)
+            axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
         axis.setRange(min, max);
 
         int majorTickCount = axis.getMajorTickCount();
@@ -159,6 +161,10 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                 binSize = axis.getMinorTickSpacing();
                 binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
             }
+        } else if (binSize > 1) {
+            // getMinorTickSpacing() returns 1.25, if the min integer slightly bigger than 0
+            binSize = 0.5;
+            binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
         }
 
         double start = axis.getMinAxis();

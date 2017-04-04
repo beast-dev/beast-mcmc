@@ -426,7 +426,7 @@ public interface Axis {
 
         /**	autoCalibrate
          *	Attempt to find the optimum axis range and ticks.
-         *	This will attempt to use atleast numMajorTick ticks on the axis.
+         *	This will attempt to use at least numMajorTick ticks on the axis.
          */
         static private final int UNIT=0;
         static private final int HALFS=1;

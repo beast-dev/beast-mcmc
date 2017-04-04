@@ -346,7 +346,25 @@ public class LogFileTraces extends AbstractTraceList {
                     burnIn + " < step size " + stepSize + " !");
 
         validateTraceType(lastLine);
+        validateUniqueValues();
     }
+
+    private final int MAX_UNIQUE_VALUE = 200;
+    // change integer type into real, if too many unique values
+    private void validateUniqueValues() throws TraceException {
+        for (int id = 0; id < getTraceCount(); id++) {
+            Trace trace = getTrace(id);
+            if (trace.getTraceType().isOrdinal()) {
+                int uniqueValue = trace.getUniqueVauleCount();
+                if (uniqueValue > MAX_UNIQUE_VALUE) {
+                    System.out.println("Too many unique values (>" + MAX_UNIQUE_VALUE +
+                            ") found in trace " + trace.getName() + " at " + id);
+                    changeTraceType(id, TraceType.REAL);
+                }
+            }
+        }
+    }
+
 
     // validate TraceType at the last value of trace,
     // in case integer is logged for double values in the first (even several) row.
@@ -358,7 +376,7 @@ public class LogFileTraces extends AbstractTraceList {
             int traceId = i-1;
             Trace trace = getTrace(traceId);
             // avoid to assign integer to double incorrectly
-            if (trace.getTraceType() == TraceType.ORDINAL && NumberUtils.hasDecimalPoint(values[i]))
+            if (trace.getTraceType().isOrdinal() && NumberUtils.hasDecimalPoint(values[i]))
                 changeTraceType(traceId, TraceType.REAL);
         }
     }
@@ -462,7 +480,6 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-    private final int MAX_UNIQUE_VALUE = 50;
     // TODO get rid of generic to make things easy
     // TODO change to String only, and parse to double, int or string in getValues according to trace type
     public void changeTraceType(int id, TraceType newType) throws TraceException {
@@ -473,12 +490,14 @@ public class LogFileTraces extends AbstractTraceList {
         if (oldType != newType) {
             Trace newTrace = createTrace(trace.getName(), newType);
 
-            if (oldType == TraceType.CATEGORICAL || newType == TraceType.CATEGORICAL) {
+            if (newType.isDiscrete()) {
                 int uniqueValue = trace.getUniqueVauleCount();
                 if (uniqueValue > MAX_UNIQUE_VALUE)
                     throw new TraceException("Type change is failed, because too many unique values (>" +
                             MAX_UNIQUE_VALUE + ") are found !");
+            }
 
+            if (oldType.isCategorical() || newType.isCategorical()) {
                 try {
                     if (newType.isNumber()) { // oldType == TraceType.CATEGORICAL &&
                         for (int i = 0; i < trace.getValueCount(); i++) {

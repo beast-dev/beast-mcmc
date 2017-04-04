@@ -86,42 +86,6 @@ public class CategoryDensityPlot extends FrequencyPlot {
         setData(xData, yData);
     }
 
-//    protected FrequencyDistribution getFrequencyDistribution(Variate data) {
-//        double min = (Double) data.getMin();
-//        double max = (Double) data.getMax();
-//
-//        if (min == max) {
-//            if (min == 0) {
-//                min = -1.0;
-//            } else {
-//                min -= 1;
-//            }
-//            if (max == 0) {
-//                max = 1.0;
-//            } else {
-//                max += 1;
-//            }
-//        }
-//
-//        Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
-//        axis.setRange(min, max);
-//
-//        int majorTickCount = axis.getMajorTickCount();
-//        axis.setPrefNumTicks(majorTickCount, 4);
-//
-//        double binSize = axis.getMinorTickSpacing();
-//        int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
-//
-//        double start = Math.floor(axis.getMinAxis()); // to convert x-axis into integer
-//        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
-//
-//        for (int i = 0; i < raw.getCount(); i++) {
-//            frequency.addValue((Double) raw.get(i));
-//        }
-//
-//        return frequency;
-//    }
-
     /**
      * Paint data series
      */

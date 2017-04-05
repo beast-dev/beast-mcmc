@@ -212,6 +212,10 @@ public class CheckPointTreeModifier {
             }
         }
 
+        if (patternLists.size() == 0) {
+            throw new RuntimeException("No patterns detected. Please make sure the XML file is BEAST 1.9 compatible.");
+        }
+
         //aggregate all patterns to create distance matrix
         //TODO What about different trees for different partitions?
         Patterns patterns = new Patterns(patternLists.get(0));

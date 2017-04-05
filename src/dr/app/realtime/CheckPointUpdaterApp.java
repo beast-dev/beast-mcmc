@@ -29,22 +29,12 @@ import dr.app.beast.BeastParser;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
-import dr.evolution.tree.BranchRates;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;
@@ -54,14 +44,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Locale;
 
 /**
  * @author Guy Baele
  */
 public class CheckPointUpdaterApp {
+
+    private final boolean ADD_TAXA = true;
 
     private final boolean VERBOSE = true;
     private final boolean PARSER_WARNINGS = true;
@@ -100,6 +90,10 @@ public class CheckPointUpdaterApp {
             return matrix.getTaxon(closestIndex);
         }
 
+        public double getDistance(Taxon taxonOne, Taxon taxonTwo) {
+            return matrix.getElement(matrix.getTaxonIndex(taxonOne), matrix.getTaxonIndex(taxonTwo));
+        }
+
         public String getName() {
             return this.name;
         }
@@ -134,6 +128,7 @@ public class CheckPointUpdaterApp {
             CheckPointModifier checkpoint = new CheckPointModifier();
 
             //load the stored checkpoint file
+            //TODO Check if this works for multiple trees (e.g. for multiple partitions)
             long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 
             //probably don't need this but it's good to check
@@ -143,13 +138,17 @@ public class CheckPointUpdaterApp {
             lnL = mc.evaluate();
             System.out.println("likelihood = " + lnL);
 
-            checkpoint.extendLoadState(choice);
+            if (ADD_TAXA) {
 
-            lnL = mc.evaluate();
-            System.out.println("likelihood = " + lnL);
-            mc.getLikelihood().makeDirty();
-            lnL = mc.evaluate();
-            System.out.println("likelihood = " + lnL);
+                checkpoint.extendLoadState(choice);
+
+                lnL = mc.evaluate();
+                System.out.println("likelihood = " + lnL);
+                mc.getLikelihood().makeDirty();
+                lnL = mc.evaluate();
+                System.out.println("likelihood = " + lnL);
+
+            }
 
 
 
@@ -162,94 +161,16 @@ public class CheckPointUpdaterApp {
 
 
 
-            //TODO Move most of the code below to the CheckPointModifier class and keep the app code simple?
-            //check the Tree(Data)Likelihoods in the connected set of likelihoods
-            //focus on TreeDataLikelihood, which has getTree() to get the tree for each likelihood
-            //also get the DataLikelihoodDelegate from TreeDataLikelihood
-            ArrayList<TreeDataLikelihood> likelihoods = new ArrayList<TreeDataLikelihood>();
-            ArrayList<Tree> trees = new ArrayList<Tree>();
-            ArrayList<DataLikelihoodDelegate> delegates = new ArrayList<DataLikelihoodDelegate>();
-            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
-                if (likelihood instanceof TreeDataLikelihood) {
-                    likelihoods.add((TreeDataLikelihood)likelihood);
-                    trees.add(((TreeDataLikelihood) likelihood).getTree());
-                    delegates.add(((TreeDataLikelihood) likelihood).getDataLikelihoodDelegate());
-                }
-            }
-
-            BranchRates rateModel = null;
+            /*BranchRates rateModel = null;
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof BranchRates) {
                     rateModel = (BranchRates) model;
                 }
-            }
+            }*/
 
-            //suggested to go through TreeDataLikelihoodParser and give it an extra option to create a HashMap
-            //keyed by the tree; am currently not overly fond of this approach
-            ArrayList<PatternList> patternLists = new ArrayList<PatternList>();
-            for (DataLikelihoodDelegate del : delegates) {
-                if (del instanceof BeagleDataLikelihoodDelegate) {
-                    patternLists.add(((BeagleDataLikelihoodDelegate) del).getPatternList());
-                } else if (del instanceof MultiPartitionDataLikelihoodDelegate) {
-                    //TODO complete code
-                }
-            }
 
-            //aggregate all patterns to create distance matrix
-            //TODO What about different trees for different partitions?
-            Patterns patterns = new Patterns(patternLists.get(0));
-            if (patternLists.size() > 1) {
-                for (int i = 1; i < patternLists.size(); i++) {
-                    patterns.addPatterns(patternLists.get(i));
-                }
-            }
 
-            //identify the additional taxa/sequences
-            int taxonCount = patterns.getTaxonCount();
 
-            //TODO Could be multiple trees (for multiple partitions)
-            Tree currentTree = trees.get(0);
-            int treeTaxa = currentTree.getExternalNodeCount();
-
-            if (taxonCount > treeTaxa) {
-                System.out.println("Additional taxa found:");
-                //list to contain the taxa being added
-                ArrayList<Taxon> additionalTaxa = new ArrayList<Taxon>();
-
-                Iterator<Taxon> iterator = patterns.iterator();
-                while (iterator.hasNext()) {
-                    Taxon taxon = iterator.next();
-                    boolean taxonFound = false;
-                    for (int i = 0; i < currentTree.getExternalNodeCount(); i++) {
-                        if (currentTree.getNodeTaxon(currentTree.getExternalNode(i)) == taxon) {
-                            taxonFound = true;
-                        }
-                    }
-                    if (!taxonFound) {
-                        additionalTaxa.add(taxon);
-                    }
-                }
-
-                for (Taxon tax : additionalTaxa) {
-                    System.out.println(tax);
-                }
-
-                TreeModel newTreeModel = null;
-                if (choice.equals(UpdateChoice.JC69DISTANCE)) {
-                    //build a distance matrix according to JC69
-                    JukesCantorDistanceMatrix jcDistanceMatrix = new JukesCantorDistanceMatrix(patterns);
-                    //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,jcDistanceMatrix);
-                } else if (choice.equals(UpdateChoice.F84DISTANCE)) {
-                    //build a distance matrix according to F84
-                    F84DistanceMatrix f84DistanceMatrix = new F84DistanceMatrix(patterns);
-                    //newTreeModel = new GeneticDistanceTree(currentTree, rateModel).addTaxa(additionalTaxa,f84DistanceMatrix);
-                } else {
-                    throw new RuntimeException("Invalid update option provided.");
-                }
-
-            } else {
-                throw new RuntimeException("Removing taxa from previous analysis currently not supported.");
-            }
 
             mc.getLikelihood().makeDirty();
             double logL = mc.evaluate();

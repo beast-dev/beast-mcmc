@@ -211,6 +211,10 @@ public class CheckPointModifier extends BeastCheckpointer {
                     traitModels.add((TreeParameterModel)model);
                 }*/
 
+                if (model instanceof BranchRates) {
+                    this.rateModel = (BranchRates)model;
+                }
+
             }
 
             while (fields[0].equals("tree")) {

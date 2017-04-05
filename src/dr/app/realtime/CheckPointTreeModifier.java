@@ -235,10 +235,13 @@ public class CheckPointTreeModifier {
 
         //add new taxa one at a time
         for (NodeRef newTaxon : newTaxaNodes) {
+            System.out.println("\nadding Taxon: " + newTaxon);
             //get the closest Taxon to the Taxon that needs to be added
             Taxon closest = choice.getClosestTaxon(treeModel.getNodeTaxon(newTaxon));
+            System.out.println("\nclosest Taxon: " + closest + " with height: " + closest.getHeight());
             //get the distance between these two taxa
             double distance = choice.getDistance(treeModel.getNodeTaxon(newTaxon), closest);
+            System.out.println("at distance: " + distance);
             //find the NodeRef for the closest Taxon (do not rely on node numbering)
             NodeRef closestRef = null;
             //careful with node numbering and subtract number of new taxa
@@ -248,13 +251,19 @@ public class CheckPointTreeModifier {
                 }
             }
             double timeForDistance = distance/rateModel.getBranchRate(treeModel, closestRef);
-            //determine height of new node
-            double insertHeight = (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - closest.getHeight()))/2.0;
+            System.out.println("timeForDistance = " + timeForDistance);
             //get parent node of branch that will be split
             NodeRef parent = treeModel.getParent(closestRef);
+            //determine height of new node
+            //double insertHeight = closest.getHeight() + (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - closest.getHeight()))/2.0;
+            //TODO This differs from the master thesis I received from AR; need to double check
+            double insertHeight = Math.abs(treeModel.getNodeHeight(parent) + treeModel.getNodeHeight(closestRef))/2.0;
+            System.out.println("insert at height: " + insertHeight);
             //pass on all the necessary variables to a method that adds the new taxon to the tree
             addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);
         }
+
+        System.out.println(treeModel.toString());
 
     }
 
@@ -275,6 +284,7 @@ public class CheckPointTreeModifier {
         for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
             if (treeModel.getChildCount(treeModel.getInternalNode(i)) == 0 && treeModel.getParent(treeModel.getInternalNode(i)) == null) {
                 internalNode = treeModel.getInternalNode(i);
+                System.out.println("\ninternal node found: " + internalNode.getNumber());
                 break;
             }
         }
@@ -289,6 +299,10 @@ public class CheckPointTreeModifier {
         treeModel.addChild(internalNode, newTaxon);
         //still need to set the height of the new internal node
         treeModel.setNodeHeight(internalNode, insertHeight);
+
+        System.out.println("\nparent node height: " + treeModel.getNodeHeight(parentNode));
+        System.out.println("child node height: " + treeModel.getNodeHeight(childNode));
+        System.out.println("internal node height: " + treeModel.getNodeHeight(internalNode));
 
         treeModel.endTreeEdit();
     }

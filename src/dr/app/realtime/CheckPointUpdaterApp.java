@@ -91,6 +91,8 @@ public class CheckPointUpdaterApp {
         }
 
         public double getDistance(Taxon taxonOne, Taxon taxonTwo) {
+            System.out.println("taxon 1: " + taxonOne + " (" + matrix.getTaxonIndex(taxonOne) + ")");
+            System.out.println("taxon 2: " + taxonTwo + " (" + matrix.getTaxonIndex(taxonTwo) + ")");
             return matrix.getElement(matrix.getTaxonIndex(taxonOne), matrix.getTaxonIndex(taxonTwo));
         }
 

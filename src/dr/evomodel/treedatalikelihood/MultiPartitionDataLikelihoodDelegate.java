@@ -119,6 +119,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         setId(patternLists.get(0).getId());
 
+        this.patternLists = patternLists;
         this.dataType = patternLists.get(0).getDataType();
         stateCount = dataType.getStateCount();
 
@@ -463,6 +464,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
     }
 
+    public List<PatternList> getPatternLists() {
+        return this.patternLists;
+    }
 
     @Override
     public int getTraitCount() {
@@ -1224,6 +1228,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the patternLists
      */
+    private List<PatternList> patternLists;
+
     private final DataType dataType;
 
     private final int partitionCount;

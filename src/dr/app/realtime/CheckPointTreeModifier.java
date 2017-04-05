@@ -39,6 +39,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Likelihood;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Guy Baele
@@ -208,7 +209,11 @@ public class CheckPointTreeModifier {
             if (del instanceof BeagleDataLikelihoodDelegate) {
                 patternLists.add(((BeagleDataLikelihoodDelegate) del).getPatternList());
             } else if (del instanceof MultiPartitionDataLikelihoodDelegate) {
-                //TODO complete code
+                MultiPartitionDataLikelihoodDelegate mpdld = (MultiPartitionDataLikelihoodDelegate)del;
+                List<PatternList> list = mpdld.getPatternLists();
+                for (PatternList pList : list) {
+                    patternLists.add(pList);
+                }
             }
         }
 

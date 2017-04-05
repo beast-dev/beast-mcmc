@@ -235,7 +235,8 @@ public class CheckPointTreeModifier {
 
         //add new taxa one at a time
         for (NodeRef newTaxon : newTaxaNodes) {
-            System.out.println("\nadding Taxon: " + newTaxon);
+            treeModel.setNodeHeight(newTaxon, treeModel.getNodeTaxon(newTaxon).getHeight());
+            System.out.println("\nadding Taxon: " + newTaxon + " (height = " + treeModel.getNodeHeight(newTaxon) + ")");
             //get the closest Taxon to the Taxon that needs to be added
             Taxon closest = choice.getClosestTaxon(treeModel.getNodeTaxon(newTaxon));
             System.out.println("\nclosest Taxon: " + closest + " with height: " + closest.getHeight());

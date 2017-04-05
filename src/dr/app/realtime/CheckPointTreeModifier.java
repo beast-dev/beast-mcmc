@@ -25,8 +25,19 @@
 
 package dr.app.realtime;
 
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.inference.model.Likelihood;
+
 import java.util.ArrayList;
 
 /**
@@ -165,7 +176,7 @@ public class CheckPointTreeModifier {
     /**
      * Add the remaining taxa, which are stored in
      */
-    public void incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice) {
+    public void incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
 
         ArrayList<NodeRef> newTaxaNodes = new ArrayList<NodeRef>();
         for (String str : newTaxaNames) {
@@ -176,9 +187,101 @@ public class CheckPointTreeModifier {
             }
         }
 
-        //TODO Modify to use chosen update criterion later
+        //check the Tree(Data)Likelihoods in the connected set of likelihoods
+        //focus on TreeDataLikelihood, which has getTree() to get the tree for each likelihood
+        //also get the DataLikelihoodDelegate from TreeDataLikelihood
+        ArrayList<TreeDataLikelihood> likelihoods = new ArrayList<TreeDataLikelihood>();
+        ArrayList<Tree> trees = new ArrayList<Tree>();
+        ArrayList<DataLikelihoodDelegate> delegates = new ArrayList<DataLikelihoodDelegate>();
+        for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+            if (likelihood instanceof TreeDataLikelihood) {
+                likelihoods.add((TreeDataLikelihood)likelihood);
+                trees.add(((TreeDataLikelihood) likelihood).getTree());
+                delegates.add(((TreeDataLikelihood) likelihood).getDataLikelihoodDelegate());
+            }
+        }
 
+        //suggested to go through TreeDataLikelihoodParser and give it an extra option to create a HashMap
+        //keyed by the tree; am currently not overly fond of this approach
+        ArrayList<PatternList> patternLists = new ArrayList<PatternList>();
+        for (DataLikelihoodDelegate del : delegates) {
+            if (del instanceof BeagleDataLikelihoodDelegate) {
+                patternLists.add(((BeagleDataLikelihoodDelegate) del).getPatternList());
+            } else if (del instanceof MultiPartitionDataLikelihoodDelegate) {
+                //TODO complete code
+            }
+        }
 
+        //aggregate all patterns to create distance matrix
+        //TODO What about different trees for different partitions?
+        Patterns patterns = new Patterns(patternLists.get(0));
+        if (patternLists.size() > 1) {
+            for (int i = 1; i < patternLists.size(); i++) {
+                patterns.addPatterns(patternLists.get(i));
+            }
+        }
+
+        //set the patterns for the distance matrix computations
+        choice.setPatterns(patterns);
+
+        //add new taxa one at a time
+        for (NodeRef newTaxon : newTaxaNodes) {
+            //get the closest Taxon to the Taxon that needs to be added
+            Taxon closest = choice.getClosestTaxon(treeModel.getNodeTaxon(newTaxon));
+            //get the distance between these two taxa
+            double distance = choice.getDistance(treeModel.getNodeTaxon(newTaxon), closest);
+            //find the NodeRef for the closest Taxon (do not rely on node numbering)
+            NodeRef closestRef = null;
+            //careful with node numbering and subtract number of new taxa
+            for (int i = 0; i < treeModel.getExternalNodeCount()-newTaxaNodes.size(); i++) {
+                if (treeModel.getNodeTaxon(treeModel.getExternalNode(i)) == closest) {
+                    closestRef = treeModel.getExternalNode(i);
+                }
+            }
+            double timeForDistance = distance/rateModel.getBranchRate(treeModel, closestRef);
+            //determine height of new node
+            double insertHeight = (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - closest.getHeight()))/2.0;
+            //get parent node of branch that will be split
+            NodeRef parent = treeModel.getParent(closestRef);
+            //pass on all the necessary variables to a method that adds the new taxon to the tree
+            addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);
+        }
+
+    }
+
+    /**
+     * Adds a taxon along a branch specified by its parent and child node, at a specified height
+     * @param newTaxon The new Taxon to be added to the tree
+     * @param parentNode The parent node of the branch along which the new taxon is to be added
+     * @param childNode The child of the branch along which the new taxon is to be added
+     * @param insertHeight The height of the new internal node that will be created
+     */
+    private void addTaxonAlongBranch(NodeRef newTaxon, NodeRef parentNode, NodeRef childNode, double insertHeight) {
+        treeModel.beginTreeEdit();
+
+        //remove child node that correspondes to childNode argument
+        treeModel.removeChild(parentNode, childNode);
+        //add a currently unused internal node as the new child node
+        NodeRef internalNode = null;
+        for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
+            if (treeModel.getChildCount(treeModel.getInternalNode(i)) == 0 && treeModel.getParent(treeModel.getInternalNode(i)) == null) {
+                internalNode = treeModel.getInternalNode(i);
+                break;
+            }
+        }
+        if (internalNode == null) {
+            throw new RuntimeException("No free internal node found for adding a new taxon.");
+        }
+        //add internal node as a child of the old parent node
+        treeModel.addChild(parentNode, internalNode);
+        //add the old child node as a child of the new internal node
+        treeModel.addChild(internalNode, childNode);
+        //add the new taxon as a child of the new internal node
+        treeModel.addChild(internalNode, newTaxon);
+        //still need to set the height of the new internal node
+        treeModel.setNodeHeight(internalNode, insertHeight);
+
+        treeModel.endTreeEdit();
     }
 
     /**

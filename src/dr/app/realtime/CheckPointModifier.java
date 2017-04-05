@@ -26,6 +26,7 @@
 package dr.app.realtime;
 
 import dr.app.checkpoint.BeastCheckpointer;
+import dr.evolution.tree.BranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.Model;
@@ -49,6 +50,7 @@ public class CheckPointModifier extends BeastCheckpointer {
     private static final boolean DEBUG = false;
 
     private CheckPointTreeModifier modifyTree;
+    private BranchRates rateModel;
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -321,7 +323,12 @@ public class CheckPointModifier extends BeastCheckpointer {
     }
 
     public void extendLoadState(CheckPointUpdaterApp.UpdateChoice choice) {
-        modifyTree.incorporateAdditionalTaxa(choice);
+        //add the BranchRates model here
+        if (this.rateModel == null) {
+            throw new RuntimeException("BranchRates model has not been set correctly.");
+        } else {
+            modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
+        }
     }
 
     @Override

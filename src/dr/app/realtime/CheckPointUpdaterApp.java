@@ -110,7 +110,7 @@ public class CheckPointUpdaterApp {
      * Running the MCMC chain after parsing the file(s) should not happen.
      * @param beastXMLFileName
      */
-    public CheckPointUpdaterApp(String beastXMLFileName, String debugStateFile, UpdateChoice choice, FileWriter fw) {
+    public CheckPointUpdaterApp(String beastXMLFileName, String debugStateFile, UpdateChoice choice) {
         //no additional parsers, we don't need BEAGLE at the moment just yet
         XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML);
         try {
@@ -134,50 +134,23 @@ public class CheckPointUpdaterApp {
             long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 
             //probably don't need this but it's good to check
-            double lnL = mc.evaluate();
-            System.out.println("likelihood = " + lnL);
+            double logL = mc.evaluate();
+            System.out.println("likelihood = " + logL);
             mc.getLikelihood().makeDirty();
-            lnL = mc.evaluate();
-            System.out.println("likelihood = " + lnL);
+            logL = mc.evaluate();
+            System.out.println("likelihood = " + logL);
 
             if (ADD_TAXA) {
 
                 checkpoint.extendLoadState(choice);
 
-                lnL = mc.evaluate();
-                System.out.println("likelihood = " + lnL);
+                logL = mc.evaluate();
+                System.out.println("likelihood = " + logL);
                 mc.getLikelihood().makeDirty();
-                lnL = mc.evaluate();
-                System.out.println("likelihood = " + lnL);
+                logL = mc.evaluate();
+                System.out.println("likelihood = " + logL);
 
             }
-
-
-
-
-
-            System.exit(0);
-
-
-
-
-
-
-            /*BranchRates rateModel = null;
-            for (Model model : Model.CONNECTED_MODEL_SET) {
-                if (model instanceof BranchRates) {
-                    rateModel = (BranchRates) model;
-                }
-            }*/
-
-
-
-
-
-            mc.getLikelihood().makeDirty();
-            double logL = mc.evaluate();
-
-            System.out.println("new logLikelihood value = " + logL);
 
             checkpoint.saveState(mc, state, logL);
 
@@ -258,18 +231,15 @@ public class CheckPointUpdaterApp {
             throw new RuntimeException("Incorrect update mechanism specified.");
         }
 
-        FileWriter fw = null;
         if (arguments.hasOption("output_file")) {
-            String output = arguments.getStringOption("output_file");
-            fw = new FileWriter(output);
+            String outputStateFile = arguments.getStringOption("output_file");
+            //pass on as argument
+            System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, outputStateFile);
         } else {
             throw new RuntimeException("No output file specified.");
         }
 
-        new CheckPointUpdaterApp(inputFile, debugStateFile, chosen, fw);
-
-        fw.flush();
-        fw.close();
+        new CheckPointUpdaterApp(inputFile, debugStateFile, chosen);
 
         System.exit(0);
 

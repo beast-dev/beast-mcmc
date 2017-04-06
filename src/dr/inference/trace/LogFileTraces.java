@@ -336,18 +336,21 @@ public class LogFileTraces extends AbstractTraceList {
             line = reader.readLine();
             tokens = reader.getStringTokenizer(line);
         }
-        if (num_samples < 3)
-            throw new TraceException("Inadequate sample size (" + num_samples + ") will cause incorrect statistical summary !");
+
+        if (num_samples == 0)
+            throw new TraceException("Incorrect file format, no sample is found !");
 
         burnIn =  lastState / 10;
 
-        if (burnIn < stepSize)
-            throw new TraceException("Inadequate sample size (" + num_samples + ") causes burn in " +
-                    burnIn + " < step size " + stepSize + " !");
+        if (lastState < 0)
+            lastState = firstState;
+        if (stepSize < 0 && lastState > 0)
+            stepSize = lastState;
 
         validateTraceType(lastLine);
         validateUniqueValues();
     }
+    public static final int MIN_SAMPLE = 5; // used in StatisticsModel
 
     private final int MAX_UNIQUE_VALUE = 200;
     // change integer type into real, if too many unique values

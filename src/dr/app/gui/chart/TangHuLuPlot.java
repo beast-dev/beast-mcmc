@@ -120,14 +120,14 @@ public class TangHuLuPlot extends ScatterPlot {
 
         int n = xData.getCount();
 
-        double maxCircleSize = MIN_CIRCLE_SIZE * 2;
+        double maxDiameter = MIN_CIRCLE_SIZE * 2;
         if (n > 1) {
             double xGap = Math.abs(xAxis.getMajorTickSpacing() * xScale);
             double yGap = Math.abs(yAxis.getMajorTickSpacing() * yScale);
             // take the smaller gap to fit in circles
             double maxCS = Math.min(xGap, yGap);
-            if (maxCS > maxCircleSize)
-                maxCircleSize = maxCS;
+            if (maxCS > maxDiameter)
+                maxDiameter = maxCS;
         }
 
 //        if (xyFC != null) {
@@ -136,10 +136,8 @@ public class TangHuLuPlot extends ScatterPlot {
                 y = (float) transformY(((Number) yData.get(i)).doubleValue());
 
                 XY xy = uniqueXYList.get(i);
-                double circleSize = maxCircleSize * xyFC.getFreqScaledMaxTo1(xy);
-                if (circleSize < MIN_CIRCLE_SIZE)
-                    circleSize = MIN_CIRCLE_SIZE;
-
+                // probability is proportional to area not diameter
+                double diameter = maxDiameter * Math.sqrt(xyFC.getFreqScaledMaxTo1(xy));
 
                 CredibleSetAnalysis credibleSetAnalysis = xyFC.getCredibleSetAnalysis(credProb);
                 Set incredibleSet = credibleSetAnalysis.getIncredibleSet();
@@ -155,7 +153,7 @@ public class TangHuLuPlot extends ScatterPlot {
                 } else {
 
                     // cred set colour
-                    setMarkStyle(CIRCLE_MARK, circleSize, new BasicStroke(1),
+                    setMarkStyle(CIRCLE_MARK, diameter, new BasicStroke(1),
                             currentPaint, currentPaint);
 
 //                    if (colours != null && colours.size() == n)

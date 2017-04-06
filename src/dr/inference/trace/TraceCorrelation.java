@@ -43,9 +43,9 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         super(values, traceType);
         this.stepSize = stepSize;
 
-//        if (minEqualToMax) {
+        if (stepSize > 0) {
             analyseCorrelation(values, stepSize);
-//        }
+        }
     }
 
     public double getStdErrorOfMean() {
@@ -75,22 +75,24 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     private void analyseCorrelation(List<T> values, long stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
-        if (getTraceType().isNumber()) {
-            double[] doubleValues = new double[values.size()];
-            for (int i = 0; i < values.size(); i++) {
-                doubleValues[i] = ((Number) values.get(i)).doubleValue();
-            }
-            analyseCorrelationNumeric(doubleValues, stepSize);
+        if (stepSize > 0) {
+            if (getTraceType().isNumber()) {
+                double[] doubleValues = new double[values.size()];
+                for (int i = 0; i < values.size(); i++) {
+                    doubleValues[i] = ((Number) values.get(i)).doubleValue();
+                }
+                analyseCorrelationNumeric(doubleValues, stepSize);
 
-        } else if (getTraceType() == TraceType.CATEGORICAL) {
-            //todo Do not know how to calculate
-            stdErrorOfMean = Double.NaN;
-            ACT = Double.NaN;
-            ESS = Double.NaN;
-            stdErrOfACT = Double.NaN;
+            } else if (getTraceType() == TraceType.CATEGORICAL) {
+                //todo Do not know how to calculate
+                stdErrorOfMean = Double.NaN;
+                ACT = Double.NaN;
+                ESS = Double.NaN;
+                stdErrOfACT = Double.NaN;
 //            throw new UnsupportedOperationException("should not be categorical");
-        } else {
-            throw new RuntimeException("Trace type is not recognized");
+            } else {
+                throw new RuntimeException("Trace type is not recognized");
+            }
         }
     }
 

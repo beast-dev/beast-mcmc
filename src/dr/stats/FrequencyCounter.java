@@ -167,7 +167,7 @@ public class FrequencyCounter<T> {
     }
 
     public double getProbability(T key) {
-        return (double) frequencyCounter.get(key) / (double) getTotalCount();
+        return (double) getCount(key) / (double) getTotalCount();
     }
 
     /**
@@ -177,7 +177,7 @@ public class FrequencyCounter<T> {
      * @return
      */
     public double getFreqScaledMaxTo1(T key) {
-        return (double) frequencyCounter.get(key) / (double) getMaxCount();
+        return (double) getCount(key) / (double) getMaxCount();
     }
 
     /**

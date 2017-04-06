@@ -44,7 +44,7 @@ public class CredibleSetAnalysis<T> {
         calculateCredibleSet(frequencyCounter, probability);
     }
 
-    private void calculateCredibleSet(FrequencyCounter<T> frequencyCounter, double probability) {
+    protected void calculateCredibleSet(FrequencyCounter<T> frequencyCounter, double probability) {
         this.probability = probability;
 
         if (! frequencyCounter.isSortedByCounts())

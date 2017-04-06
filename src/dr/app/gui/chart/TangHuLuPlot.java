@@ -51,6 +51,8 @@ public class TangHuLuPlot extends ScatterPlot {
 
     private Paint circlePaint = new Color(124, 164, 221);
     private Paint incrediblePaint = new Color(232, 114, 103);
+    private Paint tileShade = new Color(222, 229, 235);
+    private Paint incredTileShade = new Color(235, 225, 230);
 
     // set min circle size to avoid the circle too small to see
     private final double MIN_CIRCLE_SIZE = 5;
@@ -131,37 +133,42 @@ public class TangHuLuPlot extends ScatterPlot {
         }
 
 //        if (xyFC != null) {
-            for (int i = 0; i < n; i++) {
-                x = (float) transformX(((Number) xData.get(i)).doubleValue());
-                y = (float) transformY(((Number) yData.get(i)).doubleValue());
+        for (int i = 0; i < n; i++) {
+            x = (float) transformX(((Number) xData.get(i)).doubleValue());
+            y = (float) transformY(((Number) yData.get(i)).doubleValue());
 
-                XY xy = uniqueXYList.get(i);
-                // probability is proportional to area not diameter
-                double diameter = maxDiameter * Math.sqrt(xyFC.getFreqScaledMaxTo1(xy));
+            XY xy = uniqueXYList.get(i);
+            // probability is proportional to area not diameter
+            double diameter = maxDiameter * Math.sqrt(xyFC.getFreqScaledMaxTo1(xy));
 
-                CredibleSetAnalysis credibleSetAnalysis = xyFC.getCredibleSetAnalysis(credProb);
-                Set incredibleSet = credibleSetAnalysis.getIncredibleSet();
-                Paint currentPaint = circlePaint;
-                if (incredibleSet.contains(xy))
-                    currentPaint = incrediblePaint;
+            CredibleSetAnalysis credibleSetAnalysis = xyFC.getCredibleSetAnalysis(credProb);
+            Set incredibleSet = credibleSetAnalysis.getIncredibleSet();
 
-                if (selectedPoints.contains(i)) {
+            // background tiles
+            Paint currentPaint = tileShade;
+            if (incredibleSet.contains(xy))
+                currentPaint = incredTileShade;
+            setMarkStyle(SQUARE_MARK, maxDiameter, new BasicStroke(1), currentPaint, currentPaint);
+            drawMark(g2, x + (float) maxDiameter/2, y + (float) maxDiameter/2, null);
 
-                    setHilightedMarkStyle(new BasicStroke(1), currentPaint, currentPaint);
-                    drawMarkHilighted(g2, x, y);
+            // circles
+            currentPaint = circlePaint;
+            if (incredibleSet.contains(xy))
+                currentPaint = incrediblePaint;
 
-                } else {
-
-                    // cred set colour
-                    setMarkStyle(CIRCLE_MARK, diameter, new BasicStroke(1),
-                            currentPaint, currentPaint);
+            if (selectedPoints.contains(i)) {
+                setHilightedMarkStyle(new BasicStroke(1), currentPaint, currentPaint);
+                drawMarkHilighted(g2, x, y);
+            } else {
+                setMarkStyle(CIRCLE_MARK, diameter, new BasicStroke(1),
+                        currentPaint, currentPaint);
 
 //                    if (colours != null && colours.size() == n)
 //                        drawMark(g2, x, y, colours.get(i));
 //                    else
-                    drawMark(g2, x, y, null);
-                }
+                drawMark(g2, x, y, null);
             }
+        }
 //        }
     }
 }

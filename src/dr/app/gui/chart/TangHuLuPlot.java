@@ -41,7 +41,12 @@ import java.util.Set;
  * The size of circle is proportional to the joint probability,
  * the blue coloured circle is in the credible set of
  * given a probability threshold default to 0.95,
- * the red is in the incredible set.
+ * the red is in the set not in the credible set.
+ * The tile background is coloured if there is any circle,
+ * in case the very small circle wouldn't be missed out.
+ * The coloured background can also show the area of
+ * the credible set and non-credible set.
+ *
  * TangHuLu is a traditional Chinese snack of candied fruit
  * normally sugar-coated hawthorns on a stick.
  *
@@ -117,7 +122,7 @@ public class TangHuLuPlot extends ScatterPlot {
         // remove ?
         markBounds = new java.util.Vector<Rectangle2D>();
 
-        // what is selectedPoints?
+        // todo do we need selectedPoints here?
         Set<Integer> selectedPoints = getSelectedPoints();
 
         int n = xData.getCount();

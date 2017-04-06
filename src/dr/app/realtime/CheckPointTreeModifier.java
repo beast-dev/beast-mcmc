@@ -47,6 +47,7 @@ import java.util.List;
 public class CheckPointTreeModifier {
 
     public final static String TREE_UPDATE_OPTION = "JC69Distance";
+    public final static Double EPSILON = 0.01;
 
     private TreeModel treeModel;
     private ArrayList<String> newTaxaNames;
@@ -251,14 +252,23 @@ public class CheckPointTreeModifier {
                     closestRef = treeModel.getExternalNode(i);
                 }
             }
+            treeModel.setNodeHeight(closestRef, closest.getHeight());
             double timeForDistance = distance/rateModel.getBranchRate(treeModel, closestRef);
             System.out.println("timeForDistance = " + timeForDistance);
             //get parent node of branch that will be split
             NodeRef parent = treeModel.getParent(closestRef);
+
             //determine height of new node
-            //double insertHeight = closest.getHeight() + (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - closest.getHeight()))/2.0;
-            //TODO This differs from the master thesis I received from AR; need to double check
-            double insertHeight = Math.abs(treeModel.getNodeHeight(parent) + treeModel.getNodeHeight(closestRef))/2.0;
+            //double insertHeight = Math.abs(treeModel.getNodeHeight(parent) + treeModel.getNodeHeight(closestRef))/2.0;
+            double insertHeight;
+            if (treeModel.getNodeHeight(closestRef) < treeModel.getNodeHeight(newTaxon)) {
+                insertHeight = closest.getHeight() + (timeForDistance + Math.abs(closest.getHeight() - treeModel.getNodeHeight(newTaxon)))/2.0;
+            } else {
+                insertHeight = closest.getHeight() + (timeForDistance - Math.abs(closest.getHeight() - treeModel.getNodeHeight(newTaxon)))/2.0;
+            }
+            if (insertHeight > treeModel.getNodeHeight(parent)) {
+                insertHeight = treeModel.getNodeHeight(parent) - EPSILON*(treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(closestRef));
+            }
             System.out.println("insert at height: " + insertHeight);
             //pass on all the necessary variables to a method that adds the new taxon to the tree
             addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);

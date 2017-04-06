@@ -338,7 +338,7 @@ public class TraceDistribution<T> {
     public List<String> getRange() {
         List<String> valuesList = new ArrayList<String>();
         for (T value : frequencyCounter.uniqueValues()) {
-            if (traceType == TraceType.ORDINAL) { // as Integer is stored as Double in Trace
+            if (traceType.isInteger()) { // as Integer is stored as Double in Trace
                 if (!valuesList.contains(Integer.toString(((Number) value).intValue())))
                     valuesList.add(Integer.toString(((Number) value).intValue()));
             } else {

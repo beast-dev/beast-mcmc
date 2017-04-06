@@ -357,7 +357,7 @@ public class LogFileTraces extends AbstractTraceList {
     private void validateUniqueValues() throws TraceException {
         for (int id = 0; id < getTraceCount(); id++) {
             Trace trace = getTrace(id);
-            if (trace.getTraceType().isOrdinal()) {
+            if (trace.getTraceType().isInteger()) {
                 int uniqueValue = trace.getUniqueVauleCount();
                 if (uniqueValue > MAX_UNIQUE_VALUE) {
                     System.out.println("Too many unique values (>" + MAX_UNIQUE_VALUE +
@@ -379,7 +379,7 @@ public class LogFileTraces extends AbstractTraceList {
             int traceId = i-1;
             Trace trace = getTrace(traceId);
             // avoid to assign integer to double incorrectly
-            if (trace.getTraceType().isOrdinal() && NumberUtils.hasDecimalPoint(values[i]))
+            if (trace.getTraceType().isInteger() && NumberUtils.hasDecimalPoint(values[i]))
                 changeTraceType(traceId, TraceType.REAL);
         }
     }
@@ -404,7 +404,7 @@ public class LogFileTraces extends AbstractTraceList {
 
 
     /**
-     * Auto assign ORDINAL or CATEGORICAL type to traces
+     * Auto assign INTEGER or CATEGORICAL type to traces
      * according their values in the first line.
      * Default type is REAL.
      *
@@ -416,7 +416,7 @@ public class LogFileTraces extends AbstractTraceList {
         TraceType type = TraceType.REAL;
         if (NumberUtils.isNumber(value)) { // Double or Integer
             if (! NumberUtils.hasDecimalPoint(value)) { // Integer
-                type = TraceType.ORDINAL;
+                type = TraceType.INTEGER;
                 // change tracesType map for
                 tracesType.put(name, type);
                 System.out.println("Auto detect " + type + " type for trace " + name + " at " + nTrace);
@@ -441,10 +441,10 @@ public class LogFileTraces extends AbstractTraceList {
     private void readTraceType(String firstToken, StringTokenizer tokens) {
         if (tokens.hasMoreTokens()) {
             String token; //= tokens.nextToken();
-            if (firstToken.toLowerCase().contains(TraceType.ORDINAL.toString())) {
+            if (firstToken.toLowerCase().contains(TraceType.INTEGER.toString())) {
                 while (tokens.hasMoreTokens()) {
                     token = tokens.nextToken();
-                    tracesType.put(token, TraceType.ORDINAL);
+                    tracesType.put(token, TraceType.INTEGER);
                 }
             } else if (firstToken.toLowerCase().contains(TraceType.CATEGORICAL.toString())) {
                 while (tokens.hasMoreTokens()) {

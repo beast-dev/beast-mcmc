@@ -39,7 +39,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
 //    public static final int INITIAL_SIZE = 1000;
 //    public static final int INCREMENT_SIZE = 1000;
 
-    // use <Double> for integer, but traceType must = ORDINAL, because of legacy issue at analyseCorrelationContinuous
+    // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
     protected TraceType traceType = TraceType.REAL;
     protected List<T> values = new ArrayList<T>(); // TODO change to String only, and parse to double, int or string in getValues according to trace type
     //    protected int valueCount = 0;

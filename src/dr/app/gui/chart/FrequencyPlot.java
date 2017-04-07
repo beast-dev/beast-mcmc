@@ -154,12 +154,14 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
 
         if (minimumBinCount > 0) {
-            while (binCount < minimumBinCount) {
+            // avoid dead loop
+            while (binCount < minimumBinCount && majorTickCount < 1000) {
                 majorTickCount++;
                 axis.setPrefNumTicks(majorTickCount, 4);
 
                 binSize = axis.getMinorTickSpacing();
-                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
+                // should +2, otherwise the last bar will lose
+                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
             }
         } else if (binSize > 1) {
             // getMinorTickSpacing() returns 1.25, if the min integer slightly bigger than 0

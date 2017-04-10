@@ -226,7 +226,7 @@ public class FrequencyCounter<T> {
         return new CredibleSetAnalysis<T>(this, probability);
     }
 
-    static class Utils {
+    public static class Utils {
         public static <T> String setToString(Set<T> aSet) {
             String line = "{";
             for (T value : aSet) {

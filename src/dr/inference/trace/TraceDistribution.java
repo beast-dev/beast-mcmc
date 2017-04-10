@@ -325,6 +325,10 @@ public class TraceDistribution<T> {
         return credibleSetAnalysis.toStringIncredibleSet();
     }
 
+    public String printUniqueValues() {
+        return FrequencyCounter.Utils.setToString(frequencyCounter.uniqueValues());
+    }
+
     public T getMode() {
         if (mode == null) return null;
         return mode.getMode();

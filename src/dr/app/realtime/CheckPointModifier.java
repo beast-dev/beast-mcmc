@@ -140,7 +140,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                     int dimension = Integer.parseInt(fields[2]);
 
                     //TODO This will throw an exception for trait models when taxa are being added
-                    if (dimension != parameter.getDimension()) {
+                    if (dimension != parameter.getDimension() && !fields[1].equals("branchRates.categories")) {
                         System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
                         System.err.print("Read from file: ");
                         for (int i = 0; i < fields.length; i++) {
@@ -160,10 +160,20 @@ public class CheckPointModifier extends BeastCheckpointer {
                         if (DEBUG) {
                             System.out.print("restoring " + fields[1] + " with values ");
                         }
-                        for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                            parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
-                            if (DEBUG) {
-                                System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                        if (fields[1].equals("branchRates.categories")) {
+                            for (int dim = 0; dim < (fields.length-3); dim++) {
+                                System.out.println("dim " + dim);
+                                parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
+                                if (DEBUG) {
+                                    System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                }
+                            }
+                        } else {
+                            for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                                parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
+                                if (DEBUG) {
+                                    System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                }
                             }
                         }
                         if (DEBUG) {
@@ -298,8 +308,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         modifyTree.adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
-                            //TODO Complete this method's implementation
-                            modifyTree.adoptTraitData(this.traitModels, traitValues);
+                            modifyTree.adoptTraitData(parents, this.traitModels, traitValues);
                         }
 
                         //adopt the loaded tree structure; this does not yet copy the traits on the branches

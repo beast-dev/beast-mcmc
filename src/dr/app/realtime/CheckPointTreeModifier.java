@@ -178,21 +178,30 @@ public class CheckPointTreeModifier {
 
     /**
      * Imports trait information from a file
+     * @param edges Edges are provided as index: child number; parent: array entry
      * @param traitModels List of TreeParameterModel object that contain trait information
      * @param traitValues Values to be copied into the List of TreeParameterModel objects
      */
-    public void adoptTraitData(ArrayList<TreeParameterModel> traitModels, double[][] traitValues) {
+    //TODO Small difference in reconstructed log likelihood
+    public void adoptTraitData(int[] edges, ArrayList<TreeParameterModel> traitModels, double[][] traitValues) {
         int index = 0;
         for (TreeParameterModel tpm : traitModels) {
-            for (int i = 0; i < this.treeModel.getNodeCount(); i++) {
-                tpm.setNodeValue(this.treeModel, this.treeModel.getNode(i), traitValues[index][i]);
-                System.out.println("Setting node " + this.treeModel.getNode(i) + " to " + traitValues[index][i]);
-
-                //TODO check this method
-
-
+            int k = 0;
+            for (int i = 0; i < edges.length; i++) {
+                System.out.println(i + "   " + edges[i]);
+                if (edges[i] != -1) {
+                    if (i < (treeModel.getExternalNodeCount()-additionalTaxa)) {
+                        tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(nodeMap[i]), traitValues[index][k]);
+                        System.out.println("Setting external node " + this.treeModel.getExternalNode(nodeMap[i]) + " to " + traitValues[index][k]);
+                    } else {
+                        tpm.setNodeValue(this.treeModel, this.treeModel.getNode(i + additionalTaxa), traitValues[index][k]);
+                        System.out.println("Setting internal node " + this.treeModel.getNode(i + additionalTaxa) + " to " + traitValues[index][k]);
+                    }
+                } else {
+                    k--;
+                }
+                k++;
             }
-
             index++;
         }
     }

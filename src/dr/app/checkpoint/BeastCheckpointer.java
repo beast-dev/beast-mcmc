@@ -209,6 +209,14 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 out.println();
             }
 
+            //check up front if there are any TreeParameterModel objects
+            for (Model model : Model.CONNECTED_MODEL_SET) {
+                if (model instanceof TreeParameterModel) {
+                    //System.out.println("\nDetected TreeParameterModel: " + ((TreeParameterModel) model).toString());
+                    traitModels.add((TreeParameterModel) model);
+                }
+            }
+
             for (Model model : Model.CONNECTED_MODEL_SET) {
 
                 if (model instanceof TreeModel) {
@@ -263,10 +271,6 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         }
                     }
 
-                }
-
-                if (model instanceof TreeParameterModel) {
-                    traitModels.add((TreeParameterModel)model);
                 }
 
             }

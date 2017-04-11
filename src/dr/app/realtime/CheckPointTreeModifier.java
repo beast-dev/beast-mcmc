@@ -32,6 +32,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
@@ -176,9 +177,37 @@ public class CheckPointTreeModifier {
     }
 
     /**
-     * Add the remaining taxa, which are stored in
+     * Imports trait information from a file
+     * @param traitModels List of TreeParameterModel object that contain trait information
+     * @param traitValues Values to be copied into the List of TreeParameterModel objects
      */
-    public void incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
+    public void adoptTraitData(ArrayList<TreeParameterModel> traitModels, double[][] traitValues) {
+        int index = 0;
+        for (TreeParameterModel tpm : traitModels) {
+            for (int i = 0; i < this.treeModel.getNodeCount(); i++) {
+                tpm.setNodeValue(this.treeModel, this.treeModel.getNode(i), traitValues[index][i]);
+                System.out.println("Setting node " + this.treeModel.getNode(i) + " to " + traitValues[index][i]);
+
+                //TODO check this method
+
+
+            }
+
+            index++;
+        }
+    }
+
+    /**
+     * The newly added taxa still need to be provided with trait values if there are any.
+     */
+    public void interpolateTraitValues(ArrayList<NodeRef> newTaxa, ArrayList<TreeParameterModel> traitModels) {
+
+    }
+
+    /**
+     * Add the remaining taxa, which can be identified through the TreeDataLikelihood XML elements.
+     */
+    public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
 
         ArrayList<NodeRef> newTaxaNodes = new ArrayList<NodeRef>();
         for (String str : newTaxaNames) {
@@ -276,6 +305,7 @@ public class CheckPointTreeModifier {
 
         System.out.println(treeModel.toString());
 
+        return newTaxaNodes;
     }
 
     /**

@@ -130,6 +130,7 @@ public class CheckPointUpdaterApp {
             CheckPointModifier checkpoint = new CheckPointModifier();
 
             //load the stored checkpoint file
+            //this will/should also copy any trait information present in the checkpoint file
             //TODO Check if this works for multiple trees (e.g. for multiple partitions)
             long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 

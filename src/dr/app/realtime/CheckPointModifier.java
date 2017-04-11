@@ -27,7 +27,9 @@ package dr.app.realtime;
 
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.evolution.tree.BranchRates;
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -39,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,6 +54,7 @@ public class CheckPointModifier extends BeastCheckpointer {
 
     private CheckPointTreeModifier modifyTree;
     private BranchRates rateModel;
+    private ArrayList<TreeParameterModel> traitModels;
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -72,6 +76,8 @@ public class CheckPointModifier extends BeastCheckpointer {
 
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
         long state = -1;
+
+        this.traitModels = new ArrayList<TreeParameterModel>();
 
         try {
             FileReader fileIn = new FileReader(file);
@@ -133,6 +139,7 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                     int dimension = Integer.parseInt(fields[2]);
 
+                    //TODO This will throw an exception for trait models when taxa are being added
                     if (dimension != parameter.getDimension()) {
                         System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
                         System.err.print("Read from file: ");
@@ -207,9 +214,9 @@ public class CheckPointModifier extends BeastCheckpointer {
                     expectedTreeModelNames.add(model.getModelName());
                 }
 
-                /*if (model instanceof TreeParameterModel) {
-                    traitModels.add((TreeParameterModel)model);
-                }*/
+                if (model instanceof TreeParameterModel) {
+                    this.traitModels.add((TreeParameterModel)model);
+                }
 
                 if (model instanceof BranchRates) {
                     this.rateModel = (BranchRates)model;
@@ -261,7 +268,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         int edgeCount = Integer.parseInt(fields[0]);
 
                         //create data matrix of doubles to store information from list of TreeParameterModels
-                        //double[][] traitValues = new double[traitModels.size()][edgeCount];
+                        double[][] traitValues = new double[traitModels.size()][edgeCount];
 
                         //create array to store whether a node is left or right child of its parent
                         //can be important for certain tree transition kernels
@@ -280,9 +287,9 @@ public class CheckPointModifier extends BeastCheckpointer {
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
                                 childOrder[i] = Integer.parseInt(fields[2]);
-                                /*for (int j = 0; j < traitModels.size(); j++) {
+                                for (int j = 0; j < traitModels.size(); j++) {
                                     traitValues[j][i] = Double.parseDouble(fields[3+j]);
-                                }*/
+                                }
                             }
                         }
 
@@ -290,6 +297,10 @@ public class CheckPointModifier extends BeastCheckpointer {
                         //CheckPointTreeModifier modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         modifyTree.adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
+                        if (traitModels.size() > 0) {
+                            //TODO Complete this method's implementation
+                            modifyTree.adoptTraitData(this.traitModels, traitValues);
+                        }
 
                         //adopt the loaded tree structure; this does not yet copy the traits on the branches
                         //((TreeModel) model).beginTreeEdit();
@@ -331,7 +342,8 @@ public class CheckPointModifier extends BeastCheckpointer {
         if (this.rateModel == null) {
             throw new RuntimeException("BranchRates model has not been set correctly.");
         } else {
-            modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
+            ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
+            modifyTree.interpolateTraitValues(newTaxa, this.traitModels);
         }
     }
 

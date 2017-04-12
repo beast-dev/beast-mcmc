@@ -352,9 +352,6 @@ public class CheckPointModifier extends BeastCheckpointer {
         } else {
             ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
             modifyTree.interpolateTraitValues(this.traitModels);
-
-            //TODO Figure out how new Parameter objects corresponding to new Node objects are added to the Parameter Connected Set
-
         }
     }
 

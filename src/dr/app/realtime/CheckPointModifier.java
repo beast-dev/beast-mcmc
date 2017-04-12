@@ -139,7 +139,6 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                     int dimension = Integer.parseInt(fields[2]);
 
-                    //TODO This will throw an exception for trait models when taxa are being added
                     if (dimension != parameter.getDimension() && !fields[1].equals("branchRates.categories")) {
                         System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
                         System.err.print("Read from file: ");
@@ -352,7 +351,10 @@ public class CheckPointModifier extends BeastCheckpointer {
             throw new RuntimeException("BranchRates model has not been set correctly.");
         } else {
             ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
-            modifyTree.interpolateTraitValues(newTaxa, this.traitModels);
+            modifyTree.interpolateTraitValues(this.traitModels);
+
+            //TODO Figure out how new Parameter objects corresponding to new Node objects are added to the Parameter Connected Set
+
         }
     }
 

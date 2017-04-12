@@ -127,7 +127,6 @@ public class CheckPointTreeModifier {
 
         //not possible to determine correct ordering of child nodes in the loop where they're being assigned
         //hence perform possible swaps in a separate loop
-        //TODO Remove possible code duplication after testing
         for (int i = 0; i < edges.length; i++) {
             if (edges[i] != -1) {
                 if (i < (treeModel.getExternalNodeCount()-additionalTaxa)) {
@@ -161,7 +160,6 @@ public class CheckPointTreeModifier {
         System.out.println("new root index: " + newRootIndex);
         treeModel.setRoot(treeModel.getNode(newRootIndex+additionalTaxa));
 
-        //TODO Test if the entire tree structure (minus the new taxa) has been reconstructed correctly
         System.out.println(treeModel.toString());
 
         for (int i = 0; i < edges.length; i++) {
@@ -230,17 +228,49 @@ public class CheckPointTreeModifier {
 
     /**
      * The newly added taxa still need to be provided with trait values if there are any.
-     * @param newTaxa List of the taxa that have been added to the analysis.
      * @param traitModels List of the trait models for which trait values need to be imputed / interpolated.
      */
-    //TODO Complete this method
-    public void interpolateTraitValues(ArrayList<NodeRef> newTaxa, ArrayList<TreeParameterModel> traitModels) {
-        //new rates need to be set for each added taxon and the internal nodes at the end of the node list
-
-
-
-
-
+    public void interpolateTraitValues(ArrayList<TreeParameterModel> traitModels) {
+        System.out.println();
+        for (TreeParameterModel tpm : traitModels) {
+            for (int i = 0; i < treeModel.getNodeCount(); i++) {
+                if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
+                    double newValue = -1.0;
+                    //get trait value from sibling
+                    NodeRef parent = treeModel.getParent(treeModel.getNode(i));
+                    for (int j = 0; j < treeModel.getChildCount(parent); j++) {
+                        NodeRef child = treeModel.getChild(parent, j);
+                        if (tpm.getNodeValue(treeModel, child) != -1.0) {
+                            tpm.setNodeValue(treeModel, treeModel.getNode(i), tpm.getNodeValue(treeModel, child) + 1.0);
+                            System.out.println("Checking sibling trait.");
+                            System.out.println("Setting node trait for node " + treeModel.getNode(i) + " to " + tpm.getNodeValue(treeModel, treeModel.getNode(i)));
+                            break;
+                        }
+                    }
+                }
+                //if not successful, get trait from its parent
+                if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
+                    NodeRef currentNode = treeModel.getNode(i);
+                    while (currentNode != treeModel.getRoot() && tpm.getNodeValue(treeModel, currentNode) == -1.0) {
+                        currentNode = treeModel.getParent(currentNode);
+                    }
+                    tpm.setNodeValue(treeModel, treeModel.getNode(i), tpm.getNodeValue(treeModel, currentNode) + 1.0);
+                    System.out.println("Checking parent trait.");
+                    System.out.println("Setting node trait for node " + treeModel.getNode(i) + " to " + tpm.getNodeValue(treeModel, currentNode));
+                }
+                //adjust the other trait values after a trait has been imputed
+                if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
+                    for (int j = 0; j < treeModel.getNodeCount(); j++) {
+                        if (treeModel.getNode(j) != treeModel.getNode(i)) {
+                            if (tpm.getNodeValue(treeModel, treeModel.getNode(j)) >= tpm.getNodeValue(treeModel, treeModel.getNode(i))) {
+                                tpm.setNodeValue(treeModel, treeModel.getNode(j), tpm.getNodeValue(treeModel, treeModel.getNode(j)) + 1.0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println();
     }
 
     /**

@@ -339,6 +339,12 @@ public class TraceDistribution<T> {
         return mode.getFrequencyOfMode();
     }
 
+    public double getProbabilityOfMode() {
+        if (getSize() > 0)
+            return (double) getFrequencyOfMode() / (double) getSize();
+        return 0;
+    }
+
     public List<String> getRange() {
         List<String> valuesList = new ArrayList<String>();
         for (T value : frequencyCounter.uniqueValues()) {

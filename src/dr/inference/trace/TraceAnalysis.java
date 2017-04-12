@@ -334,7 +334,8 @@ public class TraceAnalysis {
 
     static final String[] colNamesNumeric = {"mean", "stderr_of_mean", "stdev", "variance", "median", "min", "max",
             "quantile1", "quantile3", "95_hpd_lower", "95_hpd_upper", "ACT", "ESS", "num_samples", "geometric_mean"};
-    static final String[] colNamesCategorical = {"mode", "frequency_of_mode", "unique_values", "95_credible_set"};
+    static final String[] colNamesCategorical = {"mode", "mode_frequency", "mode_probability",
+            "unique_values", "95_credible_set"};
 
     /**
      * Output a tab-delimited result of the full statistic summary in a string,
@@ -407,7 +408,7 @@ public class TraceAnalysis {
             return "";
 
         Object value = null;
-        switch (i) {
+        switch (i) { // i is the index of colNamesNumeric + colNamesCategorical
             case 0:
                 value = tc.getMean();
                 break;
@@ -462,9 +463,12 @@ public class TraceAnalysis {
                 value = tc.getFrequencyOfMode();
                 break;
             case 17:
-                value = tc.printUniqueValues();
+                value = tc.getProbabilityOfMode();
                 break;
             case 18:
+                value = tc.printUniqueValues();
+                break;
+            case 19:
                 value = tc.printCredibleSet();
                 break;
         }

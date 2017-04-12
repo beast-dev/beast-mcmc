@@ -48,7 +48,7 @@ import java.util.List;
 public class CheckPointTreeModifier {
 
     public final static String TREE_UPDATE_OPTION = "JC69Distance";
-    public final static Double EPSILON = 0.01;
+    public final static Double EPSILON = 0.10;
 
     private TreeModel treeModel;
     private ArrayList<String> newTaxaNames;
@@ -247,27 +247,39 @@ public class CheckPointTreeModifier {
                             break;
                         }
                     }
-                }
-                //if not successful, get trait from its parent
-                if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
-                    NodeRef currentNode = treeModel.getNode(i);
-                    while (currentNode != treeModel.getRoot() && tpm.getNodeValue(treeModel, currentNode) == -1.0) {
-                        currentNode = treeModel.getParent(currentNode);
+                    //if not successful, get trait from its parent
+                    if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
+                        NodeRef currentNode = treeModel.getNode(i);
+                        while (currentNode != treeModel.getRoot() && tpm.getNodeValue(treeModel, currentNode) == -1.0) {
+                            currentNode = treeModel.getParent(currentNode);
+                        }
+                        tpm.setNodeValue(treeModel, treeModel.getNode(i), tpm.getNodeValue(treeModel, currentNode) + 1.0);
+                        System.out.println("Checking parent trait.");
+                        System.out.println("Setting node trait for node " + treeModel.getNode(i) + " to " + tpm.getNodeValue(treeModel, currentNode));
                     }
-                    tpm.setNodeValue(treeModel, treeModel.getNode(i), tpm.getNodeValue(treeModel, currentNode) + 1.0);
-                    System.out.println("Checking parent trait.");
-                    System.out.println("Setting node trait for node " + treeModel.getNode(i) + " to " + tpm.getNodeValue(treeModel, currentNode));
-                }
-                //adjust the other trait values after a trait has been imputed
-                if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
+                    //adjust the other trait values after a trait has been imputed
+                    //TODO This does not seem to be doing much ...
                     for (int j = 0; j < treeModel.getNodeCount(); j++) {
                         if (treeModel.getNode(j) != treeModel.getNode(i)) {
                             if (tpm.getNodeValue(treeModel, treeModel.getNode(j)) >= tpm.getNodeValue(treeModel, treeModel.getNode(i))) {
+                                System.out.print("Updating trait from " + tpm.getNodeValue(treeModel, treeModel.getNode(j)));
                                 tpm.setNodeValue(treeModel, treeModel.getNode(j), tpm.getNodeValue(treeModel, treeModel.getNode(j)) + 1.0);
+                                System.out.println(" to " + tpm.getNodeValue(treeModel, treeModel.getNode(j)));
                             }
                         }
                     }
                 }
+                /*if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
+                    for (int j = 0; j < treeModel.getNodeCount(); j++) {
+                        if (treeModel.getNode(j) != treeModel.getNode(i)) {
+                            if (tpm.getNodeValue(treeModel, treeModel.getNode(j)) >= tpm.getNodeValue(treeModel, treeModel.getNode(i))) {
+                                System.out.print("Updating trait from " + tpm.getNodeValue(treeModel, treeModel.getNode(j)));
+                                tpm.setNodeValue(treeModel, treeModel.getNode(j), tpm.getNodeValue(treeModel, treeModel.getNode(j)) + 1.0);
+                                System.out.println(" to " + tpm.getNodeValue(treeModel, treeModel.getNode(j)));
+                            }
+                        }
+                    }
+                }*/
             }
         }
         System.out.println();

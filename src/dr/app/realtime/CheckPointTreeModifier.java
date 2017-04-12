@@ -182,7 +182,7 @@ public class CheckPointTreeModifier {
      * @param traitModels List of TreeParameterModel object that contain trait information
      * @param traitValues Values to be copied into the List of TreeParameterModel objects
      */
-    //TODO Small difference in reconstructed log likelihood
+    //TODO Small difference in reconstructed log likelihood, probably due to increased number of rate categories
     public void adoptTraitData(int[] edges, ArrayList<TreeParameterModel> traitModels, double[][] traitValues) {
         int index = 0;
         for (TreeParameterModel tpm : traitModels) {
@@ -202,14 +202,44 @@ public class CheckPointTreeModifier {
                 }
                 k++;
             }
+            //set trait of remaining internal nodes to -1.0
+            for (int i = 0; i < additionalTaxa; i++) {
+                tpm.setNodeValue(this.treeModel, treeModel.getNode(treeModel.getNodeCount()-1-i), -1.0);
+            }
+            //set trait of newly added external taxa to -1.0
+            int shift = 0;
+
+            for (int i = 0; i < (treeModel.getExternalNodeCount()-additionalTaxa); i++) {
+                System.out.println("i = " + i + " ; nodeMap[i] = " + nodeMap[i]);
+            }
+
+            for (int i = 0; i < (treeModel.getExternalNodeCount()-additionalTaxa); i++) {
+                System.out.println("i = " + i + " ; nodeMap[i] = " + nodeMap[i]);
+                if (i != (nodeMap[i]-shift)) {
+                    int difference = nodeMap[i] - i;
+                    shift = difference;
+                    //for (int j = 0; j < difference; j++) {
+                        tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(nodeMap[i]-1), -1.0);
+                        System.out.println("Setting external node: " + (nodeMap[i]-1));
+                    //}
+                }
+            }
             index++;
         }
     }
 
     /**
      * The newly added taxa still need to be provided with trait values if there are any.
+     * @param newTaxa List of the taxa that have been added to the analysis.
+     * @param traitModels List of the trait models for which trait values need to be imputed / interpolated.
      */
+    //TODO Complete this method
     public void interpolateTraitValues(ArrayList<NodeRef> newTaxa, ArrayList<TreeParameterModel> traitModels) {
+        //new rates need to be set for each added taxon and the internal nodes at the end of the node list
+
+
+
+
 
     }
 

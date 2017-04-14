@@ -72,6 +72,7 @@ public class CheckPointUpdaterApp {
             this.matrix.setPatterns(patterns);
         }
 
+        //TODO This method needs some serious testing
         public Taxon getClosestTaxon(Taxon taxon) {
             if (matrix == null) {
                 throw new RuntimeException("Patterns need to be set first.");

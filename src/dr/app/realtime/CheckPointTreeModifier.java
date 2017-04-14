@@ -282,7 +282,7 @@ public class CheckPointTreeModifier {
                 }*/
             }
         }
-        System.out.println();
+        System.out.println("Done.\n");
     }
 
     /**
@@ -348,9 +348,18 @@ public class CheckPointTreeModifier {
         for (NodeRef newTaxon : newTaxaNodes) {
             treeModel.setNodeHeight(newTaxon, treeModel.getNodeTaxon(newTaxon).getHeight());
             System.out.println("\nadding Taxon: " + newTaxon + " (height = " + treeModel.getNodeHeight(newTaxon) + ")");
+            //check if this taxon has a more recent sampling date than all other nodes in the current TreeModel
+            double offset = checkCurrentTreeNodes(newTaxon, treeModel.getRoot());
+            System.out.println("Sampling date offset when adding " + newTaxon + " = " + offset);
+            //if so, update all nodes current in the tree (i.e. recursively from the root)
+            if (offset < 0.0) {
+                System.out.println("Updating all node heights with offset " + Math.abs(offset));
+                updateAllTreeNodes(Math.abs(offset), treeModel.getRoot());
+                treeModel.setNodeHeight(newTaxon, 0.0);
+            }
             //get the closest Taxon to the Taxon that needs to be added
             Taxon closest = choice.getClosestTaxon(treeModel.getNodeTaxon(newTaxon));
-            System.out.println("\nclosest Taxon: " + closest + " with height: " + closest.getHeight());
+            System.out.println("\nclosest Taxon: " + closest + " with original height: " + closest.getHeight());
             //get the distance between these two taxa
             double distance = choice.getDistance(treeModel.getNodeTaxon(newTaxon), closest);
             System.out.println("at distance: " + distance);
@@ -362,7 +371,9 @@ public class CheckPointTreeModifier {
                     closestRef = treeModel.getExternalNode(i);
                 }
             }
-            treeModel.setNodeHeight(closestRef, closest.getHeight());
+            System.out.println(closestRef + " with height " + treeModel.getNodeHeight(closestRef));
+            //System.out.println("trying to set node height: " + closestRef + " from " + treeModel.getNodeHeight(closestRef) + " to " + closest.getHeight());
+            //treeModel.setNodeHeight(closestRef, closest.getHeight());
             double timeForDistance = distance/rateModel.getBranchRate(treeModel, closestRef);
             System.out.println("timeForDistance = " + timeForDistance);
             //get parent node of branch that will be split
@@ -370,23 +381,62 @@ public class CheckPointTreeModifier {
 
             //determine height of new node
             //double insertHeight = Math.abs(treeModel.getNodeHeight(parent) + treeModel.getNodeHeight(closestRef))/2.0;
+            //TODO This insertion criterion needs a major update
             double insertHeight;
             if (treeModel.getNodeHeight(closestRef) < treeModel.getNodeHeight(newTaxon)) {
-                insertHeight = closest.getHeight() + (timeForDistance + Math.abs(closest.getHeight() - treeModel.getNodeHeight(newTaxon)))/2.0;
+                insertHeight = treeModel.getNodeHeight(closestRef) + (timeForDistance + Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon)))/2.0;
+                System.out.println("treeModel.getNodeHeight(closestRef) < treeModel.getNodeHeight(newTaxon): " + insertHeight);
             } else {
-                insertHeight = closest.getHeight() + (timeForDistance - Math.abs(closest.getHeight() - treeModel.getNodeHeight(newTaxon)))/2.0;
+                insertHeight = treeModel.getNodeHeight(closestRef) + (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon)))/2.0;
+                System.out.println("treeModel.getNodeHeight(closestRef) >= treeModel.getNodeHeight(newTaxon): " + insertHeight);
             }
-            if (insertHeight > treeModel.getNodeHeight(parent)) {
+            if (insertHeight > treeModel.getNodeHeight(parent) || insertHeight < treeModel.getNodeHeight(closestRef)) {
                 insertHeight = treeModel.getNodeHeight(parent) - EPSILON*(treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(closestRef));
             }
             System.out.println("insert at height: " + insertHeight);
             //pass on all the necessary variables to a method that adds the new taxon to the tree
             addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);
+            //option to print tree after each taxon addition
+            System.out.println("\nTree after adding taxon " + newTaxon + ":\n" + treeModel.toString());
         }
 
-        System.out.println(treeModel.toString());
+        //System.out.println(treeModel.toString());
 
         return newTaxaNodes;
+    }
+
+    /**
+     * Add a given offset to all node height (both internal and external) of a tree
+     * @param offset The offset to add to the node height
+     * @param currentRoot Root of the tree
+     */
+    private void updateAllTreeNodes(double offset, NodeRef currentRoot) {
+        treeModel.setNodeHeight(currentRoot, treeModel.getNodeHeight(currentRoot) + offset);
+        for (int i = 0; i < treeModel.getChildCount(currentRoot); i++) {
+            updateAllTreeNodes(offset, treeModel.getChild(currentRoot, i));
+        }
+    }
+
+    /**
+     * Check if the taxon to be added has a more recent sampling date than all external nodes currently in the tree.
+     * @param newTaxon The taxon to be added
+     * @param currentRoot The current connected tree that does not yet contain the @newTaxon taxon
+     * @return Offset of the node height of the new taxon versus the current most recent sampling date
+     */
+    private double checkCurrentTreeNodes(NodeRef newTaxon, NodeRef currentRoot) {
+        /*System.out.println(currentRoot);
+        if (treeModel.getChildCount(currentRoot) == 0) {
+            System.out.println("root date = " + treeModel.getNodeTaxon(currentRoot).getDate().getTimeValue());
+        }*/
+        if (treeModel.getChildCount(currentRoot) == 0) {
+            return treeModel.getNodeTaxon(currentRoot).getDate().getTimeValue() - treeModel.getNodeTaxon(newTaxon).getDate().getTimeValue();
+        } else {
+            double maximum = -Double.MAX_VALUE;
+            for (int i = 0; i < treeModel.getChildCount(currentRoot); i++) {
+                maximum = Math.max(checkCurrentTreeNodes(newTaxon, treeModel.getChild(currentRoot, i)), maximum);
+            }
+            return maximum;
+        }
     }
 
     /**

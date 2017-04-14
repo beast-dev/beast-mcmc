@@ -161,7 +161,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         }
                         if (fields[1].equals("branchRates.categories")) {
                             for (int dim = 0; dim < (fields.length-3); dim++) {
-                                System.out.println("dim " + dim);
+                                //System.out.println("dim " + dim);
                                 parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
                                 if (DEBUG) {
                                     System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
@@ -351,6 +351,15 @@ public class CheckPointModifier extends BeastCheckpointer {
             throw new RuntimeException("BranchRates model has not been set correctly.");
         } else {
             ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
+
+
+
+
+            System.exit(0);
+
+
+
+
             modifyTree.interpolateTraitValues(this.traitModels);
         }
     }

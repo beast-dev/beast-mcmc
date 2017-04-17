@@ -45,8 +45,8 @@ public abstract class TreeTraversal {
     }
 
     protected TreeTraversal(final Tree treeModel,
-                          final BranchRateModel branchRateModel,
-                          final TraversalType traversalType) {
+                            final BranchRateModel branchRateModel,
+                            final TraversalType traversalType) {
         this.treeModel = treeModel;
         this.branchRateModel = branchRateModel;
         this.traversalType = traversalType;
@@ -63,10 +63,12 @@ public abstract class TreeTraversal {
 
     public final void setAllNodesUpdated() {
         Arrays.fill(updateNode, false);
+        updateAllNodes = false;
     }
 
     public final void updateAllNodes() {
         Arrays.fill(updateNode, true);
+        updateAllNodes = true;
     }
 
     public final void updateNode(final NodeRef node) {
@@ -122,6 +124,7 @@ public abstract class TreeTraversal {
     protected final Tree treeModel;
     protected final BranchRateModel branchRateModel;
     protected final boolean[] updateNode;
+    protected boolean updateAllNodes;
 
     protected final TraversalType traversalType;
 }

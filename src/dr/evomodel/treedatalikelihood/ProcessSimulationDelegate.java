@@ -1107,21 +1107,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     class ConditionalOnPartiallyMissingTipsDelegate extends ConditionalOnTipsRealizedDelegate {
 
-        @Deprecated
-        public ConditionalOnPartiallyMissingTipsDelegate(String name, MultivariateTraitTree tree,
-                                                         MultivariateDiffusionModel diffusionModel,
-                                                         ContinuousTraitDataModel dataModel,
-                                                         ConjugateRootTraitPrior rootPrior,
-                                                         ContinuousRateTransformation rateTransformation,
-                                                         BranchRateModel rateModel,
-                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                                         Parameter missingParameter) {
-
-            this(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate,
-                    new PartiallyMissingInformation(tree.getExternalNodeCount(), dataModel.getTraitCount(),
-                            dataModel.getTraitDimension(), missingParameter));
-        }
-
         public ConditionalOnPartiallyMissingTipsDelegate(String name, MultivariateTraitTree tree,
                                                          MultivariateDiffusionModel diffusionModel,
                                                          ContinuousTraitDataModel dataModel,

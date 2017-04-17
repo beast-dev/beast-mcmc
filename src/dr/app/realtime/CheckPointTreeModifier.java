@@ -212,22 +212,35 @@ public class CheckPointTreeModifier {
                 System.out.println("i = " + i + " ; nodeMap[i] = " + nodeMap[i]);
             }
 
-            //TODO Too many external nodes with a trait being set to -1.0
+            System.out.println();
+            for (String name : newTaxaNames) {
+                System.out.println("new taxon: " + name);
+            }
+
             int externalMissing = 0;
-            for (int i = 0; i < (treeModel.getExternalNodeCount()-additionalTaxa); i++) {
+            for (String name : newTaxaNames) {
+                for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+                    if (treeModel.getNodeTaxon(treeModel.getExternalNode(i)).getId().equals(name)) {
+                        externalMissing++;
+                        tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(i), -1.0);
+                    }
+                }
+            }
+            System.out.println("External nodes with trait set to -1.0 = " + externalMissing + "\n");
+
+
+            /*for (int i = 0; i < (treeModel.getExternalNodeCount()-additionalTaxa); i++) {
                 System.out.println("i = " + i + " ; nodeMap[i] = " + nodeMap[i]);
                 if (i != (nodeMap[i]-shift)) {
                     int difference = nodeMap[i] - i;
                     shift = difference;
-                    //for (int j = 0; j < difference; j++) {
-                        tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(nodeMap[i]-1), -1.0);
-                        System.out.println("Setting external node: " + (nodeMap[i]-1));
-                        externalMissing++;
-                    //}
+                    tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(nodeMap[i]-1), -1.0);
+                    System.out.println("Setting external node: " + (nodeMap[i]-1));
+                    externalMissing++;
                 }
             }
             System.out.println("External node with trait set to -1.0 = " + externalMissing);
-            index++;
+            index++;*/
         }
     }
 

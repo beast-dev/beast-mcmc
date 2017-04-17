@@ -365,6 +365,11 @@ public class CheckPointTreeModifier {
         //set the patterns for the distance matrix computations
         choice.setPatterns(patterns);
 
+        ArrayList<Taxon> currentTaxa = new ArrayList<Taxon>();
+        for (int i = 0; i < (treeModel.getExternalNodeCount()-additionalTaxa); i++) {
+            currentTaxa.add(treeModel.getNodeTaxon(treeModel.getExternalNode(i)));
+        }
+
         //add new taxa one at a time
         for (NodeRef newTaxon : newTaxaNodes) {
             treeModel.setNodeHeight(newTaxon, treeModel.getNodeTaxon(newTaxon).getHeight());
@@ -379,7 +384,8 @@ public class CheckPointTreeModifier {
                 treeModel.setNodeHeight(newTaxon, 0.0);
             }
             //get the closest Taxon to the Taxon that needs to be added
-            Taxon closest = choice.getClosestTaxon(treeModel.getNodeTaxon(newTaxon));
+            //take into account which taxa can currently be chosen
+            Taxon closest = choice.getClosestTaxon(treeModel.getNodeTaxon(newTaxon), currentTaxa);
             System.out.println("\nclosest Taxon: " + closest + " with original height: " + closest.getHeight());
             //get the distance between these two taxa
             double distance = choice.getDistance(treeModel.getNodeTaxon(newTaxon), closest);
@@ -419,6 +425,8 @@ public class CheckPointTreeModifier {
             addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);
             //option to print tree after each taxon addition
             System.out.println("\nTree after adding taxon " + newTaxon + ":\n" + treeModel.toString());
+            //add newly added Taxon to list of current taxa
+            currentTaxa.add(treeModel.getNodeTaxon(newTaxon));
         }
 
         //System.out.println(treeModel.toString());

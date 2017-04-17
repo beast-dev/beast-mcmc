@@ -44,6 +44,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
@@ -58,7 +59,7 @@ public class CheckPointUpdaterApp {
     private final boolean STRICT_XML = false;
 
     public enum UpdateChoice {
-        JC69DISTANCE("JC69Distance", new JukesCantorDistanceMatrix()), F84DISTANCE("F84Distance", new F84DistanceMatrix());
+        JC69DISTANCE("JC69Distance", new JukesCantorDistanceMatrix()), F84DISTANCE("F84Distance", new F84DistanceMatrix()), SIMPLE("Simple", new SimpleDistanceMatrix());
 
         private String name;
         private DistanceMatrix matrix;
@@ -72,7 +73,6 @@ public class CheckPointUpdaterApp {
             this.matrix.setPatterns(patterns);
         }
 
-        //TODO This method needs some serious testing
         public Taxon getClosestTaxon(Taxon taxon) {
             if (matrix == null) {
                 throw new RuntimeException("Patterns need to be set first.");
@@ -91,6 +91,16 @@ public class CheckPointUpdaterApp {
             return matrix.getTaxon(closestIndex);
         }
 
+        public Taxon getClosestTaxon(Taxon taxon, ArrayList<Taxon> taxa) {
+            //TODO complete implementation
+
+
+
+
+
+            return null;
+        }
+
         public double getDistance(Taxon taxonOne, Taxon taxonTwo) {
             System.out.println("taxon 1: " + taxonOne + " (" + matrix.getTaxonIndex(taxonOne) + ")");
             System.out.println("taxon 2: " + taxonTwo + " (" + matrix.getTaxonIndex(taxonTwo) + ")");
@@ -99,6 +109,10 @@ public class CheckPointUpdaterApp {
 
         public String getName() {
             return this.name;
+        }
+
+        public DistanceMatrix getMatrix() {
+            return this.matrix;
         }
 
         public String toString() {

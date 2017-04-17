@@ -29,7 +29,7 @@ import dr.app.beast.BeastParser;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
+import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
@@ -61,7 +61,7 @@ public class DistanceMatrixInsertionTest extends JPanel {
     private final boolean PARSER_WARNINGS = true;
     private final boolean STRICT_XML = false;
 
-    public DistanceMatrixInsertionTest(String beastXMLFileName) {
+    public DistanceMatrixInsertionTest(String beastXMLFileName, CheckPointUpdaterApp.UpdateChoice choice) {
 
         super(new GridLayout(1,0));
 
@@ -122,15 +122,15 @@ public class DistanceMatrixInsertionTest extends JPanel {
             }
 
             //set the patterns for the distance matrix
-            JukesCantorDistanceMatrix jc = new JukesCantorDistanceMatrix(patterns);
+            DistanceMatrix matrix = choice.getMatrix();
 
             Object[][] data = new Object[patterns.getTaxonCount()][patterns.getTaxonCount()+1];
 
             //perform actual tests on the constructed distance matrix
-            for (int i = 0; i < jc.getRowCount(); i++) {
+            for (int i = 0; i < matrix.getRowCount(); i++) {
                 data[i][0] = new String(columnNames[i+1]);
-                for (int j = 1; j < jc.getColumnCount()+1; j++) {
-                    data[i][j] = new Double(jc.getElement(i, j-1));
+                for (int j = 1; j < matrix.getColumnCount()+1; j++) {
+                    data[i][j] = new Double(matrix.getElement(i, j-1));
                 }
             }
 
@@ -215,7 +215,7 @@ public class DistanceMatrixInsertionTest extends JPanel {
         JFrame frame = new JFrame("Test distance matrix");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        DistanceMatrixInsertionTest test = new DistanceMatrixInsertionTest(inputFile);
+        DistanceMatrixInsertionTest test = new DistanceMatrixInsertionTest(inputFile, chosen);
         test.setOpaque(true);
         frame.setContentPane(test);
 

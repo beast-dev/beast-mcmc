@@ -23,6 +23,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private double stepSize;
     private int nSteps;
     private boolean diffusionSN=true;
+    private Parameter missingIndicator;
 
 
     public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
@@ -38,23 +39,24 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         ntraits = Precision.getRowDimension();
         this.stepSize = stepSize;
         this.nSteps = nSteps;
+        this.missingIndicator = lfm.getMissingIndicator();
     }
 
 
 
     @Override
     public double getCoercableParameter() {
-        return 0;
+        return Math.log(stepSize);
     }
 
     @Override
     public void setCoercableParameter(double value) {
-
+        stepSize = Math.exp(value);
     }
 
     @Override
     public double getRawParameter() {
-        return 0;
+        return stepSize;
     }
 
     @Override
@@ -72,8 +74,10 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         for (int i = 0; i < this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
                 for (int k = 0; k < ntaxa; k++) {
-                answer[i][k] += loadings.getParameterValue(j, i) * Precision.getParameterValue(j, j) *
-                        residual[k * ntraits + j];
+                    if(missingIndicator == null || missingIndicator.getParameterValue(k * ntraits + j) != 1){
+                        answer[i][k] += loadings.getParameterValue(j, i) * Precision.getParameterValue(j, j) *
+                            residual[k * ntraits + j];
+                    }
                 }
             }
         }
@@ -89,7 +93,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 //        if(diffusionSN){
             for (int i = 0; i < nfac ; i++) {
                 for (int j = 0; j < ntaxa; j++) {
-                    derivative[i][j] -= (factors.getParameterValue(i, j) - mean[j][i]) * precfactor[j];
+                    derivative[i][j] += (factors.getParameterValue(i, j) - mean[j][i]) * precfactor[j];
                 }
 
             }
@@ -116,7 +120,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 //        double[][] prec = null;
         double rand = MathUtils.nextDouble();
 //        System.out.println(rand);
-        double functionalStepSize = stepSize * rand;
+        double functionalStepSize = stepSize;
 
 //        if(diffusionSN){
             precfactor = tree.getPrecisionFactors();

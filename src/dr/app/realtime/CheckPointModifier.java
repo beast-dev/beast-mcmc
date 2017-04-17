@@ -351,15 +351,6 @@ public class CheckPointModifier extends BeastCheckpointer {
             throw new RuntimeException("BranchRates model has not been set correctly.");
         } else {
             ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
-
-
-
-
-            System.exit(0);
-
-
-
-
             modifyTree.interpolateTraitValues(this.traitModels);
         }
     }

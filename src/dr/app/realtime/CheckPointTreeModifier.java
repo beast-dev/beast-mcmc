@@ -188,6 +188,7 @@ public class CheckPointTreeModifier {
             for (int i = 0; i < edges.length; i++) {
                 System.out.println(i + "   " + edges[i]);
                 if (edges[i] != -1) {
+                    //TODO Seems like I messed up here
                     if (i < (treeModel.getExternalNodeCount()-additionalTaxa)) {
                         tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(nodeMap[i]), traitValues[index][k]);
                         System.out.println("Setting external node " + this.treeModel.getExternalNode(nodeMap[i]) + " to " + traitValues[index][k]);
@@ -211,6 +212,8 @@ public class CheckPointTreeModifier {
                 System.out.println("i = " + i + " ; nodeMap[i] = " + nodeMap[i]);
             }
 
+            //TODO Too many external nodes with a trait being set to -1.0
+            int externalMissing = 0;
             for (int i = 0; i < (treeModel.getExternalNodeCount()-additionalTaxa); i++) {
                 System.out.println("i = " + i + " ; nodeMap[i] = " + nodeMap[i]);
                 if (i != (nodeMap[i]-shift)) {
@@ -219,9 +222,11 @@ public class CheckPointTreeModifier {
                     //for (int j = 0; j < difference; j++) {
                         tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(nodeMap[i]-1), -1.0);
                         System.out.println("Setting external node: " + (nodeMap[i]-1));
+                        externalMissing++;
                     //}
                 }
             }
+            System.out.println("External node with trait set to -1.0 = " + externalMissing);
             index++;
         }
     }
@@ -233,8 +238,11 @@ public class CheckPointTreeModifier {
     public void interpolateTraitValues(ArrayList<TreeParameterModel> traitModels) {
         System.out.println();
         for (TreeParameterModel tpm : traitModels) {
+            int numberOfInterpolations = 0;
             for (int i = 0; i < treeModel.getNodeCount(); i++) {
                 if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
+                    System.out.println("Current trait = -1.0 for node: " + treeModel.getNode(i));
+                    numberOfInterpolations++;
                     double newValue = -1.0;
                     //get trait value from sibling
                     NodeRef parent = treeModel.getParent(treeModel.getNode(i));
@@ -258,7 +266,6 @@ public class CheckPointTreeModifier {
                         System.out.println("Setting node trait for node " + treeModel.getNode(i) + " to " + tpm.getNodeValue(treeModel, currentNode));
                     }
                     //adjust the other trait values after a trait has been imputed
-                    //TODO This does not seem to be doing much ...
                     for (int j = 0; j < treeModel.getNodeCount(); j++) {
                         if (treeModel.getNode(j) != treeModel.getNode(i)) {
                             if (tpm.getNodeValue(treeModel, treeModel.getNode(j)) >= tpm.getNodeValue(treeModel, treeModel.getNode(i))) {
@@ -281,6 +288,7 @@ public class CheckPointTreeModifier {
                     }
                 }*/
             }
+            System.out.println("Number of interpolations: " + numberOfInterpolations);
         }
         System.out.println("Done.\n");
     }
@@ -472,9 +480,9 @@ public class CheckPointTreeModifier {
         //still need to set the height of the new internal node
         treeModel.setNodeHeight(internalNode, insertHeight);
 
-        System.out.println("\nparent node height: " + treeModel.getNodeHeight(parentNode));
-        System.out.println("child node height: " + treeModel.getNodeHeight(childNode));
-        System.out.println("internal node height: " + treeModel.getNodeHeight(internalNode));
+        System.out.println("\nparent node (" + parentNode + ") height: " + treeModel.getNodeHeight(parentNode));
+        System.out.println("child node (" + childNode + ") height: " + treeModel.getNodeHeight(childNode));
+        System.out.println("internal node (" + internalNode + ") height: " + treeModel.getNodeHeight(internalNode));
 
         treeModel.endTreeEdit();
     }

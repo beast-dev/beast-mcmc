@@ -502,13 +502,20 @@ public class LogFileTraces extends AbstractTraceList {
 
             if (oldType.isCategorical() || newType.isCategorical()) {
                 try {
-                    if (newType.isNumber()) { // oldType == TraceType.CATEGORICAL &&
+                    if (newType.isNumber()) { // oldType.isCategorical()
                         for (int i = 0; i < trace.getValueCount(); i++) {
                             newTrace.add(Double.parseDouble(trace.getValue(i).toString())); // String => Double
                         }
-                    } else if (oldType.isNumber()) { // && newType == TraceType.CATEGORICAL
+                    } else if (oldType.isContinuous()) { // newType.isCategorical()
                         for (int i = 0; i < trace.getValueCount(); i++) {
                             newTrace.add(trace.getValue(i).toString()); // Double => String
+                        }
+                    } else if (oldType.isIntegerOrBinary()) { // newType.isCategorical()
+                        // treat Integer separately to rm .0 because Trace<Double>
+                        for (int i = 0; i < trace.getValueCount(); i++) {
+                            String value = trace.getValue(i).toString();
+                            String valueNoDecimal = String.valueOf(value).split("\\.")[0];
+                            newTrace.add(valueNoDecimal); // Integer => String
                         }
                     }
                 } catch (Exception e) {

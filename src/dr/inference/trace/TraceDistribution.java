@@ -274,7 +274,8 @@ public class TraceDistribution<T> {
             int i = -1;
             for (Object key : frequencyCounter.uniqueValues()) {
                 i++;
-                categoryDataMap.put(i, key.toString());
+                String value = key.toString();
+                categoryDataMap.put(i, value);
             }
         }
         return categoryDataMap;

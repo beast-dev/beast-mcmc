@@ -387,9 +387,12 @@ public class CheckPointTreeModifier {
             double offset = checkCurrentTreeNodes(newTaxon, treeModel.getRoot());
             System.out.println("Sampling date offset when adding " + newTaxon + " = " + offset);
             //if so, update all nodes current in the tree (i.e. recursively from the root)
+            //AND set its current node height to 0.0
             if (offset < 0.0) {
                 System.out.println("Updating all node heights with offset " + Math.abs(offset));
                 updateAllTreeNodes(Math.abs(offset), treeModel.getRoot());
+                treeModel.setNodeHeight(newTaxon, 0.0);
+            } else if (offset == 0.0) {
                 treeModel.setNodeHeight(newTaxon, 0.0);
             }
             //get the closest Taxon to the Taxon that needs to be added

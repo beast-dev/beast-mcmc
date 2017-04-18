@@ -320,6 +320,20 @@ public class CheckPointTreeModifier {
             }
         }
 
+        ArrayList<Taxon> currentTaxa = new ArrayList<Taxon>();
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            boolean taxonFound = false;
+            for (String str : newTaxaNames) {
+                if (str.equals((treeModel.getNodeTaxon(treeModel.getExternalNode(i))).getId())) {
+                    taxonFound = true;
+                }
+            }
+            if (!taxonFound) {
+                System.out.println("Adding " + treeModel.getNodeTaxon(treeModel.getExternalNode(i)).getId());
+                currentTaxa.add(treeModel.getNodeTaxon(treeModel.getExternalNode(i)));
+            }
+        }
+
         //check the Tree(Data)Likelihoods in the connected set of likelihoods
         //focus on TreeDataLikelihood, which has getTree() to get the tree for each likelihood
         //also get the DataLikelihoodDelegate from TreeDataLikelihood
@@ -365,11 +379,6 @@ public class CheckPointTreeModifier {
         //set the patterns for the distance matrix computations
         choice.setPatterns(patterns);
 
-        ArrayList<Taxon> currentTaxa = new ArrayList<Taxon>();
-        for (int i = 0; i < (treeModel.getExternalNodeCount()-additionalTaxa); i++) {
-            currentTaxa.add(treeModel.getNodeTaxon(treeModel.getExternalNode(i)));
-        }
-
         //add new taxa one at a time
         for (NodeRef newTaxon : newTaxaNodes) {
             treeModel.setNodeHeight(newTaxon, treeModel.getNodeTaxon(newTaxon).getHeight());
@@ -393,7 +402,7 @@ public class CheckPointTreeModifier {
             //find the NodeRef for the closest Taxon (do not rely on node numbering)
             NodeRef closestRef = null;
             //careful with node numbering and subtract number of new taxa
-            for (int i = 0; i < treeModel.getExternalNodeCount()-newTaxaNodes.size(); i++) {
+            for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
                 if (treeModel.getNodeTaxon(treeModel.getExternalNode(i)) == closest) {
                     closestRef = treeModel.getExternalNode(i);
                 }

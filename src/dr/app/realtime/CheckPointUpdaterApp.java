@@ -42,7 +42,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -92,13 +91,21 @@ public class CheckPointUpdaterApp {
         }
 
         public Taxon getClosestTaxon(Taxon taxon, ArrayList<Taxon> taxa) {
-            //TODO complete implementation
-
-
-
-
-
-            return null;
+            if (matrix == null) {
+                throw new RuntimeException("Patterns need to be set first.");
+            }
+            int taxonIndex = matrix.getTaxonIndex(taxon);
+            int closestIndex = 0;
+            double minimumDistance = Double.MAX_VALUE;
+            for (int i = 0; i < matrix.getColumnCount(); i++) {
+                if (i != taxonIndex) {
+                    if ((matrix.getElement(taxonIndex, i) < minimumDistance) && (taxa.contains(matrix.getTaxon(i)))) {
+                        minimumDistance = matrix.getElement(taxonIndex, i);
+                        closestIndex = i;
+                    }
+                }
+            }
+            return matrix.getTaxon(closestIndex);
         }
 
         public double getDistance(Taxon taxonOne, Taxon taxonTwo) {

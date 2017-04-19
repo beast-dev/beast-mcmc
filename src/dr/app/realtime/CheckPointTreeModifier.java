@@ -271,6 +271,7 @@ public class CheckPointTreeModifier {
                     //if not successful, get trait from its parent
                     if (tpm.getNodeValue(treeModel, treeModel.getNode(i)) == -1.0) {
                         NodeRef currentNode = treeModel.getNode(i);
+                        //TODO Check for situations where no proper trait can be found
                         while (currentNode != treeModel.getRoot() && tpm.getNodeValue(treeModel, currentNode) == -1.0) {
                             currentNode = treeModel.getParent(currentNode);
                         }

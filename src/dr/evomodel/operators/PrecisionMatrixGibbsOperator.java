@@ -258,7 +258,11 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         final double df = sufficientStatistics.getDf();
-
+        if (DEBUG) {
+            System.err.println("OP df = " + df);
+            System.err.println("OP    = " + new Vector(outerProducts));
+        }
+//        System.exit(-1);
 
         if (debugModel != null) {
             final WishartSufficientStatistics debug = ((ConjugateWishartStatisticsProvider) debugModel).getWishartStatistics();
@@ -407,6 +411,11 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //        double[][] draw = null;
 //
 //        while (!success && tries < limit) {
+
+        if (DEBUG) {
+            System.err.println("draw = " + new Matrix(draw));
+        }
+
 //
 //
 //        draw = WishartDistribution.nextWishart(df, scaleMatrix);
@@ -463,41 +472,29 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//            if (xo.getChildCount() != 2) {
-//                throw new XMLParseException(
-//                        "Element with id = '" + xo.getName() + "' should contain either:\n" +
-//                                "\t 1 multivariateTraitLikelihood and 1 multivariateDistributionLikelihood (prior), or\n" +
-//                                "\t 2 multivariateDistributionLikelihoods (likelihood and prior)\n"
-//                );
-//            }
-
             double weight = xo.getDoubleAttribute(WEIGHT);
 
             AbstractMultivariateTraitLikelihood traitModel = (AbstractMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
-            TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+            ConjugateWishartStatisticsProvider ws = (ConjugateWishartStatisticsProvider) xo.getChild(ConjugateWishartStatisticsProvider.class);
+            if (ws == traitModel) {
+                ws = null;
+            }
 
             MultivariateDistributionLikelihood prior = null;
-            MatrixParameter precMatrix = null;
+            MatrixParameterInterface precMatrix = null;
             MultivariateDistributionLikelihood likelihood = null;
-
-            ContinuousDataLikelihoodDelegate continuousData = null;
 
             if (traitModel != null) {
                 precMatrix = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
                 prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
             }
-            if (treeDataLikelihood != null) {
-                DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-                if (delegate instanceof ContinuousDataLikelihoodDelegate) {
-                    continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-                    precMatrix = (MatrixParameter) continuousData.getDiffusionModel().getPrecisionParameter();
-                } else {
-                    throw new XMLParseException("May not provide a sequence data likelihood in the precision Gibbs sampler");
-                }
+
+            if (ws != null) {
+                precMatrix = ws.getPrecisionParamter();
                 prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
             }
 
-            if (traitModel == null && treeDataLikelihood == null) { // generic likelihood and prior
+            if (traitModel == null && ws == null) { // generic likelihood and prior
                 for (int i = 0; i < xo.getChildCount(); ++i) {
                     MultivariateDistributionLikelihood density = (MultivariateDistributionLikelihood) xo.getChild(i);
                     if (density.getDistribution() instanceof WishartStatistics) {
@@ -526,13 +523,13 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 throw new XMLParseException("The variance matrix is not square or of wrong dimension");
             }
 
-            if (traitModel != null && treeDataLikelihood == null) {
+            if (traitModel != null && ws == null) {
                 return new PrecisionMatrixGibbsOperator(
                         traitModel, (WishartStatistics) prior.getDistribution(), weight
                 );
-            } else if (treeDataLikelihood != null) {
+            } else if (ws != null) {
                 return new PrecisionMatrixGibbsOperator(
-                        continuousData, (WishartStatistics) prior.getDistribution(), weight, traitModel
+                        ws, (WishartStatistics) prior.getDistribution(), weight, traitModel
                 );
 
             } else {
@@ -559,8 +556,10 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, true),
-                new ElementRule(TreeDataLikelihood.class, true),
+                new ElementRule(ConjugateWishartStatisticsProvider.class, true),
                 new ElementRule(MultivariateDistributionLikelihood.class, 1, 2),
         };
     };
+
+    private static final boolean DEBUG = false;
 }

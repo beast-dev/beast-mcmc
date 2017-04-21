@@ -82,7 +82,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 
     @Override
     public double doOperation() throws OperatorFailedException {
-        if(callCount < BASE_SIZE){
+        boolean off = true;
+        if(callCount < BASE_SIZE || off == true){
             performOperation();
         }
         else{

@@ -378,6 +378,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     @Override
+    public String getReport() {
+        return null;
+    }
+
+    @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
         return TreeTraversal.TraversalType.POST_ORDER;
     }

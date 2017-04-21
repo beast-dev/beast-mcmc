@@ -25,7 +25,9 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import corejava.Format;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.xml.Reportable;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
@@ -34,6 +36,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.InversionResult.Code.FULLY_OBSERVED;
 import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.InversionResult.Code.NOT_OBSERVED;
@@ -43,7 +47,7 @@ import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionI
 /**
  * @author Marc A. Suchard
  */
-public interface ContinuousDiffusionIntegrator {
+public interface ContinuousDiffusionIntegrator extends Reportable {
     int OPERATION_TUPLE_SIZE = 5;
     int NONE = -1;
 
@@ -100,6 +104,11 @@ public interface ContinuousDiffusionIntegrator {
 //        public Basic(final Basic base) {
 //            this(base.precisionType, base.numTraits, base.dimTrait, base.bufferCount, base.diffusionCount);
 //        }
+
+        @Override
+        public String getReport() {
+            return "";
+        }
 
         public Basic(
                 final PrecisionType precisionType,
@@ -615,10 +624,55 @@ public interface ContinuousDiffusionIntegrator {
             assert precisionType == PrecisionType.FULL;
 
             allocateStorage();
+
+            if (TIMING) {
+                times = new HashMap<String, Long>();
+            } else {
+                times = null;
+            }
         }
+
+        @Override
+        public String getReport() {
+
+            StringBuilder sb = new StringBuilder();
+
+            if (TIMING) {
+                sb.append("\nTIMING:");
+                for (String key : times.keySet()) {
+                    String value = String.format("%4.3e", (double) times.get(key));
+                    sb.append("\n" + key + "\t\t" + value);
+                }
+                sb.append("\n");
+            }
+            return sb.toString();
+        }
+
+        private static final boolean TIMING = false;
+
+        private final Map<String, Long> times;
+
+        private DenseMatrix64F matrix0;
+        private DenseMatrix64F matrix1;
+        private DenseMatrix64F matrix2;
+        private DenseMatrix64F matrix3;
+        private DenseMatrix64F matrix4;
+        private DenseMatrix64F matrix5;
+        private DenseMatrix64F matrix6;
+
+        private double[] vector0;
 
         private void allocateStorage() {
             inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
+
+            vector0 = new double[dimTrait];
+            matrix0 = new DenseMatrix64F(dimTrait, dimTrait);
+            matrix1 = new DenseMatrix64F(dimTrait, dimTrait);
+            matrix2 = new DenseMatrix64F(dimTrait, dimTrait);
+            matrix3 = new DenseMatrix64F(dimTrait, dimTrait);
+            matrix4 = new DenseMatrix64F(dimTrait, dimTrait);
+            matrix5 = new DenseMatrix64F(dimTrait, dimTrait);
+            matrix6 = new DenseMatrix64F(dimTrait, dimTrait);
         }
 
         @Override
@@ -638,12 +692,6 @@ public interface ContinuousDiffusionIntegrator {
                 System.err.println("precision: " + precision);
                 System.err.println("variance : " + variance);
             }
-        }
-
-        private static void invert(final double[] source, final int sourceOffset,
-                                   final double[] destination, final int destinationOffset,
-                                   final int dim) {
-//            throw new RuntimeException("Not yet implemented");
         }
 
         public static DenseMatrix64F wrap(final double[] source, final int offset,
@@ -1044,20 +1092,25 @@ public interface ContinuousDiffusionIntegrator {
                 final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
                 // B. Inflate variance along sibling branch using matrix inversion
-                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Vjp = matrix0;
                 CommonOps.add(Vj, vj, Vd, Vjp);
 
-                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Pjp = matrix1;
                 InversionResult cj = safeInvert(Vjp, Pjp, false);
 
-                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Pip = matrix2;
                 CommonOps.add(Pk, Pjp, Pip);
 
-                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Vip = matrix3;
                 InversionResult cip = safeInvert(Pip, Vip, false);
 
                 // C. Compute prePartial mean
-                final double[] tmp = new double[dimTrait];
+//                final double[] tmp = new double[dimTrait];
+                final double[] tmp = vector0;
                 for (int g = 0; g < dimTrait; ++g) {
                     double sum = 0.0;
                     for (int h = 0; h < dimTrait; ++h) {
@@ -1078,7 +1131,8 @@ public interface ContinuousDiffusionIntegrator {
                 final DenseMatrix64F Vi = Vip;
                 CommonOps.add(vi, Vd, Vip, Vi);
 
-                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Pi = matrix4;
                 InversionResult ci = safeInvert(Vi, Pi, false);
 
                 // X. Store precision results for node
@@ -1119,6 +1173,10 @@ public interface ContinuousDiffusionIntegrator {
                 throw new RuntimeException("Outer-products are not supported.");
             }
 
+            if (TIMING) {
+                startTime("total");
+            }
+
             // Determine buffer offsets
             int kbo = dimPartial * kBuffer;
             int ibo = dimPartial * iBuffer;
@@ -1149,6 +1207,10 @@ public interface ContinuousDiffusionIntegrator {
                 // variance, dT + dT * dT, dT * dT
                 // scalar, dT + 2 * dT * dT, 1
 
+                if (TIMING) {
+                    startTime("peel1");
+                }
+
                 // Increase variance along the branches i -> k and j -> k
 
                 // A. Get current precision of i and j
@@ -1161,34 +1223,55 @@ public interface ContinuousDiffusionIntegrator {
                 final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
                 final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
+                if (TIMING) {
+                    endTime("peel1");
+                    startTime("peel2");
+                }
+
                 // B. Integrate along branch using two matrix inversions
                 final double lpip = Double.isInfinite(lpi) ?
                         1.0 / vi : lpi / (1.0 + lpi * vi);
                 final double lpjp = Double.isInfinite(lpj) ?
                         1.0 / vj : lpj / (1.0 + lpj * vj);
 
-                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
-                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Vip = matrix0;
+                final DenseMatrix64F Vjp = matrix1;
 
                 CommonOps.add(Vi, vi, Vd, Vip);
                 CommonOps.add(Vj, vj, Vd, Vjp);
 
-                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
-                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
+                if (TIMING) {
+                    endTime("peel2");
+                    startTime("peel2a");
+                }
+
+//                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Pip = matrix2;
+                final DenseMatrix64F Pjp = matrix3;
 
                 InversionResult ci = safeInvert(Vip, Pip, true);
                 InversionResult cj = safeInvert(Vjp, Pjp, true);
+
+                if (TIMING) {
+                    endTime("peel2a");
+                    startTime("peel3");
+                }
 
                 // Compute partial mean and precision at node k
 
                 // A. Partial precision and variance (for later use) using one matrix inversion
                 final double lpk = lpip + lpjp;
 
-                final DenseMatrix64F Pk = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Pk = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Pk = matrix4;
 
                 CommonOps.add(Pip, Pjp, Pk);
 
-                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
+//                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F Vk = matrix5;
                 InversionResult ck = safeInvert(Pk, Vk, true);
 
                 // B. Partial mean
@@ -1196,7 +1279,13 @@ public interface ContinuousDiffusionIntegrator {
 //                    partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk;
 //                }
 
-                final double[] tmp = new double[dimTrait];
+                if (TIMING) {
+                    endTime("peel3");
+                    startTime("peel4");
+                }
+
+//                final double[] tmp = new double[dimTrait];
+                final double[] tmp = vector0;
                 for (int g = 0; g < dimTrait; ++g) {
                     double sum = 0.0;
                     for (int h = 0; h < dimTrait; ++h) {
@@ -1213,11 +1302,20 @@ public interface ContinuousDiffusionIntegrator {
                     partials[kbo + g] = sum;
                 }
 
+                if (TIMING) {
+                    endTime("peel4");
+                    startTime("peel5");
+                }
+
                 // C. Store precision
                 partials[kbo + dimTrait + 2 * dimTrait * dimTrait] = lpk;
 
                 unwrap(Pk, partials, kbo + dimTrait);
                 unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
+
+                if (TIMING) {
+                    endTime("peel5");
+                }
 
                 if (DEBUG) {
                     System.err.println("\ttrait: " + trait);
@@ -1257,6 +1355,9 @@ public interface ContinuousDiffusionIntegrator {
                     // TODO Fix for partially observed
 //                if (pi != 0 && pj != 0) {
 //
+                    if (TIMING) {
+                        startTime("remain");
+                    }
 
                     // Inner products
                     double SSk = 0;
@@ -1280,7 +1381,8 @@ public interface ContinuousDiffusionIntegrator {
                         }
                     }
 
-                    final DenseMatrix64F Vt = new DenseMatrix64F(dimTrait, dimTrait);
+//                    final DenseMatrix64F Vt = new DenseMatrix64F(dimTrait, dimTrait);
+                    final DenseMatrix64F Vt = matrix6;
                     CommonOps.add(Vip, Vjp, Vt);
 
                     if (DEBUG) {
@@ -1312,6 +1414,10 @@ public interface ContinuousDiffusionIntegrator {
                         System.err.println("\t\t\tSSk = " + (SSk));
                         System.err.println("\t\tremainder: " + remainder);
 //                        System.exit(-1);
+                    }
+
+                    if (TIMING) {
+                        endTime("remain");
                     }
 
                     if (incrementOuterProducts) {
@@ -1363,7 +1469,45 @@ public interface ContinuousDiffusionIntegrator {
                 jbo += dimPartialForTrait;
 
             }
+
+            if (TIMING) {
+                endTime("total");
+            }
         }
+
+        private final Map<String, Long> startTimes = new HashMap<String, Long>();
+
+        private void startTime(String key) {
+            startTimes.put(key, System.nanoTime());
+        }
+
+        private void endTime(String key) {
+            long start = startTimes.get(key);
+
+            Long total = times.get(key);
+            if (total == null) {
+                total = new Long(0);
+            }
+
+            long run = total + (System.nanoTime() - start);
+            times.put(key, run);
+
+//            System.err.println("run = " + run);
+//            System.exit(-1);
+        }
+
+//        private void incrementTiming(long start, long end, String key) {
+//            Long total = times.get(key);
+//
+//            System.err.println(start + " " + end + " " + key);
+//            System.exit(-1);
+//            if (total == null) {
+//                total = new Long(0);
+//                times.put(key, total);
+//            }
+//            total += (end - start);
+////            times.put(key, total);
+//        }
 
         @Override
         public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,

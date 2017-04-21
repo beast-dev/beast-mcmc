@@ -46,30 +46,7 @@ public class PartiallyMissingInformation {
         this.numTraits = dataModel.getTraitCount(); //likelihoodDelegate.getTraitCount();
         this.dimTrait = dataModel.getTraitDimension(); //likelihoodDelegate.getTraitDim();
 
-        this.missingParameter = null;
         this.rawMissingIndices = dataModel.getMissingIndices();
-
-        final int length = tipCount * numTraits;
-        anyMissing = new boolean[length];
-        allMissing = new boolean[length];
-        missingIndices = new HashedIntArray[length];
-
-        setupIndices();
-    }
-
-    @Deprecated
-    public PartiallyMissingInformation(int tipCount,
-                                       int numTraits,
-                                       int dimTrait,
-                                       Parameter missingParameter) {
-        this.tipCount = tipCount;
-        this.numTraits = numTraits;
-        this.dimTrait = dimTrait;
-        this.missingParameter = missingParameter;
-        this.rawMissingIndices = null;
-
-
-        assert (tipCount * numTraits * dimTrait == missingParameter.getDimension());
 
         final int length = tipCount * numTraits;
         anyMissing = new boolean[length];
@@ -144,11 +121,7 @@ public class PartiallyMissingInformation {
 
     private boolean isObservationMissing(final int index, final int dim) {
         final int id = index * dimTrait + dim;
-        if (missingParameter != null) {
-            return missingParameter.getParameterValue(id) == 1;
-        } else {
-            return rawMissingIndices.contains(id);
-        }
+        return rawMissingIndices.contains(id);
     }
 
     public class HashedIntArray {
@@ -202,9 +175,6 @@ public class PartiallyMissingInformation {
     final private int tipCount;
     final private int numTraits;
     final private int dimTrait;
-
-    @Deprecated
-    final private Parameter missingParameter;
 
     final private List<Integer> rawMissingIndices;
 

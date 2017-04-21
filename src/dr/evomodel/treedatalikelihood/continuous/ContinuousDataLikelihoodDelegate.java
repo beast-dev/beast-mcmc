@@ -259,263 +259,218 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append("Tree:\n");
         sb.append(callbackLikelihood.getId()).append("\t");
 
-        final Tree tree = callbackLikelihood.getTree();
-        sb.append(tree.toString());
-        sb.append("\n\n");
+        sb.append(cdi.getReport());
 
-        final double normalization = rateTransformation.getNormalization();
-        final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
-
-        double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
-        sb.append("Tree structure:\n");
-        sb.append(new Matrix(treeStructure));
-        sb.append("\n\n");
-
-        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
-        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
-        Matrix traitVariance = new Matrix(traitPrecision).inverse();
-
-        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
-
-        Matrix treeV = new Matrix(treeVariance);
-        Matrix treeP = treeV.inverse();
-
-        sb.append("Tree variance:\n");
-        sb.append(treeV);
-        sb.append("Tree precision:\n");
-        sb.append(treeP);
-//        sb.append(matrixMin(treeVariance)).append("\t").append(matrixMax(treeVariance)).append("\t").append(matrixSum(treeVariance));
-        sb.append("\n\n");
-        sb.append("Trait variance:\n");
-        sb.append(traitVariance);
-        sb.append("\n\n");
-        sb.append("Joint variance:\n");
-        sb.append(new Matrix(jointVariance));
-        sb.append("\n\n");
-
-        final int datumLength = tipCount * dimTrait;
-
-        sb.append("Tree dim : " + treeVariance.length + "\n");
-        sb.append("dimTrait : " + dimTrait + "\n");
-        sb.append("numTraits: " + numTraits + "\n");
-        sb.append("Jvar dim : " + jointVariance.length + "\n");
-        sb.append("datum dim: " + datumLength);
-        sb.append("\n\n");
-
-        double[] data = getTipObservations();
-        sb.append("data: " + new dr.math.matrixAlgebra.Vector(data));
-        sb.append("\n\n");
-
-        double logLikelihood = 0;
-
-        Matrix totalNop = new Matrix(dimTrait, dimTrait);
-        Matrix totalOp = new Matrix(dimTrait, dimTrait);
-
-        for (int trait = 0; trait < numTraits; ++trait) {
-            sb.append("Trait #" + trait + "\n");
-
-            double[] rawDatum = new double[datumLength];
-            double[][] opDatum = new double[tipCount][dimTrait];
-
-
-            List<Integer> missing = new ArrayList<Integer>();
-            int index = 0;
-            for (int tip = 0; tip < tipCount; ++tip) {
-                for (int dim = 0; dim < dimTrait; ++dim) {
-                    double d = data[tip * dimTrait * numTraits + trait * dimTrait + dim];
-                    rawDatum[index] = d;
-                    if (Double.isNaN(d)) {
-                        missing.add(index);
-                        d = 0.0;
-                    }
-                    opDatum[tip][dim] = d;
-                    ++index;
-                }
-            }
-
-            double[][] varianceDatum = jointVariance;
-            double[] datum = rawDatum;
-
-            int[] missingIndices = null;
-            int[] notMissingIndices = null;
-
-            if (missing.size() > 0) {
-                missingIndices = new int[missing.size()];
-                notMissingIndices = new int[datumLength - missing.size()];
-                int offsetMissing = 0;
-                int offsetNotMissing = 0;
-                for (int i = 0; i < datumLength; ++i) {
-                    if (!missing.contains(i)) {
-                        notMissingIndices[offsetNotMissing] = i;
-                        ++offsetNotMissing;
-                    } else {
-                        missingIndices[offsetMissing] = i;
-                        ++offsetMissing;
-                    }
-                }
-
-                datum = Matrix.gatherEntries(rawDatum, notMissingIndices);
-                varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, notMissingIndices, notMissingIndices);
-            }
-
-            sb.append("datum : " + new dr.math.matrixAlgebra.Vector(datum) + "\n");
-            sb.append("variance:\n");
-            sb.append(new Matrix(varianceDatum));
-
-            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[datum.length], new Matrix(varianceDatum).inverse().toComponents());
-            double logDensity = mvn.logPdf(datum);
-            sb.append("\n\n");
-            sb.append("logDatumLikelihood: " + logDensity + "\n\n");
-            logLikelihood += logDensity;
-
-            if (DEBUG_MISSING_DISTRIBUTION && missing.size() > 0) {
-                sb.append("\nConditional distribution of missing values at");
-                for (int m : missing) {
-                    sb.append(" " + m);
-                }
-                sb.append("\n");
-//                for (int n : notMissingIndices) {
-//                    sb.append(" " + n);
-//                }
-//                sb.append("\n");
-
-
-                ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform transform =
-                        new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform(
-                        new Matrix(jointVariance), missingIndices, notMissingIndices
-                );
-
-                double[] mean = transform.getConditionalMean(rawDatum, 0, new double[rawDatum.length], 0);
-                Matrix variance = transform.getVariance();
-
-                sb.append("obs: " + new WrappedVector.Raw(rawDatum, 0, rawDatum.length));
-                sb.append("cMean: " + new dr.math.matrixAlgebra.Vector(mean) + "\n");
-                sb.append("cVar :\n" + variance + "\n");
-//                System.err.println(sb.toString());
-//                System.exit(-1);
-            }
-
-            if (DEBUG_OUTER_PRODUCTS) {
-
-                Matrix y = new Matrix(opDatum);
-
-//            System.err.println("y = \n" + y);
-                sb.append("Y:\n" + y);
-                sb.append("Tree V:\n" + treeV);
-
-                Matrix op = null;
-
-                try {
-                    op = y.transpose().product(treeP).product(y);
-                    totalOp.accumulate(op);
-                } catch (IllegalDimension illegalDimension) {
-                    illegalDimension.printStackTrace();
-                }
-
-                sb.append("Outer-products:\n");
-                sb.append(op);
-                sb.append("\n\n");
-
-                sb.append("check for missing taxa ...");
-
-                missing.clear();
-                for (int tip = 0; tip < tipCount; ++tip) {
-                    if (allZero(opDatum[tip])) {
-                        missing.add(tip);
-                    }
-                }
-
-                index = 0;
-                int[] notMissing = new int[opDatum.length - missing.size()];
-                double[][] nopDatum = new double[opDatum.length - missing.size()][];
-                for (int tip = 0; tip < tipCount; ++tip) {
-                    if (!missing.contains(tip)) {
-                        nopDatum[index] = opDatum[tip];
-                        notMissing[index] = tip;
-                        ++index;
-                    }
-                }
-
-                Matrix nonMissingTreeVariance = treeV.extractRowsAndColumns(notMissing, notMissing);
-                Matrix notMissingTreePrecision = nonMissingTreeVariance.inverse();
-                Matrix notMissingY = new Matrix(nopDatum);
-
-                sb.append("NP Y:\n" + notMissingY);
-                sb.append("NP Tree V:\n" + nonMissingTreeVariance);
-                sb.append("NP Tree P:\n" + notMissingTreePrecision);
-
-                Matrix nop = null;
-                try {
-                    nop = notMissingY.transpose().product(notMissingTreePrecision).product(notMissingY);
-                    totalNop.accumulate(nop);
-                } catch (IllegalDimension illegalDimension) {
-                    illegalDimension.printStackTrace();
-                }
-
-                sb.append("NP Outer-products:\n");
-                sb.append(nop);
-            }
-
-            sb.append("\n\n");
-
-
-        }
-
-        sb.append("TOTAL DEBUG logLikelihood = " + logLikelihood + "\n");
-
-        if (DEBUG_OUTER_PRODUCTS) {
-            sb.append("TOTAL (+ zeros) outer-products = \n" + totalOp + "\n\n");
-            sb.append("TOTAL (- zeros) outer-products = \n" + totalNop + "\n\n");
-        }
-
-//        WishartSufficientStatistics wishartStatistics = getWishartStatistics();
-//
-//
-//
-//        System.err.println(sb.toString());
-//        System.exit(-1);
-//
-//        if (nodeToClampMap != null) {
-//            int offset = treeModel.getExternalNodeCount() * getDimTrait();
-//            for(Map.Entry<NodeRef, RestrictedPartials> clamps : nodeToClampMap.entrySet()) {
-//                double[] partials = clamps.getValue().getPartials();
-//                for (int i = 0; i < partials.length; ++i) {
-//                    data[offset] = partials[i];
-//                    ++offset;
-//                }
-//            }
-//        }
-
-
-//        final WishartSufficientStatistics sufficientStatistics = getWishartStatistics();
-//        final double[] outerProducts = sufficientStatistics.getScaleMatrix();
-//
-//        sb.append("Outer-products (DP):\n");
-//        sb.append(new Vector(outerProducts));
-//        sb.append(sufficientStatistics.getDf() + "\n");
-//
-//        Matrix treePrecision = new Matrix(treeVariance).inverse();
-//        final int n = data.length / traitPrecision.length;
-//        final int p = traitPrecision.length;
-//        double[][] tmp = new double[n][p];
-//
-//        for (int i = 0; i < n; ++i) {
-//            for (int j = 0; j < p; ++j) {
-//                tmp[i][j] = data[i * p + j];
-//            }
-//        }
-//        Matrix y = new Matrix(tmp);
-//
-//        Matrix S = null;
-//        try {
-//            S = y.transpose().product(treePrecision).product(y); // Using Matrix-Normal form
-//        } catch (IllegalDimension illegalDimension) {
-//            illegalDimension.printStackTrace();
-//        }
-//        sb.append("Outer-products (from tree variance:\n");
-//        sb.append(S);
+//        final Tree tree = callbackLikelihood.getTree();
+//        sb.append(tree.toString());
 //        sb.append("\n\n");
 //
+//        final double normalization = rateTransformation.getNormalization();
+//        final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
+//
+//        double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+//        sb.append("Tree structure:\n");
+//        sb.append(new Matrix(treeStructure));
+//        sb.append("\n\n");
+//
+//        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
+//        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+//        Matrix traitVariance = new Matrix(traitPrecision).inverse();
+//
+//        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+//
+//        Matrix treeV = new Matrix(treeVariance);
+//        Matrix treeP = treeV.inverse();
+//
+//        sb.append("Tree variance:\n");
+//        sb.append(treeV);
+//        sb.append("Tree precision:\n");
+//        sb.append(treeP);
+////        sb.append(matrixMin(treeVariance)).append("\t").append(matrixMax(treeVariance)).append("\t").append(matrixSum(treeVariance));
+//        sb.append("\n\n");
+//        sb.append("Trait variance:\n");
+//        sb.append(traitVariance);
+//        sb.append("\n\n");
+//        sb.append("Joint variance:\n");
+//        sb.append(new Matrix(jointVariance));
+//        sb.append("\n\n");
+//
+//        final int datumLength = tipCount * dimTrait;
+//
+//        sb.append("Tree dim : " + treeVariance.length + "\n");
+//        sb.append("dimTrait : " + dimTrait + "\n");
+//        sb.append("numTraits: " + numTraits + "\n");
+//        sb.append("Jvar dim : " + jointVariance.length + "\n");
+//        sb.append("datum dim: " + datumLength);
+//        sb.append("\n\n");
+//
+//        double[] data = getTipObservations();
+//        sb.append("data: " + new dr.math.matrixAlgebra.Vector(data));
+//        sb.append("\n\n");
+//
+//        double logLikelihood = 0;
+//
+//        Matrix totalNop = new Matrix(dimTrait, dimTrait);
+//        Matrix totalOp = new Matrix(dimTrait, dimTrait);
+//
+//        for (int trait = 0; trait < numTraits; ++trait) {
+//            sb.append("Trait #" + trait + "\n");
+//
+//            double[] rawDatum = new double[datumLength];
+//            double[][] opDatum = new double[tipCount][dimTrait];
+//
+//
+//            List<Integer> missing = new ArrayList<Integer>();
+//            int index = 0;
+//            for (int tip = 0; tip < tipCount; ++tip) {
+//                for (int dim = 0; dim < dimTrait; ++dim) {
+//                    double d = data[tip * dimTrait * numTraits + trait * dimTrait + dim];
+//                    rawDatum[index] = d;
+//                    if (Double.isNaN(d)) {
+//                        missing.add(index);
+//                        d = 0.0;
+//                    }
+//                    opDatum[tip][dim] = d;
+//                    ++index;
+//                }
+//            }
+//
+//            double[][] varianceDatum = jointVariance;
+//            double[] datum = rawDatum;
+//
+//            int[] missingIndices = null;
+//            int[] notMissingIndices = null;
+//
+//            if (missing.size() > 0) {
+//                missingIndices = new int[missing.size()];
+//                notMissingIndices = new int[datumLength - missing.size()];
+//                int offsetMissing = 0;
+//                int offsetNotMissing = 0;
+//                for (int i = 0; i < datumLength; ++i) {
+//                    if (!missing.contains(i)) {
+//                        notMissingIndices[offsetNotMissing] = i;
+//                        ++offsetNotMissing;
+//                    } else {
+//                        missingIndices[offsetMissing] = i;
+//                        ++offsetMissing;
+//                    }
+//                }
+//
+//                datum = Matrix.gatherEntries(rawDatum, notMissingIndices);
+//                varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, notMissingIndices, notMissingIndices);
+//            }
+//
+//            sb.append("datum : " + new dr.math.matrixAlgebra.Vector(datum) + "\n");
+//            sb.append("variance:\n");
+//            sb.append(new Matrix(varianceDatum));
+//
+//            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[datum.length], new Matrix(varianceDatum).inverse().toComponents());
+//            double logDensity = mvn.logPdf(datum);
+//            sb.append("\n\n");
+//            sb.append("logDatumLikelihood: " + logDensity + "\n\n");
+//            logLikelihood += logDensity;
+//
+//            if (DEBUG_MISSING_DISTRIBUTION && missing.size() > 0) {
+//                sb.append("\nConditional distribution of missing values at");
+//                for (int m : missing) {
+//                    sb.append(" " + m);
+//                }
+//                sb.append("\n");
+////                for (int n : notMissingIndices) {
+////                    sb.append(" " + n);
+////                }
+////                sb.append("\n");
+//
+//
+//                ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform transform =
+//                        new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform(
+//                        new Matrix(jointVariance), missingIndices, notMissingIndices
+//                );
+//
+//                double[] mean = transform.getConditionalMean(rawDatum, 0, new double[rawDatum.length], 0);
+//                Matrix variance = transform.getVariance();
+//
+//                sb.append("obs: " + new WrappedVector.Raw(rawDatum, 0, rawDatum.length));
+//                sb.append("cMean: " + new dr.math.matrixAlgebra.Vector(mean) + "\n");
+//                sb.append("cVar :\n" + variance + "\n");
+////                System.err.println(sb.toString());
+////                System.exit(-1);
+//            }
+//
+//            if (DEBUG_OUTER_PRODUCTS) {
+//
+//                Matrix y = new Matrix(opDatum);
+//
+////            System.err.println("y = \n" + y);
+//                sb.append("Y:\n" + y);
+//                sb.append("Tree V:\n" + treeV);
+//
+//                Matrix op = null;
+//
+//                try {
+//                    op = y.transpose().product(treeP).product(y);
+//                    totalOp.accumulate(op);
+//                } catch (IllegalDimension illegalDimension) {
+//                    illegalDimension.printStackTrace();
+//                }
+//
+//                sb.append("Outer-products:\n");
+//                sb.append(op);
+//                sb.append("\n\n");
+//
+//                sb.append("check for missing taxa ...");
+//
+//                missing.clear();
+//                for (int tip = 0; tip < tipCount; ++tip) {
+//                    if (allZero(opDatum[tip])) {
+//                        missing.add(tip);
+//                    }
+//                }
+//
+//                index = 0;
+//                int[] notMissing = new int[opDatum.length - missing.size()];
+//                double[][] nopDatum = new double[opDatum.length - missing.size()][];
+//                for (int tip = 0; tip < tipCount; ++tip) {
+//                    if (!missing.contains(tip)) {
+//                        nopDatum[index] = opDatum[tip];
+//                        notMissing[index] = tip;
+//                        ++index;
+//                    }
+//                }
+//
+//                Matrix nonMissingTreeVariance = treeV.extractRowsAndColumns(notMissing, notMissing);
+//                Matrix notMissingTreePrecision = nonMissingTreeVariance.inverse();
+//                Matrix notMissingY = new Matrix(nopDatum);
+//
+//                sb.append("NP Y:\n" + notMissingY);
+//                sb.append("NP Tree V:\n" + nonMissingTreeVariance);
+//                sb.append("NP Tree P:\n" + notMissingTreePrecision);
+//
+//                Matrix nop = null;
+//                try {
+//                    nop = notMissingY.transpose().product(notMissingTreePrecision).product(notMissingY);
+//                    totalNop.accumulate(nop);
+//                } catch (IllegalDimension illegalDimension) {
+//                    illegalDimension.printStackTrace();
+//                }
+//
+//                sb.append("NP Outer-products:\n");
+//                sb.append(nop);
+//            }
+//
+//            sb.append("\n\n");
+//
+//
+//        }
+//
+//        sb.append("TOTAL DEBUG logLikelihood = " + logLikelihood + "\n");
+//
+//        if (DEBUG_OUTER_PRODUCTS) {
+//            sb.append("TOTAL (+ zeros) outer-products = \n" + totalOp + "\n\n");
+//            sb.append("TOTAL (- zeros) outer-products = \n" + totalNop + "\n\n");
+//        }
+
+
         return sb.toString();
     }
 

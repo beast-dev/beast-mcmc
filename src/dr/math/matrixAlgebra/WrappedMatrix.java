@@ -25,6 +25,8 @@
 
 package dr.math.matrixAlgebra;
 
+import java.util.Arrays;
+
 /**
  * Created by msuchard on 1/27/17.
  */
@@ -143,6 +145,48 @@ public interface WrappedMatrix {
 
         private final int getIndex(final int i, final int j) {
             return offset + indicesMajor[i] * dimMajor + indicesMinor[j];
+        }
+    }
+
+    final class Utils {
+
+        public static void gatherRowsAndColumns(final WrappedMatrix source, final WrappedMatrix destination,
+                                                final int[] rowIndices, final int[] colIndices) {
+
+            final int rowLength = rowIndices.length;
+            final int colLength = colIndices.length;
+
+            for (int i = 0; i < rowLength; ++i) {
+                final int rowIndex = rowIndices[i];
+                for (int j = 0; j < colLength; ++j) {
+                    destination.set(i, j, source.get(rowIndex, colIndices[j]) );
+                }
+            }
+        }
+
+        public static void scatterRowsAndColumns(final WrappedMatrix source, final WrappedMatrix destination,
+                                                 final int[] rowIndices, final int[] colIndices) {
+            scatterRowsAndColumns(source, destination, rowIndices, colIndices, true);
+        }
+
+        public static void scatterRowsAndColumns(final WrappedMatrix source, final WrappedMatrix destination,
+                                                 final int[] rowIndices, final int[] colIndices, final boolean clear) {
+            if (clear) {
+                double[] data = destination.getBuffer();
+                final int start = destination.getOffset();
+                final int end = start + destination.getMajorDim() * destination.getMinorDim();
+                Arrays.fill(data, start, end, 0.0);
+            }
+
+            final int rowLength = rowIndices.length;
+            final int colLength = colIndices.length;
+
+            for (int i = 0; i < rowLength; ++i) {
+                final int rowIndex = rowIndices[i];
+                for (int j = 0; j < colLength; ++j) {
+                    destination.set(rowIndex, colIndices[i], source.get(i, j));
+                }
+            }
         }
     }
 }

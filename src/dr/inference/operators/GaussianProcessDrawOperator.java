@@ -25,8 +25,6 @@
 
 package dr.inference.operators;
 
-import dr.evomodel.continuous.ConstrainedGaussianProcessRandomGenerator;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.EllipticalSliceOperatorParser;
 import dr.math.distributions.GaussianProcessRandomGenerator;
@@ -75,7 +73,7 @@ public class GaussianProcessDrawOperator extends AbstractCoercableOperator {
 
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[] x = parameter.getParameterValues();
         double[] epsilon = (double[]) gaussianProcess.nextRandom();

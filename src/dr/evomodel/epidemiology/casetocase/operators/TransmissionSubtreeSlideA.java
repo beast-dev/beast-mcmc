@@ -92,7 +92,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if(DEBUG){
             c2cLikelihood.outputTreeToFile("beforeTSSA.nex", false);
@@ -162,7 +162,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
                 // if the parent has slid out of its partition
                 if(branchMap.get(newChild.getNumber())!=branchMap.get(iP.getNumber())){
-                    throw new OperatorFailedException("invalid slide");
+//                    throw new OperatorFailedException("invalid slide");
+                    return Double.NEGATIVE_INFINITY;
                 }
 
                 // if iP is now the earliest node in its subtree
@@ -341,16 +342,18 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
         }
 
-        if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
+//        if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
+        if (!Double.isInfinite(logq)) {
 
-        if (DEBUG){
-            c2cLikelihood.getTreeModel().checkPartitions();
-            c2cLikelihood.outputTreeToFile("afterTSSA.nex", false);
+            if (DEBUG){
+                c2cLikelihood.getTreeModel().checkPartitions();
+                c2cLikelihood.outputTreeToFile("afterTSSA.nex", false);
+            }
+
+            double reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
+
+            logq += Math.log(eligibleNodeCount/reverseEligibleNodeCount);
         }
-
-        double reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
-
-        logq += Math.log(eligibleNodeCount/reverseEligibleNodeCount);
 
         return logq;
     }

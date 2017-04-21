@@ -1,12 +1,9 @@
 package dr.evomodel.operators;
 
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.*;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
-import jebl.math.Random;
 
 /**
  * Created by max on 1/11/16.
@@ -65,7 +62,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
 
         double[][] derivative = getGradient();

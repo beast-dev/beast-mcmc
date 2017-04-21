@@ -28,10 +28,7 @@ package dr.evolution.parsimony;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.tree.FlexibleNode;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 
 /**
@@ -134,7 +131,7 @@ public class FitchParsimony implements ParsimonyCriterion {
      */
     public int[] getStates(Tree tree, NodeRef node) {
 
-        if (!Tree.Utils.isBinary(tree)) {
+        if (!TreeUtils.isBinary(tree)) {
             throw new IllegalArgumentException("The Fitch algorithm can only reconstruct ancestral states on binary trees");
         }
 

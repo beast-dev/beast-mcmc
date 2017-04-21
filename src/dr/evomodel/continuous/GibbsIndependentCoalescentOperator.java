@@ -38,7 +38,6 @@ import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -84,9 +83,9 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
     }
 
     /**
-     * change the parameter and return the hastings ratio.
+	 * change the parameter and return the hastings ratio.
      */
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		
 		CoalescentSimulator simulator = new CoalescentSimulator();
         

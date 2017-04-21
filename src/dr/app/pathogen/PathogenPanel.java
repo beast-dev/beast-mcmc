@@ -27,8 +27,8 @@ package dr.app.pathogen;
 
 import dr.app.gui.chart.*;
 import dr.app.gui.util.LongTask;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
@@ -36,8 +36,6 @@ import dr.stats.Regression;
 import dr.stats.Variate;
 import dr.util.NumberFormatter;
 import figtree.panel.FigTreePanel;
-import figtree.panel.SimpleControlPalette;
-import figtree.panel.SimpleTreeViewer;
 import figtree.treeviewer.TreePaneSelector;
 import figtree.treeviewer.TreeSelectionListener;
 import figtree.treeviewer.TreeViewer;
@@ -395,7 +393,7 @@ public class PathogenPanel extends JPanel implements Exportable {
             }
 
             Regression r = temporalRooting.getRootToTipRegression(currentTree);
-            NodeRef mrca = Tree.Utils.getCommonAncestorNode(currentTree, selectedTaxa);
+            NodeRef mrca = TreeUtils.getCommonAncestorNode(currentTree, selectedTaxa);
             double mrcaDistance1 = temporalRooting.getRootToTipDistance(currentTree, mrca);
             double mrcaTime1 = r.getX(mrcaDistance1);
             if (tree.isExternal(mrca)) {
@@ -496,7 +494,7 @@ public class PathogenPanel extends JPanel implements Exportable {
                 tabbedPane.setEnabledAt(2, true);
             }
 
-            RootedTree jtree = Tree.Utils.asJeblTree(currentTree);
+            RootedTree jtree = dr.evolution.tree.TreeUtils.asJeblTree(currentTree);
 
             List<Color> colours = new ArrayList<Color>();
             for (Node tip : jtree.getExternalNodes()) {

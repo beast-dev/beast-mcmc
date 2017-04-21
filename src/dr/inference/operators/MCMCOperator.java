@@ -45,9 +45,8 @@ public interface MCMCOperator extends Serializable {
      * operates on the model.
      *
      * @return the hastings ratio of this operator.
-     * @throws OperatorFailedException if the operator failed and should be rejected
      */
-    double operate() throws OperatorFailedException;
+    double operate();
 
     /**
      * Called to tell operator that operation was accepted

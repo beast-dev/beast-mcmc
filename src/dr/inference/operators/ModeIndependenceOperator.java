@@ -115,7 +115,7 @@ public class ModeIndependenceOperator extends AbstractCoercableOperator {
         return matrix;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[] x = parameter.getParameterValues();
         double[] epsilon = new double[dim];

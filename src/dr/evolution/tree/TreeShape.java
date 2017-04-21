@@ -89,8 +89,8 @@ public class TreeShape {
 			
 			NodeRef node = tree.getInternalNode(i);
 			
-			int r = Tree.Utils.getLeafCount(tree, tree.getChild(node, 0));
-			int s = Tree.Utils.getLeafCount(tree, tree.getChild(node, 1));
+			int r = TreeUtils.getLeafCount(tree, tree.getChild(node, 0));
+			int s = TreeUtils.getLeafCount(tree, tree.getChild(node, 1));
 			
 			C += Math.abs(r-s);
 		} 
@@ -187,7 +187,7 @@ public class TreeShape {
 	private static double[] getIntervals(Tree tree) {
 	
 		ArrayList<Double> heights = new ArrayList<Double>();
-		if (Tree.Utils.isUltrametric(tree)) {
+		if (TreeUtils.isUltrametric(tree)) {
 			for (int i = 0; i < tree.getInternalNodeCount(); i++) {
 				heights.add(tree.getNodeHeight(tree.getInternalNode(i)));
 			}

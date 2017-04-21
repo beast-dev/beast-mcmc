@@ -44,7 +44,7 @@ import java.util.Vector;
 
 public class ScatterPlot extends Plot.AbstractPlot {
 
-    private Vector<Rectangle2D> markBounds = null;
+    protected Vector<Rectangle2D> markBounds = null;
 
     protected Stroke hilightedMarkStroke = new BasicStroke(0.5f);
     protected Paint hilightedMarkPaint = Color.black;

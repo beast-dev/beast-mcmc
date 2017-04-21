@@ -77,9 +77,9 @@ public class TreeTraceAnalysis {
         double[] symDistance = new double[treeTrace.getTreeCount(0)];
 
         RobinsonsFouldMetric metric = new RobinsonsFouldMetric();
-        jebl.evolution.trees.RootedTree jreference = Tree.Utils.asJeblTree(targetTree);
+        jebl.evolution.trees.RootedTree jreference = TreeUtils.asJeblTree(targetTree);
         for (int i = 0; i < symDistance.length; i++) {
-            final jebl.evolution.trees.RootedTree tree = Tree.Utils.asJeblTree(treeTrace.getTree(i, 0));
+            final jebl.evolution.trees.RootedTree tree = TreeUtils.asJeblTree(treeTrace.getTree(i, 0));
 
             symDistance[i] = metric.getMetric(jreference, tree);
         }
@@ -106,7 +106,7 @@ public class TreeTraceAnalysis {
 
         cladeSet = new CladeSet(tree0);
         treeSet = new FrequencySet<String>();
-        treeSet.add(Tree.Utils.uniqueNewick(tree0, tree0.getRoot()));
+        treeSet.add(TreeUtils.uniqueNewick(tree0, tree0.getRoot()));
 
         final int reportRate = 60;
 
@@ -144,7 +144,7 @@ public class TreeTraceAnalysis {
                 }
 
                 cladeSet.add(tree);
-                treeSet.add(Tree.Utils.uniqueNewick(tree, tree.getRoot()));
+                treeSet.add(TreeUtils.uniqueNewick(tree, tree.getRoot()));
 
                 if (verbose && i >= (int) Math.round(counter * stepSize) && counter <= reportRate) {
                     System.out.print("*");
@@ -194,7 +194,7 @@ public class TreeTraceAnalysis {
         for (int i = 0; i < n; i++) {
             final Tree tree = getTree(i);
 
-            if (Tree.Utils.uniqueNewick(tree, tree.getRoot()).equals(target)) {
+            if (TreeUtils.uniqueNewick(tree, tree.getRoot()).equals(target)) {
                 meanTree = new FlexibleTree(tree);
                 break;
             }
@@ -207,12 +207,12 @@ public class TreeTraceAnalysis {
         for (int j = 0; j < inc; j++) {
             double[] heights = new double[n];
             NodeRef nodej = meanTree.getInternalNode(j);
-            Set<String> leafSet = Tree.Utils.getDescendantLeaves(meanTree, nodej);
+            Set<String> leafSet = TreeUtils.getDescendantLeaves(meanTree, nodej);
 
             for (int i = 0; i < n; i++) {
                 final Tree tree = getTree(i);
 
-                NodeRef can = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+                NodeRef can = TreeUtils.getCommonAncestorNode(tree, leafSet);
                 heights[i] = tree.getNodeHeight(can);
             }
 
@@ -315,7 +315,7 @@ public class TreeTraceAnalysis {
                 if (freq > 100) {
                     // calculate conditional average node heights
                     Tree meanTree = analyzeTree(newickTree);
-                    System.out.println("\t" + Tree.Utils.newick(meanTree));
+                    System.out.println("\t" + TreeUtils.newick(meanTree));
 
                 } else {
                     System.out.println("\t" + newickTree);
@@ -399,7 +399,7 @@ public class TreeTraceAnalysis {
     public void shortReport(String name, Tree tree, boolean drawHeader, double credSetProbability) {
 
         String targetTree = "";
-        if (tree != null) targetTree = Tree.Utils.uniqueNewick(tree, tree.getRoot());
+        if (tree != null) targetTree = TreeUtils.uniqueNewick(tree, tree.getRoot());
 
         final int n = treeSet.size();
         final int totalTrees = treeSet.getSumFrequency();

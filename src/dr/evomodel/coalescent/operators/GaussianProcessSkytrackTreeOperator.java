@@ -33,7 +33,6 @@ import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackTreeOperatorPa
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 import dr.util.ComparableDouble;
@@ -331,10 +330,10 @@ public class GaussianProcessSkytrackTreeOperator extends AbstractCoercableOperat
 //        else return CoalescentEventType.NOTHING;
 
 
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 
 //		System.err.println("Does GPSkytrack Tree Operator"+changePoints.getSize());
-		double hRatio = 0;
+        double hRatio = 0;
 		Trip1GP intervalInfo= getTreeIntervals(tree,tree.getRoot(),null);
 		double [] intervals =intervalInfo.getInterval();
 		int [] lineageCount=intervalInfo.getLineages();

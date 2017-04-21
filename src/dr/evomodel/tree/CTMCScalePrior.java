@@ -25,9 +25,8 @@
 
 package dr.evomodel.tree;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -85,7 +84,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     }
 
     private void updateTreeLength() {
-        treeLength = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
+        treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -112,7 +111,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     }
 
     private double calculateTrialLikelihood() {
-        double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
+        double totalTreeTime = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
 
         double[] eigenValues = substitutionModel.getEigenDecomposition().getEigenValues();
         // Find second largest
@@ -144,7 +143,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
 
         if (trial) return calculateTrialLikelihood();
 
-        double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
+        double totalTreeTime = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
         if (reciprocal) {
             totalTreeTime = 1.0 / totalTreeTime;
         }

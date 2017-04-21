@@ -43,6 +43,8 @@ import java.util.List;
 /**
  * @author Sebastian Hoehna
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
     public final int SAMPLE_EVERY = 10;
@@ -116,7 +118,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         if (!burnin) {
             if (sampleCount < samples * SAMPLE_EVERY) {
                 sampleCount++;
@@ -139,14 +141,14 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
         }
     }
 
-    private double doUnguidedOperation() throws OperatorFailedException {
+    private double doUnguidedOperation() {
         int index = schedule.getNextOperatorIndex();
         SimpleMCMCOperator operator = (SimpleMCMCOperator) schedule.getOperator(index);
 
         return operator.doOperation();
     }
 
-    private double importancePruneAndRegraft() throws OperatorFailedException {
+    private double importancePruneAndRegraft() {
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
@@ -213,7 +215,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
         try {
             tree.checkTreeIsValid();
         } catch (InvalidTreeException e) {
-            throw new OperatorFailedException(e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
 
         double forward = probabilities.get(index);
@@ -230,7 +232,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
     }
 
     private void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef iP,
-                                 NodeRef j, NodeRef jP) throws OperatorFailedException {
+                                 NodeRef j, NodeRef jP) {
         // tree.beginTreeEdit();
 
         // the grandfather

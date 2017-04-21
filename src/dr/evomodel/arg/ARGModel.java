@@ -194,7 +194,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         // System.err.println("Going to do postOrder");
 
         do {
-            node = (Node) Tree.Utils.postorderSuccessor(this, node);
+            node = (Node) TreeUtils.postorderSuccessor(this, node);
 
             if (node.isExternal()) {
                 node.number = i;
@@ -2616,7 +2616,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
      * @return a string containing a newick representation of the tree
      */
     public final String getNewick(int partition) {
-        return Tree.Utils.newick(new ARGTree(this, partition));
+        return TreeUtils.newick(new ARGTree(this, partition));
         // return Tree.Utils.newick(this);
     }
 
@@ -4255,7 +4255,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
             Logger.getLogger("dr.evomodel").info(
                     "  initial tree topology = "
-                            + Tree.Utils.uniqueNewick(treeModel, treeModel
+                            + TreeUtils.uniqueNewick(treeModel, treeModel
                             .getRoot()));
             return treeModel;
         }

@@ -90,7 +90,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
      * @return the hastings ratio
      * @throws OperatorFailedException if operator fails and should be rejected
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         final double priorMean = prior.mean();
         final double priorVariance = prior.variance();

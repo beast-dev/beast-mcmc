@@ -40,14 +40,12 @@ import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.WishartDistribution;
 import dr.math.distributions.WishartStatistics;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
@@ -388,7 +386,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         return inverseS2.toComponents();
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if (wishartIsModel) {
             setupWishartStatistics(priorModel);

@@ -3,22 +3,15 @@ package dr.evomodel.antigenic.phyloClustering.misc.obsolete;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.LinkedList;
-import java.util.logging.Logger;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.GammaFunction;
 import dr.math.MathUtils;
-import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.distributions.WishartDistribution;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
 
 
@@ -160,7 +153,7 @@ public class TreeClusterGibbsOperator extends SimpleMCMCOperator implements Gibb
 
  
     /**
-     * change the parameter and return the log hastings ratio.
+	 * change the parameter and return the log hastings ratio.
      */
     public final double doOperation() {
     	

@@ -32,9 +32,11 @@ import dr.math.MathUtils;
  * A generic operator for use with a sum-constrained vector parameter.
  *
  * @author Alexei Drummond
- * @author Andrew Rambaut
  * @version $Id: CenteredScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
+
+// AR - I don't see how this can work...
+@Deprecated
 public class CenteredScaleOperator extends AbstractCoercableOperator {
 
     public CenteredScaleOperator(Parameter parameter) {
@@ -63,7 +65,7 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
      * This operator changes the variance but maintains the order
      * of the scalars.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         double total = 0.0;
 
@@ -78,7 +80,8 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
 
             double newScalar = (parameter.getParameterValue(i) - mean) * scaleFactor + mean;
             if (newScalar < parameter.getBounds().getLowerLimit(i) || newScalar > parameter.getBounds().getUpperLimit(i)) {
-                throw new OperatorFailedException("Proposed value out of bounds");
+//                throw new OperatorFailedException("Proposed value out of bounds");
+                return Double.NEGATIVE_INFINITY;
             }
             parameter.setParameterValue(i, newScalar);
         }

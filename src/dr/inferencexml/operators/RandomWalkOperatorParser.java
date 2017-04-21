@@ -70,6 +70,11 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
             RandomWalkOperator.BoundaryCondition condition = RandomWalkOperator.BoundaryCondition.valueOf(
                     xo.getAttribute(BOUNDARY_CONDITION, RandomWalkOperator.BoundaryCondition.reflecting.name()));
 
+            if (condition == RandomWalkOperator.BoundaryCondition.logit &&
+                    (lower == null || Double.isInfinite(lower) || upper == null || Double.isInfinite(upper))) {
+                throw new XMLParseException("The logit transformed RandomWalkOperator cannot be used on a parameter without bounds.");
+            }
+
             if (xo.hasChildNamed(UPDATE_INDEX)) {
                 XMLObject cxo = xo.getChild(UPDATE_INDEX);
                 Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);

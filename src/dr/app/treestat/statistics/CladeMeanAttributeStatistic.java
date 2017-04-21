@@ -27,10 +27,10 @@ package dr.app.treestat.statistics;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.*;
 
 import java.util.*;
-import java.lang.reflect.Array;
 
 /**
  *
@@ -59,10 +59,10 @@ public class CladeMeanAttributeStatistic extends AbstractTreeSummaryStatistic {
             node = tree.getRoot();
         } else {
             try {
-                Set<String> leafSet = Tree.Utils.getLeavesForTaxa(tree, taxonList);
-                node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+                Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, taxonList);
+                node = TreeUtils.getCommonAncestorNode(tree, leafSet);
                 if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
-            } catch (Tree.MissingTaxonException e) {
+            } catch (TreeUtils.MissingTaxonException e) {
                 throw new RuntimeException("Missing taxon!");
             }
         }

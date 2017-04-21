@@ -2,18 +2,10 @@ package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
-import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.*;
 import dr.math.MathUtils;
-import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
-import jebl.math.Random;
-
-import java.util.ArrayList;
-import java.util.ListIterator;
 
 /**
  * Created by max on 2/4/16.
@@ -286,7 +278,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         int size = LFM.getLoadings().getRowDimension();
         int column = MathUtils.nextInt(LFM.getLoadings().getColumnDimension());

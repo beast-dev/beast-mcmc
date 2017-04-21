@@ -28,7 +28,6 @@ package dr.evomodel.operators;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.HiddenLinkageModel;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -53,7 +52,7 @@ public class LinkageGroupSwap extends SimpleMCMCOperator {
 	}
 
 	@Override
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		if(MathUtils.nextBoolean()){
 			// swap all taxa in one group to a new group
 			int A = MathUtils.nextInt(groupCount);

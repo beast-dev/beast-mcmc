@@ -146,6 +146,9 @@ public class PartitionClockModelPanel extends OptionsPanel {
         if (model == null) {
             return;
         }
+        clockTypeCombo.setSelectedItem(model.getClockType());
+        clockDistributionCombo.setSelectedItem(model.getClockDistributionType());
+
         setupPanel();
         setOpaque(false);
 

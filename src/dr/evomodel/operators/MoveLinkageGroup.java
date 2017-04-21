@@ -28,7 +28,6 @@ package dr.evomodel.operators;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.HiddenLinkageModel;
 import dr.evomodelxml.operators.MoveLinkageGroupParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -48,7 +47,7 @@ public class MoveLinkageGroup extends SimpleMCMCOperator {
         setWeight(weight);
 	}
 
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		// pick a read uniformly at random, add it to a linkage group uniformly at random
 		int r = MathUtils.nextInt(readCount);		
 		Taxon read = hlm.getData().getReadsTaxa().getTaxon(r);

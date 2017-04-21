@@ -36,7 +36,7 @@ package dr.evomodel.arg.operators;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.ARGPartitionLikelihood;
@@ -47,7 +47,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -153,7 +152,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         double logq = 0;
 
         try {
@@ -163,7 +162,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 logq = RemoveOperation() + size;
             }
         } catch (NoReassortmentEventException nree) {
-            throw new OperatorFailedException("");
+            throw new RuntimeException("");
         }
 
         assert !Double.isInfinite(logq) && !Double.isNaN(logq);
@@ -172,7 +171,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         return logq;
     }
 
-    private double AddOperation() throws OperatorFailedException {
+    private double AddOperation() {
         double logHastings = 0;
 
 
@@ -798,7 +797,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             arg.checkTreeIsValid();
         } catch (MutableTree.InvalidTreeException ite) {
             throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+                    + "\n" + TreeUtils.uniqueNewick(arg, arg.getRoot()));
         }
 
         //Do all the backwards stuff now. :(
@@ -895,7 +894,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     }
 
 
-    private double RemoveOperation() throws OperatorFailedException {
+    private double RemoveOperation() throws NoReassortmentEventException {
 
         double logHastings = 0;
 
@@ -1129,7 +1128,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             arg.checkTreeIsValid();
         } catch (MutableTree.InvalidTreeException ite) {
             throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+                    + "\n" + TreeUtils.uniqueNewick(arg, arg.getRoot()));
         }
 
         assert nodeCheck() : arg.toARGSummary();
@@ -1641,7 +1640,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         }
     };
 
-    private class NoReassortmentEventException extends OperatorFailedException {
+    private class NoReassortmentEventException extends Exception {
         public NoReassortmentEventException(String message) {
             super(message);
         }

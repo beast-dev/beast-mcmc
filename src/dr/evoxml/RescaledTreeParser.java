@@ -25,15 +25,12 @@
 
 package dr.evoxml;
 
-import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.xml.*;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -76,8 +73,8 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
                         leafSet.add(taxon.getId());
                     }
 
-                    NodeRef mrca = Tree.Utils.getCommonAncestorNode(rescaledTree, leafSet);
-                    if (mrca == null ||  Tree.Utils.getLeafCount(rescaledTree, mrca) != leafSet.size()) {
+                    NodeRef mrca = TreeUtils.getCommonAncestorNode(rescaledTree, leafSet);
+                    if (mrca == null ||  TreeUtils.getLeafCount(rescaledTree, mrca) != leafSet.size()) {
                         throw new XMLParseException("Clade defined by taxon Set, " + taxa.getId() + ", is not found in the guide tree");
                     }
 

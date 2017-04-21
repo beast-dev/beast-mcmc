@@ -28,7 +28,6 @@ package dr.evomodel.operators;
 import dr.evolution.alignment.Alignment;
 import dr.oldevomodel.sitemodel.CategorySampleModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 import org.w3c.dom.Document;
@@ -58,7 +57,7 @@ public class CategoryOperator extends SimpleMCMCOperator {
     /**
      * Alter the category of one site
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         int randomSite = (int) (Math.random() * siteCount);
 

@@ -101,9 +101,9 @@ public class GibbsIndependentNormalDistributionOperator extends SimpleMCMCOperat
     }
 
     /**
-     * change the parameter and return the hastings ratio.
+	 * change the parameter and return the hastings ratio.
      */
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		
 		//double logq = 0;
 		
@@ -131,7 +131,8 @@ public class GibbsIndependentNormalDistributionOperator extends SimpleMCMCOperat
 				//logq += (model.logPdf(currentValue) - model.logPdf(newValue));
 				
 				if (newValue < bounds.getLowerLimit(i) || newValue > bounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
+//                    throw new OperatorFailedException("proposed value outside boundaries");
+					return Double.NEGATIVE_INFINITY;
                 }
 				
 				variable.setValue(i, newValue);

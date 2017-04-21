@@ -101,7 +101,7 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         //store MH-ratio in logq
         double logJacobian = 0.0;
@@ -146,7 +146,8 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
         if (condition == BoundaryCondition.reflecting) {
             newValue = reflectValue(newValue, lower, upper);
         } else if (newValue < lower || newValue > upper) {
-            throw new OperatorFailedException("proposed value outside boundaries");
+//            throw new OperatorFailedException("proposed value outside boundaries");
+            return Double.NEGATIVE_INFINITY;
         }
 
         //parameter.setParameterValue(index, newValue);

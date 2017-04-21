@@ -29,6 +29,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evoxml.util.GraphMLUtils;
 import dr.util.FrequencySet;
 import dr.util.NumberFormatter;
@@ -120,7 +121,7 @@ public class ARGTraceAnalysis {
 		for (int i = 0; i < n; i++) {
 			Tree tree = getARG(i);
 
-			if (Tree.Utils.uniqueNewick(tree, tree.getRoot()).equals(target)) {
+			if (TreeUtils.uniqueNewick(tree, tree.getRoot()).equals(target)) {
 				meanTree = new FlexibleTree(tree);
 				break;
 			}
@@ -131,12 +132,12 @@ public class ARGTraceAnalysis {
 		for (int j = 0; j < m; j++) {
 			double[] heights = new double[n];
 			NodeRef node1 = meanTree.getInternalNode(j);
-			Set<String> leafSet = Tree.Utils.getDescendantLeaves(meanTree, node1);
+			Set<String> leafSet = TreeUtils.getDescendantLeaves(meanTree, node1);
 
 			for (int i = 0; i < n; i++) {
 				Tree tree = getARG(i);
 
-				NodeRef node2 = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+				NodeRef node2 = TreeUtils.getCommonAncestorNode(tree, leafSet);
 				heights[i] = tree.getNodeHeight(node2);
 			}
 			meanTree.setNodeHeight(node1, dr.stats.DiscreteStatistics.mean(heights));

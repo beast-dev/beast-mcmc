@@ -27,6 +27,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.inference.model.Statistic;
 import dr.math.distributions.Distribution;
@@ -248,9 +249,9 @@ public class CalibrationPoints {
             final int[] taxk = clades[k];
             if (taxk.length > 1) {
                 // check if monophyly and find node
-                c = Tree.Utils.getCommonAncestor(tree, taxk);
+                c = TreeUtils.getCommonAncestor(tree, taxk);
 
-                if (Tree.Utils.getLeafCount(tree, c) != taxk.length) {
+                if (TreeUtils.getLeafCount(tree, c) != taxk.length) {
                     return Double.NEGATIVE_INFINITY;
                 }
             } else {

@@ -26,6 +26,7 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -81,6 +82,17 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
+        }
+
+        List<Taxon> treeTaxa = treeModel.asList();
+        List<Taxon> patternTaxa = patternLists.get(0).asList();
+
+        if (!patternTaxa.containsAll(treeTaxa)) {
+            throw new XMLParseException("TreeModel contains more taxa than the partition pattern list.");
+        }
+
+        if (!treeTaxa.containsAll(patternTaxa)) {
+            throw new XMLParseException("TreeModel contains fewer taxa than the partition pattern list.");
         }
 
 //        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(

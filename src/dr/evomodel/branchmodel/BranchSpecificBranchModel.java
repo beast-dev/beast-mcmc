@@ -25,6 +25,7 @@
 
 package dr.evomodel.branchmodel;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
@@ -78,9 +79,9 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
      * @param taxonList a list of taxa who's MRCA define the clade
      * @param substitutionModel the substitution model
      * @param stemWeight the proportion of the stem branch to include in this model (0, 1)
-     * @throws Tree.MissingTaxonException
+     * @throws TreeUtils.MissingTaxonException
      */
-    public void addClade(TaxonList taxonList, SubstitutionModel substitutionModel, double stemWeight) throws Tree.MissingTaxonException {
+    public void addClade(TaxonList taxonList, SubstitutionModel substitutionModel, double stemWeight) throws TreeUtils.MissingTaxonException {
         int index = substitutionModels.indexOf(substitutionModel);
         if (index == -1) {
             index = substitutionModels.size();
@@ -88,7 +89,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
             addModel(substitutionModel);
         }
 
-        BitSet tips = Tree.Utils.getTipsBitSetForTaxa(treeModel, taxonList);
+        BitSet tips = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
         Clade clade = new Clade(index, tips, stemWeight);
         clades.put(tips, clade);
 
@@ -97,7 +98,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         }
     }
 
-    public void addExternalBranches(TaxonList taxonList, SubstitutionModel substitutionModel) throws Tree.MissingTaxonException {
+    public void addExternalBranches(TaxonList taxonList, SubstitutionModel substitutionModel) throws TreeUtils.MissingTaxonException {
         int x = substitutionModels.indexOf(substitutionModel);
         if (x == -1) {
             x = substitutionModels.size();
@@ -123,7 +124,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         }
     }
 
-    public void addBackbone(TaxonList taxonList, SubstitutionModel substitutionModel) throws Tree.MissingTaxonException {
+    public void addBackbone(TaxonList taxonList, SubstitutionModel substitutionModel) throws TreeUtils.MissingTaxonException {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 

@@ -59,22 +59,43 @@ public class UpDownOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
         int goingUp = 0, goingDown = 0;
 
         if( upParameter != null ) {
             for( Scalable up : upParameter ) {
-                goingUp += up.scale(scale, -1);
+                goingUp += up.scale(scale, -1, false);
+//                try {
+//                    goingUp += up.scale(scale, -1, true);
+//                } catch (RuntimeException re) {
+//                    return Double.NEGATIVE_INFINITY;
+//                }
+            }
+            for( Scalable up : upParameter ) {
+                if (!up.testBounds()) {
+                    return Double.NEGATIVE_INFINITY;
+                }
             }
         }
 
         if( downParameter != null ) {
             for( Scalable dn : downParameter ) {
-                goingDown += dn.scale(1.0 / scale, -1);
+                goingDown += dn.scale(1.0 / scale, -1, false);
+//                try {
+//                    goingDown += dn.scale(1.0 / scale, -1, true);
+//                } catch (RuntimeException re) {
+//                    return Double.NEGATIVE_INFINITY;
+//                }
+            }
+            for( Scalable dn : downParameter ) {
+                if (!dn.testBounds()) {
+                    return Double.NEGATIVE_INFINITY;
+                }
             }
         }
+
 
         return (goingUp - goingDown - 2) * Math.log(scale);
     }

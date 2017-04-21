@@ -25,22 +25,19 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.WilsonBaldingParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 /**
- * Implements the unweighted wilson-balding brach swapping move.
+ * Implements the unweighted wilson-balding branch swapping move.
  *
  * @author Alexei Drummond
  * @version $Id: WilsonBalding.java,v 1.38 2005/06/14 10:40:34 rambaut Exp $
  */
 public class WilsonBalding extends AbstractTreeOperator {
 
-    private double logq;
     private TreeModel tree = null;
     private final int tipCount;
 
@@ -51,9 +48,10 @@ public class WilsonBalding extends AbstractTreeOperator {
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
-        proposeTree();
+        double logq = proposeTree();
+
         if (tree.getExternalNodeCount() != tipCount) {
             int newCount = tree.getExternalNodeCount();
             throw new RuntimeException("Lost some tips in modified SPR! (" +
@@ -67,7 +65,7 @@ public class WilsonBalding extends AbstractTreeOperator {
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void proposeTree() throws OperatorFailedException {
+    public double proposeTree() {
 
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
@@ -97,10 +95,12 @@ public class WilsonBalding extends AbstractTreeOperator {
 
         // disallow moves that change the root.
         if (j == tree.getRoot() || iP == tree.getRoot()) {
-            throw new OperatorFailedException("Root changes not allowed!");
+            return Double.NEGATIVE_INFINITY;
         }
 
-        if (k == iP || j == iP || k == i) throw new OperatorFailedException("move failed");
+        if (k == iP || j == iP || k == i) {
+            return Double.NEGATIVE_INFINITY;
+        }
 
         final NodeRef CiP = getOtherChild(tree, iP, i);
         NodeRef PiP = tree.getParent(iP);
@@ -204,7 +204,7 @@ public class WilsonBalding extends AbstractTreeOperator {
 //        }
 
 
-        logq = Math.log(q);
+        return Math.log(q);
     }
 
     public double getMinimumAcceptanceLevel() {

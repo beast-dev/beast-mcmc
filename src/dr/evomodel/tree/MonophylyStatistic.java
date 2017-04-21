@@ -26,6 +26,7 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.BooleanStatistic;
 
@@ -42,19 +43,19 @@ import java.util.Set;
  */
 public class MonophylyStatistic extends BooleanStatistic implements TreeStatistic {
 
-    public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore) throws Tree.MissingTaxonException {
+    public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore) throws TreeUtils.MissingTaxonException {
 
         this(name, tree, taxa, ignore, false);
 
     }
 
-    public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore, boolean inverse) throws Tree.MissingTaxonException {
+    public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore, boolean inverse) throws TreeUtils.MissingTaxonException {
 
         super(name);
         this.tree = tree;
-        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+        this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxa);
         if (ignore != null) {
-            this.ignoreLeafSet = Tree.Utils.getLeavesForTaxa(tree, ignore);
+            this.ignoreLeafSet = TreeUtils.getLeavesForTaxa(tree, ignore);
         } else {
             this.ignoreLeafSet = Collections.emptySet();
         }
@@ -78,7 +79,7 @@ public class MonophylyStatistic extends BooleanStatistic implements TreeStatisti
      * @return boolean result of test.
      */
     public boolean getBoolean(int dim) {
-        boolean monophyletic = Tree.Utils.isMonophyletic(this.tree, this.leafSet, this.ignoreLeafSet);
+        boolean monophyletic = TreeUtils.isMonophyletic(this.tree, this.leafSet, this.ignoreLeafSet);
         if (inverse){
             return !monophyletic;
         } else {

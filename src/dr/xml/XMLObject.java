@@ -103,6 +103,20 @@ public class XMLObject {
     }
 
     /**
+     * @return all children with or empty list if no children.
+     */
+    public List<Object> getChildren() {
+
+        List<Object> allChildren = new ArrayList<Object>();
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+                allChildren.add(child);
+
+        }
+        return allChildren;
+    }
+
+    /**
      * @param c the class of the children to return
      * @return all children with a native format of the given class, or null if no such child exists.
      */
@@ -123,22 +137,6 @@ public class XMLObject {
 
     }
 
-    /*public List<Object> getAllChildren(Class c) {
-
-        List<Object> allChildren = null;
-        for (int i = 0; i < getChildCount(); i++) {
-            Object child = getChild(i);
-            if( c.isInstance(child) ) {
-                if (allChildren == null) {
-                    allChildren = new ArrayList<Object>();
-                }
-                allChildren.add(child);
-            }
-        }
-        return allChildren;
-
-    }*/
-
     /**
      * @param name the name of the child to return
      * @return the first child of type XMLObject with a given name, or null if no such child exists.
@@ -154,6 +152,23 @@ public class XMLObject {
             }
         }
         return null;
+    }
+
+    /**
+     * @param name the name of the children
+     * @return all children with a given name.
+     */
+    public List<XMLObject> getAllChildren(String name) {
+
+        List<XMLObject> allChildren = new ArrayList<XMLObject>();
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+            if( child instanceof XMLObject && ((XMLObject)child).getName().equals(name)) {
+                allChildren.add((XMLObject)child);
+            }
+        }
+        return allChildren;
+
     }
 
     /**

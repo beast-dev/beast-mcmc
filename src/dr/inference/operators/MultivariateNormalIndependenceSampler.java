@@ -78,7 +78,7 @@ public class MultivariateNormalIndependenceSampler extends AbstractCoercableOper
     /**
      * change the parameter and return the hastings ratio.
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[] mean = sccs.getMode();
         double[] currentValue = parameter.getParameterValues();

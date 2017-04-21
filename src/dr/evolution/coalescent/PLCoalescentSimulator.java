@@ -26,6 +26,7 @@
 package dr.evolution.coalescent;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -189,9 +190,9 @@ public class PLCoalescentSimulator {
             CoalescentSimulator simulator = new CoalescentSimulator();
             Tree tree = simulator.simulateTree(taxa, demo);
 
-            out.println(Tree.Utils.newick(tree));
+            out.println(TreeUtils.newick(tree));
             if (debug != null) {
-                debug.println(Tree.Utils.newick(tree));
+                debug.println(TreeUtils.newick(tree));
             }
         }
 

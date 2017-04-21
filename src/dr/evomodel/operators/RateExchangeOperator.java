@@ -29,7 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.RateExchangeOperatorParser;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import org.w3c.dom.Document;
@@ -65,7 +64,7 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         NodeRef node0 = tree.getInternalNode(MathUtils.nextInt(tree.getInternalNodeCount()));
         NodeRef node1 = tree.getChild(node0, 0);

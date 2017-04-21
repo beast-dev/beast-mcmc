@@ -48,6 +48,7 @@ public enum OperatorType {
     SCALE_INDEPENDENTLY("scaleIndependently"),
     CENTERED_SCALE("centeredScale"),
     DELTA_EXCHANGE("deltaExchange"),
+    WEIGHTED_DELTA_EXCHANGE("weightedDeltaExchange"),
     INTEGER_DELTA_EXCHANGE("integerDeltaExchange"),
     SWAP("swap"),
     BITFLIP("bitFlip"),

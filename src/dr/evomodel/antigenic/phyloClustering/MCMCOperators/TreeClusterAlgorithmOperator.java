@@ -335,7 +335,7 @@ private void loadClusterTreeNodes() {
     
  
     /**
-     * change the parameter and return the log hastings ratio.
+	 * change the parameter and return the log hastings ratio.
      */
     public final double doOperation() {
     	double logHastingRatio = 0; //initiate the log Metropolis Hastings ratio of the MCMC

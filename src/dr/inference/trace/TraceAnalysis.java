@@ -110,7 +110,7 @@ public class TraceAnalysis {
         int warning = 0;
         for (int i = 0; i < traces.getTraceCount(); i++) {
             traces.analyseTrace(i);
-            TraceDistribution distribution = traces.getDistributionStatistics(i);
+            TraceCorrelation distribution = traces.getCorrelationStatistics(i);
 
             double ess = distribution.getESS();
             System.out.print(traces.getTraceName(i));
@@ -203,7 +203,7 @@ public class TraceAnalysis {
         int id = traces.getTraceIndex(traceName);
 
         traces.analyseTrace(id);
-        TraceDistribution distribution = traces.getDistributionStatistics(id);
+        TraceCorrelation distribution = traces.getCorrelationStatistics(id);
 
         double ess = distribution.getESS();
 //            System.out.print(traces.getTraceName(id) + "\t");
@@ -331,4 +331,153 @@ public class TraceAnalysis {
             return formatter.format(value);
         } else return formatter2.format(value);
     }
+
+    static final String[] colNamesNumeric = {"mean", "stderr_of_mean", "stdev", "variance", "median", "min", "max",
+            "quantile1", "quantile3", "95_hpd_lower", "95_hpd_upper", "ACT", "ESS", "num_samples", "geometric_mean"};
+    static final String[] colNamesCategorical = {"mode", "mode_frequency", "mode_probability",
+            "unique_values", "95_credible_set"};
+
+    /**
+     * Output a tab-delimited result of the full statistic summary in a string,
+     * given a list of <code>TraceList</code> (log or combined trace).
+     * The rows are traces, columns are statistics.
+     * The left section of statistics is for numbers, the right for categorical values,
+     * if null or NA, then return empty string in that particular row and column.
+     *
+     * @param traceLists
+     * @return
+     */
+    public static String getStatisticSummary(List<TraceList> traceLists)  {
+        StringBuffer buffer = new StringBuffer();
+
+        String[] colNames = colNamesNumeric;
+        if (TraceTypeUtils.anyCategorical(traceLists, null)) {
+            colNames = new String[colNamesNumeric.length + colNamesCategorical.length];
+            System.arraycopy(colNamesNumeric, 0, colNames, 0, colNamesNumeric.length);
+            System.arraycopy(colNamesCategorical, 0, colNames, colNamesNumeric.length, colNamesCategorical.length);
+        }
+
+        for (int i = 0; i < traceLists.size(); i++) {
+            TraceList tl = traceLists.get(i);
+            // trace list name
+            String prefix = "";
+            // add prefix to multi-log
+            if (traceLists.size() > 1) {
+                prefix = tl.getName() + ".";
+
+                // rm all spaces
+                prefix = prefix.replaceAll("\\s+", "");
+                // file extension
+                if (prefix.contains(".txt") || prefix.contains(".log"))
+                    prefix = prefix.replaceAll("\\.txt|\\.log", "");
+            }
+
+            // write column names
+            if (i == 0) {
+                for (String colName : colNames) {
+                    buffer.append("\t");
+                    buffer.append(colName);
+                }
+                buffer.append("\n");
+            }
+
+            // main
+            for (int row = 0; row < tl.getTraceCount(); row++) {
+                // row name
+                buffer.append(prefix + tl.getTrace(row).getName());
+
+                TraceCorrelation tc = tl.getCorrelationStatistics(row);
+                // stats
+                for (int col = 0; col < colNames.length; col++) {
+                    buffer.append("\t");
+                    String stats = getStatistic(col, tc);
+                    buffer.append(stats);
+                }
+                buffer.append("\n");
+            }
+        }
+        return buffer.toString();
+    }
+
+    private static String getStatistic(int i, TraceCorrelation tc) {
+        if (tc == null)
+            return "";
+        if (tc.getTraceType().isContinuous() && i >= colNamesNumeric.length)
+            return "";
+        if (tc.getTraceType().isCategorical() && i < colNamesNumeric.length)
+            return "";
+
+        Object value = null;
+        switch (i) { // i is the index of colNamesNumeric + colNamesCategorical
+            case 0:
+                value = tc.getMean();
+                break;
+            case 1:
+                value = tc.getStdErrorOfMean();
+                break;
+            case 2:
+                value = tc.getStdError();
+                break;
+            case 3:
+                value = tc.getVariance();
+                break;
+            case 4:
+                value = tc.getMedian();
+                break;
+            case 5:
+                value = tc.getMinimum();
+                break;
+            case 6:
+                value = tc.getMaximum();
+                break;
+            case 7:
+                value = tc.getQ1();
+                break;
+            case 8:
+                value = tc.getQ3();
+                break;
+            case 9:
+                value = tc.getLowerHPD();
+                break;
+            case 10:
+                value = tc.getUpperHPD();
+                break;
+            case 11:
+                value = tc.getACT();
+                break;
+            case 12:
+                value = tc.getESS();
+                break;
+            case 13:
+                value = tc.getSize();
+                break;
+            case 14:
+                if (!tc.hasGeometricMean()) return "";
+                value = tc.getGeometricMean();
+                break;
+            //+++++ categorical +++++
+            case 15:
+                value = tc.getMode().toString();
+                break;
+            case 16:
+                value = tc.getFrequencyOfMode();
+                break;
+            case 17:
+                value = tc.getProbabilityOfMode();
+                break;
+            case 18:
+                value = tc.printUniqueValues();
+                break;
+            case 19:
+                value = tc.printCredibleSet();
+                break;
+        }
+        if (value == null)
+            return "";
+        else if (value instanceof Double && Double.isNaN(((Double) value).doubleValue()))
+            return "";
+        else
+            return value.toString();
+    }
+
 }

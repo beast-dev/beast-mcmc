@@ -33,7 +33,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMetropolizedGibbsOperator;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
@@ -45,6 +44,8 @@ import java.util.List;
  * @author Sebastian Hoehna
  *
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
 
     private int MAX_DISTANCE = 10;
@@ -77,8 +78,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         return 1;
     }
 
-    public double doOperation(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException {
+    public double doOperation(Prior prior, Likelihood likelihood) {
 
         if( pruned ) {
             return prunedWide(prior, likelihood);
@@ -92,8 +92,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
      *
      * @throws InvalidTreeException
      */
-    public double wide(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException {
+    public double wide(Prior prior, Likelihood likelihood) {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -143,7 +142,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
             // hack
             // the proposals have such a small likelihood that they can be
             // neglected
-            throw new OperatorFailedException(
+            throw new RuntimeException(
                     "Couldn't find another proposal with a decent likelihood.");
         }
 
@@ -252,8 +251,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
      *
      * @throws InvalidTreeException
      */
-    public double prunedWide(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException {
+    public double prunedWide(Prior prior, Likelihood likelihood) {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -304,7 +302,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
             // hack
             // the proposals have such a small likelihood that they can be
             // neglected
-            throw new OperatorFailedException(
+            throw new RuntimeException(
                     "Couldn't find another proposal with a decent likelihood.");
         }
 
@@ -430,8 +428,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
     }
 
     /* exchange subtrees whose root are i and j */
-    private TreeModel swap(TreeModel tree, NodeRef i, NodeRef j, NodeRef iP,
-                           NodeRef jP) throws OperatorFailedException {
+    private TreeModel swap(TreeModel tree, NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) {
 
         tree.beginTreeEdit();
         tree.removeChild(iP, i);

@@ -27,6 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
@@ -43,7 +44,7 @@ import java.util.List;
  */
 public class ExternalLengthStatistic extends Statistic.Abstract implements TreeStatistic {
 
-    public ExternalLengthStatistic(String name, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+    public ExternalLengthStatistic(String name, Tree tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
         super(name);
         this.tree = tree;
         int m = taxa.getTaxonCount();
@@ -65,7 +66,7 @@ public class ExternalLengthStatistic extends Statistic.Abstract implements TreeS
             }
 
             if (!found) {
-                throw new Tree.MissingTaxonException(taxon);
+                throw new TreeUtils.MissingTaxonException(taxon);
             }
 
             leafSet.add(node);

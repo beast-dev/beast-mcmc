@@ -25,6 +25,7 @@
 
 package dr.geo.operators;
 
+import dr.geo.AbstractPolygon2D;
 import dr.geo.GeoSpatialDistribution;
 import dr.geo.MultiRegionGeoSpatialDistribution;
 import dr.geo.Polygon2D;
@@ -74,7 +75,7 @@ public class UniformGeoSpatialOperatorParser extends AbstractXMLObjectParser {
             likelihood = (MultivariateDistributionLikelihood) ab;
         }
 
-        List<Polygon2D> polygonList = new ArrayList<Polygon2D>();
+        List<AbstractPolygon2D> polygonList = new ArrayList<AbstractPolygon2D>();
 
         if (likelihood.getDistribution() instanceof MultiRegionGeoSpatialDistribution) {
             for (GeoSpatialDistribution spatial : ((MultiRegionGeoSpatialDistribution) likelihood.getDistribution()).getRegions()) {

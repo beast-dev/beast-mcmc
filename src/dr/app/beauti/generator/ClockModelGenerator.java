@@ -28,6 +28,7 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -591,13 +592,15 @@ public class ClockModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeAllMus(PartitionClockModel model, XMLWriter writer) {
-        Parameter allMus = model.getParameter("allMus");
+        String parameterName = options.NEW_OPERATORS ? "allNus" : "allMus";
+
+        Parameter allMus = model.getParameter(parameterName);
         if (allMus.getSubParameters().size() > 1) {
             writer.writeComment("Collecting together relative rates for partitions");
 
             // allMus is global for each gene
             writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "allMus")});
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + parameterName)});
 
             for (Parameter parameter : allMus.getSubParameters()) {
                 writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
@@ -650,9 +653,19 @@ public class ClockModelGenerator extends Generator {
     public void writeLog(PartitionClockModel model, XMLWriter writer) {
         setModelPrefix(model.getPrefix());
 
-        Parameter allMus = model.getParameter("allMus");
-        if (allMus.getSubParameters().size() > 1) {
-            writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
+        if (options.NEW_OPERATORS) {
+            Parameter allNus = model.getParameter("allNus");
+            if (allNus.getSubParameters().size() > 1) {
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allNus");
+            }
+
+            // todo write mu s here as statistics (or per-partition rates?).
+
+        } else {
+            Parameter allMus = model.getParameter("allMus");
+            if (allMus.getSubParameters().size() > 1) {
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
+            }
         }
 
         switch (model.getClockType()) {

@@ -27,12 +27,11 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.IllegalDimension;
@@ -898,14 +897,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
                 for (int j = 0; j < tipCount; ++j) {
                     NodeRef friend = treeModel.getExternalNode(j);
-                    NodeRef mrca = Tree.Utils.getCommonAncestor(treeModel, node, friend);
+                    NodeRef mrca = TreeUtils.getCommonAncestor(treeModel, node, friend);
                     variance[j][tipCount + i] = getRescaledLengthToRoot(mrca);
 
                 }
 
                 for (int j = 0; j < i; ++j) {
                     NodeRef friend = partialsList.get(j).getNode();
-                    NodeRef mrca = Tree.Utils.getCommonAncestor(treeModel, node, friend);
+                    NodeRef mrca = TreeUtils.getCommonAncestor(treeModel, node, friend);
                     variance[tipCount + j][tipCount + i] = getRescaledLengthToRoot(mrca);
                 }
             }
@@ -945,7 +944,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         Set<String> leafNames = new HashSet<String>();
         leafNames.add(treeModel.getTaxonId(iTip));
         leafNames.add(treeModel.getTaxonId(jTip));
-        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+        return TreeUtils.getCommonAncestorNode(treeModel, leafNames);
     }
 
     private double[][] removeMissingTipsInTreeVariance(double[][] variance) {

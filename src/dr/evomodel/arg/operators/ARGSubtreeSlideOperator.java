@@ -114,7 +114,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 	 *
 	 * @return the log-transformed hastings ratio
 	 */
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 
 //		System.err.println("Starting Subtree Slide Operation.");
 		double logq = 0;
@@ -180,13 +180,13 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 				if (tree.isRoot(newChild)) {
 
 					if (true) {
-                        tree.endTreeEdit();
+						tree.endTreeEdit();
 						try {
                             tree.checkTreeIsValid();
 						} catch (MutableTree.InvalidTreeException e) {
 							e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 						}
-						throw new OperatorFailedException("Temporarily disable re-rooting");
+						throw new RuntimeException("Temporarily disable re-rooting");
 					}
 
 					//Parameter rootParameter = ((Node)newChild).heightParameter;
@@ -276,7 +276,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 
 				// if no valid destinations then return a failure
 				if (newChildren.size() == 0) //{ return Double.NEGATIVE_INFINITY; }
-					throw new OperatorFailedException("no valid destinations");
+					throw new RuntimeException("no valid destinations");
 
 				// pick a random parent/child destination edge uniformly from options
 				int childIndex = MathUtils.nextInt(newChildren.size());
@@ -308,7 +308,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 				if (tree.isRoot(iP)) {
 					// new root is CiP, but root cannot be a reassortment
 					if (!tree.isBifurcation(CiP))
-						throw new OperatorFailedException("root cannot be a reassortment");
+						throw new RuntimeException("root cannot be a reassortment");
 					boolean doubly = tree.isBifurcationDoublyLinked(newParent);
 					tree.doubleRemoveChild(iP, CiP);
 					tree.doubleRemoveChild(newParent, newChild);
@@ -421,14 +421,14 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 		// todo fix
 		// Reject all trees in which the root is doubly-
 		if (tree.isBifurcationDoublyLinked(tree.getRoot()))
-			throw new OperatorFailedException("invalid slide");
+			throw new RuntimeException("invalid slide");
 
 		// todo -- check all ARGTree.Roots
 		if (!tree.validRoot())
-			throw new OperatorFailedException("Roots are invalid");
+			throw new RuntimeException("Roots are invalid");
 
 		if (logq == Double.NEGATIVE_INFINITY)
-			throw new OperatorFailedException("invalid slide");
+			throw new RuntimeException("invalid slide");
 //		System.err.println("Ending Subtree Slide Operation.");
 		//System.err.println("logq = "+logq);
 		//  logq = 0;
@@ -436,7 +436,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 
 		if (scaledDirichletBranches) {
 			if (oldTreeHeight != tree.getNodeHeight(tree.getRoot()))
-				throw new OperatorFailedException("Temporarily disabled."); // TODO calculate Hastings ratio
+				throw new RuntimeException("Temporarily disabled."); // TODO calculate Hastings ratio
 		}
 
 

@@ -1,7 +1,7 @@
 /*
  * UniformGeoSpatialOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,7 @@
 
 package dr.geo.operators;
 
+import dr.geo.AbstractPolygon2D;
 import dr.geo.Polygon2D;
 import dr.inference.model.Parameter;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -38,7 +39,7 @@ import java.util.List;
  */
 public class UniformGeoSpatialOperator extends SimpleMCMCOperator {
 
-    public UniformGeoSpatialOperator(Parameter parameter, double weight, List<Polygon2D> polygonList) {
+    public UniformGeoSpatialOperator(Parameter parameter, double weight, List<AbstractPolygon2D> polygonList) {
         this.parameter = parameter;
         this.polygonList = polygonList;
         setWeight(weight);
@@ -64,7 +65,7 @@ public class UniformGeoSpatialOperator extends SimpleMCMCOperator {
             currentSum++; // For debugging prior probability of first region
         }
 
-        Polygon2D polygon = polygonList.get(whichRegion);
+        AbstractPolygon2D polygon = polygonList.get(whichRegion);
 
         double[][] minMax = polygon.getXYMinMax();
 
@@ -105,7 +106,7 @@ public class UniformGeoSpatialOperator extends SimpleMCMCOperator {
 
     //PRIVATE STUFF
     private final Parameter parameter;
-    private final List<Polygon2D> polygonList;
+    private final List<AbstractPolygon2D> polygonList;
 
     private long totalOps = 0;
     private long currentSum = 0;

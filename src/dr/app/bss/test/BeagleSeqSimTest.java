@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchmodel.RandomBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -206,10 +207,10 @@ public class BeagleSeqSimTest {
 			NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 			boolean useTipLabels = true;
 
-			Tree.Utils.newick(treeModel, //
+			TreeUtils.newick(treeModel, //
 					treeModel.getRoot(), //
 					useTipLabels, //
-					Tree.BranchLengthType.LENGTHS_AS_TIME, //
+					TreeUtils.BranchLengthType.LENGTHS_AS_TIME, //
 					format, //
 					null, //
 					treeTraitProviders, //

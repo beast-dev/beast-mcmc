@@ -30,6 +30,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import jam.framework.DocumentFrame;
@@ -147,7 +148,7 @@ public class CoalGenFrame extends DocumentFrame {
                     "Reading " + fileName,
                     new FileInputStream(file));
 
-            final Reader reader = new InputStreamReader(in);
+//            final Reader reader = new InputStreamReader(in);
             final JFrame frame = this;
 
             // the monitored activity must be in a new thread.
@@ -156,7 +157,7 @@ public class CoalGenFrame extends DocumentFrame {
                     try {
                         final File file1 = new File(fileName);
                         final LogFileTraces traces = new LogFileTraces(fileName, file1);
-                        traces.loadTraces(reader);
+                        traces.loadTraces(in);
 
                         EventQueue.invokeLater(
                                 new Runnable() {
@@ -303,7 +304,7 @@ public class CoalGenFrame extends DocumentFrame {
 
             Tree tree = simulator.simulateTree(data.taxonList, demo);
 
-            writer.println(count + "\t" + Tree.Utils.newick(tree));
+            writer.println(count + "\t" + TreeUtils.newick(tree));
             count += 1;
         }
 

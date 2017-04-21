@@ -33,6 +33,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.geo.KMLCoordinates;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.Polygon2D;
@@ -41,7 +42,6 @@ import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceType;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.util.DataTable;
 import dr.util.HeapSort;
 import dr.util.Version;
 import org.jdom.Element;
@@ -1643,7 +1643,7 @@ public class TimeSlicer {
 
         if (tree.isExternal(node)) return false;
 
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
         int size = leafSet.size();
 
         leafSet.retainAll(targetSet);
@@ -1653,7 +1653,7 @@ public class TimeSlicer {
             // if all leaves below are in target then check just above.
             if (leafSet.size() == size) {
 
-                Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                Set superLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
                 superLeafSet.removeAll(targetSet);
 
                 // the branch is on ancestral path if the super tree has some non-targets in it
@@ -1666,7 +1666,7 @@ public class TimeSlicer {
 
     private static boolean inClade(Tree tree, NodeRef node, Set targetSet, boolean includeStem) {
 
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
         int size = leafSet.size();
 
         leafSet.retainAll(targetSet);
@@ -1679,7 +1679,7 @@ public class TimeSlicer {
                 if (!includeStem){
                     return false;
                 } else {
-                    Set newLeafSet = Tree.Utils.getDescendantLeaves(tree, node);
+                    Set newLeafSet = TreeUtils.getDescendantLeaves(tree, node);
                     newLeafSet.removeAll(targetSet);
                     if (newLeafSet.size() == 0){
                         return true;
@@ -1704,7 +1704,7 @@ public class TimeSlicer {
             Object o = treeTime.getAttribute(PRECISION_STRING);
             double treeNormalization = 1; // None
             if (normalize == Normalization.LENGTH) {
-                treeNormalization = Tree.Utils.getTreeLength(treeTime, treeTime.getRoot());
+                treeNormalization = TreeUtils.getTreeLength(treeTime, treeTime.getRoot());
             } else if (normalize == Normalization.HEIGHT) {
                 treeNormalization = treeTime.getNodeHeight(treeTime.getRoot());
             }
@@ -1757,7 +1757,7 @@ public class TimeSlicer {
         double[][] treeSliceDiffusionCoefficients = new double[sliceCount][treeTime.getNodeCount() - 1];
         double[] treeSliceBranchCount = new double[sliceCount];
 
-        treeLengths.add(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot()));
+        treeLengths.add(TreeUtils.getTreeLength(treeTime, treeTime.getRoot()));
 
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
@@ -1811,7 +1811,7 @@ public class TimeSlicer {
                     boolean descendentsOK = false;
                     if (descendentTaxaSet!=null){
 
-                        NodeRef setNode = Tree.Utils.getCommonAncestorNode(treeTime, descendentTaxaSet);
+                        NodeRef setNode = TreeUtils.getCommonAncestorNode(treeTime, descendentTaxaSet);
 
                         if (setNode==null){
                             System.err.println("no common ancestor node for taxa you have defined:");

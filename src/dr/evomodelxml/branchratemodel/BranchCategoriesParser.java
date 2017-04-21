@@ -25,20 +25,13 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
-import dr.evomodel.branchratemodel.CountableMixtureBranchRates;
-import dr.evomodel.branchratemodel.CountableModelMixtureBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Logger;
 
 /**
  */
@@ -74,7 +67,7 @@ public class BranchCategoriesParser extends AbstractXMLObjectParser {
                         int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
                         try {
                             cm.setClade(taxonList, rateCategory, includeStem, excludeClade, false);
-                        } catch (Tree.MissingTaxonException e) {
+                        } catch (TreeUtils.MissingTaxonException e) {
                             throw new XMLParseException("Unable to find taxon for clade in countable mixture model: " + e.getMessage());
                         }
                     }  else if (xoc.getName().equals(LocalClockModelParser.TRUNK)) {
@@ -85,7 +78,7 @@ public class BranchCategoriesParser extends AbstractXMLObjectParser {
                         int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
                         try {
                             cm.setClade(taxonList, rateCategory, includeStem, excludeClade, true);
-                        } catch (Tree.MissingTaxonException e) {
+                        } catch (TreeUtils.MissingTaxonException e) {
                             throw new XMLParseException("Unable to find taxon for trunk in countable mixture model: " + e.getMessage());
                         }
                     }

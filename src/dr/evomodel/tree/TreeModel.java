@@ -1,7 +1,7 @@
 /*
  * TreeModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -112,7 +112,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         root = node;
 
         do {
-            node = (Node) Tree.Utils.postorderSuccessor(this, node);
+            node = (Node) TreeUtils.postorderSuccessor(this, node);
 
             if (node.isExternal()) {
                 node.number = i;
@@ -627,7 +627,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      * in the same way as this TreeModel is set up. This method is package
      * private.
      */
-    void copyNodeStructure(Node[] destination) {
+    private void copyNodeStructure(Node[] destination) {
 
         if (nodes.length != destination.length) {
             throw new IllegalArgumentException("Node arrays are of different lengths");
@@ -688,6 +688,59 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         addNodeStructure(donor, donor.getRoot());
 
         //Tree donor has no rates nor traits, only heights
+
+    }
+
+    /**
+     * Modifies the current tree by adopting the provided collection of edges
+     * @param edges Edges are provided as index: child number; parent: array entry
+     * @param nodeHeights Also sets the node heights to the provided values
+     * @param childOrder Array that contains whether a child node is left or right child
+     */
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder) {
+
+        if (this.nodeCount != edges.length) {
+            throw new RuntimeException("Incorrect number of edges provided: " + edges.length + " versus " + this.nodeCount + " nodes.");
+        }
+
+        //first remove all the child nodes of the internal nodes
+        for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
+            int childCount = nodes[i].getChildCount();
+            for (int j = 0; j < childCount; j++) {
+                nodes[i].removeChild(j);
+            }
+        }
+
+        //set the node heights
+        for (int i = 0; i < nodeHeights.length; i++) {
+            setNodeHeight(nodes[i], nodeHeights[i]);
+        }
+
+        int newRootIndex = -1;
+        //now add the parent-child links again to ALL the nodes
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] != -1) {
+                nodes[edges[i]].addChild(nodes[i]);
+            } else {
+                newRootIndex = i;
+            }
+        }
+
+        //not possible to determine correct ordering of child nodes in the loop where they're being assigned
+        //hence perform possible swaps in a separate loop
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] != -1) {
+                if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
+                    //swap child nodes
+                    Node childOne = nodes[edges[i]].removeChild(0);
+                    Node childTwo = nodes[edges[i]].removeChild(1);
+                    nodes[edges[i]].addChild(childTwo);
+                    nodes[edges[i]].addChild(childOne);
+                }
+            }
+        }
+
+        this.setRoot(nodes[newRootIndex]);
 
     }
 
@@ -933,7 +986,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      * @return a string containing a newick representation of the tree
      */
     public final String getNewick() {
-        return Tree.Utils.newick(this);
+        return TreeUtils.newick(this);
     }
 
     /**

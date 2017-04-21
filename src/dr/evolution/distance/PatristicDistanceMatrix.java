@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.Importer;
+import dr.evolution.tree.TreeUtils;
 import dr.matrix.Matrix;
 
 import java.util.HashSet;
@@ -62,7 +63,7 @@ public class PatristicDistanceMatrix extends DistanceMatrix {
         nodes.add(tree.getNodeTaxon(node1).getId());
         nodes.add(tree.getNodeTaxon(node2).getId());
 
-        NodeRef ancestor = Tree.Utils.getCommonAncestorNode(tree, nodes);
+        NodeRef ancestor = TreeUtils.getCommonAncestorNode(tree, nodes);
 
         if (ancestor == null) System.out.println("common ancestor is null!");
 

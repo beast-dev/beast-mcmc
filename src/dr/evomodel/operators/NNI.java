@@ -31,7 +31,6 @@ package dr.evomodel.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.NNIParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 /**
@@ -60,7 +59,7 @@ public class NNI extends AbstractTreeOperator {
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 

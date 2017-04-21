@@ -8,8 +8,6 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 
-import java.util.Random;
-
 /**
  * Created by Max on 9/1/16.
  */
@@ -37,7 +35,7 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         if(liabilityLikelihood.getOrdering())
             doUnorderedOperation();
         else

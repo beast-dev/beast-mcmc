@@ -29,10 +29,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.app.gui.tree.JTreeDisplay;
 import dr.app.gui.tree.JTreePanel;
 import dr.app.gui.tree.SquareTreePainter;
@@ -83,7 +80,7 @@ public class BranchRatePlotter {
             targetImporter = new NewickImporter(new FileReader(targetTreeFile));
         }
         MutableTree targetTree = new FlexibleTree(targetImporter.importNextTree());
-        targetTree = Tree.Utils.rotateTreeByComparator(targetTree, Tree.Utils.createNodeDensityComparator(targetTree));
+        targetTree = TreeUtils.rotateTreeByComparator(targetTree, TreeUtils.createNodeDensityComparator(targetTree));
 
         BufferedReader reader = new BufferedReader(new FileReader(controlFile));
         String line = reader.readLine();
@@ -285,10 +282,10 @@ public class BranchRatePlotter {
     private static void annotateRates(
             MutableTree targetTree, NodeRef node, Tree timeTree, Tree mutationTree) {
 
-        Set<String> leafSet = Tree.Utils.getDescendantLeaves(targetTree, node);
-        if (Tree.Utils.isMonophyletic(timeTree, leafSet)) {
-            NodeRef timeNode = Tree.Utils.getCommonAncestorNode(timeTree, leafSet);
-            NodeRef mutationNode = Tree.Utils.getCommonAncestorNode(mutationTree, leafSet);
+        Set<String> leafSet = TreeUtils.getDescendantLeaves(targetTree, node);
+        if (TreeUtils.isMonophyletic(timeTree, leafSet)) {
+            NodeRef timeNode = TreeUtils.getCommonAncestorNode(timeTree, leafSet);
+            NodeRef mutationNode = TreeUtils.getCommonAncestorNode(mutationTree, leafSet);
 
             double height = timeTree.getNodeHeight(timeNode);
 

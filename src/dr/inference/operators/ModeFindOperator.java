@@ -25,20 +25,10 @@
 
 package dr.inference.operators;
 
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
-import cern.colt.matrix.linalg.SingularValueDecomposition;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
 import dr.inference.multidimensionalscaling.mm.MMAlgorithm;
 import dr.inference.multidimensionalscaling.mm.MultiDimensionalScalingMM;
-import dr.math.MathUtils;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
-
-import javax.sql.rowset.serial.SerialRef;
 
 
 /**
@@ -73,7 +63,7 @@ public class ModeFindOperator extends AbstractCoercableOperator {
         this.scaleFactor = scaleFactor;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if (executeTimes < maxTimes) {
 
@@ -116,7 +106,7 @@ public class ModeFindOperator extends AbstractCoercableOperator {
             return logHR;
 
         } else {
-            throw new OperatorFailedException("Finished max times");
+            throw new RuntimeException("Finished max times");
         }
     }
 

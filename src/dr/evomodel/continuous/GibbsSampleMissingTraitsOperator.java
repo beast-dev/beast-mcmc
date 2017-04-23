@@ -35,7 +35,7 @@ import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
+//import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 
@@ -71,7 +71,7 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {//throws OperatorFailedException {
 
         final Tree tree = treeLikelihood.getTree();
 

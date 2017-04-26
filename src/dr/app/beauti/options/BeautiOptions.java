@@ -54,6 +54,8 @@ import dr.inference.operators.OperatorSchedule;
  */
 public class BeautiOptions extends ModelOptions {
 
+    public static final boolean NEW_OPERATORS = true;
+
     private static final long serialVersionUID = -3676802825545741012L;
 
     public BeautiOptions() {
@@ -143,7 +145,7 @@ public class BeautiOptions extends ModelOptions {
         operatorAnalysis = false;
         operatorAnalysisFileName = null;
 
-        siteModelOptions = new SiteModelOptions(this);
+        globalModelOptions = new GlobalModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
         treeModelOptions = new TreeModelOptions(this);
 //        priorOptions = new PriorOptions(this);
@@ -250,6 +252,8 @@ public class BeautiOptions extends ModelOptions {
     @Override
     public List<Parameter> selectParameters(List<Parameter> parameters) {
 
+        globalModelOptions.selectParameters(parameters);
+
         selectTaxonSetsStatistics(parameters); // have to be before clockModelOptions.selectParameters(parameters);
 
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
@@ -271,12 +275,18 @@ public class BeautiOptions extends ModelOptions {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
             if (relativeRateParameters.size() > 1) {
-                Parameter allMus = model.getParameter("allMus");
+                Parameter allMus = model.getParameter(NEW_OPERATORS ? "allNus" : "allMus" );
                 allMus.clearSubParameters();
+
+                int totalWeight = 0;
                 for (Parameter mu : relativeRateParameters) {
                     allMus.addSubParameter(mu);
+                    totalWeight += mu.getDimensionWeight();
                 }
                 parameters.add(allMus);
+
+                // add the total weight of all mus/nus to the allMus parameter
+                allMus.setDimensionWeight(totalWeight);
             }
 
             model.selectParameters(parameters);
@@ -334,10 +344,11 @@ public class BeautiOptions extends ModelOptions {
 
     @Override
     public List<Operator> selectOperators(List<Operator> ops) {
+        globalModelOptions.selectOperators(ops);
+
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             model.selectOperators(ops);
         }
-//        substitutionModelOptions.selectOperators(ops);
 
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectOperators(ops);
@@ -1421,7 +1432,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean operatorAnalysis = true;
     public String operatorAnalysisFileName = null;
 
-    public SiteModelOptions siteModelOptions = new SiteModelOptions(this);
+    public GlobalModelOptions globalModelOptions = new GlobalModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
 

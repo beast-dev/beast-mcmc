@@ -1,7 +1,7 @@
 /*
  * GeoSpatialDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -63,18 +63,25 @@ public class GeoSpatialDistribution implements MultivariateDistribution, Citable
         this.label = label;
     }
 
-    public GeoSpatialDistribution(String label, Polygon2D region, boolean inside) {
+    public GeoSpatialDistribution(String label, AbstractPolygon2D region, boolean inside) {
         this.label = label;
         this.region = region;
         this.outside = !inside;
     }
 
     public double logPdf(double[] x) {
-        final boolean contains = region.containsPoint2D(new Point2D.Double(x[0], x[1]));
-        if (outside ^ contains)
+        /*final boolean contains = region.containsPoint2D(new Point2D.Double(x[0], x[1]));
+        if (region.hasFillValue()) {
+            if (contains) {
+                return region.getLogFillValue();
+            } else {
+                return Double.NEGATIVE_INFINITY;
+            }
+        } else if (outside ^ contains)
             return 0;
-        return Double.NEGATIVE_INFINITY;
+        return Double.NEGATIVE_INFINITY;*/
 
+        return region.getLogProbability(new Point2D.Double(x[0], x[1]), this.outside);
     }
 
     public double[][] getScaleMatrix() {
@@ -97,11 +104,11 @@ public class GeoSpatialDistribution implements MultivariateDistribution, Citable
         return outside;
     }
 
-    public Polygon2D getRegion() {
+    public AbstractPolygon2D getRegion() {
         return region;
     }
 
-    protected Polygon2D region;
+    protected AbstractPolygon2D region;
     protected String label = null;
     private boolean outside = false;
 
@@ -122,12 +129,34 @@ public class GeoSpatialDistribution implements MultivariateDistribution, Citable
 
             List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
 
+            boolean overAllFill = false;
             if (xo.hasAttribute(KML_FILE)) {
                 // read file
                 String kmlFileName = xo.getStringAttribute(KML_FILE);
-                List<Polygon2D> polygons = Polygon2D.readKMLFile(kmlFileName);
-                for (Polygon2D region : polygons)
+                List<AbstractPolygon2D> polygons = Polygon2D.readKMLFile(kmlFileName);
+                //check if all the polygons have either a fillValue or do not have this fillValue
+                AbstractPolygon2D first = polygons.get(0);
+                boolean equalFills = first.hasFillValue();
+                if (polygons.size() > 1) {
+                    for (int i = 1; i < polygons.size(); i++) {
+                        if (!(equalFills == polygons.get(i).hasFillValue())) {
+                            throw new XMLParseException("Inconsistent fillValue attributes provided.");
+                        }
+                    }
+                }
+                if (equalFills) {
+                    double sum = 0.0;
+                    for (AbstractPolygon2D region : polygons) {
+                        sum += region.getFillValue();
+                    }
+                    if (Math.abs(sum - 1.0) > 1E-12) {
+                        throw new XMLParseException("Fill values in " + kmlFileName + " do not sum to 1 : " + sum);
+                    }
+                }
+                overAllFill = equalFills;
+                for (AbstractPolygon2D region : polygons) {
                     geoSpatialDistributions.add(new GeoSpatialDistribution(label, region, inside));
+                }
                 readFromFile = true;
             } else {
 
@@ -148,6 +177,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution, Citable
                 parameters.add(spatialParameter);
             }
 
+            //changes with fillValue attribute do not apply here
             if (geoSpatialDistributions.size() == 1) {
                 MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(geoSpatialDistributions.get(0));
                 for (Parameter spatialParameter : parameters) {
@@ -183,7 +213,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution, Citable
                                     "\tTaxon: " + label + "\n" +
                                     "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
                     MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
-                            new MultiRegionGeoSpatialDistribution(label, geoSpatialDistributions, union));
+                            new MultiRegionGeoSpatialDistribution(label, geoSpatialDistributions, union, overAllFill));
                     likelihood.addData(parameter);
                     likelihood.setId(xo.getId());
                     if (cache) {
@@ -264,4 +294,122 @@ public class GeoSpatialDistribution implements MultivariateDistribution, Citable
         ));
         return citationList;
     }
+
+    public static void main(String[] args) {
+
+        //test reading in KML file with multiple polygons and fillValue attribute
+        List<AbstractPolygon2D> polygons = Polygon2D.readKMLFile("Multiple_polygons/9.285_105.7244444.kml");
+        System.out.println(polygons.size() + " polygons found.");
+
+        //check if all the polygons have either a fillValue or do not have this fillValue
+        AbstractPolygon2D first = polygons.get(0);
+        boolean equalFills = first.hasFillValue();
+        if (polygons.size() > 1) {
+            for (int i = 1; i < polygons.size(); i++) {
+                if (!(equalFills == polygons.get(i).hasFillValue())) {
+                    System.out.println("Inconsistent fillValue attributes provided.");
+                }
+            }
+        }
+
+        if (equalFills) {
+            double sum = 0.0;
+            for (AbstractPolygon2D region : polygons) {
+                sum += region.getFillValue();
+            }
+            if (Math.abs(sum - 1.0) > 1E-12) {
+                System.out.println("\nFill values do not sum to 1 : " + sum);
+            }
+        }
+
+        boolean overAllFill = equalFills;
+        List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
+        for (AbstractPolygon2D region : polygons) {
+            geoSpatialDistributions.add(new GeoSpatialDistribution("test", region, false));
+        }
+
+        MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
+                new MultiRegionGeoSpatialDistribution("multi", geoSpatialDistributions, false, overAllFill));
+
+        Parameter.Default parameter = new Parameter.Default("coordinate", 2);
+        likelihood.addData(parameter);
+        double logL = likelihood.calculateLogLikelihood();
+
+        System.out.println("\n(" + parameter.getParameterValue(0) + "," + parameter.getParameterValue(1) + ")");
+        System.out.println("logL = " + logL);
+        System.out.println("L = " + Math.exp(logL));
+
+        parameter.setParameterValue(0, 11.40);
+        parameter.setParameterValue(1, 106.90);
+
+        likelihood.makeDirty();
+        logL = likelihood.calculateLogLikelihood();
+
+        System.out.println("\n(" + parameter.getParameterValue(0) + "," + parameter.getParameterValue(1) + ")");
+        System.out.println("logL = " + logL);
+        System.out.println("L = " + Math.exp(logL));
+
+
+        //test reading in KML file with a single polygon without fillValue attribute
+        polygons = Polygon2D.readKMLFile("Districts_polygons/21.035_106.063.kml");
+        System.out.println("\n" + polygons.size() + " polygons found.");
+
+        first = polygons.get(0);
+        equalFills = first.hasFillValue();
+        if (polygons.size() > 1) {
+            for (int i = 1; i < polygons.size(); i++) {
+                if (!(equalFills == polygons.get(i).hasFillValue())) {
+                    System.out.println("Inconsistent fillValue attributes provided.");
+                }
+            }
+        }
+
+        if (equalFills) {
+            double sum = 0.0;
+            for (AbstractPolygon2D region : polygons) {
+                sum += region.getFillValue();
+            }
+            if (Math.abs(sum - 1.0) > 1E-12) {
+                System.out.println("\nFill values do not sum to 1 : " + sum);
+            }
+        }
+
+        overAllFill = equalFills;
+        geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
+        for (AbstractPolygon2D region : polygons) {
+            geoSpatialDistributions.add(new GeoSpatialDistribution("test", region, false));
+        }
+
+        likelihood = new MultivariateDistributionLikelihood(
+                new MultiRegionGeoSpatialDistribution("multi", geoSpatialDistributions, false, overAllFill));
+
+        likelihood.addData(parameter);
+        logL = likelihood.calculateLogLikelihood();
+
+        System.out.println("\n(" + parameter.getParameterValue(0) + "," + parameter.getParameterValue(1) + ")");
+        System.out.println("logL = " + logL);
+        System.out.println("L = " + Math.exp(logL));
+
+        parameter.setParameterValue(0, 21.0);
+        parameter.setParameterValue(1, 106.03);
+
+        likelihood.makeDirty();
+        logL = likelihood.calculateLogLikelihood();
+
+        System.out.println("\n(" + parameter.getParameterValue(0) + "," + parameter.getParameterValue(1) + ")");
+        System.out.println("logL = " + logL);
+        System.out.println("L = " + Math.exp(logL));
+
+        parameter.setParameterValue(0, 21.0);
+        parameter.setParameterValue(1, 106.10);
+
+        likelihood.makeDirty();
+        logL = likelihood.calculateLogLikelihood();
+
+        System.out.println("\n(" + parameter.getParameterValue(0) + "," + parameter.getParameterValue(1) + ")");
+        System.out.println("logL = " + logL);
+        System.out.println("L = " + Math.exp(logL));
+
+    }
+
 }

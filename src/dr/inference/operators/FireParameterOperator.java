@@ -25,9 +25,7 @@
 
 package dr.inference.operators;
 
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inferencexml.operators.DirtyLikelihoodOperatorParser;
 import dr.inferencexml.operators.FireParameterOperatorParser;
 
 /**
@@ -48,7 +46,7 @@ public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOp
         return FireParameterOperatorParser.FIRE_PARAMETER_OPERATOR;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         parameter.setParameterValue(0, parameter.getParameterValue(0));
         return 0;
     }

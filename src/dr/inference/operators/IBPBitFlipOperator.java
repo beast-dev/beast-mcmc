@@ -18,7 +18,8 @@ public class IBPBitFlipOperator extends BitFlipOperator {
     }
 
     @Override
-    public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
+    public double doOperation(Prior prior, Likelihood likelihood)
+    { //throws OperatorFailedException {
         return super.doOperation(prior, likelihood);
     }
 

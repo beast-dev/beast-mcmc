@@ -38,7 +38,7 @@ public class HMCOperator extends AbstractCoercableOperator{
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() { //throws OperatorFailedException {
         double functionalStepSize = stepSize;
 
         double[] HMCDerivative = derivative.getDerivative();

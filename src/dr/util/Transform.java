@@ -79,7 +79,7 @@ public interface Transform {
      * @param value evaluation point
      * @return the log of the transform's jacobian
      */
-    public double getLogJacobian(double value);
+    double getLogJacobian(double value);
 
     /**
      * @param values evaluation points
@@ -87,10 +87,10 @@ public interface Transform {
      * @param to end calculation at this index
      * @return the log of the transform's jacobian
      */
-    public double getLogJacobian(double[] values, int from, int to);
+    double getLogJacobian(double[] values, int from, int to);
 
 
-    public static class LogTransform implements Transform {
+    class LogTransform implements Transform {
 
         public LogTransform() {
         }
@@ -124,7 +124,7 @@ public interface Transform {
         }
     }
 
-    public static class LogConstrainedSumTransform implements Transform {
+    class LogConstrainedSumTransform implements Transform {
 
         public LogConstrainedSumTransform() {
         }
@@ -223,9 +223,11 @@ public interface Transform {
 
     }
 
-    public static class LogitTransform implements Transform {
+    class LogitTransform implements Transform {
 
         public LogitTransform() {
+            range = 1.0;
+            lower = 0.0;
         }
 
         public double transform(double value) {
@@ -256,9 +258,11 @@ public interface Transform {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
+        private final double range;
+        private final double lower;
     }
 
-    public static class FisherZTransform implements Transform {
+    class FisherZTransform implements Transform {
 
         public FisherZTransform() {
         }
@@ -293,7 +297,7 @@ public interface Transform {
 
     }
 
-    public static class NoTransform implements Transform {
+    class NoTransform implements Transform {
 
         public NoTransform() {
         }
@@ -328,27 +332,22 @@ public interface Transform {
 
     }
 
-    public class ParsedTransform {
+    class ParsedTransform {
         public Transform transform;
         public int start; // zero-indexed
         public int end; // zero-indexed, i.e, i = start; i < end; ++i
         public int every;
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Transform thisTransform = Transform.NONE;
             String name = (String) xo.getAttribute(TYPE);
             System.err.println("name: " + name);
-            for (Transform type : Transform.transformList) {
-                if (name.equals(type.getTransformName())) {
-                    System.err.println(name + " --- " + type.getTransformName());
-                    thisTransform = type;
-                    break;
-                }
-            }
+
+            thisTransform = Type.valueOf(name).transform;
 
             ParsedTransform transform = new ParsedTransform();
             transform.transform = thisTransform;
@@ -382,7 +381,7 @@ public interface Transform {
         }
     };
 
-    public class Util {
+    class Util {
         public static Transform[] getListOfNoTransforms(int size) {
             Transform[] transforms = new Transform[size];
             for (int i = 0; i < size; ++i) {
@@ -392,18 +391,40 @@ public interface Transform {
         }
     }
 
-    public static final LogTransform LOG = new LogTransform();
-    public static final LogitTransform LOGIT = new LogitTransform();
-    public static final NoTransform NONE = new NoTransform();
-    public static final FisherZTransform FISHER_Z = new FisherZTransform();
-    public static final LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
+    NoTransform NONE = new NoTransform();
+    LogTransform LOG = new LogTransform();
+    LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
+    LogitTransform LOGIT = new LogitTransform();
+    FisherZTransform FISHER_Z = new FisherZTransform();
 
-    public static final Transform[] transformList = {LOG, LOG_CONSTRAINED_SUM, LOGIT, NONE, FISHER_Z};
+    enum Type {
+        NONE("none", new NoTransform()),
+        LOG("log", new LogTransform()),
+        LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
+        LOGIT("logit", new LogitTransform()),
+        FISHER_Z("fisherZ",new FisherZTransform());
 
-    public static final String TRANSFORM = "transform";
-    public static final String TYPE = "type";
-    public static final String START = "start";
-    public static final String END = "end";
-    public static final String EVERY = "every";
+        Type(String name, Transform transform) {
+            this.name = name;
+            this.transform = transform;
+        }
+
+        public Transform getTransform() {
+            return transform;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        private Transform transform;
+        private String name;
+    }
+
+    String TRANSFORM = "transform";
+    String TYPE = "type";
+    String START = "start";
+    String END = "end";
+    String EVERY = "every";
 
 }

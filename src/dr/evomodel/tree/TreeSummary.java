@@ -29,6 +29,7 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.MLLogger;
@@ -106,7 +107,7 @@ public class TreeSummary extends MCLogger {
     }
 
     private void addTree(Tree tree) {
-        String newick = Tree.Utils.uniqueNewick(tree, tree.getRoot());
+        String newick = TreeUtils.uniqueNewick(tree, tree.getRoot());
         newick = replaceTaxa(newick);
 
         if (treeOccurences.containsKey(newick)) {

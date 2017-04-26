@@ -39,7 +39,7 @@ import java.io.IOException;
 public class LogFileTraceExporter extends TabularData {
     private final LogFileTraces analysis;
     private final String[] rows = {"mean", "median", "hpdLower", "hpdUpper", "ESS"};
-    TraceDistribution[] distributions;
+    TraceCorrelation[] distributions;
 
     public LogFileTraceExporter(File file, int burnin) throws TraceException, IOException {
 
@@ -49,7 +49,7 @@ public class LogFileTraceExporter extends TabularData {
             analysis.setBurnIn(burnin);
         }
 
-        distributions = new TraceDistribution[nColumns()];
+        distributions = new TraceCorrelation[nColumns()];
     }
 
     public int nColumns() {
@@ -68,10 +68,10 @@ public class LogFileTraceExporter extends TabularData {
         // read on demand
         if (distributions[nColumn] == null) {
             analysis.analyseTrace(nColumn);
-            distributions[nColumn] = analysis.getDistributionStatistics(nColumn);
+            distributions[nColumn] = analysis.getCorrelationStatistics(nColumn);
         }
 
-        TraceDistribution distribution = distributions[nColumn];
+        TraceCorrelation distribution = distributions[nColumn];
 
         switch (nRow) {
             case 0: {

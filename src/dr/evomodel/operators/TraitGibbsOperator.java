@@ -36,7 +36,6 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateDistribution;
@@ -130,7 +129,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         return nodeMVNPrior != null && nodeMVNPrior.containsKey(treeModel.getNodeTaxon(node));
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         NodeRef node = null;
         final NodeRef root = treeModel.getRoot();
@@ -183,7 +182,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             do {
                 if (count > maxTries) {
                     treeModel.setMultivariateTrait(node, traitName, initialValue);  // TODO Add to MTT interface
-                    throw new OperatorFailedException("Truncated Gibbs is stuck!");
+                    throw new RuntimeException("Truncated Gibbs is stuck!");
                 }
 
                 draw = MultivariateNormalDistribution.nextMultivariateNormalPrecision(

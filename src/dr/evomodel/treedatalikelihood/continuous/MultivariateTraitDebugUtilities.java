@@ -28,6 +28,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.RestrictedPartials;
 import dr.math.KroneckerOperation;
@@ -62,7 +64,7 @@ public class MultivariateTraitDebugUtilities {
         Set<String> leafNames = new HashSet<String>();
         leafNames.add(tree.getTaxonId(iTip));
         leafNames.add(tree.getTaxonId(jTip));
-        return Tree.Utils.getCommonAncestorNode(tree, leafNames);
+        return TreeUtils.getCommonAncestorNode(tree, leafNames);
     }
 
     public static double[][] getTreeVariance(final Tree tree, final double normalization, final double priorSampleSize) {

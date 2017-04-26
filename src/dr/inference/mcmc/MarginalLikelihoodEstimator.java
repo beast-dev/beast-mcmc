@@ -25,6 +25,7 @@
 
 package dr.inference.mcmc;
 
+import com.sun.tools.javac.util.Options;
 import dr.inference.loggers.Logger;
 import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
@@ -116,7 +117,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
             mc.runChain(chainLength, false);
 
             if (SHOW_OPERATOR_ANALYSIS) {
-            	(new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
             }
             ((CombinedOperatorSchedule) schedule).reset();
         }
@@ -374,7 +375,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         /**
          * Called to update the current model keepEvery states.
          */
-        public void currentState(long state, Model currentModel) {
+        @Override
+        public void currentState(long state, MarkovChain markovChain, Model currentModel) {
 
             currentState = state;
 
@@ -388,16 +390,18 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         /**
          * Called when a new new best posterior state is found.
          */
-        public void bestState(long state, Model bestModel) {
+        @Override
+        public void bestState(long state, MarkovChain markovChain, Model bestModel) {
             currentState = state;
         }
 
         /**
          * cleans up when the chain finishes (possibly early).
          */
-        public void finished(long chainLength) {
+        @Override
+        public void finished(long chainLength, MarkovChain markovChain) {
             currentState = chainLength;
-            (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
 //            logger.log(currentState);
             for (MCLogger logger : loggers) {
                 logger.stopLogging();

@@ -131,7 +131,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         return logPosterior - logGaussianPrior;
     }
 
-    public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
+    public double doOperation(Prior prior, Likelihood likelihood) {
 
 //        System.err.println("Likelihood type:" + likelihood.getClass().getName());
 
@@ -476,11 +476,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         log[1] = precParameter;
 
         for (int i = 0; i < length; i++) {
-            try {
-                sliceSampler.doOperation(null, posterior);
-            } catch (OperatorFailedException e) {
-                System.err.println(e.getMessage());
-            }
+            sliceSampler.doOperation(null, posterior);
             for (int j = 0; j < dim; ++j) {
                 double x = log[j].getValue(0);
                 mean[j] += x;

@@ -41,13 +41,19 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
     public static final String SEQUENTIAL = "sequential";
     public static final String OPTIMIZATION_SCHEDULE = "optimizationSchedule";
 
+    public static final String ACCEPTANCE_THRESHOLD = "minAcceptance";
+    public static final String USE_THRESHOLD = "minUsage";
+
     public String getParserName() {
         return OPERATOR_SCHEDULE;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        SimpleOperatorSchedule schedule = new SimpleOperatorSchedule();
+        int useThreshold = xo.getAttribute(USE_THRESHOLD, 1000);
+        double acceptanceThreshold = xo.getAttribute(ACCEPTANCE_THRESHOLD, 0.0);
+
+        SimpleOperatorSchedule schedule = new SimpleOperatorSchedule(useThreshold, acceptanceThreshold);
 
         if (xo.hasAttribute(SEQUENTIAL)) {
             schedule.setSequential(xo.getBooleanAttribute(SEQUENTIAL));
@@ -85,7 +91,9 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(SEQUENTIAL, true),
             new ElementRule(MCMCOperator.class, 1, Integer.MAX_VALUE),
-            AttributeRule.newStringRule(OPTIMIZATION_SCHEDULE, true)
+            AttributeRule.newStringRule(OPTIMIZATION_SCHEDULE, true),
+            AttributeRule.newDoubleRule(ACCEPTANCE_THRESHOLD, true, "Acceptance rate below which an operator will be switched off"),
+            AttributeRule.newIntegerRule(USE_THRESHOLD, true, "Minimum number of usage before testing acceptance threshold")
     };
 
     public String getParserDescription() {

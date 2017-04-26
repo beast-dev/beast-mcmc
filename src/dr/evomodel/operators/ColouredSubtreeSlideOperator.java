@@ -25,14 +25,12 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -48,6 +46,8 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: ColouredSubtreeSlideOperator.java,v 1.4 2006/09/11 09:33:01 gerton Exp $
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
     public static final String SUBTREE_SLIDE = "colouredSubtreeSlide";
@@ -82,7 +82,7 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logP = colouringModel.getTreeColouringWithProbability().getLogProbabilityDensity();
 
@@ -232,7 +232,7 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
 
         }
 
-        if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
+        if (logq == Double.NEGATIVE_INFINITY) throw new RuntimeException("invalid slide");
 
         colouringModel.resample();
 

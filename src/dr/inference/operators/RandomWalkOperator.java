@@ -29,6 +29,7 @@ import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.RandomWalkOperatorParser;
 import dr.math.MathUtils;
+import dr.util.Transform;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +44,10 @@ import java.util.List;
 public class RandomWalkOperator extends AbstractCoercableOperator {
 
     public enum BoundaryCondition {
+        rejecting,
         reflecting,
-        absorbing
+        absorbing,
+        logit
     }
 
     public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
@@ -56,12 +59,12 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         this(parameter, updateIndex, windowSize, bc, weight, mode, null, null);
     }
 
-    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition bc,
+    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition boundaryCondition,
                               double weight, CoercionMode mode, Double lowerOperatorBound, Double upperOperatorBound) {
         super(mode);
         this.parameter = parameter;
         this.windowSize = windowSize;
-        this.condition = bc;
+        this.boundaryCondition = boundaryCondition;
 
         setWeight(weight);
         if (updateIndex != null) {
@@ -91,41 +94,57 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         // a random dimension to perturb
         if (parameter.getDimension() <= 0) {
-            throw new OperatorFailedException("Illegal Dimension");
+            throw new RuntimeException("Illegal Dimension");
         }
 
-        int index;
+        int dim;
         if (updateMap == null) {
-            index = MathUtils.nextInt(parameter.getDimension());
+            dim = MathUtils.nextInt(parameter.getDimension());
         } else {
-            index = updateMap.get(MathUtils.nextInt(updateMapSize));
+            dim = updateMap.get(MathUtils.nextInt(updateMapSize));
         }
 
         // a random point around old value within windowSize * 2
         double draw = (2.0 * MathUtils.nextDouble() - 1.0) * windowSize;
-        double newValue = parameter.getParameterValue(index) + draw;
+
+        double oldValue = parameter.getParameterValue(dim);
 
         final Bounds<Double> bounds = parameter.getBounds();
-        final double lower = (lowerOperatorBound == null ? bounds.getLowerLimit(index) : Math.max(bounds.getLowerLimit(index), lowerOperatorBound));
-        final double upper = (upperOperatorBound == null ? bounds.getUpperLimit(index) : Math.min(bounds.getUpperLimit(index), upperOperatorBound));
+        final double lower = (lowerOperatorBound == null ? bounds.getLowerLimit(dim) : Math.max(bounds.getLowerLimit(dim), lowerOperatorBound));
+        final double upper = (upperOperatorBound == null ? bounds.getUpperLimit(dim) : Math.min(bounds.getUpperLimit(dim), upperOperatorBound));
 
-        if (condition == BoundaryCondition.reflecting) {
-            newValue = reflectValue(newValue, lower, upper);
-        } else if(condition == BoundaryCondition.absorbing && (newValue < lower || newValue > upper)){
+        if (boundaryCondition == BoundaryCondition.logit) {
+            // scale oldValue to [0,1]
+            double x1 = (oldValue - lower) / (upper - lower);
+            // logit transform it, add the draw, inverse transform it
+            double x2 = Transform.LOGIT.inverse(Transform.LOGIT.transform(x1) + draw);
+
+            // parameter takes new value scaled back into interval [lower, upper]
+            parameter.setParameterValue(dim, (x2 * (upper - lower)) + lower);
+
+            // HR is the ratio of Jacobians for the before and after values in interval [0,1]
+            return Transform.LOGIT.getLogJacobian(x1) - Transform.LOGIT.getLogJacobian(x2);
+
+        } else {
+            double newValue = oldValue + draw;
+            if (boundaryCondition == BoundaryCondition.reflecting) {
+                newValue = reflectValue(newValue, lower, upper);
+            } else if (boundaryCondition == BoundaryCondition.absorbing && (newValue < lower || newValue > upper)) {
+                return 0.0;
+            } else if (boundaryCondition == BoundaryCondition.rejecting && (newValue < lower || newValue > upper)) {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            parameter.setParameterValue(dim, newValue);
+
             return 0.0;
         }
-        else if (newValue < lower || newValue > upper) {
-            throw new OperatorFailedException("proposed value outside boundaries");
-        }
 
-        parameter.setParameterValue(index, newValue);
-
-        return 0.0;
-    }
+}
 
     public double reflectValue(double value, double lower, double upper) {
 
@@ -250,7 +269,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
     private int updateMapSize;
-    private final BoundaryCondition condition;
+    private final BoundaryCondition boundaryCondition;
 
     private final Double lowerOperatorBound;
     private final Double upperOperatorBound;

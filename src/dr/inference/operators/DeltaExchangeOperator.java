@@ -80,7 +80,7 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
      * performs a delta exchange operation between two scalars in the vector
      * and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         // get two dimensions
         final int dim = parameter.getDimension();
@@ -117,7 +117,7 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
                 scalar1 > bounds.getUpperLimit(dim1) ||
                 scalar2 < bounds.getLowerLimit(dim2) ||
                 scalar2 > bounds.getUpperLimit(dim2)) {
-            throw new OperatorFailedException("proposed values out of range!");
+            return Double.NEGATIVE_INFINITY;
         }
         parameter.setParameterValue(dim1, scalar1);
         parameter.setParameterValue(dim2, scalar2);

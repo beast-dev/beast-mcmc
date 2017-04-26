@@ -38,7 +38,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
 import dr.util.Author;
 import dr.util.Citable;
@@ -141,7 +140,7 @@ public class SpeciesTreeModel extends AbstractModel implements
         spTree = compatibleUninformedSpeciesTree(startTree);
 
         // some of the code is generic but some parts assume a binary tree.
-        assert Tree.Utils.isBinary(spTree);
+        assert TreeUtils.isBinary(spTree);
 
         final int nNodes = spTree.getNodeCount();
         heights = new double[nNodes];
@@ -990,7 +989,7 @@ public class SpeciesTreeModel extends AbstractModel implements
 
     static private TreeNodeSlide internalTreeOP = null;
 
-    public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
+    public int scale(double scaleFactor, int nDims, boolean testBounds) {
         assert scaleFactor > 0;
         if (nDims <= 0) {
             // actually when in an up down with operators on the gene trees the flags
@@ -1007,7 +1006,7 @@ public class SpeciesTreeModel extends AbstractModel implements
             return count;
         } else {
             if (nDims != 1) {
-                throw new OperatorFailedException("not implemented for count != 1");
+                throw new UnsupportedOperationException("not implemented for count != 1");
             }
             if (internalTreeOP == null) {
                 internalTreeOP = new TreeNodeSlide(this, species, 1);
@@ -1017,6 +1016,11 @@ public class SpeciesTreeModel extends AbstractModel implements
             fireModelChanged(this, 1);
             return nDims;
         }
+    }
+
+    @Override
+    public boolean testBounds() {
+        return true;
     }
 
     private final boolean verbose = false;
@@ -1089,7 +1093,7 @@ public class SpeciesTreeModel extends AbstractModel implements
     String previousTopology = null;
 
     public boolean logNow(long state) {
-        final String curTop = Tree.Utils.uniqueNewick(spTree, spTree.getRoot());
+        final String curTop = TreeUtils.uniqueNewick(spTree, spTree.getRoot());
         if (state == 0 || !curTop.equals(previousTopology)) {
             previousTopology = curTop;
             return true;

@@ -58,8 +58,21 @@ public class DirichletDistribution implements MultivariateDistribution {
             countParameterSum = 1.0;
         }
         dim = counts.length;
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < dim; i++) {
             countSum += counts[i];
+        }
+
+        computeNormalizingConstant();
+    }
+
+    public DirichletDistribution(double[] counts, double countParameterSum) {
+        this.counts = counts;
+        this.countParameterSum = countParameterSum;
+
+        dim = counts.length;
+        for (int i = 0; i < dim; i++) {
+            countSum += counts[i];
+        }
 
         computeNormalizingConstant();
     }
@@ -84,13 +97,13 @@ public class DirichletDistribution implements MultivariateDistribution {
         for (int i = 0; i < dim; i++) {
             logPDF += (counts[i] - 1) * (Math.log(x[i]) - Math.log(countParameterSum));
             parameterSum += x[i];
-            if ((!sumToNumberOfElements && x[i] >= 1.0) || x[i] <= 0.0) {
-                if (DEBUG) {
-                    System.out.println("Invalid parameter value");
-                }
-                logPDF = Double.NEGATIVE_INFINITY;
-                break;
-            }
+//            if ((!sumToNumberOfElements && x[i] >= 1.0) || x[i] <= 0.0) {
+//                if (DEBUG) {
+//                    System.out.println("Invalid parameter value");
+//                }
+//                logPDF = Double.NEGATIVE_INFINITY;
+//                break;
+//            }
         }
         if (Math.abs(parameterSum - countParameterSum) > ACCURACY_THRESHOLD) {
             if (DEBUG) {

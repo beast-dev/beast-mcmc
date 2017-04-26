@@ -48,12 +48,34 @@ import java.util.List;
  */
 public class GTR extends BaseSubstitutionModel implements Citable {
 
+    public static final String A_TO_C = "rateAC";
+    public static final String A_TO_G = "rateAG";
+    public static final String A_TO_T = "rateAT";
+    public static final String C_TO_G = "rateCG";
+    public static final String C_TO_T = "rateCT";
+    public static final String G_TO_T = "rateGT";
+
+    private Parameter rates = null;
+
     private Variable<Double> rateACVariable = null;
     private Variable<Double> rateAGVariable = null;
     private Variable<Double> rateATVariable = null;
     private Variable<Double> rateCGVariable = null;
     private Variable<Double> rateCTVariable = null;
     private Variable<Double> rateGTVariable = null;
+
+    /**
+     * @param rates           vector of all 6 rates
+     * @param freqModel       frequencies
+     */
+    public GTR(
+            Parameter rates,
+            FrequencyModel freqModel) {
+        super("GTR", Nucleotides.INSTANCE, freqModel);
+        this.rates = rates;
+        this.rates.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, rates.getDimension()));
+        addVariable(rates);
+    }
 
     /**
      * @param rateACVariable rate of A<->C substitutions
@@ -136,23 +158,27 @@ public class GTR extends BaseSubstitutionModel implements Citable {
     }
 
     protected void setupRelativeRates(double[] rates) {
-        if (rateACVariable != null) {
-            rates[0] = rateACVariable.getValue(0);
-        }
-        if (rateAGVariable != null) {
-            rates[1] = rateAGVariable.getValue(0);
-        }
-        if (rateATVariable != null) {
-            rates[2] = rateATVariable.getValue(0);
-        }
-        if (rateCGVariable != null) {
-            rates[3] = rateCGVariable.getValue(0);
-        }
-        if (rateCTVariable != null) {
-            rates[4] = rateCTVariable.getValue(0);
-        }
-        if (rateGTVariable != null) {
-            rates[5] = rateGTVariable.getValue(0);
+        if (rates != null) {
+            if (rateACVariable != null) {
+                rates[0] = rateACVariable.getValue(0);
+            }
+            if (rateAGVariable != null) {
+                rates[1] = rateAGVariable.getValue(0);
+            }
+            if (rateATVariable != null) {
+                rates[2] = rateATVariable.getValue(0);
+            }
+            if (rateCGVariable != null) {
+                rates[3] = rateCGVariable.getValue(0);
+            }
+            if (rateCTVariable != null) {
+                rates[4] = rateCTVariable.getValue(0);
+            }
+            if (rateGTVariable != null) {
+                rates[5] = rateGTVariable.getValue(0);
+            }
+        } else {
+            System.arraycopy(this.rates.getParameterValues(), 0, rates, 0, rates.length);
         }
     }
 

@@ -27,6 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
 
@@ -41,11 +42,11 @@ import java.util.Set;
  */
 public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatistic {
 
-    public MRCATraitStatistic(String name, String trait, TreeModel tree, TaxonList taxa) throws Tree.MissingTaxonException {
+    public MRCATraitStatistic(String name, String trait, TreeModel tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
         super(name);
         this.tree = tree;
         this.trait = trait;
-        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+        this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxa);
         this.isRate = trait.equals("rate");
     }
 
@@ -66,7 +67,7 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
      */
     public double getStatisticValue(int dim) {
 
-        NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+        NodeRef node = TreeUtils.getCommonAncestorNode(tree, leafSet);
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
         if (isRate) {
             return tree.getNodeRate(node);

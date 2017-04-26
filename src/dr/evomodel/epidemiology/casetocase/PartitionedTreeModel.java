@@ -27,6 +27,7 @@ package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
@@ -485,7 +486,7 @@ public class PartitionedTreeModel extends TreeModel {
 
     public NodeRef caseMRCA(AbstractCase aCase, boolean checkConnectedness){
         int[] caseTips = allTipsForThisCase(aCase);
-        NodeRef mrca =  Tree.Utils.getCommonAncestor(this, caseTips);
+        NodeRef mrca =  TreeUtils.getCommonAncestor(this, caseTips);
 
         if(checkConnectedness) {
             if (branchMap.get(mrca.getNumber()) != aCase) {

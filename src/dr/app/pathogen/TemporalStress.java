@@ -27,6 +27,7 @@ package dr.app.pathogen;
 
 import java.util.*;
 
+import dr.evolution.tree.TreeUtils;
 import dr.stats.DiscreteStatistics;
 import dr.math.UnivariateFunction;
 import dr.math.UnivariateMinimum;
@@ -95,8 +96,8 @@ public class TemporalStress {
 
         final double sumLength = length1 + length2;
 
-        final Set<NodeRef> tipSet1 = Tree.Utils.getExternalNodes(tree, node1);
-        final Set<NodeRef> tipSet2 = Tree.Utils.getExternalNodes(tree, node2);
+        final Set<NodeRef> tipSet1 = TreeUtils.getExternalNodes(tree, node1);
+        final Set<NodeRef> tipSet2 = TreeUtils.getExternalNodes(tree, node2);
 
         final double[] y = new double[tree.getExternalNodeCount()];
 

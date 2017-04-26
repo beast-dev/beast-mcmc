@@ -125,7 +125,7 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
 
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if (DEBUG) {
             System.err.println("\nTwoPhaseOperator: doOperation() called");

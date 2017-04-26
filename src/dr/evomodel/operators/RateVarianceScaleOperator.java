@@ -32,7 +32,6 @@ import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 
@@ -62,7 +61,7 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
     /**
      * scale the rates of a subtree and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
@@ -73,7 +72,8 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
 
         final Bounds<Double> bounds = variance.getBounds();
         if (newValue < bounds.getLowerLimit(0) || newValue > bounds.getUpperLimit(0)) {
-            throw new OperatorFailedException("proposed value outside boundaries");
+//            throw new OperatorFailedException("proposed value outside boundaries");
+            return Double.NEGATIVE_INFINITY;
         }
         variance.setParameterValue(0, newValue);
 

@@ -25,7 +25,6 @@
 
 package dr.inference.operators;
 
-import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -82,9 +81,9 @@ public class IndependentGammaSampler extends SimpleMCMCOperator {
 	}
 
     /**
-     * change the parameter and return the hastings ratio.
+	 * change the parameter and return the hastings ratio.
      */
-	public double doOperation() throws OperatorFailedException {
+	public double doOperation() {
 		
 		double logq = 0;
 		
@@ -110,7 +109,7 @@ public class IndependentGammaSampler extends SimpleMCMCOperator {
 				logq += (gamma.logPdf(currentValue) - gamma.logPdf(newValue));
 				
 				if (newValue < bounds.getLowerLimit(i) || newValue > bounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
+                    throw new RuntimeException("proposed value outside boundaries");
                 }
 				
 				variable.setValue(i, newValue);

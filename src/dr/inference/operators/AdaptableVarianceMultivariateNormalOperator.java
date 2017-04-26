@@ -1,7 +1,7 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,9 +26,11 @@
 package dr.inference.operators;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -60,7 +62,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String COEFFICIENT = "coefficient";
     public static final String SKIP_RANK_CHECK = "skipRankCheck";
 
+    public static final String TRANSFORM = "transform";
+    public static final String TYPE = "type";
+
     public static final boolean DEBUG = false;
+    public static final boolean PRINT_FULL_MATRIX = false;
 
     private double scaleFactor;
     private double beta;
@@ -81,7 +87,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[][] proposal;
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor, double[][] inMatrix,
-            double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
+                                                       double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -133,7 +139,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     }
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor,
-            MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance, boolean skipRankCheck) {
+                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance, boolean skipRankCheck) {
         this(parameter, transformations, transformationSizes, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance, skipRankCheck);
     }
 
@@ -175,7 +181,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         iterations++;
 
@@ -542,7 +548,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
+        String output = "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
+        if (PRINT_FULL_MATRIX) {
+            output += "\nMeans:\n";
+            for (int i = 0; i < dim; i++) {
+                output += newMeans[i] + " ";
+            }
+            output += "\nVariance-covariance matrix:\n";
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    output += empirical[i][j] + " ";
+                }
+                output += "\n";
+            }
+        }
+        return output;
     }
 
     public double getCoercableParameter() {
@@ -636,9 +656,113 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 throw new XMLParseException("scaleFactor must be greater than 0.0");
             }
 
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
+
+            Parameter parameter;
+            Transform[] transformations;
+            int[] transformationSizes;
+
+            if (xo.getChild(Transform.ParsedTransform.class) == null) {
+                // if there are no ParsedTransform elements then use the new parser syntax
+
+                CompoundParameter allParameters = new CompoundParameter("allParameters");
+
+                List<Transform> transformList = new ArrayList<Transform>();
+                List<Integer> transformCountList = new ArrayList<Integer>();
+
+                for (Object co : xo.getChildren()) {
+                    if (co instanceof Parameter) {
+                        // parameters in the body of the object are assumed to have no transform
+                        transformList.add(Transform.NONE);
+                        Parameter param = (Parameter) co;
+                        allParameters.addParameter(param);
+                        transformCountList.add(param.getDimension());
+                    } else if (co instanceof XMLObject) {
+                        XMLObject cxo = (XMLObject) co;
+
+                        if (cxo.getName() == TRANSFORM) {
+                            Transform transform = Transform.NONE;
+                            if (cxo.hasAttribute(TYPE)) {
+                                Transform.Type type = Transform.Type.valueOf(cxo.getStringAttribute(TYPE));
+                                transform = type.getTransform();
+                            }
+                            transformList.add(transform);
+
+                            int dim = 0;
+                            for (Parameter param : cxo.getAllChildren(Parameter.class)) {
+                                allParameters.addParameter(param);
+                                dim += param.getDimension();
+                            }
+                            transformCountList.add(dim);
+                        } else {
+                            throw new XMLParseException("Unknown element, " + cxo.getName() + ", in " + AVMVN_OPERATOR);
+                        }
+                    } else {
+                        throw new XMLParseException("Unknown object in " + AVMVN_OPERATOR);
+                    }
+                }
+
+                parameter = allParameters;
+                transformations = new Transform[parameter.getDimension()];
+                transformationSizes = new int[parameter.getDimension()];
+
+                transformations = transformList.toArray(transformations);
+                for (int i = 0; i < transformCountList.size(); i++) {
+                    transformationSizes[i] = transformCountList.get(i);
+                }
+            } else {
+                // assume old parser syntax for backwards compatibility
+                parameter = (Parameter) xo.getChild(Parameter.class);
+                transformations = new Transform[parameter.getDimension()];
+                transformationSizes = new int[parameter.getDimension()];
+
+                int transformationSizeCounter = 0;
+                //TODO: add LOG_CONSTRAINED_SUM transformation to transformations array!
+                for (int i = 0; i < xo.getChildCount(); i++) {
+                    Object child = xo.getChild(i);
+                    if (child instanceof Transform.ParsedTransform) {
+                        Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
+
+                        if (DEBUG) {
+                            System.err.println(thisObject.transform.getTransformName());
+                        }
+                        if (thisObject.transform.equals(Transform.LOG_CONSTRAINED_SUM)) {
+                            transformations[transformationSizeCounter] = thisObject.transform;
+                            transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
+                            if (DEBUG) {
+                                System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
+                            }
+                            transformationSizeCounter++;
+                        } else {
+                            for (int j = thisObject.start; j < thisObject.end; ++j) {
+                                transformations[transformationSizeCounter] = thisObject.transform;
+                                transformationSizes[transformationSizeCounter] = 1;
+                                if (DEBUG) {
+                                    System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
+                                }
+                                transformationSizeCounter++;
+                            }
+                        }
+                    }
+                }
+
+                //determine array length for transformationSizes = transformationSizeCounter - 1;
+                if (DEBUG) {
+                    System.err.println("\nCleaning up transformation and size arrays");
+                    System.err.println("transformationSizeCounter = " + transformationSizeCounter);
+                }
+                int temp[] = new int[transformationSizeCounter];
+                Transform tempTransform[] = new Transform[transformationSizeCounter];
+                for (int i = 0; i < temp.length; i++) {
+                    temp[i] = transformationSizes[i];
+                    tempTransform[i] = transformations[i];
+                    if (transformationSizes[i] == 0 || temp[i] == 0) {
+                        throw new XMLParseException("Transformation size 0 encountered");
+                    }
+                }
+                transformationSizes = temp;
+                transformations = tempTransform;
+            }
 
             //varMatrix needs to be initialized
             int dim = parameter.getDimension();
@@ -659,71 +783,6 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
             MatrixParameter varMatrix = new MatrixParameter(null, init);
 
-            /*double[][] test = varMatrix.getParameterAsMatrix();
-            for (int i = 0; i < dim; i++) {
-            	for (int j = 0; j < dim; j++) {
-            		System.err.print(test[i][j] + " ");
-            	}
-            	System.err.println();
-            }*/
-
-            int[] transformationSizes = new int[dim];
-            int transformationSizeCounter = 0;
-
-            Transform[] transformations = new Transform[dim];
-            for (int i = 0; i < dim; i++) {
-                transformations[i] = Transform.NONE;
-            }
-
-            if (DEBUG) {
-                System.err.println("Transformations & transformation sizes:");
-            }
-
-            //TODO: add LOG_CONSTRAINED_SUM transformation to transformations array!
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                Object child = xo.getChild(i);
-                if (child instanceof Transform.ParsedTransform) {
-                    Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
-
-                    if (DEBUG) {
-                        System.err.println(thisObject.transform.getTransformName());
-                    }
-                    if (thisObject.transform.equals(Transform.LOG_CONSTRAINED_SUM)) {
-                        transformations[transformationSizeCounter] = thisObject.transform;
-                        transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
-                        if (DEBUG) {
-                            System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
-                        }
-                        transformationSizeCounter++;
-                    } else {
-                        for (int j = thisObject.start; j < thisObject.end; ++j) {
-                            transformations[transformationSizeCounter] = thisObject.transform;
-                            transformationSizes[transformationSizeCounter] = 1;
-                            if (DEBUG) {
-                                System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
-                            }
-                            transformationSizeCounter++;
-                        }
-                    }
-                }
-            }
-
-            //determine array length for transformationSizes = transformationSizeCounter - 1;
-            if (DEBUG) {
-                System.err.println("\nCleaning up transformation and size arrays");
-                System.err.println("transformationSizeCounter = " + transformationSizeCounter);
-            }
-            int temp[] = new int[transformationSizeCounter];
-            Transform tempTransform[] = new Transform[transformationSizeCounter];
-            for (int i = 0; i < temp.length; i++) {
-                temp[i] = transformationSizes[i];
-                tempTransform[i] = transformations[i];
-                if (transformationSizes[i] == 0 || temp[i] == 0) {
-                    throw new XMLParseException("Transformation size 0 encountered");
-                }
-            }
-            transformationSizes = temp;
-            transformations = tempTransform;
             if (DEBUG) {
                 System.err.println("\nChecking transformation array contents");
                 for (int i = 0; i < transformations.length; i++) {
@@ -784,8 +843,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
                 AttributeRule.newBooleanRule(SKIP_RANK_CHECK, true),
-                new ElementRule(Parameter.class),
-                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
+                new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
+                new ElementRule(TRANSFORM, new XMLSyntaxRule[] {
+                        AttributeRule.newStringRule(TYPE, true),
+                        new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+                }, 0, Integer.MAX_VALUE)
         };
 
     };

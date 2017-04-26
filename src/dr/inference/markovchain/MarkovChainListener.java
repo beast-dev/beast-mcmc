@@ -40,9 +40,9 @@ import java.io.Serializable;
  */
 public interface MarkovChainListener extends Serializable {
 
-    void bestState(long state, Model bestModel);
+    void bestState(long state, MarkovChain markovChain, Model bestModel);
 
-    void currentState(long state, Model currentModel);
+    void currentState(long state, MarkovChain markovChain, Model currentModel);
 
-	void finished(long chainLength);
+	void finished(long chainLength, MarkovChain markovChain);
 }

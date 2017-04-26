@@ -26,7 +26,6 @@
 package dr.evomodel.coalescent.structure;
 
 import dr.evolution.colouring.ColourSampler;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 
@@ -63,7 +62,7 @@ public class TreeColouringOperator extends SimpleMCMCOperator {
      *
      * @return the hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logP = colouringModel.getTreeColouringWithProbability().getLogProbabilityDensity();
 

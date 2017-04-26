@@ -28,11 +28,9 @@
  */
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.FNPRParser;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 /**
@@ -60,7 +58,7 @@ public class FNPR extends AbstractTreeOperator {
     * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
     */
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         NodeRef iGrandfather, iBrother;
         double heightFather;
         final int tipCount = tree.getExternalNodeCount();
@@ -122,7 +120,7 @@ public class FNPR extends AbstractTreeOperator {
            }
         }
 
-        throw new OperatorFailedException("Couldn't find valid SPR move on this tree!");
+        throw new RuntimeException("Couldn't find valid SPR move on this tree!");
      }
 
     /*

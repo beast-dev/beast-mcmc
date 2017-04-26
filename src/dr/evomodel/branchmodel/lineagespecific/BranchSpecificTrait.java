@@ -25,12 +25,9 @@
 
 package dr.evomodel.branchmodel.lineagespecific;
 
+import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -145,7 +142,7 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 
 	public String toString() {
 
-		String annotatedTree = Tree.Utils.newick(treeModel, 
+		String annotatedTree = TreeUtils.newick(treeModel,
 				new TreeTraitProvider[] { this });
 
 		return annotatedTree;

@@ -44,6 +44,8 @@ import java.util.*;
 /**
  * @author Sebastian Hoehna
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public abstract class AbstractImportanceDistributionOperator extends
         SimpleMCMCOperator implements GeneralOperator {
 
@@ -110,7 +112,7 @@ public abstract class AbstractImportanceDistributionOperator extends
       *
       * @see dr.inference.operators.AbstractImportanceSampler#doOperation()
       */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         // dummy method
         return 0.0;
     }
@@ -120,8 +122,7 @@ public abstract class AbstractImportanceDistributionOperator extends
       *
       * @see dr.inference.operators.AbstractImportanceSampler#doOperation()
       */
-    public double doOperation(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException {
+    public double doOperation(Prior prior, Likelihood likelihood) {
         if (!burnin) {
             if (sampleCount < samples * sampleEvery) {
                 sampleCount++;
@@ -145,7 +146,7 @@ public abstract class AbstractImportanceDistributionOperator extends
     }
 
     protected double doImportanceDistributionOperation(Prior prior,
-                                                       Likelihood likelihood) throws OperatorFailedException {
+                                                       Likelihood likelihood) {
         final NodeRef root = tree.getRoot();
         BitSet all = new BitSet();
         all.set(0, (tree.getNodeCount() + 1) / 2);
@@ -191,7 +192,7 @@ public abstract class AbstractImportanceDistributionOperator extends
 
             tree.checkTreeIsValid();
         } catch (InvalidTreeException e) {
-            throw new OperatorFailedException(e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
 
         tree.pushTreeChangedEvent(root);
@@ -658,7 +659,7 @@ public abstract class AbstractImportanceDistributionOperator extends
         return schedule;
     }
 
-    protected double doUnguidedOperation() throws OperatorFailedException {
+    protected double doUnguidedOperation() {
         int index = schedule.getNextOperatorIndex();
         SimpleMCMCOperator operator = (SimpleMCMCOperator) schedule
                 .getOperator(index);

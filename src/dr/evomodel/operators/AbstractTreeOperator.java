@@ -27,7 +27,6 @@ package dr.evomodel.operators;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evolution.tree.*;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 
 /**
@@ -64,7 +63,7 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 
 	/* exchange sub-trees whose root are i and j */
 	protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
-	                             NodeRef iP, NodeRef jP) throws OperatorFailedException {
+	                             NodeRef iP, NodeRef jP) {
 
 	    tree.beginTreeEdit();
 	    tree.removeChild(iP, i);

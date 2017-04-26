@@ -47,7 +47,7 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
     }
 
     public abstract double doOperation(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException;
+            ;
 
     /*
       * (non-Javadoc)
@@ -64,12 +64,11 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
     @Override
     public abstract String getOperatorName();
 
-    public final double operate() throws OperatorFailedException {
+    public final double operate() {
         return operate(null, null);
     }
 
-    public final double operate(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException {
+    public final double operate(Prior prior, Likelihood likelihood) {
         if (operateAllowed) {
             operateAllowed = false;
             return doOperation(prior, likelihood);

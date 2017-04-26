@@ -5,6 +5,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -71,10 +72,10 @@ public class TestCalibratedYuleModel {
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-        System.out.println("treeModel = " + Tree.Utils.newickNoLengths(treeModel));
+        System.out.println("treeModel = " + TreeUtils.newickNoLengths(treeModel));
 //        out.write("\t");
 //        out.write("treeModel = \t");
-        out.write(Tree.Utils.newickNoLengths(treeModel));
+        out.write(TreeUtils.newickNoLengths(treeModel));
         out.write("\t");
         yuleTester(treeModel, schedule, brParameter, S, chainLength);
 
@@ -133,7 +134,7 @@ public class TestCalibratedYuleModel {
     }
 
     private void yuleTester(TreeModel treeModel, OperatorSchedule schedule, Parameter brParameter, double S, int chainLength)
-            throws IOException, Tree.MissingTaxonException {
+            throws IOException, TreeUtils.MissingTaxonException {
 
         MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions(chainLength);

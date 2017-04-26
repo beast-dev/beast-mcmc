@@ -27,11 +27,12 @@ package dr.inferencexml;
 
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
-import dr.inference.markovchain.MarkovChainDelegate;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
 import dr.xml.*;
 
@@ -81,37 +82,35 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         likelihood.setUsed();
 
-        // check that all models, parameters and likelihoods are being used
-//        for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
-//            if (!l.isUsed()) {
-//                java.util.logging.Logger.getLogger("dr.inference").warning("Likelihood, " + l.getId() +
-//                        ", of class " + l.getClass().getName() + " is not being handled by the MCMC.");
-//            }
-//        }
-//        for (Model m : Model.FULL_MODEL_SET) {
-//            if (!m.isUsed()) {
-//                java.util.logging.Logger.getLogger("dr.inference").warning("Model, " + m.getId() +
-//                        ", of class " + m.getClass().getName() + " is not being handled by the MCMC.");
-//            }
-//        }
-//        for (Parameter p : Parameter.FULL_PARAMETER_SET) {
-//            if (!p.isUsed()) {
-//                java.util.logging.Logger.getLogger("dr.inference").warning("Parameter, " + p.getId() +
-//                        ", of class " + p.getClass().getName() + " is not being handled by the MCMC.");
-//            }
-//        }
+        if (Boolean.valueOf(System.getProperty("show_warnings", "false"))) {
 
+            // check that all models, parameters and likelihoods are being used
+            for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
+                if (!l.isUsed()) {
+                    java.util.logging.Logger.getLogger("dr.inference").warning("Likelihood, " + l.getId() +
+                            ", of class " + l.getClass().getName() + " is not being handled by the MCMC.");
+                }
+            }
+            for (Model m : Model.FULL_MODEL_SET) {
+                if (!m.isUsed()) {
+                    java.util.logging.Logger.getLogger("dr.inference").warning("Model, " + m.getId() +
+                            ", of class " + m.getClass().getName() + " is not being handled by the MCMC.");
+                }
+            }
+            for (Parameter p : Parameter.FULL_PARAMETER_SET) {
+                if (!p.isUsed()) {
+                    java.util.logging.Logger.getLogger("dr.inference").warning("Parameter, " + p.getId() +
+                            ", of class " + p.getClass().getName() + " is not being handled by the MCMC.");
+                }
+            }
+        }
 
         ArrayList<Logger> loggers = new ArrayList<Logger>();
-        ArrayList<MarkovChainDelegate> delegates = new ArrayList<MarkovChainDelegate>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);
             if (child instanceof Logger) {
                 loggers.add((Logger) child);
-            }
-            else if (child instanceof MarkovChainDelegate) {
-                delegates.add((MarkovChainDelegate) child);
             }
         }
 
@@ -132,10 +131,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
                 (options.getFullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
         );
 
-        MarkovChainDelegate[] delegateArray = new MarkovChainDelegate[delegates.size()];
-        delegates.toArray(delegateArray);
-
-        mcmc.init(options, likelihood, opsched, loggerArray, delegateArray);
+        mcmc.init(options, likelihood, opsched, loggerArray);
 
 
         MarkovChain mc = mcmc.getMarkovChain();
@@ -188,7 +184,6 @@ public class MCMCParser extends AbstractXMLObjectParser {
             new ElementRule(OperatorSchedule.class),
             new ElementRule(Likelihood.class),
             new ElementRule(Logger.class, 1, Integer.MAX_VALUE),
-            new ElementRule(MarkovChainDelegate.class, 0, Integer.MAX_VALUE)
     };
 
     public static final String COERCION = "autoOptimize";

@@ -27,6 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.inference.model.BooleanStatistic;
 
@@ -94,7 +95,7 @@ public class SpeciesTreeStatistic extends BooleanStatistic implements TreeStatis
             if (species != null) {
                 species.addAll(speciesTaxa);
 
-                NodeRef speciesNode = Tree.Utils.getCommonAncestorNode(speciesTree, speciesTaxa);
+                NodeRef speciesNode = TreeUtils.getCommonAncestorNode(speciesTree, speciesTaxa);
                 if (popTree.getNodeHeight(popNode) < speciesTree.getNodeHeight(speciesNode)) {
                     return false;
                 }

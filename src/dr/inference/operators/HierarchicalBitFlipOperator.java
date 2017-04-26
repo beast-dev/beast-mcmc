@@ -26,12 +26,10 @@
 package dr.inference.operators;
 
 
-	import java.util.List;
-
-import dr.inference.model.Parameter;
+	import dr.inference.model.Parameter;
 	import dr.math.MathUtils;
-import dr.inference.model.VectorSliceParameter;
-	/**
+
+/**
 	 * An operator that flips bits in same position for all strata and hieararchical level.
 	 *
 	 * 
@@ -53,7 +51,7 @@ import dr.inference.model.VectorSliceParameter;
 	    
 
 	    /**
-	     * Change the parameter and return the hastings ratio.
+		 * Change the parameter and return the hastings ratio.
 	     * Flip (Switch a 0 to 1 or 1 to 0) for a random bit in a bit vector.
 	     * Return the hastings ratio which makes all subsets of vectors with the same number of 1 bits
 	     * equiprobable

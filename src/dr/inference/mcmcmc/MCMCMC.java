@@ -384,7 +384,7 @@ public class MCMCMC implements Runnable {
         /**
          * Called to update the current model keepEvery states.
          */
-        public synchronized void currentState(long state, Model currentModel) {
+        public synchronized void currentState(long state, MarkovChain markovChain, Model currentModel) {
 
             currentState = state;
 
@@ -416,14 +416,14 @@ public class MCMCMC implements Runnable {
         /**
          * Called when a new new best posterior state is found.
          */
-        public synchronized void bestState(long state, Model bestModel) {
+        public synchronized void bestState(long state, MarkovChain markovChain, Model bestModel) {
             currentState = state;
         }
 
         /**
          * cleans up when the chain finishes (possibly early).
          */
-        public synchronized void finished(long chainLength) {
+        public synchronized void finished(long chainLength, MarkovChain markovChain) {
         }
 
     };

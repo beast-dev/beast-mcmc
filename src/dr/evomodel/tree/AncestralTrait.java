@@ -28,6 +28,7 @@ package dr.evomodel.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -43,12 +44,12 @@ import java.util.Set;
  */
 public class AncestralTrait implements Loggable {
 
-    public AncestralTrait(String name, TreeTrait ancestralTrait, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+    public AncestralTrait(String name, TreeTrait ancestralTrait, Tree tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
         this.name = name;
         this.tree = tree;
         this.ancestralTrait = ancestralTrait;
         if (taxa != null) {
-            this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+            this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxa);
         }
     }
 
@@ -63,7 +64,7 @@ public class AncestralTrait implements Loggable {
 
         NodeRef node;
         if (leafSet != null) {
-            node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+            node = TreeUtils.getCommonAncestorNode(tree, leafSet);
             if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
         } else {
             node = tree.getRoot();

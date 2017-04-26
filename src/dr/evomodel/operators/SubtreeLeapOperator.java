@@ -81,7 +81,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         double logq;
 
         final double delta = getDelta();

@@ -27,6 +27,7 @@ package dr.evomodelxml.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.StarTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -216,7 +217,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
         return treeModel;
     }

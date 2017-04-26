@@ -31,11 +31,10 @@ package dr.evomodel.operators;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 
 import java.util.HashMap;
@@ -46,6 +45,8 @@ import java.util.Map;
  * @version 1.0
  */
 @SuppressWarnings({"ConstantConditions"})
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ImportanceNarrowExchange extends AbstractTreeOperator implements TreeLogger.LogUpon {
 
     private TreeModel tree = null;
@@ -174,7 +175,7 @@ public class ImportanceNarrowExchange extends AbstractTreeOperator implements Tr
 
             weights[node.getNumber()] = w;
             if( DEBUG > 5 && w > 0 ) {
-              System.out.println("" + w + " " + Tree.Utils.uniqueNewick(tree, node));
+              System.out.println("" + w + " " + TreeUtils.uniqueNewick(tree, node));
             }
             totalWeight += w;
         }
@@ -186,7 +187,7 @@ public class ImportanceNarrowExchange extends AbstractTreeOperator implements Tr
             r -= weights[nodeIndex];
             if( r < 0 ) {
                 if( DEBUG > 0 ) {
-                    System.out.println("" + weights[nodeIndex] + "/" + totalWeight + " " + Tree.Utils.uniqueNewick(tree, node));
+                    System.out.println("" + weights[nodeIndex] + "/" + totalWeight + " " + TreeUtils.uniqueNewick(tree, node));
                 }
                 return k;
             }
@@ -201,15 +202,15 @@ public class ImportanceNarrowExchange extends AbstractTreeOperator implements Tr
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         int k = getNode();
         if( k < 0 ) {
-            throw new OperatorFailedException("no node found");
+            throw new RuntimeException("no node found");
         }
 
         final NodeRef p = tree.getInternalNode(k);
         if( DEBUG > 0 ) {
-            System.out.println(Tree.Utils.newick(tree));
+            System.out.println(TreeUtils.newick(tree));
             System.out.println("" + getAcceptCount() + " - " + getRejectCount());
         }
         assert tree.getChildCount(p) == 2;

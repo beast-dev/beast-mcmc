@@ -31,6 +31,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import dr.evolution.tree.TreeUtils;
 import dr.evomodelxml.substmodel.MG94CodonModelParser;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
@@ -39,7 +40,6 @@ import dr.app.beagle.tools.parsers.PartitionParser;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.oldevomodel.sitemodel.SiteModel;
@@ -653,7 +653,7 @@ public class XMLGenerator {
 										"true") //
 		});
 
-		writer.writeText(Tree.Utils.newick(tree));
+		writer.writeText(TreeUtils.newick(tree));
 
 		writer.writeCloseTag(NewickParser.NEWICK);
 

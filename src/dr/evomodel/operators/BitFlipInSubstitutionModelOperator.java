@@ -65,7 +65,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
      * Return the hastings ratio which makes all subsets of vectors with the same number of 1 bits
      * equiprobable.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
         final int dim = indicatorParameter.getDimension();
         double sum = 0.0;
 

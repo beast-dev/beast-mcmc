@@ -1,7 +1,7 @@
 /*
  * MultiRegionGeoSpatialDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -37,15 +37,26 @@ public class MultiRegionGeoSpatialDistribution extends GeoSpatialDistribution {
         super(label);
         regions = new ArrayList<GeoSpatialDistribution>();
         union = false;
+        fillValue = false;
     }
 
-    public MultiRegionGeoSpatialDistribution(String label, List<GeoSpatialDistribution> regions, boolean union) {
+    public MultiRegionGeoSpatialDistribution(String label, List<GeoSpatialDistribution> regions, boolean union, boolean fillValue) {
         super(label);
         this.regions = regions;
         this.union = union;
+        this.fillValue = fillValue;
     }
 
-     public double logPdf(double[] x) {
+    public double logPdf(double[] x) {
+
+        if (fillValue) {
+            for (GeoSpatialDistribution region : regions) {
+                if (!Double.isInfinite(region.logPdf(x))) {
+                    return region.logPdf(x);
+                }
+            }
+            return Double.NEGATIVE_INFINITY;
+        }
 
         if (union) {
             for (GeoSpatialDistribution region : regions) {
@@ -90,5 +101,6 @@ public class MultiRegionGeoSpatialDistribution extends GeoSpatialDistribution {
 
     private final List<GeoSpatialDistribution> regions;
     private final boolean union;
+    private final boolean fillValue;
 
 }

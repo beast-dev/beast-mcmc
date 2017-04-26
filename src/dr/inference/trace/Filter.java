@@ -30,13 +30,12 @@ package dr.inference.trace;
  */
 public class Filter {
 
-//    public boolean[] selected; // a mark, length = trace.values.size() = valueCount, all must be true initially
     final protected TraceType traceType; // for consistency matter
     protected String[] in; // bound of double or integer filter, values of string filter
 
     public Filter(String[] in, TraceType traceType) {
         if (traceType.isNumber() && in.length != 2)
-            throw new IllegalArgumentException("Double or integer filter should have 2 bounds ! trace type = " + traceType);
+            throw new IllegalArgumentException("Numeric filter must have both lower and upper ! trace type = " + traceType);
         setIn(in);
         this.traceType = traceType;
     }
@@ -45,10 +44,8 @@ public class Filter {
         if (traceType.isNumber()) {
             // double or integer
             return ( (Double)value >= Double.parseDouble(in[0]) && (Double)value <= Double.parseDouble(in[1]));
-         }
-//        else if (traceType == TraceFactory.TraceType.INTEGER) {
-//            return ( (Integer)value >= Integer.parseInt(in[0]) && (Integer)value <= Integer.parseInt(in[1]));
-//        }
+        }
+        // String
         for (Object t : in) {
             if (t.toString().equals(value.toString())) {
                 return true;
@@ -57,11 +54,11 @@ public class Filter {
         return false;
     }
 
+    /**
+     * either lower and upper limits of double or integer filter, or values of string filter
+     * @return String[]
+     */
     public String[] getIn() {
-//        String[] inString = new String[in.length];
-//        for (int i = 0; i < in.length; i++) {
-//            inString[i] = in[i].toString();
-//        }
         return this.in;
     }
 

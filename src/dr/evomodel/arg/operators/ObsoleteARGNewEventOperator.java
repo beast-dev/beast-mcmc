@@ -34,7 +34,7 @@
 package dr.evomodel.arg.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodelxml.tree.TreeModelParser;
@@ -110,7 +110,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 //		System.err.println("Starting AddRemove Operation");
 
         double logq = 0;
@@ -157,7 +157,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
         return count;
     }
 
-    private double RemoveOperation() throws OperatorFailedException {
+    private double RemoveOperation() throws ARGOperatorFailedException {
         double logq = 0;
 
 //	    System.err.println("Starting remove ARG operation.");
@@ -169,7 +169,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
 
         int totalPotentials = findPotentialNodesToRemove(potentialNodes);
         if (totalPotentials == 0)
-            throw new OperatorFailedException("No reassortment nodes to remove.");
+            throw new ARGOperatorFailedException("No reassortment nodes to remove.");
 //	    System.err.println("potentials exist!");
         Node recNode = (Node) potentialNodes.get(MathUtils.nextInt(totalPotentials));
 //        logq += Math.log(totalPotentials);
@@ -327,7 +327,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
         System.err.println("Checking all internal nodes (" + n + ") via tree:");
         for (int i = 0; i < n; i++) {
             NodeRef node = arg.getInternalNode(i);
-            System.err.print(Tree.Utils.uniqueNewick(arg, node) + " ");
+            System.err.print(TreeUtils.uniqueNewick(arg, node) + " ");
             System.err.println(((Node) node).getHeight());
         }
     }
@@ -420,7 +420,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
     }
 
 
-    private double AddOperation() throws OperatorFailedException {
+    private double AddOperation() throws ARGOperatorFailedException {
 
         double logq = 0;
 

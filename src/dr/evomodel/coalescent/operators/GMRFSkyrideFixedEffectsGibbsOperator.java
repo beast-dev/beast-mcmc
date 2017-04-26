@@ -29,7 +29,6 @@ import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideFixedEffectsGibbsOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.MultivariateDistribution;
 import no.uib.cipr.matrix.*;
@@ -67,7 +66,7 @@ public class GMRFSkyrideFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
         setWeight(weight);
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         DenseMatrix X = new DenseMatrix(gmrfLikelihood.getDesignMatrix().getParameterAsMatrix());
         SymmTridiagMatrix Q = gmrfLikelihood.getScaledWeightMatrix(gmrfLikelihood.getPrecisionParameter().getParameterValue(0),

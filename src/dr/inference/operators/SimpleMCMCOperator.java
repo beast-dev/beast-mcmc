@@ -166,7 +166,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 //        return span;
 //    }
 
-    public final double operate() throws OperatorFailedException {
+    public final double operate() {
         if( operateAllowed ) {
             operateAllowed = false;
             return doOperation();
@@ -176,8 +176,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         }
     }
 
-    public final double operate(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException {
+    public final double operate(Prior prior, Likelihood likelihood) {
         if( operateAllowed ) {
             operateAllowed = false;
             return doOperation(prior, likelihood);
@@ -195,10 +194,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
      * Called by operate(), does the actual operation.
      *
      * @return the hastings ratio
-     * @throws OperatorFailedException if operator fails and should be rejected
      */
-    public double doOperation(Prior prior, Likelihood likelihood)
-            throws OperatorFailedException {
+    public double doOperation(Prior prior, Likelihood likelihood) {
         return 0.0;
     }
 
@@ -218,9 +215,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
      * Called by operate(), does the actual operation.
      *
      * @return the hastings ratio
-     * @throws OperatorFailedException if operator fails and should be rejected
      */
-    public abstract double doOperation() throws OperatorFailedException;
+    public abstract double doOperation();
 
     private double weight = 1.0;
     private int acceptCount = 0;

@@ -28,6 +28,7 @@ package dr.oldevomodel.treelikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -165,7 +166,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
      */
     public void addCladeSiteModel(SiteModel siteModel,
                                   TaxonList taxonList,
-                                  boolean includeStem) throws Tree.MissingTaxonException {
+                                  boolean includeStem) throws TreeUtils.MissingTaxonException {
         Logger.getLogger("dr.evomodel").info("SiteModel added for clade.");
         cladeSiteModels.add(new Clade(siteModel, taxonList, includeStem));
         addModel(siteModel);
@@ -529,7 +530,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
                             treeLikelihood.addCladeSiteModel(siteModel2, taxonList, includeStem);
 
-                        } catch (Tree.MissingTaxonException mte) {
+                        } catch (TreeUtils.MissingTaxonException mte) {
                             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
                         }
                     }
@@ -580,9 +581,9 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     };
 
     private class Clade {
-        Clade(SiteModel siteModel, TaxonList taxonList, boolean includeStem) throws Tree.MissingTaxonException {
+        Clade(SiteModel siteModel, TaxonList taxonList, boolean includeStem) throws TreeUtils.MissingTaxonException {
             this.siteModel = siteModel;
-            this.leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
+            this.leafSet = TreeUtils.getLeavesForTaxa(treeModel, taxonList);
             this.includeStem = includeStem;
             if (taxonList.getTaxonCount() == 1) {
                 this.includeStem = true;
@@ -592,7 +593,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         void findMRCA() {
-            node = Tree.Utils.getCommonAncestorNode(treeModel, leafSet).getNumber();
+            node = TreeUtils.getCommonAncestorNode(treeModel, leafSet).getNumber();
         }
 
         int getNode() {

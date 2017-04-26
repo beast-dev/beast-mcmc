@@ -1,7 +1,7 @@
 /*
  * BeagleDataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -109,8 +109,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         final Logger logger = Logger.getLogger("dr.evomodel");
 
         logger.info("\nUsing BEAGLE DataLikelihood Delegate");
+        setId(patternList.getId());
 
         this.dataType = patternList.getDataType();
+        this.patternList = patternList;
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
 
@@ -394,7 +396,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public int getTraitDim() {
-        return  patternCount;
+        return patternCount;
+    }
+
+    public PatternList getPatternList() {
+        return this.patternList;
     }
 
     private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
@@ -553,6 +559,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException {
 
         //recomputeScaleFactors = false;
+        if (DEBUG) {
+            System.out.println("Partition: " + this.getModelName());
+        }
 
         if (!this.delayRescalingUntilUnderflow || everUnderflowed) {
             if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS || this.rescalingScheme == PartialsRescalingScheme.DELAYED) {
@@ -586,17 +595,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
                 }
 
-                if (underflowHandling < 1) {
-                    underflowHandling++;
-                    if (DEBUG) {
-                        System.out.println("underflowHandling < 1");
+                //underflowHandling takes into account the first evaluation when initiating the MCMC chain
+                //suggest replacing with boolean initialEvaluation
+                if (initialEvaluation) {
+                    if (underflowHandling < 1) {
+                        underflowHandling++;
+                        if (DEBUG) {
+                            System.out.println("underflowHandling < 1");
+                        }
+                    } else if (underflowHandling == 1) {
+                        if (DEBUG) {
+                            System.out.println("underflowHandling == 1");
+                        }
+                        recomputeScaleFactors = true;
+                        underflowHandling++;
+                        initialEvaluation = false;
                     }
-                } else if (underflowHandling == 1) {
-                    if (DEBUG) {
-                        System.out.println("underflowHandling == 1");
-                    }
-                    recomputeScaleFactors = true;
-                    underflowHandling++;
                 }
 
                 rescalingCount++;
@@ -623,6 +637,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         if (updateSiteModel) {
             double[] categoryRates = this.siteRateModel.getCategoryRates();
+            if (categoryRates == null) {
+                // If this returns null then there was a numerical error calculating the category rates
+                // (probably a very small alpha) so reject the move.
+                return Double.NEGATIVE_INFINITY;
+            }
             beagle.setCategoryRates(categoryRates);
         }
 
@@ -716,7 +735,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         double[] sumLogLikelihoods = new double[1];
 
         if (DEBUG) {
-            System.out.println("useScaleFactors=" + useScaleFactors + " recomputeScaleFactors=" + recomputeScaleFactors);
+            System.out.println("useScaleFactors=" + useScaleFactors + " recomputeScaleFactors=" + recomputeScaleFactors + " (" + getId() + ")");
         }
 
         beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
@@ -734,7 +753,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         if (Double.isNaN(logL) || Double.isInfinite(logL)) {
 
             if (DEBUG) {
-                System.out.println("Double.isNaN(logL) || Double.isInfinite(logL)");
+                System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (" + getId() + ")");
             }
 
             everUnderflowed = true;
@@ -747,9 +766,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     // show a message but only every 1000 rescales
                     if (rescalingMessageCount % 1000 == 0) {
                         if (rescalingMessageCount > 0) {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
+                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown; " + getId() + ").");
                         } else {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
                         }
                     }
                     rescalingMessageCount += 1;
@@ -932,6 +951,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * the patternList
      */
+    private final PatternList patternList;
+
+    /**
+     * the data type
+     */
     private final DataType dataType;
 
     /**
@@ -998,5 +1022,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * Flag to specify that the site model has changed
      */
     private boolean updateSiteModel;
+
+    /**
+     * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
+     */
+    private boolean initialEvaluation = true;
 
 }

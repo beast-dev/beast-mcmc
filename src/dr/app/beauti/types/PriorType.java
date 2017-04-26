@@ -356,6 +356,18 @@ public enum PriorType {
                     LOGNORMAL_HPM_PRIOR,
                     NORMAL_HPM_PRIOR};
         }
+        if (parameter.isMaintainedSum) {
+            return new PriorType[]{
+                    NONE_FIXED,
+                    NONE_IMPROPER,
+                    DIRICHLET_PRIOR,
+                    UNIFORM_PRIOR,
+                    EXPONENTIAL_PRIOR,
+                    NORMAL_PRIOR,
+                    LOGNORMAL_PRIOR,
+                    GAMMA_PRIOR,
+                    INVERSE_GAMMA_PRIOR};
+        }
         if (parameter.isZeroOne) {
             return new PriorType[]{
                     NONE_FIXED,
@@ -380,6 +392,7 @@ public enum PriorType {
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
         }
+
 
         // just a continuous parameter
         return new PriorType[]{

@@ -26,6 +26,7 @@
 package dr.app.pathogen;
 
 import dr.evolution.tree.*;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.*;
 import dr.evolution.util.Date;
 import dr.stats.Regression;
@@ -313,8 +314,8 @@ public class TemporalRooting {
 
         final double sumLength = length1 + length2;
 
-        final Set<NodeRef> tipSet1 = Tree.Utils.getExternalNodes(tree, node1);
-        final Set<NodeRef> tipSet2 = Tree.Utils.getExternalNodes(tree, node2);
+        final Set<NodeRef> tipSet1 = TreeUtils.getExternalNodes(tree, node1);
+        final Set<NodeRef> tipSet2 = TreeUtils.getExternalNodes(tree, node2);
 
         final double[] y = new double[tree.getExternalNodeCount()];
 
@@ -414,8 +415,8 @@ public class TemporalRooting {
 
         final double sumLength = length1 + length2;
 
-        final Set<NodeRef> tipSet1 = Tree.Utils.getExternalNodes(tree, node1);
-        final Set<NodeRef> tipSet2 = Tree.Utils.getExternalNodes(tree, node2);
+        final Set<NodeRef> tipSet1 = TreeUtils.getExternalNodes(tree, node1);
+        final Set<NodeRef> tipSet2 = TreeUtils.getExternalNodes(tree, node2);
         
         int N = tipSet1.size() + tipSet2.size();
         int n = tipSet2.size();

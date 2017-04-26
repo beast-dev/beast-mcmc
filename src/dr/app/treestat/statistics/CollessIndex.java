@@ -27,6 +27,7 @@ package dr.app.treestat.statistics;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 
 /**
  *
@@ -49,8 +50,8 @@ public class CollessIndex extends AbstractTreeSummaryStatistic {
 
 			NodeRef node = tree.getInternalNode(i);
 
-			int r = Tree.Utils.getLeafCount(tree, tree.getChild(node, 0));
-			int s = Tree.Utils.getLeafCount(tree, tree.getChild(node, 1));
+			int r = TreeUtils.getLeafCount(tree, tree.getChild(node, 0));
+			int s = TreeUtils.getLeafCount(tree, tree.getChild(node, 1));
 
 			C += Math.abs(r-s);
 		}

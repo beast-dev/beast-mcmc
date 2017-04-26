@@ -35,6 +35,8 @@ import dr.xml.*;
 /**
  * @author Sebastian Hoehna
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class CCPImportanceDistributionOperator extends
         AbstractImportanceDistributionOperator {
 

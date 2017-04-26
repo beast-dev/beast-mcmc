@@ -1,16 +1,11 @@
 package dr.evomodel.antigenic.phyloClustering.misc.obsolete;
 
 import dr.evomodel.antigenic.NPAntigenicLikelihood;
-import dr.inference.model.Bounds;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.RandomWalkOperator.BoundaryCondition;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -65,8 +60,8 @@ public class ClusterOperator extends SimpleMCMCOperator  {
              * change the parameter and return the hastings ratio.
              */
             public final double doOperation() {
-            	
-            	double moveWholeClusterOrChangeOnePoint = MathUtils.nextDouble();
+
+                double moveWholeClusterOrChangeOnePoint = MathUtils.nextDouble();
             	            	
             	//double moveWholeClusterProb = 0.2;
             	double moveWholeClusterProb = 0.5;

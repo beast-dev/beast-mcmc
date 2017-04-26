@@ -32,6 +32,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
+import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -49,6 +50,7 @@ import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;
+import dr.util.Transform;
 import dr.xml.XMLParser;
 
 import java.util.List;
@@ -144,7 +146,7 @@ public class OperatorsGenerator extends Generator {
                 writeUpDownOperator(UpDownOperatorParser.UP_DOWN_OPERATOR, operator, writer);
                 break;
             case MICROSAT_UP_DOWN:
-                writeUpDownOperator(MicrosatUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
+                writeUpDownOperator(MicrosatelliteUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
                 break;
             case UP_DOWN_ALL_RATES_HEIGHTS:
                 writeUpDownOperatorAllRatesTrees(operator, writer);
@@ -159,7 +161,10 @@ public class OperatorsGenerator extends Generator {
                 writeCenteredOperator(operator, writer);
                 break;
             case DELTA_EXCHANGE:
-                writeDeltaOperator(operator, writer);
+                writeDeltaOperator(operator, false, writer);
+                break;
+            case WEIGHTED_DELTA_EXCHANGE:
+                writeDeltaOperator(operator, true, writer);
                 break;
             case INTEGER_DELTA_EXCHANGE:
                 writeIntegerDeltaOperator(operator, writer);
@@ -215,6 +220,9 @@ public class OperatorsGenerator extends Generator {
                 break;
             case NODE_REHIGHT:
                 writeSpeciesTreeOperator(operator, writer);
+                break;
+            case ADAPTIVE_MULTIVARIATE:
+                writeAdaptiveMultivariateOperator(operator, writer);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown operator type");
@@ -351,12 +359,12 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(CenteredScaleOperatorParser.CENTERED_SCALE);
     }
 
-    private void writeDeltaOperator(Operator operator, XMLWriter writer) {
+    private void writeDeltaOperator(Operator operator, boolean weighted, XMLWriter writer) {
 
         int[] parameterWeights = operator.getParameter1().getParameterDimensionWeights();
         Attribute[] attributes;
 
-        if (parameterWeights != null && parameterWeights.length > 1) {
+        if (weighted && parameterWeights != null && parameterWeights.length > 1) {
             String pw = "" + parameterWeights[0];
             for (int i = 1; i < parameterWeights.length; i++) {
                 pw += " " + parameterWeights[i];
@@ -366,7 +374,6 @@ public class OperatorsGenerator extends Generator {
                     new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
                     getWeightAttribute(operator.getWeight())
             };
-
         } else {
             attributes = new Attribute[]{
                     new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.getTuning()),
@@ -679,6 +686,64 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(UpDownOperatorParser.DOWN);
 
         writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
+    }
+
+    private void writeAdaptiveMultivariateOperator(Operator operator, XMLWriter writer) {
+
+        //determine how many parameters will be part of the AVMVN transition kernel
+        int parameterCount = 0;
+        for (Parameter parameter : options.selectParameters()) {
+            parameterCount++;
+        }
+        //options set according to recommendations in AVMVN paper
+        int initial = 200*parameterCount;
+        int burnin = initial/2;
+
+        writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
+                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
+                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
+                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
+                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
+                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
+                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
+                });
+
+        // @todo Need to collate only the parameters being controlled by this here.
+
+        for (Parameter parameter : options.selectParameters()) {
+            if (parameter.isAdaptiveMultivariateCompatible) {
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+            }
+        }
+
+        //set appropriate transformations for all parameters
+        //TODO: we should aggregate as best as possible the different transformation so as to have fewer attributes
+        int startTransform = 0;
+        for (Parameter parameter : options.selectParameters()) {
+            if (parameter.isAdaptiveMultivariateCompatible) {
+                if (parameter.isNonNegative) {
+                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.LogTransform().getTransformName()),
+                            new Attribute.Default<Integer>(Transform.START, startTransform),
+                            new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
+                    }, true);
+                    startTransform += parameter.getDimensionWeight();
+                    System.out.println(parameter + ": " + parameter.getDimensionWeight());
+
+                } else { // -Inf to Inf
+                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.NoTransform().getTransformName()),
+                            new Attribute.Default<Integer>(Transform.START, startTransform),
+                            new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
+                    }, true);
+                    startTransform += parameter.getDimensionWeight();
+                    System.out.println(parameter + ": " + parameter.getDimensionWeight());
+                }
+            }
+        }
+
+        writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
     }
 
     private Attribute getWeightAttribute(double weight) {

@@ -30,7 +30,8 @@
         $Id$
     </description>
 
-    <property name="JDK_VERSION" value="1.7"/>
+    <property name="JDK_SOURCE_VERSION" value="1.6"/>
+    <property name="JDK_TARGET_VERSION" value="1.7"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
@@ -73,7 +74,7 @@
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
-        <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="${src}" destdir="${build}"
+        <javac source="${JDK_SOURCE_VERSION}" target="${JDK_TARGET_VERSION}" srcdir="${src}" destdir="${build}"
                classpathref="classpath"
                fork="true"
                memoryinitialsize="256m"
@@ -81,7 +82,7 @@
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/bss/**"/>
-            <include name="dr/app/tracer/**"/>
+            <include name="dr/app/checkpoint/**"/>
             <include name="dr/app/gui/**"/>
             <include name="dr/app/oldbeauti/**"/>
             <include name="dr/app/beagle/**"/>
@@ -92,9 +93,7 @@
             <include name="dr/app/treestat/**"/>
             <include name="dr/evolution/**"/>
             <include name="dr/evomodel/**"/>
-            <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
             <include name="dr/evomodelxml/**"/>
-            <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
             <include name="dr/oldevomodel/**"/>
             <include name="dr/oldevomodelxml/**"/>
             <include name="dr/evoxml/**"/>
@@ -131,6 +130,7 @@
                 <!--<include name="dr/app/beastdev/**/*.class"/>-->
                 <include name="dr/app/beauti/**/*.class"/>
                 <include name="dr/app/bss/**/*.class"/>
+                <include name="dr/app/checkpoint/**"/>
                 <include name="dr/app/gui/**/*.class"/>
                 <include name="dr/app/seqgen/**"/>
                 <include name="dr/app/plugin/**"/>
@@ -142,9 +142,7 @@
                 <include name="dr/evolution/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/evomodel/**/*.class"/>
-                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evomodelxml/**/*.class"/>
-                <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/oldevomodel/**/*.class"/>
                 <include name="dr/oldevomodelxml/**/*.class"/>
                 <include name="dr/exporters/**/*.class"/>
@@ -238,6 +236,23 @@
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
+        </jar>
+
+        <!-- Put everything in ${build} into the trace.jar file -->
+        <jar jarfile="${dist}/trace.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/util/*.class"/>
+                <include name="dr/evolution/coalescent/*.class"/>
+                <include name="dr/evolution/util/*.class"/>
+                <include name="dr/inference/trace/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+            </fileset>
         </jar>
 
     </target>

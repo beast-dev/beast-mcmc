@@ -29,7 +29,6 @@ import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -43,6 +42,8 @@ import org.w3c.dom.Element;
  * @author Alexei Drummond
  * @version $Id: FixedColouredOperator.java,v 1.1 2006/08/12 12:55:44 gerton Exp $
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class FixedColouredOperator implements CoercableMCMCOperator {
 
     public static final double ACCEPTANCE_FACTOR = 0.5;
@@ -59,7 +60,7 @@ public class FixedColouredOperator implements CoercableMCMCOperator {
         this.innerOperator = operator;
     }
 
-    public final double operate() throws OperatorFailedException {
+    public final double operate() {
 
         colouringModel.invalidateProposalProbability();
 

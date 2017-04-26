@@ -40,7 +40,7 @@ public class HMCOperator extends AbstractCoercableOperator{
     public double doOperation() { //throws OperatorFailedException {
         double functionalStepSize = stepSize;
 
-        double[] HMCDerivative = derivative.getGradient();
+        double[] HMCDerivative = derivative.getGradientLogDensity();
         double[] momentum = new double[HMCDerivative.length];
         for (int i = 0; i < momentum.length; i++) {
             momentum[i] = (Double) drawDistribution.nextRandom();
@@ -62,7 +62,7 @@ public class HMCOperator extends AbstractCoercableOperator{
             }
 //            parameter.fireParameterChangedEvent();
 
-            HMCDerivative = derivative.getGradient();
+            HMCDerivative = derivative.getGradientLogDensity();
 
             if(i != nSteps){
 

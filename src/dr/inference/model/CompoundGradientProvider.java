@@ -11,16 +11,23 @@ import java.util.List;
 public class CompoundGradientProvider implements GradientProvider {
 
     private int dimension = -1;
-    private List<GradientProvider> derivativeList;
-    
-    public CompoundGradientProvider(List<GradientProvider> derivativeList){
+    private final List<GradientProvider> derivativeList;
+    private final Likelihood likelihood;
+
+    public CompoundGradientProvider(List<GradientProvider> derivativeList, List<Likelihood> likelihoodList){
         this.derivativeList = derivativeList;
+        if (likelihoodList.size() == 1) {
+            likelihood = likelihoodList.get(0);
+        } else {
+            likelihood = new CompoundLikelihood(likelihoodList);
+        }
+
     }
 
-//    @Override
-//    public Likelihood getLikelihood() {
-//        return null;
-//    }
+    @Override
+    public Likelihood getLikelihood() {
+        return null;
+    }
 //
 //    @Override
 //    public Parameter getParameter() {
@@ -46,18 +53,18 @@ public class CompoundGradientProvider implements GradientProvider {
     }
 
 //    @Override
-//    public void getGradient(final double[] destination, final int offset) {
-//        double[] grad = getGradient();
+//    public void getGradientLogDensity(final double[] destination, final int offset) {
+//        double[] grad = getGradientLogDensity();
 //        System.arraycopy(grad, 0, destination, offset, grad.length);
 //    }
 
     @Override
-    public double[] getGradient() {
+    public double[] getGradientLogDensity() {
         int count = 0;
         ArrayList<double[]> derivativeArrayList = new ArrayList<double[]>();
 
         for (int i = 0; i < derivativeList.size(); i++) {
-            derivativeArrayList.add(derivativeList.get(i).getGradient());
+            derivativeArrayList.add(derivativeList.get(i).getGradientLogDensity());
             count += derivativeArrayList.get(i).length;
         }
 

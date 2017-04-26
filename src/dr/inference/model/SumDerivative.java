@@ -26,18 +26,23 @@ public class SumDerivative implements GradientProvider {
     }
 
     @Override
+    public Likelihood getLikelihood() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public int getDimension() {
         return dimension;
     }
 
     @Override
-    public double[] getGradient() {
+    public double[] getGradientLogDensity() {
         int size = derivativeList.size();
 
-        double[] derivative = derivativeList.get(0).getGradient();
+        double[] derivative = derivativeList.get(0).getGradientLogDensity();
         double[] temp;
         for (int i = 1; i < size; i++) {
-            temp = derivativeList.get(i).getGradient();
+            temp = derivativeList.get(i).getGradientLogDensity();
             for (int j = 0; j < temp.length; j++) {
                 derivative[j] += temp[j];
             }

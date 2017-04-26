@@ -16,17 +16,22 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientProvid
     }
 
     @Override
+    public Likelihood getLikelihood() {
+        return treeLikelihood;
+    }
+
+    @Override
     public int getDimension() {
         return treeLikelihood.getTraitParameter().getDimension();
     }
 
 //    @Override
-//    public void getGradient(double[] destination, int offset) {
+//    public void getGradientLogDensity(double[] destination, int offset) {
 //        throw new RuntimeException("Not yet implemented");
 //    }
 
     @Override
-    public double[] getGradient() {
+    public double[] getGradientLogDensity() {
 
         int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
         int ntaxa = traitParameter.getDimension() / dimTraits;

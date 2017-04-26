@@ -11,12 +11,17 @@ public class LFMLoadingsPotentialDerivative implements GradientProvider {
     }
 
     @Override
+    public Likelihood getLikelihood() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public int getDimension() {
         return lfm.getLoadings().getDimension();
     }
 
     @Override
-    public double[] getGradient() {
+    public double[] getGradientLogDensity() {
         double[] derivative = new double[lfm.getLoadings().getDimension()];
         Parameter missingIndicator = lfm.getMissingIndicator();
         int ntaxa = lfm.getFactors().getColumnDimension();

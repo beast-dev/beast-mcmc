@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
@@ -32,7 +33,8 @@ import dr.math.matrixAlgebra.*;
 /**
  * @author Marc Suchard
  */
-public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator {
+public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator,
+        GradientProvider {
 
     public static final String TYPE = "MultivariateNormal";
 
@@ -370,6 +372,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     @Override
     public int getDimension() { return mean.length; }
+
+    @Override
+    public double[] getGradientLogDensity() {
+        return new double[0];
+    }
 
     @Override
     public double[][] getPrecisionMatrix() {

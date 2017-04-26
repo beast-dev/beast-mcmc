@@ -31,13 +31,13 @@ package dr.inference.model;
  */
 public interface GradientProvider {
 
-//    Likelihood getLikelihood();
+    Likelihood getLikelihood();
 
 //    Parameter getParameter();
 
     int getDimension();
 
-    double[] getGradient();
+    double[] getGradientLogDensity();
 
-//    void getGradient(double[] destination, int offset);
+//    void getGradientLogDensity(double[] destination, int offset);
 }

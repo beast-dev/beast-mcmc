@@ -15,12 +15,17 @@ public class NormalPotentialDerivative implements GradientProvider {
     }
 
     @Override
+    public Likelihood getLikelihood() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public int getDimension() {
         return parameter.getDimension();
     }
 
     @Override
-    public double[] getGradient() {
+    public double[] getGradientLogDensity() {
         double[] derivative = new double[parameter.getDimension()];
 
         for (int i = 0; i < derivative.length; i++) {

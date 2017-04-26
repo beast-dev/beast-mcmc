@@ -215,6 +215,11 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     }
 
     @Override
+    public void getGradient(double[] location) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    @Override
     public void makeDirty() {
         sumOfIncrementsKnown = false;
         incrementsKnown = false;

@@ -1,5 +1,5 @@
 /*
- * GradientProvider2.java
+ * GradientForLikelihood.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -29,9 +29,15 @@ package dr.inference.model;
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
-public interface GradientProvider {
+public interface GradientWrtParameterProvider {
+
+    Likelihood getLikelihood();
+
+    Parameter getParameter();
 
     int getDimension();
 
-    double[] getGradientLogDensity(Object x);
+    double[] getGradientLogDensity();
+
+//    void getGradientLogDensity(double[] destination, int offset);
 }

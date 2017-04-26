@@ -1,6 +1,6 @@
 package dr.inference.operators;
 
-import dr.inference.model.GradientProvider;
+import dr.inference.model.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalDistribution;
 
@@ -8,14 +8,14 @@ import dr.math.distributions.NormalDistribution;
  * @author Max Tolkoff
  */
 public class HMCOperator extends AbstractCoercableOperator{
-    GradientProvider derivative;
+    GradientWrtParameterProvider derivative;
     Parameter parameter;
     double stepSize;
     int nSteps;
     NormalDistribution drawDistribution;
 
 
-    public HMCOperator(CoercionMode mode, double weight, GradientProvider derivative, Parameter parameter, double stepSize, int nSteps, double drawVariance) {
+    public HMCOperator(CoercionMode mode, double weight, GradientWrtParameterProvider derivative, Parameter parameter, double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
         this.derivative = derivative;

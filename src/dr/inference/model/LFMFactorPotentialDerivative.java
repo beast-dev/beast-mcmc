@@ -3,7 +3,7 @@ package dr.inference.model;
 /**
  * Created by maxryandolinskytolkoff on 3/1/17.
  */
-public class LFMFactorPotentialDerivative implements GradientProvider {
+public class LFMFactorPotentialDerivative implements GradientWrtParameterProvider {
     LatentFactorModel lfm;
 
     public LFMFactorPotentialDerivative(LatentFactorModel lfm){
@@ -12,6 +12,11 @@ public class LFMFactorPotentialDerivative implements GradientProvider {
 
     @Override
     public Likelihood getLikelihood() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Parameter getParameter() {
         throw new RuntimeException("Not yet implemented");
     }
 

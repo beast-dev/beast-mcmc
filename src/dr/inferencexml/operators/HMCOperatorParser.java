@@ -1,6 +1,6 @@
 package dr.inferencexml.operators;
 
-import dr.inference.model.GradientProvider;
+import dr.inference.model.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.HMCOperator;
@@ -36,7 +36,7 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
 
-        GradientProvider derivative = (GradientProvider) xo.getChild(GradientProvider.class);
+        GradientWrtParameterProvider derivative = (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
         if (derivative.getDimension() != parameter.getDimension()) {
@@ -60,7 +60,7 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             new ElementRule(Parameter.class),
-            new ElementRule(GradientProvider.class),
+            new ElementRule(GradientWrtParameterProvider.class),
     };
 
     @Override

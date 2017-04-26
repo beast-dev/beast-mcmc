@@ -1,33 +1,53 @@
 package dr.inference.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Max Tolkoff
+ * @author Marc A. Suchard
  */
-public class SumDerivative implements GradientProvider {
+public class SumDerivative implements GradientWrtParameterProvider {
 
-    private int dimension = -1;
+    private final int dimension;
+    private final Likelihood likelihood;
+    private final Parameter parameter;
 
-    List<GradientProvider> derivativeList;
+    List<GradientWrtParameterProvider> derivativeList;
 
-    public SumDerivative(List<GradientProvider> derivativeList){
+    public SumDerivative(List<GradientWrtParameterProvider> derivativeList){
+
+        // TODO Check that parameters are the same
+
         this.derivativeList = derivativeList;
 
-        for (GradientProvider grad : derivativeList) {
-            if (dimension == -1) {
-                dimension = grad.getDimension();
-            } else {
-                if (dimension != grad.getDimension()) {
-                    throw new IllegalArgumentException("All gradients must have the same dimension");
+        GradientWrtParameterProvider first = derivativeList.get(1);
+        dimension = first.getDimension();
+        parameter = first.getParameter();
+
+        if (derivativeList.size() == 1) {
+            likelihood = first.getLikelihood();
+        } else {
+            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+
+            for (GradientWrtParameterProvider grad : derivativeList) {
+                if (grad.getDimension() != dimension) {
+                    throw new RuntimeException("Unequal parameter dimensions");
                 }
+                likelihoodList.add(grad.getLikelihood());
             }
+            likelihood = new CompoundLikelihood(likelihoodList);
         }
     }
 
     @Override
     public Likelihood getLikelihood() {
-        throw new RuntimeException("Not yet implemented");
+        return likelihood;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return parameter;
     }
 
     @Override
@@ -39,10 +59,10 @@ public class SumDerivative implements GradientProvider {
     public double[] getGradientLogDensity() {
         int size = derivativeList.size();
 
-        double[] derivative = derivativeList.get(0).getGradientLogDensity();
-        double[] temp;
+        final double[] derivative = derivativeList.get(0).getGradientLogDensity();
+
         for (int i = 1; i < size; i++) {
-            temp = derivativeList.get(i).getGradientLogDensity();
+            final double[] temp = derivativeList.get(i).getGradientLogDensity();
             for (int j = 0; j < temp.length; j++) {
                 derivative[j] += temp[j];
             }

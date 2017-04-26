@@ -4,7 +4,7 @@ package dr.inference.model;
  * @author Max Tolkoff
  */
 @Deprecated // TODO Should be implemented in NormalDistribution, etc.
-public class NormalPotentialDerivative implements GradientProvider {
+public class NormalPotentialDerivative implements GradientWrtParameterProvider {
     double mean;
     double stdev;
     Parameter parameter;
@@ -18,6 +18,11 @@ public class NormalPotentialDerivative implements GradientProvider {
     @Override
     public Likelihood getLikelihood() {
         return null;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return parameter;
     }
 
     @Override

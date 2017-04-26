@@ -5,7 +5,7 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 /**
  * @author Max Tolkoff
  */
-public class FullyConjugateTreeTipsPotentialDerivative implements GradientProvider {
+public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider {
 
     private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;
     private final Parameter traitParameter;
@@ -21,8 +21,13 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientProvid
     }
 
     @Override
+    public Parameter getParameter() {
+        return traitParameter;
+    }
+
+    @Override
     public int getDimension() {
-        return treeLikelihood.getTraitParameter().getDimension();
+        return traitParameter.getDimension();
     }
 
 //    @Override

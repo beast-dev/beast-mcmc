@@ -3,6 +3,7 @@ package dr.inference.model;
 /**
  * @author Max Tolkoff
  */
+@Deprecated // TODO Should be implemented in NormalDistribution, etc.
 public class NormalPotentialDerivative implements GradientProvider {
     double mean;
     double stdev;
@@ -16,7 +17,7 @@ public class NormalPotentialDerivative implements GradientProvider {
 
     @Override
     public Likelihood getLikelihood() {
-        throw new RuntimeException("Not yet implemented");
+        return null;
     }
 
     @Override
@@ -30,6 +31,8 @@ public class NormalPotentialDerivative implements GradientProvider {
 
         for (int i = 0; i < derivative.length; i++) {
             derivative[i] += (parameter.getParameterValue(i) - mean) / Math.sqrt(stdev);
+            // TODO Should be?
+            // derivative[i] = (mean - parameter.getParameterValue(i)) / variance;
         }
 
         return derivative;

@@ -209,9 +209,10 @@ public class BNPRLikelihoodParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("The " + BNPR_LIKELIHOOD + " has " +
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
-        return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
-                lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight,
-                cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), false);
+        return null;
+//        return new BNPRLikelihood(treeList, popParameter, groupParameter, precParameter,
+//                lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight,
+//                cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), false);
 //        if (xo.getChild(GRID_POINTS) != null) {
 //            System.err.println("A");
 //

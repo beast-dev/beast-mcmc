@@ -1,5 +1,8 @@
 package dr.evomodel.coalescent.operators;
 
+import dr.evolution.io.NewickImporter;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.BNPRLikelihood;
 import dr.evomodelxml.coalescent.operators.BNPRBlockUpdateOperatorParser;
 import dr.inference.model.MatrixParameter;
@@ -9,6 +12,10 @@ import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
 import no.uib.cipr.matrix.*;
 
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -94,7 +101,7 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator { // implements 
         DenseVector currentGamma = new DenseVector(bnprField.getPopSizeParameter().getParameterValues());
 
         shape = bnprField.getPrecAlpha() + (bnprField.getNumGridPoints() - 1) / 2.0; // TODO: Watch for off-by-one
-        scale = bnprField.getPrecBeta() + currentGamma.dot(bnprField.getStoredScaledWeightMatrix(currentValue).mult(currentGamma, new DenseVector(currentGamma.size())));
+        scale = bnprField.getPrecBeta() + currentGamma.dot(bnprField.getScaledWeightMatrix(currentValue).mult(currentGamma, new DenseVector(currentGamma.size())));
 
         returnValue = GammaDistribution.nextGamma(shape, scale);
 
@@ -229,7 +236,49 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator { // implements 
 
     // Main function for testing
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+//        NewickImporter importer = new NewickImporter("((((5:0.5,1:0.2):0.5,0:1):0.2,2:0.8):0.2,3:1.4)");
+//        System.out.println(System.getProperty("user.home"));
+        NexusImporter importer = new NexusImporter(new FileReader(System.getProperty("user.home") + "/Dropbox/VladResearch/Julia/influenza_max_clade.nex"));
+        Tree tree = importer.importNextTree();
 
+        System.out.println("Got here A");
+
+        System.out.println("Number of nodes: " + tree.getNodeCount());
+
+        BNPRLikelihood bnprLikelihood = new BNPRLikelihood(tree, new Parameter.Default(1.0),
+                null, new Parameter.Default(1.0), 679.66184, 100, false);
+
+        System.out.println("Got here B");
+
+        BNPRBlockUpdateOperator bnprBlockUpdateOperator = new BNPRBlockUpdateOperator(bnprLikelihood, 1.0);
+
+        System.out.println("Got here C");
+
+        System.out.println("Pop sizes: " + Arrays.toString(bnprBlockUpdateOperator.bnprField.getPopSizeParameter().getParameterValues()));
+
+        System.out.println("Got here D");
+
+        bnprBlockUpdateOperator.doOperation();
+        System.out.println("Pop sizes: " + Arrays.toString(bnprBlockUpdateOperator.bnprField.getPopSizeParameter().getParameterValues()));
+
+        System.out.println("Got here E");
+
+        for (int i = 0; i < 10; i++) {
+            bnprBlockUpdateOperator.doOperation();
+        }
+
+        System.out.println("Opening file for writing...");
+        PrintWriter pw = new PrintWriter(new FileWriter(System.getProperty("user.home") + "/Documents/Research/BEASText/doOperationOutput.txt"));
+
+        for (int i = 0; i < 30; i++) {
+            bnprBlockUpdateOperator.doOperation();
+            if (i % 10 == 9) {
+                System.out.println("Iteration " + i);
+                pw.println(Arrays.toString(bnprBlockUpdateOperator.bnprField.getPopSizeParameter().getParameterValues()));
+            }
+        }
+
+        pw.close();
     }
 }

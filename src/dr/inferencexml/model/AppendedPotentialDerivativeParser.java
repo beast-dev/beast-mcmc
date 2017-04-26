@@ -1,10 +1,11 @@
 package dr.inferencexml.model;
 
-import dr.inference.model.AppendedPotentialDerivative;
-import dr.inference.model.PotentialDerivativeInterface;
+import dr.inference.model.CompoundGradientProvider;
+import dr.inference.model.GradientProvider;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Max Tolkoff
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
 
     public final static String SUM_DERIVATIVE = "appendedPotentialDerivative";
+    public static final String SUM_DERIVATIVE2 = "compoundGradientForLikelihood";
 
     @Override
     public String getParserName() {
@@ -19,15 +21,21 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
     }
 
     @Override
+    public String[] getParserNames() {
+        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
+    }
+
+    @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        ArrayList<PotentialDerivativeInterface> derivativeList = new ArrayList<PotentialDerivativeInterface>();
+
+        List<GradientProvider> derivativeList = new ArrayList<GradientProvider>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
-            derivativeList.add((PotentialDerivativeInterface) xo.getChild(i));
+            derivativeList.add((GradientProvider) xo.getChild(i));
         }
 
 
-        return new AppendedPotentialDerivative(derivativeList);
+        return new CompoundGradientProvider(derivativeList);
     }
 
     @Override
@@ -36,7 +44,7 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(PotentialDerivativeInterface.class, 1, Integer.MAX_VALUE),
+            new ElementRule(GradientProvider.class, 1, Integer.MAX_VALUE),
     };
 
     @Override
@@ -46,6 +54,6 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return AppendedPotentialDerivative.class;
+        return CompoundGradientProvider.class;
     }
 }

@@ -3,7 +3,7 @@ package dr.inference.model;
 /**
  * Created by maxryandolinskytolkoff on 3/1/17.
  */
-public class LFMFactorPotentialDerivative implements PotentialDerivativeInterface {
+public class LFMFactorPotentialDerivative implements GradientProvider {
     LatentFactorModel lfm;
 
     public LFMFactorPotentialDerivative(LatentFactorModel lfm){
@@ -12,7 +12,12 @@ public class LFMFactorPotentialDerivative implements PotentialDerivativeInterfac
 
 
     @Override
-    public double[] getDerivative() {
+    public int getDimension() {
+        return lfm.getFactors().getDimension();
+    }
+
+    @Override
+    public double[] getGradient() {
         double[] derivative = new double[lfm.getFactors().getDimension()];
         Parameter missingIndicator = lfm.getMissingIndicator();
         int ntaxa = lfm.getFactors().getColumnDimension();

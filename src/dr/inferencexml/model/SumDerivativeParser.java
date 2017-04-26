@@ -1,10 +1,11 @@
 package dr.inferencexml.model;
 
-import dr.inference.model.PotentialDerivativeInterface;
+import dr.inference.model.GradientProvider;
 import dr.inference.model.SumDerivative;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Max Tolkoff
@@ -19,10 +20,10 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        ArrayList<PotentialDerivativeInterface> derivativeList = new ArrayList<PotentialDerivativeInterface>();
+        List<GradientProvider> derivativeList = new ArrayList<GradientProvider>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
-            derivativeList.add((PotentialDerivativeInterface) xo.getChild(i));
+            derivativeList.add((GradientProvider) xo.getChild(i));
         }
 
 
@@ -35,7 +36,7 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(PotentialDerivativeInterface.class, 1, Integer.MAX_VALUE),
+            new ElementRule(GradientProvider.class, 1, Integer.MAX_VALUE),
     };
 
     @Override

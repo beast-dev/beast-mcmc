@@ -9,11 +9,17 @@ import dr.xml.*;
  */
 public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXMLObjectParser {
     public final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE = "fullyConjugateTreeTipsPotentialDerivative";
+    public final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2 = "traitGradientOnTree";
 
 
     @Override
     public String getParserName() {
         return FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE;
+    }
+
+    @Override
+    public String[] getParserNames() {
+        return new String[] { FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE, FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2 };
     }
 
     @Override

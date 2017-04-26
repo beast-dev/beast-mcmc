@@ -3,16 +3,20 @@ package dr.inference.model;
 /**
  * @author Max Tolkoff
  */
-public class LFMLoadingsPotentialDerivative implements PotentialDerivativeInterface {
+public class LFMLoadingsPotentialDerivative implements GradientProvider {
     LatentFactorModel lfm;
 
     public LFMLoadingsPotentialDerivative(LatentFactorModel lfm){
         this.lfm = lfm;
     }
 
+    @Override
+    public int getDimension() {
+        return lfm.getLoadings().getDimension();
+    }
 
     @Override
-    public double[] getDerivative() {
+    public double[] getGradient() {
         double[] derivative = new double[lfm.getLoadings().getDimension()];
         Parameter missingIndicator = lfm.getMissingIndicator();
         int ntaxa = lfm.getFactors().getColumnDimension();

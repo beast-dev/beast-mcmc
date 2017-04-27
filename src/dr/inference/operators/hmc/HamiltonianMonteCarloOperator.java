@@ -66,6 +66,36 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return "Vanilla HMC operator";
     }
 
+    private static void updateMomentum(final double[] momentum,
+                                       final double functionalStepSize,
+                                       final double[] gradient) {
+        final int dim = momentum.length;
+
+        for (int i = 0; i < dim; ++i) {
+            momentum[i] = momentum[i] + functionalStepSize / 2 * gradient[i]; /* Sign change */
+        }
+    }
+
+    private static double getDotProduct(final double[] momentum,
+                                        final double sigmaSquared) {
+        final int dim = momentum.length;
+
+        double total = 0.0;
+        for (int i = 0; i < dim; i++) {
+            total += momentum[i] * momentum[i] / (2 * sigmaSquared);
+        }
+
+        return total;
+    }
+
+    private static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
+        double[] momentum = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            momentum[i] = (Double) distribution.nextRandom();
+        }
+        return momentum;
+    }
+
     @Override
     public double doOperation() {
 
@@ -73,25 +103,18 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         final int dim = gradientProvider.getDimension();
         final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
 
+        double[] momentum = drawInitialMomentum(drawDistribution, dim);
+
+        double prop = getDotProduct(momentum, sigmaSquared);
+
         double[] gradient = gradientProvider.getGradientLogDensity(); /* Sign change */
 
-        double[] momentum = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            momentum[i] = (Double) drawDistribution.nextRandom();
-        }
-
-        double prop = 0;
-        for (int i = 0; i < dim; i++) {
-            prop += momentum[i] * momentum[i] / (2 * sigmaSquared);
-        }
-
-        for (int i = 0; i < momentum.length; i++) {
-            momentum[i] = momentum[i] + functionalStepSize / 2 * gradient[i];  /* Sign change */
-        }
+        updateMomentum(momentum, functionalStepSize, gradient);
 
         for (int i = 0; i < nSteps; i++) {
 
             for (int j = 0; j < dim; j++) {
+
                 final double newValue = parameter.getParameterValue(j) +
                         functionalStepSize * momentum[j] / sigmaSquared;
                 parameter.setParameterValueQuietly(j, newValue);
@@ -100,22 +123,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
             gradient = gradientProvider.getGradientLogDensity(); /* Sign change */
 
-            if (i != nSteps) {
-
-                for (int j = 0; j < dim; j++) {
-                    momentum[j] = momentum[j] + functionalStepSize / 2 * gradient[j];  /* Sign change */
-                }
+            if (i != nSteps) { // TODO: This *always* occurs, no?
+                updateMomentum(momentum, functionalStepSize, gradient);
             }
         } // end of loop over steps
 
-        for (int i = 0; i < dim; i++) {
-            momentum[i] = momentum[i] + functionalStepSize / 2 * gradient[i];  /* Sign change */
-        }
+        updateMomentum(momentum, functionalStepSize, gradient);
 
-        double res = 0;
-        for (int i = 0; i < momentum.length; i++) {
-            res += momentum[i] * momentum[i] / (2 * sigmaSquared);
-        }
+        double res = getDotProduct(momentum, sigmaSquared);
 
         return prop - res;
     }

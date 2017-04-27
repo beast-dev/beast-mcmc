@@ -93,40 +93,40 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
 
 
         }
-        DoubleMatrix2D LL = new DenseDoubleMatrix2D(matrix);
-        RobustSingularValueDecomposition SVD = new RobustSingularValueDecomposition(LL);
-        double[][] U = SVD.getU().toArray();
-        double[][] V = SVD.getV().toArray();
-        DoubleMatrix2D EvalsTemp= SVD.getS();
-
-        double[] EVals = new double[EvalsTemp.rows()];
-        for (int i = 0; i < EVals.length ; i++) {
-            EVals[i] = EvalsTemp.get(i, i);
-        }
-
-        for (int i = 0; i < EVals.length ; i++) {
-            if(Math.abs(EVals[i]) >= Math.pow(10, -10)){
-                EVals[i] = 1 / EVals[i];
-            }
-            else
-                EVals[i] = 0;
-        }
-
-
-        for (int i = 0; i <U.length; i++) {
-            for (int j = 0; j <V.length ; j++) {
-                matrix[i][j] = 0;
-                for (int k = 0; k < U.length; k++) {
-                    matrix[i][j] += V[i][k] * EVals[k] * U[j][k];
-                }
-
-            }
-
-        }
+//        DoubleMatrix2D LL = new DenseDoubleMatrix2D(matrix);
+//        RobustSingularValueDecomposition SVD = new RobustSingularValueDecomposition(LL);
+//        double[][] U = SVD.getU().toArray();
+//        double[][] V = SVD.getV().toArray();
+//        DoubleMatrix2D EvalsTemp= SVD.getS();
+//
+//        double[] EVals = new double[EvalsTemp.rows()];
+//        for (int i = 0; i < EVals.length ; i++) {
+//            EVals[i] = EvalsTemp.get(i, i);
+//        }
+//
+//        for (int i = 0; i < EVals.length ; i++) {
+//            if(Math.abs(EVals[i]) >= Math.pow(10, -10)){
+//                EVals[i] = 1 / EVals[i];
+//            }
+//            else
+//                EVals[i] = 0;
+//        }
+//
+//
+//        for (int i = 0; i <U.length; i++) {
+//            for (int j = 0; j <V.length ; j++) {
+//                matrix[i][j] = 0;
+//                for (int k = 0; k < U.length; k++) {
+//                    matrix[i][j] += V[i][k] * EVals[k] * U[j][k];
+//                }
+//
+//            }
+//
+//        }
 
         for (int row = 0; row < dim; row++) {
 
-            matrix[row][row] += gamma.getParameterValue(row);
+            matrix[row][row] += 1 / gamma.getParameterValue(row);
         }
 
         if (DEBUG) {
@@ -136,7 +136,8 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
             System.err.println(new Matrix(matrix));
         }
 
-//        Matrix inverse = new Matrix(matrix).inverse();
+        matrix = new Matrix(matrix).inverse().toComponents();
+
 
         int index = 0;
         for (int row = 0; row < dim; ++row) {

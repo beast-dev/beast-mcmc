@@ -453,6 +453,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
 
 
+//            System.err.println(tipTraitParameter.getDimension()+"\t"+numTaxa+"\t"+numData+"\t"+dimTrait);
 
                 if (tipTraitParameter.getDimension() != numTaxa * numData * dimTrait) {
                     throw new XMLParseException("Tip trait parameter is wrong dimension in latent liability model");

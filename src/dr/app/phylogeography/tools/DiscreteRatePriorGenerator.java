@@ -246,7 +246,7 @@ public class DiscreteRatePriorGenerator {
         //printLocations(locations,false);
         //printLocationsDensitiesDistances(locations,true);
         //printLocationsDensitiesDistances(locations,false);
-        //printFullDistanceMatrix("test.txt", false);
+        printFullDistanceMatrix("test.txt", false);
         resultsStream = System.out;
 
         if (outputFileName != null) {

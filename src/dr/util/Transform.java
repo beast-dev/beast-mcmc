@@ -102,10 +102,12 @@ public interface Transform {
         public double[] transform(double[] values, int from, int to) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
-
         public double inverse(double value) {
             return Math.exp(value);
         }
+//        public double inverse(double value) {
+//            return Math.pow(10,value);
+//        }
 
         public double[] inverse(double[] values, int from, int to) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");

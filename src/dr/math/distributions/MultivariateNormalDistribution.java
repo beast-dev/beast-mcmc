@@ -25,6 +25,8 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
+import dr.inference.model.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
@@ -32,7 +34,8 @@ import dr.math.matrixAlgebra.*;
 /**
  * @author Marc Suchard
  */
-public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator {
+public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator,
+        GradientProvider {
 
     public static final String TYPE = "MultivariateNormal";
 
@@ -155,6 +158,46 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         } else {
             return logPdf(x, mean, precision, getLogDet(), 1.0);
         }
+    }
+
+    public double[] gradLogPdf(double[] x) {
+        if (hasSinglePrecision) {
+            return gradLogPdf(x, mean, singlePrecision);
+        } else {
+            return gradLogPdf(x, mean, precision);
+        }
+    }
+
+    public static double[] gradLogPdf(double[] x, double[] mean, double singlePrecision) {
+
+        final int dim = x .length;
+        final double[] gradient = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            gradient[i] = singlePrecision * (mean[i] - x[i]);
+        }
+
+        return gradient;
+    }
+
+    public static double[] gradLogPdf(double[] x, double[] mean, double[][] precision) {
+        final int dim = x.length;
+        final double[] gradient = new double[dim];
+        final double[] delta = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            delta[i] = mean[i] - x[i];
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            double sum = 0;
+            for (int j = 0; j <dim; ++j) {
+                sum += precision[i][j] * delta[j];
+            }
+            gradient[i] = sum;
+        }
+
+        return gradient;
     }
 
     // scale only modifies precision
@@ -370,6 +413,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     @Override
     public int getDimension() { return mean.length; }
+
+    @Override
+    public double[] getGradientLogDensity(Object x) {
+        return new double[0];
+    }
 
     @Override
     public double[][] getPrecisionMatrix() {

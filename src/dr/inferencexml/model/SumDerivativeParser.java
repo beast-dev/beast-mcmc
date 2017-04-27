@@ -1,16 +1,21 @@
 package dr.inferencexml.model;
 
-import dr.inference.model.PotentialDerivativeInterface;
+import dr.inference.model.GradientWrtParameterProvider;
 import dr.inference.model.SumDerivative;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Max Tolkoff
+ * @author Marc A. Suchard
  */
+
 public class SumDerivativeParser extends AbstractXMLObjectParser{
     public final static String SUM_DERIVATIVE = "sumDerivative";
+    public final static String SUM_DERIVATIVE2 = "jointGradient";
+
 
     @Override
     public String getParserName() {
@@ -18,13 +23,19 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
     }
 
     @Override
+    public String[] getParserNames() {
+        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
+    }
+
+    @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        ArrayList<PotentialDerivativeInterface> derivativeList = new ArrayList<PotentialDerivativeInterface>();
+
+        List<GradientWrtParameterProvider> derivativeList = new ArrayList<GradientWrtParameterProvider>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
-            derivativeList.add((PotentialDerivativeInterface) xo.getChild(i));
+            GradientWrtParameterProvider grad = (GradientWrtParameterProvider) xo.getChild(i);
+            derivativeList.add(grad);
         }
-
 
         return new SumDerivative(derivativeList);
     }
@@ -35,7 +46,7 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(PotentialDerivativeInterface.class, 1, Integer.MAX_VALUE),
+            new ElementRule(GradientWrtParameterProvider.class, 1, Integer.MAX_VALUE),
     };
 
     @Override

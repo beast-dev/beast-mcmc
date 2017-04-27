@@ -5,16 +5,39 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 /**
  * @author Max Tolkoff
  */
-public class FullyConjugateTreeTipsPotentialDerivative implements PotentialDerivativeInterface {
-    FullyConjugateMultivariateTraitLikelihood treeLikelihood;
+public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider {
+
+    private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;
+    private final Parameter traitParameter;
 
     public FullyConjugateTreeTipsPotentialDerivative(FullyConjugateMultivariateTraitLikelihood treeLikelihood){
         this.treeLikelihood = treeLikelihood;
+        traitParameter = treeLikelihood.getTraitParameter();
     }
 
     @Override
-    public double[] getDerivative() {
-        Parameter traitParameter = treeLikelihood.getTraitParameter();
+    public Likelihood getLikelihood() {
+        return treeLikelihood;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return traitParameter;
+    }
+
+    @Override
+    public int getDimension() {
+        return traitParameter.getDimension();
+    }
+
+//    @Override
+//    public void getGradientLogDensity(double[] destination, int offset) {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+
         int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
         int ntaxa = traitParameter.getDimension() / dimTraits;
         double[] derivative = new double[traitParameter.getDimension()];

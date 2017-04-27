@@ -3,16 +3,30 @@ package dr.inference.model;
 /**
  * @author Max Tolkoff
  */
-public class LFMLoadingsPotentialDerivative implements PotentialDerivativeInterface {
+public class LFMLoadingsPotentialDerivative implements GradientWrtParameterProvider {
     LatentFactorModel lfm;
 
     public LFMLoadingsPotentialDerivative(LatentFactorModel lfm){
         this.lfm = lfm;
     }
 
+    @Override
+    public Likelihood getLikelihood() {
+        throw new RuntimeException("Not yet implemented");
+    }
 
     @Override
-    public double[] getDerivative() {
+    public Parameter getParameter() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getDimension() {
+        return lfm.getLoadings().getDimension();
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
         double[] derivative = new double[lfm.getLoadings().getDimension()];
         Parameter missingIndicator = lfm.getMissingIndicator();
         int ntaxa = lfm.getFactors().getColumnDimension();

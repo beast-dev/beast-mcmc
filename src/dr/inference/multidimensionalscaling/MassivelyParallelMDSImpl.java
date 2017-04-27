@@ -106,6 +106,11 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     }
 
     @Override
+    public void getGradient(double[] location) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public void makeDirty() {
         singleton.makeDirty(instance);
     }

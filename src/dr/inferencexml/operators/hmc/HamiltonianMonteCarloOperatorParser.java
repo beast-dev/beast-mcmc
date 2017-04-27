@@ -30,6 +30,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.NewHamiltonianMonteCarloOperator;
 import dr.xml.*;
 
 /**
@@ -42,6 +43,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public final static String N_STEPS = "nSteps";
     public final static String STEP_SIZE = "stepSize";
     public final static String DRAW_VARIANCE = "drawVariance";
+    public static final String MODE = "mode";
 
     @Override
     public String getParserName() {
@@ -60,6 +62,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         int nSteps = xo.getIntegerAttribute(N_STEPS);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
+        int mode = xo.getAttribute(MODE, 0);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
@@ -70,8 +73,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
-        return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter,stepSize,
-                nSteps, drawVariance);
+        if (mode == 0) {
+            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, stepSize,
+                    nSteps, drawVariance);
+        } else {
+            return new NewHamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, stepSize,
+                    nSteps, drawVariance);
+        }
     }
 
     @Override
@@ -84,6 +92,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
+            AttributeRule.newIntegerRule(MODE, false),
             new ElementRule(Parameter.class),
             new ElementRule(GradientWrtParameterProvider.class),
     };

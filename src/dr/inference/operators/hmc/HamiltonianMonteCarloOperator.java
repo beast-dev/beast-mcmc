@@ -105,7 +105,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         double[] momentum = drawInitialMomentum(drawDistribution, dim);
 
-        double prop = getDotProduct(momentum, sigmaSquared);
+        final double prop = getDotProduct(momentum, sigmaSquared);
 
         double[] gradient = gradientProvider.getGradientLogDensity(); /* Sign change */
 
@@ -123,14 +123,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
             gradient = gradientProvider.getGradientLogDensity(); /* Sign change */
 
-            if (i != nSteps) { // TODO: This *always* occurs, no?
-                updateMomentum(momentum, functionalStepSize, gradient);
-            }
+            updateMomentum(momentum, functionalStepSize, gradient);
         } // end of loop over steps
 
-        updateMomentum(momentum, functionalStepSize, gradient);
-
-        double res = getDotProduct(momentum, sigmaSquared);
+        final double res = getDotProduct(momentum, sigmaSquared);
 
         return prop - res;
     }

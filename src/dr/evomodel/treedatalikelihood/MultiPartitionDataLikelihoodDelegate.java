@@ -998,7 +998,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         updateSubstitutionModels(false);
         updateSiteRateModels(false);
-        // updateAllPartitions = true;
+        updateAllPartitions = true;
 
         if (Double.isNaN(tmpLogL) || Double.isInfinite(tmpLogL)) {
             // one or more of the updated partitions has underflowed

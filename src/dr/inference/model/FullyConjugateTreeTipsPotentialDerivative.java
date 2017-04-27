@@ -5,16 +5,39 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 /**
  * @author Max Tolkoff
  */
-public class FullyConjugateTreeTipsPotentialDerivative implements PotentialDerivativeInterface {
-    FullyConjugateMultivariateTraitLikelihood treeLikelihood;
+public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider {
+
+    private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;
+    private final Parameter traitParameter;
 
     public FullyConjugateTreeTipsPotentialDerivative(FullyConjugateMultivariateTraitLikelihood treeLikelihood){
         this.treeLikelihood = treeLikelihood;
+        traitParameter = treeLikelihood.getTraitParameter();
     }
 
     @Override
-    public double[] getDerivative() {
-        Parameter traitParameter = treeLikelihood.getTraitParameter();
+    public Likelihood getLikelihood() {
+        return treeLikelihood;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return traitParameter;
+    }
+
+    @Override
+    public int getDimension() {
+        return traitParameter.getDimension();
+    }
+
+//    @Override
+//    public void getGradientLogDensity(double[] destination, int offset) {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+
         int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
         int ntaxa = traitParameter.getDimension() / dimTraits;
         double[] derivative = new double[traitParameter.getDimension()];
@@ -23,7 +46,8 @@ public class FullyConjugateTreeTipsPotentialDerivative implements PotentialDeriv
 
         for (int i = 0; i < dimTraits; i++) {
             for (int j = 0; j < ntaxa; j++) {
-                derivative[j * dimTraits + i] += (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
+                derivative[j * dimTraits + i] -= (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
+                /* Sign change */
             }
 
         }

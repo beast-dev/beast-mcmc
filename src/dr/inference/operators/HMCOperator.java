@@ -1,7 +1,6 @@
 package dr.inference.operators;
 
-import dr.inference.model.PotentialDerivativeInterface;
-import dr.inference.model.Likelihood;
+import dr.inference.model.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalDistribution;
 
@@ -9,14 +8,14 @@ import dr.math.distributions.NormalDistribution;
  * @author Max Tolkoff
  */
 public class HMCOperator extends AbstractCoercableOperator{
-    PotentialDerivativeInterface derivative;
+    GradientWrtParameterProvider derivative;
     Parameter parameter;
     double stepSize;
     int nSteps;
     NormalDistribution drawDistribution;
 
 
-    public HMCOperator(CoercionMode mode, double weight, PotentialDerivativeInterface derivative, Parameter parameter, double stepSize, int nSteps, double drawVariance) {
+    public HMCOperator(CoercionMode mode, double weight, GradientWrtParameterProvider derivative, Parameter parameter, double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
         this.derivative = derivative;
@@ -41,7 +40,7 @@ public class HMCOperator extends AbstractCoercableOperator{
     public double doOperation() { //throws OperatorFailedException {
         double functionalStepSize = stepSize;
 
-        double[] HMCDerivative = derivative.getDerivative();
+        double[] HMCDerivative = derivative.getGradientLogDensity(); /* Sign change */
         double[] momentum = new double[HMCDerivative.length];
         for (int i = 0; i < momentum.length; i++) {
             momentum[i] = (Double) drawDistribution.nextRandom();
@@ -54,7 +53,7 @@ public class HMCOperator extends AbstractCoercableOperator{
 
 
         for (int i = 0; i < momentum.length; i++) {
-                momentum[i] = momentum[i] - functionalStepSize / 2 * HMCDerivative[i];
+                momentum[i] = momentum[i] + functionalStepSize / 2 * HMCDerivative[i];  /* Sign change */
         }
 
         for (int i = 0; i <nSteps ; i++) {
@@ -63,18 +62,18 @@ public class HMCOperator extends AbstractCoercableOperator{
             }
 //            parameter.fireParameterChangedEvent();
 
-            HMCDerivative = derivative.getDerivative();
+            HMCDerivative = derivative.getGradientLogDensity(); /* Sign change */
 
             if(i != nSteps){
 
                 for (int j = 0; j < momentum.length; j++) {
-                    momentum[j] = momentum[j] - functionalStepSize / 2 * HMCDerivative[j];
+                    momentum[j] = momentum[j] + functionalStepSize / 2 * HMCDerivative[j];  /* Sign change */
                 }
             }
         }
 
         for (int i = 0; i < momentum.length; i++) {
-                momentum[i] = momentum[i] - functionalStepSize / 2 * HMCDerivative[i];
+                momentum[i] = momentum[i] + functionalStepSize / 2 * HMCDerivative[i];  /* Sign change */
         }
 
         double res=0;

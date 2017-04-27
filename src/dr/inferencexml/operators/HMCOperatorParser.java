@@ -1,7 +1,6 @@
 package dr.inferencexml.operators;
 
-import dr.inference.model.Likelihood;
-import dr.inference.model.PotentialDerivativeInterface;
+import dr.inference.model.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.HMCOperator;
@@ -13,6 +12,7 @@ import dr.xml.*;
  */
 public class HMCOperatorParser extends AbstractXMLObjectParser {
     public final static String HMC_OPERATOR = "HMCOperator";
+    public static final String HMC_OPERATOR2 = "hamiltonianMonteCarloOperator";
 
     public final static String N_STEPS = "nSteps";
     public final static String STEP_SIZE = "stepSize";
@@ -24,6 +24,11 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
     }
 
     @Override
+    public String[] getParserNames() {
+        return new String[] { HMC_OPERATOR, HMC_OPERATOR2 };
+    }
+
+    @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
@@ -31,8 +36,13 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
 
-        PotentialDerivativeInterface derivative = (PotentialDerivativeInterface) xo.getChild(PotentialDerivativeInterface.class);
+        GradientWrtParameterProvider derivative = (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
+        if (derivative.getDimension() != parameter.getDimension()) {
+            throw new XMLParseException("Gradient (" + derivative.getDimension() +
+                    ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
+        }
 
 
 
@@ -50,7 +60,7 @@ public class HMCOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             new ElementRule(Parameter.class),
-            new ElementRule(PotentialDerivativeInterface.class),
+            new ElementRule(GradientWrtParameterProvider.class),
     };
 
     @Override

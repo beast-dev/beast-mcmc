@@ -88,6 +88,11 @@ public interface MultiDimensionalScalingCore {
     void acceptState();
 
     /**
+     * Get gradient of MDS likelihood w.r.t. locations
+     */
+    void getGradient(double[] location);
+
+    /**
      * Get pair-wise data
      */
     double[] getPairwiseData();

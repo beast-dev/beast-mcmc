@@ -317,12 +317,12 @@ public class PartitionClockModel extends PartitionOptions {
             }
         }
 
-        Parameter allMus = getParameter(options.NEW_OPERATORS ? "allNus" : "allMus");
+        Parameter allMus = getParameter(options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus");
 
         if (allMus.getSubParameters().size() > 1) {
             Operator muOperator;
 
-            muOperator = getOperator(options.NEW_OPERATORS ? "deltaNus" : "deltaMus");
+            muOperator = getOperator(options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "deltaNus" : "deltaMus");
 
             ops.add(muOperator);
         }

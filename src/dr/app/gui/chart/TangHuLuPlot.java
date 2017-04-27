@@ -37,7 +37,7 @@ import java.util.Set;
 
 /**
  * Create a string of bubbles to visualise the joint probability
- * between two ordinal random variables.
+ * between two integer/categorical random variables.
  * The size of circle is proportional to the joint probability,
  * the blue coloured circle is in the credible set of
  * given a probability threshold default to 0.95,

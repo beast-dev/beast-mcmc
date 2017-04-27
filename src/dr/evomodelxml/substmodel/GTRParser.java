@@ -141,7 +141,7 @@ public class GTRParser extends AbstractXMLObjectParser {
             new ElementRule(FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
             new ElementRule(RATES,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(A_TO_C,
                     new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true),
             new ElementRule(A_TO_G,

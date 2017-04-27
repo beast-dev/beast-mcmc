@@ -43,7 +43,8 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id$
  */
-public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood implements Reportable {
+public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood implements Reportable,
+        GradientWrtParameterProvider {
 
     public static final String REQUIRED_FLAGS_PROPERTY = "mds.required.flags";
 
@@ -52,6 +53,33 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         StringBuilder sb = new StringBuilder();
         sb.append(getId() + ": " + getLogLikelihood());
         return sb.toString();
+    }
+
+    @Override
+    public Likelihood getLikelihood() {
+        return this;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return locationsParameter;
+    }
+
+    @Override
+    public int getDimension() {
+        return locationsParameter.getDimension();
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+        // TODO Cache !!!
+        if (gradient == null) {
+            gradient = new double[locationsParameter.getDimension()];
+        }
+
+        mdsCore.getGradient(gradient);
+
+        return gradient; // TODO Do not expose internals
     }
 
     public enum ObservationType {
@@ -457,4 +485,5 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
     private long flags = 0;
 
     private double[] observations;
+    private double[] gradient;
 }

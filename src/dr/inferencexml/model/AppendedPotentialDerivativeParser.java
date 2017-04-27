@@ -30,8 +30,7 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         List<GradientWrtParameterProvider> gradList = new ArrayList<GradientWrtParameterProvider>();
-        List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
-
+        List<Likelihood> likelihoodList = new ArrayList<Likelihood>(); // TODO Remove?
 
         for (int i = 0; i < xo.getChildCount(); ++i) {
 
@@ -58,28 +57,7 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
                 final Parameter parameter = mdl.getDataParameter();
                 likelihood = mdl;
 
-                grad = new GradientWrtParameterProvider() { // Return gradient w.r.t. parameter
-
-                    @Override
-                    public Likelihood getLikelihood() {
-                        return mdl;
-                    }
-
-                    @Override
-                    public Parameter getParameter() {
-                        return parameter;
-                    }
-
-                    @Override
-                    public int getDimension() {
-                        return parameter.getDimension();
-                    }
-
-                    @Override
-                    public double[] getGradientLogDensity() {
-                        return provider.getGradientLogDensity(parameter.getParameterValues());
-                    }
-                };
+                grad = new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
 
             } else if (obj instanceof GradientWrtParameterProvider) {
                 grad = (GradientWrtParameterProvider) obj;

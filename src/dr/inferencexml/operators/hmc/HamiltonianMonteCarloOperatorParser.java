@@ -30,7 +30,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.hmc.NewHamiltonianMonteCarloOperator;
 import dr.xml.*;
 
 /**

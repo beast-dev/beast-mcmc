@@ -1,5 +1,5 @@
 /*
- * HMCOperatorParser.java
+ * HamiltonianMonteCarloOperatorParser.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -61,7 +61,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
 
-        GradientWrtParameterProvider derivative = (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
+        GradientWrtParameterProvider derivative =
+                (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
         if (derivative.getDimension() != parameter.getDimension()) {
@@ -69,9 +70,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
-
-
-        return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter,stepSize, nSteps, drawVariance);
+        return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter,stepSize,
+                nSteps, drawVariance);
     }
 
     @Override

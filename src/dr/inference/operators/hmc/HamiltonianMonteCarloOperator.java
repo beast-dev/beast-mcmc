@@ -1,5 +1,5 @@
 /*
- * HMCOperator.java
+ * HamiltonianMonteCarloOperator.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -33,19 +33,23 @@ import dr.math.distributions.NormalDistribution;
 
 /**
  * @author Max Tolkoff
+ * @author Marc A. Suchard
  */
+
 public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
-    GradientWrtParameterProvider derivative;
-    Parameter parameter;
-    double stepSize;
-    int nSteps;
-    NormalDistribution drawDistribution;
 
+    private final GradientWrtParameterProvider gradientProvider;
+    private final Parameter parameter;
+    private double stepSize;
+    private final int nSteps;
+    private final NormalDistribution drawDistribution;
 
-    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider derivative, Parameter parameter, double stepSize, int nSteps, double drawVariance) {
+    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                                         Parameter parameter, double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
-        this.derivative = derivative;
+
+        this.gradientProvider = gradientProvider;
         this.parameter = parameter;
         this.stepSize = stepSize;
         this.nSteps = nSteps;
@@ -59,53 +63,60 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     @Override
     public String getOperatorName() {
-        return "HMC Operator";
+        return "Vanilla HMC operator";
     }
 
     @Override
-    public double doOperation() { //throws OperatorFailedException {
-        double functionalStepSize = stepSize;
+    public double doOperation() {
 
-        double[] HMCDerivative = derivative.getGradientLogDensity(); /* Sign change */
-        double[] momentum = new double[HMCDerivative.length];
-        for (int i = 0; i < momentum.length; i++) {
+        final double functionalStepSize = stepSize;
+        final int dim = gradientProvider.getDimension();
+        final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
+
+        double[] gradient = gradientProvider.getGradientLogDensity(); /* Sign change */
+
+        double[] momentum = new double[dim];
+        for (int i = 0; i < dim; i++) {
             momentum[i] = (Double) drawDistribution.nextRandom();
         }
 
-        double prop=0;
-        for (int i = 0; i < momentum.length ; i++) {
-            prop += momentum[i] * momentum[i] / (2 * Math.pow(drawDistribution.getSD(), 2));
+        double prop = 0;
+        for (int i = 0; i < dim; i++) {
+            prop += momentum[i] * momentum[i] / (2 * sigmaSquared);
         }
-
 
         for (int i = 0; i < momentum.length; i++) {
-                momentum[i] = momentum[i] + functionalStepSize / 2 * HMCDerivative[i];  /* Sign change */
+            momentum[i] = momentum[i] + functionalStepSize / 2 * gradient[i];  /* Sign change */
         }
 
-        for (int i = 0; i <nSteps ; i++) {
-            for (int j = 0; j < momentum.length; j++) {
-                    parameter.setParameterValue(j, parameter.getParameterValue(j) + functionalStepSize * momentum[j] / (Math.pow(drawDistribution.getSD() , 2)));
+        for (int i = 0; i < nSteps; i++) {
+
+            for (int j = 0; j < dim; j++) {
+                final double newValue = parameter.getParameterValue(j) +
+                        functionalStepSize * momentum[j] / sigmaSquared;
+                parameter.setParameterValueQuietly(j, newValue);
             }
-//            parameter.fireParameterChangedEvent();
+            parameter.fireParameterChangedEvent();
 
-            HMCDerivative = derivative.getGradientLogDensity(); /* Sign change */
+            gradient = gradientProvider.getGradientLogDensity(); /* Sign change */
 
-            if(i != nSteps){
+            if (i != nSteps) {
 
-                for (int j = 0; j < momentum.length; j++) {
-                    momentum[j] = momentum[j] + functionalStepSize / 2 * HMCDerivative[j];  /* Sign change */
+                for (int j = 0; j < dim; j++) {
+                    momentum[j] = momentum[j] + functionalStepSize / 2 * gradient[j];  /* Sign change */
                 }
             }
+        } // end of loop over steps
+
+        for (int i = 0; i < dim; i++) {
+            momentum[i] = momentum[i] + functionalStepSize / 2 * gradient[i];  /* Sign change */
         }
 
+        double res = 0;
         for (int i = 0; i < momentum.length; i++) {
-                momentum[i] = momentum[i] + functionalStepSize / 2 * HMCDerivative[i];  /* Sign change */
+            res += momentum[i] * momentum[i] / (2 * sigmaSquared);
         }
 
-        double res=0;
-        for (int i = 0; i <momentum.length ; i++) {
-            res += momentum[i] * momentum[i] / (2 * Math.pow(drawDistribution.getSD(), 2));
-        }
         return prop - res;
     }
 

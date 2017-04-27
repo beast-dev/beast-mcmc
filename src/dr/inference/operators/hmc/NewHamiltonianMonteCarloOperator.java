@@ -66,14 +66,30 @@ public class NewHamiltonianMonteCarloOperator extends AbstractCoercableOperator 
         return "Vanilla HMC operator";
     }
 
-    private static void updateHalfMomentum(final double[] momentum,
-                                           final double functionalStepSize,
-                                           final double[] gradient) {
+    private static void updateMomentum(final double[] momentum,
+                                       final double functionalStepSize,
+                                       final double[] gradient) {
         final int dim = momentum.length;
 
         for (int i = 0; i < dim; ++i) {
-            momentum[i] = momentum[i] + functionalStepSize / 2 * gradient[i]; /* Sign change */
+            momentum[i] = momentum[i] + functionalStepSize  * gradient[i];
         }
+    }
+
+    private static void updateParameter(final Parameter parameter,
+                                        final double[] momentum,
+                                        final double functionalStepSize,
+                                        final double sigmaSquared) {
+        final int dim = momentum.length;
+
+        for (int j = 0; j < dim; j++) {
+            final double oldValue = parameter.getParameterValue(j);
+            final double newValue =  oldValue +
+                    functionalStepSize * momentum[j] / sigmaSquared;
+
+            parameter.setParameterValueQuietly(j, newValue);
+        }
+        parameter.fireParameterChangedEvent();
     }
 
     private static double getScaledDotProduct(final double[] momentum,
@@ -96,44 +112,30 @@ public class NewHamiltonianMonteCarloOperator extends AbstractCoercableOperator 
         return momentum;
     }
 
-    private static void updateParameter(final Parameter parameter,
-                                        final double[] momentum,
-                                        final double functionalStepSize,
-                                        final double sigmaSquared) {
-        final int dim = momentum.length;
-
-        for (int j = 0; j < dim; j++) {
-            final double oldValue = parameter.getParameterValue(j);
-            final double newValue =  oldValue +
-                    functionalStepSize * momentum[j] / sigmaSquared;
-
-            parameter.setParameterValueQuietly(j, newValue);
-        }
-        parameter.fireParameterChangedEvent();
-    }
-
     @Override
     public double doOperation() {
 
-        final double functionalStepSize = stepSize;
         final int dim = gradientProvider.getDimension();
         final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
 
         double[] momentum = drawInitialMomentum(drawDistribution, dim);
         final double prop = getScaledDotProduct(momentum, sigmaSquared);
 
+        updateMomentum(momentum, stepSize / 2,
+                gradientProvider.getGradientLogDensity());
+
         for (int i = 0; i < nSteps; i++) { // Leap-frog
 
-            updateHalfMomentum(momentum, functionalStepSize,
-                    gradientProvider.getGradientLogDensity());
+            updateParameter(parameter, momentum, stepSize, sigmaSquared);
 
-            updateParameter(parameter, momentum, functionalStepSize, sigmaSquared);
-
-            updateHalfMomentum(momentum, functionalStepSize,
-                    gradientProvider.getGradientLogDensity());
-
+            if (i < (nSteps - 1)) {
+                updateMomentum(momentum, stepSize,
+                        gradientProvider.getGradientLogDensity());
+            }
         } // end of loop over steps
 
+        updateMomentum(momentum, stepSize / 2,
+                gradientProvider.getGradientLogDensity());
         final double res = getScaledDotProduct(momentum, sigmaSquared);
 
         return prop - res;

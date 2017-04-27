@@ -91,7 +91,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
-            AttributeRule.newIntegerRule(MODE, false),
+            AttributeRule.newIntegerRule(MODE, true),
             new ElementRule(Parameter.class),
             new ElementRule(GradientWrtParameterProvider.class),
     };

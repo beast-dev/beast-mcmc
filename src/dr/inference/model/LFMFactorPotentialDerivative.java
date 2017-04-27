@@ -38,8 +38,9 @@ public class LFMFactorPotentialDerivative implements GradientWrtParameterProvide
             for (int j = 0; j < ntraits; j++) {
                 for (int k = 0; k < ntaxa; k++) {
                     if(missingIndicator == null || missingIndicator.getParameterValue(k * ntraits + j) != 1){
-                        derivative[k * nfac + i] -= lfm.getLoadings().getParameterValue(j, i) * lfm.getColumnPrecision().getParameterValue(j, j) *
+                        derivative[k * nfac + i] += lfm.getLoadings().getParameterValue(j, i) * lfm.getColumnPrecision().getParameterValue(j, j) *
                                 residual[k * ntraits + j];
+                        /* Sign change */
                     }
                 }
             }

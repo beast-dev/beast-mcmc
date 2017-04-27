@@ -46,7 +46,8 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
 
         for (int i = 0; i < dimTraits; i++) {
             for (int j = 0; j < ntaxa; j++) {
-                derivative[j * dimTraits + i] += (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
+                derivative[j * dimTraits + i] -= (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
+                /* Sign change */
             }
 
         }

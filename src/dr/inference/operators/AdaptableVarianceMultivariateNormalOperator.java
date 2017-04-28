@@ -841,11 +841,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newBooleanRule(FORM_XTX, true),
                 AttributeRule.newBooleanRule(SKIP_RANK_CHECK, true),
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
-                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
-                new ElementRule(TRANSFORM, new XMLSyntaxRule[] {
-                        AttributeRule.newStringRule(TYPE, true),
-                        new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
-                }, 0, Integer.MAX_VALUE)
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
         };
 
     };

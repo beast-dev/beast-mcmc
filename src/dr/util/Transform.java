@@ -350,7 +350,15 @@ public interface Transform {
             String name = (String) xo.getAttribute(TYPE);
             System.err.println("name: " + name);
 
-            thisTransform = Type.valueOf(name).transform;
+            thisTransform = null;
+            for (Type type: Type.values()) {
+                if (name.equalsIgnoreCase(type.getName())) {
+                    thisTransform = type.transform;
+                }
+            }
+            if (thisTransform == null) {
+                throw new XMLParseException("Unrecognized transform type, " + name);
+            }
 
             ParsedTransform transform = new ParsedTransform();
             transform.transform = thisTransform;

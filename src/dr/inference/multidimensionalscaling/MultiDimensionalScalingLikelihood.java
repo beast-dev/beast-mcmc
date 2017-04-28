@@ -26,8 +26,8 @@
 package dr.inference.multidimensionalscaling;
 
 import dr.evomodel.antigenic.MultidimensionalScalingLikelihood;
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
-import dr.inference.parallel.ServiceRequest;
 import dr.util.DataTable;
 import dr.xml.*;
 
@@ -35,7 +35,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

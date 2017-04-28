@@ -25,7 +25,7 @@
 
 package dr.inference.operators.hmc;
 
-import dr.inference.model.GradientWrtParameterProvider;
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;

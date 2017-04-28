@@ -1,5 +1,5 @@
 /*
- * GradientForLikelihood.java
+ * GradientWrtParameterProvider.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,10 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.model;
+package dr.inference.hmc;
 
-import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.xml.*;
+import dr.inference.model.GradientProvider;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 
 /**
  * @author Max Tolkoff

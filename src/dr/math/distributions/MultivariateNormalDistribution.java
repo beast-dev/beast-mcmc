@@ -26,7 +26,6 @@
 package dr.math.distributions;
 
 import dr.inference.model.GradientProvider;
-import dr.inference.model.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;

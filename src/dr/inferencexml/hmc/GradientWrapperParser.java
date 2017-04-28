@@ -28,7 +28,7 @@ package dr.inferencexml.hmc;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.GradientProvider;
-import dr.inference.model.GradientWrtParameterProvider;
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

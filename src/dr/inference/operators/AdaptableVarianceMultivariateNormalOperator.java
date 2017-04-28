@@ -705,6 +705,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     transformationSizes[i] = transformCountList.get(i);
                 }
             } else {
+
+                if (DEBUG) {
+                    System.err.println("Old parser");
+                }
                 // assume old parser syntax for backwards compatibility
                 parameter = (Parameter)xo.getChild(Parameter.class);
 
@@ -713,7 +717,6 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
                 int transformationSizeCounter = 0;
 
-                //TODO: add LOG_CONSTRAINED_SUM transformation to transformations array!
                 for (int i = 0; i < xo.getChildCount(); i++) {
                     Object child = xo.getChild(i);
                     if (child instanceof Transform.ParsedTransform) {
@@ -723,11 +726,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                             System.err.println(thisObject.transform.getTransformName());
                         }
 
-                        if (thisObject.transform.equals(Transform.LOG_CONSTRAINED_SUM)) {
+                        if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
-                                System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
+                                System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }
                             transformationSizeCounter++;
                         } else {

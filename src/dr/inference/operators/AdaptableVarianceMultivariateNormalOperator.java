@@ -665,8 +665,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             Transform[] transformations;
             int[] transformationSizes;
 
+            int transformationSizeCounter = 0;
+
             if (!oldXML) {
                 // if there are no ParsedTransform elements then use the new parser syntax
+                if (DEBUG) {
+                    System.err.println("New parser");
+                }
 
                 CompoundParameter allParameters = new CompoundParameter("allParameters");
 
@@ -700,20 +705,46 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 transformations = new Transform[parameter.getDimension()];
                 transformationSizes = new int[parameter.getDimension()];
 
-                transformations = transformList.toArray(transformations);
+                /*transformations = transformList.toArray(transformations);
                 for (int i = 0; i < transformCountList.size(); i++) {
                     transformationSizes[i] = transformCountList.get(i);
+                }*/
+                if (DEBUG) {
+                    for (int i = 0; i < transformList.size(); i++) {
+                        System.err.println(i + "  " + transformList.get(i));
+                    }
+                    for (int i = 0; i < transformCountList.size(); i++) {
+                        System.err.println(i + "  " + transformCountList.get(i));
+                    }
                 }
+                int index = 0;
+                for (int i = 0; i < transformCountList.size(); i++) {
+                    if (!transformList.get(i).getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
+                        for (int j = 0; j < transformCountList.get(i); j++) {
+                            transformations[index] = transformList.get(i);
+                            transformationSizes[index] = 1;
+                            index++;
+                            transformationSizeCounter++;
+                        }
+                    } else {
+                        transformations[index] = transformList.get(i);
+                        transformationSizes[index] = transformCountList.get(i);
+                        index++;
+                        transformationSizeCounter++;
+                    }
+                }
+
             } else {
+
+                if (DEBUG) {
+                    System.err.println("Old parser");
+                }
                 // assume old parser syntax for backwards compatibility
                 parameter = (Parameter)xo.getChild(Parameter.class);
 
                 transformations = new Transform[parameter.getDimension()];
                 transformationSizes = new int[parameter.getDimension()];
 
-                int transformationSizeCounter = 0;
-
-                //TODO: add LOG_CONSTRAINED_SUM transformation to transformations array!
                 for (int i = 0; i < xo.getChildCount(); i++) {
                     Object child = xo.getChild(i);
                     if (child instanceof Transform.ParsedTransform) {
@@ -723,11 +754,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                             System.err.println(thisObject.transform.getTransformName());
                         }
 
-                        if (thisObject.transform.equals(Transform.LOG_CONSTRAINED_SUM)) {
+                        if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
-                                System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
+                                System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }
                             transformationSizeCounter++;
                         } else {
@@ -742,24 +773,24 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         }
                     }
                 }
-
-                //determine array length for transformationSizes = transformationSizeCounter - 1;
-                if (DEBUG) {
-                    System.err.println("\nCleaning up transformation and size arrays");
-                    System.err.println("transformationSizeCounter = " + transformationSizeCounter);
-                }
-                int temp[] = new int[transformationSizeCounter];
-                Transform tempTransform[] = new Transform[transformationSizeCounter];
-                for (int i = 0; i < temp.length; i++) {
-                    temp[i] = transformationSizes[i];
-                    tempTransform[i] = transformations[i];
-                    if (transformationSizes[i] == 0 || temp[i] == 0) {
-                        throw new XMLParseException("Transformation size 0 encountered");
-                    }
-                }
-                transformationSizes = temp;
-                transformations = tempTransform;
             }
+
+            //determine array length for transformationSizes = transformationSizeCounter - 1;
+            if (DEBUG) {
+                System.err.println("\nCleaning up transformation and size arrays");
+                System.err.println("transformationSizeCounter = " + transformationSizeCounter);
+            }
+            int temp[] = new int[transformationSizeCounter];
+            Transform tempTransform[] = new Transform[transformationSizeCounter];
+            for (int i = 0; i < temp.length; i++) {
+                temp[i] = transformationSizes[i];
+                tempTransform[i] = transformations[i];
+                if (transformationSizes[i] == 0 || temp[i] == 0) {
+                    throw new XMLParseException("Transformation size 0 encountered");
+                }
+            }
+            transformationSizes = temp;
+            transformations = tempTransform;
 
             //varMatrix needs to be initialized
             int dim = parameter.getDimension();

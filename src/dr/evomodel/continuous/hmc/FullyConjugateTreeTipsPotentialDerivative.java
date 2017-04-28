@@ -57,29 +57,41 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
     public int getDimension() {
         return traitParameter.getDimension();
     }
-
-//    @Override
-//    public void getGradientLogDensity(double[] destination, int offset) {
-//        throw new RuntimeException("Not yet implemented");
-//    }
-
+    
     @Override
     public double[] getGradientLogDensity() {
 
-        int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
-        int ntaxa = traitParameter.getDimension() / dimTraits;
-        double[] derivative = new double[traitParameter.getDimension()];
-        double[][] mean = treeLikelihood.getConditionalMeans();
-        double[] precfactor = treeLikelihood.getPrecisionFactors(); //TODO need to be flexible to handle diagonal case and dense case. Right now just diagonal.
+        final int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
+        final int ntaxa = traitParameter.getDimension() / dimTraits;
 
-        for (int i = 0; i < dimTraits; i++) {
-            for (int j = 0; j < ntaxa; j++) {
-                derivative[j * dimTraits + i] -= (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
-                /* Sign change */
+        final double[] derivative = new double[traitParameter.getDimension()];
+
+        final double[][] allMeans = treeLikelihood.getConditionalMeans();
+        final double[] allScalars = treeLikelihood.getPrecisionFactors();
+        final double[][] precisionMatrix = treeLikelihood.getDiffusionModel().getPrecisionmatrix();
+
+        for (int i = 0; i < ntaxa; ++i) {
+
+            final double[] mean = allMeans[i];
+            final double scale = allScalars[i];
+
+            for (int j = 0; j < dimTraits; ++j) {
+
+                double sum = 0.0;
+                for (int k = 0; k < dimTraits; ++k) {
+                    sum += (mean[k] - traitParameter.getParameterValue(i * dimTraits + k)) * scale * precisionMatrix[j][k];
+                }
+                derivative[i * dimTraits + j] = sum;
             }
-
         }
 
+//        for (int i = 0; i < dimTraits; i++) { // This only works for IDENTITY matrices
+//            for (int j = 0; j < ntaxa; j++) {
+//                derivative[j * dimTraits + i] -= (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
+//                /* Sign change */
+//            }
+//
+//        }
 
         return derivative;
     }

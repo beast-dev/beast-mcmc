@@ -191,6 +191,11 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     public static void transformPoint(double[] x, boolean translationInvariant, boolean rotationInvariant, int dim) {
+
+        if (dim != 2) {
+            throw new IllegalArgumentException("Not yet implemented");
+        }
+
         if (translationInvariant) {
 
             double[] mean = new double[dim];

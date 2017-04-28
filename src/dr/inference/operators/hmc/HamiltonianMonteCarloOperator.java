@@ -48,6 +48,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                                             Parameter parameter, double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
+        setTargetAcceptanceProbability(0.5);
 
         this.gradientProvider = gradientProvider;
         this.parameter = parameter;

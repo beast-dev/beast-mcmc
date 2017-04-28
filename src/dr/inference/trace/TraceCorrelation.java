@@ -28,20 +28,22 @@ package dr.inference.trace;
 import java.util.List;
 
 /**
- * A class that stores the correlation statistics for a trace
+ * A class that stores the correlation statistics for a trace.
+ * The difference to TraceDistribution is mainly to add ACT and ESS
+ * which require stepSize.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
 public class TraceCorrelation<T> extends TraceDistribution<T> {
-    final int stepSize;
+    final long stepSize;
 
-    public TraceCorrelation(List<T> values, TraceType traceType, int stepSize) {
-        super(values, traceType, stepSize);
+    public TraceCorrelation(List<T> values, TraceType traceType, long stepSize) {
+        super(values, traceType);
         this.stepSize = stepSize;
 
-        if (isValid) {
+        if (stepSize > 0) {
             analyseCorrelation(values, stepSize);
         }
     }
@@ -54,35 +56,53 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         return ACT;
     }
 
-    private void analyseCorrelation(List<T> values, int stepSize) {
+    public double getESS() {
+        return ESS;
+    }
+
+    //************************************************************************
+    // private methods
+    //************************************************************************
+
+    protected double stdErrorOfMean;
+    protected double stdErrorOfVariance;
+    protected double ACT;
+    protected double stdErrOfACT;
+    protected double ESS;
+
+    private static final int MAX_LAG = 2000;
+
+    private void analyseCorrelation(List<T> values, long stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
-        if (getTraceType().isNumber()) {
-            double[] doubleValues = new double[values.size()];
-            for (int i = 0; i < values.size(); i++) {
-                doubleValues[i] = ((Number) values.get(i)).doubleValue();
-            }
-            analyseCorrelationNumeric(doubleValues, stepSize);
+        if (stepSize > 0) {
+            if (getTraceType().isNumber()) {
+                double[] doubleValues = new double[values.size()];
+                for (int i = 0; i < values.size(); i++) {
+                    doubleValues[i] = ((Number) values.get(i)).doubleValue();
+                }
+                analyseCorrelationNumeric(doubleValues, stepSize);
 
-        } else if (getTraceType() == TraceType.CATEGORICAL) {
-            //todo Do not know how to calculate
-            stdErrorOfMean = Double.NaN;
-            ACT = Double.NaN;
-            ESS = Double.NaN;
-            stdErrOfACT = Double.NaN;
+            } else if (getTraceType() == TraceType.CATEGORICAL) {
+                //todo Do not know how to calculate
+                stdErrorOfMean = Double.NaN;
+                ACT = Double.NaN;
+                ESS = Double.NaN;
+                stdErrOfACT = Double.NaN;
 //            throw new UnsupportedOperationException("should not be categorical");
-        } else {
-            throw new RuntimeException("Trace type is not recognized");
+            } else {
+                throw new RuntimeException("Trace type is not recognized");
+            }
         }
     }
 
     /**
-     * Analyze trace
+     * Analyze trace for numeric values
      *
      * @param values   the values
      * @param stepSize the sampling frequency of the values
      */
-    private void analyseCorrelationNumeric(double[] values, int stepSize) {
+    private void analyseCorrelationNumeric(double[] values, long stepSize) {
 
         final int samples = values.length;
         int maxLag = Math.min(samples - 1, MAX_LAG);
@@ -127,25 +147,21 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         stdErrorOfMean = Math.sqrt(varStat / samples);
 
         // auto correlation time
-        ACT = stepSize * varStat / gammaStat[0];
+        if (gammaStat[0]==0)
+            ACT = 0;
+        else
+            ACT = stepSize * varStat / gammaStat[0];
 
         // effective sample size
-        ESS = (stepSize * samples) / ACT;
+        if (ACT==0)
+            ESS=1;
+        else
+            ESS = (stepSize * samples) / ACT;
 
         // standard deviation of autocorrelation time
         stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * stepSize);
 
-        isValid = true;
+//        minEqualToMax = true;
     }
 
-    //************************************************************************
-    // private methods
-    //************************************************************************
-
-    protected double stdErrorOfMean;
-    protected double stdErrorOfVariance;
-    protected double ACT;
-    protected double stdErrOfACT;
-
-    private static final int MAX_LAG = 2000;
 }

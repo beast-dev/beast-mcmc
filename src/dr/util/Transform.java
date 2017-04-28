@@ -25,6 +25,8 @@
 
 package dr.util;
 
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -79,7 +81,7 @@ public interface Transform {
      * @param value evaluation point
      * @return the log of the transform's jacobian
      */
-    public double getLogJacobian(double value);
+    double getLogJacobian(double value);
 
     /**
      * @param values evaluation points
@@ -87,10 +89,10 @@ public interface Transform {
      * @param to end calculation at this index
      * @return the log of the transform's jacobian
      */
-    public double getLogJacobian(double[] values, int from, int to);
+    double getLogJacobian(double[] values, int from, int to);
 
 
-    public static class LogTransform implements Transform {
+    class LogTransform implements Transform {
 
         public LogTransform() {
         }
@@ -124,7 +126,7 @@ public interface Transform {
         }
     }
 
-    public static class LogConstrainedSumTransform implements Transform {
+    class LogConstrainedSumTransform implements Transform {
 
         public LogConstrainedSumTransform() {
         }
@@ -223,9 +225,11 @@ public interface Transform {
 
     }
 
-    public static class LogitTransform implements Transform {
+    class LogitTransform implements Transform {
 
         public LogitTransform() {
+            range = 1.0;
+            lower = 0.0;
         }
 
         public double transform(double value) {
@@ -256,9 +260,11 @@ public interface Transform {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
+        private final double range;
+        private final double lower;
     }
 
-    public static class FisherZTransform implements Transform {
+    class FisherZTransform implements Transform {
 
         public FisherZTransform() {
         }
@@ -293,7 +299,7 @@ public interface Transform {
 
     }
 
-    public static class NoTransform implements Transform {
+    class NoTransform implements Transform {
 
         public NoTransform() {
         }
@@ -328,14 +334,15 @@ public interface Transform {
 
     }
 
-    public class ParsedTransform {
+    class ParsedTransform {
         public Transform transform;
         public int start; // zero-indexed
         public int end; // zero-indexed, i.e, i = start; i < end; ++i
         public int every;
+        public List<Parameter> parameters = null;
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -347,11 +354,20 @@ public interface Transform {
 
             ParsedTransform transform = new ParsedTransform();
             transform.transform = thisTransform;
-            transform.start = xo.getAttribute(START, 1);
-            transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
-            transform.every = xo.getAttribute(EVERY, 1);
+            if (xo.hasAttribute(START)) {
+                transform.start = xo.getIntegerAttribute(START);
+                transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
+                transform.every = xo.getAttribute(EVERY, 1);
+                // todo: check values are valid
+                transform.start--; // zero-indexed
+            } else {
+                transform.parameters = new ArrayList<Parameter>();
 
-            transform.start--; // zero-indexed
+                for (Parameter param : xo.getAllChildren(Parameter.class)) {
+                    transform.parameters.add(param);
+                }
+            }
+
             return transform;
         }
 
@@ -361,6 +377,7 @@ public interface Transform {
                     AttributeRule.newIntegerRule(START, true),
                     AttributeRule.newIntegerRule(END, true),
                     AttributeRule.newIntegerRule(EVERY, true),
+                    new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)
             };
         }
 
@@ -377,7 +394,7 @@ public interface Transform {
         }
     };
 
-    public class Util {
+    class Util {
         public static Transform[] getListOfNoTransforms(int size) {
             Transform[] transforms = new Transform[size];
             for (int i = 0; i < size; ++i) {
@@ -387,13 +404,13 @@ public interface Transform {
         }
     }
 
-    public static final NoTransform NONE = new NoTransform();
-    public static final LogTransform LOG = new LogTransform();
-    public static final LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
-    public static final LogitTransform LOGIT = new LogitTransform();
-    public static final FisherZTransform FISHER_Z = new FisherZTransform();
+    NoTransform NONE = new NoTransform();
+    LogTransform LOG = new LogTransform();
+    LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
+    LogitTransform LOGIT = new LogitTransform();
+    FisherZTransform FISHER_Z = new FisherZTransform();
 
-    public enum Type {
+    enum Type {
         NONE("none", new NoTransform()),
         LOG("log", new LogTransform()),
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
@@ -414,12 +431,13 @@ public interface Transform {
         }
 
         private Transform transform;
-              private String name;
+        private String name;
     }
-    public static final String TRANSFORM = "transform";
-    public static final String TYPE = "type";
-    public static final String START = "start";
-    public static final String END = "end";
-    public static final String EVERY = "every";
+
+    String TRANSFORM = "transform";
+    String TYPE = "type";
+    String START = "start";
+    String END = "end";
+    String EVERY = "every";
 
 }

@@ -41,7 +41,8 @@ import org.w3c.dom.Element;
  * @version $Id: NormalDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel, GaussianProcessRandomGenerator {
+public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
+        GaussianProcessRandomGenerator, GradientProvider {
     /**
      * Constructor.
      */
@@ -195,6 +196,13 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     @Override
     public int getDimension() { return 1; }
+
+    @Override
+    public double[] getGradientLogDensity(Object x) {
+        double[] result = new double[1];
+        result[0] = NormalDistribution.gradLogPdf((Double) x, mean(), getScale());
+        return result;
+    }
 
     @Override
     public double[][] getPrecisionMatrix() {

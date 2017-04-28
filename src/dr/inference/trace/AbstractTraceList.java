@@ -31,6 +31,12 @@ import java.util.List;
  * @author Alexei Drummond
  */
 public abstract class AbstractTraceList extends FilteredTraceList {
+    /**
+     * Please use {@link #getCorrelationStatistics(int) getCorrelationStatistics}
+     * @param index
+     * @return
+     */
+    @Deprecated
     public TraceDistribution getDistributionStatistics(int index) {
         return getCorrelationStatistics(index);
     }
@@ -43,7 +49,7 @@ public abstract class AbstractTraceList extends FilteredTraceList {
     }
 
     public void analyseTrace(int index) {
-        int start = (getBurnIn() / getStepSize());
+        int start = (int) (getBurnIn() / getStepSize());
 
         Trace trace = getTrace(index);
         List values = trace.getValues(start, trace.getValueCount(), super.filtered);

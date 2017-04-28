@@ -1,7 +1,7 @@
 /*
  * VisualizeKMLBrownianBridge.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,7 +30,6 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,7 @@ import java.util.List;
  */
 public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
-    List<Polygon2D> polygons;
+    List<AbstractPolygon2D> polygons;
     List<Reject> rejects = new ArrayList<Reject>();
     int MAX_DEPTH = 10;
     int MAX_TRIES = 20;
@@ -84,8 +83,8 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
         System.out.println("Converting polygons to shapes");
         shapes = new ArrayList<Shape>();
-        for (Polygon2D p : polygons) {
-            shapes.add(getShape(p));
+        for (AbstractPolygon2D p : polygons) {
+            shapes.add(p.getShape());
             System.out.print(".");
             System.out.flush();
         }
@@ -163,21 +162,6 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
             SpaceTime.paintDot(new SpaceTime(r.getTime(), r.getSpace()), 2, transform, (Graphics2D) g);
         }
         rejector.reset();
-    }
-
-    Shape getShape(Polygon2D poly) {
-        GeneralPath path = new GeneralPath();
-
-        List<Point2D> points = poly.point2Ds;
-        path.moveTo((float) points.get(0).getX(), (float) points.get(0).getY());
-
-        System.out.println("x=" + points.get(0).getX() + ", y=" + points.get(0).getY());
-
-        for (int i = 1; i < points.size(); i++) {
-            path.lineTo((float) points.get(i).getX(), (float) points.get(i).getY());
-        }
-        path.closePath();
-        return path;
     }
 
     AffineTransform getTranslate() {

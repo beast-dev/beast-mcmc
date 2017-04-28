@@ -311,6 +311,42 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     public double doOperation() {
 
         int size = LFM.getLoadings().getRowDimension();
+        if(LFM.getFactorDimension() != precisionArray.listIterator().next().length){
+            precisionArray.clear();
+            meanArray.clear();
+            meanMidArray.clear();
+            double[] tempMean;
+            double[][] temp;
+            if (!randomScan) {
+                for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                    temp = new double[i + 1][i + 1];
+                    precisionArray.add(temp);
+                }
+                for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                    tempMean = new double[i + 1];
+                    meanArray.add(tempMean);
+                }
+
+                for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                    tempMean = new double[i + 1];
+                    meanMidArray.add(tempMean);
+                }
+            } else {
+                for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                    temp = new double[LFM.getFactorDimension() - i][LFM.getFactorDimension() - i];
+                    precisionArray.add(temp);
+                }
+                for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                    tempMean = new double[LFM.getFactorDimension() - i];
+                    meanArray.add(tempMean);
+                }
+
+                for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                    tempMean = new double[LFM.getFactorDimension() - i];
+                    meanMidArray.add(tempMean);
+                }
+            }
+        }
 
         if(pool != null){
             try {

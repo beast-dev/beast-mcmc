@@ -34,39 +34,28 @@ import java.util.Map;
  */
 public class DiscreteJChart extends JChart {
 
-    private Map<Integer, String> categoryDataMap;
+    // todo merge with dr.stats.FrequencyCounter
+    protected Map<Integer, String> categoryDataMap;
 
     public DiscreteJChart(Axis xAxis, Axis yAxis) {
         super(xAxis, yAxis);
     }
 
     public void setXAxis(boolean isInteger, Map<Integer, String> categoryDataMap) {
-        if (categoryDataMap.isEmpty()) {
-            if (isInteger) {
-                super.setXAxis(new DiscreteAxis(true, true));
-            } else {
-                super.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS));
-            }
-
-        } else {
+        if (isInteger || (categoryDataMap != null && !categoryDataMap.isEmpty())) {
             super.setXAxis(new DiscreteAxis(true, true));
+        } else {
+            super.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS));
         }
-
         this.categoryDataMap = categoryDataMap;
     }
 
     public void setYAxis(boolean isInteger, Map<Integer, String> categoryDataMap) {
-        if (categoryDataMap.isEmpty()) {
-            if (isInteger) {
-                super.setYAxis(new DiscreteAxis(true, true));
-            } else {
-                super.setYAxis(new LinearAxis());
-            }
-
-        } else {
+        if (isInteger || (categoryDataMap != null && !categoryDataMap.isEmpty())) {
             super.setYAxis(new DiscreteAxis(true, true));
+        } else {
+            super.setYAxis(new LinearAxis());
         }
-
         this.categoryDataMap = categoryDataMap;
     }
 
@@ -103,7 +92,7 @@ public class DiscreteJChart extends JChart {
     }
 
     protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis) {
-        if ((!categoryDataMap.isEmpty()) && axis.getIsDiscrete()) {
+        if (categoryDataMap != null && (!categoryDataMap.isEmpty()) && axis.getIsDiscrete()) {
             int n1 = axis.getMajorTickCount();
             int n2, i, j;
 

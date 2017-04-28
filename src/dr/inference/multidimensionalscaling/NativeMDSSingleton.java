@@ -124,6 +124,8 @@ public class NativeMDSSingleton {
 
     public native double[] getPairwiseData(int instance);
 
+    public native void getLocationGradient(int instance, double[] gradient);
+
 //jsize size = env->GetArrayLength( arr );
 //std::vector<double> input( size );
 //env->GetDoubleArrayRegion( arr, 0, size, &input[0] );

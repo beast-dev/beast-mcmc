@@ -119,6 +119,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         setId(patternLists.get(0).getId());
 
+        this.patternLists = patternLists;
         this.dataType = patternLists.get(0).getDataType();
         stateCount = dataType.getStateCount();
 
@@ -145,6 +146,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         updatePartition = new boolean[partitionCount];
         partitionWasUpdated = new boolean[partitionCount];
         updateAllPartitions = true;
+
+        cachedLogLikelihoodsByPartition = new double[partitionCount];
+        storedCachedLogLikelihoodsByPartition = new double[partitionCount];
 
         // Branch models determine the substitution models per branch. There can be either
         // one per partition or one shared across all partitions
@@ -396,13 +400,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 j++;
             }
 
-            //use value of j to construct partitionIndices?
-            //TODO: check with Daniel if this is correct
-            partitionIndices = new int[partitionCount];
-            for (int i = 0; i < partitionCount; i++) {
-                partitionIndices[i] = i;
-            }
-
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             String patternCountString = "" + patternLists.get(0).getPatternCount();
             for (int i = 1; i < patternLists.size(); i++) {
@@ -459,10 +456,18 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
+    public String getReport() {
+        return null;
+    }
+
+    @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
         return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
     }
 
+    public List<PatternList> getPatternLists() {
+        return this.patternLists;
+    }
 
     @Override
     public int getTraitCount() {
@@ -710,6 +715,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         for (SiteRateModel siteRateModel : siteRateModels) {
             if (updateSiteRateModels[k]) {
                 double[] categoryRates = siteRateModel.getCategoryRates();
+                if (categoryRates == null) {
+                    // If this returns null then there was a numerical error calculating the category rates
+                    // (probably a very small alpha) so reject the move.
+                    return Double.NEGATIVE_INFINITY;
+                }
 
                 if (flip[k]) {
                     categoryRateBufferHelper[k].flipOffset(0);
@@ -907,8 +917,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             beagle.setStateFrequencies(i, frequencies);
         }
 
-        double[] sumLogLikelihoods = new double[1];
-        double[] sumLogLikelihoodsByPartition = new double[partitionCount];
 
         if (DEBUG) {
             for (int i = 0; i < partitionCount; i++) {
@@ -921,25 +929,38 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     System.out.println("partitionIndices[" + i + "] = " + partitionIndices[i]);
                 }*/
 
+        int[] partitionIndices = new int[partitionCount];
         int[] rootIndices             = new int[partitionCount];
         int[] categoryWeightsIndices  = new int[partitionCount];
         int[] stateFrequenciesIndices = new int[partitionCount];
+        double[] sumLogLikelihoods = new double[1];
+        double[] sumLogLikelihoodsByPartition = new double[partitionCount];
 
+        // create a list of partitions that have been updated
+        int updatedPartitionCount = 0;
         for (int i = 0; i < partitionCount; i++) {
-            rootIndices            [i]  = partialBufferHelper[i].getOffsetIndex(rootNodeNumber);
-            categoryWeightsIndices [i]  = i % siteRateModels.size();
-            stateFrequenciesIndices[i]  = i % siteRateModels.size();
-            cumulativeScaleIndices [i]  = cumulativeScaleIndices[i];
+            if (updatePartition[i] || updateAllPartitions) {
+                partitionIndices[updatedPartitionCount] = i;
+
+                rootIndices            [updatedPartitionCount]  = partialBufferHelper[i].getOffsetIndex(rootNodeNumber);
+                categoryWeightsIndices [updatedPartitionCount]  = i % siteRateModels.size();
+                stateFrequenciesIndices[updatedPartitionCount]  = i % siteRateModels.size();
+                cumulativeScaleIndices [updatedPartitionCount]  = cumulativeScaleIndices[i];
+
+                updatedPartitionCount++;
+            }
         }
+
 
         //TODO: check these arguments with Daniel
         //TODO: partitionIndices needs to be set according to which partitions need updating?
-        beagle.calculateRootLogLikelihoodsByPartition(rootIndices,
+        beagle.calculateRootLogLikelihoodsByPartition(
+                rootIndices,
                 categoryWeightsIndices,
                 stateFrequenciesIndices,
                 cumulativeScaleIndices,
                 partitionIndices,
-                partitionCount,
+                updatedPartitionCount,
                 1,
                 sumLogLikelihoodsByPartition,
                 sumLogLikelihoods);
@@ -949,12 +970,23 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     System.out.println("partition " + i + " lnL = " + sumLogLikelihoodsByPartition[i]);
                 }*/
 
-        double logL = sumLogLikelihoods[0];
+        // write updated partition likelihoods to the cached array
+        for (int i = 0; i < updatedPartitionCount; i++) {
+            cachedLogLikelihoodsByPartition[partitionIndices[i]] = sumLogLikelihoodsByPartition[i];
+
+            // clear the global flags
+            updatePartition[partitionIndices[i]] = false;
+            recomputeScaleFactors[partitionIndices[i]] = false;
+
+            partitionWasUpdated[partitionIndices[i]] = true;
+        }
+
+        double tmpLogL = sumLogLikelihoods[0];
 
         if (DEBUG) {
             for (int i = 0; i < partitionCount; i++) {
-                System.out.println("partition " + i + ": " + sumLogLikelihoodsByPartition[i] +
-                        ((updatePartition[i] || updateAllPartitions) ? " [updated]" : ""));
+                System.out.println("partition " + i + ": " + cachedLogLikelihoodsByPartition[i] +
+                        (partitionWasUpdated[i] ? " [updated]" : ""));
             }
         }
 
@@ -964,33 +996,22 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 //        }
 //        beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 
-
-        for (int i = 0; i < partitionCount; i++) {
-            if (updatePartition[i] || updateAllPartitions) {
-                partitionWasUpdated[i] = true;
-            }
-
-            updatePartition[i] = false;
-            recomputeScaleFactors[i] = false;
-
-        }
         updateSubstitutionModels(false);
         updateSiteRateModels(false);
         updateAllPartitions = true;
 
-        if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+        if (Double.isNaN(tmpLogL) || Double.isInfinite(tmpLogL)) {
+            // one or more of the updated partitions has underflowed
 
             if (DEBUG) {
                 System.out.println("Double.isNaN(logL) || Double.isInfinite(logL)");
             }
 
-            for (int i = 0; i < partitionCount; i++) {
+            for (int i = 0; i < updatedPartitionCount; i++) {
                 if (Double.isNaN(sumLogLikelihoodsByPartition[i]) || Double.isInfinite(sumLogLikelihoodsByPartition[i])) {
-                    everUnderflowed[i] = true;
+                    everUnderflowed[partitionIndices[i]] = true;
                 }
             }
-
-            logL = Double.NEGATIVE_INFINITY;
 
             if (firstRescaleAttempt) {
                 if (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED) {
@@ -1006,21 +1027,21 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
                 }
 
-                for (int i = 0; i < partitionCount; i++) {
+                for (int i = 0; i < updatedPartitionCount; i++) {
                     if (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED) {
                         if (Double.isNaN(sumLogLikelihoodsByPartition[i]) || Double.isInfinite(sumLogLikelihoodsByPartition[i])) {
-                            useScaleFactors[i] = true;
-                            recomputeScaleFactors[i] = true;
-                            updatePartition[i] = true;
+                            useScaleFactors[partitionIndices[i]] = true;
+                            recomputeScaleFactors[partitionIndices[i]] = true;
+                            updatePartition[partitionIndices[i]] = true;
 
                             // turn off double buffer flipping so the next call overwrites the
                             // underflowed buffers. Flip will be turned on again in storeState for
                             // next step
-                            flip[i] = false;
+                            flip[partitionIndices[i]] = false;
                             
                             updateAllPartitions = false;
                             if (DEBUG) {
-                                System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (partition index: " + i + ")");
+                                System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (partition index: " + partitionIndices[i] + ")");
                             }
                         }
 
@@ -1031,24 +1052,25 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
                 throw new LikelihoodUnderflowException();
             }
+
+            return Double.NEGATIVE_INFINITY;
         } else {
 
-            for (int i = 0; i < partitionCount; i++) {
-                if (partitionWasUpdated[i]) {
-                    if (!this.delayRescalingUntilUnderflow || everUnderflowed[i]) {
+            for (int i = 0; i < updatedPartitionCount; i++) {
+                if (partitionWasUpdated[partitionIndices[i]]) {
+                    if (!this.delayRescalingUntilUnderflow || everUnderflowed[partitionIndices[i]]) {
                         if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
                             if (!initialEvaluation) {
-                                rescalingCount[i]++;
+                                rescalingCount[partitionIndices[i]]++;
                             }
                         }
                     }
-                    partitionWasUpdated[i] = false;
+                    partitionWasUpdated[partitionIndices[i]] = false;
                 }
 
-
                 //TODO: probably better to only switch back those booleans that were actually altered
-                recomputeScaleFactors[i] = false;
-                flip[i] = true;
+                recomputeScaleFactors[partitionIndices[i]] = false;
+                flip[partitionIndices[i]] = true;
             }
 
             firstRescaleAttempt = true;
@@ -1056,6 +1078,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         //********************************************************************
+        double logL = 0.0;
+        for (double l : cachedLogLikelihoodsByPartition) {
+            logL += l;
+        }
 
         return logL;
     }
@@ -1115,6 +1141,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             // turn on double buffering flipping (may have been turned off to enable a rescale)
             flip[i] = true;
         }
+        System.arraycopy(cachedLogLikelihoodsByPartition, 0, storedCachedLogLikelihoodsByPartition, 0, cachedLogLikelihoodsByPartition.length);
     }
 
     /**
@@ -1140,6 +1167,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 //rescalingCount = storedRescalingCount;
             }
         }
+
+        double[] tmp = cachedLogLikelihoodsByPartition;
+        cachedLogLikelihoodsByPartition = storedCachedLogLikelihoodsByPartition;
+        storedCachedLogLikelihoodsByPartition = tmp;
 
     }
 
@@ -1219,6 +1250,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the patternLists
      */
+    private List<PatternList> patternLists;
+
     private final DataType dataType;
 
     private final int partitionCount;
@@ -1232,11 +1265,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * The partition for each pattern
      */
     private final int[] patternPartitions;
-
-    /**
-     * The index number for each partition
-     */
-    private final int[] partitionIndices;
 
     /**
      * the number of patterns for each partition
@@ -1269,29 +1297,20 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private final List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
 
     /**
-     * the pattern likelihoods
-     */
-    private double[] patternLogLikelihoods = null;
-
-    /**
      * the number of rate categories
      */
     private final int categoryCount;
 
     /**
-     * an array used to transfer tip partials
-     */
-    private double[] tipPartials;
-
-    /**
-     * an array used to transfer tip states
-     */
-    private int[] tipStates;
-
-    /**
      * the BEAGLE library instance
      */
     private final Beagle beagle;
+
+    /**
+     * Cached log likelihood for each partition
+     */
+    private double[] cachedLogLikelihoodsByPartition;
+    private double[] storedCachedLogLikelihoodsByPartition;
 
     /**
      * Flag to specify that the substitution model has changed

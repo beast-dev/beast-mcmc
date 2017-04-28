@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -33,13 +34,15 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.List;
@@ -58,6 +61,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
 
     public static final String RECONSTRUCT_TRAITS = "reconstructTraits";
+    public static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -78,14 +82,23 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
         CompoundParameter traitParameter = returnValue.traitParameter;
         List<Integer> missingIndices = returnValue.missingIndices;
+        Parameter sampleMissingParameter = returnValue.sampleMissingParameter;
         traitName = returnValue.traitName;
 
         final int dim = diffusionModel.getPrecisionmatrix().length;
 
+        PrecisionType precisionType = PrecisionType.SCALAR;
+
+        if (missingIndices.size() > 0 && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false)) {
+            precisionType = PrecisionType.FULL;
+        }
+
+        System.err.println("Using precisionType == " + precisionType + " for data model.");
+
         ContinuousTraitDataModel dataModel = new ContinuousTraitDataModel(traitName,
                 traitParameter,
                 missingIndices,
-                dim);
+                dim, precisionType);
 
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dim);
 
@@ -107,13 +120,46 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
-            ProcessSimulationDelegate.ConditionalOnTipsDelegate simulationDelegate =
-                    new ProcessSimulationDelegate.ConditionalOnTipsDelegate(traitName, treeModel,
-                            diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
 
-            TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
-                    treeDataLikelihood, simulationDelegate);
-            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+            if (missingIndices.size() == 0) {
+
+                ProcessSimulationDelegate simulationDelegate = new ProcessSimulationDelegate.ConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                        diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+
+                TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
+                        treeDataLikelihood, simulationDelegate);
+
+                treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+
+            } else {
+
+                ProcessSimulationDelegate simulationDelegate =
+                        delegate.getPrecisionType()== PrecisionType.SCALAR ?
+                                new ProcessSimulationDelegate.ConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                        diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate) :
+                                new ProcessSimulationDelegate.MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                        diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+
+                TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
+                        treeDataLikelihood, simulationDelegate);
+
+                treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+
+                ProcessSimulationDelegate fullConditionalDelegate = new ProcessSimulationDelegate.TipRealizedValuesViaFullConditionalDelegate(
+                        traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+
+                treeDataLikelihood.addTraits(new ProcessSimulation(("fc." + traitName), treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
+
+//                String partialTraitName = getPartiallyMissingTraitName(traitName);
+//
+//                ProcessSimulationDelegate parialSimulationDelegate = new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate(partialTraitName,
+//                        treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
+//
+//                TreeTraitProvider partialTraitProvider = new ProcessSimulation(partialTraitName,
+//                        treeDataLikelihood, parialSimulationDelegate);
+//
+//                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
+            }
         }
 
         return treeDataLikelihood;
@@ -140,6 +186,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
             AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
+            AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

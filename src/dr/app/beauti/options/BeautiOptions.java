@@ -54,7 +54,10 @@ import dr.inference.operators.OperatorSchedule;
  */
 public class BeautiOptions extends ModelOptions {
 
-    public static final boolean NEW_OPERATORS = true;
+    public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = false;
+    public static final boolean NEW_GTR_PARAMETERIZATION = false;
+    public static final boolean FREQUENCIES_DIRICLET_PRIOR = false;
+
 
     private static final long serialVersionUID = -3676802825545741012L;
 
@@ -275,7 +278,7 @@ public class BeautiOptions extends ModelOptions {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
             if (relativeRateParameters.size() > 1) {
-                Parameter allMus = model.getParameter(NEW_OPERATORS ? "allNus" : "allMus" );
+                Parameter allMus = model.getParameter(NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
                 allMus.clearSubParameters();
 
                 int totalWeight = 0;

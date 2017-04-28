@@ -40,7 +40,7 @@ import java.util.Set;
 public class SPPathDifferenceMetric {
 
     private Tree focalTree;
-    private int dim, externalNodeCount;
+    private int dim;
     private double[] focalPath;
 
     public SPPathDifferenceMetric() {
@@ -49,66 +49,10 @@ public class SPPathDifferenceMetric {
 
     public SPPathDifferenceMetric(Tree focalTree) {
         this.focalTree = focalTree;
-        this.externalNodeCount = focalTree.getExternalNodeCount();
-//        this.dim = (externalNodeCount-2)*(externalNodeCount-1);
-        this.dim = externalNodeCount * externalNodeCount;
+        this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
         this.focalPath = new double[dim];
 
         traverse(this.focalTree, this.focalTree.getRoot(), focalPath);
-    }
-
-    public double getMetric_old(Tree tree) {
-
-        //check if taxon lists are in the same order!!
-        if (focalTree.getExternalNodeCount() != tree.getExternalNodeCount()) {
-            throw new RuntimeException("Different number of taxa in both trees.");
-        } else {
-            for (int i = 0; i < focalTree.getExternalNodeCount(); i++) {
-                if (!focalTree.getNodeTaxon(focalTree.getExternalNode(i)).getId().equals(tree.getNodeTaxon(tree.getExternalNode(i)).getId())) {
-                    throw new RuntimeException("Mismatch between taxa in both trees: " + focalTree.getNodeTaxon(focalTree.getExternalNode(i)).getId() + " vs. " + tree.getNodeTaxon(tree.getExternalNode(i)).getId());
-                }
-            }
-        }
-
-        double[] pathTwo = new double[dim];
-
-        int index = 0;
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            for (int j = i+1; j < tree.getExternalNodeCount(); j++) {
-                //get two leaf nodes
-                NodeRef nodeOne = tree.getExternalNode(i);
-                NodeRef nodeTwo = tree.getExternalNode(j);
-
-                //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = TreeUtils.getCommonAncestor(tree, nodeOne, nodeTwo);
-
-//                double pathLength = 0.0;
-//                while (nodeOne != MRCA) {
-//                    pathLength += tree.getNodeHeight(tree.getParent(nodeOne)) - tree.getNodeHeight(nodeOne);
-//                    nodeOne = tree.getParent(nodeOne);
-//                }
-//                while (nodeTwo != MRCA) {
-//                    pathLength += tree.getNodeHeight(tree.getParent(nodeTwo)) - tree.getNodeHeight(nodeTwo);
-//                    nodeTwo = tree.getParent(nodeTwo);
-//                }
-//
-//                pathTwo[index] = pathLength;
-
-                pathTwo[index] = tree.getNodeHeight(MRCA) * 2
-                        - tree.getNodeHeight(nodeOne)
-                        - tree.getNodeHeight(nodeTwo);
-                index++;
-            }
-        }
-
-        double metric = 0.0;
-        for (int i = 0; i < dim; i++) {
-            metric += Math.pow(focalPath[i] - pathTwo[i],2);
-        }
-        metric = Math.sqrt(metric);
-
-        return metric;
-
     }
 
     public double getMetric(Tree tree) {
@@ -119,120 +63,18 @@ public class SPPathDifferenceMetric {
 
         traverse(tree, tree.getRoot(), pathTwo);
 
+        int n = tree.getExternalNodeCount();
+
         double metric = 0.0;
-        for (int i = 0; i < externalNodeCount; i++) {
-            for (int j = i + 1; j < externalNodeCount; j++) {
-                int index = (i * externalNodeCount) + j;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int index = (i * n) + j;
                 metric += Math.pow(focalPath[index] - pathTwo[index], 2);
             }
         }
         metric = Math.sqrt(metric);
 
         return metric;
-    }
-
-
-
-    /**
-     * This method bypasses the constructor entirely, computing the metric on the two provided trees
-     * and ignoring the internally stored tree.
-     * @param tree1 Focal tree that will be used for computing the metric
-     * @param tree2 Provided tree that will be compared to the focal tree
-     * @return
-     */
-    public double getMetric_old(Tree tree1, Tree tree2) {
-
-        int dim = (tree1.getExternalNodeCount()-2)*(tree1.getExternalNodeCount()-1);
-
-        double[] pathOne = new double[dim];
-        double[] pathTwo = new double[dim];
-
-        //check if taxon lists are in the same order!!
-        if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
-            throw new RuntimeException("Different number of taxa in both trees.");
-        } else {
-            for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
-                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
-                }
-            }
-        }
-
-        int index = 0;
-        for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-            for (int j = i+1; j < tree1.getExternalNodeCount(); j++) {
-                //get two leaf nodes
-                NodeRef nodeOne = tree1.getExternalNode(i);
-                NodeRef nodeTwo = tree1.getExternalNode(j);
-
-                //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = TreeUtils.getCommonAncestor(tree1, nodeOne, nodeTwo);
-
-//                double pathLength = 0.0;
-//                while (nodeOne != MRCA) {
-//                    pathLength += tree1.getNodeHeight(tree1.getParent(nodeOne)) - tree1.getNodeHeight(nodeOne);
-//                    nodeOne = tree1.getParent(nodeOne);
-//                }
-//                while (nodeTwo != MRCA) {
-//                    pathLength += tree1.getNodeHeight(tree1.getParent(nodeTwo)) - tree1.getNodeHeight(nodeTwo);
-//                    nodeTwo = tree1.getParent(nodeTwo);
-//                }
-//
-//                pathOne[index] = pathLength;
-
-                pathOne[index] = tree1.getNodeHeight(MRCA) * 2
-                        - tree1.getNodeHeight(nodeOne)
-                        - tree1.getNodeHeight(nodeTwo);
-                index++;
-            }
-        }
-
-        /*for (int i = 0; i < pathOne.length; i++) {
-            System.out.print(pathOne[i] + " ");
-        }
-        System.out.println();*/
-
-        index = 0;
-        for (int i = 0; i < tree2.getExternalNodeCount(); i++) {
-            for (int j = i+1; j < tree2.getExternalNodeCount(); j++) {
-                //get two leaf nodes
-                NodeRef nodeOne = tree2.getExternalNode(i);
-                NodeRef nodeTwo = tree2.getExternalNode(j);
-
-                //get common ancestor of 2 leaf nodes
-                NodeRef MRCA = TreeUtils.getCommonAncestor(tree2, nodeOne, nodeTwo);
-
-                pathTwo[index] = tree2.getNodeHeight(MRCA) * 2
-                        - tree2.getNodeHeight(nodeOne)
-                        - tree2.getNodeHeight(nodeTwo);
-//                while (nodeOne != MRCA) {
-//                    pathLength += tree2.getNodeHeight(tree2.getParent(nodeOne)) - tree2.getNodeHeight(nodeOne);
-//                    nodeOne = tree2.getParent(nodeOne);
-//                }
-//                while (nodeTwo != MRCA) {
-//                    pathLength += tree2.getNodeHeight(tree2.getParent(nodeTwo)) - tree2.getNodeHeight(nodeTwo);
-//                    nodeTwo = tree2.getParent(nodeTwo);
-//                }
-//
-//                pathTwo[index] = pathLength;
-
-                index++;
-            }
-        }
-
-        /*for (int i = 0; i < pathTwo.length; i++) {
-            System.out.print(pathTwo[i] + " ");
-        }
-        System.out.println();*/
-
-        double metric = 0.0;
-        for (int i = 0; i < dim; i++) {
-            metric += Math.pow(pathOne[i] - pathTwo[i],2);
-        }
-        metric = Math.sqrt(metric);
-
-        return metric;
-
     }
 
     /**
@@ -255,10 +97,12 @@ public class SPPathDifferenceMetric {
         traverse(tree1, tree1.getRoot(), pathOne);
         traverse(tree2, tree2.getRoot(), pathTwo);
 
+        int n = tree1.getExternalNodeCount();
+
         double metric = 0.0;
-        for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-            for (int j = i + 1; j < tree1.getExternalNodeCount(); j++) {
-                int index = (i * tree1.getExternalNodeCount()) + j;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int index = (i * n) + j;
                 metric += Math.pow(pathOne[index] - pathTwo[index], 2);
             }
         }
@@ -333,10 +177,9 @@ public class SPPathDifferenceMetric {
             Tree treeTwo = importer.importNextTree();
             System.out.println("tree 2: " + treeTwo + "\n");
 
-            double oldmetric = (new SPPathDifferenceMetric().getMetric_old(treeOne, treeTwo));
             double metric = (new SPPathDifferenceMetric().getMetric(treeOne, treeTwo));
 
-            System.out.println("path difference = " + metric + " old: " + oldmetric);
+            System.out.println("path difference = " + metric);
 
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree

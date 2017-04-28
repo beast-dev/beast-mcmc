@@ -88,17 +88,17 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
                     trait[0] = 0.0;
                     if(datum == 0){
                         for (int l = 0; l < dim - 1; l++) {
-                             lfmData.setParameterValue(LLpointer + l, i, drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + l)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, 0));
+                             lfmData.setParameterValue(LLpointer + l, i, drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + l)], colPrec.getParameterValue((LLpointer + l), (LLpointer + l)), Double.NEGATIVE_INFINITY, 0));
                         }
                     }
                     else {
-                        trait[datum] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + datum - 1)], colPrec.getParameterValue(LLpointer, LLpointer), 0, Double.POSITIVE_INFINITY);
+                        trait[datum] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + datum - 1)], colPrec.getParameterValue((LLpointer + datum - 1), (LLpointer + datum - 1)), 0, Double.POSITIVE_INFINITY);
                         lfmData.setParameterValue(LLpointer + datum - 1, i, trait[datum]);
                         for (int l = 1; l < dim; l++) {
                             if(l != datum){
 //                                System.out.println("Free Rolls");
 //                                System.out.println(LxF[i * lfmData.getRowDimension() + (LLpointer + l - 1)]);
-                                trait[l] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + l - 1)], colPrec.getParameterValue(LLpointer, LLpointer), Double.NEGATIVE_INFINITY, trait[datum]);
+                                trait[l] = drawTruncatedNormalDistribution(LxF[i * lfmData.getRowDimension() + (LLpointer + l - 1)], colPrec.getParameterValue((LLpointer + l - 1), (LLpointer + l - 1)), Double.NEGATIVE_INFINITY, trait[datum]);
                                 lfmData.setParameterValue(LLpointer + l - 1, i, trait[l]);
                             }
                         }

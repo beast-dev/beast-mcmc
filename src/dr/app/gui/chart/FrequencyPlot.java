@@ -49,9 +49,10 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     private double lowerInterval = 0.0;
 
     private boolean hasIncredibleSet = false;
-//    private TraceDistribution.CredibleSet credSet;
+//    private TraceDistribution.CredibleSetAnalysis credSet;
 
     protected TraceDistribution traceDistribution = null;
+    // for categorical only
 
     protected FrequencyPlot(TraceDistribution traceDistribution) {
         super();
@@ -63,35 +64,20 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<Double> data, int minimumBinCount) {
-        super();
-        setData(data, minimumBinCount);
-    }
-
     public FrequencyPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution) {
         this(traceDistribution);
         setData(data, minimumBinCount);
     }
 
-//    public FrequencyPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD) {
-//        this(traceD);
-//        Double[] doubleData = new Double[data.length];
-//        for (int i = 0; i < data.length; i++) {
-//            doubleData[i] = data[i].doubleValue();
-//        }
-//        setData(doubleData, minimumBinCount);
-//    }
+    public FrequencyPlot(List<String> data, TraceDistribution traceDistribution) {
+        this(traceDistribution);
+        if (!traceDistribution.getTraceType().isCategorical())
+            throw new IllegalArgumentException("Categorical value is required for frequency plot !");
 
-//    public FrequencyPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
-//        this(traceD);
-//        categoryDataMap.clear();
-//        double[] doubleData = new double[data.length];
-//        for (int i = 0; i < data.length; i++) {
-//            doubleData[i] = (double) traceD.getIndex(data[i]);
-//            categoryDataMap.put(doubleData[i], data[i]);
-//        }
-//        setData(doubleData, minimumBinCount);
-//    }
+        List<Double> intData = traceDistribution.indexingData(data);
+        // set data by index of unique categorical values
+        setData(intData, -1);
+    }
 
     /**
      * Set data
@@ -106,7 +92,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      */
     public void setData(Variate.D data, int minimumBinCount) {
 
-        this.raw = data;
+        setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
         Variate.D xData = new Variate.D();
@@ -157,6 +143,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         }
 
         Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
+        if (minimumBinCount <= 0)
+            axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
         axis.setRange(min, max);
 
         int majorTickCount = axis.getMajorTickCount();
@@ -166,16 +154,25 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
 
         if (minimumBinCount > 0) {
-            while (binCount < minimumBinCount) {
+            // avoid dead loop
+            while (binCount < minimumBinCount && majorTickCount < 1000) {
                 majorTickCount++;
                 axis.setPrefNumTicks(majorTickCount, 4);
 
                 binSize = axis.getMinorTickSpacing();
-                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
+                // should +2, otherwise the last bar will lose
+                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
             }
+        } else if (binSize > 1) {
+            // getMinorTickSpacing() returns 1.25, if the min integer slightly bigger than 0
+            binSize = 0.5;
+            binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
         }
 
-        FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
+        double start = axis.getMinAxis();
+        if (minimumBinCount < 0)
+            start = Math.round(start); // to convert x-axis into integer
+        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {
             frequency.addValue((Double) raw.get(i));
@@ -208,7 +205,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      */
     public void setInCredibleSet(TraceDistribution traceD) {
         this.traceDistribution = traceD;
-        hasIncredibleSet = traceD.inCredibleSet.size() > 0;
+        hasIncredibleSet = traceD.credibleSetAnalysis != null && traceD.credibleSetAnalysis.getIncredibleSet().size() > 0;
     }
 
     /**
@@ -272,7 +269,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                             fillRect(g2, x1, y1, x2, y2);
                         }
                     } else if (hasIncredibleSet) {
-                        if (traceDistribution.inCredibleSetContains((int) x1) || traceDistribution.inCredibleSetContains((int) x2)) {
+                        if (traceDistribution.incredibleSetContains((int) x1) || traceDistribution.incredibleSetContains((int) x2)) {
                             g2.setPaint(quantilePaint);
                         } else {
                             g2.setPaint(barPaint);

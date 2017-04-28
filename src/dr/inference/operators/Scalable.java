@@ -47,6 +47,13 @@ public interface Scalable {
     int scale(double factor, int nDims, boolean testBounds);
 
     /**
+     * Checks that all elements are within their bounds and returns
+     * false if any are not.
+     * @return
+     */
+    boolean testBounds();
+
+    /**
      * @return Name for display purposes.
      */
     String getName();
@@ -81,6 +88,23 @@ public interface Scalable {
             }
 
             return dimension;
+        }
+
+        public boolean testBounds() {
+            final int dimension = parameter.getDimension();
+
+
+            final Bounds<Double> bounds = parameter.getBounds();
+
+            for (int i = 0; i < dimension; i++) {
+                final double value = parameter.getParameterValue(i);
+
+                if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public String getName() {

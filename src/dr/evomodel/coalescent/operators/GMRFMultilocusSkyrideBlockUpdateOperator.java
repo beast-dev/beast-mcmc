@@ -45,6 +45,8 @@ import java.util.logging.Logger;
  */
 public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
+    private static boolean FAIL_SILENTLY = false;
+
     private double scaleFactor;
     private double lambdaScaleFactor;
     private int fieldLength;
@@ -225,17 +227,31 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
            } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
 //                throw new OperatorFailedException("");
-               return null;
-            } catch (no.uib.cipr.matrix.MatrixSingularException e) {
+               if (FAIL_SILENTLY) {
+                   // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
+                   return null;
+               }
+               throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                       "Try starting BEAST with a more accurate initial tree.");
+           } catch (no.uib.cipr.matrix.MatrixSingularException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
 //                throw new OperatorFailedException("");
-               return null;
+               if (FAIL_SILENTLY) {
+                   // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
+                   return null;
+               }
+               throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                       "Try starting BEAST with a more accurate initial tree.");
             }
 
             iterateGamma.add(tempValue);
             numberIterations++;
 
             if (numberIterations > maxIterations) {
+                if (FAIL_SILENTLY) {
+                    // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                 throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                         "Try starting BEAST with a more accurate initial tree.");

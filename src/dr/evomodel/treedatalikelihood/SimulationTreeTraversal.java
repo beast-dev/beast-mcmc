@@ -47,6 +47,7 @@ public class SimulationTreeTraversal extends TreeTraversal {
     @Override
     public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
         branchNodeOperations.clear();
+        nodeOperations.clear();
 
         switch (traversalType) {
 
@@ -62,6 +63,10 @@ public class SimulationTreeTraversal extends TreeTraversal {
         return branchNodeOperations;
     }
 
+    public List<DataLikelihoodDelegate.NodeOperation> getNodeOperations() {
+        return nodeOperations;
+    }
+
     /**
      * Traverse the tree in pre order.
      *
@@ -69,7 +74,7 @@ public class SimulationTreeTraversal extends TreeTraversal {
      * @return boolean
      */
     private void traversePreOrder(Tree tree) {
-        traversePreOrder(tree, tree.getRoot(), null);
+        traversePreOrder(tree, tree.getRoot(), null, null);
     }
 
     /**
@@ -79,7 +84,7 @@ public class SimulationTreeTraversal extends TreeTraversal {
      * @param node node
      * @return boolean
      */
-    private boolean traversePreOrder(final Tree tree, final NodeRef node, final NodeRef parent) {
+    private boolean traversePreOrder(final Tree tree, final NodeRef node, final NodeRef parent, final NodeRef sibling) {
 
         boolean update = (parent == null) ? true : false;
 
@@ -93,6 +98,11 @@ public class SimulationTreeTraversal extends TreeTraversal {
                     nodeNum, parent.getNumber(), computeBranchLength(tree, node)
             ));
 
+            nodeOperations.add(new ProcessOnTreeDelegate.NodeOperation(
+                    parent.getNumber(),
+                    nodeNum,
+                    sibling.getNumber()));
+
             update = true;
         }
 
@@ -101,8 +111,8 @@ public class SimulationTreeTraversal extends TreeTraversal {
             final NodeRef child2 = tree.getChild(node, 1);
 
             if (update) {
-                final boolean update1 = traversePreOrder(tree, child1, node);
-                final boolean update2 = traversePreOrder(tree, child2, node);
+                final boolean update1 = traversePreOrder(tree, child1, node, child2);
+                final boolean update2 = traversePreOrder(tree, child2, node, child1);
             }
         }
 
@@ -111,4 +121,7 @@ public class SimulationTreeTraversal extends TreeTraversal {
 
     private final List<DataLikelihoodDelegate.BranchNodeOperation> branchNodeOperations =
             new ArrayList<DataLikelihoodDelegate.BranchNodeOperation>();
+
+    private final List<DataLikelihoodDelegate.NodeOperation> nodeOperations =
+            new ArrayList<DataLikelihoodDelegate.NodeOperation>();
 }

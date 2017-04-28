@@ -71,7 +71,7 @@ public class Vector {
 			throw new NegativeArraySizeException(
 					"Requested vector size: " + dimension);
 		components = new double[dimension];
-		clear();
+//		clear();  // Java automatically zeros new vectors
 	}
 
 	/**
@@ -166,6 +166,10 @@ public class Vector {
 	 */
 	public double component(int n) {
 		return components[n];
+	}
+
+	public void set(int n, double value) {
+		components[n] = value;
 	}
 
 	/**

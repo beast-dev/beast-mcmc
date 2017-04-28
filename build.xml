@@ -111,7 +111,7 @@
             <!-- complie JUnit test classes -->
             <include name="test/dr/**"/>
         </javac>
-        <echo message="Successfully complied."/>
+        <echo message="Successfully compiled."/>
     </target>
 
     <!-- make the beast.jar and beauti.jar -->

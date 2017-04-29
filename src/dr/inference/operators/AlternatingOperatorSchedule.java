@@ -25,11 +25,8 @@
 
 package dr.inference.operators;
 
-import dr.math.MathUtils;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * File: AlternatingOperatorSchedule
@@ -111,9 +108,9 @@ public class AlternatingOperatorSchedule implements OperatorSchedule {
                 "use individual operator schedules to add operators. This call will have no affect!");
     }
 
-    public void operatorsHasBeenUpdated() {
+    public void operatorsHaveBeenUpdated() {
         for (OperatorSchedule os : operatorSchedules) {
-            os.operatorsHasBeenUpdated();
+            os.operatorsHaveBeenUpdated();
         }
     }
 

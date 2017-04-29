@@ -71,7 +71,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 	}
 
-	public void operatorsHasBeenUpdated() {
+	public void operatorsHaveBeenUpdated() {
 		totalWeight = calculateTotalWeight();
 	}
 

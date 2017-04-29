@@ -59,7 +59,7 @@ public interface OperatorSchedule extends Serializable {
     /**
      * Should be called after operators weight is externally changed.
      */
-    void operatorsHasBeenUpdated();
+    void operatorsHaveBeenUpdated();
 
     /**
      * @return the optimization schedule

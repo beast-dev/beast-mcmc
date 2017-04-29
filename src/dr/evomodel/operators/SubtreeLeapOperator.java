@@ -50,6 +50,7 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @version $Id$
  */
+
 public class SubtreeLeapOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
     private double size = 1.0;
@@ -57,6 +58,8 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
     private final TreeModel tree;
     private final CoercionMode mode;
+
+    private Instance lastInstance;
 
     /**
      * Constructor
@@ -74,7 +77,9 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         this.mode = mode;
     }
 
-
+    public TreeModel getTreeModel() {
+        return tree;
+    }
 
     /**
      * Do a subtree leap move.
@@ -82,6 +87,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
      * @return the log-transformed hastings ratio
      */
     public double doOperation() {
+
         double logq;
 
         final double delta = getDelta();
@@ -113,67 +119,71 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
         double forwardProbability = 1.0 / destinations.size();
 
-        final NodeRef j = destinationNodes.get(r);
-        final double newHeight = destinations.get(j);
+        final NodeRef destination = destinationNodes.get(r);
+        final double destinationHeight = destinations.get(destination);
 
-        final NodeRef jParent = tree.getParent(j);
+        final NodeRef destinationParent = tree.getParent(destination);
 
-        if (jParent != null && newHeight > tree.getNodeHeight(jParent)) {
-            throw new IllegalArgumentException("height error");
-        }
+//        if (destinationParent != null && destinationHeight > tree.getNodeHeight(destinationParent)) {
+//            throw new IllegalArgumentException("height error");
+//        }
+//
+//        if (destinationHeight < tree.getNodeHeight(destination)) {
+//            throw new IllegalArgumentException("height error");
+//        }
 
-        if (newHeight < tree.getNodeHeight(j)) {
-            throw new IllegalArgumentException("height error");
-        }
+        lastInstance = new Instance(node, parent, sibling, grandParent, destination, destinationParent, destinationHeight);
 
-        tree.beginTreeEdit();
+        applyInstance(lastInstance);
 
-        if (j == parent || jParent == parent) {
-            // the subtree is not actually moving but the height will change
-        } else {
-            if (grandParent == null) {
-                // if the parent of the original node is the root then the sibling becomes
-                // the root.
-                tree.removeChild(parent, sibling);
-                tree.setRoot(sibling);
+//        tree.beginTreeEdit();
+//
+//        if (destination == parent || destinationParent == parent) {
+//            // the subtree is not actually moving but the height will change
+//        } else {
+//            if (grandParent == null) {
+//                // if the parent of the original node is the root then the sibling becomes
+//                // the root.
+//                tree.removeChild(parent, sibling);
+//                tree.setRoot(sibling);
+//
+//            } else {
+//                // remove the parent of node by connecting its sibling to its grandparent.
+//                tree.removeChild(parent, sibling);
+//                tree.removeChild(grandParent, parent);
+//                tree.addChild(grandParent, sibling);
+//            }
+//
+//            if (destinationParent == null) {
+//                // adding the node to the root of the tree
+//                tree.addChild(parent, destination);
+//                tree.setRoot(parent);
+//            } else {
+//                // remove destination edge from its parent
+//                tree.removeChild(destinationParent, destination);
+//
+//                // add destination edge to the parent of node
+//                tree.addChild(parent, destination);
+//
+//                // and add the parent of target node as a child of the former parent of destination
+//                tree.addChild(destinationParent, parent);
+//            }
+//        }
+//        tree.endTreeEdit();
+//
+//        tree.setNodeHeight(parent, newHeight);
 
-            } else {
-                // remove the parent of node by connecting its sibling to its grandparent.
-                tree.removeChild(parent, sibling);
-                tree.removeChild(grandParent, parent);
-                tree.addChild(grandParent, sibling);
-            }
-
-            if (jParent == null) {
-                // adding the node to the root of the tree
-                tree.addChild(parent, j);
-                tree.setRoot(parent);
-            } else {
-                // remove destination edge j from its parent
-                tree.removeChild(jParent, j);
-
-                // add destination edge to the parent of node
-                tree.addChild(parent, j);
-
-                // and add the parent of i as a child of the former parent of j
-                tree.addChild(jParent, parent);
-            }
-        }
-        tree.endTreeEdit();
-
-        tree.setNodeHeight(parent, newHeight);
-
-        if (tree.getParent(parent) != null && newHeight > tree.getNodeHeight(tree.getParent(parent))) {
-            throw new IllegalArgumentException("height error");
-        }
-
-        if (newHeight < tree.getNodeHeight(node)) {
-            throw new IllegalArgumentException("height error");
-        }
-
-        if (newHeight < tree.getNodeHeight(getOtherChild(tree, parent, node))) {
-            throw new IllegalArgumentException("height error");
-        }
+//        if (tree.getParent(parent) != null && newHeight > tree.getNodeHeight(tree.getParent(parent))) {
+//            throw new IllegalArgumentException("height error");
+//        }
+//
+//        if (newHeight < tree.getNodeHeight(node)) {
+//            throw new IllegalArgumentException("height error");
+//        }
+//
+//        if (newHeight < tree.getNodeHeight(getOtherChild(tree, parent, node))) {
+//            throw new IllegalArgumentException("height error");
+//        }
 
         final Map<NodeRef, Double> reverseDestinations = getDestinations(node, parent, getOtherChild(tree, parent, node), delta);
         double reverseProbability = 1.0 / reverseDestinations.size();
@@ -181,6 +191,51 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         // hastings ratio = reverse Prob / forward Prob
         logq = Math.log(reverseProbability) - Math.log(forwardProbability);
         return logq;
+    }
+
+    protected Instance getLastInstance() {
+        return lastInstance;
+    }
+
+    protected void applyInstance(Instance instance) {
+        tree.beginTreeEdit();
+
+        Instance i = (Instance)instance;
+
+        if (i.destination == i.parent || i.destinationParent == i.parent) {
+            // the subtree is not actually moving but the height will change
+        } else {
+            if (i.grandParent == null) {
+                // if the parent of the original node is the root then the sibling becomes
+                // the root.
+                tree.removeChild(i.parent, i.sibling);
+                tree.setRoot(i.sibling);
+
+            } else {
+                // remove the parent of node by connecting its sibling to its grandparent.
+                tree.removeChild(i.parent, i.sibling);
+                tree.removeChild(i.grandParent, i.parent);
+                tree.addChild(i.grandParent, i.sibling);
+            }
+
+            if (i.destinationParent == null) {
+                // adding the node to the root of the tree
+                tree.addChild(i.parent, i.destination);
+                tree.setRoot(i.parent);
+            } else {
+                // remove destination edge from its parent
+                tree.removeChild(i.destinationParent, i.destination);
+
+                // add destination edge to the parent of node
+                tree.addChild(i.parent, i.destination);
+
+                // and add the parent of target node as a child of the former parent of destination
+                tree.addChild(i.destinationParent, i.parent);
+            }
+        }
+        tree.endTreeEdit();
+
+        tree.setNodeHeight(i.parent, i.destinationHeight);
     }
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
@@ -319,5 +374,23 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
     }
 
+    class Instance {
+        final NodeRef node;
+        final NodeRef parent;
+        final NodeRef sibling;
+        final NodeRef grandParent;
+        final NodeRef destination;
+        final NodeRef destinationParent;
+        final double destinationHeight;
 
+        public Instance(NodeRef node, NodeRef parent, NodeRef sibling, NodeRef grandParent, NodeRef destination, NodeRef destinationParent, double destinationHeight) {
+            this.node = node;
+            this.parent = parent;
+            this.sibling = sibling;
+            this.grandParent = grandParent;
+            this.destination = destination;
+            this.destinationParent = destinationParent;
+            this.destinationHeight = destinationHeight;
+        }
+    }
 }

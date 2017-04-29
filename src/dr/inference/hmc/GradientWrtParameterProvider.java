@@ -1,5 +1,5 @@
 /*
- * GradientForLikelihood.java
+ * GradientWrtParameterProvider.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,7 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.model;
+package dr.inference.hmc;
+
+import dr.inference.model.GradientProvider;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 
 /**
  * @author Max Tolkoff
@@ -40,4 +44,37 @@ public interface GradientWrtParameterProvider {
     double[] getGradientLogDensity();
 
 //    void getGradientLogDensity(double[] destination, int offset);
+
+    class ParameterWrapper implements GradientWrtParameterProvider {
+
+        final GradientProvider provider;
+        final Parameter parameter;
+        final Likelihood likelihood;
+
+        public ParameterWrapper(GradientProvider provider, Parameter parameter, Likelihood likelihood) {
+            this.provider = provider;
+            this.parameter = parameter;
+            this.likelihood = likelihood;
+        }
+
+        @Override
+        public Likelihood getLikelihood() {
+            return likelihood;
+        }
+
+        @Override
+        public Parameter getParameter() {
+            return parameter;
+        }
+
+        @Override
+        public int getDimension() {
+            return parameter.getDimension();
+        }
+
+        @Override
+        public double[] getGradientLogDensity() {
+            return provider.getGradientLogDensity(parameter.getParameterValues());
+        }
+    }
 }

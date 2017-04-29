@@ -25,6 +25,8 @@
 
 package dr.util;
 
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -339,6 +341,7 @@ public interface Transform {
         public int start; // zero-indexed
         public int end; // zero-indexed, i.e, i = start; i < end; ++i
         public int every;
+        public List<Parameter> parameters = null;
     }
 
     XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -349,15 +352,32 @@ public interface Transform {
             String name = (String) xo.getAttribute(TYPE);
             System.err.println("name: " + name);
 
-            thisTransform = Type.valueOf(name).transform;
+            thisTransform = null;
+            for (Type type: Type.values()) {
+                if (name.equalsIgnoreCase(type.getName())) {
+                    thisTransform = type.transform;
+                }
+            }
+            if (thisTransform == null) {
+                throw new XMLParseException("Unrecognized transform type, " + name);
+            }
 
             ParsedTransform transform = new ParsedTransform();
             transform.transform = thisTransform;
-            transform.start = xo.getAttribute(START, 1);
-            transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
-            transform.every = xo.getAttribute(EVERY, 1);
+            if (xo.hasAttribute(START)) {
+                transform.start = xo.getIntegerAttribute(START);
+                transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
+                transform.every = xo.getAttribute(EVERY, 1);
+                // todo: check values are valid
+                transform.start--; // zero-indexed
+            } else {
+                transform.parameters = new ArrayList<Parameter>();
 
-            transform.start--; // zero-indexed
+                for (Parameter param : xo.getAllChildren(Parameter.class)) {
+                    transform.parameters.add(param);
+                }
+            }
+
             return transform;
         }
 
@@ -367,6 +387,7 @@ public interface Transform {
                     AttributeRule.newIntegerRule(START, true),
                     AttributeRule.newIntegerRule(END, true),
                     AttributeRule.newIntegerRule(EVERY, true),
+                    new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)
             };
         }
 

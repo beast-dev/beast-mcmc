@@ -1,7 +1,34 @@
-package dr.inferencexml.model;
+/*
+ * AppendedPotentialDerivativeParser.java
+ *
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.inferencexml.hmc;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.hmc.CompoundGradient;
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.xml.*;
 
@@ -30,33 +57,23 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         List<GradientWrtParameterProvider> gradList = new ArrayList<GradientWrtParameterProvider>();
-        List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
-
+        List<Likelihood> likelihoodList = new ArrayList<Likelihood>(); // TODO Remove?
 
         for (int i = 0; i < xo.getChildCount(); ++i) {
+
             Object obj = xo.getChild(i);
-            GradientWrtParameterProvider grad = null;
 
-            Likelihood likelihood = null;
+            GradientWrtParameterProvider grad;
+            Likelihood likelihood;
 
-//            int copies = -1;
             if (obj instanceof DistributionLikelihood) {
                 DistributionLikelihood dl = (DistributionLikelihood) obj;
                 if (!(dl.getDistribution() instanceof GradientProvider)) {
                     throw new XMLParseException("Not a gradient provider");
                 }
 
-//                likelihood = dl;
-//                grad = (GradientWrtParameterProvider) dl.getDistribution();
                 throw new RuntimeException("Not yet implemented");
 
-//                copies = 0;
-//
-//                for (Attribute<double[]> datum : dl.getDataList()) {
-//                    Double draw = (Double) gp.nextRandom();
-//                    System.err.println("DL: " + datum.getAttributeName() + " " + datum.getAttributeValue().length + " " + "1");
-//                    copies += datum.getAttributeValue().length;
-//                }
             } else if (obj instanceof MultivariateDistributionLikelihood) {
                 final MultivariateDistributionLikelihood mdl = (MultivariateDistributionLikelihood) obj;
                 if (!(mdl.getDistribution() instanceof GradientProvider)) {
@@ -67,54 +84,18 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
                 final Parameter parameter = mdl.getDataParameter();
                 likelihood = mdl;
 
-                grad = new GradientWrtParameterProvider() { // Return gradient w.r.t. parameter
+                grad = new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
 
-                    @Override
-                    public Likelihood getLikelihood() {
-                        return mdl;
-                    }
-
-                    @Override
-                    public Parameter getParameter() {
-                        return parameter;
-                    }
-
-                    @Override
-                    public int getDimension() {
-                        return parameter.getDimension();
-                    }
-
-                    @Override
-                    public double[] getGradientLogDensity() {
-                        return provider.getGradientLogDensity(parameter.getParameterValues());
-                    }
-                };
-
-//                grad = (GradientWrtParameterProvider) mdl.getDistribution();
-
-//                copies = 0;
-//                double[] draw = (double[]) gp.nextRandom();
-//                for (Attribute<double[]> datum : mdl.getDataList()) {
-////                    System.err.println("ML: " + datum.getAttributeName() + " " + datum.getAttributeValue().length + " " + draw.length);
-//                    copies += datum.getAttributeValue().length / draw.length;
-//                }
             } else if (obj instanceof GradientWrtParameterProvider) {
                 grad = (GradientWrtParameterProvider) obj;
                 likelihood = grad.getLikelihood();
-
-//                copies = 1;
             } else {
                 throw new XMLParseException("Not a Gaussian process");
             }
+
             gradList.add(grad);
             likelihoodList.add(likelihood);
-//            copyList.add(copies);
         }
-
-//        for (int i = 0; i < xo.getChildCount(); i++) {
-//            derivativeList.add((GradientWrtParameterProvider) xo.getChild(i));
-//        }
-
 
         return new CompoundGradient(gradList);
     }

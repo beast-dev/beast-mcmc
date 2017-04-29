@@ -658,12 +658,20 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
+            Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
+            boolean oldXML = pt.parameters == null;
+
             Parameter parameter;
             Transform[] transformations;
             int[] transformationSizes;
 
-            if (xo.getChild(Transform.ParsedTransform.class) == null) {
+            int transformationSizeCounter = 0;
+
+            if (!oldXML) {
                 // if there are no ParsedTransform elements then use the new parser syntax
+                if (DEBUG) {
+                    System.err.println("New parser");
+                }
 
                 CompoundParameter allParameters = new CompoundParameter("allParameters");
 
@@ -677,28 +685,19 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         Parameter param = (Parameter) co;
                         allParameters.addParameter(param);
                         transformCountList.add(param.getDimension());
-                    } else if (co instanceof XMLObject) {
-                        XMLObject cxo = (XMLObject) co;
+                    } else if (co instanceof Transform.ParsedTransform) {
+                        Transform.ParsedTransform parsedTransform = (Transform.ParsedTransform)co;
 
-                        if (cxo.getName() == TRANSFORM) {
-                            Transform transform = Transform.NONE;
-                            if (cxo.hasAttribute(TYPE)) {
-                                Transform.Type type = Transform.Type.valueOf(cxo.getStringAttribute(TYPE));
-                                transform = type.getTransform();
-                            }
-                            transformList.add(transform);
+                        transformList.add(parsedTransform.transform);
 
-                            int dim = 0;
-                            for (Parameter param : cxo.getAllChildren(Parameter.class)) {
-                                allParameters.addParameter(param);
-                                dim += param.getDimension();
-                            }
-                            transformCountList.add(dim);
-                        } else {
-                            throw new XMLParseException("Unknown element, " + cxo.getName() + ", in " + AVMVN_OPERATOR);
+                        int dim = 0;
+                        for (Parameter param : parsedTransform.parameters) {
+                            allParameters.addParameter(param);
+                            dim += param.getDimension();
                         }
+                        transformCountList.add(dim);
                     } else {
-                        throw new XMLParseException("Unknown object in " + AVMVN_OPERATOR);
+                        throw new XMLParseException("Unknown element in " + AVMVN_OPERATOR);
                     }
                 }
 
@@ -706,18 +705,46 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 transformations = new Transform[parameter.getDimension()];
                 transformationSizes = new int[parameter.getDimension()];
 
-                transformations = transformList.toArray(transformations);
+                /*transformations = transformList.toArray(transformations);
                 for (int i = 0; i < transformCountList.size(); i++) {
                     transformationSizes[i] = transformCountList.get(i);
+                }*/
+                if (DEBUG) {
+                    for (int i = 0; i < transformList.size(); i++) {
+                        System.err.println(i + "  " + transformList.get(i));
+                    }
+                    for (int i = 0; i < transformCountList.size(); i++) {
+                        System.err.println(i + "  " + transformCountList.get(i));
+                    }
                 }
+                int index = 0;
+                for (int i = 0; i < transformCountList.size(); i++) {
+                    if (!transformList.get(i).getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
+                        for (int j = 0; j < transformCountList.get(i); j++) {
+                            transformations[index] = transformList.get(i);
+                            transformationSizes[index] = 1;
+                            index++;
+                            transformationSizeCounter++;
+                        }
+                    } else {
+                        transformations[index] = transformList.get(i);
+                        transformationSizes[index] = transformCountList.get(i);
+                        index++;
+                        transformationSizeCounter++;
+                    }
+                }
+
             } else {
+
+                if (DEBUG) {
+                    System.err.println("Old parser");
+                }
                 // assume old parser syntax for backwards compatibility
-                parameter = (Parameter) xo.getChild(Parameter.class);
+                parameter = (Parameter)xo.getChild(Parameter.class);
+
                 transformations = new Transform[parameter.getDimension()];
                 transformationSizes = new int[parameter.getDimension()];
 
-                int transformationSizeCounter = 0;
-                //TODO: add LOG_CONSTRAINED_SUM transformation to transformations array!
                 for (int i = 0; i < xo.getChildCount(); i++) {
                     Object child = xo.getChild(i);
                     if (child instanceof Transform.ParsedTransform) {
@@ -726,11 +753,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         if (DEBUG) {
                             System.err.println(thisObject.transform.getTransformName());
                         }
-                        if (thisObject.transform.equals(Transform.LOG_CONSTRAINED_SUM)) {
+
+                        if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
-                                System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
+                                System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }
                             transformationSizeCounter++;
                         } else {
@@ -745,24 +773,24 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         }
                     }
                 }
-
-                //determine array length for transformationSizes = transformationSizeCounter - 1;
-                if (DEBUG) {
-                    System.err.println("\nCleaning up transformation and size arrays");
-                    System.err.println("transformationSizeCounter = " + transformationSizeCounter);
-                }
-                int temp[] = new int[transformationSizeCounter];
-                Transform tempTransform[] = new Transform[transformationSizeCounter];
-                for (int i = 0; i < temp.length; i++) {
-                    temp[i] = transformationSizes[i];
-                    tempTransform[i] = transformations[i];
-                    if (transformationSizes[i] == 0 || temp[i] == 0) {
-                        throw new XMLParseException("Transformation size 0 encountered");
-                    }
-                }
-                transformationSizes = temp;
-                transformations = tempTransform;
             }
+
+            //determine array length for transformationSizes = transformationSizeCounter - 1;
+            if (DEBUG) {
+                System.err.println("\nCleaning up transformation and size arrays");
+                System.err.println("transformationSizeCounter = " + transformationSizeCounter);
+            }
+            int temp[] = new int[transformationSizeCounter];
+            Transform tempTransform[] = new Transform[transformationSizeCounter];
+            for (int i = 0; i < temp.length; i++) {
+                temp[i] = transformationSizes[i];
+                tempTransform[i] = transformations[i];
+                if (transformationSizes[i] == 0 || temp[i] == 0) {
+                    throw new XMLParseException("Transformation size 0 encountered");
+                }
+            }
+            transformationSizes = temp;
+            transformations = tempTransform;
 
             //varMatrix needs to be initialized
             int dim = parameter.getDimension();
@@ -844,11 +872,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newBooleanRule(FORM_XTX, true),
                 AttributeRule.newBooleanRule(SKIP_RANK_CHECK, true),
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
-                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
-                new ElementRule(TRANSFORM, new XMLSyntaxRule[] {
-                        AttributeRule.newStringRule(TYPE, true),
-                        new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
-                }, 0, Integer.MAX_VALUE)
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
         };
 
     };

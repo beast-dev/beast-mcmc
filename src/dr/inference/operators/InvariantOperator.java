@@ -92,8 +92,6 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
 
     public static class Rotation extends InvariantOperator {
 
-
-
         public Rotation(Parameter parameter, double weight, Likelihood likelihood) {
             super(parameter, likelihood, weight);
         }

@@ -26,9 +26,12 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
+import dr.inference.operators.GeneralOperator;
+import dr.inference.prior.Prior;
 import dr.math.distributions.NormalDistribution;
 
 /**
@@ -115,6 +118,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     @Override
     public double doOperation() {
+        return leafFrog();
+    }
+
+    protected double leafFrog() {
 
         final int dim = gradientProvider.getDimension();
         final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();

@@ -31,7 +31,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
-import dr.inference.prior.Prior;
 import dr.math.distributions.NormalDistribution;
 
 /**

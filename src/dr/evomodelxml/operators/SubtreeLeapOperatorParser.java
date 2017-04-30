@@ -25,8 +25,11 @@
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.operators.PrefetchSubtreeLeapOperator;
 import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.PrefetchTreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
@@ -59,8 +62,17 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         if (prob <= 0.0 || prob >= 1.0) {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1). Currently: " + prob);
         }
-        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, prob, mode);
 
+        PrefetchTreeDataLikelihood treeDataLikelihood = (PrefetchTreeDataLikelihood) xo.getChild(PrefetchTreeDataLikelihood.class);
+
+        SubtreeLeapOperator operator;
+
+        if (treeDataLikelihood != null) {
+            operator = new PrefetchSubtreeLeapOperator(treeDataLikelihood, treeModel, weight, size, prob, mode);
+        } else {
+            operator = new SubtreeLeapOperator(treeModel, weight, size, prob, mode);
+        }
+        
         return operator;
     }
 

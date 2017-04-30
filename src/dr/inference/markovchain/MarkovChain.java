@@ -304,7 +304,7 @@ public final class MarkovChain implements Serializable {
                     score = Double.NEGATIVE_INFINITY;
                 }
 
-                if (usingFullEvaluation) {
+                if (usingFullEvaluation && !(mcmcOperator instanceof Prefetchable)) {
 
                     // This is a test that the state was correctly evaluated. The
                     // likelihood of all components of the model are flagged as
@@ -364,7 +364,7 @@ public final class MarkovChain implements Serializable {
 
                 currentModel.restoreModelState();
 
-                if (usingFullEvaluation) {
+                if (usingFullEvaluation && !(mcmcOperator instanceof Prefetchable)) {
                     // This is a test that the state is correctly restored. The
                     // restored state is fully evaluated and the likelihood compared with
                     // that before the operation was made.

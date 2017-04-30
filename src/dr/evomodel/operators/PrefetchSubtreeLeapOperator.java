@@ -26,8 +26,8 @@
 package dr.evomodel.operators;
 
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.PrefetchTreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.inference.model.Model;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.Prefetchable;
 
@@ -39,7 +39,7 @@ import dr.inference.operators.Prefetchable;
 
 public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements Prefetchable {
 
-    private final TreeDataLikelihood treeDataLikelihood;
+    private final PrefetchTreeDataLikelihood treeDataLikelihood;
     private final int prefetchCount;
     private int currentPrefetch;
     private final double[] hastingsRatios;
@@ -54,12 +54,12 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
      * @param accP
      * @param mode   coercion mode
      */
-    public PrefetchSubtreeLeapOperator(TreeDataLikelihood treeDataLikelihood, int prefetchCount,
+    public PrefetchSubtreeLeapOperator(PrefetchTreeDataLikelihood treeDataLikelihood,
                                        TreeModel tree, double weight, double size, double accP, CoercionMode mode) {
         super(tree, weight, size, accP, mode);
 
         this.treeDataLikelihood = treeDataLikelihood;
-        this.prefetchCount = prefetchCount;
+        this.prefetchCount = treeDataLikelihood.getPrefetchCount();
         hastingsRatios = new double[prefetchCount];
         instances = new Instance[prefetchCount];
 
@@ -80,24 +80,23 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             currentPrefetch = 0;
 
             for (int i = 0; i < prefetchCount; i++) {
-
-                super.doOperation();
-
-                // todo restore on treemodel and treeDataLikelihood
+                treeDataLikelihood.setCurrentPrefetch(i);
 
                 hastingsRatios[i] = super.doOperation();
 
-                // todo treeDataLikelihood.prefetchLogLikelihood(i);
+                treeDataLikelihood.collectOperations();
+
+                getTreeModel().restoreModelState();
 
                 instances[i] = getLastInstance();
             }
 
+            treeDataLikelihood.prefetchLogLikelihoods();
         }
 
-        double logHR = hastingsRatios[currentPrefetch];
-        // todo treeDataLikelihood.setCurrentPrefetch(currentPrefetch);
+        treeDataLikelihood.setCurrentPrefetch(currentPrefetch);
 
-        return logHR;
+        return hastingsRatios[currentPrefetch];
     }
 
     @Override
@@ -108,6 +107,8 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         treeDataLikelihood.restoreModelState();
 
         applyInstance(instances[currentPrefetch]);
+        
+        currentPrefetch = -1;
     }
 
     @Override

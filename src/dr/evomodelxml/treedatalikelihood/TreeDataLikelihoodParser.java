@@ -37,10 +37,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -116,11 +113,12 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     scalingScheme,
                     delayRescalingUntilUnderflow);
 
-            return new TreeDataLikelihood(
+            return new PrefetchTreeDataLikelihood(
                     dataLikelihoodDelegate,
                     treeModel,
-                    branchRateModel);
-        } else {
+                    branchRateModel,
+                    4);
+        } else if (patternLists.size() > 1) {
             // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
             List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
 
@@ -144,6 +142,22 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             }
 
             return new CompoundLikelihood(treeDataLikelihoods);
+        } else {
+            DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists.get(0),
+                    branchModels.get(0),
+                    siteRateModels.get(0),
+                    useAmbiguities,
+                    scalingScheme,
+                    delayRescalingUntilUnderflow);
+
+            return new PrefetchTreeDataLikelihood(
+                    dataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel,
+                    4);
+
         }
     }
 

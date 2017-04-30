@@ -27,6 +27,7 @@ package dr.inferencexml.operators;
 
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.PrefetchOperatorSchedule;
 import dr.inference.operators.SimpleOperatorSchedule;
 import dr.xml.*;
 
@@ -77,7 +78,8 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
                 schedule.addOperator((MCMCOperator) child);
             }
         }
-        return schedule;
+
+        return new PrefetchOperatorSchedule(schedule);
     }
 
     //************************************************************************

@@ -30,11 +30,14 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.NoUTurnOperator;
 import dr.xml.*;
 
 /**
  * @author Max Tolkoff
+ * @author Marc A. Suchard
  */
+
 public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser {
     public final static String HMC_OPERATOR = "HamiltonianMonteCarloOperator";
     public static final String HMC_OPERATOR2 = "hamiltonianMonteCarloOperator";
@@ -76,7 +79,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, stepSize,
                     nSteps, drawVariance);
         } else {
-            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, stepSize,
+            return new NoUTurnOperator(CoercionMode.DEFAULT, weight, derivative, parameter, stepSize,
                     nSteps, drawVariance);
         }
     }

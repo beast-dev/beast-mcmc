@@ -33,7 +33,6 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
 import dr.inference.operators.*;
-import dr.inference.prior.Prior;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -81,7 +80,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         this.pathLikelihood = pathLikelihood;
         pathLikelihood.setPathParameter(pathParameter);
 
-        mc = new MarkovChain(Prior.UNIFORM_PRIOR, pathLikelihood, schedule, criterion, 0, 0, 0.0, true);
+        mc = new MarkovChain(pathLikelihood, schedule, criterion, 0, 0, 0.0, true);
 
         this.loggers = loggers;
     }

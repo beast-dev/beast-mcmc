@@ -5,7 +5,6 @@ import dr.inference.model.IndianBuffetProcessPrior;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.prior.Prior;
 
 /**
  * Created by maxryandolinskytolkoff on 11/21/16.
@@ -18,9 +17,9 @@ public class IBPBitFlipOperator extends BitFlipOperator {
     }
 
     @Override
-    public double doOperation(Prior prior, Likelihood likelihood)
+    public double doOperation(Likelihood likelihood)
     { //throws OperatorFailedException {
-        return super.doOperation(prior, likelihood);
+        return super.doOperation(likelihood);
     }
 
     protected double sum(int pos) {

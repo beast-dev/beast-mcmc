@@ -30,7 +30,6 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.*;
-import dr.inference.prior.Prior;
 import dr.inferencexml.operators.EllipticalSliceOperatorParser;
 import dr.math.MathUtils;
 import dr.math.distributions.CompoundGaussianProcess;
@@ -124,14 +123,14 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         }
     }
 
-    private double evaluateDensity(Prior prior, Likelihood likelihood, double pathParameter) {
-        double logPosterior = evaluate(likelihood, prior, pathParameter);
+    private double evaluateDensity(Likelihood likelihood, double pathParameter) {
+        double logPosterior = evaluate(likelihood, pathParameter);
         double logGaussianPrior = getLogGaussianPrior() * pathParameter;
 
         return logPosterior - logGaussianPrior;
     }
 
-    public double doOperation(Prior prior, Likelihood likelihood) {
+    public double doOperation(Likelihood likelihood) {
 
 //        System.err.println("Likelihood type:" + likelihood.getClass().getName());
 
@@ -159,12 +158,12 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
         } else {
 
-            double logPosterior = evaluate(likelihood, prior, pathParameter);
+            double logPosterior = evaluate(likelihood, pathParameter);
             double logGaussianPrior = getLogGaussianPrior() * pathParameter;
 
             // Cut-off depends only on non-GP contribution to posterior
             double cutoffDensity = logPosterior - logGaussianPrior + MathUtils.randomLogDouble();
-            drawFromSlice(prior, likelihood, cutoffDensity);
+            drawFromSlice(likelihood, cutoffDensity);
         }
 
         // No need to set variable, as SliceInterval has already done this (and recomputed posterior)
@@ -298,7 +297,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 //        }
 
 
-    private void drawFromSlice(Prior prior, Likelihood likelihood, double cutoffDensity) {
+    private void drawFromSlice(Likelihood likelihood, double cutoffDensity) {
         // Do nothing
         double[] x = variable.getParameterValues();
         double[] nu = (double[]) gaussianProcess.nextRandom();
@@ -345,7 +344,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         while (!done) {
             double[] xx = pointOnEllipse(x, nu, phi, priorMean);
             setVariable(xx);
-            double density = evaluate(likelihood, prior, pathParameter);
+            double density = evaluate(likelihood, pathParameter);
             density -= getLogGaussianPrior(); // Depends only on non-GP contribution to posterior
 
             if (density > cutoffDensity) {
@@ -481,7 +480,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         log[1] = precParameter;
 
         for (int i = 0; i < length; i++) {
-            sliceSampler.doOperation(null, posterior);
+            sliceSampler.doOperation(posterior);
             for (int j = 0; j < dim; ++j) {
                 double x = log[j].getValue(0);
                 mean[j] += x;

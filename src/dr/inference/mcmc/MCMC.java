@@ -35,7 +35,6 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.operators.*;
-import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.util.NumberFormatter;
 import dr.xml.Spawnable;
@@ -72,29 +71,10 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             OperatorSchedule schedule,
             Logger[] loggers) {
 
-        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
-    }
-
-    /**
-     * Must be called before calling chain.
-     *
-     * @param options    the options for this MCMC analysis
-     * @param prior      the prior disitrbution on the model parameters.
-     * @param schedule   operator schedule to be used in chain.
-     * @param likelihood the likelihood for this MCMC
-     * @param loggers    an array of loggers to record output of this MCMC run
-     */
-    public void init(
-            MCMCOptions options,
-            Likelihood likelihood,
-            Prior prior,
-            OperatorSchedule schedule,
-            Logger[] loggers) {
-
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(options.getTemperature());
 
-        mc = new MarkovChain(prior, likelihood, schedule, criterion,
+        mc = new MarkovChain(likelihood, schedule, criterion,
                 options.getFullEvaluationCount(), options.minOperatorCountForFullEvaluation(),
                 options.getEvaluationTestThreshold(),
                 options.useCoercion());
@@ -133,7 +113,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         OperatorSchedule schedule = new SimpleOperatorSchedule();
         for (MCMCOperator operator : operators) schedule.addOperator(operator);
 
-        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        init(options, likelihood, schedule, loggers);
     }
 
     public MarkovChain getMarkovChain() {
@@ -314,13 +294,6 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         }
 
     };
-
-    /**
-     * @return the prior of this MCMC analysis.
-     */
-    public Prior getPrior() {
-        return mc.getPrior();
-    }
 
     /**
      * @return the likelihood function.

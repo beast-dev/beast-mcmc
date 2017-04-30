@@ -52,4 +52,16 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     public double doOperation() {
         throw new IllegalStateException("Should not be called.");
     }
+
+    private void buildTree() {
+
+    }
+
+    private double findReasonableEpsilon() {
+        return 0.0;
+    }
+
+    private double computeStopCriterion() {
+        return 0.0;
+    }
 }

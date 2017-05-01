@@ -30,7 +30,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
-import dr.inference.prior.Prior;
 
 /**
  * @author Marc A. Suchard
@@ -44,7 +43,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     @Override
-    public double doOperation(Prior prior, Likelihood likelihood) {
+    public double doOperation(Likelihood likelihood) {
         return leafFrog(); // TODO Implement NUTS algorithm
     }
 

@@ -35,7 +35,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Likelihood;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 import java.io.IOException;
@@ -384,8 +383,7 @@ public class WeightedMultiplicativeBinary extends AbstractCladeImportanceDistrib
       * @see dr.evomodel.tree.AbstractCladeImportanceDistribution#getChanceForNodeHeights(dr.evomodel.tree.TreeModel, dr.inference.model.Likelihood, dr.inference.prior.Prior)
       */
     @Override
-    public double getChanceForNodeHeights(TreeModel tree,
-                                          Likelihood likelihood, Prior prior) {
+    public double getChanceForNodeHeights(TreeModel tree, Likelihood likelihood) {
         // TODO Auto-generated method stub
         return 0;
     }
@@ -394,8 +392,7 @@ public class WeightedMultiplicativeBinary extends AbstractCladeImportanceDistrib
       * @see dr.evomodel.tree.AbstractCladeImportanceDistribution#setNodeHeights(dr.evomodel.tree.TreeModel, dr.inference.model.Likelihood, dr.inference.prior.Prior)
       */
     @Override
-    public double setNodeHeights(TreeModel tree, Likelihood likelihood,
-                                 Prior prior) {
+    public double setNodeHeights(TreeModel tree, Likelihood likelihood) {
         // TODO Auto-generated method stub
         return 0;
     }

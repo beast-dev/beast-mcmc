@@ -34,7 +34,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.GibbsPruneAndRegraftParser;
 import dr.inference.model.Likelihood;
 import dr.inference.operators.SimpleMetropolizedGibbsOperator;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
@@ -77,15 +76,15 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 	 * .Prior, dr.inference.model.Likelihood)
 	 */
 	@Override
-	public double doOperation(Prior prior, Likelihood likelihood) {
+	public double doOperation(Likelihood likelihood) {
 		if (pruned) {
-			return prunedGibbsProposal(prior, likelihood);
+			return prunedGibbsProposal(likelihood);
 		} else {
-			return gibbsProposal(prior, likelihood);
+			return gibbsProposal(likelihood);
 		}
 	}
 
-	private double gibbsProposal(Prior prior, Likelihood likelihood) {
+	private double gibbsProposal(Likelihood likelihood) {
 
 		final int nodeCount = tree.getNodeCount();
 		final NodeRef root = tree.getRoot();
@@ -103,8 +102,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 		final NodeRef iP = tree.getParent(i);
 		final double heightIP = tree.getNodeHeight(iP);
 		double sum = 0.0;
-		double backwardLikelihood = calculateTreeLikelihood(prior, likelihood,
-				tree);
+		double backwardLikelihood = calculateTreeLikelihood(likelihood, tree);
 		int offset = (int) -backwardLikelihood;
 		double backward = Math.exp(backwardLikelihood + offset);
 		final NodeRef oldBrother = getOtherChild(tree, iP, i);
@@ -119,8 +117,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 					secondNodeIndices.add(n);
 
 					pruneAndRegraft(tree, i, iP, j, jP);
-					double prob = Math.exp(calculateTreeLikelihood(prior,
-							likelihood, tree)
+					double prob = Math.exp(calculateTreeLikelihood(likelihood, tree)
 							+ offset);
 					probabilities.add(prob);
 					sum += prob;
@@ -160,7 +157,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 		return hastingsRatio;
 	}
 
-	private double prunedGibbsProposal(Prior prior, Likelihood likelihood) {
+	private double prunedGibbsProposal(Likelihood likelihood) {
 		final int nodeCount = tree.getNodeCount();
 		final NodeRef root = tree.getRoot();
 
@@ -181,7 +178,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 		final NodeRef iP = tree.getParent(i);
 		final double heightIP = tree.getNodeHeight(iP);
 		double sum = 0.0;
-		double backwardLikelihood = calculateTreeLikelihood(prior, likelihood,
+		double backwardLikelihood = calculateTreeLikelihood(likelihood,
 				tree);
 		int offset = (int) -backwardLikelihood;
 		double backward = Math.exp(backwardLikelihood + offset);
@@ -198,7 +195,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 					secondNodeIndices.add(n);
 
 					pruneAndRegraft(tree, i, iP, j, jP);
-					double prob = Math.exp(calculateTreeLikelihood(prior,
+					double prob = Math.exp(calculateTreeLikelihood(
 							likelihood, tree)
 							+ offset);
 					probabilities.add(prob);
@@ -248,13 +245,13 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 						sumBackward += scores[n];
 					} else {
 						pruneAndRegraft(tree, i, iP, j, jP);
-						double prob = Math.exp(calculateTreeLikelihood(prior,
+						double prob = Math.exp(calculateTreeLikelihood(
 								likelihood, tree)
 								+ offset);
 						sumBackward += prob;
 
 						pruneAndRegraft(tree, i, iP, newBrother, newGrandfather);
-						evaluate(likelihood, prior, 1.0);
+						evaluate(likelihood, 1.0);
 					}
 				}
 			}
@@ -294,9 +291,9 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 		}
 	}
 
-	private double calculateTreeLikelihood(Prior prior, Likelihood likelihood,
+	private double calculateTreeLikelihood(Likelihood likelihood,
 			TreeModel tree) {
-		return evaluate(likelihood, prior, 1.0);
+		return evaluate(likelihood, 1.0);
 	}
 
 	private void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef iP, NodeRef j, NodeRef jP) {

@@ -31,7 +31,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
 import dr.inference.operators.*;
-import dr.inference.prior.Prior;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -56,7 +55,6 @@ public final class MarkovChain implements Serializable {
 
     private final OperatorSchedule schedule;
     private final Acceptor acceptor;
-    private final Prior prior;
     private final Likelihood likelihood;
 
     private boolean pleaseStop = false;
@@ -72,13 +70,12 @@ public final class MarkovChain implements Serializable {
     private double evaluationTestThreshold = EVALUATION_TEST_THRESHOLD;
 
 
-    public MarkovChain(Prior prior, Likelihood likelihood,
+    public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
                        long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold,
                        boolean useCoercion) {
 
         currentLength = 0;
-        this.prior = prior;
         this.likelihood = likelihood;
         this.schedule = schedule;
         this.acceptor = acceptor;
@@ -97,7 +94,7 @@ public final class MarkovChain implements Serializable {
             }
         }
 
-        currentScore = evaluate(likelihood, prior);
+        currentScore = evaluate(likelihood);
     }
 
     /**
@@ -120,7 +117,7 @@ public final class MarkovChain implements Serializable {
     public long runChain(long length, boolean disableCoerce) {
 
         likelihood.makeDirty();
-        currentScore = evaluate(likelihood, prior);
+        currentScore = evaluate(likelihood);
 
         long currentState = currentLength;
 
@@ -135,15 +132,6 @@ public final class MarkovChain implements Serializable {
         if (currentScore == Double.NEGATIVE_INFINITY) {
 
             // identify which component of the score is zero...
-            if (prior != null) {
-                double logPrior = prior.getLogPrior(likelihood.getModel());
-
-                if (logPrior == Double.NEGATIVE_INFINITY) {
-                    throw new IllegalArgumentException(
-                            "The initial model is invalid because one of the priors has zero probability.");
-                }
-            }
-
             String message = "The initial likelihood is zero";
             if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
@@ -228,7 +216,7 @@ public final class MarkovChain implements Serializable {
                 }
 
             if (mcmcOperator instanceof GeneralOperator) {
-                hastingsRatio = ((GeneralOperator) mcmcOperator).operate(prior, likelihood);
+                hastingsRatio = ((GeneralOperator) mcmcOperator).operate(likelihood);
             } else {
                 hastingsRatio = mcmcOperator.operate();
             }
@@ -268,7 +256,7 @@ public final class MarkovChain implements Serializable {
                 }
 
                 // The new model is evaluated
-                score = evaluate(likelihood, prior);
+                score = evaluate(likelihood);
 
                 if (PROFILE) {
                     long duration = System.currentTimeMillis() - elapsedTime;
@@ -313,7 +301,7 @@ public final class MarkovChain implements Serializable {
                     // BEAST is aware of all changes that the operator induced.
 
                     likelihood.makeDirty();
-                    final double testScore = evaluate(likelihood, prior);
+                    final double testScore = evaluate(likelihood);
 
                     final String d2 = likelihood instanceof CompoundLikelihood ?
                             ((CompoundLikelihood) likelihood).getDiagnosis() : "";
@@ -370,7 +358,7 @@ public final class MarkovChain implements Serializable {
                     // that before the operation was made.
 
                     likelihood.makeDirty();
-                    final double testScore = evaluate(likelihood, prior);
+                    final double testScore = evaluate(likelihood);
 
                     final String d2 = likelihood instanceof CompoundLikelihood ?
                             ((CompoundLikelihood) likelihood).getDiagnosis() : "";
@@ -431,10 +419,6 @@ public final class MarkovChain implements Serializable {
         // Profiler.report();
     }
 
-    public Prior getPrior() {
-        return prior;
-    }
-
     public Likelihood getLikelihood() {
         return likelihood;
     }
@@ -480,22 +464,12 @@ public final class MarkovChain implements Serializable {
     }
 
     public double evaluate() {
-        return evaluate(likelihood, prior);
+        return evaluate(likelihood);
     }
 
-    protected double evaluate(Likelihood likelihood, Prior prior) {
+    protected double evaluate(Likelihood likelihood) {
 
         double logPosterior = 0.0;
-
-        if (prior != null) {
-            final double logPrior = prior.getLogPrior(likelihood.getModel());
-
-            if (logPrior == Double.NEGATIVE_INFINITY) {
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            logPosterior += logPrior;
-        }
 
         final double logLikelihood = likelihood.getLogLikelihood();
 

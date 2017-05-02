@@ -56,8 +56,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     public PrefetchTreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                                       TreeModel treeModel,
-                                      BranchRateModel branchRateModel,
-                                      int prefetchCount) {
+                                      BranchRateModel branchRateModel) {
 
         super("TreeDataLikelihood");  // change this to use a const once the parser exists
 
@@ -69,7 +68,13 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
         logger.info("\nUsing TreeDataLikelihood");
 
-        this.likelihoodDelegate = likelihoodDelegate;
+        if (!(likelihoodDelegate instanceof PrefetchMultiPartitionDataLikelihoodDelegate)) {
+            throw new RuntimeException("DataLikelihoodDelegate in PrefetchTreeDataLikelihood " +
+                    "should be PrefetchMultiPartitionDataLikelihoodDelegate");
+        }
+        this.likelihoodDelegate = (PrefetchMultiPartitionDataLikelihoodDelegate)likelihoodDelegate;
+        int prefetchCount = this.likelihoodDelegate.getPrefetchCount();
+
         addModel(likelihoodDelegate);
         likelihoodDelegate.setCallback(null);
 
@@ -459,7 +464,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     /**
      * The data likelihood delegate
      */
-    private final DataLikelihoodDelegate likelihoodDelegate;
+    private final PrefetchMultiPartitionDataLikelihoodDelegate likelihoodDelegate;
 
     /**
      * the tree model

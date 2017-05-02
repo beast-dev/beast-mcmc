@@ -53,11 +53,10 @@ import java.util.List;
  */
 public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
+    private static final boolean USE_PREFETCH = true;
 
     public static final String TREE_DATA_LIKELIHOOD = "treeDataLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
-    public static final String INSTANCE_COUNT = "instanceCount";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
 
@@ -104,20 +103,37 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
 
         if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
-            DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                    treeModel,
-                    patternLists,
-                    branchModels,
-                    siteRateModels,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayRescalingUntilUnderflow);
+            if (USE_PREFETCH) {
+                DataLikelihoodDelegate dataLikelihoodDelegate = new PrefetchMultiPartitionDataLikelihoodDelegate(
+                        treeModel,
+                        patternLists,
+                        branchModels,
+                        siteRateModels,
+                        useAmbiguities,
+                        scalingScheme,
+                        delayRescalingUntilUnderflow,
+                        2);
 
-            return new PrefetchTreeDataLikelihood(
-                    dataLikelihoodDelegate,
-                    treeModel,
-                    branchRateModel,
-                    4);
+                return new PrefetchTreeDataLikelihood(
+                        dataLikelihoodDelegate,
+                        treeModel,
+                        branchRateModel);
+            } else {
+                DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                        treeModel,
+                        patternLists,
+                        branchModels,
+                        siteRateModels,
+                        useAmbiguities,
+                        scalingScheme,
+                        delayRescalingUntilUnderflow);
+
+                return new TreeDataLikelihood(
+                        dataLikelihoodDelegate,
+                        treeModel,
+                        branchRateModel);
+
+            }
         } else if (patternLists.size() > 1) {
             // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
             List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
@@ -152,11 +168,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     scalingScheme,
                     delayRescalingUntilUnderflow);
 
-            return new PrefetchTreeDataLikelihood(
+            return new TreeDataLikelihood(
                     dataLikelihoodDelegate,
                     treeModel,
-                    branchRateModel,
-                    4);
+                    branchRateModel);
 
         }
     }

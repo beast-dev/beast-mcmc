@@ -84,23 +84,23 @@ public abstract class SimpleOperator implements MCMCOperator {
         sumDeviation = 0.0;
     }
 
-    public final int getCount() {
+    public final long getCount() {
         return accepted + rejected;
     }
 
-    public final int getAcceptCount() {
+    public final long getAcceptCount() {
         return accepted;
     }
 
-    public final void setAcceptCount(int accepted) {
+    public final void setAcceptCount(long accepted) {
         this.accepted = accepted;
     }
 
-    public final int getRejectCount() {
+    public final long getRejectCount() {
         return rejected;
     }
 
-    public final void setRejectCount(int rejected) {
+    public final void setRejectCount(long rejected) {
         this.rejected = rejected;
     }
 
@@ -156,8 +156,8 @@ public abstract class SimpleOperator implements MCMCOperator {
     private int spanCount = 0;
 
     private double weight = 1.0;
-    private int accepted = 0;
-    private int rejected = 0;
+    private long accepted = 0;
+    private long rejected = 0;
     private double sumDeviation = 0.0;
     private double lastDeviation = 0.0;
     protected boolean operateAllowed = true;

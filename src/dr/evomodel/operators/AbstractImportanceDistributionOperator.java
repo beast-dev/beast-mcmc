@@ -36,7 +36,6 @@ import dr.evomodel.tree.AbstractCladeImportanceDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.operators.*;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 import java.util.*;
@@ -122,7 +121,7 @@ public abstract class AbstractImportanceDistributionOperator extends
       *
       * @see dr.inference.operators.AbstractImportanceSampler#doOperation()
       */
-    public double doOperation(Prior prior, Likelihood likelihood) {
+    public double doOperation(Likelihood likelihood) {
         if (!burnin) {
             if (sampleCount < samples * sampleEvery) {
                 sampleCount++;
@@ -136,7 +135,7 @@ public abstract class AbstractImportanceDistributionOperator extends
                 return doUnguidedOperation();
 
             } else {
-                return doImportanceDistributionOperation(prior, likelihood);
+                return doImportanceDistributionOperation(likelihood);
             }
         } else {
 
@@ -145,8 +144,7 @@ public abstract class AbstractImportanceDistributionOperator extends
         }
     }
 
-    protected double doImportanceDistributionOperation(Prior prior,
-                                                       Likelihood likelihood) {
+    protected double doImportanceDistributionOperation(Likelihood likelihood) {
         final NodeRef root = tree.getRoot();
         BitSet all = new BitSet();
         all.set(0, (tree.getNodeCount() + 1) / 2);

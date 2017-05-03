@@ -37,7 +37,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Likelihood;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 import java.io.BufferedReader;
@@ -443,8 +442,7 @@ public class ConditionalCladeFrequency extends
 
     }
 
-    public double getChanceForNodeHeights(TreeModel tree,
-                                          Likelihood likelihood, Prior prior) {
+    public double getChanceForNodeHeights(TreeModel tree, Likelihood likelihood) {
         double prob = 0.0;
         NodeRef node = tree.getRoot();
         Clade currentClade = getClade(tree, node);
@@ -461,8 +459,7 @@ public class ConditionalCladeFrequency extends
         return prob;
     }
 
-    public double setNodeHeights(TreeModel tree, Likelihood likelihood,
-                                 Prior prior) {
+    public double setNodeHeights(TreeModel tree, Likelihood likelihood) {
         double prob = 0.0;
         NodeRef node = tree.getRoot();
         Clade currentClade = getClade(tree, node);

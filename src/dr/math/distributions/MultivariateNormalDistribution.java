@@ -415,7 +415,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     @Override
     public double[] getGradientLogDensity(Object x) {
-        return new double[0];
+        return gradLogPdf((double[]) x);
     }
 
     @Override

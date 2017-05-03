@@ -26,7 +26,6 @@
 package dr.inference.operators;
 
 import dr.inference.model.Likelihood;
-import dr.inference.prior.Prior;
 
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
@@ -176,10 +175,10 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         }
     }
 
-    public final double operate(Prior prior, Likelihood likelihood) {
+    public final double operate(Likelihood likelihood) {
         if( operateAllowed ) {
             operateAllowed = false;
-            return doOperation(prior, likelihood);
+            return doOperation(likelihood);
         } else {
             throw new RuntimeException(
                     "Operate called twice without accept/reject in between!");
@@ -195,7 +194,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
      *
      * @return the hastings ratio
      */
-    public double doOperation(Prior prior, Likelihood likelihood) {
+    public double doOperation(Likelihood likelihood) {
         return 0.0;
     }
 

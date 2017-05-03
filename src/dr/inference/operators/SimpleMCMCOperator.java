@@ -116,23 +116,23 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         sumDeviation = 0.0;
     }
 
-    public final int getCount() {
+    public final long getCount() {
         return acceptCount + rejectCount;
     }
 
-    public final int getAcceptCount() {
+    public final long getAcceptCount() {
         return acceptCount;
     }
 
-    public final void setAcceptCount(int acceptCount) {
+    public final void setAcceptCount(long acceptCount) {
         this.acceptCount = acceptCount;
     }
 
-    public final int getRejectCount() {
+    public final long getRejectCount() {
         return rejectCount;
     }
 
-    public final void setRejectCount(int rejectCount) {
+    public final void setRejectCount(long rejectCount) {
         this.rejectCount = rejectCount;
     }
 
@@ -223,8 +223,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     public abstract double doOperation() throws OperatorFailedException;
 
     private double weight = 1.0;
-    private int acceptCount = 0;
-    private int rejectCount = 0;
+    private long acceptCount = 0;
+    private long rejectCount = 0;
 
     private double sumDeviation = 0.0;
     private double lastDeviation = 0.0;

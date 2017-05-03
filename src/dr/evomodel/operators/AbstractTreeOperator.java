@@ -36,12 +36,12 @@ import dr.inference.operators.SimpleMCMCOperator;
  */
 public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 
-	private int transitions = 0;
+	private long transitions = 0;
 
 	/**
      * @return the number of transitions since last call to reset().
      */
-    public int getTransitions() {
+    public long getTransitions() {
     	return transitions;
     }
 
@@ -51,14 +51,14 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
      *
      * @param transitions number of transition
      */
-    public void setTransitions(int transitions) {
+    public void setTransitions(long transitions) {
     	this.transitions = transitions;
     }
 
     public double getTransistionProbability() {
-        final int accepted = getAcceptCount();
-        final int rejected = getRejectCount();
-        final int transition = getTransitions();
+        final long accepted = getAcceptCount();
+        final long rejected = getRejectCount();
+        final long transition = getTransitions();
         return (double) transition / (double) (accepted + rejected);
     }
 

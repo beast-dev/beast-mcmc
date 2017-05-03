@@ -121,8 +121,8 @@ public class CombinedOperatorSchedule implements OperatorSchedule {
             return 0;
     }
 
-    public int getMinimumAcceptAndRejectCount() {
-        int minCount = Integer.MAX_VALUE;
+    public long getMinimumAcceptAndRejectCount() {
+        long minCount = Long.MAX_VALUE;
         for (OperatorSchedule os : operatorSchedules) {
             if (os.getMinimumAcceptAndRejectCount() < minCount) {
                 minCount = os.getMinimumAcceptAndRejectCount();

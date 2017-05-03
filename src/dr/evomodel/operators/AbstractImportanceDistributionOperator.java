@@ -47,7 +47,7 @@ import java.util.*;
 public abstract class AbstractImportanceDistributionOperator extends
         SimpleMCMCOperator implements GeneralOperator {
 
-    private int transitions = 0;
+    private long transitions = 0;
 
     private OperatorSchedule schedule;
 
@@ -669,7 +669,7 @@ public abstract class AbstractImportanceDistributionOperator extends
     /**
      * @return the number of transitions since last call to reset().
      */
-    public int getTransitions() {
+    public long getTransitions() {
         return transitions;
     }
 
@@ -682,9 +682,9 @@ public abstract class AbstractImportanceDistributionOperator extends
     }
 
     public double getTransistionProbability() {
-        int accepted = getAcceptCount();
-        int rejected = getRejectCount();
-        int transition = getTransitions();
+        long accepted = getAcceptCount();
+        long rejected = getRejectCount();
+        long transition = getTransitions();
         return (double) transition / (double) (accepted + rejected);
     }
 

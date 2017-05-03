@@ -449,8 +449,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     }
 
     private String formattedCountString(MCMCOperator op) {
-        final int count = op.getCount();
-        return formatter.formatToFieldWidth(Integer.toString(count), 10) + " ";
+        final long count = op.getCount();
+        return formatter.formatToFieldWidth(Long.toString(count), 10) + " ";
     }
 
     private String formattedTimeString(MCMCOperator op) {

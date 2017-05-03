@@ -15,7 +15,7 @@ import java.util.Vector;
 public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
 
     double theta;
-    AdaptableSizeFastMatrixParameter data;
+    MatrixParameterInterface data;
     boolean likelihoodKnown = false;
     boolean storedLikelihoodKnown;
     double logLikelihood;
@@ -27,7 +27,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     Vector<Integer> changedList;
     Vector<Integer> storedChangedList;
 
-    public DeterminentalPointProcessPrior(String name, double theta, AdaptableSizeFastMatrixParameter data) {
+    public DeterminentalPointProcessPrior(String name, double theta, MatrixParameterInterface data) {
         super(name);
         this.theta = theta;
         this.data = data;

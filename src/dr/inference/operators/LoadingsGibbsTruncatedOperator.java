@@ -253,7 +253,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
     void getCutoffDraw(int row, int column, NormalDistribution posteriorLoadings){
         double loadingsCutoff = Math.abs(loadings.getParameterValue(row, column));
         double draw = MathUtils.nextDouble() * loadingsCutoff;
-        double cutoffVal = Math.sqrt(((AdaptableSizeFastMatrixParameter) ((MomentDistributionModel) prior).getCutoff()).getParameterValue(row, column));
+        double cutoffVal = Math.sqrt(((MatrixParameterInterface) ((MomentDistributionModel) prior).getCutoff()).getParameterValue(row, column));
         double top = cutoffPrior.getDistribution().pdf(Math.pow(draw,2)) / (1 - (posteriorLoadings.cdf(draw) - posteriorLoadings.cdf(-draw)));
         double bottom = cutoffPrior.getDistribution().pdf(Math.pow(cutoffVal, 2)) / (1 - (posteriorLoadings.cdf(cutoffVal) - posteriorLoadings.cdf(-cutoffVal)));
 //        double stopperCDF = Math.pow(cutoffPrior.getDistribution().cdf(loadingsCutoff), 2);

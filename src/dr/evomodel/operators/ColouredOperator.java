@@ -161,23 +161,23 @@ public class ColouredOperator implements CoercableMCMCOperator {
         innerOperator.reset();
     }
 
-    public final int getCount() {
+    public final long getCount() {
         return innerOperator.getCount();
     }
 
-    public final int getAcceptCount() {
+    public final long getAcceptCount() {
         return innerOperator.getAcceptCount();
     }
 
-    public final void setAcceptCount(int accepted) {
+    public final void setAcceptCount(long accepted) {
         innerOperator.setAcceptCount(accepted);
     }
 
-    public final int getRejectCount() {
+    public final long getRejectCount() {
         return innerOperator.getRejectCount();
     }
 
-    public final void setRejectCount(int rejected) {
+    public final void setRejectCount(long rejected) {
         innerOperator.setRejectCount(rejected);
     }
 

@@ -275,7 +275,7 @@ public class MCMCMC implements Runnable {
                 MCMCOperator operator1 = schedule1.getOperator(i);
                 MCMCOperator operator2 = schedule2.getOperator(i);
 
-                int tmp = operator1.getAcceptCount();
+                long tmp = operator1.getAcceptCount();
                 operator1.setAcceptCount(operator2.getAcceptCount());
                 operator2.setAcceptCount(tmp);
 

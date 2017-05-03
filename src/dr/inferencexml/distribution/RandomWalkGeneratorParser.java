@@ -24,10 +24,10 @@ public class RandomWalkGeneratorParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(PREC);
         Parameter prec = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(DIM); // May need to adapt to multiple trees, a la CoalescentLikelihoodParser
-        Integer dim = (Integer) cxo.getChild(Integer.class);
+        //cxo = xo.getChild(DIM); // May need to adapt to multiple trees, a la CoalescentLikelihoodParser
+        int dim = xo.getIntegerAttribute(DIM);
 
-        return new RandomWalkGenerator(dim.intValue(), firstElementPrecision, prec);
+        return new RandomWalkGenerator(dim, firstElementPrecision, prec);
     }
 
     @Override
@@ -54,8 +54,6 @@ public class RandomWalkGeneratorParser extends AbstractXMLObjectParser {
                     new ElementRule(Parameter.class)
             }, "The precision for the relationship between adjacent elements in the random walk"),
 
-            new ElementRule(DIM, new XMLSyntaxRule[]{
-                    new ElementRule(Integer.class)
-            }, "The number of elements in the random walk")
+            AttributeRule.newIntegerRule(DIM)
     };
 }

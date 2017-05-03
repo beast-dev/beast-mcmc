@@ -130,11 +130,11 @@ public class RandomWalkGammaPrecisionGibbsOperator extends SimpleMCMCOperator im
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{
-                                new ElementRule(DistributionLikelihood.class)
+                                new ElementRule(Parameter.class)
                         }),
                 new ElementRule(PRECISION,
                         new XMLSyntaxRule[]{
-                                new ElementRule(DistributionLikelihood.class)
+                                new ElementRule(Parameter.class)
                         }),
                 new ElementRule(PRIOR,
                         new XMLSyntaxRule[]{

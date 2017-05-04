@@ -170,8 +170,8 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		this.optimizationSchedule = optimizationSchedule;
 	}
 
-    public int getMinimumAcceptAndRejectCount() {
-        int minCount = Integer.MAX_VALUE;
+    public long getMinimumAcceptAndRejectCount() {
+        long minCount = Long.MAX_VALUE;
         for( MCMCOperator op : operators ) {
             if( op.getAcceptCount() < minCount || op.getRejectCount() < minCount ) {
                 minCount = op.getCount();

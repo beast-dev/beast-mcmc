@@ -42,12 +42,12 @@ public class LFMFactorPotentialDerivative implements GradientWrtParameterProvide
 
     @Override
     public Likelihood getLikelihood() {
-        throw new RuntimeException("Not yet implemented");
+        return lfm;
     }
 
     @Override
     public Parameter getParameter() {
-        throw new RuntimeException("Not yet implemented");
+        return lfm.getFactors();
     }
 
     @Override

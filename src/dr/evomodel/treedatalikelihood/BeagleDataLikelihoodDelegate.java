@@ -112,6 +112,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         setId(patternList.getId());
 
         this.dataType = patternList.getDataType();
+        this.patternList = patternList;
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
 
@@ -379,6 +380,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     @Override
+    public String getReport() {
+        return null;
+    }
+
+    @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
         return TreeTraversal.TraversalType.POST_ORDER;
     }
@@ -390,7 +396,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public int getTraitDim() {
-        return  patternCount;
+        return patternCount;
+    }
+
+    public PatternList getPatternList() {
+        return this.patternList;
     }
 
     private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
@@ -627,6 +637,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         if (updateSiteModel) {
             double[] categoryRates = this.siteRateModel.getCategoryRates();
+            if (categoryRates == null) {
+                // If this returns null then there was a numerical error calculating the category rates
+                // (probably a very small alpha) so reject the move.
+                return Double.NEGATIVE_INFINITY;
+            }
             beagle.setCategoryRates(categoryRates);
         }
 
@@ -935,6 +950,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     /**
      * the patternList
+     */
+    private final PatternList patternList;
+
+    /**
+     * the data type
      */
     private final DataType dataType;
 

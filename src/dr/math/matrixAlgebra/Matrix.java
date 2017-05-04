@@ -81,7 +81,7 @@ public class Matrix {
             throw new NegativeArraySizeException(
                     "Requested matrix size: " + n + " by " + m);
         components = new double[n][m];
-        clear();
+//        clear();  // Java automatically zeros new vectors
     }
 
     /**
@@ -100,6 +100,19 @@ public class Matrix {
         for (int i = 0; i < components.length; i++) {
             for (int j = 0; j < m; j++)
                 components[i][j] += a.component(i, j);
+        }
+    }
+
+    public void decumulate(Matrix a) throws IllegalDimension {
+        if (a.rows() != rows() || a.columns() != columns())
+            throw new IllegalDimension("Operation error: cannot add a"
+                    + a.rows() + " by " + a.columns()
+                    + " matrix to a " + rows() + " by "
+                    + columns() + " matrix");
+        int m = components[0].length;
+        for (int i = 0; i < components.length; i++) {
+            for (int j = 0; j < m; j++)
+                components[i][j] -= a.component(i, j);
         }
     }
 
@@ -159,6 +172,10 @@ public class Matrix {
      */
     public double component(int n, int m) {
         return components[n][m];
+    }
+
+    public void set(int n, int m, double value) {
+        components[n][m] = value;
     }
 
     /**
@@ -459,6 +476,17 @@ public class Matrix {
         return answer;
     }
 
+    public double[] toVectorizedComponents() {
+        int n = rows();
+        int m = columns();
+        double[] answer = new double[n * m];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++)
+                answer[i * m  + j] = components[i][j];
+        }
+        return answer;
+    }
+
     /**
      * Returns a string representation of the system.
      *
@@ -517,6 +545,10 @@ public class Matrix {
         return new Matrix(newComponents);
     }
 
+    public Matrix extractRowsAndColumns(final int[] rowIndices, final int[] colIndices) {
+        return new Matrix(gatherRowsAndColumns(components, rowIndices, colIndices));
+    }
+
     /**
      * @return MatrixAlgebra.SymmetricMatrix    the transposed product
      *         of the receiver with itself.
@@ -564,5 +596,33 @@ public class Matrix {
             }
         }
         return newComponents;
+    }
+
+    public static double[][] gatherRowsAndColumns(final double[][] source, final int[] rowIndices, final int[] colIndices) {
+        final int rowLength = rowIndices.length;
+        final int colLength = colIndices.length;
+        double[][] destination = new double[rowLength][colLength];
+
+        for (int i = 0; i < rowLength; ++i) {
+
+            final double[] in = source[rowIndices[i]];
+            final double[] out = destination[i];
+
+            for (int j = 0; j < colLength; ++j) {
+                out[j] = in[colIndices[j]];
+            }
+        }
+        return destination;
+    }
+
+    public static double[] gatherEntries(final double[] in, final int[] indices) {
+        final int indicesLength = indices.length;
+        final double[] out = new double[indicesLength];
+
+        for (int i = 0; i < indicesLength; ++i) {
+            out[i] = in[indices[i]];
+        }
+
+        return out;
     }
 }

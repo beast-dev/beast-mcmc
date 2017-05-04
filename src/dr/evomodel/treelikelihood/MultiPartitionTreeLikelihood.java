@@ -58,6 +58,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
+@Deprecated
 @SuppressWarnings("serial")
 public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood implements ThreadAwareLikelihood {
 

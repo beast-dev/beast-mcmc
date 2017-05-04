@@ -496,6 +496,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         }
     }
 
+    @Override
+    public boolean testBounds() {
+        return true;
+    }
 
     // finds the union of a tip (diploid or hyb-tip) in the diploid history.
     // Used by move that slides node in diploid history to check gene-tree compatibility.

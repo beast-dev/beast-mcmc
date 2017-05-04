@@ -80,11 +80,6 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
         double sumOfIncrements = singleton.getSumOfIncrements(instance);
 
         double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount - sumOfIncrements;
-
-//        if (isLeftTruncated) {
-//            logLikelihood -= singleton.getSumOfLogTruncations(instance);
-//        }
-
         return logLikelihood;
     }
 
@@ -103,6 +98,11 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     @Override
     public void acceptState() {
         singleton.acceptState(instance);
+    }
+
+    @Override
+    public void getGradient(double[] location) {
+        singleton.getLocationGradient(instance, location);
     }
 
     @Override

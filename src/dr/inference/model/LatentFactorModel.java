@@ -220,6 +220,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //            System.exit(10);
         }
         if (factors.getRowDimension() != loadings.getColumnDimension()) {
+            System.out.println(getModelName());
             throw new RuntimeException("LOADINGS AND FACTORS MUST HAVE THE SAME NUMBER OF FACTORS\n");
 //            System.exit(10);
         }

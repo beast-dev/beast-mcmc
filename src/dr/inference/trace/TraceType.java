@@ -26,6 +26,8 @@
 package dr.inference.trace;
 
 /**
+ * The trace type to determine what statistics
+ *
  * @author Alexei Drummond
  * @author Walter Xie
  * @author Andrew Rambaut
@@ -33,7 +35,7 @@ package dr.inference.trace;
 public enum TraceType {
     // changed this to 'real' as this is less Comp Sci. than 'double'
     REAL("real", "R", Double.class),
-    ORDINAL("ordinal", "O", Integer.class),
+    INTEGER("integer", "I", Integer.class),
     CATEGORICAL("categorical", "C", String.class),
     BINARY("binary", "B", Integer.class);
 
@@ -55,6 +57,10 @@ public enum TraceType {
         return type;
     }
 
+    public boolean isContinuous() {
+        return getTypeClass() == Double.class;
+    }
+
     /**
      * is the data type numerical
      * @return
@@ -67,7 +73,7 @@ public enum TraceType {
      * is the datatype ordinal (integer or binary)
      * @return
      */
-    public boolean isOrdinal() {
+    public boolean isInteger() {
         return getTypeClass() == Integer.class;
     }
 
@@ -76,7 +82,7 @@ public enum TraceType {
      * @return
      */
     public boolean isDiscrete() {
-        return isOrdinal() || isCatorical();
+        return isInteger() || isCategorical();
     }
 
     /**
@@ -87,11 +93,15 @@ public enum TraceType {
         return this == BINARY;
     }
 
+    public boolean isIntegerOrBinary() {
+        return isInteger() || isBinary();
+    }
+
     /**
      * is the datatype categorical
      * @return
      */
-    public boolean isCatorical() {
+    public boolean isCategorical() {
         return getTypeClass() == String.class;
     }
 

@@ -148,7 +148,7 @@ public class CoalGenFrame extends DocumentFrame {
                     "Reading " + fileName,
                     new FileInputStream(file));
 
-            final Reader reader = new InputStreamReader(in);
+//            final Reader reader = new InputStreamReader(in);
             final JFrame frame = this;
 
             // the monitored activity must be in a new thread.
@@ -157,7 +157,7 @@ public class CoalGenFrame extends DocumentFrame {
                     try {
                         final File file1 = new File(fileName);
                         final LogFileTraces traces = new LogFileTraces(fileName, file1);
-                        traces.loadTraces(reader);
+                        traces.loadTraces(in);
 
                         EventQueue.invokeLater(
                                 new Runnable() {

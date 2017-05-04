@@ -113,6 +113,7 @@ public interface TraceList {
      * @param traceIndex the index of the trace
      * @return the trace distribution statistic object for the given index
      */
+    @Deprecated
     TraceDistribution getDistributionStatistics(int traceIndex);
 
     /**

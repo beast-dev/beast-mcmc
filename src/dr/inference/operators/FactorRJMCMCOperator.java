@@ -2,6 +2,7 @@ package dr.inference.operators;
 
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 
@@ -80,8 +81,9 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     }
 
     @Override
-    public double doOperation() {
-        if(callCount < BASE_SIZE){
+    public double doOperation() {//throws OperatorFailedException {
+        boolean off = true;
+        if(callCount < BASE_SIZE || off == true){
             performOperation();
         }
         else{

@@ -66,9 +66,15 @@ public class UpDownOperator extends AbstractCoercableOperator {
 
         if( upParameter != null ) {
             for( Scalable up : upParameter ) {
-                try {
-                    goingUp += up.scale(scale, -1, true);
-                } catch (RuntimeException re) {
+                goingUp += up.scale(scale, -1, false);
+//                try {
+//                    goingUp += up.scale(scale, -1, true);
+//                } catch (RuntimeException re) {
+//                    return Double.NEGATIVE_INFINITY;
+//                }
+            }
+            for( Scalable up : upParameter ) {
+                if (!up.testBounds()) {
                     return Double.NEGATIVE_INFINITY;
                 }
             }
@@ -76,13 +82,20 @@ public class UpDownOperator extends AbstractCoercableOperator {
 
         if( downParameter != null ) {
             for( Scalable dn : downParameter ) {
-                try {
-                    goingDown += dn.scale(1.0 / scale, -1, true);
-                } catch (RuntimeException re) {
+                goingDown += dn.scale(1.0 / scale, -1, false);
+//                try {
+//                    goingDown += dn.scale(1.0 / scale, -1, true);
+//                } catch (RuntimeException re) {
+//                    return Double.NEGATIVE_INFINITY;
+//                }
+            }
+            for( Scalable dn : downParameter ) {
+                if (!dn.testBounds()) {
                     return Double.NEGATIVE_INFINITY;
                 }
             }
         }
+
 
         return (goingUp - goingDown - 2) * Math.log(scale);
     }

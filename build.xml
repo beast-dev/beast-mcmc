@@ -111,7 +111,7 @@
             <!-- complie JUnit test classes -->
             <include name="test/dr/**"/>
         </javac>
-        <echo message="Successfully complied."/>
+        <echo message="Successfully compiled."/>
     </target>
 
     <!-- make the beast.jar and beauti.jar -->
@@ -172,6 +172,9 @@
             <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
+            <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
+            <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
+            <zipgroupfileset dir="${lib}" includes="EJML-dense64-0.30.jar"/>
         </jar>
 
         <!-- Put everything in ${build} into the beauti.jar file -->

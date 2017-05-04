@@ -148,7 +148,7 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
             sb.append("\n");
         }
 
-        sb.append("\nlog Bayes factor (using generalized stepping stone sampling) from (" + sourceName + " - " + destinationName + ") = " + bf + "\n");
+        sb.append("\nlog marginal likelihood (using generalized stepping stone sampling) from (" + sourceName + " - " + destinationName + ") = " + bf + "\n");
         return sb.toString();
     }
     

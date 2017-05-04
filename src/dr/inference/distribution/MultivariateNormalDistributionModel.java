@@ -37,7 +37,8 @@ import dr.math.distributions.MultivariateNormalDistribution;
  * @author Max Tolkoff
  */
 
-public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel, GaussianProcessRandomGenerator {
+public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel,
+        GaussianProcessRandomGenerator, GradientProvider {
 
     public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
@@ -181,6 +182,13 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     public double logPdf(Object x) {
         checkDistribution();
         return distribution.logPdf(x);
+    }
+
+    // GradientWrtParameterProvider interface
+    @Override
+    public double[] getGradientLogDensity(Object x) {
+        checkDistribution();
+        return distribution.gradLogPdf((double[]) x);
     }
 
 }

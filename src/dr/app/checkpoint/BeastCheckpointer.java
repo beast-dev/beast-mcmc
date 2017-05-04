@@ -48,8 +48,11 @@ import java.util.*;
 
 /**
  * A state loader / saver
+ * @author Andrew Rambaut
+ * @author Guy Baele
  */
 public class BeastCheckpointer implements StateLoader, StateSaver {
+
     private static final boolean DEBUG = false;
 
     // A debugging flag to do a check that the state gives the same likelihood after loading
@@ -81,7 +84,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         Factory.INSTANCE = new Factory() {
             @Override
             public StateLoader getInitialStateLoader() {
-                return null;
+                if (loadStateFileName == null) {
+                    return null;
+                } else {
+                    return getStateLoaderObject();
+                }
             }
 
             @Override
@@ -90,7 +97,10 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             }
         };
 
+    }
 
+    private BeastCheckpointer getStateLoaderObject() {
+        return this;
     }
 
     @Override
@@ -199,6 +209,14 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 out.println();
             }
 
+            //check up front if there are any TreeParameterModel objects
+            for (Model model : Model.CONNECTED_MODEL_SET) {
+                if (model instanceof TreeParameterModel) {
+                    //System.out.println("\nDetected TreeParameterModel: " + ((TreeParameterModel) model).toString());
+                    traitModels.add((TreeParameterModel) model);
+                }
+            }
+
             for (Model model : Model.CONNECTED_MODEL_SET) {
 
                 if (model instanceof TreeModel) {
@@ -253,10 +271,6 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         }
                     }
 
-                }
-
-                if (model instanceof TreeParameterModel) {
-                    traitModels.add((TreeParameterModel)model);
                 }
 
             }

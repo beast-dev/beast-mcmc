@@ -63,7 +63,7 @@ public class TopologyTracer {
     // output to stdout
     private static PrintStream progressStream = System.out;
 
-    public TopologyTracer(int burnin, String treeFile, String outputFile, ArrayList<Double> lambdaValues) {
+    public TopologyTracer(int burnin, String treeFile, String userProvidedTreeFile, String outputFile, ArrayList<Double> lambdaValues) {
 
         try {
 
@@ -82,8 +82,25 @@ public class TopologyTracer {
                 importer = new NewickImporter(reader);
             }
 
-            //pick first tree as focal tree
-            Tree focalTree = importer.importNextTree();
+            Tree focalTree = null;
+            boolean userProvidedTree = false;
+            if (!userProvidedTreeFile.equals("")) {
+                userProvidedTree = true;
+                progressStream.println("User-provided focal tree.");
+                //get tree from user provided tree file
+                BufferedReader focalReader = new BufferedReader(new FileReader(userProvidedTreeFile));
+                TreeImporter userImporter;
+                String userLine = focalReader.readLine();
+                if (userLine.toUpperCase().startsWith("#NEXUS")) {
+                    userImporter = new NexusImporter(focalReader);
+                } else {
+                    userImporter = new NewickImporter(focalReader);
+                }
+                focalTree = userImporter.importNextTree();
+            } else {
+                //pick first tree as focal tree
+                focalTree = importer.importNextTree();
+            }
 
             ArrayList<Long> treeStates = new ArrayList<Long>();
             ArrayList<String> treeIds = new ArrayList<String>();
@@ -98,19 +115,22 @@ public class TopologyTracer {
                 kcMetrics.add(new ArrayList<Double>());
             }
 
-            //take into account first distance of focal tree to itself
-            treeStates.add((long)0);
-
-            jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-            billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-            cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-            branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
             SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
-            pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
             KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
             List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
-            for (int i = 0; i < allKCMetrics.size(); i++) {
-                kcMetrics.get(i).add(allKCMetrics.get(i));
+
+            if (!userProvidedTree) {
+                //take into account first distance of focal tree to itself
+                treeStates.add((long) 0);
+
+                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
+                for (int i = 0; i < allKCMetrics.size(); i++) {
+                    kcMetrics.get(i).add(allKCMetrics.get(i));
+                }
             }
 
             int numberOfTrees = 1;
@@ -160,9 +180,6 @@ public class TopologyTracer {
                 }
                 afterTime = System.currentTimeMillis();
                 timings[5] += afterTime - beforeTime;
-
-                //TODO Last tree is not being processed?
-                //System.out.println(tree.getId());
 
                 numberOfTrees++;
 
@@ -244,6 +261,7 @@ public class TopologyTracer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.StringOption("tree", "tree file name", "a focal tree provided by the user [default = first tree in .trees file]"),
                         new Arguments.RealOption("lambda", "the lambda value to be used for the 'Kendall-Colijn metric' [default = {0,0.5,1}]"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -271,6 +289,11 @@ public class TopologyTracer {
             lambdaValues.add(arguments.getRealOption("lambda"));
         }
 
+        String providedFileName = "";
+        if (arguments.hasOption("tree")) {
+            providedFileName = arguments.getStringOption("tree");
+        }
+
         String inputFileName = null;
         String outputFileName = null;
 
@@ -296,7 +319,7 @@ public class TopologyTracer {
             inputFileName = Utils.getLoadFileName("TopologyTracer " + version.getVersionString() + " - Select log file to analyse");
         }
 
-        new TopologyTracer(burnin, inputFileName, outputFileName, lambdaValues);
+        new TopologyTracer(burnin, inputFileName, providedFileName, outputFileName, lambdaValues);
 
         System.exit(0);
 

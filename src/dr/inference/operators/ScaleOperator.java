@@ -193,7 +193,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
             if (newValue > bounds.getUpperLimit(index)) {
                 // if bounded then perhaps this could be reflected.
-                throw new RuntimeException("proposed value greater than upper bound");
+                throw new RuntimeException("proposed value greater than upper bound: " + newValue + " (" + variable.getId() + ")");
             }
 
             variable.setValue(index, newValue);

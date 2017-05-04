@@ -29,9 +29,65 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
  * @author Marc A. Suchard
  */
 public enum PrecisionType {
-    SCALAR("proportional scaling per branch", 0),
-    MIXED("mixed method", 1),
-    FULL("full precision matrix per branch", 2);
+    SCALAR("proportional scaling per branch", 0) {
+        @Override
+        public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                            int dimTrait) {
+            if (index == 0) {
+                partial[offset + dimTrait] = precision;
+            } else {
+                if (partial[offset + dimTrait] != 0.0) {
+                    partial[offset + dimTrait] = precision;
+                }
+            }
+        }
+
+        @Override
+        public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
+            for (int i = 0; i < dimTrait; ++i) {
+                data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait]) ?
+                        partial[pOffset + i] : Double.NaN;
+            }
+        }
+    },
+    MIXED("mixed method", 1) {
+        @Override
+        public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                            int dimTrait) {
+            partial[offset + dimTrait + index] = precision;
+        }
+
+        @Override
+        public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
+            for (int i = 0; i < dimTrait; ++i) {
+                data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait + i]) ?
+                        partial[pOffset + i] : Double.NaN;
+            }
+        }
+    },
+    FULL("full precision matrix per branch", 2) {
+        @Override
+        public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                            int dimTrait) {
+            final int offs = offset + dimTrait + index * dimTrait + index;
+            partial[offs] = precision;
+            partial[offs+ dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
+            partial[offset + dimTrait + 2 * dimTrait * dimTrait] = Double.POSITIVE_INFINITY;
+        }
+
+        @Override
+        public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
+            for (int i = 0; i < dimTrait; ++i) {
+                data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait + i * dimTrait + i]) ?
+                        partial[pOffset + i] : Double.NaN;
+            }
+        }
+
+        @Override
+        public int getMatrixLength(int dimTrait) {
+            return 2 * super.getMatrixLength(dimTrait) + 1;
+        }
+    };
 
     private final int power;
     private final String name;
@@ -58,7 +114,13 @@ public enum PrecisionType {
         return length;
     }
 
-//    public int getPartialLength(final int numTraits, final int dimTrait) {
-//        return  (dimTrait + getMatrixLength(dimTrait));
-//    }
+    public static double getObservedPrecisionValue(final boolean missing) {
+        return missing ? 0.0 : Double.POSITIVE_INFINITY;
+    }
+
+    abstract public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                                 int dimTrait);
+
+    abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
+
 }

@@ -216,4 +216,7 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
 
     private final List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
     private final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
+
+    private List<DataLikelihoodDelegate.BranchNodeOperation> savedWholeTreeBranchOperations;
+    private List<DataLikelihoodDelegate.NodeOperation> savedWholeTreeNodeOperations;
 }

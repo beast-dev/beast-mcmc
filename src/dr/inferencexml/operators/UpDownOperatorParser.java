@@ -63,6 +63,11 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
                             return s.scale(factor, count, testBounds);
                         }
 
+                        @Override
+                        public boolean testBounds() {
+                            return s.testBounds();
+                        }
+
                         public String getName() {
                             return s.getName() + "(" + count + ")";
                         }
@@ -76,6 +81,11 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
                         public int scale(double factor, int nDims, boolean testBounds) {
                             s.scale(factor, -1, testBounds);
                             return df;
+                        }
+
+                        @Override
+                        public boolean testBounds() {
+                            return s.testBounds();
                         }
 
                         public String getName() {

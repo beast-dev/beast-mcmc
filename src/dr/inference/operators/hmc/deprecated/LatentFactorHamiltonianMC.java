@@ -1,14 +1,40 @@
-package dr.evomodel.operators;
+/*
+ * LatentFactorHamiltonianMC.java
+ *
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.inference.operators.hmc.deprecated;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.model.*;
-import dr.inference.operators.AbstractHamiltonianMCOperator;
+import dr.inference.operators.hmc.deprecated.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.math.MathUtils;
 
 /**
  * Created by max on 12/2/15.
  */
+@Deprecated
 public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private LatentFactorModel lfm;
     private FullyConjugateMultivariateTraitLikelihood tree;
@@ -21,6 +47,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private double stepSize;
     private int nSteps;
     private boolean diffusionSN=true;
+    private Parameter missingIndicator;
 
 
     public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
@@ -36,23 +63,24 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         ntraits = Precision.getRowDimension();
         this.stepSize = stepSize;
         this.nSteps = nSteps;
+        this.missingIndicator = lfm.getMissingIndicator();
     }
 
 
 
     @Override
     public double getCoercableParameter() {
-        return 0;
+        return Math.log(stepSize);
     }
 
     @Override
     public void setCoercableParameter(double value) {
-
+        stepSize = Math.exp(value);
     }
 
     @Override
     public double getRawParameter() {
-        return 0;
+        return stepSize;
     }
 
     @Override
@@ -70,8 +98,10 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         for (int i = 0; i < this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
                 for (int k = 0; k < ntaxa; k++) {
-                answer[i][k] += loadings.getParameterValue(j, i) * Precision.getParameterValue(j, j) *
-                        residual[k * ntraits + j];
+                    if(missingIndicator == null || missingIndicator.getParameterValue(k * ntraits + j) != 1){
+                        answer[i][k] -= loadings.getParameterValue(j, i) * Precision.getParameterValue(j, j) *
+                            residual[k * ntraits + j];
+                    }
                 }
             }
         }
@@ -87,7 +117,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 //        if(diffusionSN){
             for (int i = 0; i < nfac ; i++) {
                 for (int j = 0; j < ntaxa; j++) {
-                    derivative[i][j] -= (factors.getParameterValue(i, j) - mean[j][i]) * precfactor[j];
+                    derivative[i][j] += (factors.getParameterValue(i, j) - mean[j][i]) * precfactor[j];
                 }
 
             }
@@ -114,7 +144,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 //        double[][] prec = null;
         double rand = MathUtils.nextDouble();
 //        System.out.println(rand);
-        double functionalStepSize = stepSize * rand;
+        double functionalStepSize = stepSize;
 
 //        if(diffusionSN){
             precfactor = tree.getPrecisionFactors();
@@ -149,8 +179,8 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             }
             factors.fireParameterChangedEvent();
 
-            if(i!=nSteps){
-                derivative=getGradient(mean, precfactor);
+            if(i != nSteps){
+                derivative = getGradient(mean, precfactor);
 
                 for (int j = 0; j < lfm.getFactorDimension() ; j++) {
                     for (int k = 0; k < ntaxa; k++) {

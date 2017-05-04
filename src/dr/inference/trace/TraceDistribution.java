@@ -25,7 +25,10 @@
 
 package dr.inference.trace;
 
+import dr.stats.CredibleSetAnalysis;
 import dr.stats.DiscreteStatistics;
+import dr.stats.FrequencyCounter;
+import dr.stats.Mode;
 import dr.util.HeapSort;
 
 import java.util.*;
@@ -45,10 +48,11 @@ public class TraceDistribution<T> {
         initStatistics(values, 0.95);
     }
 
-    public TraceDistribution(List<T> values, TraceType traceType, double ESS) {
-        this(values, traceType);
-        this.ESS = ESS;
-    }
+//    @Deprecated
+//    public TraceDistribution(List<T> values, TraceType traceType, double ESS) {
+//        this(values, traceType);
+//        this.ESS = ESS; // // move to TraceCorrelation
+//    }
 
     public TraceType getTraceType() {
         return traceType;
@@ -58,8 +62,12 @@ public class TraceDistribution<T> {
         this.traceType = traceType;
     }
 
-    public boolean isValid() {
-        return isValid;
+    public boolean isMinEqualToMax() {
+        return minEqualToMax;
+    }
+
+    public int getSize() {
+        return size;
     }
 
     public double getMean() {
@@ -87,6 +95,14 @@ public class TraceDistribution<T> {
         return median;
     }
 
+    public double getQ1() {
+        return q1;
+    }
+
+    public double getQ3() {
+        return q3;
+    }
+
     public double getLowerHPD() {
         return hpdLower;
     }
@@ -101,10 +117,6 @@ public class TraceDistribution<T> {
 
     public double getUpperCPD() {
         return cpdUpper;
-    }
-
-    public double getESS() {
-        return ESS;
     }
 
     public double getMinimum() {
@@ -143,6 +155,7 @@ public class TraceDistribution<T> {
     private void analyseDistributionNumeric(double[] values, double proportion) {
 //        this.values = values;   // move to TraceDistribution(T[] values)
 
+        size = values.length;
         mean = DiscreteStatistics.mean(values);
         stdError = DiscreteStatistics.stdev(values);
         variance = DiscreteStatistics.variance(values);
@@ -161,7 +174,7 @@ public class TraceDistribution<T> {
         }
 
         if (maximum == minimum) {
-            isValid = false;
+            minEqualToMax = false;
             return;
         }
 
@@ -170,11 +183,13 @@ public class TraceDistribution<T> {
         median = DiscreteStatistics.quantile(0.5, values, indices);
         cpdLower = DiscreteStatistics.quantile(0.025, values, indices);
         cpdUpper = DiscreteStatistics.quantile(0.975, values, indices);
+        q1 = DiscreteStatistics.quantile(0.25, values, indices);
+        q3 = DiscreteStatistics.quantile(0.75, values, indices);
         calculateHPDInterval(proportion, values, indices);
-        ESS = values.length;
+//        ESS = values.length; // move to TraceCorrelation
         calculateHPDIntervalCustom(0.5, values, indices);
 
-        isValid = true;
+        minEqualToMax = true;
     }
 
     /**
@@ -194,36 +209,29 @@ public class TraceDistribution<T> {
         hpdUpperCustom = hpd[1];
     }
 
-    protected boolean isValid = false;
+    protected boolean minEqualToMax = false;
     protected boolean hasGeometricMean = false;
 
+    protected int size = 0;
     protected double minimum, maximum;
     protected double mean;
-    protected double median;
+    protected double median, q1, q3;
     protected double geometricMean;
     protected double stdError, meanSquaredError;
     protected double variance;
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double hpdLowerCustom, hpdUpperCustom;
-    protected double ESS;
 
     //************************************************************************
     // new types
     //************************************************************************
 
     // frequency counter for T = Integer and String
-    public Map<T, Integer> freqCounterMap = new HashMap<T, Integer>();
-    public Set<T> credibleSet = new TreeSet<T>();
-    public Set<T> inCredibleSet = new TreeSet<T>();
-
-    public T mode;
-    public int freqOfMode = 0;
+    public FrequencyCounter<T> frequencyCounter;
+    protected Mode<T> mode;
+    public CredibleSetAnalysis<T> credibleSetAnalysis;
 
     public void initStatistics(List<T> values, double proportion) {
-        freqCounterMap.clear();
-        credibleSet.clear();
-        inCredibleSet.clear();
-
         if (values.size() < 1) throw new RuntimeException("There is no value sent to statistics calculation !");
 
         if (traceType.isNumber()) {
@@ -239,69 +247,109 @@ public class TraceDistribution<T> {
         }
     }
 
-    // used for Integer and String
+    // init FrequencyCounter used for Integer and String
     private void analyseDistributionDiscrete(List<T> values, double proportion) {
-        for (T value : values) {
-            if (freqCounterMap.containsKey(value)) {
-                int i = freqCounterMap.get(value) + 1;
-                freqCounterMap.put(value, i);
-            } else {
-                freqCounterMap.put(value, 1);
-            }
-        }
-
-        for (T value : new TreeSet<T>(freqCounterMap.keySet())) {
-            // frequency / total size
-            double prob = freqCounterMap.get(value).doubleValue() / (double) values.size();
-            if (prob < (1 - proportion)) {
-                inCredibleSet.add(value);
-            } else {
-                credibleSet.add(value);
-            }
-        }
-        calculateMode();
-        isValid = true; // todo what purpose?
+        if (size == 0)
+            size = values.size();
+        frequencyCounter = new FrequencyCounter<T>(values, false);
+        mode = frequencyCounter.getModeStats();
+        credibleSetAnalysis = frequencyCounter.getCredibleSetAnalysis(proportion);
     }
-
 
     //************ Used by panels or FrequencyPlot *************
     public int getIndex(T value) {
-        int i = -1;
-        for (T v : new TreeSet<T>(freqCounterMap.keySet())) {
-            i++;
-            if (v.equals(value)) return i;
+        return frequencyCounter.getKeyIndex(value);
+    }
+
+    /**
+     * Convert a categorical value to the index of unique values,
+     * and put it into a map <code>Map<Integer, String></code>.
+     * Key is the index of unique values, value of map is that unique value.
+     *
+     * @return
+     */
+    public Map<Integer, String> getIndexMap() {
+        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+        if (frequencyCounter != null && categoryDataMap.size() == 0) {
+            int i = -1;
+            for (Object key : frequencyCounter.uniqueValues()) {
+                i++;
+                String value = key.toString();
+                categoryDataMap.put(i, value);
+            }
         }
-        return i;
+        return categoryDataMap;
+    }
+
+    /**
+     * Convert a list of categorical values into a list of indices of their unique values,
+     * given the map <code>categoryDataMap</code>.
+     * Key is the index of unique values, value of map is that unique value
+     *
+     * @param values
+     * @return
+     */
+    public List<Double> indexingData(List<String> values) {
+        List<Double> intData = new ArrayList<Double>();
+        Map<Integer, String> categoryDataMap = getIndexMap();
+        if (categoryDataMap.size() < 1) return intData;
+
+        for (int v = 0; v < values.size(); v++) {
+            for (Map.Entry<Integer, String> entry : categoryDataMap.entrySet()) {
+                if (values.get(v).equals(entry.getValue())) {
+                    // add index
+                    intData.add(v, (double) entry.getKey());
+                    break;
+                }
+            }
+
+        }
+        if (intData.size() > 0 && values.size() != intData.size())
+            System.err.println("values.size(" + values.size() + ") != intData.size(" + intData.size() + ") !");
+
+        return intData;
     }
 
     public boolean credibleSetContains(int valueORIndex) {
-        return contains(credibleSet, valueORIndex);
+        return contains(credibleSetAnalysis.getCredibleSet(), valueORIndex);
     }
 
-    public boolean inCredibleSetContains(int valueORIndex) {
-        return contains(inCredibleSet, valueORIndex);
+    public boolean incredibleSetContains(int valueORIndex) {
+        return contains(credibleSetAnalysis.getIncredibleSet(), valueORIndex);
     }
 
     public String printCredibleSet() {
-        return printSet(credibleSet);
+        return credibleSetAnalysis.toStringCredibleSet();
     }
 
-    public String printInCredibleSet() {
-        return printSet(inCredibleSet);
+    public String printIncredibleSet() {
+        return credibleSetAnalysis.toStringIncredibleSet();
+    }
+
+    public String printUniqueValues() {
+        return FrequencyCounter.Utils.setToString(frequencyCounter.uniqueValues());
     }
 
     public T getMode() {
-        return mode;
+        if (mode == null) return null;
+        return mode.getMode();
     }
 
     public int getFrequencyOfMode() {
-        return freqOfMode;
+        if (mode == null) return 0;
+        return mode.getFrequencyOfMode();
+    }
+
+    public double getProbabilityOfMode() {
+        if (getSize() > 0)
+            return (double) getFrequencyOfMode() / (double) getSize();
+        return 0;
     }
 
     public List<String> getRange() {
         List<String> valuesList = new ArrayList<String>();
-        for (T value : new TreeSet<T>(freqCounterMap.keySet())) {
-            if (traceType == TraceType.ORDINAL) { // as Integer is stored as Double in Trace
+        for (T value : frequencyCounter.uniqueValues()) {
+            if (traceType.isInteger()) { // as Integer is stored as Double in Trace
                 if (!valuesList.contains(Integer.toString(((Number) value).intValue())))
                     valuesList.add(Integer.toString(((Number) value).intValue()));
             } else {
@@ -312,14 +360,6 @@ public class TraceDistribution<T> {
         return valuesList;
     }
 
-//    public boolean inside(T value) {
-//        return freqCounterMap.containsKey(value);
-//    }
-//
-//    public boolean inside(Double value) {
-//        return value <= hpdUpper && value >= hpdLower;
-//    }
-
     private boolean contains(Set<T> aSet, int valueORIndex) {
         if (traceType.isNumber()) {
             // T is either Double or Integer
@@ -327,34 +367,16 @@ public class TraceDistribution<T> {
         } else { // String
             String valueString = null;
             int i = -1;
-            for (T v : new TreeSet<T>(freqCounterMap.keySet())) {
+            for (T v : frequencyCounter.uniqueValues()) {
                 i++;
-                if (i == valueORIndex) valueString = v.toString();
+                if (i == valueORIndex) {
+                    valueString = v.toString();
+                    break;
+                }
             }
+            if (valueString == null) return false;
             return aSet.contains(valueString);
         }
-    }
-
-    private void calculateMode() {
-        for (T value : new TreeSet<T>(freqCounterMap.keySet())) {
-            if (freqOfMode < freqCounterMap.get(value)) {
-                freqOfMode = freqCounterMap.get(value);
-                mode = value;
-            }
-        }
-    }
-
-    private String printSet(Set<T> aSet) {
-        String line = "{";
-        for (T value : aSet) {
-            line = line + value + ", ";
-        }
-        if (line.endsWith(", ")) {
-            line = line.substring(0, line.lastIndexOf(", ")) + "}";
-        } else {
-            line = "{}";
-        }
-        return line;
     }
 
 }

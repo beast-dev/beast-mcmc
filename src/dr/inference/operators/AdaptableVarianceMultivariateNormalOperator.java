@@ -658,11 +658,14 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
+            Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
+            boolean oldXML = pt.parameters == null;
+
             Parameter parameter;
             Transform[] transformations;
             int[] transformationSizes;
 
-            if (xo.getChild(Transform.ParsedTransform.class) == null) {
+            if (!oldXML) {
                 // if there are no ParsedTransform elements then use the new parser syntax
 
                 CompoundParameter allParameters = new CompoundParameter("allParameters");
@@ -677,28 +680,19 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         Parameter param = (Parameter) co;
                         allParameters.addParameter(param);
                         transformCountList.add(param.getDimension());
-                    } else if (co instanceof XMLObject) {
-                        XMLObject cxo = (XMLObject) co;
+                    } else if (co instanceof Transform.ParsedTransform) {
+                        Transform.ParsedTransform parsedTransform = (Transform.ParsedTransform)co;
 
-                        if (cxo.getName() == TRANSFORM) {
-                            Transform transform = Transform.NONE;
-                            if (cxo.hasAttribute(TYPE)) {
-                                Transform.Type type = Transform.Type.valueOf(cxo.getStringAttribute(TYPE));
-                                transform = type.getTransform();
-                            }
-                            transformList.add(transform);
+                        transformList.add(parsedTransform.transform);
 
-                            int dim = 0;
-                            for (Parameter param : cxo.getAllChildren(Parameter.class)) {
-                                allParameters.addParameter(param);
-                                dim += param.getDimension();
-                            }
-                            transformCountList.add(dim);
-                        } else {
-                            throw new XMLParseException("Unknown element, " + cxo.getName() + ", in " + AVMVN_OPERATOR);
+                        int dim = 0;
+                        for (Parameter param : parsedTransform.parameters) {
+                            allParameters.addParameter(param);
+                            dim += param.getDimension();
                         }
+                        transformCountList.add(dim);
                     } else {
-                        throw new XMLParseException("Unknown object in " + AVMVN_OPERATOR);
+                        throw new XMLParseException("Unknown element in " + AVMVN_OPERATOR);
                     }
                 }
 
@@ -712,11 +706,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 }
             } else {
                 // assume old parser syntax for backwards compatibility
-                parameter = (Parameter) xo.getChild(Parameter.class);
+                parameter = (Parameter)xo.getChild(Parameter.class);
+
                 transformations = new Transform[parameter.getDimension()];
                 transformationSizes = new int[parameter.getDimension()];
 
                 int transformationSizeCounter = 0;
+
                 //TODO: add LOG_CONSTRAINED_SUM transformation to transformations array!
                 for (int i = 0; i < xo.getChildCount(); i++) {
                     Object child = xo.getChild(i);
@@ -726,6 +722,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         if (DEBUG) {
                             System.err.println(thisObject.transform.getTransformName());
                         }
+
                         if (thisObject.transform.equals(Transform.LOG_CONSTRAINED_SUM)) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;

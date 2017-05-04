@@ -137,7 +137,7 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     public double getStateValue(int trace, int index) {
-        return (Double) getTrace(trace).getValue(index + (int) (burnIn / stepSize));
+        return (Double) getTrace(trace).getValue(index + (int) (getBurnIn() / stepSize));
     }
 
     /**
@@ -148,7 +148,7 @@ public class LogFileTraces extends AbstractTraceList {
      * @param offset      first trace index
      */
     public void getStateValues(int nState, double[] destination, int offset) {
-        final int index1 = nState + (int) (burnIn / stepSize);
+        final int index1 = nState + (int) (getBurnIn() / stepSize);
         for (int k = 0; k < destination.length; ++k) {
             destination[k] = (Double) getTrace(k + offset).getValue(index1);
         }
@@ -182,22 +182,58 @@ public class LogFileTraces extends AbstractTraceList {
         return this.getValues(index, 0, getBurninStateCount());
     }
 
+    /**
+     * Use the {@link #loadTraces(File) loadTraces} method,
+     * where <code>File</code> is defined from the constructor.
+     *
+     * @throws TraceException
+     * @throws IOException
+     */
     public void loadTraces() throws TraceException, IOException {
-        FileReader reader = new FileReader(file);
+        loadTraces(file);
+    }
+
+    /**
+     * Read through <code>File</code> created from a log file,
+     * fill in <code>traces</code> list, and set <code>TraceType</code>.
+     *
+     * @param file <code>File</code>
+     * @throws TraceException
+     * @throws IOException
+     */
+    public void loadTraces(File file) throws TraceException, IOException {
+        final Reader reader = new FileReader(file);
         loadTraces(reader);
         reader.close();
     }
 
     /**
-     * Walter: Please comment what the extra arguments mean
+     * Read through <code>InputStream</code> created from a log file,
+     * fill in <code>traces</code> list, and set <code>TraceType</code>.
      *
-     * @param r
+     * @param in <code>InputStream</code>
+     * @throws TraceException
+     * @throws IOException
+     */
+    public void loadTraces(InputStream in) throws TraceException, IOException {
+        final Reader reader = new InputStreamReader(in);
+        loadTraces(reader);
+        reader.close();
+    }
+
+    /**
+     * Read through either <code>FileReader</code> or <code>InputStreamReader</code>
+     * created from a log file,
+     * fill in <code>traces</code> list, and set <code>TraceType</code>.
+     *
+     * @param r The input for <code>TrimLineReader</code>.
+     *          Use either <code>FileReader</code> or <code>InputStreamReader</code>
      * @throws TraceException
      * @throws java.io.IOException
      */
-    public void loadTraces(Reader r) throws TraceException, java.io.IOException {
+    private void loadTraces(Reader r) throws TraceException, java.io.IOException {
 
-        TrimLineReader reader = new LogFileTraces.TrimLineReader(r);
+        final TrimLineReader reader = new LogFileTraces.TrimLineReader(r);
 
         // Read through to first token
         StringTokenizer tokens = reader.tokenizeLine();
@@ -237,12 +273,13 @@ public class LogFileTraces extends AbstractTraceList {
             addTraceAndType(labels[i]);
         }
 
-
         int traceCount = getTraceCount();
 
         long num_samples = 0;
 
-        tokens = reader.tokenizeLine();
+        String line = reader.readLine();
+        tokens = reader.getStringTokenizer(line);
+        String lastLine = line;
         while (tokens != null && tokens.hasMoreTokens()) {
 
             String stateString = tokens.nextToken();
@@ -253,7 +290,8 @@ public class LogFileTraces extends AbstractTraceList {
                     // Changed this to parseDouble because LAMARC uses scientific notation for the state number
                     state = (long) Double.parseDouble(stateString);
                 } catch (NumberFormatException nfe) {
-                    throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
+                    throw new TraceException("Unable to parse state number in column 1 (Line " +
+                            reader.getLineNumber() + ")");
                 }
 
                 if (num_samples < 1) {
@@ -265,7 +303,8 @@ public class LogFileTraces extends AbstractTraceList {
                 num_samples += 1;
 
                 if (!addState(state, num_samples)) {
-                    throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
+                    throw new TraceException("State " + state + " is not consistent with previous spacing (Line " +
+                            reader.getLineNumber() + ")");
                 }
 
             } catch (NumberFormatException nfe) {
@@ -276,25 +315,73 @@ public class LogFileTraces extends AbstractTraceList {
                 if (tokens.hasMoreTokens()) {
                     String value = tokens.nextToken();
 
-                    if (state == 0) assignTraceTypeAccordingValue(value);
+                    if (state == 0) assignTraceTypeAccordingValue(i, value);
 
                     try {
 //                        values[i] = Double.parseDouble(tokens.nextToken());
                         addParsedValue(i, value);
                     } catch (NumberFormatException nfe) {
-                        throw new TraceException("State " + state + ": Expected correct number type (Double, Integer or String) in column "
-                                + (i + 1) + " (Line " + reader.getLineNumber() + ")");
+                        throw new TraceException("State " + state + ": Expected correct data type " +
+                                "(Double, Integer or String) in column " + (i + 1) +
+                                " (Line " + reader.getLineNumber() + ")");
                     }
 
                 } else {
                     throw new TraceException("State " + state + ": missing values at line " + reader.getLineNumber());
                 }
             }
-
-            tokens = reader.tokenizeLine();
+            // used to keep the last valid line
+            lastLine = line;
+//            tokens = reader.tokenizeLine();
+            line = reader.readLine();
+            tokens = reader.getStringTokenizer(line);
         }
 
+        if (num_samples == 0)
+            throw new TraceException("Incorrect file format, no sample is found !");
+
         burnIn =  lastState / 10;
+
+        if (lastState < 0)
+            lastState = firstState;
+        if (stepSize < 0 && lastState > 0)
+            stepSize = lastState;
+
+        validateTraceType(lastLine);
+        validateUniqueValues();
+    }
+    public static final int MIN_SAMPLE = 5; // used in StatisticsModel
+
+    private final int MAX_UNIQUE_VALUE = 200;
+    // change integer type into real, if too many unique values
+    private void validateUniqueValues() throws TraceException {
+        for (int id = 0; id < getTraceCount(); id++) {
+            Trace trace = getTrace(id);
+            if (trace.getTraceType().isInteger()) {
+                int uniqueValue = trace.getUniqueVauleCount();
+                if (uniqueValue > MAX_UNIQUE_VALUE) {
+                    System.out.println("Too many unique values (>" + MAX_UNIQUE_VALUE +
+                            ") found in trace " + trace.getName() + " at " + id);
+                    changeTraceType(id, TraceType.REAL);
+                }
+            }
+        }
+    }
+
+
+    // validate TraceType at the last value of trace,
+    // in case integer is logged for double values in the first (even several) row.
+    // it must use original line, because the data type of values in traces are changed
+    private void validateTraceType(String lastLine) throws TraceException {
+        String[] values = lastLine.split("\\t");
+        // the 1st is state
+        for (int i=1; i < values.length; i++) {
+            int traceId = i-1;
+            Trace trace = getTrace(traceId);
+            // avoid to assign integer to double incorrectly
+            if (trace.getTraceType().isInteger() && NumberUtils.hasDecimalPoint(values[i]))
+                changeTraceType(traceId, TraceType.REAL);
+        }
     }
 
     /**
@@ -315,22 +402,49 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-    private void assignTraceTypeAccordingValue(String value) {
-        //todo
+
+    /**
+     * Auto assign INTEGER or CATEGORICAL type to traces
+     * according their values in the first line.
+     * Default type is REAL.
+     *
+     * @param nTrace
+     * @param value
+     */
+    private void assignTraceTypeAccordingValue(int nTrace, String value) throws TraceException {
+        String name = getTraceName(nTrace);
+        TraceType type = TraceType.REAL;
+        if (NumberUtils.isNumber(value)) { // Double or Integer
+            if (! NumberUtils.hasDecimalPoint(value)) { // Integer
+                type = TraceType.INTEGER;
+                // change tracesType map for
+                tracesType.put(name, type);
+                System.out.println("Auto detect " + type + " type for trace " + name + " at " + nTrace);
+                changeTraceType(nTrace, type);
+            }
+
+        } else { // String
+            type = TraceType.CATEGORICAL;
+            tracesType.put(name, type);
+            System.out.println("Auto detect " + type + " type for trace " + name + " at " + nTrace);
+            changeTraceType(nTrace, type);
+        }
     }
 
     /**
-     * todo I would have thought this would read the type across the header for each trace
+     * @deprecated should be replaced by
+     * {@link #assignTraceTypeAccordingValue(int, String) assignTraceTypeAccordingValue} method
+     *
      * @param firstToken
      * @param tokens
      */
     private void readTraceType(String firstToken, StringTokenizer tokens) {
         if (tokens.hasMoreTokens()) {
             String token; //= tokens.nextToken();
-            if (firstToken.toLowerCase().contains(TraceType.ORDINAL.toString())) {
+            if (firstToken.toLowerCase().contains(TraceType.INTEGER.toString())) {
                 while (tokens.hasMoreTokens()) {
                     token = tokens.nextToken();
-                    tracesType.put(token, TraceType.ORDINAL);
+                    tracesType.put(token, TraceType.INTEGER);
                 }
             } else if (firstToken.toLowerCase().contains(TraceType.CATEGORICAL.toString())) {
                 while (tokens.hasMoreTokens()) {
@@ -372,37 +486,52 @@ public class LogFileTraces extends AbstractTraceList {
     // TODO get rid of generic to make things easy
     // TODO change to String only, and parse to double, int or string in getValues according to trace type
     public void changeTraceType(int id, TraceType newType) throws TraceException {
-        if (id >= getTraceCount() || id < 0) throw new TraceException("trace id is invaild " + id);
-        Trace trace = traces.get(id);
-        if (trace.getTraceType() != newType) {
-            Trace newTrace = null;
-            try {
-                if (trace.getTraceType() == TraceType.CATEGORICAL && newType.isNumber()) {
-                    newTrace = createTrace(trace.getName(), newType);
-                    for (int i = 0; i < trace.getValueCount(); i++) { // String => Double
-                        newTrace.add(Double.parseDouble(trace.getValue(i).toString()));
-                    }
-                } else if (trace.getTraceType().isNumber() && newType == TraceType.CATEGORICAL) {
-                    newTrace = createTrace(trace.getName(), TraceType.CATEGORICAL);
-                    for (int i = 0; i < trace.getValueCount(); i++) { // Double => String
-                        newTrace.add(trace.getValue(i).toString());
-                    }
-                } else {
-                    trace.setTraceType(newType); // change between numeric
-                }
-            } catch (Exception e) {
-                throw new TraceException("Type change is failed, when parsing " + trace.getTraceType()
-                        + " to " + newType + " in trace " + trace.getName());
+        if (id >= getTraceCount() || id < 0)
+            throw new TraceException("Invalid trace id : " + id + ", which should 0 < and >= " + getTraceCount());
+        Trace trace = getTrace(id);
+        TraceType oldType = trace.getTraceType();
+        if (oldType != newType) {
+            Trace newTrace = createTrace(trace.getName(), newType);
+
+            if (newType.isDiscrete()) {
+                int uniqueValue = trace.getUniqueVauleCount();
+                if (uniqueValue > MAX_UNIQUE_VALUE)
+                    throw new TraceException("Type change is failed, because too many unique values (>" +
+                            MAX_UNIQUE_VALUE + ") are found !");
             }
 
-            if (trace.getTraceType() == TraceType.CATEGORICAL || newType == TraceType.CATEGORICAL) {
+            if (oldType.isCategorical() || newType.isCategorical()) {
+                try {
+                    if (newType.isNumber()) { // oldType.isCategorical()
+                        for (int i = 0; i < trace.getValueCount(); i++) {
+                            newTrace.add(Double.parseDouble(trace.getValue(i).toString())); // String => Double
+                        }
+                    } else if (oldType.isContinuous()) { // newType.isCategorical()
+                        for (int i = 0; i < trace.getValueCount(); i++) {
+                            newTrace.add(trace.getValue(i).toString()); // Double => String
+                        }
+                    } else if (oldType.isIntegerOrBinary()) { // newType.isCategorical()
+                        // treat Integer separately to rm .0 because Trace<Double>
+                        for (int i = 0; i < trace.getValueCount(); i++) {
+                            String value = trace.getValue(i).toString();
+                            String valueNoDecimal = String.valueOf(value).split("\\.")[0];
+                            newTrace.add(valueNoDecimal); // Integer => String
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new TraceException("Type change is failed, when parsing " + oldType +
+                            " to " + newType + " in trace " + trace.getName());
+                }
+
                 if (newTrace.getValueCount() != trace.getValueCount())
                     throw new TraceException("Type change is failed, because values size is different after copy !");
 
                 traces.set(id, newTrace);
+
             } else {
-                trace.setTraceType(newType);
+                trace.setTraceType(newType); // change between numeric
             }
+            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
         }
     }
 
@@ -449,7 +578,11 @@ public class LogFileTraces extends AbstractTraceList {
         tracesType.put(newTName, TraceType.REAL);
     }
 
-    // tracesType only save INTEGER and STRING, and only use during loading files
+    /**
+     * store INTEGER or STRING predefined at the top of log file, only used during loading files
+     * @deprecated should be replaced by
+     * {@link #assignTraceTypeAccordingValue(int, String) assignTraceTypeAccordingValue} method
+     */
     private TreeMap<String, TraceType> tracesType = new TreeMap<String, TraceType>();
 
     private long burnIn = -1;
@@ -473,6 +606,10 @@ public class LogFileTraces extends AbstractTraceList {
 
         public StringTokenizer tokenizeLine() throws java.io.IOException {
             String line = readLine();
+            return getStringTokenizer(line);
+        }
+
+        public StringTokenizer getStringTokenizer(String line) {
             if (line == null) return null;
             return new StringTokenizer(line, "\t");
         }

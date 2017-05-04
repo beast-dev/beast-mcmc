@@ -36,7 +36,6 @@ import dr.evomodel.tree.AbstractCladeImportanceDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.operators.*;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 import java.util.*;
@@ -49,7 +48,7 @@ import java.util.*;
 public abstract class AbstractImportanceDistributionOperator extends
         SimpleMCMCOperator implements GeneralOperator {
 
-    private int transitions = 0;
+    private long transitions = 0;
 
     private OperatorSchedule schedule;
 
@@ -122,7 +121,7 @@ public abstract class AbstractImportanceDistributionOperator extends
       *
       * @see dr.inference.operators.AbstractImportanceSampler#doOperation()
       */
-    public double doOperation(Prior prior, Likelihood likelihood) {
+    public double doOperation(Likelihood likelihood) {
         if (!burnin) {
             if (sampleCount < samples * sampleEvery) {
                 sampleCount++;
@@ -136,7 +135,7 @@ public abstract class AbstractImportanceDistributionOperator extends
                 return doUnguidedOperation();
 
             } else {
-                return doImportanceDistributionOperation(prior, likelihood);
+                return doImportanceDistributionOperation(likelihood);
             }
         } else {
 
@@ -145,8 +144,7 @@ public abstract class AbstractImportanceDistributionOperator extends
         }
     }
 
-    protected double doImportanceDistributionOperation(Prior prior,
-                                                       Likelihood likelihood) {
+    protected double doImportanceDistributionOperation(Likelihood likelihood) {
         final NodeRef root = tree.getRoot();
         BitSet all = new BitSet();
         all.set(0, (tree.getNodeCount() + 1) / 2);
@@ -670,7 +668,7 @@ public abstract class AbstractImportanceDistributionOperator extends
     /**
      * @return the number of transitions since last call to reset().
      */
-    public int getTransitions() {
+    public long getTransitions() {
         return transitions;
     }
 
@@ -683,9 +681,9 @@ public abstract class AbstractImportanceDistributionOperator extends
     }
 
     public double getTransistionProbability() {
-        int accepted = getAcceptCount();
-        int rejected = getRejectCount();
-        int transition = getTransitions();
+        long accepted = getAcceptCount();
+        long rejected = getRejectCount();
+        long transition = getTransitions();
         return (double) transition / (double) (accepted + rejected);
     }
 

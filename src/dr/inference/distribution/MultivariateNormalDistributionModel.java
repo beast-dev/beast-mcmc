@@ -188,7 +188,7 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     @Override
     public double[] getGradientLogDensity(Object x) {
         checkDistribution();
-        return distribution.gradLogPdf((double[]) x);
+        return distribution.getGradientLogDensity(x);
     }
 
 }

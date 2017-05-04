@@ -27,7 +27,6 @@ package dr.inference.operators;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Variable;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 /**
@@ -37,20 +36,20 @@ import dr.math.MathUtils;
  */
 public interface SliceInterval {
 
-    public double drawFromInterval(Prior prior, Likelihood likelihood, double cutoffDensity, double width);
+    public double drawFromInterval(Likelihood likelihood, double cutoffDensity, double width);
 
     public void setSliceSampler(SliceOperator sliceSampler);
 
     public abstract class Abstract implements SliceInterval {
 
-        public double drawFromInterval(Prior prior, Likelihood likelihood, double cutoffDensity, double width) {
+        public double drawFromInterval(Likelihood likelihood, double cutoffDensity, double width) {
             double x0 = variable.getValue(0);
-            Interval interval = constructInterval(prior, likelihood, x0, cutoffDensity, width);
+            Interval interval = constructInterval(likelihood, x0, cutoffDensity, width);
             double x1 = x0;
             boolean found = false;
             while (!found) {
                 x1 = MathUtils.uniform(interval.lower, interval.upper);
-                if (cutoffDensity < evaluate(prior, likelihood, x1) && test(prior, likelihood, x0, x1,
+                if (cutoffDensity < evaluate(likelihood, x1) && test(likelihood, x0, x1,
                         cutoffDensity, width)) {
                     found = true;
                 } else {
@@ -60,11 +59,11 @@ public interface SliceInterval {
             return x1;
         }
 
-        public abstract Interval constructInterval(Prior prior, Likelihood likelihood, double x0, 
+        public abstract Interval constructInterval(Likelihood likelihood, double x0,
                                                    double cutoffDensity, double width);
 
 
-        protected abstract boolean test(Prior prior, Likelihood likelihood, double x0, double x1,
+        protected abstract boolean test(Likelihood likelihood, double x0, double x1,
                                double cutoffDensity, double width);
 
         public void shrinkInterval(Interval interval, double x0, double x1) {
@@ -91,9 +90,9 @@ public interface SliceInterval {
             this.variable = sliceSampler.getVariable();
          }
 
-        protected double evaluate(Prior prior, Likelihood likelihood, double x) {
+        protected double evaluate(Likelihood likelihood, double x) {
             variable.setValue(0, x);
-            return sliceSampler.evaluate(likelihood, prior, 1.0);
+            return sliceSampler.evaluate(likelihood, 1.0);
         }
 
         protected Variable<Double> variable;
@@ -110,25 +109,25 @@ public interface SliceInterval {
             this.m = m;
         }
 
-        public Interval constructInterval(Prior prior, Likelihood likelihood, double x0,
+        public Interval constructInterval(Likelihood likelihood, double x0,
                                           double cutoffDensity, double w) {
             // Taken from Fig 3 in Neal (2003)
             double L = x0 -  w * MathUtils.nextDouble();
             double R = L +  w;
             int J = MathUtils.nextInt(m);
             int K = (m - 1) - J;
-            while (J > 0 && cutoffDensity < evaluate(prior, likelihood, L) ) {
+            while (J > 0 && cutoffDensity < evaluate(likelihood, L) ) {
                 L -=  w;
                 J--;
             }
-            while (K > 0 && cutoffDensity < evaluate(prior, likelihood, R) ) {
+            while (K > 0 && cutoffDensity < evaluate(likelihood, R) ) {
                 R +=  w;
                 K--;
             }
             return new Interval(L,R);
         }
 
-        protected boolean test(Prior prior, Likelihood likelihood, double x0, double x1,
+        protected boolean test(Likelihood likelihood, double x0, double x1,
                                double cutoffDensity, double width) {
             return true;
         }
@@ -138,13 +137,13 @@ public interface SliceInterval {
 
     public class Doubling extends Abstract {
 
-        public Interval constructInterval(Prior prior, Likelihood likelihood, double x0,
+        public Interval constructInterval(Likelihood likelihood, double x0,
                                           double cutoffDensity, double width) {
             // TODO
             return new Interval(0,1);
         }
 
-         protected boolean test(Prior prior, Likelihood likelihood, double x0, double x1,
+         protected boolean test(Likelihood likelihood, double x0, double x1,
                                double cutoffDensity, double width) {
              // TODO
             return true;

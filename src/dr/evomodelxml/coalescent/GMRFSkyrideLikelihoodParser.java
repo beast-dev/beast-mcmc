@@ -246,8 +246,6 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         } else {
             if(xo.getChild(GRID_POINTS) != null){
-                System.err.println("A");
-
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                         lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
                         lastObservedIndex, covPrecParam, betaList);

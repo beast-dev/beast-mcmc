@@ -29,6 +29,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,15 +90,43 @@ public class SumDerivative implements GradientWrtParameterProvider {
     public double[] getGradientLogDensity() {
         int size = derivativeList.size();
 
+        if (DEBUG) {
+            // start timer
+        }
+
         final double[] derivative = derivativeList.get(0).getGradientLogDensity();
 
+        if (DEBUG) {
+            String name = derivativeList.get(0).getLikelihood().getId();
+            System.err.println(name);
+            System.err.println(new Vector(derivative));
+        }
+
         for (int i = 1; i < size; i++) {
+
+            if (DEBUG) {
+                // start timer
+            }
+
             final double[] temp = derivativeList.get(i).getGradientLogDensity();
+
+            if (DEBUG) {
+                String name = derivativeList.get(i).getLikelihood().getId();
+                System.err.println(name);
+                System.err.println(new Vector(temp));
+            }
+
             for (int j = 0; j < temp.length; j++) {
                 derivative[j] += temp[j];
             }
         }
 
+        if (DEBUG) {
+            System.exit(-1);
+        }
+
         return derivative;
     }
+
+    private static final boolean DEBUG = false;
 }

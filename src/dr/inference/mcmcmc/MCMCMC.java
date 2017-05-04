@@ -39,7 +39,6 @@ import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 import dr.util.NumberFormatter;
 
@@ -276,7 +275,7 @@ public class MCMCMC implements Runnable {
                 MCMCOperator operator1 = schedule1.getOperator(i);
                 MCMCOperator operator2 = schedule2.getOperator(i);
 
-                int tmp = operator1.getAcceptCount();
+                long tmp = operator1.getAcceptCount();
                 operator1.setAcceptCount(operator2.getAcceptCount());
                 operator2.setAcceptCount(tmp);
 
@@ -431,14 +430,7 @@ public class MCMCMC implements Runnable {
     public int getColdChain() {
         return coldChain;
     }
-
-    /**
-     * @return the prior of this MCMC analysis.
-     */
-    public Prior getPrior() {
-        return chains[coldChain].getPrior();
-    }
-
+    
     /**
      * @return the likelihood function.
      */

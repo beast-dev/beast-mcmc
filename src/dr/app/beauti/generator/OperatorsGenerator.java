@@ -51,6 +51,7 @@ import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;
 import dr.util.Transform;
+import dr.util.TransformParsers;
 import dr.xml.XMLParser;
 
 import java.util.List;
@@ -725,17 +726,17 @@ public class OperatorsGenerator extends Generator {
         for (Parameter parameter : options.selectParameters()) {
             if (parameter.isAdaptiveMultivariateCompatible) {
                 if (parameter.isNonNegative) {
-                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.LogTransform().getTransformName()),
-                            new Attribute.Default<Integer>(Transform.START, startTransform),
-                            new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
+                    writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName()),
+                            new Attribute.Default<Integer>(TransformParsers.START, startTransform),
+                            new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
                     }, true);
                     startTransform += parameter.getDimensionWeight();
                     System.out.println(parameter + ": " + parameter.getDimensionWeight());
 
                 } else { // -Inf to Inf
-                    writer.writeTag(Transform.TRANSFORM, new Attribute[]{new Attribute.Default<String>(Transform.TYPE, new Transform.NoTransform().getTransformName()),
-                            new Attribute.Default<Integer>(Transform.START, startTransform),
-                            new Attribute.Default<Integer>(Transform.END, startTransform + parameter.getDimensionWeight()),
+                    writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName()),
+                            new Attribute.Default<Integer>(TransformParsers.START, startTransform),
+                            new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
                     }, true);
                     startTransform += parameter.getDimensionWeight();
                     System.out.println(parameter + ": " + parameter.getDimensionWeight());

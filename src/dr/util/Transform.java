@@ -169,7 +169,7 @@ public interface Transform {
             return Math.exp(value);
         }
 
-        public double gradient(double value) { return 1.0 / value; }
+        public double gradient(double value) { return value; }
 
         public String getTransformName() { return "log"; }
 

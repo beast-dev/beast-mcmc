@@ -39,7 +39,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                            Parameter parameter, double stepSize, int nSteps, double drawVariance) {
-        super(mode, weight, gradientProvider, parameter, stepSize, nSteps, drawVariance);
+        super(mode, weight, gradientProvider, parameter, null, stepSize, nSteps, drawVariance);
     }
 
     @Override

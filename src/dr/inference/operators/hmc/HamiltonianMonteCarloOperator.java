@@ -32,6 +32,7 @@ import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
 import dr.math.distributions.NormalDistribution;
+import dr.util.Transform;
 
 /**
  * @author Max Tolkoff
@@ -42,18 +43,22 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private final GradientWrtParameterProvider gradientProvider;
     private final Parameter parameter;
+    private final Transform transform;
     private double stepSize;
     private final int nSteps;
     private final NormalDistribution drawDistribution;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                            Parameter parameter, double stepSize, int nSteps, double drawVariance) {
+                                         Parameter parameter, Transform transform,
+                                         double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.5);
 
         this.gradientProvider = gradientProvider;
         this.parameter = parameter;
+        this.transform = transform;
+        
         this.stepSize = stepSize;
         this.nSteps = nSteps;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
@@ -71,8 +76,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private static void updateMomentum(final double[] momentum,
                                        final double functionalStepSize,
-                                       final double[] gradient) {
+                                       final double[] gradient,
+                                       final Parameter parameter,
+                                       final Transform transform) {
+
         final int dim = momentum.length;
+
+        if (transform != null) {
+            double[] transformGradient = transform.gradient(parameter.getParameterValues(), 0, dim);
+
+             for (int i = 0; i < dim; ++i) {
+                 gradient[i] *= transformGradient[i];
+             }
+        }
 
         for (int i = 0; i < dim; ++i) {
             momentum[i] = momentum[i] + functionalStepSize  * gradient[i];
@@ -80,6 +96,18 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     private static void updateParameter(final Parameter parameter,
+                                        final double[] momentum,
+                                        final Transform transform,
+                                        final double functionalStepSize,
+                                        final double sigmaSquared) {
+        if (transform == null) {
+            updateParameterNoTransform(parameter, momentum, functionalStepSize, sigmaSquared);
+        } else {
+            updateParameterWithTransform(parameter, momentum, transform, functionalStepSize, sigmaSquared);
+        }
+    }
+
+    private static void updateParameterNoTransform(final Parameter parameter,
                                         final double[] momentum,
                                         final double functionalStepSize,
                                         final double sigmaSquared) {
@@ -91,6 +119,31 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     functionalStepSize * momentum[j] / sigmaSquared;
 
             parameter.setParameterValueQuietly(j, newValue);
+        }
+        parameter.fireParameterChangedEvent();
+    }
+
+    private static void updateParameterWithTransform(final Parameter parameter,
+                                        final double[] momentum,
+                                        final Transform transform,
+                                        final double functionalStepSize,
+                                        final double sigmaSquared) {
+        final int dim = momentum.length;
+
+        double[] transformedValues = transform.transform(parameter.getParameterValues(), 0, dim);
+
+        for (int j = 0; j < dim; j++) {
+            final double oldValue = transformedValues[j];
+            final double newValue =  oldValue +
+                    functionalStepSize * momentum[j] / sigmaSquared;
+
+            transformedValues[j] = newValue;
+        }
+
+        double[] backTransformedValues = transform.inverse(transformedValues, 0, dim);
+
+        for (int j = 0; j < dim; ++j) {
+            parameter.setParameterValueQuietly(j, backTransformedValues[j]);
         }
         parameter.fireParameterChangedEvent();
     }
@@ -129,20 +182,20 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         final double prop = getScaledDotProduct(momentum, sigmaSquared);
 
         updateMomentum(momentum, stepSize / 2,
-                gradientProvider.getGradientLogDensity());
+                gradientProvider.getGradientLogDensity(), parameter, transform);
 
         for (int i = 0; i < nSteps; i++) { // Leap-frog
 
-            updateParameter(parameter, momentum, stepSize, sigmaSquared);
+            updateParameter(parameter, momentum, transform, stepSize, sigmaSquared);
 
             if (i < (nSteps - 1)) {
                 updateMomentum(momentum, stepSize,
-                        gradientProvider.getGradientLogDensity());
+                        gradientProvider.getGradientLogDensity(), parameter, transform);
             }
         } // end of loop over steps
 
         updateMomentum(momentum, stepSize / 2,
-                gradientProvider.getGradientLogDensity());
+                gradientProvider.getGradientLogDensity(), parameter, transform);
         final double res = getScaledDotProduct(momentum, sigmaSquared);
 
         return prop - res;

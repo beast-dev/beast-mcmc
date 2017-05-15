@@ -327,13 +327,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     }
 
     private void setAllNodesUpdated() {
-        if (currentPrefetch < 0) {
-            for (int i = 0; i < currentPrefetch; i++) {
-                treeTraversalDelegates[i].setAllNodesUpdated();
-            }
-        } else {
-            treeTraversalDelegates[currentPrefetch].setAllNodesUpdated();
-        }
+        treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].setAllNodesUpdated();
     }
 
     /**
@@ -343,7 +337,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;
 
-        treeTraversalDelegates[currentPrefetch].updateNode(node);
+        treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateNode(node);
         likelihoodKnown = false;
     }
 
@@ -354,7 +348,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
 
-        treeTraversalDelegates[currentPrefetch].updateNodeAndChildren(node);
+        treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateNodeAndChildren(node);
         likelihoodKnown = false;
     }
 
@@ -365,7 +359,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;
 
-        treeTraversalDelegates[currentPrefetch].updateNodeAndDescendents(node);
+        treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateNodeAndDescendents(node);
         likelihoodKnown = false;
     }
 
@@ -376,13 +370,8 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateAllCount++;
 
-        if (currentPrefetch < 0) {
-            for (int i = 0; i < currentPrefetch; i++) {
-                treeTraversalDelegates[i].updateAllNodes();
-            }
-        } else {
-            treeTraversalDelegates[currentPrefetch].updateAllNodes();
-        }
+        treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateAllNodes();
+
         likelihoodKnown = false;
     }
 
@@ -405,13 +394,13 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
             if (COUNT_TOTAL_OPERATIONS)
                 sb.append("\n  total operations = " + totalOperationCount +
-                          "\n  matrix updates = " + totalMatrixUpdateCount +
-                          "\n  model changes = " + totalModelChangedCount +
-                          "\n  make dirties = " + totalMakeDirtyCount +
-                          "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
-                          "\n  get likelihoods = " + totalGetLogLikelihoodCount +
-                          "\n  all rate updates = " + totalRateUpdateAllCount +
-                          "\n  partial rate updates = " + totalRateUpdateSingleCount);
+                        "\n  matrix updates = " + totalMatrixUpdateCount +
+                        "\n  model changes = " + totalModelChangedCount +
+                        "\n  make dirties = " + totalMakeDirtyCount +
+                        "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
+                        "\n  get likelihoods = " + totalGetLogLikelihoodCount +
+                        "\n  all rate updates = " + totalRateUpdateAllCount +
+                        "\n  partial rate updates = " + totalRateUpdateSingleCount);
 
             return sb.toString();
         } else {

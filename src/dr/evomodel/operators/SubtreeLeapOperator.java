@@ -88,7 +88,14 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
      */
     public double doOperation() {
 
-        double logq;
+        lastInstance = drawOperation();
+
+        applyInstance(lastInstance);
+
+        return lastInstance.logHastingsRatio;
+    }
+
+    protected Instance drawOperation() {
 
         final double delta = getDelta();
 
@@ -114,83 +121,24 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         final Map<NodeRef, Double> destinations = getDestinations(node, parent, sibling, delta);
         final List<NodeRef> destinationNodes = new ArrayList<NodeRef>(destinations.keySet());
 
+        double forwardProbability = 1.0 / destinations.size();
+
         // pick uniformly from this list
         int r = MathUtils.nextInt(destinations.size());
-
-        double forwardProbability = 1.0 / destinations.size();
 
         final NodeRef destination = destinationNodes.get(r);
         final double destinationHeight = destinations.get(destination);
 
         final NodeRef destinationParent = tree.getParent(destination);
 
-//        if (destinationParent != null && destinationHeight > tree.getNodeHeight(destinationParent)) {
-//            throw new IllegalArgumentException("height error");
-//        }
-//
-//        if (destinationHeight < tree.getNodeHeight(destination)) {
-//            throw new IllegalArgumentException("height error");
-//        }
-
-        lastInstance = new Instance(node, parent, sibling, grandParent, destination, destinationParent, destinationHeight);
-
-        applyInstance(lastInstance);
-
-//        tree.beginTreeEdit();
-//
-//        if (destination == parent || destinationParent == parent) {
-//            // the subtree is not actually moving but the height will change
-//        } else {
-//            if (grandParent == null) {
-//                // if the parent of the original node is the root then the sibling becomes
-//                // the root.
-//                tree.removeChild(parent, sibling);
-//                tree.setRoot(sibling);
-//
-//            } else {
-//                // remove the parent of node by connecting its sibling to its grandparent.
-//                tree.removeChild(parent, sibling);
-//                tree.removeChild(grandParent, parent);
-//                tree.addChild(grandParent, sibling);
-//            }
-//
-//            if (destinationParent == null) {
-//                // adding the node to the root of the tree
-//                tree.addChild(parent, destination);
-//                tree.setRoot(parent);
-//            } else {
-//                // remove destination edge from its parent
-//                tree.removeChild(destinationParent, destination);
-//
-//                // add destination edge to the parent of node
-//                tree.addChild(parent, destination);
-//
-//                // and add the parent of target node as a child of the former parent of destination
-//                tree.addChild(destinationParent, parent);
-//            }
-//        }
-//        tree.endTreeEdit();
-//
-//        tree.setNodeHeight(parent, newHeight);
-
-//        if (tree.getParent(parent) != null && newHeight > tree.getNodeHeight(tree.getParent(parent))) {
-//            throw new IllegalArgumentException("height error");
-//        }
-//
-//        if (newHeight < tree.getNodeHeight(node)) {
-//            throw new IllegalArgumentException("height error");
-//        }
-//
-//        if (newHeight < tree.getNodeHeight(getOtherChild(tree, parent, node))) {
-//            throw new IllegalArgumentException("height error");
-//        }
-
-        final Map<NodeRef, Double> reverseDestinations = getDestinations(node, parent, getOtherChild(tree, parent, node), delta);
+        final Map<NodeRef, Double> reverseDestinations = getDestinations(
+                node, parent, getOtherChild(tree, parent, node), delta);
         double reverseProbability = 1.0 / reverseDestinations.size();
 
         // hastings ratio = reverse Prob / forward Prob
-        logq = Math.log(reverseProbability) - Math.log(forwardProbability);
-        return logq;
+        double logq = Math.log(reverseProbability) - Math.log(forwardProbability);
+
+        return new Instance(node, parent, sibling, grandParent, destination, destinationParent, destinationHeight, logq);
     }
 
     protected Instance getLastInstance() {
@@ -382,8 +330,9 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         final NodeRef destination;
         final NodeRef destinationParent;
         final double destinationHeight;
+        final double logHastingsRatio;
 
-        public Instance(NodeRef node, NodeRef parent, NodeRef sibling, NodeRef grandParent, NodeRef destination, NodeRef destinationParent, double destinationHeight) {
+        public Instance(NodeRef node, NodeRef parent, NodeRef sibling, NodeRef grandParent, NodeRef destination, NodeRef destinationParent, double destinationHeight, double logHastingsRatio) {
             this.node = node;
             this.parent = parent;
             this.sibling = sibling;
@@ -391,6 +340,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
             this.destination = destination;
             this.destinationParent = destinationParent;
             this.destinationHeight = destinationHeight;
+            this.logHastingsRatio = logHastingsRatio;
         }
     }
 }

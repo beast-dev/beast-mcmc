@@ -39,6 +39,8 @@ import dr.inference.operators.Prefetchable;
 
 public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements Prefetchable {
 
+    private static final boolean NO_PARALLEL_PREFETCH = true;
+
     private final PrefetchTreeDataLikelihood treeDataLikelihood;
     private final int prefetchCount;
     private int currentPrefetch;
@@ -68,7 +70,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
     @Override
     public boolean prefetchingDone() {
-        return currentPrefetch == prefetchCount;
+        return currentPrefetch == prefetchCount - 1;
     }
 
     @Override
@@ -79,22 +81,41 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             // store the hastings ratios. TreeDataLikelihood will also store likelihoods.
             currentPrefetch = 0;
 
-            for (int i = 0; i < prefetchCount; i++) {
-                treeDataLikelihood.setCurrentPrefetch(i);
+            if (NO_PARALLEL_PREFETCH) {
+                // A debugging option where there is no parallel processing of the operator
+                // moves but they are simply done in sequence. The N operator instances
+                // are drawn so that the random number sequence is conserved (allowing for
+                // comparison with the parallel approach) and these are then just applied
+                // in sequence as doOperation is called.
 
-                hastingsRatios[i] = super.doOperation();
+                for (int i = 0; i < prefetchCount; i++) {
 
-                treeDataLikelihood.collectOperations();
+                    instances[i] = drawOperation();
+                    hastingsRatios[i] = instances[i].logHastingsRatio;
+                }
+            } else {
 
-                getTreeModel().restoreModelState();
+                for (int i = 0; i < prefetchCount; i++) {
+                    treeDataLikelihood.setCurrentPrefetch(i);
 
-                instances[i] = getLastInstance();
+                    hastingsRatios[i] = super.doOperation();
+
+                    treeDataLikelihood.collectOperations();
+
+                    getTreeModel().restoreModelState();
+
+                    instances[i] = getLastInstance();
+                }
+
+                treeDataLikelihood.prefetchLogLikelihoods();
             }
-
-            treeDataLikelihood.prefetchLogLikelihoods();
         }
 
-        treeDataLikelihood.setCurrentPrefetch(currentPrefetch);
+        if (NO_PARALLEL_PREFETCH) {
+            applyInstance(instances[currentPrefetch]);
+        } else {
+            treeDataLikelihood.setCurrentPrefetch(currentPrefetch);
+        }
 
         return hastingsRatios[currentPrefetch];
     }
@@ -102,12 +123,17 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
     @Override
     public void accept(double deviation) {
         super.accept(deviation);
-        // clear the cached likelihoods, restore treemodel, TDL and apply successful operation instance
-        getTreeModel().restoreModelState();
-        treeDataLikelihood.restoreModelState();
 
-        applyInstance(instances[currentPrefetch]);
-        
+        // clear the cached likelihoods, restore treemodel, TDL and apply successful operation instance
+        if (!NO_PARALLEL_PREFETCH) {
+
+            // would be better to adopt the partial likelihoods of the successful move.
+            getTreeModel().restoreModelState();
+            treeDataLikelihood.restoreModelState();
+
+            applyInstance(instances[currentPrefetch]);
+        }
+
         currentPrefetch = -1;
     }
 

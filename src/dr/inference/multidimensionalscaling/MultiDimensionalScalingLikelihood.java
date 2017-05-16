@@ -130,7 +130,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
 
         boolean allowMissing = true;
 
-        int[] permute = null;
+        int[] permute;
         if (reorderData) {
             permute = getPermutation(rowLabelsOriginal, locationsParameter, allowMissing);
         } else {

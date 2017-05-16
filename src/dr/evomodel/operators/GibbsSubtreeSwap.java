@@ -34,7 +34,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.operators.SimpleMetropolizedGibbsOperator;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
@@ -78,12 +77,12 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         return 1;
     }
 
-    public double doOperation(Prior prior, Likelihood likelihood) {
+    public double doOperation(Likelihood likelihood) {
 
         if( pruned ) {
-            return prunedWide(prior, likelihood);
+            return prunedWide(likelihood);
         } else {
-            return wide(prior, likelihood);
+            return wide(likelihood);
         }
     }
 
@@ -92,7 +91,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
      *
      * @throws InvalidTreeException
      */
-    public double wide(Prior prior, Likelihood likelihood) {
+    public double wide(Likelihood likelihood) {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -114,7 +113,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         double heightIP = tree.getNodeHeight(iP);
         double heightI = tree.getNodeHeight(i);
         double sum = 0.0;
-        double backward = calculateTreeLikelihood(prior, likelihood, tree);
+        double backward = calculateTreeLikelihood(likelihood, tree);
         int offset = (int) -backward;
         backward = Math.exp(backward + offset);
         for(int n = 0; n < nodeCount; n++) {
@@ -127,7 +126,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                     secondNodeIndices.add(n);
 
                     swap(tree, i, j, iP, jP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     probabilities.add(prob);
@@ -175,7 +174,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                         && (heightJ < tree.getNodeHeight(kP)) ) {
 
                     swap(tree, j, k, jP, kP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     sumForward2 += prob;
@@ -199,7 +198,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                         && (heightI < tree.getNodeHeight(jP)) ) {
 
                     swap(tree, i, j, iP, jP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     sumBackward += prob;
@@ -225,7 +224,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                         && (heightJ < tree.getNodeHeight(kP)) ) {
 
                     swap(tree, j, k, jP, kP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     sumBackward2 += prob;
@@ -251,7 +250,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
      *
      * @throws InvalidTreeException
      */
-    public double prunedWide(Prior prior, Likelihood likelihood) {
+    public double prunedWide(Likelihood likelihood) {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -273,7 +272,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         double heightIP = tree.getNodeHeight(iP);
         double heightI = tree.getNodeHeight(i);
         double sum = 0.0;
-        double backward = calculateTreeLikelihood(prior, likelihood, tree);
+        double backward = calculateTreeLikelihood(likelihood, tree);
         int offset = (int) -backward;
         backward = Math.exp(backward + offset);
         for(int n = 0; n < nodeCount; n++) {
@@ -287,7 +286,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                     secondNodeIndices.add(n);
 
                     swap(tree, i, j, iP, jP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     probabilities.add(prob);
@@ -333,7 +332,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                         && getNodeDistance(kP, jP) <= MAX_DISTANCE ) {
 
                     swap(tree, j, k, jP, kP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     sumForward2 += prob;
@@ -358,7 +357,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                         && getNodeDistance(iP, jP) <= MAX_DISTANCE ) {
 
                     swap(tree, i, j, iP, jP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     sumBackward += prob;
@@ -385,7 +384,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
                         && getNodeDistance(kP, jP) <= MAX_DISTANCE ) {
 
                     swap(tree, j, k, jP, kP);
-                    double prob = Math.exp(calculateTreeLikelihood(prior,
+                    double prob = Math.exp(calculateTreeLikelihood(
                             likelihood, tree)
                             + offset);
                     sumBackward2 += prob;
@@ -406,9 +405,9 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         return hastingsRatio;
     }
 
-    private double calculateTreeLikelihood(Prior prior, Likelihood likelihood,
+    private double calculateTreeLikelihood(Likelihood likelihood,
                                            TreeModel tree) {
-        return evaluate(likelihood, prior, 1.0);
+        return evaluate(likelihood, 1.0);
         // return 0.0;
     }
 

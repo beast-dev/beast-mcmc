@@ -69,7 +69,7 @@ public interface OperatorSchedule extends Serializable {
     /**
      * @return the minimum number of times an operator has been called
      */
-    int getMinimumAcceptAndRejectCount();
+    long getMinimumAcceptAndRejectCount();
 
     public enum OptimizationTransform {
         DEFAULT("default"),

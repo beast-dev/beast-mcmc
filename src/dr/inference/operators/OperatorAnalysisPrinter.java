@@ -103,8 +103,8 @@ public class OperatorAnalysisPrinter {
     }
 
     private static String formattedCountString(MCMCOperator op) {
-        final int count = op.getCount();
-        return formatter.formatToFieldWidth(Integer.toString(count), 10) + " ";
+        final long count = op.getCount();
+        return formatter.formatToFieldWidth(Long.toString(count), 10) + " ";
     }
 
     private static String formattedTimeString(MCMCOperator op) {

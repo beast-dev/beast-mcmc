@@ -53,6 +53,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
+    private static final boolean PREFETCH_DEBUG = false;
 
     public PrefetchTreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                                       TreeModel treeModel,
@@ -162,8 +163,14 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
             if (!isPrefetching) {
                 logLikelihood = calculateLogLikelihood(treeTraversalDelegates[0]);
+                if (PREFETCH_DEBUG) {
+                    System.err.println("PTDL calculated likelihood: " + logLikelihood);
+                }
             } else {
                 logLikelihood = prefetchedLogLikelihoods[currentPrefetch];
+                if (PREFETCH_DEBUG) {
+                    System.err.println("PTDL returning pre-calculated likelihood: " + prefetchedLogLikelihoods[currentPrefetch]);
+                }
             }
             likelihoodKnown = true;
         }
@@ -327,6 +334,9 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     }
 
     private void setAllNodesUpdated() {
+        if (PREFETCH_DEBUG) {
+            System.err.println("TDL setting all nodes to updated - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+        }
         treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].setAllNodesUpdated();
     }
 
@@ -336,6 +346,10 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     protected void updateNode(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;
+
+        if (PREFETCH_DEBUG) {
+            System.err.println("TDL setting update for node " + node.getNumber() + " - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+        }
 
         treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateNode(node);
         likelihoodKnown = false;
@@ -347,6 +361,10 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     protected void updateNodeAndChildren(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
+
+        if (PREFETCH_DEBUG) {
+            System.err.println("TDL setting update for node " + node.getNumber() + " and children - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+        }
 
         treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateNodeAndChildren(node);
         likelihoodKnown = false;
@@ -369,6 +387,10 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     protected void updateAllNodes() {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateAllCount++;
+
+        if (PREFETCH_DEBUG) {
+            System.err.println("TDL setting updating all nodes - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+        }
 
         treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateAllNodes();
 

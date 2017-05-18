@@ -53,6 +53,8 @@ import java.util.Map;
 
 public class SubtreeLeapOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
+    private static final boolean DEBUG = false;
+    
     private double size = 1.0;
     private double accP = 0.234;
 
@@ -136,9 +138,9 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         double reverseProbability = 1.0 / reverseDestinations.size();
 
         // hastings ratio = reverse Prob / forward Prob
-        double logq = Math.log(reverseProbability) - Math.log(forwardProbability);
+        double logHastingsRatio = Math.log(reverseProbability) - Math.log(forwardProbability);
 
-        return new Instance(node, parent, sibling, grandParent, destination, destinationParent, destinationHeight, logq);
+        return new Instance(node, parent, sibling, grandParent, destination, destinationParent, destinationHeight, logHastingsRatio);
     }
 
     protected Instance getLastInstance() {
@@ -148,42 +150,59 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
     protected void applyInstance(Instance instance) {
         tree.beginTreeEdit();
 
-        Instance i = (Instance)instance;
+        NodeRef parent = instance.parent < 0 ? null : tree.getNode(instance.parent);
+        NodeRef grandParent = instance.grandParent < 0 ? null : tree.getNode(instance.grandParent);
+        NodeRef sibling = instance.sibling < 0 ? null : tree.getNode(instance.sibling);
+        NodeRef destination = instance.destination < 0 ? null : tree.getNode(instance.destination);
+        NodeRef destinationParent = instance.destinationParent < 0 ? null : tree.getNode(instance.destinationParent);
 
-        if (i.destination == i.parent || i.destinationParent == i.parent) {
+        if (destination == parent || destinationParent == parent) {
             // the subtree is not actually moving but the height will change
         } else {
-            if (i.grandParent == null) {
+            if (grandParent == null) {
                 // if the parent of the original node is the root then the sibling becomes
                 // the root.
-                tree.removeChild(i.parent, i.sibling);
-                tree.setRoot(i.sibling);
+                if (DEBUG) System.err.println("STL: removing child " + sibling.getNumber() + " of root node " + parent.getNumber());
+
+                tree.removeChild(parent, sibling);
+                if (DEBUG) System.err.println("STL: setting node " + sibling.getNumber() + " as root node ");
+
+                tree.setRoot(sibling);
 
             } else {
                 // remove the parent of node by connecting its sibling to its grandparent.
-                tree.removeChild(i.parent, i.sibling);
-                tree.removeChild(i.grandParent, i.parent);
-                tree.addChild(i.grandParent, i.sibling);
+                if (DEBUG) System.err.println("STL: removing child " + sibling.getNumber() + " of node " + parent.getNumber() );
+                tree.removeChild(parent, sibling);
+                if (DEBUG) System.err.println("STL: removing child " + parent.getNumber() + " of node " + grandParent.getNumber() );
+                tree.removeChild(grandParent, parent);
+                if (DEBUG) System.err.println("STL: setting node " + sibling.getNumber() + " as child of node " + grandParent.getNumber());
+                tree.addChild(grandParent, sibling);
             }
 
-            if (i.destinationParent == null) {
+            if (destinationParent == null) {
                 // adding the node to the root of the tree
-                tree.addChild(i.parent, i.destination);
-                tree.setRoot(i.parent);
+                if (DEBUG) System.err.println("STL: adding node " + destination.getNumber() + " as child of node " + parent.getNumber());
+                tree.addChild(parent, destination);
+                if (DEBUG) System.err.println("STL: setting node " + parent.getNumber() + " as root node ");
+                tree.setRoot(parent);
             } else {
+                if (DEBUG) System.err.println("STL: removing child " + destination.getNumber() + " of node " + destinationParent.getNumber() );
                 // remove destination edge from its parent
-                tree.removeChild(i.destinationParent, i.destination);
+                tree.removeChild(destinationParent, destination);
 
+                if (DEBUG) System.err.println("STL: adding node " + destination.getNumber() + " as child of node " + parent.getNumber());
                 // add destination edge to the parent of node
-                tree.addChild(i.parent, i.destination);
+                tree.addChild(parent, destination);
 
+                if (DEBUG) System.err.println("STL: adding node " + parent.getNumber() + " as child of node " + destinationParent.getNumber());
                 // and add the parent of target node as a child of the former parent of destination
-                tree.addChild(i.destinationParent, i.parent);
+                tree.addChild(destinationParent, parent);
             }
         }
         tree.endTreeEdit();
 
-        tree.setNodeHeight(i.parent, i.destinationHeight);
+        if (DEBUG) System.err.println("STL: setting height of node " + parent.getNumber() + " to " + instance.destinationHeight);
+        tree.setNodeHeight(parent, instance.destinationHeight);
     }
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
@@ -323,22 +342,22 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
     }
 
     class Instance {
-        final NodeRef node;
-        final NodeRef parent;
-        final NodeRef sibling;
-        final NodeRef grandParent;
-        final NodeRef destination;
-        final NodeRef destinationParent;
+        final int node;
+        final int parent;
+        final int sibling;
+        final int grandParent;
+        final int destination;
+        final int destinationParent;
         final double destinationHeight;
         final double logHastingsRatio;
 
         public Instance(NodeRef node, NodeRef parent, NodeRef sibling, NodeRef grandParent, NodeRef destination, NodeRef destinationParent, double destinationHeight, double logHastingsRatio) {
-            this.node = node;
-            this.parent = parent;
-            this.sibling = sibling;
-            this.grandParent = grandParent;
-            this.destination = destination;
-            this.destinationParent = destinationParent;
+            this.node = node == null ? -1 : node.getNumber();
+            this.parent = parent == null ? -1 : parent.getNumber();
+            this.sibling = sibling == null ? -1 : sibling.getNumber();
+            this.grandParent = grandParent == null ? -1 : grandParent.getNumber();
+            this.destination = destination == null ? -1 : destination.getNumber();
+            this.destinationParent = destinationParent == null ? -1 : destinationParent.getNumber();
             this.destinationHeight = destinationHeight;
             this.logHastingsRatio = logHastingsRatio;
         }

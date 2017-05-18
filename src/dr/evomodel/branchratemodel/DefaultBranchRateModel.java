@@ -55,6 +55,11 @@ public final class DefaultBranchRateModel implements BranchRateModel {
         // nothing to do
     }
 
+    public void quietlyRestoreModelState() {
+        // nothing to do
+    }
+
+
     public void acceptModelState() {
         // nothing to do
     }

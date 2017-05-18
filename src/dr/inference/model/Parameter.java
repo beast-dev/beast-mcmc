@@ -107,6 +107,11 @@ public interface Parameter extends Statistic, Variable<Double> {
     void restoreParameterValues();
 
     /**
+     * restores the stored state of this parameter
+     */
+    void quietlyRestoreParameterValues();
+
+    /**
      * accepts the stored state of this parameter
      */
     void acceptParameterValues();
@@ -295,6 +300,10 @@ public interface Parameter extends Statistic, Variable<Double> {
 
                 isValid = true;
             }
+        }
+
+        public final void quietlyRestoreParameterValues() {
+            restoreValues();
         }
 
         public final void acceptParameterValues() {

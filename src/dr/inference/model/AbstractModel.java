@@ -267,7 +267,6 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
 
     public final void restoreModelState() {
         if (!isValidState) {
-            //System.out.println("RESTORE MODEL: " + getModelName() + "/" + getId());
 
             for (Variable variable : variables) {
                 variable.restoreVariableValues();
@@ -277,12 +276,12 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
             }
 
             restoreState();
-            isValidState = true;
 
+            isValidState = true;
             listenerHelper.fireModelRestored(this);
         }
     }
-
+    
     public final void acceptModelState() {
         if (!isValidState) {
             //System.out.println("ACCEPT MODEL: " + getModelName() + "/" + getId());

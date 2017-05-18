@@ -1132,6 +1132,8 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
      */
     @Override
     public void storeState() {
+        if (DEBUG) System.err.println("PMPDLD storing state");
+
         for (int i = 0; i < partitionCount; i++) {
             partialBufferHelper[i].storeState();
             categoryRateBufferHelper[i].storeState();
@@ -1158,6 +1160,7 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
      */
     @Override
     public void restoreState() {
+        if (DEBUG) System.err.println("PMPDLD restoring state");
 
         for (int i = 0; i < partitionCount; i++) {
             partialBufferHelper[i].restoreState();
@@ -1190,6 +1193,7 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
 
     @Override
     protected void acceptState() {
+        if (DEBUG) System.err.println("PMPDLD accepting state");
     }
 
     // **************************************************************

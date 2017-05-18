@@ -105,6 +105,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
 
         nodes = new Node[nodeCount];
         storedNodes = new Node[nodeCount];
+        pushedNodes = new Node[nodeCount];
+        pushedHeights = new double[nodeCount];
 
         int i = 0;
         int j = externalNodeCount;
@@ -122,6 +124,10 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
                 storedNodes[i].taxon = node.taxon;
                 storedNodes[i].number = i;
 
+                pushedNodes[i] = new Node();
+                pushedNodes[i].taxon = node.taxon;
+                pushedNodes[i].number = i;
+
                 i++;
             } else {
                 node.number = j;
@@ -129,6 +135,9 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
                 nodes[j] = node;
                 storedNodes[j] = new Node();
                 storedNodes[j].number = j;
+
+                pushedNodes[j] = new Node();
+                pushedNodes[j].number = j;
 
                 j++;
             }
@@ -598,7 +607,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      */
     protected void storeState() {
 
-        copyNodeStructure(storedNodes);
+        copyNodeStructure(nodes, storedNodes);
         storedRootNumber = root.getNumber();
 
     }
@@ -622,19 +631,42 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     } // nothing to do
 
     /**
-     * Copies the node connections from this TreeModel's nodes array to the
+     * Push a copy of the current tree structure (independent of the formal store/restore mechanism)
+     */
+    public void pushState() {
+        copyNodeStructure(nodes, pushedNodes);
+        for (int i = 0, n = nodes.length; i < n; i++) {
+            pushedHeights[i] = nodes[i].heightParameter.getParameterValue(0);
+        }
+        pushedRootNumber = root.getNumber();
+    }
+
+    /**
+     * Pop a copy of the current tree structure (independent of the formal store/restore mechanism). This
+     * will be done quietly (i.e., will not inform listeners).
+     */
+    public void popState() {
+        copyNodeStructure(pushedNodes, nodes);
+        for (int i = 0, n = nodes.length; i < n; i++) {
+            nodes[i].heightParameter.setParameterValue(0, pushedHeights[i]);
+        }
+        root = nodes[pushedRootNumber];
+    }
+
+    /**
+     * Copies the node connections from the source array to the
      * destination array. Basically it connects up the nodes in destination
-     * in the same way as this TreeModel is set up. This method is package
+     * in the same way as this TreeModel is set up. This method is class
      * private.
      */
-    private void copyNodeStructure(Node[] destination) {
+    private void copyNodeStructure(Node[] source, Node[] destination) {
 
-        if (nodes.length != destination.length) {
+        if (source.length != destination.length) {
             throw new IllegalArgumentException("Node arrays are of different lengths");
         }
 
         for (int i = 0, n = nodes.length; i < n; i++) {
-            Node node0 = nodes[i];
+            Node node0 = source[i];
             Node node1 = destination[i];
 
             // the parameter values are automatically stored and restored
@@ -644,19 +676,19 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             node1.traitParameters = node0.traitParameters;
 
             if (node0.parent != null) {
-                node1.parent = storedNodes[node0.parent.getNumber()];
+                node1.parent = destination[node0.parent.getNumber()];
             } else {
                 node1.parent = null;
             }
 
             if (node0.leftChild != null) {
-                node1.leftChild = storedNodes[node0.leftChild.getNumber()];
+                node1.leftChild = destination[node0.leftChild.getNumber()];
             } else {
                 node1.leftChild = null;
             }
 
             if (node0.rightChild != null) {
-                node1.rightChild = storedNodes[node0.rightChild.getNumber()];
+                node1.rightChild = destination[node0.rightChild.getNumber()];
             } else {
                 node1.rightChild = null;
             }
@@ -1480,7 +1512,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             } else if (rightChild == node) {
                 rightChild = null;
             } else {
-                throw new IllegalArgumentException("Unknown child node");
+                throw new IllegalArgumentException("Unknown child node, " + node.getNumber() + ", of node " + node.getNumber());
             }
             node.parent = null;
             return node;
@@ -1575,12 +1607,15 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      */
     private Node root = null;
     private int storedRootNumber;
+    private int pushedRootNumber;
 
     /**
      * list of internal nodes (including root)
      */
     private Node[] nodes = null;
     private Node[] storedNodes = null;
+    private Node[] pushedNodes = null;
+    private double[] pushedHeights = null;
 
     /**
      * number of nodes (including root and tips)

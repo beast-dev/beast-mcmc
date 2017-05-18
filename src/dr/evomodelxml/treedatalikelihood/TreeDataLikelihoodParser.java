@@ -195,14 +195,42 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
         List<BranchModel> branchModels = new ArrayList<BranchModel>();
 
+        boolean hasSinglePartition = false;
+
+        PatternList patternList = (PatternList)xo.getChild(PatternList.class);
+        if (patternList != null) {
+            hasSinglePartition = true;
+            patternLists.add(patternList);
+
+            GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+            siteRateModels.add(siteRateModel);
+
+            FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+
+            BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
+            if (branchModel == null) {
+                SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+                if (substitutionModel == null) {
+                    substitutionModel = siteRateModel.getSubstitutionModel();
+                }
+                if (substitutionModel == null) {
+                    throw new XMLParseException("No substitution model available for partition in DataTreeLikelihood: "+xo.getId());
+                }
+                branchModel = new HomogeneousBranchModel(substitutionModel, rootFreqModel);
+            }
+            branchModels.add(branchModel);
+        }
 
         int k = 0;
         for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChildName(i).equals(PARTITION)) {
+                if (hasSinglePartition) {
+                    throw new XMLParseException("Either a single set of patterns should be given or multiple 'partitions' elements within DataTreeLikelihood: "+xo.getId());
+                }
                 k += 1;
 
                 XMLObject cxo = (XMLObject)xo.getChild(i);
-                PatternList patternList = (PatternList) cxo.getChild(PatternList.class);
+                patternList = (PatternList) cxo.getChild(PatternList.class);
                 patternLists.add(patternList);
 
                 GammaSiteRateModel siteRateModel = (GammaSiteRateModel) cxo.getChild(GammaSiteRateModel.class);
@@ -223,6 +251,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 }
                 branchModels.add(branchModel);
             }
+        }
+
+        if (patternLists.size() == 0) {
+            throw new XMLParseException("Either a single set of patterns should be given or multiple 'partitions' elements within DataTreeLikelihood: "+xo.getId());
         }
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -278,12 +310,20 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
+
+            // really it should be this set of elements or the PARTITION elements
+            new ElementRule(PatternList.class, true),
+            new ElementRule(SiteRateModel.class, true),
+            new ElementRule(FrequencyModel.class, true),
+            new ElementRule(BranchModel.class, true),
+
             new ElementRule(PARTITION, new XMLSyntaxRule[] {
                     new ElementRule(PatternList.class),
                     new ElementRule(SiteRateModel.class),
                     new ElementRule(FrequencyModel.class, true),
                     new ElementRule(BranchModel.class, true)
-            }, 1, Integer.MAX_VALUE),
+            }, true),
+
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TreeModel.class),
             new ElementRule(TipStatesModel.class, true)

@@ -2,6 +2,7 @@ package dr.inferencexml.distribution;
 
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
+import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
 
 /**
@@ -17,7 +18,7 @@ public class DeterminentalPointProcessPriorParser extends AbstractXMLObjectParse
 
         String name = xo.getName();
         double theta = xo.getDoubleAttribute(THETA);
-        AdaptableSizeFastMatrixParameter data = (AdaptableSizeFastMatrixParameter) xo.getChild(AdaptableSizeFastMatrixParameter.class);
+        MatrixParameterInterface data = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
         return new DeterminentalPointProcessPrior(name, theta, data);
     }
@@ -29,7 +30,7 @@ public class DeterminentalPointProcessPriorParser extends AbstractXMLObjectParse
 
     private final XMLSyntaxRule[] rules = {
 //            new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
-        new ElementRule(AdaptableSizeFastMatrixParameter.class),
+        new ElementRule(MatrixParameterInterface.class),
             AttributeRule.newDoubleRule(THETA),
 
     };

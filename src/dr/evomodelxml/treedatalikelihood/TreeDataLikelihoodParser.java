@@ -297,7 +297,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(SiteRateModel.class),
                     new ElementRule(FrequencyModel.class, true),
                     new ElementRule(BranchModel.class, true)
-            }, true),
+            }, 0, Integer.MAX_VALUE),
 
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TreeModel.class),

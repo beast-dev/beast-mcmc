@@ -34,7 +34,7 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
-import dr.evomodelxml.clock.ACLikelihoodParser;
+import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.speciation.*;
@@ -131,13 +131,20 @@ public class LogGenerator extends Generator {
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + TreeModelParser.ROOT_HEIGHT),
+                            // new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + TreeModelParser.ROOT_HEIGHT),
+                            // Switching to use 'rootAge' in screen log (an absolute date if tip dates are used)
+                            (options.getPartitionTreeModels().size() > 1 ?
+                                    new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + ".rootAge"):
+                                    new Attribute.Default<String>(ColumnsParser.LABEL, "rootAge")
+                            ),
                             new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
                             new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
 
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+            // writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+            // Switching to use 'rootAge' in screen log (an absolute date if tip dates are used)
+            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + TreeModel.TREE_MODEL + ".rootAge");
 
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
@@ -236,6 +243,14 @@ public class LogGenerator extends Generator {
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+        }
+
+        // for convenience, log root age statistic - gives the absolute age of the root given the tip dates.
+        // @todo check for redundancy with rootHeight - if no tip dates or given as heights (time before present)
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            if (model.hasTipCalibrations()) {
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + TreeModel.TREE_MODEL + ".rootAge");
+            }
         }
 
         if (options.useStarBEAST) {

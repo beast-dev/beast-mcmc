@@ -30,10 +30,7 @@ import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.*;
 import dr.xml.*;
 
 
@@ -74,18 +71,11 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
             matrix = formXtXInverse(inMatrix);
         }
 
-//        System.err.println("Matrix:");
-//        System.err.println(new Matrix(matrix));
-
         try {
             cholesky = (new CholeskyDecomposition(matrix)).getL();
         } catch (IllegalDimension illegalDimension) {
             throw new RuntimeException("Unable to decompose matrix in mvnOperator");
         }
-
-//        System.err.println("Cholesky:");
-//        System.err.println(new Matrix(cholesky));
-//        System.exit(-1);
     }
 
     public MultivariateNormalOperator(Parameter parameter, double scaleFactor,
@@ -99,24 +89,29 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
 
         double[][] matrix = new double[P][P];
         for (int i = 0; i < P; i++) {
-            for (int j = 0; j < P; j++) {
+            for (int j = i; j < P; j++) {
                 double total = 0.0;
                 for (int k = 0; k < N; k++) {
                     total += X[k][i] * X[k][j];
                 }
-                matrix[i][j] = total;
+                matrix[j][i] = matrix[i][j] = total;
             }
         }
 
-//        System.err.println("XtX:");
-//        System.err.println(new Matrix(matrix));
-
         // Take inverse
-        matrix = new SymmetricMatrix(matrix).inverse().toComponents();
-        return matrix;
+        double[][] inverse = new SymmetricMatrix(matrix).inverse().toComponents();
+
+        // Force symmetric
+        for (int i = 0; i < inverse.length; ++i) {
+            for (int j = i; j < inverse[i].length; ++j) {
+                inverse[j][i] = inverse[i][j] = (inverse[j][i] + inverse[i][j]) / 2;
+            }
+        }
+
+        return inverse;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[] x = parameter.getParameterValues();
         double[] epsilon = new double[dim];
@@ -130,10 +125,9 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
                 // caution: decomposition returns lower triangular
             }
             parameter.setParameterValueQuietly(i, x[i]);
-//            System.out.println(i+" : "+x[i]);
         }
         parameter.fireParameterChangedEvent();
-//                    System.exit(-1);
+
         return 0;
     }
 

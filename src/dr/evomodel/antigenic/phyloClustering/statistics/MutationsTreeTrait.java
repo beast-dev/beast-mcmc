@@ -1,29 +1,17 @@
 package dr.evomodel.antigenic.phyloClustering.statistics;
 
-import dr.evolution.alignment.ConvertAlignment;
-import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.AminoAcids;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneticCode;
 import dr.evolution.datatype.Nucleotides;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateTraitProvider;
-import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evolution.tree.TreeTrait.Intent;
-import dr.evolution.tree.TreeTraitProvider.Helper;
-import dr.evolution.util.Taxon;
 import dr.evomodel.antigenic.phyloClustering.TreeClusteringVirusesPrior;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;

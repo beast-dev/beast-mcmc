@@ -30,7 +30,7 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
-
+@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
 public class LogisticRegression extends GeneralizedLinearModel {
 
 

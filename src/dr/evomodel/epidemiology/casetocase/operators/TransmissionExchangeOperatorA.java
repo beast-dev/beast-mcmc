@@ -32,7 +32,6 @@ import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -64,7 +63,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         TreeModel tree = c2cLikelihood.getTreeModel();
 
         double hr = exchange();
@@ -76,7 +75,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         return hr;
     }
 
-    public double exchange() throws OperatorFailedException{
+    public double exchange() {
 
         TreeModel tree = c2cLikelihood.getTreeModel();
 
@@ -96,7 +95,8 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         int candidateCount = candidates.size();
 
         if(candidateCount==0){
-            throw new OperatorFailedException("No valid exchanges for this node");
+//            throw new OperatorFailedException("No valid exchanges for this node");
+            return Double.NEGATIVE_INFINITY;
         }
 
         NodeRef j = candidates.get(MathUtils.nextInt(candidates.size()));

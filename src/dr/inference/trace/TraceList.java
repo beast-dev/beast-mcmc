@@ -62,7 +62,7 @@ public interface TraceList {
     /**
      * @return the burn-in for this trace list (the number of actual states to discard)
      */
-    int getBurnIn();
+    long getBurnIn();
 
     /**
      * @return the number of states in the traces (without the burnin)
@@ -77,7 +77,7 @@ public interface TraceList {
     /**
      * @return the size of the step between states
      */
-    int getStepSize();
+    long getStepSize();
 
     /**
      * @return the last state in the chain
@@ -113,6 +113,7 @@ public interface TraceList {
      * @param traceIndex the index of the trace
      * @return the trace distribution statistic object for the given index
      */
+    @Deprecated
     TraceDistribution getDistributionStatistics(int traceIndex);
 
     /**

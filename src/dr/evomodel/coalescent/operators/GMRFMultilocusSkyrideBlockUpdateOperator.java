@@ -45,6 +45,8 @@ import java.util.logging.Logger;
  */
 public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
+    private static boolean FAIL_SILENTLY = false;
+
     private double scaleFactor;
     private double lambdaScaleFactor;
     private int fieldLength;
@@ -206,12 +208,12 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
     }
 
     public DenseVector newtonRaphson(double[] data1, double[] data2, DenseVector currentGamma,
-                                     SymmTridiagMatrix proposedQ, DenseVector ZBeta) throws OperatorFailedException {
+                                     SymmTridiagMatrix proposedQ, DenseVector ZBeta) {
         return newNewtonRaphson(data1, data2, currentGamma, proposedQ, maxIterations, stopValue, ZBeta);
     }
 
     public static DenseVector newNewtonRaphson(double[] data1, double[] data2, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
-                                               int maxIterations, double stopValue, DenseVector ZBeta) throws OperatorFailedException {
+                                               int maxIterations, double stopValue, DenseVector ZBeta) {
 
         DenseVector iterateGamma = currentGamma.copy();
         DenseVector tempValue = currentGamma.copy();
@@ -224,18 +226,34 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
                 jacobian(data2, iterateGamma, proposedQ).solve(gradient(data1, data2, iterateGamma, proposedQ, ZBeta), tempValue);
            } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new OperatorFailedException("");
-            } catch (no.uib.cipr.matrix.MatrixSingularException e) {
+//                throw new OperatorFailedException("");
+               if (FAIL_SILENTLY) {
+                   // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
+                   return null;
+               }
+               throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                       "Try starting BEAST with a more accurate initial tree.");
+           } catch (no.uib.cipr.matrix.MatrixSingularException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new OperatorFailedException("");
-            }     
+//                throw new OperatorFailedException("");
+               if (FAIL_SILENTLY) {
+                   // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
+                   return null;
+               }
+               throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                       "Try starting BEAST with a more accurate initial tree.");
+            }
 
             iterateGamma.add(tempValue);
             numberIterations++;
 
             if (numberIterations > maxIterations) {
+                if (FAIL_SILENTLY) {
+                    // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                         "Try starting BEAST with a more accurate initial tree.");
             }
         }
@@ -268,7 +286,7 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         return jacobian;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double currentPrecision = precisionParameter.getParameterValue(0);
         double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
@@ -304,7 +322,12 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         backwardQW.mult(ZBetaVector, QZBetaCurrent);
 
         DenseVector modeForward = newtonRaphson(numCoalEv, wNative, currentGamma, proposedQ.copy(), ZBetaVector);
-       
+
+        if (modeForward == null) {
+            // used to pass on an OperatorFailedException
+            return Double.NEGATIVE_INFINITY;
+        }
+
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
             diagonal2.set(i, modeForward.get(i) + 1);
@@ -349,6 +372,11 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         diagonal3.zero();
 
         DenseVector modeBackward = newtonRaphson(numCoalEv, wNative, proposedGamma, currentQ.copy(), ZBetaVector);
+
+        if (modeBackward == null) {
+            // used to pass on an OperatorFailedException
+            return Double.NEGATIVE_INFINITY;
+        }
 
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));

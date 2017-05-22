@@ -174,12 +174,12 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         return returnValue;
     }
 
-    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException {
+    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) {
         return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
     }
 
     public static DenseVector newNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
-                                               int maxIterations, double stopValue) throws OperatorFailedException {
+                                               int maxIterations, double stopValue) {
         DenseVector iterateGamma = currentGamma.copy();
         DenseVector tempValue = currentGamma.copy();
 
@@ -191,18 +191,20 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
                 jacobian(data, iterateGamma, proposedQ).solve(gradient(data, iterateGamma, proposedQ), tempValue);
             } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new OperatorFailedException("");
+//                throw new OperatorFailedException("");
+                return null;
             } catch (no.uib.cipr.matrix.MatrixSingularException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
 
-                throw new OperatorFailedException("");
+//                throw new OperatorFailedException("");
+                return null;
             }
             iterateGamma.add(tempValue);
             numberIterations++;
 
             if (numberIterations > maxIterations) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                         "Try starting BEAST with a more accurate initial tree.");
             }
         }
@@ -231,7 +233,7 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         return jacobian;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double currentPrecision = precisionParameter.getParameterValue(0);
         double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
@@ -262,6 +264,11 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         DenseVector diagonal3 = new DenseVector(fieldLength);
 
         DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
+
+        if (modeForward == null) {
+            // used to pass on an OperatorFailedException
+            return Double.NEGATIVE_INFINITY;
+        }
 
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
@@ -296,6 +303,11 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         diagonal3.zero();
 
         DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
+
+        if (modeBackward == null) {
+            // used to pass on an OperatorFailedException
+            return Double.NEGATIVE_INFINITY;
+        }
 
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));

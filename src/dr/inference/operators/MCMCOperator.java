@@ -45,9 +45,8 @@ public interface MCMCOperator extends Serializable {
      * operates on the model.
      *
      * @return the hastings ratio of this operator.
-     * @throws OperatorFailedException if the operator failed and should be rejected
      */
-    double operate() throws OperatorFailedException;
+    double operate();
 
     /**
      * Called to tell operator that operation was accepted
@@ -69,12 +68,12 @@ public interface MCMCOperator extends Serializable {
     /**
      * @return the total number of operations since last call to reset().
      */
-    int getCount();
+    long getCount();
 
     /**
      * @return the number of acceptances since last call to reset().
      */
-    int getAcceptCount();
+    long getAcceptCount();
 
     /**
      * Set the number of acceptances since last call to reset(). This is used
@@ -82,12 +81,12 @@ public interface MCMCOperator extends Serializable {
      *
      * @param acceptCount number of acceptances
      */
-    void setAcceptCount(int acceptCount);
+    void setAcceptCount(long acceptCount);
 
     /**
      * @return the number of rejections since last call to reset().
      */
-    int getRejectCount();
+    long getRejectCount();
 
     /**
      * Set the number of rejections since last call to reset(). This is used
@@ -95,7 +94,7 @@ public interface MCMCOperator extends Serializable {
      *
      * @param rejectCount number of rejections
      */
-    void setRejectCount(int rejectCount);
+    void setRejectCount(long rejectCount);
 
     /**
      * @return the mean deviation in log posterior per accepted operations.
@@ -167,12 +166,12 @@ public interface MCMCOperator extends Serializable {
     class Utils {
 
         public static double getAcceptanceProbability(MCMCOperator op) {
-            final int accepted = op.getAcceptCount();
-            final int rejected = op.getRejectCount();
+            final long accepted = op.getAcceptCount();
+            final long rejected = op.getRejectCount();
             return (double) accepted / (double) (accepted + rejected);
         }
 
-        public static int getOperationCount(MCMCOperator op) {
+        public static long getOperationCount(MCMCOperator op) {
             return op.getAcceptCount() + op.getRejectCount();
         }
     }

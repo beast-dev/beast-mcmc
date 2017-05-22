@@ -33,7 +33,6 @@ import dr.evolution.tree.ImportanceDistribution;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Likelihood;
-import dr.inference.prior.Prior;
 
 import java.util.BitSet;
 import java.util.HashMap;
@@ -517,10 +516,8 @@ public abstract class AbstractCladeImportanceDistribution implements
       */
     public abstract double splitClade(Clade parent, Clade[] children);
 
-    public abstract double setNodeHeights(TreeModel tree,
-                                          Likelihood likelihood, Prior prior);
+    public abstract double setNodeHeights(TreeModel tree, Likelihood likelihood);
 
-    public abstract double getChanceForNodeHeights(TreeModel tree,
-                                                   Likelihood likelihood, Prior prior);
+    public abstract double getChanceForNodeHeights(TreeModel tree, Likelihood likelihood);
 
 }

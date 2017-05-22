@@ -1,8 +1,8 @@
 package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.GeneralDataType;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.GeneralF81Model;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.GeneralF81Model;
 import junit.framework.TestCase;
 
 /**

@@ -25,7 +25,6 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -43,6 +42,8 @@ import java.util.List;
  * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
+
+    private static final boolean DEBUG = false;
 
     private TreeModel tree = null;
     private double size = 1.0;
@@ -79,7 +80,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logq;
 
@@ -101,6 +102,11 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
         final double delta = getDelta();
         final double oldHeight = tree.getNodeHeight(iP);
         final double newHeight = oldHeight + delta;
+
+        if (DEBUG) {
+            System.out.println("\nSubTreeSlideOperator: oldTreeHeight = " + oldTreeHeight);
+            System.out.println("Node selected: " + i + " ; delta = " + delta);
+        }
 
         // 3. if the move is up
         if (delta > 0) {
@@ -186,6 +192,10 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
                 List<NodeRef> newChildren = new ArrayList<NodeRef>();
                 final int possibleDestinations = intersectingEdges(tree, CiP, newHeight, newChildren);
 
+                if (DEBUG) {
+                    System.out.println("possibleDestinations = " + possibleDestinations);
+                }
+
                 // if no valid destinations then return a failure
                 if (newChildren.size() == 0) {
                     return Double.NEGATIVE_INFINITY;
@@ -193,13 +203,27 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
                 // pick a random parent/child destination edge uniformly from options
                 final int childIndex = MathUtils.nextInt(newChildren.size());
+                if (DEBUG) {
+                    for (NodeRef ref : newChildren) {
+                        System.out.println("child: " + ref.getNumber());
+                    }
+                }
                 NodeRef newChild = newChildren.get(childIndex);
                 NodeRef newParent = tree.getParent(newChild);
+
+                if (DEBUG) {
+                    System.out.println("childIndex: " + childIndex);
+                    System.out.println(newChild);
+                    System.out.println(newParent);
+                }
 
                 tree.beginTreeEdit();
 
                 // 4.1.1 if iP was root
                 if (tree.isRoot(iP)) {
+                    if (DEBUG) {
+                        System.out.println("isRoot");
+                    }
                     // new root is CiP
                     tree.removeChild(iP, CiP);
                     tree.removeChild(newParent, newChild);
@@ -269,17 +293,21 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
         }
 
-        if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
+        // just return -Inf
+        //if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
         if (scaledDirichletBranches) {
             if (oldTreeHeight != tree.getNodeHeight(tree.getRoot()))
-                throw new OperatorFailedException("Temporarily disabled."); // TODO calculate Hastings ratio
+                throw new UnsupportedOperationException("Temporarily disabled."); // TODO calculate Hastings ratio
         }
 
         return logq;
     }
 
     private double getDelta() {
+        if (DEBUG) {
+            System.out.println("size = " + size);
+        }
         if (!gaussian) {
             return (MathUtils.nextDouble() * size) - (size / 2.0);
         } else {
@@ -290,6 +318,11 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
     private int intersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> directChildren) {
 
         final NodeRef parent = tree.getParent(node);
+
+        /*if (DEBUG) {
+            System.out.println("intersectingEdges");
+            System.out.println("parent: " + parent);
+        }*/
 
         if (tree.getNodeHeight(parent) < height) return 0;
 

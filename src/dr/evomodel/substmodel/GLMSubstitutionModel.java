@@ -26,7 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.inference.distribution.LogLinearModel;
+import dr.inference.glm.GeneralizedLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
@@ -37,16 +37,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * <b>A irreversible class for any data type where
- * rates come from a log-linear model; allows complex eigenstructures.</b>
- *
  * @author Marc A. Suchard
- * @author Alexei J. Drummond
  */
 public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
     public GLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                LogLinearModel glm) {
+                                GeneralizedLinearModel glm) {
 
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
@@ -64,19 +60,35 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         if (model == glm) {
             updateMatrix = true;
             fireModelChanged();
-        }
-        else
-            super.handleModelChangedEvent(model,object,index);       
+        } else
+            super.handleModelChangedEvent(model, object, index);
     }
 
+    // This info can be gotten from the GLM
+//    public LogColumn[] getColumns() {
+//        return glm.getColumns();
+//    }
+
     public LogColumn[] getColumns() {
-        return glm.getColumns();
+        //Aggregate columns from ComplexSubstitutionModel with glm.columns
+        LogColumn[] aggregated = new LogColumn[glm.getColumns().length + 2];
+        int index = 0;
+        for (LogColumn col : glm.getColumns()) {
+            aggregated[index] = col;
+            index++;
+        }
+        aggregated[index++] = new LikelihoodColumn(getId() + ".L");
+        aggregated[index++] = new NormalizationColumn(getId() + ".Norm");
+
+        return aggregated;
+        //return glm.getColumns();
     }
 
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
         if (logL == 0 &&
-            BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(testProbabilities,this)) { // Also check that graph is connected
+                BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(testProbabilities, this)) {
+            // Also check that graph is connected
             return 0;
         }
         return Double.NEGATIVE_INFINITY;
@@ -93,6 +105,6 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 
-    private LogLinearModel glm;
+    private GeneralizedLinearModel glm;
     private double[] testProbabilities;    
 }

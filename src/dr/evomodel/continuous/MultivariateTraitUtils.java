@@ -27,7 +27,7 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -45,7 +45,7 @@ public class MultivariateTraitUtils {
         Set<String> leafNames = new HashSet<String>();
         leafNames.add(treeModel.getTaxonId(iTip));
         leafNames.add(treeModel.getTaxonId(jTip));
-        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+        return TreeUtils.getCommonAncestorNode(treeModel, leafNames);
     }
 
     public static double[][] computeTreePrecision(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {

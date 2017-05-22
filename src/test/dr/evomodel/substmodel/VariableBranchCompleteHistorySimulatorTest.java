@@ -1,10 +1,10 @@
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.evolution.tree.TreeUtils;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.inference.markovjumps.MarkovJumpsCore;
@@ -37,7 +37,7 @@ public class VariableBranchCompleteHistorySimulatorTest extends CompleteHistoryS
         siteModel.setSubstitutionModel(hky);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
-        double analyticResult = Tree.Utils.getTreeLength(tree, tree.getRoot()) * mu.getParameterValue(0);
+        double analyticResult = TreeUtils.getTreeLength(tree, tree.getRoot()) * mu.getParameterValue(0);
         int nSites = 200;
 
         double[] register1 = new double[stateCount * stateCount];

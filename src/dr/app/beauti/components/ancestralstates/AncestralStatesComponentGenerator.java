@@ -32,7 +32,7 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
-import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
+import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.util.Attribute;
 
 /**
@@ -229,6 +229,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "robustCounting2"),
                         new Attribute.Default<String>("labeling", "N"),
                         new Attribute.Default<String>("prefix", prefix),
+                        new Attribute.Default<String>("saveCompleteHistory",
+                                                        isCompleteHistoryLogging ? "true" : "false"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",

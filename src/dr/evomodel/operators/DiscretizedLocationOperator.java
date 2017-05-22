@@ -31,7 +31,6 @@ import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -169,7 +168,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
         return uniquePoints;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         NodeRef node;
 

@@ -78,7 +78,7 @@ public class PartitionTreeModel extends PartitionOptions {
         ploidyType = source.ploidyType;
     }
 
-    protected void initModelParametersAndOpererators() {
+    public void initModelParametersAndOpererators() {
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
@@ -107,12 +107,8 @@ public class PartitionTreeModel extends PartitionOptions {
 
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param parameters the parameter list
-     */
-    public void selectParameters(List<Parameter> parameters) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> parameters) {
 //        setAvgRootAndRate();
 
         getParameter("tree");
@@ -133,14 +129,11 @@ public class PartitionTreeModel extends PartitionOptions {
             rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
             parameters.add(rootHeightParameter);
         }
+        return parameters;
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param operators the operator list
-     */
-    public void selectOperators(List<Operator> operators) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> operators) {
 //        setAvgRootAndRate();
 
         Operator subtreeSlideOp = getOperator("subtreeSlide");
@@ -162,36 +155,39 @@ public class PartitionTreeModel extends PartitionOptions {
 
         operators.add(getOperator("subtreeLeap"));
 
-        boolean defaultInUse;
-        boolean branchesInUse;
-        boolean newMixInUse;
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            // do nothing
+            boolean defaultInUse = false;
+            boolean branchesInUse = false;
+            boolean newTreeOperatorsInUse = false;
+            boolean adaptiveMultivariateInUse = false;
 
-        // if not a fixed tree then sample tree space
-        if (options.operatorSetType == OperatorSetType.DEFAULT) {
-            defaultInUse = true;
-            branchesInUse = true;
-            newMixInUse = false;
-        } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-            defaultInUse = false;
-            branchesInUse = false;
-            newMixInUse = true;
-        } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
-            defaultInUse = false;
-            branchesInUse = true;
-            newMixInUse = false;
-        } else {
-            throw new IllegalArgumentException("Unknown operator set type");
+            // if not a fixed tree then sample tree space
+            if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                defaultInUse = true;
+                branchesInUse = true;
+            } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
+                newTreeOperatorsInUse = true;
+            } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
+                branchesInUse = true;
+            } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
+                newTreeOperatorsInUse = true;
+                adaptiveMultivariateInUse = true;
+            } else {
+                throw new IllegalArgumentException("Unknown operator set type");
+            }
+
+            getOperator("subtreeSlide").setUsed(defaultInUse);
+            getOperator("narrowExchange").setUsed(defaultInUse);
+            getOperator("wideExchange").setUsed(defaultInUse);
+            getOperator("wilsonBalding").setUsed(defaultInUse);
+
+            getOperator("treeModel.rootHeight").setUsed(branchesInUse);
+            getOperator("uniformHeights").setUsed(branchesInUse);
+
+            getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
         }
-
-        getOperator("subtreeSlide").setUsed(defaultInUse);
-        getOperator("narrowExchange").setUsed(defaultInUse);
-        getOperator("wideExchange").setUsed(defaultInUse);
-        getOperator("wilsonBalding").setUsed(defaultInUse);
-
-        getOperator("treeModel.rootHeight").setUsed(branchesInUse);
-        getOperator("uniformHeights").setUsed(branchesInUse);
-
-        getOperator("subtreeLeap").setUsed(newMixInUse);
+        return operators;
     }
 
     /////////////////////////////////////////////////////////////
@@ -233,10 +229,17 @@ public class PartitionTreeModel extends PartitionOptions {
         this.hasTipCalibrations = hasTipCalibrations;
     }
 
+    public boolean hasTipCalibrations() {
+        return hasTipCalibrations;
+    }
+
     public void setNodeCalibrations(boolean hasNodeCalibrations) {
         this.hasNodeCalibrations = hasNodeCalibrations;
     }
 
+    public boolean hasNodeCalibrations() {
+        return hasNodeCalibrations;
+    }
 
     public void setPloidyType(PloidyType ploidyType) {
         this.ploidyType = ploidyType;

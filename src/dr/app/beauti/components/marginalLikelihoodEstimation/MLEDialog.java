@@ -44,13 +44,14 @@ public class MLEDialog {
 
     private final OptionsPanel optionsPanel;
 
-    private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName, labelStepDistribution;
+    private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName, labelResultFileName, labelStepDistribution;
 
     private WholeNumberField pathStepsField = new WholeNumberField(1, Integer.MAX_VALUE);
     private WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
     private WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
     private JTextArea logFileNameField = new JTextArea("mle.log");
+    private JTextArea resultFileNameField = new JTextArea("mle.result.log");
 
     JCheckBox operatorAnalysis = new JCheckBox("Print operator analysis");
 
@@ -144,6 +145,24 @@ public class MLEDialog {
 
         optionsPanel.addSeparator();
 
+        resultFileNameField.setColumns(32);
+        resultFileNameField.setEditable(false);
+        resultFileNameField.setMinimumSize(resultFileNameField.getPreferredSize());
+        labelResultFileName = optionsPanel.addComponentWithLabel("Results file name:", resultFileNameField);
+        resultFileNameField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.mleResultFileName = resultFileNameField.getText();
+            }
+        });
+
+        optionsPanel.addSeparator();
+
         JTextArea betaInfo = new JTextArea("By default, the power posteriors are determined according to " +
                 "evenly spaced quantiles of a Beta(0.3, 1.0) distribution, thereby estimating " +
                 "more power posteriors close to the prior.");
@@ -229,7 +248,9 @@ public class MLEDialog {
 
     public void setFilenameStem(String fileNameStem, boolean addTxt) {
         logFileNameField.setText(fileNameStem + ".mle.log" + (addTxt ? ".txt" : ""));
+        resultFileNameField.setText(fileNameStem + ".mle.result.log" + (addTxt ? ".txt" : ""));
         options.mleFileName = logFileNameField.getText();
+        options.mleResultFileName = resultFileNameField.getText();
     }
 
     public void setOptions(MarginalLikelihoodEstimationOptions options) {
@@ -245,6 +266,7 @@ public class MLEDialog {
         logEveryField.setValue(options.mleLogEvery);
 
         logFileNameField.setText(options.mleFileName);
+        resultFileNameField.setText(options.mleResultFileName);
 
         operatorAnalysis.setSelected(options.printOperatorAnalysis);
 
@@ -262,6 +284,7 @@ public class MLEDialog {
         options.printOperatorAnalysis = operatorAnalysis.isSelected();
 
         options.mleFileName = logFileNameField.getText();
+        options.mleResultFileName = resultFileNameField.getText();
 
         /*System.err.println("getOptions: " + options);
         System.err.println("options.pathSteps: " + options.pathSteps);

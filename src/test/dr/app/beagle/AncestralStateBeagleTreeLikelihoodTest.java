@@ -1,11 +1,10 @@
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.evolution.tree.TreeUtils;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
@@ -17,12 +16,11 @@ import dr.math.MathUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Parameter;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
 
 
 /**
@@ -116,7 +114,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
 
 //        Tree.Utils.newick(treeModel, treeModel.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
 //                null, null, new NodeAttributeProvider[]{treeLikelihood}, null, null, buffer);
-        Tree.Utils.newick(treeModel, treeModel.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+        TreeUtils.newick(treeModel, treeModel.getRoot(), false, TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
                 null, null, new TreeTraitProvider[] { treeLikelihood }, null, buffer);
 
         System.out.println(buffer);

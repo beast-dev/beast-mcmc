@@ -69,7 +69,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 		this.id = id;
 
-		mc = new MarkovChain(null, likelihood, schedule, new GreatDelugeCriterion(0.2), 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, false);
+		mc = new MarkovChain(likelihood, schedule, new GreatDelugeCriterion(0.2), 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, false);
         //mc = new MarkovChain(null, likelihood, schedule, new HillClimbingCriterion(), false);
 
 		this.chainLength = chainLength;
@@ -142,42 +142,33 @@ public class MLOptimizer implements Runnable, Identifiable {
 	}
 
     private final MarkovChainListener chainListener = new MarkovChainListener() {
-	// for receiving messages from subordinate MarkovChain
+		@Override
+		public void bestState(long state, MarkovChain markovChain, Model bestModel) {
+			currentState = state;
+		}
 
-        /**
-         * Called to update the current model keepEvery states.
-         */
-        public void currentState(long state, Model currentModel) {
+		@Override
+		public void currentState(long state, MarkovChain markovChain, Model currentModel) {
 
-            currentState = state;
+			currentState = state;
 
-            if (loggers != null) {
-                for (Logger logger : loggers) {
-                    logger.log(state);
-                }
-            }
-        }
+			if (loggers != null) {
+				for (Logger logger : loggers) {
+					logger.log(state);
+				}
+			}
+		}
 
-        /** Called when a new new best posterior state is found. */
-        public void bestState(long state, Model bestModel) {
-            currentState = state;
-        }
+		@Override
+		public void finished(long chainLength, MarkovChain markovChain) {
+			currentState = chainLength;
 
-        /** Called when a new new best likelihood state is found. */
-        public void bestLklModel(long state, Model bestModel) {
-            currentState = state;
-        }
-
-        /** cleans up when the chain finishes (possibly early). */
-        public void finished(long chainLength) {
-            currentState = chainLength;
-
-            if (loggers != null) {
-                for (Logger logger : loggers) {
-                    logger.log(currentState);
-                    logger.stopLogging();
-                }
-            }
+			if (loggers != null) {
+				for (Logger logger : loggers) {
+					logger.log(currentState);
+					logger.stopLogging();
+				}
+			}
 
            /* if (false) {
                 NumberFormatter formatter = new NumberFormatter(8);
@@ -193,8 +184,14 @@ public class MLOptimizer implements Runnable, Identifiable {
                 System.out.println();
             }
 */
+		}
+		// for receiving
+        /** Called when a new new best likelihood state is found. */
+        public void bestLklModel(long state, Model bestModel) {
+            currentState = state;
         }
-    };
+
+	};
 
 	/**
 	 * Creates a DOM element that represents this MCMC analysis.

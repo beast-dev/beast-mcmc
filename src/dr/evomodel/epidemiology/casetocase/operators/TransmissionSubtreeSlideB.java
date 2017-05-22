@@ -91,7 +91,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
 
         if(DEBUG){
@@ -393,7 +393,8 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
         }
 
-        if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
+        // just return -Inf: will reject move
+//        if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
         if (DEBUG) {
             c2cLikelihood.getTreeModel().checkPartitions();

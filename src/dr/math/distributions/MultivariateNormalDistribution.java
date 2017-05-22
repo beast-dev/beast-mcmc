@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
@@ -32,7 +33,8 @@ import dr.math.matrixAlgebra.*;
 /**
  * @author Marc Suchard
  */
-public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator {
+public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator,
+        GradientProvider {
 
     public static final String TYPE = "MultivariateNormal";
 
@@ -157,6 +159,46 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
     }
 
+    public double[] gradLogPdf(double[] x) {
+        if (hasSinglePrecision) {
+            return gradLogPdf(x, mean, singlePrecision);
+        } else {
+            return gradLogPdf(x, mean, precision);
+        }
+    }
+
+    public static double[] gradLogPdf(double[] x, double[] mean, double singlePrecision) {
+
+        final int dim = x .length;
+        final double[] gradient = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            gradient[i] = singlePrecision * (mean[i] - x[i]);
+        }
+
+        return gradient;
+    }
+
+    public static double[] gradLogPdf(double[] x, double[] mean, double[][] precision) {
+        final int dim = x.length;
+        final double[] gradient = new double[dim];
+        final double[] delta = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            delta[i] = mean[i] - x[i];
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            double sum = 0;
+            for (int j = 0; j <dim; ++j) {
+                sum += precision[i][j] * delta[j];
+            }
+            gradient[i] = sum;
+        }
+
+        return gradient;
+    }
+
     // scale only modifies precision
     // in one dimension, this is equivalent to:
     // PDF[NormalDistribution[mean, Sqrt[scale]*Sqrt[1/precison]], x]
@@ -258,6 +300,25 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
     }
 
+    public static void nextMultivariateNormalCholesky(final WrappedVector mean, final double[][] cholesky,
+                                                      final double sqrtScale, final WrappedVector result,
+                                                      final double[] epsilon) {
+
+        final int dim = mean.getDim();
+        for (int i = 0; i < dim; i++) {
+            epsilon[i] = MathUtils.nextGaussian() * sqrtScale;
+        }
+
+        for (int i = 0; i < dim; i++) {
+            double x = mean.get(i);
+            for (int j = 0; j <= i; j++) {
+                x += cholesky[i][j] * epsilon[j];
+                // caution: decomposition returns lower triangular
+            }
+            result.set(i, x);
+        }
+    }
+
     public static void nextMultivariateNormalCholesky(final double[] mean, final int meanOffset, final double[][] cholesky,
                                                       final double sqrtScale, final double[] result, final int resultOffset,
                                                       final double[] epsilon) {
@@ -351,6 +412,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     @Override
     public int getDimension() { return mean.length; }
+
+    @Override
+    public double[] getGradientLogDensity(Object x) {
+        return gradLogPdf((double[]) x);
+    }
 
     @Override
     public double[][] getPrecisionMatrix() {

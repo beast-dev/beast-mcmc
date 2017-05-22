@@ -27,6 +27,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodelxml.speciation.BetaSplittingModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -101,8 +102,8 @@ public class BetaSplittingModel extends BranchingModel {
 
         if (tree.isExternal(node)) return 0.0;
 
-        int leftChildren = Tree.Utils.getLeafCount(tree, tree.getChild(node, 0));
-        int rightChildren = Tree.Utils.getLeafCount(tree, tree.getChild(node, 1));
+        int leftChildren = TreeUtils.getLeafCount(tree, tree.getChild(node, 0));
+        int rightChildren = TreeUtils.getLeafCount(tree, tree.getChild(node, 1));
 
         // calculate the probability of this pair..
 

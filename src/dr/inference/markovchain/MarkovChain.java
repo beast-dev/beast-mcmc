@@ -31,7 +31,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
 import dr.inference.operators.*;
-import dr.inference.prior.Prior;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -49,7 +48,6 @@ import java.util.logging.Logger;
 public final class MarkovChain implements Serializable {
     private static final long serialVersionUID = 181L;
 
-
     private final static boolean DEBUG = false;
     private final static boolean PROFILE = true;
 
@@ -57,7 +55,6 @@ public final class MarkovChain implements Serializable {
 
     private final OperatorSchedule schedule;
     private final Acceptor acceptor;
-    private final Prior prior;
     private final Likelihood likelihood;
 
     private boolean pleaseStop = false;
@@ -73,13 +70,12 @@ public final class MarkovChain implements Serializable {
     private double evaluationTestThreshold = EVALUATION_TEST_THRESHOLD;
 
 
-    public MarkovChain(Prior prior, Likelihood likelihood,
+    public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
                        long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold,
                        boolean useCoercion) {
 
         currentLength = 0;
-        this.prior = prior;
         this.likelihood = likelihood;
         this.schedule = schedule;
         this.acceptor = acceptor;
@@ -98,7 +94,7 @@ public final class MarkovChain implements Serializable {
             }
         }
 
-        currentScore = evaluate(likelihood, prior);
+        currentScore = evaluate(likelihood);
     }
 
     /**
@@ -121,7 +117,7 @@ public final class MarkovChain implements Serializable {
     public long runChain(long length, boolean disableCoerce) {
 
         likelihood.makeDirty();
-        currentScore = evaluate(likelihood, prior);
+        currentScore = evaluate(likelihood);
 
         long currentState = currentLength;
 
@@ -136,15 +132,6 @@ public final class MarkovChain implements Serializable {
         if (currentScore == Double.NEGATIVE_INFINITY) {
 
             // identify which component of the score is zero...
-            if (prior != null) {
-                double logPrior = prior.getLogPrior(likelihood.getModel());
-
-                if (logPrior == Double.NEGATIVE_INFINITY) {
-                    throw new IllegalArgumentException(
-                            "The initial model is invalid because one of the priors has zero probability.");
-                }
-            }
-
             String message = "The initial likelihood is zero";
             if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
@@ -215,23 +202,39 @@ public final class MarkovChain implements Serializable {
 
             logr[0] = -Double.MAX_VALUE;
 
-            try {
-                // The new model is proposed
-                // assert Profiler.startProfile("Operate");
+            long elaspedTime = 0;
+            if (PROFILE) {
+                elaspedTime = System.currentTimeMillis();
+            }
+
+            // The new model is proposed
+            // assert Profiler.startProfile("Operate");
 
                 if (DEBUG) {
+                    System.out.println("\n>> Iteration: " + currentState);
                     System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
                 }
 
-                if (mcmcOperator instanceof GeneralOperator) {
-                    hastingsRatio = ((GeneralOperator) mcmcOperator).operate(prior, likelihood);
-                } else {
-                    hastingsRatio = mcmcOperator.operate();
-                }
+            if (mcmcOperator instanceof GeneralOperator) {
+                hastingsRatio = ((GeneralOperator) mcmcOperator).operate(likelihood);
+            } else {
+                hastingsRatio = mcmcOperator.operate();
+            }
 
-                // assert Profiler.stopProfile("Operate");
-            } catch (OperatorFailedException e) {
+            // assert Profiler.stopProfile("Operate");
+            if (hastingsRatio == Double.NEGATIVE_INFINITY) {
+                // Should the evaluation be short-cutted?
+                // Previously this was set to false if OperatorFailedException was thrown.
+                // Now a -Inf HR is returned.
                 operatorSucceeded = false;
+            }
+
+            if (PROFILE) {
+                long duration = System.currentTimeMillis() - elaspedTime;
+                if (DEBUG) {
+                    System.out.println("Time: " + duration);
+                }
+                mcmcOperator.addEvaluationTime(duration);
             }
 
             double score = Double.NaN;
@@ -253,7 +256,7 @@ public final class MarkovChain implements Serializable {
                 }
 
                 // The new model is evaluated
-                score = evaluate(likelihood, prior);
+                score = evaluate(likelihood);
 
                 if (PROFILE) {
                     long duration = System.currentTimeMillis() - elapsedTime;
@@ -298,7 +301,7 @@ public final class MarkovChain implements Serializable {
                     // BEAST is aware of all changes that the operator induced.
 
                     likelihood.makeDirty();
-                    final double testScore = evaluate(likelihood, prior);
+                    final double testScore = evaluate(likelihood);
 
                     final String d2 = likelihood instanceof CompoundLikelihood ?
                             ((CompoundLikelihood) likelihood).getDiagnosis() : "";
@@ -355,7 +358,7 @@ public final class MarkovChain implements Serializable {
                     // that before the operation was made.
 
                     likelihood.makeDirty();
-                    final double testScore = evaluate(likelihood, prior);
+                    final double testScore = evaluate(likelihood);
 
                     final String d2 = likelihood instanceof CompoundLikelihood ?
                             ((CompoundLikelihood) likelihood).getDiagnosis() : "";
@@ -416,10 +419,6 @@ public final class MarkovChain implements Serializable {
         // Profiler.report();
     }
 
-    public Prior getPrior() {
-        return prior;
-    }
-
     public Likelihood getLikelihood() {
         return likelihood;
     }
@@ -465,22 +464,12 @@ public final class MarkovChain implements Serializable {
     }
 
     public double evaluate() {
-        return evaluate(likelihood, prior);
+        return evaluate(likelihood);
     }
 
-    protected double evaluate(Likelihood likelihood, Prior prior) {
+    protected double evaluate(Likelihood likelihood) {
 
         double logPosterior = 0.0;
-
-        if (prior != null) {
-            final double logPrior = prior.getLogPrior(likelihood.getModel());
-
-            if (logPrior == Double.NEGATIVE_INFINITY) {
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            logPosterior += logPrior;
-        }
 
         final double logLikelihood = likelihood.getLogLikelihood();
 
@@ -504,6 +493,10 @@ public final class MarkovChain implements Serializable {
      */
     private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
 
+        if (DEBUG) {
+            System.out.println("coerceAcceptanceProbability " + isCoercable(op));
+        }
+
         if (isCoercable(op)) {
             final double p = op.getCoercableParameter();
 
@@ -515,6 +508,9 @@ public final class MarkovChain implements Serializable {
 
             if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
                 op.setCoercableParameter(newp);
+                if (DEBUG) {
+                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " logr: " + logr);
+                }
             }
         }
     }
@@ -526,56 +522,38 @@ public final class MarkovChain implements Serializable {
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {
-        listeners.add(listener);
+        if (listener != null) {
+            listeners.add(listener);
+        }
     }
 
     public void removeMarkovChainListener(MarkovChainListener listener) {
         listeners.remove(listener);
     }
 
-    public void addMarkovChainDelegate(MarkovChainDelegate delegate) {
-        delegates.add(delegate);
-    }
-
-    public void removeMarkovChainDelegate(MarkovChainDelegate delegate) {
-        delegates.remove(delegate);
-    }
-
 
     private void fireBestModel(long state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
-            listener.bestState(state, bestModel);
+            listener.bestState(state, this, bestModel);
         }
     }
 
     private void fireCurrentModel(long state, Model currentModel) {
         for (MarkovChainListener listener : listeners) {
-            listener.currentState(state, currentModel);
-        }
-
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.currentState(state);
+            listener.currentState(state, this, currentModel);
         }
     }
 
     private void fireFinished(long chainLength) {
 
         for (MarkovChainListener listener : listeners) {
-            listener.finished(chainLength);
-        }
-
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.finished(chainLength);
+            listener.finished(chainLength, this);
         }
     }
 
     private void fireEndCurrentIteration(long state) {
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.currentStateEnd(state);
-        }
     }
 
     private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
-    private final ArrayList<MarkovChainDelegate> delegates = new ArrayList<MarkovChainDelegate>();
 }

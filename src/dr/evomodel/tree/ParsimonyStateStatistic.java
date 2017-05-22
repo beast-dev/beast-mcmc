@@ -27,6 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
 
@@ -42,13 +43,13 @@ import java.util.Set;
  */
 public class ParsimonyStateStatistic extends Statistic.Abstract implements TreeStatistic {
 
-    public ParsimonyStateStatistic(String name, Tree tree, TaxonList stateTaxa, TaxonList mrcaTaxa) throws Tree.MissingTaxonException {
+    public ParsimonyStateStatistic(String name, Tree tree, TaxonList stateTaxa, TaxonList mrcaTaxa) throws TreeUtils.MissingTaxonException {
 
         super(name);
         this.tree = tree;
-        this.stateLeafSet = Tree.Utils.getLeavesForTaxa(tree, stateTaxa);
+        this.stateLeafSet = TreeUtils.getLeavesForTaxa(tree, stateTaxa);
         if (mrcaTaxa != null) {
-            this.mrcaLeafSet = Tree.Utils.getLeavesForTaxa(tree, mrcaTaxa);
+            this.mrcaLeafSet = TreeUtils.getLeavesForTaxa(tree, mrcaTaxa);
         }
     }
 
@@ -72,11 +73,11 @@ public class ParsimonyStateStatistic extends Statistic.Abstract implements TreeS
         NodeRef node;
 
         if (mrcaLeafSet != null) {
-            node = Tree.Utils.getCommonAncestorNode(tree, mrcaLeafSet);
+            node = TreeUtils.getCommonAncestorNode(tree, mrcaLeafSet);
         } else {
             node = tree.getRoot();
         }
-        return Tree.Utils.getParsimonyState(tree, node, stateLeafSet);
+        return TreeUtils.getParsimonyState(tree, node, stateLeafSet);
     }
 
     private Tree tree = null;

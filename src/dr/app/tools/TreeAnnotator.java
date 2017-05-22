@@ -26,16 +26,12 @@
 package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
-import dr.app.phylogeography.tools.DiscreteTreeToKML;
 import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
 import dr.geo.contouring.ContourPath;
@@ -156,7 +152,7 @@ public class TreeAnnotator {
         if (targetOption != Target.USER_TARGET_TREE) {
             cladeSystem = new CladeSystem();
             FileReader fileReader = new FileReader(inputFileName);
-            TreeImporter importer = new NexusImporter(fileReader);
+            TreeImporter importer = new NexusImporter(fileReader, true);
             try {
                 totalTrees = 0;
                 while (importer.hasTree()) {
@@ -376,7 +372,7 @@ public class TreeAnnotator {
 
         int counter = 0;
         int bestTreeNumber = 0;
-        TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
+        TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
         try {
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
@@ -1534,7 +1530,7 @@ public class TreeAnnotator {
         if (reportStepSize < 1) reportStepSize = 1;
 
         final FileReader fileReader = new FileReader(inputFileName);
-        final NexusImporter importer = new NexusImporter(fileReader);
+        final NexusImporter importer = new NexusImporter(fileReader, true);
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below
@@ -1566,7 +1562,7 @@ public class TreeAnnotator {
             final Tree tree = importer.importNextTree();
 
             if (counter >= burnin) {
-                Tree.Utils.preOrderTraversalList(tree, postOrderList);
+                TreeUtils.preOrderTraversalList(tree, postOrderList);
                 cladeSystem.getTreeCladeCodes(tree, ctree);
                 for (int k = 0; k < nClades; ++k) {
                     int j = postOrderList[k];

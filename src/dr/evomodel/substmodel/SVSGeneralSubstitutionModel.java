@@ -1,7 +1,7 @@
 /*
  * SVSGeneralSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
@@ -36,35 +36,50 @@ import dr.util.CommonCitations;
 import java.util.*;
 
 /**
- * <b>A general model of sequence substitution with stochastic variable selection</b>. A general reversible class for any
- * data type.
- *
  * @author Marc Suchard
- * @version $Id: SVSGeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 msuchard Exp $
  */
 
 public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements Likelihood,
         BayesianStochasticSearchVariableSelection, Citable {
 
+    public SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
+                                       Parameter ratesParameter, Parameter indicatorsParameter) {
+        super(name, dataType, freqModel, ratesParameter, -1);
 
-    public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
-                                       Parameter indicator) {
-        super(dataType, freqModel, parameter, 1);
-
-        if (indicator != null) {
-            rateIndicator = indicator;
-            addVariable(rateIndicator);
+        if (indicatorsParameter == null) {
+            this.indicatorsParameter = new Parameter.Default(ratesParameter.getDimension(), 1.0);
         } else {
-            rateIndicator = new Parameter.Default(parameter.getDimension(), 1.0);
+            this.indicatorsParameter  = indicatorsParameter;
+            addVariable(indicatorsParameter);
+        }
+
+        setupIndicatorDimensionNames(-1);
+    }
+
+    @Override
+    protected void setupRelativeRates(double[] rates) {
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] = ratesParameter.getParameterValue(i) * indicatorsParameter.getParameterValue(i);
         }
     }
 
-    protected SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
-        super(name, dataType, freqModel, relativeTo);
+    protected void setupIndicatorDimensionNames(int relativeTo) {
+        List<String> indicatorNames = new ArrayList<String>();
+
+        String indicatorPrefix = indicatorsParameter.getParameterName();
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                indicatorNames.add(getDimensionString(i, j, indicatorPrefix));
+            }
+        }
+
+        String[] tmp = new String[0];
+        indicatorsParameter.setDimensionNames(indicatorNames.toArray(tmp));
     }
 
     public Parameter getIndicators() {
-        return rateIndicator;
+        return indicatorsParameter;
     }
 
     public boolean validState() {
@@ -72,7 +87,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == ratesParameter && rateIndicator.getParameterValue(index) == 0)
+        if (variable == ratesParameter && indicatorsParameter.getParameterValue(index) == 0)
             return; // Does not affect likelihood
         super.handleVariableChangedEvent(variable,index,type);
     }
@@ -122,55 +137,6 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return "SVSGeneralSubstitutionModel-connectedness";
     }
 
-      // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
-
-    public LogColumn[] getColumns() {
-        return new LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
-
-    protected class LikelihoodColumn extends NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
-
-    private double[] probability = null;
-
-    protected void setupRelativeRates() {
-
-        for (int i = 0; i < relativeRates.length; i++) {
-            relativeRates[i] = ratesParameter.getParameterValue(i) * rateIndicator.getParameterValue(i);
-        }
-    }
-
-    void normalize(double[][] matrix, double[] pi) {
-        double subst = 0.0;
-        int dimension = pi.length;
-
-        //final int dim = rateIndicator.getDimension();
-        //int sum = 0;
-        //for (int i = 0; i < dim; i++)
-        //	sum += rateIndicator.getParameterValue(i);
-
-
-        for (int i = 0; i < dimension; i++)
-            subst += -matrix[i][i] * pi[i];
-
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                matrix[i][j] = matrix[i][j] / subst; // / sum;
-            }
-        }
-    }
-
     @Override
     public Set<Likelihood> getLikelihoodSet() {
         return new HashSet<Likelihood>(Arrays.asList(this));
@@ -187,7 +153,15 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
     private boolean isUsed = false;
 
-    private Parameter rateIndicator;
+    // **************************************************************
+    // Loggable IMPLEMENTATION
+    // **************************************************************
+
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
 
     @Override
     public Citation.Category getCategory() {
@@ -203,4 +177,20 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     public List<Citation> getCitations() {
         return Collections.singletonList(CommonCitations.LEMEY_2009_BAYESIAN);
     }
+
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
+    }
+
+    private double[] probability = null;
+
+    private final Parameter indicatorsParameter;
+
+
 }

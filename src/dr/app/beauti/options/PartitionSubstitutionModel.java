@@ -25,6 +25,8 @@
 
 package dr.app.beauti.options;
 
+import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.types.*;
@@ -32,8 +34,6 @@ import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.datatype.Nucleotides;
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -50,6 +50,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     // Instance variables
 
+    public static final String GTR_RATES = "gtr.rates";
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
 
@@ -139,49 +140,58 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     // only init in PartitionSubstitutionModel
-    protected void initModelParametersAndOpererators() {
+    @Override
+    public void initModelParametersAndOpererators() {
         double substWeights = 1.0;
 
         //Substitution model parameters
-        createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25);
-        createZeroOneParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1", 0.25);
-        createZeroOneParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2", 0.25);
-        createZeroOneParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", 0.25);
-        createZeroOneParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3", 0.25);
+        if (options.FREQUENCIES_DIRICLET_PRIOR) {
+            createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP3.frequencies", "base frequencies for codon position 3", this, 1.0, true);
+        } else {
+            createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25, true);
+            createZeroOneParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1", 0.25, true);
+            createZeroOneParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2", 0.25, true);
+            createZeroOneParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", 0.25, true);
+            createZeroOneParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3", 0.25, true);
+        }
 
         //This prior is moderately diffuse with a median of 2.718
         createParameterLognormalPrior("kappa", "HKY transition-transversion parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP1.kappa", "HKY transition-transversion parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP2.kappa", "HKY transition-transversion parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP3.kappa", "HKY transition-transversion parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
 
         createParameterLognormalPrior("kappa1", "TN93 1st transition-transversion parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP1.kappa1", "TN93 1st transition-transversion parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP2.kappa1", "TN93 1st transition-transversion parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP1+2.kappa1", "TN93 1st transition-transversion parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP3.kappa1", "TN93 1st transition-transversion parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
 
         createParameterLognormalPrior("kappa2", "TN93 2nd transition-transversion parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP1.kappa2", "TN93 2nd transition-transversion parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP2.kappa2", "TN93 2nd transition-transversion parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP1+2.kappa2", "TN93 2nd transition-transversion parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
         createParameterLognormalPrior("CP3.kappa2", "TN93 2nd transition-transversion parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
 
 //        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
 //        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -190,68 +200,92 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 //        createParameter("CP3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
         // create the relative rate parameters for the GTR rate matrix
-        for (int j = 0; j < 5; j++) {
-            if (j == 1) { // ag
-                createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
-            } else {
-                createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
-            }
 
+        if (options.NEW_GTR_PARAMETERIZATION) {
+            createNonNegativeParameterDirichletPrior(GTR_RATES, "GTR transition rates parameter",
+                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
             for (int i = 1; i <= 3; i++) {
-                if (j == 1) { // ag
-                    createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
-                } else {
-                    createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
-                }
+                createNonNegativeParameterDirichletPrior("CP" + i + "." + GTR_RATES, "GTR transition rates parameter",
+                        this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
             }
+            createNonNegativeParameterDirichletPrior("CP1+2." + GTR_RATES, "GTR transition rates parameter",
+                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
+        } else {
+            for (int j = 0; j < 5; j++) {
+                if (j == 1) { // ag
+                    createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
+                } else {
+                    createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
+                }
 
-            if (j == 1) { // ag
-                createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
-            } else {
-                createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
+                for (int i = 1; i <= 3; i++) {
+                    if (j == 1) { // ag
+                        createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
+                                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
+                    } else {
+                        createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
+                                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
+                    }
+                }
+
+                if (j == 1) { // ag
+                    createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
+                } else {
+                    createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
+                }
             }
         }
 
 //        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
 //
 //        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createZeroOneParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates", 0.5);
-        createZeroOneParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode", 0.5);
+        createZeroOneParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates", 0.5, true);
+        createZeroOneParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode", 0.5, true);
         createParameterGammaPrior("bcov.s", "Binary Covarion rate of flipping between slow and fast modes",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, false);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, false, true);
 
         createParameterExponentialPrior("alpha", "gamma shape parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, true);
         createParameterExponentialPrior("CP1.alpha", "gamma shape parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, true);
         createParameterExponentialPrior("CP2.alpha", "gamma shape parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, true);
         createParameterExponentialPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, true);
         createParameterExponentialPrior("CP3.alpha", "gamma shape parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, true);
 
-        createZeroOneParameterUniformPrior("pInv", "proportion of invariant sites parameter", 0.5);
-        createZeroOneParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1", 0.5);
-        createZeroOneParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2", 0.5);
-        createZeroOneParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", 0.5);
-        createZeroOneParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3", 0.5);
+        createZeroOneParameterUniformPrior("pInv", "proportion of invariant sites parameter", 0.5, true);
+        createZeroOneParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1", 0.5, true);
+        createZeroOneParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2", 0.5, true);
+        createZeroOneParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", 0.5, true);
+        createZeroOneParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3", 0.5, true);
 
-        createNonNegativeParameterInfinitePrior("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+        // nu parameters are an alternative parameterization of relative rates suitable for using with a Dirichlet prior.
+        // They sum to 1 and their product with the evolutionary rate is weighted by the partitions size.
+        createNonNegativeParameterInfinitePrior("nu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createNonNegativeParameterInfinitePrior("CP1.nu", "relative rate parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createNonNegativeParameterInfinitePrior("CP2.nu", "relative rate parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createNonNegativeParameterInfinitePrior("CP1+2.nu", "relative rate parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createNonNegativeParameterInfinitePrior("CP3.nu", "relative rate parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+
+        createNonNegativeParameterInfinitePrior("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         createNonNegativeParameterInfinitePrior("CP1.mu", "relative rate parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         createNonNegativeParameterInfinitePrior("CP2.mu", "relative rate parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         createNonNegativeParameterInfinitePrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         createNonNegativeParameterInfinitePrior("CP3.mu", "relative rate parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
 
         createScaleOperator("kappa", demoTuning, substWeights);
         createScaleOperator("CP1.kappa", demoTuning, substWeights);
@@ -277,12 +311,29 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createOperator("CP1+2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        for (String rateName : GTR_RATE_NAMES) {
-            createScaleOperator(rateName, demoTuning, substWeights);
+        if (options.NEW_GTR_PARAMETERIZATION) {
+            createOperator("deltaGTR", "deltaGTR",
+                    "Change GTR transition rates relative to each other maintaining mean",
+                    GTR_RATES,
+                    OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
             for (int j = 1; j <= 3; j++) {
-                createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
+                createOperator("CP" + j + ".deltaGTR", "CP" + j + ".deltaGTR",
+                        "Change GTR transition rates relative to each other maintaining mean",
+                        "CP" + j + "." + GTR_RATES,
+                        OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
             }
-            createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
+            createOperator("CP1+2.deltaGTR", "CP1+2.deltaGTR",
+                    "Change GTR transition rates relative to each other maintaining mean",
+                    "CP1+2." + GTR_RATES,
+                    OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        } else {
+            for (String rateName : GTR_RATE_NAMES) {
+                createScaleOperator(rateName, demoTuning, substWeights);
+                for (int j = 1; j <= 3; j++) {
+                    createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
+                }
+                createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
+            }
         }
 
         createScaleOperator("alpha", demoTuning, substWeights);
@@ -303,13 +354,13 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         //=============== microsat ======================
         createParameterGammaPrior("propLinear", "Proportionality linear function",
-                PriorScaleType.NONE, 0.5, 1.0, 1.0, false);
+                PriorScaleType.NONE, 0.5, 1.0, 1.0, false, true);
         createParameterNormalPrior("biasConst", "Constant bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0);
+                0.0, 0.0, 10.0, 0.0, true);
         createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  0.1);
-        createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0);
+                0.0, 0.0, 10.0, 0.0, true);
+        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  0.1, true);
+        createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0, true);
 
         createScaleOperator("propLinear", demoTuning, substWeights);
 //        createOperator("deltaBiasConst", "deltaBiasConst", "Delta exchange on constant bias", "biasConst",
@@ -325,39 +376,38 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     ////////////////////////////////////////////////////////////////
 
-    public void selectParameters(List<Parameter> params) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
 //        setAvgRootAndRate();
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
-                        switch (nucSubstitutionModel) {
-                            case JC:
-                                break;
-                            case HKY:
-                                params.add(getParameter("CP1.kappa"));
-                                params.add(getParameter("CP2.kappa"));
-                                params.add(getParameter("CP3.kappa"));
-                                break;
-                            case TN93:
-                                params.add(getParameter("CP1.kappa1"));
-                                params.add(getParameter("CP2.kappa1"));
-                                params.add(getParameter("CP3.kappa1"));
-                                params.add(getParameter("CP1.kappa2"));
-                                params.add(getParameter("CP2.kappa2"));
-                                params.add(getParameter("CP3.kappa2"));
-                                break;
-                            case GTR:
-                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                    for (String rateName : GTR_RATE_NAMES) {
-                                        params.add(getParameter("CP" + i + "." + rateName));
+                        for (int i = 1; i <= getCodonPartitionCount(); i++) {
+                            switch (nucSubstitutionModel) {
+                                case JC:
+                                    break;
+                                case HKY:
+                                    params.add(getParameter("CP" + i + ".kappa"));
+                                    break;
+                                case TN93:
+                                    params.add(getParameter("CP" + i + ".kappa1"));
+                                    params.add(getParameter("CP" + i + ".kappa2"));
+                                    break;
+                                case GTR:
+                                    if (options.NEW_GTR_PARAMETERIZATION) {
+                                        params.add(getParameter("CP" + i + "." + GTR_RATES));
+                                    } else {
+                                        for (String rateName : GTR_RATE_NAMES) {
+                                            params.add(getParameter("CP" + i + "." + rateName));
+                                        }
                                     }
-                                }
-                                break;
+                                    break;
 
-                            default:
-                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                                default:
+                                    throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                            }
                         }
 
                     } else if (codonHeteroPattern.equals("112")) {
@@ -375,11 +425,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 params.add(getParameter("CP3.kappa2"));
                                 break;
                             case GTR:
-                                for (String rateName : GTR_RATE_NAMES) {
-                                    params.add(getParameter("CP1+2." + rateName));
-                                }
-                                for (String rateName : GTR_RATE_NAMES) {
-                                    params.add(getParameter("CP3." + rateName));
+                                if (options.NEW_GTR_PARAMETERIZATION) {
+                                    params.add(getParameter("CP1+2." + GTR_RATES));
+                                    params.add(getParameter("CP3." + GTR_RATES));
+                                } else {
+                                    for (String rateName : GTR_RATE_NAMES) {
+                                        params.add(getParameter("CP1+2." + rateName));
+                                    }
+                                    for (String rateName : GTR_RATE_NAMES) {
+                                        params.add(getParameter("CP3." + rateName));
+                                    }
                                 }
                                 break;
 
@@ -402,8 +457,13 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             params.add(getParameter("kappa2"));
                             break;
                         case GTR:
-                            for (String rateName : GTR_RATE_NAMES) {
-                                params.add(getParameter(rateName));
+                            if (options.NEW_GTR_PARAMETERIZATION) {
+                                params.add(getParameter("gtr"));
+                            } else {
+
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    params.add(getParameter(rateName));
+                                }
                             }
                             break;
 
@@ -519,6 +579,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 params.add(getParameter("pInv"));
             }
         }
+        return params;
     }
 
     public List<Parameter> getRelativeRateParameters() {
@@ -526,30 +587,30 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         int[] weights = getPartitionCodonWeights();
         if (getCodonPartitionCount() > 1) {
             if (codonHeteroPattern.equals("123")) {
-                Parameter parameter = getParameter("CP1.mu");
+                Parameter parameter = getParameter("CP1." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[0]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP2.mu");
+                parameter = getParameter("CP2." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[1]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP3.mu");
+                parameter = getParameter("CP3." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[2]);
                 allMus.add(parameter);
             } else if (codonHeteroPattern.equals("112")) {
-                Parameter parameter = getParameter("CP1+2.mu");
+                Parameter parameter = getParameter("CP1+2." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[0]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP3.mu");
+                parameter = getParameter("CP3." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[1]);
                 allMus.add(parameter);
             } else {
                 throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
             }
         } else {
-            Parameter mu = getParameter("mu");
+            Parameter mu = getParameter(options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu");
             mu.setDimensionWeight(weights[0]);
             allMus.add(mu);
         }
@@ -576,7 +637,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
     }
 
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Operator> selectOperators(List<Operator> operators) {
+
+        List<Operator> ops = new ArrayList<Operator>();
 
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
@@ -602,9 +666,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 break;
 
                             case GTR:
+
                                 for (int i = 1; i <= 3; i++) {
-                                    for (String rateName : GTR_RATE_NAMES) {
-                                        ops.add(getOperator("CP" + i + "." + rateName));
+                                    if (options.NEW_GTR_PARAMETERIZATION) {
+                                        ops.add(getOperator("CP" + i + ".deltaGTR"));
+                                    } else {
+                                        for (String rateName : GTR_RATE_NAMES) {
+                                            ops.add(getOperator("CP" + i + "." + rateName));
+                                        }
                                     }
                                 }
                                 break;
@@ -630,11 +699,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 break;
 
                             case GTR:
-                                for (String rateName : GTR_RATE_NAMES) {
-                                    ops.add(getOperator("CP1+2." + rateName));
-                                }
-                                for (String rateName : GTR_RATE_NAMES) {
-                                    ops.add(getOperator("CP3." + rateName));
+                                if (options.NEW_GTR_PARAMETERIZATION) {
+                                    ops.add(getOperator("CP1+2.deltaGTR"));
+                                    ops.add(getOperator("CP3.deltaGTR"));
+                                } else {
+                                    for (String rateName : GTR_RATE_NAMES) {
+                                        ops.add(getOperator("CP1+2." + rateName));
+                                    }
+                                    for (String rateName : GTR_RATE_NAMES) {
+                                        ops.add(getOperator("CP3." + rateName));
+                                    }
                                 }
                                 break;
 
@@ -660,8 +734,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             break;
 
                         case GTR:
-                            for (String rateName : GTR_RATE_NAMES) {
-                                ops.add(getOperator(rateName));
+                            if (options.NEW_GTR_PARAMETERIZATION) {
+                                ops.add(getOperator("deltaGTR"));
+                            } else {
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    ops.add(getOperator(rateName));
+                                }
                             }
                             break;
 
@@ -769,6 +847,18 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            // unless a custom mix has been chosen these operators should be off if AMTK is on
+            for (Operator op : ops) {
+                if (op.getParameter1().isAdaptiveMultivariateCompatible) {
+                    op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
+                }
+            }
+        }
+
+        operators.addAll(ops);
+
+        return operators;
     }
 
     private void addFrequencyOps(List<Operator> ops) {

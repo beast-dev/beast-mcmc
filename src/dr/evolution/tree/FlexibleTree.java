@@ -75,7 +75,7 @@ public class FlexibleTree implements MutableTree {
 
         FlexibleNode node = root;
         do {
-            node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
+            node = (FlexibleNode) TreeUtils.postorderSuccessor(this, node);
             if ((node.getNumber() >= externalNodeCount && node.isExternal()) ||
                     (node.getNumber() < externalNodeCount && !node.isExternal())) {
                 throw new RuntimeException("Error cloning tree: node numbers are incompatible");
@@ -136,7 +136,7 @@ public class FlexibleTree implements MutableTree {
         FlexibleNode node = (FlexibleNode) getRoot();
 
         do {
-            node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
+            node = (FlexibleNode) TreeUtils.postorderSuccessor(this, node);
 
             if (node.isExternal()) {
                 node.setNumber(i);
@@ -164,7 +164,7 @@ public class FlexibleTree implements MutableTree {
         root = node;
 
         do {
-            node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
+            node = (FlexibleNode) TreeUtils.postorderSuccessor(this, node);
             if (node.isExternal()) {
                 externalNodeCount++;
             } else
@@ -183,7 +183,7 @@ public class FlexibleTree implements MutableTree {
         int j = externalNodeCount;
 
         do {
-            node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
+            node = (FlexibleNode) TreeUtils.postorderSuccessor(this, node);
             //System.out.print("node = " + node.getId() + " ");
             if (node.isExternal()) {
                 if (taxonNumberMap != null && taxonNumberMap.size() > 0) {
@@ -603,8 +603,20 @@ public class FlexibleTree implements MutableTree {
 
             if (node.getChildCount() > 2) {
                 resolveNode(node);
-
+            } else  if (node.getChildCount() == 1) {
+                FlexibleNode parent  = node.getParent();
+                if (parent != null) {
+                    // remove the degree 2 node and add its child to its parent
+                    FlexibleNode child = node.getChild(0);
+                    child.setParent(parent);
+                    parent.removeChild(node);
+                    parent.addChild(child);
+                } else {
+                    // the root is a degree 1 node so make the root the node
+                    root = node;
+                }
             }
+
         }
 
         adoptNodes(root, null);
@@ -889,7 +901,7 @@ public class FlexibleTree implements MutableTree {
      * @return a string containing a newick representation of the tree
      */
     public String toString() {
-        return Tree.Utils.newick(this);
+        return TreeUtils.newick(this);
     }
 
     /**
@@ -903,7 +915,7 @@ public class FlexibleTree implements MutableTree {
         if (!(obj instanceof Tree)) {
             throw new IllegalArgumentException("FlexibleTree.equals can only compare instances of Tree");
         }
-        return Tree.Utils.equal(this, (Tree) obj);
+        return TreeUtils.equal(this, (Tree) obj);
     }
 
     // **************************************************************

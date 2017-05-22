@@ -1,9 +1,9 @@
 package test.dr.evomodel.substmodel;
 import junit.framework.TestCase;
 import dr.evolution.datatype.Microsatellite;
-import dr.evomodel.substmodel.OnePhaseModel;
-import dr.evomodel.substmodel.AsymmetricQuadraticModel;
-import dr.evomodel.substmodel.LinearBiasModel;
+import dr.oldevomodel.substmodel.OnePhaseModel;
+import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
+import dr.oldevomodel.substmodel.LinearBiasModel;
 import dr.inference.model.Parameter;
 
 /**

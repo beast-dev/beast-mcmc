@@ -414,13 +414,40 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == virusLocationsParameter) {
-            int loc = index / mdsDimension;
-            virusLocationChanged[loc] = true;
-            if (tipTraitsParameter != null && tipIndices[loc] != -1) {
-                Parameter location = virusLocationsParameter.getParameter(loc);
-                Parameter tip = tipTraitsParameter.getParameter(tipIndices[loc]);
-                int dim = index % mdsDimension;
-                tip.setParameterValue(dim, location.getParameterValue(dim));
+            if (index != -1) {
+                int loc = index / mdsDimension;
+                virusLocationChanged[loc] = true;
+                if (tipTraitsParameter != null && tipIndices[loc] != -1) {
+                    Parameter location = virusLocationsParameter.getParameter(loc);
+                    Parameter tip = tipTraitsParameter.getParameter(tipIndices[loc]);
+                    int dim = index % mdsDimension;
+                    tip.setParameterValue(dim, location.getParameterValue(dim));
+                }
+            } else {
+                if (false) { // Just for debugging purposes.
+//                    for (int idx = 0; idx < virusLocationsParameter.getDimension(); ++idx) {
+//                        int loc = idx / mdsDimension;
+//                        virusLocationChanged[loc] = true;
+//                        if (tipTraitsParameter != null && tipIndices[loc] != -1) {
+//                            Parameter location = virusLocationsParameter.getParameter(loc);
+//                            Parameter tip = tipTraitsParameter.getParameter(tipIndices[loc]);
+//                            int dim = idx % mdsDimension;
+//                            tip.setParameterValue(dim, location.getParameterValue(dim));
+//                        }
+//                    }
+                } else {
+                    Arrays.fill(virusLocationChanged, true);
+                    if (tipTraitsParameter != null) {
+                        for (int pindex = 0; pindex < virusLocationsParameter.getParameterCount(); ++pindex) {
+                            Parameter location = virusLocationsParameter.getParameter(pindex);
+                            Parameter tip = tipTraitsParameter.getParameter(tipIndices[pindex]);
+                            for (int i = 0; i < tip.getDimension(); ++i) {
+                                tip.setParameterValueQuietly(i, location.getParameterValue(i));//
+                            }
+                        }
+                        tipTraitsParameter.fireParameterChangedEvent();
+                    }
+                }
             }
         } else if (variable == serumLocationsParameter) {
             int loc = index / mdsDimension;

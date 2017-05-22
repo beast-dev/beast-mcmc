@@ -41,7 +41,7 @@ import java.util.Map;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ModelOptions implements Serializable {
+public abstract class ModelOptions implements Serializable {
 
     private static final long serialVersionUID = 6199011531067286245L;
 
@@ -52,11 +52,21 @@ public class ModelOptions implements Serializable {
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
 
-	protected static final double branchWeights = 30.0;
-	protected static final double treeWeights = 15.0;
-	protected static final double rateWeights = 3.0;
+    protected static final double branchWeights = 30.0;
+    protected static final double treeWeights = 15.0;
+    protected static final double rateWeights = 3.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+
+    //+++++++++++++++++++ Abstract Methods ++++++++++++++++++++++++++++++++
+
+    public abstract void initModelParametersAndOpererators();
+
+    public abstract List<Parameter> selectParameters(List<Parameter> params);
+
+    public abstract List<Operator> selectOperators(List<Operator> ops);
+
+    public abstract String getPrefix();
 
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
     public Parameter createParameter(String name, String description) {
@@ -73,22 +83,41 @@ public class ModelOptions implements Serializable {
     }
 
     public Parameter createZeroOneParameterUniformPrior(String name, String description, double initial) {
-        return new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
-                .initial(initial).isZeroOne(true).build(parameters);
+        return createZeroOneParameterUniformPrior(name, description, initial, false);
     }
 
-    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial) {
-        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR).isNonNegative(true)
-                .partitionOptions(options).initial(initial).build(parameters);
+    public Parameter createZeroOneParameterUniformPrior(String name, String description, double initial, boolean amtk) {
+        return new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
+                .initial(initial).isZeroOne(true).isAdaptiveMultivariateCompatible(amtk).build(parameters);
+    }
+
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
+                                                              double maintainedSum, boolean amtk) {
+        return new Parameter.Builder(name, description).prior(PriorType.DIRICHLET_PRIOR)
+                .isNonNegative(true).maintainedSum(maintainedSum)
+                .isAdaptiveMultivariateCompatible(amtk)
+                .partitionOptions(options).build(parameters);
+    }
+
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
+                                                              PriorScaleType scaleType, double maintainedSum, boolean amtk) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR)
+                .isNonNegative(true).maintainedSum(maintainedSum)
+                .isAdaptiveMultivariateCompatible(amtk)
+                .partitionOptions(options).build(parameters);
     }
 
     public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {
-        return createNonNegativeParameterInfinitePrior(name, description, null, scaleType, initial);
+        return createNonNegativeParameterInfinitePrior(name, description, null, scaleType, initial, false);
     }
 
-    public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial) {
+    public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial, boolean amtk) {
+        return createNonNegativeParameterInfinitePrior(name, description, null, scaleType, initial, amtk);
+    }
+
+    public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial, boolean amtk) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NONE_IMPROPER).isNonNegative(true)
-                .partitionOptions(options).initial(initial).build(parameters);
+                .partitionOptions(options).initial(initial).isAdaptiveMultivariateCompatible(amtk).build(parameters);
     }
 
     public Parameter createNonNegativeParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
@@ -105,8 +134,15 @@ public class ModelOptions implements Serializable {
 
     public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                double shape, double scale, boolean priorFixed) {
+        return createParameterGammaPrior(name, description, scaleType, initial, shape, scale, priorFixed, false);
+    }
+
+    public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                               double shape, double scale, boolean priorFixed, boolean amtk) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
-                .initial(initial).shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).build(parameters);
+                .initial(initial).shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).
+                        isAdaptiveMultivariateCompatible(amtk)
+                .build(parameters);
     }
 
     public Parameter createCachedGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
@@ -122,20 +158,38 @@ public class ModelOptions implements Serializable {
 
     public Parameter createParameterExponentialPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                      double mean, double offset) {
+        return createParameterExponentialPrior(name, description, scaleType, initial, mean, offset, false);
+    }
+
+    public Parameter createParameterExponentialPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                     double mean, double offset, boolean amtk) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
-                .initial(initial).mean(mean).offset(offset).isNonNegative(true).build(parameters);
+                .initial(initial).mean(mean).offset(offset).isNonNegative(true).isAdaptiveMultivariateCompatible(amtk).build(parameters);
     }
 
     public Parameter createParameterLognormalPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                                   double mean, double stdev, double offset, double lower, double upper) {
+                                                   double mean, double stdev, double offset) {
+        return createParameterLognormalPrior(name, description, scaleType, initial, mean, stdev, offset, false);
+    }
+
+    public Parameter createParameterLognormalPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                   double mean, double stdev, double offset, boolean amtk) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LOGNORMAL_PRIOR)
-                .initial(initial).mean(mean).stdev(stdev).offset(offset).isNonNegative(true).build(parameters);
+                .initial(initial).mean(mean).stdev(stdev).offset(offset).isNonNegative(true)
+                .isAdaptiveMultivariateCompatible(amtk)
+                .build(parameters);
     }
 
     public Parameter createParameterNormalPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                 double mean, double stdev, double offset) {
+        return createParameterNormalPrior(name, description, scaleType, initial, mean, stdev, offset, false);
+    }
+
+    public Parameter createParameterNormalPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                double mean, double stdev, double offset, boolean amtk) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NORMAL_PRIOR)
-                .initial(initial).mean(mean).stdev(stdev).offset(offset).build(parameters);
+                .initial(initial).mean(mean).stdev(stdev).offset(offset).isAdaptiveMultivariateCompatible(amtk)
+                .build(parameters);
     }
 
     public Parameter createParameterLaplacePrior(String name, String description, PriorScaleType scaleType, double initial,
@@ -189,7 +243,8 @@ public class ModelOptions implements Serializable {
         } else {
             description = parameter.getDescription();
         }
-        return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
+        return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).
+                build(operators);
     }
 
     public Operator createScaleOperator(String parameterName, String description, double tuning, double weight) {
@@ -204,7 +259,10 @@ public class ModelOptions implements Serializable {
 
     public Operator createOperator(String key, String name, String description, String parameterName, OperatorType type,
                                    double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
+        Parameter parameter = null;
+        if (parameterName != null) {
+            parameter = getParameter(parameterName);
+        }
         return operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight).build()); // key != name
     }
 

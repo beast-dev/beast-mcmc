@@ -62,7 +62,7 @@ import java.util.logging.Logger;
  */
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
-        public final static boolean DEBUG = false;
+    public final static boolean DEBUG = false;
 
     private static final long serialVersionUID = 2778103564318492601L;
 
@@ -81,7 +81,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
     BeautiFrame frame = null;
-//    CreateModelDialog createModelDialog = null;
+    //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
     private CloneModelDialog cloneModelDialog = null;
@@ -225,13 +225,13 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         if (modelTable.getSelectedRowCount() == 1) {
             int selRow = modelTable.getSelectedRow();
 
-        if (selRow >= options.getPartitionClockModels().size()) {
-            selRow = 0;
+            if (selRow >= options.getPartitionClockModels().size()) {
+                selRow = 0;
                 modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        }
+            }
 
-        if (selRow >= 0) {
-            setCurrentModel(options.getPartitionClockModels().get(selRow));
+            if (selRow >= 0) {
+                setCurrentModel(options.getPartitionClockModels().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
             }
         } else {
@@ -263,13 +263,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         currentModel = model;
 
         if (currentModel != null) {
-            PartitionClockModelPanel panel = modelPanels.get(currentModel);
-            if (panel == null) {
-                panel = new PartitionClockModelPanel(model);
-                modelPanels.put(model, panel);
-            }
-
-            panel.setOptions();
+            PartitionClockModelPanel panel = setPanelSettings(model);
             modelPanelParent.add(panel);
 
         } else {
@@ -278,8 +272,19 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         cloneModelsAction.setEnabled(true);
 
-            updateBorder();
+        updateBorder();
+    }
+
+    private PartitionClockModelPanel setPanelSettings(PartitionClockModel model) {
+        PartitionClockModelPanel panel = modelPanels.get(currentModel);
+        if (panel == null) {
+            panel = new PartitionClockModelPanel(model);
+            modelPanels.put(model, panel);
         }
+
+        panel.setOptions();
+        return panel;
+    }
 
     private void setCurrentModels(java.util.List<PartitionClockModel> models) {
         modelPanelParent.removeAll();
@@ -318,27 +323,26 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         }
 
 
-            java.util.List<PartitionClockModel> sourceModels = new ArrayList<PartitionClockModel>();
+        java.util.List<PartitionClockModel> sourceModels = new ArrayList<PartitionClockModel>();
 
-            for (PartitionClockModel model : options.getPartitionClockModels()) {
-                    sourceModels.add(model);
-            }
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            sourceModels.add(model);
+        }
 
-            int result = cloneModelDialog.showDialog(sourceModels);
+        int result = cloneModelDialog.showDialog(sourceModels);
 
-            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
+        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
 
         PartitionClockModel sourceModel = cloneModelDialog.getSourceModel();
-            for (PartitionClockModel model : getSelectedModels()) {
-                if (!model.equals(sourceModel)) {
-                    throw new UnsupportedOperationException("Not implemented yet");
-//                    model.copyFrom(sourceModel);
-                }
+        for (PartitionClockModel model : getSelectedModels()) {
+            if (!model.equals(sourceModel)) {
+                model.copyFrom(sourceModel);
             }
+        }
 
-            repaint();
+        selectionChanged();
 
     }
 

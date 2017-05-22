@@ -28,6 +28,7 @@ package dr.evomodel.coalescent;
 import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
@@ -52,7 +53,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	public CoalescentLikelihood(Tree tree,
 	                            TaxonList includeSubtree,
 	                            List<TaxonList> excludeSubtrees,
-	                            DemographicModel demoModel) throws Tree.MissingTaxonException {
+	                            DemographicModel demoModel) throws TreeUtils.MissingTaxonException {
 
 		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, tree, includeSubtree, excludeSubtrees);
 

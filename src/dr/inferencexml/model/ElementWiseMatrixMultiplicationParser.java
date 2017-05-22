@@ -3,6 +3,7 @@ package dr.inferencexml.model;
 
 import dr.inference.model.ElementWiseMatrixMultiplicationParameter;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -18,9 +19,9 @@ public class ElementWiseMatrixMultiplicationParser extends AbstractXMLObjectPars
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         final String name = xo.hasId() ? xo.getId() : null;
-        MatrixParameter[] matList=new MatrixParameter[xo.getChildCount()];
+        MatrixParameterInterface[] matList=new MatrixParameterInterface[xo.getChildCount()];
         for (int i = 0; i <xo.getChildCount(); i++) {
-            matList[i]=(MatrixParameter) xo.getChild(i);
+            matList[i]=(MatrixParameterInterface) xo.getChild(i);
         }
 
         return new ElementWiseMatrixMultiplicationParameter(name, matList);

@@ -46,7 +46,7 @@ public class StrictClockBranchRatesParser extends AbstractXMLObjectParser {
 
         Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
 
-        Logger.getLogger("dr.evomodel").info("Using strict molecular clock model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing strict molecular clock model.");
 
         return new StrictClockBranchRates(rateParameter);
     }

@@ -9,18 +9,18 @@ import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
-import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.HKY;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.HKY;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
-import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.oldevomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import dr.evomodelxml.substmodel.HKYParser;
+import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
+import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.tree.RateStatisticParser;
-import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
+import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -77,7 +77,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         Parameter meanRateParameter = new Parameter.Default(RandomLocalClockModelParser.CLOCK_RATE, 1, 1.0);
 
         RandomLocalClockModel branchRateModel = new RandomLocalClockModel(treeModel, meanRateParameter,
-                rateIndicatorParameter, ratesParameter, false);
+                rateIndicatorParameter, ratesParameter, false, 0.5);
 
         SumStatistic rateChanges = new SumStatistic("rateChangeCount", true);
         rateChanges.addStatistic(rateIndicatorParameter);

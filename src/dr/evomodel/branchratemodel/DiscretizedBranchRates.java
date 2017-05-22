@@ -27,6 +27,7 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -39,7 +40,9 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -55,6 +58,8 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     // Currently turned off as it is not working with multiple partitions for
     // some reason.
     private static final boolean DEFAULT_CACHE_RATES = false;
+
+    public static final String RATECATEGORY = "rateCat";
 
     private final ParametricDistributionModel distributionModel;
 
@@ -78,6 +83,8 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     private int storedRateArrayIndex;
 
     private boolean cacheRates = DEFAULT_CACHE_RATES;
+
+    private TreeTrait[] traits;
 
     //overSampling control the number of effective categories
 
@@ -139,6 +146,87 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         // Each parameter take any value in [1, \ldots, categoryCount]
         // NB But this depends on the transition kernel employed.  Using swap-only results in a different constant
         logDensityNormalizationConstant = -rateCategoryParameter.getDimension() * Math.log(categoryCount);
+
+        //for each branch, log the rate and the rate catogory, i.e. dimension = 2
+        this.traits = new TreeTrait[2];
+
+        TreeTrait<Double> branchRate = new TreeTrait<Double>() {
+            @Override
+            public String getTraitName() {
+                return RATE;
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Class getTraitClass() {
+                return Double.class;
+            }
+
+            @Override
+            public Double getTrait(Tree tree, NodeRef node) {
+                return getBranchRate(tree, node);
+            }
+
+            @Override
+            public String getTraitString(Tree tree, NodeRef node) {
+                return Double.toString(getBranchRate(tree, node));
+            }
+
+            @Override
+            public boolean getLoggable() {
+                return true;
+            }
+
+            @Override
+            public String toString() {
+                return RATE;
+            }
+        };
+
+        TreeTrait<Integer> rateCategory = new TreeTrait<Integer>() {
+            @Override
+            public String getTraitName() {
+                return RATECATEGORY;
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Class getTraitClass() {
+                return Double.class;
+            }
+
+            @Override
+            public Integer getTrait(Tree tree, NodeRef node) {
+                return getBranchRateCategory(tree, node);
+            }
+
+            @Override
+            public String getTraitString(Tree tree, NodeRef node) {
+                return Integer.toString(getBranchRateCategory(tree, node));
+            }
+
+            @Override
+            public boolean getLoggable() {
+                return true;
+            }
+
+            @Override
+            public String toString() {
+                return RATECATEGORY;
+            }
+        };
+
+        traits[0] = branchRate;
+        traits[1] = rateCategory;
+
     }
 
     // compute scale factor
@@ -213,6 +301,20 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         return rates[currentRateArrayIndex][rateCategory] * scaleFactor;
     }
 
+    public final int getBranchRateCategory(final Tree tree, final NodeRef node) {
+
+        assert !tree.isRoot(node) : "root node doesn't have a rate category!";
+
+        if (updateRateCategories) {
+            setupRates();
+        }
+
+        int rateCategory = (int) (rateCategories.getNodeValue(tree, node) + 0.5);
+
+        return rateCategory;
+
+    }
+
     /**
      * Calculates the actual rates corresponding to the category indices.
      */
@@ -233,6 +335,11 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         if (normalize) computeFactor();
 
         updateRateCategories = false;
+    }
+
+    @Override
+    public TreeTrait[] getTreeTraits() {
+        return traits;
     }
 
     public double getLogLikelihood() {

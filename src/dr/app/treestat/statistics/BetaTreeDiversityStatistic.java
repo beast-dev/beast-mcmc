@@ -29,6 +29,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -55,7 +56,7 @@ public class BetaTreeDiversityStatistic extends AbstractTreeSummaryStatistic {
             return new double[]{1.0};
         }
 
-        double TL = Tree.Utils.getTreeLength(tree, tree.getRoot());
+        double TL = TreeUtils.getTreeLength(tree, tree.getRoot());
 
         double betaDiversity = (TL - getUniqueBranches(tree, tree.getRoot())) / TL;
 
@@ -82,7 +83,7 @@ public class BetaTreeDiversityStatistic extends AbstractTreeSummaryStatistic {
     }
 
     private boolean isUnique(TaxonList taxonList, Tree tree, NodeRef node) {
-        Set<String> taxa = Tree.Utils.getDescendantLeaves(tree, node);
+        Set<String> taxa = TreeUtils.getDescendantLeaves(tree, node);
         int count = 0;
         for (String taxon : taxa) {
             count += (taxonList.getTaxonIndex(taxon) >= 0 ? 1 : 0);

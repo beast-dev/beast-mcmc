@@ -25,6 +25,7 @@
 
 package dr.xml;
 
+import dr.inference.model.AbstractModel;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 
@@ -47,13 +48,14 @@ public class XMLObject {
     /**
      * @param e the element the construct this XML object from
      */
-    public XMLObject(Element e) {
+    public XMLObject(Element e, XMLObject parent) {
         this.element = e;
+        this.parent = parent;
     }
 
     public XMLObject(XMLObject obj, int index) {
 
-       this(obj.element);
+       this(obj.element, null);
        nativeObject = ((List)obj.getNativeObject()).get(index);
    }
 
@@ -101,6 +103,41 @@ public class XMLObject {
     }
 
     /**
+     * @return all children with or empty list if no children.
+     */
+    public List<Object> getChildren() {
+
+        List<Object> allChildren = new ArrayList<Object>();
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+                allChildren.add(child);
+
+        }
+        return allChildren;
+    }
+
+    /**
+     * @param c the class of the children to return
+     * @return all children with a native format of the given class, or null if no such child exists.
+     */
+    public <T> List<T> getAllChildren(Class<T> c) {
+
+        List<T> allChildren = null;
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+            if( c.isInstance(child) ) {
+                if (allChildren == null) {
+                    allChildren = new ArrayList<T>();
+                }
+                allChildren.add(c.cast(child));
+            }
+
+        }
+        return allChildren;
+
+    }
+
+    /**
      * @param name the name of the child to return
      * @return the first child of type XMLObject with a given name, or null if no such child exists.
      */
@@ -115,6 +152,23 @@ public class XMLObject {
             }
         }
         return null;
+    }
+
+    /**
+     * @param name the name of the children
+     * @return all children with a given name.
+     */
+    public List<XMLObject> getAllChildren(String name) {
+
+        List<XMLObject> allChildren = new ArrayList<XMLObject>();
+        for (int i = 0; i < getChildCount(); i++) {
+            Object child = getChild(i);
+            if( child instanceof XMLObject && ((XMLObject)child).getName().equals(name)) {
+                allChildren.add((XMLObject)child);
+            }
+        }
+        return allChildren;
+
     }
 
     /**
@@ -590,12 +644,17 @@ public class XMLObject {
         throw new XMLParseException("'" + name + "' attribute was not found in " + element.getTagName() + " element.");
     }
 
+    public XMLObject getParent() {
+        return parent;
+    }
+
     //*********************************************************************
     // Private instance variables
     //*********************************************************************
 
     private final Vector<Object> children = new Vector<Object>();
-    private Element element = null;
+    private final Element element;
+    private final XMLObject parent;
 
     private Object nativeObject;
 

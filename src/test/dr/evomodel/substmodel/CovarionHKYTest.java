@@ -1,8 +1,11 @@
 package test.dr.evomodel.substmodel;
 
-import dr.evolution.datatype.HiddenNucleotides;
+import dr.evolution.datatype.OldHiddenNucleotides;
 import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
+import dr.oldevomodel.substmodel.CovarionHKY;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.SubstitutionModelUtils;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -26,7 +29,7 @@ public class CovarionHKYTest extends TestCase {
         switchingRate = new Parameter.Default(1.0);
         kappa = new Parameter.Default(2.0);
 
-        dataType = new HiddenNucleotides(2);
+        dataType = new OldHiddenNucleotides(2);
 
     }
 
@@ -119,7 +122,7 @@ public class CovarionHKYTest extends TestCase {
     }
 
     CovarionHKY model;
-    HiddenNucleotides dataType;
+    OldHiddenNucleotides dataType;
     Parameter kappa;
     Parameter switchingRate;
     Parameter alpha;

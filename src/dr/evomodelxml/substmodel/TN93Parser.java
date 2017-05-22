@@ -1,7 +1,7 @@
 /*
  * TN93Parser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,17 +26,13 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.NucModelType;
-import dr.evomodel.substmodel.TN93;
-import dr.inference.model.Variable;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
+import dr.evomodel.substmodel.nucleotide.TN93;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
 
-/**
- * Parses an element from an DOM document into a DemographicModel. Recognises
- * ConstantPopulation and ExponentialGrowth.
- */
 public class TN93Parser extends AbstractXMLObjectParser {
     public static final String TN93_MODEL = NucModelType.TN93.getXMLName();
     public static final String KAPPA1 = "kappa1";
@@ -49,11 +45,11 @@ public class TN93Parser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Variable kappa1Param = (Variable) xo.getElementFirstChild(KAPPA1);
-        Variable kappa2Param = (Variable) xo.getElementFirstChild(KAPPA2);
+        Parameter kappa1Param = (Parameter) xo.getElementFirstChild(KAPPA1);
+        Parameter kappa2Param = (Parameter) xo.getElementFirstChild(KAPPA2);
         FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FREQUENCIES);
 
-        Logger.getLogger("dr.evomodel").info("Creating TN93 substitution model. Initial kappa = "
+        Logger.getLogger("dr.evomodel").info("\nCreating TN93 substitution model. Initial kappa = "
                 + kappa1Param.getValue(0) + "," + kappa2Param.getValue(0));
 
         return new TN93(kappa1Param, kappa2Param, freqModel);
@@ -80,11 +76,9 @@ public class TN93Parser extends AbstractXMLObjectParser {
                 new ElementRule(FREQUENCIES,
                         new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
                 new ElementRule(KAPPA1,
-                        new XMLSyntaxRule[]{new ElementRule(Variable.class)}),
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(KAPPA2,
-                        new XMLSyntaxRule[]{new ElementRule(Variable.class)})
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
         };
     }
-
-
 }

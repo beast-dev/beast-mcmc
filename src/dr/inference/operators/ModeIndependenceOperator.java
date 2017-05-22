@@ -41,7 +41,7 @@ import dr.xml.*;
  */
 public class ModeIndependenceOperator extends AbstractCoercableOperator {
 
-    public static final String MVN_OPERATOR = "mvnOperator";
+    public static final String MVN_OPERATOR = "modeIndependenceOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String VARIANCE_MATRIX = "varMatrix";
     public static final String FORM_XTX = "formXtXInverse";
@@ -115,7 +115,7 @@ public class ModeIndependenceOperator extends AbstractCoercableOperator {
         return matrix;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double[] x = parameter.getParameterValues();
         double[] epsilon = new double[dim];

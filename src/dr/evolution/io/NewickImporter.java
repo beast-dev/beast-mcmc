@@ -227,16 +227,15 @@ public class NewickImporter extends Importer implements TreeImporter {
         // read the first child
         node.addChild(readBranch(taxonList));
 
-        // an internal node must have at least 2 children
         if (getLastDelimiter() != ',') {
-            throw new BadFormatException("Expecting ',' in tree, but got '" + (char) getLastDelimiter() + "'");
+            java.util.logging.Logger.getLogger("dr.evolution.io").warning("Internal node only has a single child.");
         }
 
-        // read subsequent children
-        do {
-            node.addChild(readBranch(taxonList));
 
-        } while (getLastDelimiter() == ',');
+        // read subsequent children
+        while (getLastDelimiter() == ',') {
+            node.addChild(readBranch(taxonList));
+        }
 
         // should have had a closing ')'
         if (getLastDelimiter() != ')') {

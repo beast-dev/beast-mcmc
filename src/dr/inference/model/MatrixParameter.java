@@ -184,13 +184,13 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         }
     }
 
-    public String toSymmetricString() {
+    public static String toSymmetricString(MatrixParameterInterface mat) {
         StringBuilder sb = new StringBuilder("{");
-        int dim = getRowDimension();
+        int dim = mat.getRowDimension();
         int total = dim * (dim + 1) / 2;
         for (int i = 0; i < dim; i++) {
             for (int j = i; j < dim; j++) {
-                sb.append(String.format("%5.4e", getParameterValue(i, j)));
+                sb.append(String.format("%5.4e", mat.getParameterValue(i, j)));
                 total--;
                 if (total > 0)
                     sb.append(",");
@@ -198,6 +198,10 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    public String toSymmetricString() {
+        return toSymmetricString(this);
     }
 
     public static MatrixParameter parseFromSymmetricString(String string) {

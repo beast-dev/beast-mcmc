@@ -48,29 +48,27 @@ public class TreeModelOptions extends ModelOptions {
     public TreeModelOptions(BeautiOptions options) {
         this.options = options;
 
-        initGlobalTreeModelParaAndOpers();
+        initModelParametersAndOpererators();
     }
 
-    private void initGlobalTreeModelParaAndOpers() {
-
-    }
-
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-    public void selectParameters(List<Parameter> params) {
+    @Override
+    public void initModelParametersAndOpererators() {
 
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
+        return params;
+    }
 
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
+        return ops;
+    }
+
+    @Override
+    public String getPrefix() {
+        return null;
     }
 
     public double getExpectedAvgBranchLength(double rootHeight) {

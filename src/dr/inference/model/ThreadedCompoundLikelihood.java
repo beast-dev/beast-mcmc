@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.util.NumberFormatter;
 
 /**

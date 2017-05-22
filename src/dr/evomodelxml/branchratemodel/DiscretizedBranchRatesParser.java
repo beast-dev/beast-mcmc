@@ -73,7 +73,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
 
         Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
 
-        Logger.getLogger("dr.evomodel").info("Using discretized relaxed clock model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing discretized relaxed clock model.");
         Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
         Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
         Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());

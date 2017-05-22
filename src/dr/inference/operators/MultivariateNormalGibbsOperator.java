@@ -149,7 +149,7 @@ System.err.print("\n");
     }
 
     @Override
-    public double doOperation() throws OperatorFailedException{
+    public double doOperation() {
         double[] draws=null;
 
 

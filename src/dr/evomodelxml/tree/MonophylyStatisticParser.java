@@ -26,6 +26,7 @@
 package dr.evomodelxml.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -46,15 +47,8 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
         return MONOPHYLY_STATISTIC;
     }
 
-    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String name = xo.getAttribute(Statistic.NAME, xo.getId());
-
-        Boolean inverse = xo.getAttribute(INVERSE, false);
-
-        Tree tree = (Tree) xo.getChild(Tree.class);
-
-        XMLObject cxo = xo.getChild(MRCA);
+    public static TaxonList parseTaxonListOrTaxa(XMLObject cxo) {
         TaxonList taxa = (TaxonList) cxo.getChild(TaxonList.class);
         if (taxa == null) {
             Taxa taxa1 = new Taxa();
@@ -66,26 +60,27 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
             }
             taxa = taxa1;
         }
+        return taxa;
+    }
+
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        String name = xo.getAttribute(Statistic.NAME, xo.getId());
+
+        Boolean inverse = xo.getAttribute(INVERSE, false);
+
+        Tree tree = (Tree) xo.getChild(Tree.class);
+
+        TaxonList taxa = parseTaxonListOrTaxa(xo.getChild(MRCA));
 
         TaxonList ignore = null;
         if (xo.hasChildNamed(IGNORE)) {
-            cxo = xo.getChild(IGNORE);
-            ignore = (TaxonList) cxo.getChild(TaxonList.class);
-            if (ignore == null) {
-                Taxa taxa1 = new Taxa();
-                for (int i = 0; i < cxo.getChildCount(); i++) {
-                    Object ccxo = cxo.getChild(i);
-                    if (ccxo instanceof Taxon) {
-                        taxa1.addTaxon((Taxon) ccxo);
-                    }
-                }
-                ignore = taxa1;
-            }
+            ignore = parseTaxonListOrTaxa(xo.getChild(IGNORE));
         }
 
         try {
             return new MonophylyStatistic(name, tree, taxa, ignore, inverse);
-        } catch (Tree.MissingTaxonException mte) {
+        } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
         }
     }

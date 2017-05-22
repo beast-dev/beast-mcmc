@@ -1,7 +1,7 @@
 /*
  * GLMSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,12 +30,13 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GLMSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
-import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.distribution.LogLinearModel;
+import dr.inference.glm.GeneralizedLinearModel;
 import dr.xml.*;
 
 /**
+ * @author Marc A. Suchard
  */
+
 public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
@@ -53,7 +54,9 @@ public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
-        LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
+        // Should be constructed as a log-linear model
+        GeneralizedLinearModel glm = (GeneralizedLinearModel) xo.getChild(GeneralizedLinearModel.class);
+        // LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
 
         int length = glm.getXBeta().length;
 

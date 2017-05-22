@@ -25,7 +25,7 @@
 
 package dr.util;
 
-import dr.xml.*;
+import dr.inference.model.Parameter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +70,14 @@ public interface Transform {
      */
     double[] inverse(double[] values, int from, int to);
 
+    double updateGradientLogDensity(double gradient, double value);
+
+    double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to);
+
+    double gradientInverse(double value);
+
+    double[] gradientInverse(double[] values, int from, int to);
+
     /**
      * @return the transform's name
      */
@@ -79,7 +87,7 @@ public interface Transform {
      * @param value evaluation point
      * @return the log of the transform's jacobian
      */
-    public double getLogJacobian(double value);
+    double getLogJacobian(double value);
 
     /**
      * @param values evaluation points
@@ -87,50 +95,111 @@ public interface Transform {
      * @param to end calculation at this index
      * @return the log of the transform's jacobian
      */
-    public double getLogJacobian(double[] values, int from, int to);
+    double getLogJacobian(double[] values, int from, int to);
 
+    abstract class UnivariableTransform implements Transform {
 
-    public static class LogTransform implements Transform {
+        public abstract double transform(double value);
 
-        public LogTransform() {
+        public double[] transform(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = transform(values[i]);
+            }
+            return result;
         }
+
+        public abstract double inverse(double value);
+
+        public double[] inverse(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = inverse(values[i]);
+            }
+            return result;
+        }
+
+        public abstract double gradientInverse(double value);
+
+        public double[] gradientInverse(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = gradientInverse(values[i]);
+            }
+            return result;
+        }
+
+        public abstract double updateGradientLogDensity(double gradient, double value);
+
+        public double[] updateGradientLogDensity(double[] gradient, double[] value , int from, int to) {
+            double[] result = value.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = updateGradientLogDensity(gradient[i], value[i]);
+            }
+            return result;
+        }
+
+        public abstract double getLogJacobian(double value);
+
+        public double getLogJacobian(double[] values, int from, int to) {
+            double sum = 0.0;
+            for (int i = from; i < to; ++i) {
+                sum += getLogJacobian(values[i]);
+            }
+            return sum;
+        }
+    }
+
+    abstract class MultivariableTransform implements Transform {
+
+        public double transform(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double inverse(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double gradientInverse(double value) {
+             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+         }
+
+        public double getLogJacobian(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+    }
+
+
+    class LogTransform extends UnivariableTransform {
 
         public double transform(double value) {
             return Math.log(value);
-        }
-
-        public double[] transform(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public double inverse(double value) {
             return Math.exp(value);
         }
 
-        public double[] inverse(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        public double gradientInverse(double value) { return Math.exp(value); }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            // value == gradient of inverse()
+            // 1.0 == gradient of log Jacobian of inverse()
+            return gradient * value + 1.0;
         }
 
-        public String getTransformName() {
-            return "log";
-        }
+        public String getTransformName() { return "log"; }
 
-        public double getLogJacobian(double value) {
-            return -Math.log(value);
-        }
-
-        public double getLogJacobian(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
-        }
+        public double getLogJacobian(double value) { return -Math.log(value); }
     }
 
-    public static class LogConstrainedSumTransform implements Transform {
+    class LogConstrainedSumTransform extends MultivariableTransform {
 
         public LogConstrainedSumTransform() {
-        }
-
-        public double transform(double value) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public double[] transform(double[] values, int from, int to) {
@@ -141,10 +210,6 @@ public interface Transform {
                 counter++;
             }
             return transformedValues;
-        }
-
-        public double inverse(double value) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         //inverse transformation assumes a sum of elements equal to the number of elements
@@ -168,8 +233,12 @@ public interface Transform {
             return "logConstrainedSum";
         }
 
-        public double getLogJacobian(double value) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double[] gradientInverse(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
         }
 
         public double getLogJacobian(double[] values, int from, int to) {
@@ -223,25 +292,27 @@ public interface Transform {
 
     }
 
-    public static class LogitTransform implements Transform {
+    class LogitTransform extends UnivariableTransform {
 
         public LogitTransform() {
+            range = 1.0;
+            lower = 0.0;
         }
 
         public double transform(double value) {
             return Math.log(value / (1.0 - value));
         }
 
-        public double[] transform(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
-        }
-
         public double inverse(double value) {
             return 1.0 / (1.0 + Math.exp(-value));
         }
 
-        public double[] inverse(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        public double gradientInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
         }
 
         public String getTransformName() {
@@ -252,31 +323,26 @@ public interface Transform {
             return -Math.log(1.0 - value) - Math.log(value);
         }
 
-        public double getLogJacobian(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
-        }
-
+        private final double range;
+        private final double lower;
     }
 
-    public static class FisherZTransform implements Transform {
-
-        public FisherZTransform() {
-        }
+    class FisherZTransform extends UnivariableTransform {
 
         public double transform(double value) {
             return 0.5 * (Math.log(1.0 + value) - Math.log(1.0 - value));
-        }
-
-        public double[] transform(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public double inverse(double value) {
             return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
         }
 
-        public double[] inverse(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        public double gradientInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
         }
 
         public String getTransformName() {
@@ -286,33 +352,50 @@ public interface Transform {
         public double getLogJacobian(double value) {
             return -Math.log(1 - value) - Math.log(1 + value);
         }
-
-        public double getLogJacobian(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
-        }
-
     }
 
-    public static class NoTransform implements Transform {
+    class NegateTranform extends UnivariableTransform {
 
-        public NoTransform() {
+        public double transform(double value) {
+            return -value;
         }
+
+        public double inverse(double value) {
+            return -value;
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            // -1 == gradient of inverse()
+            // 0.0 == gradient of log Jacobian of inverse()
+            return -gradient;
+        }
+
+        public double gradientInverse(double value) { return -1.0; }
+
+        public String getTransformName() {
+            return "negate";
+        }
+
+        public double getLogJacobian(double value) {
+            return 0.0;
+        }
+    }
+
+    class NoTransform extends UnivariableTransform {
 
         public double transform(double value) {
             return value;
-        }
-
-        public double[] transform(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public double inverse(double value) {
             return value;
         }
 
-        public double[] inverse(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        public double updateGradientLogDensity(double gradient, double value) {
+            return gradient;
         }
+
+        public double gradientInverse(double value) { return 1.0; }
 
         public String getTransformName() {
             return "none";
@@ -321,68 +404,280 @@ public interface Transform {
         public double getLogJacobian(double value) {
             return 0.0;
         }
-
-        public double getLogJacobian(double[] values, int from, int to) {
-            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
-        }
-
     }
 
-    public class ParsedTransform {
+    class Compose extends UnivariableTransform  {
+
+        public Compose(UnivariableTransform outer, UnivariableTransform inner) {
+            this.outer = outer;
+            this.inner = inner;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "compose." + outer.getTransformName() + "." + inner.getTransformName();
+        }
+
+        @Override
+        public double transform(double value) {
+            final double outerValue = inner.transform(value);
+            final double outerTransform = outer.transform(outerValue);
+
+//            System.err.println(value + " " + outerValue + " " + outerTransform);
+//            System.exit(-1);
+
+            return outerTransform;
+//            return outer.transform(inner.transform(value));
+        }
+
+        @Override
+        public double inverse(double value) {
+            return inner.inverse(outer.inverse(value));
+        }
+
+        @Override
+        public double gradientInverse(double value) {
+            return inner.gradientInverse(value) * outer.gradientInverse(inner.transform(value));
+        }
+
+        @Override
+        public double updateGradientLogDensity(double gradient, double value) {
+//            final double innerGradient = inner.updateGradientLogDensity(gradient, value);
+//            final double outerValue = inner.transform(value);
+//            final double outerGradient = outer.updateGradientLogDensity(innerGradient, outerValue);
+//            return outerGradient;
+
+            return outer.updateGradientLogDensity(inner.updateGradientLogDensity(gradient, value), inner.transform(value));
+        }
+
+        @Override
+        public double getLogJacobian(double value) {
+            return inner.getLogJacobian(value) + outer.getLogJacobian(inner.transform(value));
+        }
+
+        private final UnivariableTransform outer;
+        private final UnivariableTransform inner;
+    }
+
+    class Inverse extends UnivariableTransform {
+
+        public Inverse(UnivariableTransform inner) {
+            this.inner = inner;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "inverse." + inner.getTransformName();
+        }
+
+        @Override
+        public double transform(double value) {
+            return inner.inverse(value);  // Purposefully switched
+
+        }
+
+        @Override
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double inverse(double value) {
+            return inner.transform(value); // Purposefully switched
+        }
+
+        @Override
+        public double gradientInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double getLogJacobian(double value) {
+            return -inner.getLogJacobian(value);
+        }
+
+        private final UnivariableTransform inner;
+    }
+
+    class Collection extends MultivariableTransform {
+
+        private final List<ParsedTransform> segments;
+        private final Parameter parameter;
+
+        public Collection(List<ParsedTransform> segments, Parameter parameter) {
+            this.parameter = parameter;
+            this.segments = ensureContiguous(segments);
+        }
+
+        public Parameter getParameter() { return parameter; }
+
+        private List<ParsedTransform> ensureContiguous(List<ParsedTransform> segments) {
+
+            final List<ParsedTransform> contiguous = new ArrayList<ParsedTransform>();
+
+            int current = 0;
+            for (ParsedTransform segment : segments) {
+                if (current < segment.start) {
+                    contiguous.add(new ParsedTransform(NONE, current, segment.start));
+                }
+                contiguous.add(segment);
+                current = segment.end;
+            }
+            if (current < parameter.getDimension()) {
+                contiguous.add(new ParsedTransform(NONE, current, parameter.getDimension()));
+            }
+
+
+            System.err.println("Segments:");
+            for (ParsedTransform transform : contiguous) {
+                System.err.println(transform.transform.getTransformName() + " " + transform.start + " " + transform.end);
+            }
+//            System.exit(-1);
+
+            return contiguous;
+        }
+
+        @Override
+        public double[] transform(double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (ParsedTransform segment : segments) {
+                if (from < segment.end && to >= segment.start) {
+                    final int begin = Math.max(segment.start, from);
+                    final int end = Math.min(segment.end, to);
+                    for (int i = begin; i < end; ++i) {
+                        result[i] = segment.transform.transform(values[i]);
+                    }
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (ParsedTransform segment : segments) {
+                if (from < segment.end && to >= segment.start) {
+                    final int begin = Math.max(segment.start, from);
+                    final int end = Math.min(segment.end, to);
+                    for (int i = begin; i < end; ++i) {
+                        result[i] = segment.transform.inverse(values[i]);
+                    }
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public double[] gradientInverse(double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (ParsedTransform segment : segments) {
+                if (from < segment.end && to >= segment.start) {
+                    final int begin = Math.max(segment.start, from);
+                    final int end = Math.min(segment.end, to);
+                    for (int i = begin; i < end; ++i) {
+                        result[i] = segment.transform.gradientInverse(values[i]);
+                    }
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public double[] updateGradientLogDensity(double[] gradient, double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (ParsedTransform segment : segments) {
+                if (from < segment.end && to >= segment.start) {
+                    final int begin = Math.max(segment.start, from);
+                    final int end = Math.min(segment.end, to);
+                    for (int i = begin; i < end; ++i) {
+                        result[i] = segment.transform.updateGradientLogDensity(gradient[i], values[i]);
+                    }
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "collection";
+        }
+
+        @Override
+        public double getLogJacobian(double[] values, int from, int to) {
+
+            double sum = 0.0;
+
+            for (ParsedTransform segment : segments) {
+                if (from < segment.end && to >= segment.start) {
+                    final int begin = Math.max(segment.start, from);
+                    final int end = Math.min(segment.end, to);
+                    for (int i = begin; i < end; ++i) {
+                        sum += segment.transform.getLogJacobian(values[i]);
+                    }
+                }
+            }
+//            System.err.println("Log: " + sum + " " + segments.size());
+            return sum;
+        }
+
+//        class Segment {
+//
+//            public Segment(Transform transform, int start, int end) {
+//                this.transform = transform;
+//                this.start = start;
+//                this.end = end;
+//            }
+//            public Transform transform;
+//            public int start;
+//            public int end;
+//        }
+    }
+
+    class ParsedTransform {
         public Transform transform;
         public int start; // zero-indexed
         public int end; // zero-indexed, i.e, i = start; i < end; ++i
-        public int every;
+        public int every = 1;
+        public List<Parameter> parameters = null;
+
+        public ParsedTransform() {
+            
+        }
+
+        public ParsedTransform(Transform transform, int start, int end) {
+            this.transform = transform;
+            this.start = start;
+            this.end = end;
+        }
+
+        public ParsedTransform clone() {
+            ParsedTransform clone = new ParsedTransform();
+            clone.transform = transform;
+            clone.start = start;
+            clone.end = end;
+            clone.every = every;
+            clone.parameters = parameters;
+            return clone;
+        }
+
+        public boolean equivalent(ParsedTransform other) {
+            if (start == other.start && end == other.end && every == other.every && parameters == parameters) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Transform thisTransform = Transform.NONE;
-            String name = (String) xo.getAttribute(TYPE);
-            System.err.println("name: " + name);
-            for (Transform type : Transform.transformList) {
-                if (name.equals(type.getTransformName())) {
-                    System.err.println(name + " --- " + type.getTransformName());
-                    thisTransform = type;
-                    break;
-                }
-            }
-
-            ParsedTransform transform = new ParsedTransform();
-            transform.transform = thisTransform;
-            transform.start = xo.getAttribute(START, 1);
-            transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
-            transform.every = xo.getAttribute(EVERY, 1);
-
-            transform.start--; // zero-indexed
-            return transform;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[]{
-                    AttributeRule.newStringRule(TYPE),
-                    AttributeRule.newIntegerRule(START, true),
-                    AttributeRule.newIntegerRule(END, true),
-                    AttributeRule.newIntegerRule(EVERY, true),
-            };
-        }
-
-        public String getParserDescription() {
-            return null;
-        }
-
-        public Class getReturnType() {
-            return ParsedTransform.class;
-        }
-
-        public String getParserName() {
-            return TRANSFORM;
-        }
-    };
-
-    public class Util {
+    class Util {
         public static Transform[] getListOfNoTransforms(int size) {
             Transform[] transforms = new Transform[size];
             for (int i = 0; i < size; ++i) {
@@ -392,18 +687,43 @@ public interface Transform {
         }
     }
 
-    public static final LogTransform LOG = new LogTransform();
-    public static final LogitTransform LOGIT = new LogitTransform();
-    public static final NoTransform NONE = new NoTransform();
-    public static final FisherZTransform FISHER_Z = new FisherZTransform();
-    public static final LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
+    NoTransform NONE = new NoTransform();
+    LogTransform LOG = new LogTransform();
+    NegateTranform NEGATE = new NegateTranform();
+    LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
+    LogitTransform LOGIT = new LogitTransform();
+    FisherZTransform FISHER_Z = new FisherZTransform();
 
-    public static final Transform[] transformList = {LOG, LOG_CONSTRAINED_SUM, LOGIT, NONE, FISHER_Z};
+    enum Type {
+        NONE("none", new NoTransform()),
+        LOG("log", new LogTransform()),
+        NEGATE("negate", new NegateTranform()),
+        LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
+        LOGIT("logit", new LogitTransform()),
+        FISHER_Z("fisherZ",new FisherZTransform());
 
-    public static final String TRANSFORM = "transform";
-    public static final String TYPE = "type";
-    public static final String START = "start";
-    public static final String END = "end";
-    public static final String EVERY = "every";
+        Type(String name, Transform transform) {
+            this.name = name;
+            this.transform = transform;
+        }
+
+        public Transform getTransform() {
+            return transform;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        private Transform transform;
+        private String name;
+    }
+
+//    String TRANSFORM = "transform";
+//    String TYPE = "type";
+//    String START = "start";
+//    String END = "end";
+//    String EVERY = "every";
+//    String INVERSE = "inverse";
 
 }

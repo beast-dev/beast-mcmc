@@ -28,6 +28,7 @@ package dr.app.vcs;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.PiecewiseLinearPopulation;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -248,7 +249,7 @@ public class VariableCoalescentSimulator {
             for (int j = 0; j < demography.length; j++) {
                 Tree tree = simulator.simulateTree(taxa, demography[j]);
 
-                out.println(Tree.Utils.newick(tree));
+                out.println(TreeUtils.newick(tree));
                 //System.err.println(Tree.Utils.newick(tree));
             }
 

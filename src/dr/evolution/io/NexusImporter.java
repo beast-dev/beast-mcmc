@@ -37,6 +37,7 @@ import dr.evolution.sequence.Sequences;
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.*;
 import dr.util.Attributable;
 
@@ -67,6 +68,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     public static final NexusBlock CALIBRATION_BLOCK = new NexusBlock("CALIBRATION");
 
     public static boolean suppressWarnings = false;
+
+    private final boolean ignoreMetaComments;
 
     public static void setSuppressWarnings(boolean sw) {
         suppressWarnings = sw;
@@ -105,11 +108,19 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      */
     public NexusImporter(Reader reader) {
         super(reader);
+        this.ignoreMetaComments = false;
         setCommentDelimiters('[', ']', '\0', '\0', '&');
+    }
+
+    public NexusImporter(Reader reader, boolean ignoreMetaComments) {
+        super(reader);
+        this.ignoreMetaComments = ignoreMetaComments;
+        setCommentDelimiters('[', ']', '\0', '!', '&');
     }
 
     public NexusImporter(Reader reader, Writer commentWriter) {
         super(reader, commentWriter);
+        this.ignoreMetaComments = false;
         setCommentDelimiters('[', ']', '\0', '!', '&');
     }
 
@@ -1021,12 +1032,14 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
             length = readDouble(",():;");
 
             if (getLastMetaComment() != null) {
-                // There was a meta-comment which should be in the form:
-                // \[&label[=value][,label[=value]>[,/..]]\]
-                try {
-                    parseMetaCommentPairs(getLastMetaComment(), branch);
-                } catch (BadFormatException bfe) {
-                    // ignore it
+                if (!ignoreMetaComments) {
+                    // There was a meta-comment which should be in the form:
+                    // \[&label[=value][,label[=value]>[,/..]]\]
+                    try {
+                        parseMetaCommentPairs(getLastMetaComment(), branch);
+                    } catch (BadFormatException bfe) {
+                        // ignore it
+                    }
                 }
                 clearLastMetaComment();
             }
@@ -1052,19 +1065,13 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         node.addChild(readBranch(translationList));
 
         if (getLastDelimiter() != ',' && !suppressWarnings) {
-            java.util.logging.Logger.getLogger("dr.evolution.io").warning("Internal node only has a single child!");
+            java.util.logging.Logger.getLogger("dr.evolution.io").warning("Internal node only has a single child.");
         }
 
         // this allows one or more children
         while(getLastDelimiter()==',') {
             node.addChild(readBranch(translationList));
         }
-
-        // read subsequent children
-        //do {
-        //    node.addChild(readBranch(translationList));
-        //
-        //} while (getLastDelimiter() == ',');
 
         // should have had a closing ')'
         if (getLastDelimiter() != ')') {
@@ -1074,12 +1081,14 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         readToken(":(),;");
 
         if (getLastMetaComment() != null) {
-            // There was a meta-comment which should be in the form:
-            // \[&label[=value][,label[=value]>[,/..]]\]
-            try {
-                parseMetaCommentPairs(getLastMetaComment(), node);
-            } catch (BadFormatException bfe) {
-                // ignore it
+            if (!ignoreMetaComments) {
+                // There was a meta-comment which should be in the form:
+                // \[&label[=value][,label[=value]>[,/..]]\]
+                try {
+                    parseMetaCommentPairs(getLastMetaComment(), node);
+                } catch (BadFormatException bfe) {
+                    // ignore it
+                }
             }
             clearLastMetaComment();
         }
@@ -1129,12 +1138,14 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         if (getLastMetaComment() != null) {
-            // There was a meta-comment which should be in the form:
-            // \[&label[=value][,label[=value]>[,/..]]\]
-            try {
-                parseMetaCommentPairs(getLastMetaComment(), node);
-            } catch (BadFormatException bfe) {
-                // ignore it
+            if (!ignoreMetaComments) {
+                // There was a meta-comment which should be in the form:
+                // \[&label[=value][,label[=value]>[,/..]]\]
+                try {
+                    parseMetaCommentPairs(getLastMetaComment(), node);
+                } catch (BadFormatException bfe) {
+                    // ignore it
+                }
             }
             clearLastMetaComment();
         }
@@ -1312,6 +1323,31 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
     }
 
+    public static boolean isInt(String str)
+    {
+        if (str == null) {
+            return false;
+        }
+        int length = str.length();
+        if (length == 0) {
+            return false;
+        }
+        int i = 0;
+        if (str.charAt(0) == '-') {
+            if (length == 1) {
+                return false;
+            }
+            i = 1;
+        }
+        for (; i < length; i++) {
+            char c = str.charAt(i);
+            if (c <= '/' || c >= ':') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * This method takes a string and tries to decode it returning the object
      * that best fits the data. It will recognize comma delimited lists enclosed
@@ -1382,10 +1418,14 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         // Attempt to format the value as an integer
-        try {
-            return new Integer(value);
-        } catch (NumberFormatException nfe1) {
-            // not an integer
+//        try {
+//            return new Integer(value);
+//        } catch (NumberFormatException nfe1) {
+//            // not an integer
+//        }
+        // throwing exception to test for an integer is slow
+        if (isInt(value)) {
+            return Integer.valueOf(value);
         }
 
         // Attempt to format the value as a double
@@ -1449,9 +1489,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 if (index % sampleFrequency == 0) {
                     if (includeBranchLengths) {
-                        System.out.println(Tree.Utils.newick(tree));
+                        System.out.println(TreeUtils.newick(tree));
                     } else {
-                        System.out.println(Tree.Utils.newickNoLengths(tree));
+                        System.out.println(TreeUtils.newickNoLengths(tree));
                         count += 1;
                     }
                 }

@@ -1330,7 +1330,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 
     //In GMRF there is only one MH block proposing precision + GMRF jointly. Here we have : numberThinned,
 //    locationThinned, the GMRF (GP values), Gibbs sampling precision and the upper bound lambda
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         System.err.println("Runs my operator");
 

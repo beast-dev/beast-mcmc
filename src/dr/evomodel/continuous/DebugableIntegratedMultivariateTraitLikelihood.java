@@ -27,9 +27,8 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
@@ -61,11 +60,12 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
                                                           Model samplingDensity,
                                                           boolean reportAsMultivariate,
                                                           MultivariateNormalDistribution rootPrior,
-                                                          boolean reciprocalRates) {
+                                                          boolean reciprocalRates,
+                                                          List<RestrictedPartials> partials) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, missingIndices, cacheBranches,
                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                rootPrior, reciprocalRates);
+                rootPrior, reciprocalRates, partials);
     }
 
     protected double[] fillLeafTraits(int datum) {
@@ -140,7 +140,7 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
         Set<String> leafNames = new HashSet<String>();
         leafNames.add(treeModel.getTaxonId(iTip));
         leafNames.add(treeModel.getTaxonId(jTip));
-        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+        return TreeUtils.getCommonAncestorNode(treeModel, leafNames);
     }
 
     public int getNumberOfDatum() {

@@ -33,7 +33,6 @@ import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.util.Citable;
@@ -131,7 +130,7 @@ public class OldLatentLiabilityGibbsOperator extends SimpleMCMCOperator implemen
 //        return nodeMVNPrior != null && nodeMVNPrior.containsKey(treeModel.getNodeTaxon(node));
 //    }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         traitModel.redrawAncestralStates();
 

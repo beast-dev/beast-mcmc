@@ -36,6 +36,8 @@ import java.util.Set;
 
 
 /**
+ * Is this necessary - is likely redundant?
+ *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
@@ -49,23 +51,35 @@ public class ClockModelOptions extends ModelOptions {
 
     public ClockModelOptions(BeautiOptions options) {
         this.options = options;
+
+        initModelParametersAndOpererators();
     }
 
     /**
      * return a list of parameters that are required
      */
-    public void selectParameters() {
+
+    @Override
+    public void initModelParametersAndOpererators() {
+
     }
 
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
+    @Override
+    public List<Parameter> selectParameters(List<Parameter> params) {
+        return null;
     }
 
-    
+    @Override
+    public List<Operator> selectOperators(List<Operator> ops) {
+        return null;
+    }
+
+    @Override
+    public String getPrefix() {
+        return null;
+    }
+
+
     public boolean isTipCalibrated() {
         return options.maximumTipHeight > 0;
     }

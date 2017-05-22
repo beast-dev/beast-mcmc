@@ -171,10 +171,21 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
         return distribution.logPdf(x);
     }
 
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+
     private final boolean conditionOnRoot;
     private double[][] precisionMatrix = null;
     private double[] rootValue;
     private final int dim;
+
 
     /*
  public static final String TREE_TRAIT_NORMAL = "treeTraitNormalDistribution";
@@ -222,6 +233,5 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
   };
 
     */
-
 
 }

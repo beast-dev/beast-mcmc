@@ -31,7 +31,6 @@ import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.evomodelxml.coalescent.operators.BayesianSkylineGibbsOperatorParser;
 import dr.inference.model.Parameter;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.ExponentialDistribution;
 import dr.math.distributions.GammaDistribution;
@@ -268,7 +267,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         if (!bayesianSkylineLikelihood.getIntervalsKnown())
             bayesianSkylineLikelihood.setupIntervals();

@@ -44,16 +44,10 @@ public class PCARateMatrixMammalia extends AbstractPCARateMatrix{
 	public static final String FACTORS_FILE = "startfacs.csv";
 	public static final String PCS_FILE = "pcs.csv";
     
-    /**
-     * constructor
-     *
-     * @param nrOfPCs   Number of PCs to use
-     * @param dir		Directory which includes the rate matrix csv files
-     */
     public PCARateMatrixMammalia(int nrOfPCs, String dir) {
 		super("mammalia", Codons.UNIVERSAL, dir);
 		
-		// reading data files:
+		// reading data files
 		setupMeans();
 		setupFreqs();
 		setupScales();

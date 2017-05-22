@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
+import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
@@ -153,6 +154,10 @@ public class BeastMain {
                     }
                 }
             }
+
+            // Install the checkpointer. This creates a factory that returns
+            // appropriate savers and loaders according to the user's options.
+            new BeastCheckpointer();
 
             if (!useMC3) {
                 // just parse the file running all threads...
@@ -360,6 +365,7 @@ public class BeastMain {
                         new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
+                        new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
@@ -403,7 +409,15 @@ public class BeastMain {
         List<String> additionalParsers = new ArrayList<String>();
 
         final boolean verbose = arguments.hasOption("verbose");
-        final boolean parserWarning = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
+        if (verbose) {
+            System.setProperty("verbose_output", Boolean.toString(true));
+        }
+
+        final boolean warnings = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
+        if (warnings) {
+            System.setProperty("show_warnings", Boolean.toString(true));
+        }
+
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options") || (argumentCount == 0);
@@ -547,17 +561,22 @@ public class BeastMain {
 
         if (arguments.hasOption("load_dump")) {
             String debugStateFile = arguments.getStringOption("load_dump");
-            System.setProperty(MCMC.LOAD_DUMP_FILE, debugStateFile);
+            System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, debugStateFile);
         }
 
         if (arguments.hasOption("dump_state")) {
             long debugWriteState = arguments.getLongOption("dump_state");
-            System.setProperty(MCMC.DUMP_STATE, Long.toString(debugWriteState));
+            System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(debugWriteState));
         }
 
         if (arguments.hasOption("dump_every")) {
             long debugWriteEvery = arguments.getLongOption("dump_every");
-            System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
+            System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, Long.toString(debugWriteEvery));
+        }
+
+        if (arguments.hasOption("save_dump")) {
+            String debugStateFile = arguments.getStringOption("save_dump");
+            System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, debugStateFile);
         }
 
         if (arguments.hasOption("citations_file")) {
@@ -628,9 +647,11 @@ public class BeastMain {
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
-                    "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
-                    "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST</div>" +
+                    "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
+                    "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
+                    "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
+                    version.getBuildString() + "</a></div>" +
                     "</div></html>";
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
@@ -771,12 +792,10 @@ public class BeastMain {
 
         MathUtils.setSeed(seed);
 
-        System.out.println();
         System.out.println("Random number seed: " + seed);
-        System.out.println();
 
         try {
-            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             rte.printStackTrace(System.err);
             if (window) {

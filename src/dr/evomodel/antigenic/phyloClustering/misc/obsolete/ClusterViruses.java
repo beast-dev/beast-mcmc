@@ -1,38 +1,23 @@
 package dr.evomodel.antigenic.phyloClustering.misc.obsolete;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
-import java.util.logging.Logger;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 //import dr.evomodel.antigenic.driver.OrderDouble;
 
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.operators.MCMCOperator;
-import dr.math.GammaFunction;
-import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
-import dr.xml.StringAttributeRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;

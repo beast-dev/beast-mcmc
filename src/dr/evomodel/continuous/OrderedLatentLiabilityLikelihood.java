@@ -177,7 +177,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             return 0;
         }
         else{
-            return 1/(1-pathParameter);
+            return  - 1 / (1-pathParameter);
         }
     }
 
@@ -207,6 +207,12 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         }
     }
 
+
+    public int[] getData(int tip){
+        return tipData[tip];
+    }
+
+
     public boolean validTraitForTip(int tip) {
         boolean valid = true;
         Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
@@ -235,7 +241,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                 if (trait == 0) {
                     valid = true;
                 }
-                else if(datum>1){
+                else if(datum > 1){
                     valid=true;
                 } else {
                     boolean positive = trait > 0.0;
@@ -398,6 +404,10 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             return constant;
         }
     };
+
+    public Boolean getOrdering(){
+        return isUnordered;
+    }
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -525,4 +535,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
     private static final boolean DEBUG = false;
 
     private double pathParameter=1;
+
+    public Parameter getThreshold() {
+        return thresholdParameter;
+    }
 }

@@ -6,22 +6,17 @@ package test.dr.evomodel.operators;
 
 import java.io.IOException;
 
+import dr.evolution.tree.TreeUtils;
+import dr.inference.operators.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
 import dr.evomodel.operators.ImportanceSubtreeSwap;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.ScaleOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.operators.UniformOperator;
 
 /**
  * @author shhn001
@@ -35,7 +30,7 @@ public class ImportanceSubtreeSwapTestProblem extends OperatorAssert{
     }
 	
 	/**
-	 * Test method for {@link dr.evomodel.operators.ImportanceSubtreeSwap#doOperation()}.
+	 * Test method for {@link SimpleMCMCOperator#doOperation()}.
 	 * @throws ImportException 
 	 * @throws IOException 
 	 */
@@ -59,19 +54,14 @@ public class ImportanceSubtreeSwapTestProblem extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5);
-                ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-                e.printStackTrace();
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }
@@ -107,19 +97,14 @@ public class ImportanceSubtreeSwapTestProblem extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5_2);
-                ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5_2);
+            ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-                e.printStackTrace();
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }

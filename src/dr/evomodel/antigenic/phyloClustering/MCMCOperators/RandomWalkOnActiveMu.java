@@ -1,11 +1,8 @@
 
 package dr.evomodel.antigenic.phyloClustering.MCMCOperators;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.LinkedList;
 
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.antigenic.phyloClustering.Tree_Clustering_Shared_Routines;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
@@ -13,12 +10,8 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.MCMCOperator.Utils;
 import dr.math.MathUtils;
-import dr.util.DataTable;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -65,10 +58,10 @@ public class RandomWalkOnActiveMu extends AbstractCoercableOperator {
 	
 	
 
-	public double doOperation() throws OperatorFailedException {
-	
+	public double doOperation() {
 
-		//first, randomly select an "on" node to overwrite
+
+        //first, randomly select an "on" node to overwrite
 		int originalNode = Tree_Clustering_Shared_Routines.findAnOnNodeIncludingRootRandomly(numNodes, indicators);			//find an on-node	
 		//unbounded walk
 		int dimSelect = (int) Math.floor( Math.random()* 2 );   		  	    			

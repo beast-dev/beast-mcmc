@@ -32,7 +32,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.speciation.BirthDeathCollapseModel;
+import dr.evomodel.alloppnet.speciation.BirthDeathCollapseModel;
 import dr.util.Version;
 
 import java.io.*;

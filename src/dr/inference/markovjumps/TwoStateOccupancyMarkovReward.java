@@ -25,9 +25,9 @@
 
 package dr.inference.markovjumps;
 
-import dr.app.beagle.evomodel.substmodel.DefaultEigenSystem;
-import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
-import dr.app.beagle.evomodel.substmodel.EigenSystem;
+import dr.evomodel.substmodel.DefaultEigenSystem;
+import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.EigenSystem;
 import dr.math.Binomial;
 import dr.math.GammaFunction;
 import dr.math.distributions.GammaDistribution;

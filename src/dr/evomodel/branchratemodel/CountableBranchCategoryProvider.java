@@ -25,7 +25,8 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsTraitProvider;
+import dr.evolution.tree.TreeUtils;
+import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -213,7 +214,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
         private void recurseDownClade(final NodeRef node, final TreeModel treeModel, final CladeContainer clade, boolean include) {
 
-            if (include) {
+            if (include && !treeModel.isRoot(node)) {
                 setNodeValue(treeModel, node, clade.getRateCategory());
             }
 
@@ -235,7 +236,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
                 }
                 // Handle clades
                 for (CladeContainer clade : leafSetList) {
-                    NodeRef node = Tree.Utils.getCommonAncestorNode(treeModel, clade.getLeafSet());
+                    NodeRef node = TreeUtils.getCommonAncestorNode(treeModel, clade.getLeafSet());
                     if (node != treeModel.getRoot()) {
                         if (clade.getIncludeStem()) {
                             setNodeValue(treeModel, node, clade.getRateCategory());
@@ -275,7 +276,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
             if (tree.isExternal(node)) return false;
 
-            Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+            Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
             int size = leafSet.size();
 
             leafSet.retainAll(targetSet);
@@ -285,7 +286,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
                 // if all leaves below are in target then check just above.
                 if (leafSet.size() == size) {
 
-                    Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                    Set superLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
                     superLeafSet.removeAll(targetSet);
 
                     // the branch is on ancestral path if the super tree has some non-targets in it
@@ -296,9 +297,9 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
             } else return false;
         }
 
-        public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade, boolean trunk) throws Tree.MissingTaxonException {
+        public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade, boolean trunk) throws TreeUtils.MissingTaxonException {
 
-            Set<String> leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
+            Set<String> leafSet = TreeUtils.getLeavesForTaxa(treeModel, taxonList);
             if (!trunk) {
                 if (leafSetList == null) {
                     leafSetList = new ArrayList<CladeContainer>();

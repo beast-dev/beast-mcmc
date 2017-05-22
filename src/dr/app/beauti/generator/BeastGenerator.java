@@ -910,6 +910,8 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
         }
 
+        clockModelGenerator.writeClockLikelihoodReferences(writer);
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
 
         writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);
@@ -919,7 +921,6 @@ public class BeastGenerator extends Generator {
             writer.writeOpenTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-            clockModelGenerator.writeClockLikelihoodReferences(writer);
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
 

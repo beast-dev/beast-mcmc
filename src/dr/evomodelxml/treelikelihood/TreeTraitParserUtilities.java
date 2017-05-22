@@ -1,7 +1,7 @@
 /*
  * TreeTraitParserUtilities.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,7 @@
 package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.MultivariateTraitTree;
+import dr.evomodel.continuous.StandardizeTraits;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -36,8 +37,8 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
-public class TreeTraitParserUtilities {
 
+public class TreeTraitParserUtilities {
 
     public static final String TRAIT_PARAMETER = "traitParameter";
     public static final String TRAIT_NAME = "traitName";
@@ -54,6 +55,7 @@ public class TreeTraitParserUtilities {
     public static final String WINDOW = "window";
     public static final String DUPLICATES = "duplicatesOnly";
     public static final String STANDARDIZE = "standardize";
+    public static final String SAMPLE_MISSING_TRAITS = "sampleMissingTraits";
 
     public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)
@@ -230,11 +232,14 @@ public class TreeTraitParserUtilities {
         public CompoundParameter traitParameter;
         public List<Integer> missingIndices;
         public String traitName;
+        public Parameter sampleMissingParameter;
 
-        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, String traitName) {
+        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, String traitName,
+                                Parameter sampleMissingParameter) {
             this.traitParameter = traitParameter;
             this.missingIndices = missingIndices;
             this.traitName = traitName;
+            this.sampleMissingParameter = sampleMissingParameter;
         }
     }
 
@@ -253,6 +258,7 @@ public class TreeTraitParserUtilities {
 
         CompoundParameter traitParameter;
         List<Integer> missingIndices = null;
+        Parameter sampleMissingParameter = null;
 
         boolean isMatrixParameter = false;
         if (parameter instanceof MatrixParameter || parameter instanceof FastMatrixParameter) {
@@ -277,6 +283,10 @@ public class TreeTraitParserUtilities {
 
             Map<Integer, Integer> randomSample = null;
             traitName = xo.getStringAttribute(TRAIT_NAME);
+
+            StringBuilder warnings = new StringBuilder();
+            int warningLength = 0;
+            final int maxWarnings = 10;
 
             // Fill in attributeValues
             int taxonCount = treeModel.getTaxonCount();
@@ -338,17 +348,23 @@ public class TreeTraitParserUtilities {
                         if (randomSampleSizeFlag == -1 || randomSample.containsKey(j)) {
                             double value = Double.NaN;
                             if (oneValue.equals("NA") || oneValue.equals("?") ) {
-                                Logger.getLogger("dr.evomodel.continuous").info(
-                                        "Warning: Missing value in tip for taxon " + taxonName +
-                                                " (filling with 0 as starting value when sampling only)"   // See comment below
-                                );
+                                if (warningLength < maxWarnings) {
+                                    warnings.append(
+                                            "Warning: Missing value in tip for taxon " + taxonName +
+                                                    " (filling with 0 as starting value when sampling only)\n"   // See comment below
+                                    );
+                                    ++warningLength;
+                                }
                             } else {
                                 try {
                                     value = new Double(oneValue);
                                     if (Double.isNaN(value)) {
-                                        Logger.getLogger("dr.evomodel.continuous").info(
-                                                "Warning: Unrecognizable number " + oneValue + " for taxon " + taxonName
-                                        );
+                                        if (warningLength < maxWarnings) {
+                                            warnings.append(
+                                                    "Warning: Unrecognizable number " + oneValue + " for taxon " + taxonName + "\n"
+                                            );
+                                            ++warningLength;
+                                        }
                                     }
                                 } catch (NumberFormatException e) {
                                     throw new RuntimeException(e.getMessage());
@@ -369,6 +385,26 @@ public class TreeTraitParserUtilities {
                 }
             }
 
+            if (warningLength > 0) {
+                Logger.getLogger("dr.evomodel.continuous").info(warnings.toString());
+                if (warningLength == maxWarnings) {
+                    Logger.getLogger("dr.evomodel.continuous").info("Warning: only first " + maxWarnings + " trait warnings were displayed\n");
+                }
+            }
+
+            // Standardize
+            if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
+
+                System.err.println(traitParameter.getClass().getCanonicalName());
+
+                System.err.println("Yes, standardize");
+
+                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter);
+                String message = st.doStandardization(false);
+
+                Logger.getLogger("dr.evomodel.continous").info(message);
+            }
+
             // Find missing values
             double[] allValues = traitParameter.getParameterValues();
             missingIndices = new ArrayList<Integer>();
@@ -387,6 +423,7 @@ public class TreeTraitParserUtilities {
                 }
                 missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
                 ParameterParser.replaceParameter(cxo, missingParameter);
+                sampleMissingParameter = missingParameter;
             }
 
             // Give warnings if trait exist for internal and root nodes when integrating them out
@@ -408,7 +445,13 @@ public class TreeTraitParserUtilities {
                 }
             }
         }
-        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName);
+
+        if (xo.getAttribute(SAMPLE_MISSING_TRAITS, false) || xo.hasChildNamed(MISSING)) {
+            missingIndices = new ArrayList<Integer>(); // return empty
+
+        }
+
+        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName, sampleMissingParameter);
     }
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {

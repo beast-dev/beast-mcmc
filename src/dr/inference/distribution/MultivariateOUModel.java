@@ -25,9 +25,8 @@
 
 package dr.inference.distribution;
 
-import dr.evomodel.substmodel.PositiveDefiniteSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
-import dr.inference.distribution.GeneralizedLinearModel;
+import dr.oldevomodel.substmodel.PositiveDefiniteSubstitutionModel;
+import dr.oldevomodel.substmodel.SubstitutionModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -44,6 +43,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  */
+@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
 public class MultivariateOUModel extends GeneralizedLinearModel implements Statistic {
 
     private SubstitutionModel Q;
@@ -405,6 +405,15 @@ public class MultivariateOUModel extends GeneralizedLinearModel implements Stati
         if (W != null)
             return W[dim];
         return 0;
+    }
+
+    @Override
+    public double getValueSum() {
+        double sum = 0.0;
+        for (int i = 0; i < getDimension(); i++) {
+            sum += getStatisticValue(i);
+        }
+        return sum;
     }
 
     public String getAttributeName() {

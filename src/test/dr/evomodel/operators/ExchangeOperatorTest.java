@@ -5,7 +5,7 @@ import java.io.IOException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -58,19 +58,14 @@ public class ExchangeOperatorTest extends OperatorAssert {
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5);
-                ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-                //e.printStackTrace();
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }
@@ -120,19 +115,14 @@ public class ExchangeOperatorTest extends OperatorAssert {
 
         for (int i = 0; i < reps; i++) {
 
-            try {
-                TreeModel treeModel = new TreeModel("treeModel", tree5_2);
-                ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
-                operator.doOperation();
+            TreeModel treeModel = new TreeModel("treeModel", tree5_2);
+            ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
+            operator.doOperation();
 
-                String tree = Tree.Utils.newickNoLengths(treeModel);
+            String tree = TreeUtils.newickNoLengths(treeModel);
 
-                if (tree.equals(treeMatch)) {
-                    count += 1;
-                }
-
-            } catch (OperatorFailedException e) {
-//                e.printStackTrace();
+            if (tree.equals(treeMatch)) {
+                count += 1;
             }
 
         }

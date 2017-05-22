@@ -32,7 +32,6 @@ import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Attribute;
@@ -67,10 +66,10 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
         return variable;
     }
 
-    public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
-        double logPosterior = evaluate(likelihood, prior, 1.0);
+    public double doOperation(Likelihood likelihood) {
+        double logPosterior = evaluate(likelihood, 1.0);
         double cutoffDensity = logPosterior + MathUtils.randomLogDouble();
-        sliceInterval.drawFromInterval(prior, likelihood, cutoffDensity, width);
+        sliceInterval.drawFromInterval(likelihood, cutoffDensity, width);
         // No need to set variable, as SliceInterval has already done this (and recomputed posterior)
         return 0;
     }
@@ -109,11 +108,7 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
         double variance = 0;
 
         for(int i = 0; i < length; i++) {
-            try {
-                sliceSampler.doOperation(null, posterior);
-            } catch (OperatorFailedException e) {
-                System.err.println(e.getMessage());
-            }
+            sliceSampler.doOperation(posterior);
             double x = meanParameter.getValue(0);
             mean += x;
             variance += x*x;

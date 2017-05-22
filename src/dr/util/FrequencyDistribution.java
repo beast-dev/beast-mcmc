@@ -84,7 +84,7 @@ public class FrequencyDistribution {
 		return bins[bin];
 	}
 
-    public double getProb(int bin) {
+    public double getProbability(int bin) {
         int total = 0;
         for (int b : bins) {
             total = total + b;

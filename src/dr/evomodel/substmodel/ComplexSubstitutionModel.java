@@ -25,19 +25,14 @@
 
 package dr.evomodel.substmodel;
 
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
-import cern.colt.matrix.linalg.Algebra;
-import cern.colt.matrix.linalg.EigenvalueDecomposition;
-import cern.colt.matrix.linalg.Property;
 import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.inference.model.*;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -45,119 +40,65 @@ import dr.util.CommonCitations;
 import java.util.*;
 
 /**
- * <b>A general irreversible class for any
- * data type; allows complex eigenstructures.</b>
- *
  * @author Marc Suchard
  */
+public class ComplexSubstitutionModel extends GeneralSubstitutionModel implements Likelihood, Citable {
 
-public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements Likelihood, Citable {
+    public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
+        super(name, dataType, freqModel, parameter, -1);
+        probability = new double[stateCount * stateCount];
+    }
 
-    public ComplexSubstitutionModel(String name, DataType dataType,
-                                    FrequencyModel rootFreqModel, Parameter parameter) {
+    @Override
+    protected void setupDimensionNames(int relativeTo) {
+        List<String> rateNames = new ArrayList<String>();
 
-        super(name, dataType, rootFreqModel);
-        this.infinitesimalRates = parameter;
+        String ratePrefix = ratesParameter.getParameterName();
 
-        rateCount = stateCount * (stateCount - 1);
-
-        if (parameter != null) {
-            if (rateCount != infinitesimalRates.getDimension()) {
-                throw new RuntimeException("Dimension of '" + infinitesimalRates.getId() + "' ("
-                        + infinitesimalRates.getDimension() + ") must equal " + rateCount);
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                rateNames.add(getDimensionString(i, j, ratePrefix));
             }
-            addVariable(infinitesimalRates);
         }
 
-
-        stationaryDistribution = new double[stateCount];
-        storedStationaryDistribution = new double[stateCount];
-
-    }
-
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == freqModel)
-            return; // freqModel only affects the likelihood calculation at the tree root
-        super.handleModelChangedEvent(model, object, index);
-    }
-
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        if (!updateMatrix) {
-        updateMatrix = true;
-//            fireModelChanged();
-//        }
-    }
-
-    protected void restoreState() {
-
-        // To restore all this stuff just swap the pointers...
-
-        double[] tmp3 = storedEvalImag;
-        storedEvalImag = EvalImag;
-        EvalImag = tmp3;
-
-        tmp3 = storedStationaryDistribution;
-        storedStationaryDistribution = stationaryDistribution;
-        stationaryDistribution = tmp3;
-
-//        normalization = storedNormalization;
-
-        // Inherited
-        updateMatrix = storedUpdateMatrix;
-        wellConditioned = storedWellConditioned;
-
-        double[] tmp1 = storedEval;
-        storedEval = Eval;
-        Eval = tmp1;
-
-        double[][] tmp2 = storedIevc;
-        storedIevc = Ievc;
-        Ievc = tmp2;
-
-        tmp2 = storedEvec;
-        storedEvec = Evec;
-        Evec = tmp2;
-
-    }
-
-    protected void storeState() {
-
-        storedUpdateMatrix = updateMatrix;
-
-//        if(updateMatrix)
-//            System.err.println("Storing updatable state!");
-
-        storedWellConditioned = wellConditioned;
-
-        System.arraycopy(stationaryDistribution, 0, storedStationaryDistribution, 0, stateCount);
-        System.arraycopy(EvalImag, 0, storedEvalImag, 0, stateCount);
-//        storedNormalization = normalization;
-
-        // Inherited
-        System.arraycopy(Eval, 0, storedEval, 0, stateCount);
-        for (int i = 0; i < stateCount; i++) {
-            System.arraycopy(Ievc[i], 0, storedIevc[i], 0, stateCount);
-            System.arraycopy(Evec[i], 0, storedEvec[i], 0, stateCount);
+        for (int j = 0; j < dataType.getStateCount(); ++j) {
+            for (int i = j + 1; i < dataType.getStateCount(); ++i) {
+                rateNames.add(getDimensionString(i, j, ratePrefix));
+            }
         }
+
+        String[] tmp = new String[0];
+        ratesParameter.setDimensionNames(rateNames.toArray(tmp));
     }
 
+    protected EigenSystem getDefaultEigenSystem(int stateCount) {
+        return new ComplexColtEigenSystem(stateCount);
+    }
+
+    /**
+     * get the complete transition probability matrix for the given distance
+     *
+     * @param distance the expected number of substitutions
+     * @param matrix   an array to store the matrix
+     */
     public void getTransitionProbabilities(double distance, double[] matrix) {
+        getTransitionProbabilities(distance, matrix, getEigenDecomposition());
+    }
 
+    protected void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
         double temp;
-
-        int i, j, k;
-
-        synchronized (this) {
-            if (updateMatrix) {
-                setupMatrix();
-            }
-        }
-
-        if (!wellConditioned) {
+        if (eigen == null) {
             Arrays.fill(matrix, 0.0);
             return;
         }
 
+        double[] Evec = eigen.getEigenVectors();
+        double[] Eval = eigen.getEigenValues();
+        double[] EvalImag = new double[stateCount];
+        System.arraycopy(Eval, stateCount, EvalImag, 0, stateCount);
+        double[] Ievc = eigen.getInverseEigenVectors();
+
+        double[][] iexp = new double[stateCount][stateCount];
 
 // Eigenvalues and eigenvectors of a real matrix A.
 //
@@ -172,15 +113,13 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 // V may be badly conditioned, or even singular, so the validity of the
 // equation A = V D V^{-1} depends on the conditioning of V.
 
-        double[][] iexp = popiexp();
-
-        for (i = 0; i < stateCount; i++) {
+        for (int i = 0; i < stateCount; i++) {
 
             if (EvalImag[i] == 0) {
                 // 1x1 block
                 temp = Math.exp(distance * Eval[i]);
-                for (j = 0; j < stateCount; j++) {
-                    iexp[i][j] = Ievc[i][j] * temp;
+                for (int j = 0; j < stateCount; j++) {
+                    iexp[i][j] = Ievc[i * stateCount + j] * temp;
                 }
             } else {
                 // 2x2 conjugate block
@@ -192,361 +131,84 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 double expatcosbt = expat * Math.cos(distance * b);
                 double expatsinbt = expat * Math.sin(distance * b);
 
-                for (j = 0; j < stateCount; j++) {
-                    iexp[i][j] = expatcosbt * Ievc[i][j] + expatsinbt * Ievc[i2][j];
-                    iexp[i2][j] = expatcosbt * Ievc[i2][j] - expatsinbt * Ievc[i][j];
+                for (int j = 0; j < stateCount; j++) {
+                    iexp[i][j] = expatcosbt * Ievc[i * stateCount + j] +
+                            expatsinbt * Ievc[i2 * stateCount + j];
+                    iexp[i2][j] = expatcosbt * Ievc[i2 * stateCount + j] -
+                            expatsinbt * Ievc[i * stateCount + j];
                 }
                 i++; // processed two conjugate rows
             }
         }
 
         int u = 0;
-        for (i = 0; i < stateCount; i++) {
-            for (j = 0; j < stateCount; j++) {
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
                 temp = 0.0;
-                for (k = 0; k < stateCount; k++) {
-                    temp += Evec[i][k] * iexp[k][j];
+                for (int k = 0; k < stateCount; k++) {
+                    temp += Evec[i * stateCount + k] * iexp[k][j];
                 }
-                if (temp < 0.0)
-                    matrix[u] = minProb;
-                else
-                    matrix[u] = temp;
+                matrix[u] = Math.abs(temp);
                 u++;
             }
         }
-        pushiexp(iexp);
     }
 
-    public double[] getStationaryDistribution() {
-        return stationaryDistribution;
+    protected int getRateCount(int stateCount) {
+        return (stateCount - 1) * stateCount;
     }
 
-    protected void computeStationaryDistribution() {
-        stationaryDistribution = freqModel.getFrequencies();
+    protected void setupRelativeRates(double[] rates) {
+        for (int i = 0; i < rates.length; i++)
+            rates[i] = ratesParameter.getParameterValue(i);
     }
 
-
-    protected double[] getRates() {
-        return infinitesimalRates.getParameterValues();
-    }
-
-    protected double[] getPi() {
-        return freqModel.getFrequencies();
-    }
-
-    public void setupMatrix() {
-
-        if (!eigenInitialised) {
-            initialiseEigen();
-            storedEvalImag = new double[stateCount];
-        }
-
-        int i = 0;
-
-        storeIntoAmat();
-
-
-        makeValid(amat, stateCount);
-
-        // compute eigenvalues and eigenvectors
-//        EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(amat));
-
-        RobustEigenDecomposition eigenDecomp;
-        try {
-            eigenDecomp = new RobustEigenDecomposition(new DenseDoubleMatrix2D(amat), maxIterations);
-        } catch (ArithmeticException ae) {
-            System.err.println(ae.getMessage());
-            wellConditioned = false;
-            System.err.println("amat = \n" + new Matrix(amat));
-            return;
-        }
-
-        DoubleMatrix2D eigenV = eigenDecomp.getV();
-        DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
-        DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
-        DoubleMatrix2D eigenVInv;
-
-        // A better (?) approach to checking diagonalizability comes from:
-        //
-        // J. Gentle (2007) Matrix Algebra
-        //
-        // Diagonalizbility Theorem: A matrix A is (complex) diagonalizable iff all distinct eigenvalues \lambda_l
-        // with algebraic multiplicity m_l are semi-simple, i.e.
-        //
-        //          rank(A - \lambda_l I) = n - m_l
-        //
-        // Equivalently (?), eigenV must be non-singular.
-        //
-        // SVD is needed to numerically approximate the rank of a matrix, so we can check Algrebra.rank()
-        // or Algebra.cond() with almost equal amounts of work.  I don't know which is more reliable. -- MAS
-
-        if (checkConditioning) {
-            RobustSingularValueDecomposition svd;
-            try {
-                svd = new RobustSingularValueDecomposition(eigenV, maxIterations);
-            } catch (ArithmeticException ae) {
-                System.err.println(ae.getMessage());
-                wellConditioned = false;
-                return;
-            }
-            if (svd.cond() > maxConditionNumber) {
-                wellConditioned = false;
-                return;
-            }
-        }
-
-        try {
-            eigenVInv = alegbra.inverse(eigenV);
-        } catch (IllegalArgumentException e) {
-            wellConditioned = false;
-            return;
-        }
-
-        Ievc = eigenVInv.toArray();
-        Evec = eigenV.toArray();
-        Eval = eigenVReal.toArray();
-        EvalImag = eigenVImag.toArray();
-
-        // Check for valid decomposition
-        for (i = 0; i < stateCount; i++) {
-            if (Double.isNaN(Eval[i]) || Double.isNaN(EvalImag[i]) ||
-                    Double.isInfinite(Eval[i]) || Double.isInfinite(EvalImag[i])) {
-                wellConditioned = false;
-                return;
-            } else if (Math.abs(Eval[i]) < 1e-10) {
-                Eval[i] = 0.0;
-            }
-        }
-
-        updateMatrix = false;
-        wellConditioned = true;
-        // compute normalization and rescale eigenvalues
-
-        computeStationaryDistribution();
-
-        if (doNormalization) {
-            double subst = 0.0;
-
-            for (i = 0; i < stateCount; i++)
-                subst += -amat[i][i] * stationaryDistribution[i];
-
-//        normalization = subst;
-
-            for (i = 0; i < stateCount; i++) {
-                Eval[i] /= subst;
-                EvalImag[i] /= subst;
-            }
-        }
-    }
-
-    //store the infinitesimal rates in the vector to a matrix called amat
-    //store the infinitesimal rates in the vector to a matrix called amat
-    public void storeIntoAmat(){
-        double[] rates = getRates();
-        double[] pi = getPi();
+    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
-            for (j = i+1; j < stateCount; j++) {
-                amat[i][j] = rates[k++] * pi[j];
+            for (j = i + 1; j < stateCount; j++) {
+                double thisRate = rates[k++];
+                if (thisRate < 0.0) thisRate = 0.0;
+                matrix[i][j] = thisRate * pi[j];
             }
         }
         // Copy lower triangle in column-order form (transposed)
-        for (j = 0; j< stateCount; j++) {
-            for (i = j+1; i < stateCount; i++) {
-                amat[i][j] = rates[k++] * pi[j];
+        for (j = 0; j < stateCount; j++) {
+            for (i = j + 1; i < stateCount; i++) {
+                double thisRate = rates[k++];
+                if (thisRate < 0.0) thisRate = 0.0;
+                matrix[i][j] = thisRate * pi[j];
             }
         }
     }
 
-    private void printDebugSetupMatrix() {
-        System.out.println("Normalized infinitesimal rate matrix:");
-        System.out.println(new Matrix(amat));
-        System.out.println(new Matrix(amat).toStringOctave());
-//        System.out.println("Normalization = " + normalization);
-        System.out.println("Values in setupMatrix():");
-//		System.out.println(eigenV);
-//		System.out.println(eigenVInv);
-//		System.out.println(eigenVReal);
+    public boolean canReturnComplexDiagonalization() {
+        return true;
     }
 
-    protected void checkComplexSolutions() {
-        boolean complex = false;
-        for (int i = 0; i < stateCount && !complex; i++) {
-            if (EvalImag[i] != 0)
-                complex = true;
+    protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        double norm = 1.0;
+        if (doNormalization) {
+            norm = super.getNormalizationValue(matrix, pi);
         }
-        isComplex = complex;
-    }
-
-    public boolean getIsComplex() {
-        return isComplex;
-    }
-
-    protected void frequenciesChanged() {
-    }
-
-    protected void ratesChanged() {
-    }
-
-    protected void setupRelativeRates() {
-    }
-
-    protected Parameter infinitesimalRates;
-
-//    public LogColumn[] getColumns() {
-//
-//        LogColumn[] columnList = new LogColumn[stateCount * stateCount];
-//        int index = 0;
-//        for (int i = 0; i < stateCount; i++) {
-//            for (int j = 0; j < stateCount; j++)
-//                columnList[index++] = new MatrixEntryColumn(getId(), i, j, amat);
+//            return super.getNormalizationValue(matrix, pi);
+//        } else {
+//            return 1.0;
 //        }
-//        return columnList;
-//    }
-
-    public LogColumn[] getColumns() {
-        return new LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
-
-    protected class LikelihoodColumn extends NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
-
-
-    public static void main(String[] arg) {
-
-//        Parameter rates = new Parameter.Default(new double[]{5.0, 1.0, 1.0, 0.1, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
-//		Parameter rates = new Parameter.Default(new double[] {5.0, 1.0, 1.0, 1.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
-//		Parameter rates = new Parameter.Default(new double[] {1.0, 1.0});
-
-
-        Parameter rates = new Parameter.Default(159600, 1.0);
-
-
-        DataType dataType = new DataType() {
-
-            public String getDescription() {
-                return null;
-            }
-
-            public int getType() {
-                return 0;
-            }
-
-            @Override
-            public char[] getValidChars() {
-                return null;
-            }
-
-            public int getStateCount() {
-                return 400;
-            }
-        };
-
-        FrequencyModel freqModel = new FrequencyModel(dataType, new Parameter.Default(400, 1.0 / 400.0));
-
-        ComplexSubstitutionModel substModel = new ComplexSubstitutionModel("test",
-//				TwoStates.INSTANCE,
-                dataType,
-                freqModel,
-                rates);
-
-        long start = System.currentTimeMillis();
-        double[] finiteTimeProbs = new double[substModel.getDataType().getStateCount() * substModel.getDataType().getStateCount()];
-        double time = 1.0;
-        substModel.getTransitionProbabilities(time, finiteTimeProbs);
-        long end = System.currentTimeMillis();
-        System.out.println("Time: " + (end - start));
-//        System.out.println("Results:");
-//        System.out.println(new Vector(finiteTimeProbs));
-
-//		System.out.println("COLT value:");
-//		 This should work, matches 'octave' results
-//		DoubleMatrix2D result = alegbra.mult(substModel.eigenV, alegbra.mult(blockDiagonalExponential(1.0, substModel.eigenD), substModel.eigenVInv));
-//
-//		System.out.println(result);
-
-    }
-
-    public void setMaxIterations(int max) {
-        maxIterations = max;
-    }
-
-    public void setMaxConditionNumber(double max) {
-        maxConditionNumber = max;
-    }
-
-    public void setCheckConditioning(boolean check) {
-        checkConditioning = check;
-    }
-
-    private static DoubleMatrix2D blockDiagonalExponential(double distance, DoubleMatrix2D mat) {
-        for (int i = 0; i < mat.rows(); i++) {
-            if ((i + 1) < mat.rows() && mat.getQuick(i, i + 1) != 0) {
-                double a = mat.getQuick(i, i);
-                double b = mat.getQuick(i, i + 1);
-                double expat = Math.exp(distance * a);
-                double cosbt = Math.cos(distance * b);
-                double sinbt = Math.sin(distance * b);
-                mat.setQuick(i, i, expat * cosbt);
-                mat.setQuick(i + 1, i + 1, expat * cosbt);
-                mat.setQuick(i, i + 1, expat * sinbt);
-                mat.setQuick(i + 1, i, -expat * sinbt);
-                i++; // processed two entries in loop
-            } else
-                mat.setQuick(i, i, Math.exp(distance * mat.getQuick(i, i))); // 1x1 block
-        }
-        return mat;
-    }
-
-    private boolean isComplex = false;
-    private double[] stationaryDistribution = null;
-    private double[] storedStationaryDistribution;
-
-    protected boolean doNormalization = true;
-//    private Double normalization;
-//    private Double storedNormalization;
-
-    protected double[] EvalImag;
-    protected double[] storedEvalImag;
-
-    protected boolean wellConditioned = true;
-    private boolean storedWellConditioned;
-//    private double[] illConditionedProbabilities;
-
-    protected static final double minProb = Property.DEFAULT.tolerance();
-    //    private static final double minProb = 1E-20;
-    //    private static final double minProb = Property.ZERO.tolerance();
-    private static final Algebra alegbra = new Algebra(minProb);
-    EigenvalueDecomposition eigenDecomp;
-    EigenvalueDecomposition storedEigenDecomp;
-
-    private double maxConditionNumber = 1000;
-
-    private int maxIterations = 1000;
-
-    private boolean checkConditioning = true;
-
-    public Model getModel() {
-        return this;
+//        System.err.println("norm = " + doNormalization + " " + norm);
+//        System.err.println(new Matrix(matrix));
+        return norm;
     }
 
     public double getLogLikelihood() {
-        if (BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this))
+        if (BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability, this))
             return 0;
         return Double.NEGATIVE_INFINITY;
     }
 
     /**
      * Needs to be evaluated before the corresponding data likelihood.
+     *
      * @return
      */
     public boolean evaluateEarly() {
@@ -565,6 +227,16 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     }
 
+    public void printLastProbabilityMatrix() {
+        getLogLikelihood();
+        System.err.println((probability == null) ? "Null probability vector" : "Not null probability vector");
+        if (probability == null) {
+            boolean test = BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability, this);
+            System.err.println("BSSVS valid = " + test);
+        }
+        System.err.println(new Vector(probability));
+    }
+
     @Override
     public Set<Likelihood> getLikelihoodSet() {
         return new HashSet<Likelihood>(Arrays.asList(this));
@@ -580,8 +252,40 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     private boolean isUsed = false;
+    private double[] probability;
 
-    private double[] probability = null;
+    public Model getModel() {
+        return this;
+    }
+
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId()),
+                new NormalizationColumn(getId()),
+        };
+    }
+
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
+    }
+
+    protected class NormalizationColumn extends NumberColumn {
+        public NormalizationColumn(String label) { super(label); }
+
+        public double getDoubleValue() {
+            return getEigenDecomposition().getNormalization();
+        }
+    }
+
+    void setDoNormalization(boolean normalize) {
+        this.doNormalization = normalize;
+    }
 
     @Override
     public Citation.Category getCategory() {
@@ -598,4 +302,5 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         return Collections.singletonList(CommonCitations.EDWARDS_2011_ANCIENT);
     }
 
+    private boolean doNormalization = true;
 }

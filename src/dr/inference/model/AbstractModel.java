@@ -226,7 +226,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
     public final void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         handleVariableChangedEvent(variable, index, type);
 
-        // AR - I am not sure this is required and may be overruling modelChange events on parts of the
+        // todo AR - I am not sure this is required and may be overruling modelChange events on parts of the
         // model. If a parameter changes it should be handleVariableChangedEvent() job to fireModelChanged
         // events
         listenerHelper.fireModelChanged(this, variable, index);
@@ -248,13 +248,15 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
 
     public final void storeModelState() {
         if (isValidState) {
-            //System.out.println("STORE MODEL: " + getModelName() + "/" + getId());
+//            System.out.println("STORE MODEL: " + getModelName() + "/" + getId() + "/" + getClass().getCanonicalName());
 
             for (Model m : models) {
+//                System.out.println("\t" + m.getModelName() + "/" + m.getClass().getCanonicalName());
                 m.storeModelState();
             }
 
             for (Variable variable : variables) {
+//                System.out.println("\t" + variable.getVariableName() + "/" + variable.getClass().getCanonicalName());
                 variable.storeVariableValues();
             }
 

@@ -1,10 +1,11 @@
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.CodonLabeling;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.evolution.tree.TreeUtils;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.CodonLabeling;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.codon.GY94CodonModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.app.beagle.tools.CompleteHistorySimulator;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
@@ -53,7 +54,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
         siteModel.setSubstitutionModel(hky);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
-        double analyticResult = Tree.Utils.getTreeLength(tree, tree.getRoot()) * mu.getParameterValue(0);
+        double analyticResult = TreeUtils.getTreeLength(tree, tree.getRoot()) * mu.getParameterValue(0);
         int nSites = 200;
 
         double[] register1 = new double[stateCount * stateCount];
@@ -95,7 +96,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
         siteModel.setSubstitutionModel(codonModel);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
-        double analyticResult = Tree.Utils.getTreeLength(tree, tree.getRoot()) * mu.getParameterValue(0);
+        double analyticResult = TreeUtils.getTreeLength(tree, tree.getRoot()) * mu.getParameterValue(0);
         int nSites = 100;
 
         double[] synRegMatrix = CodonLabeling.getRegisterMatrix(CodonLabeling.SYN, codons, false); // use base 61

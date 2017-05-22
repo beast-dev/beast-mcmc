@@ -5,16 +5,16 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.HKY;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.HKY;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
+import dr.oldevomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
@@ -88,7 +88,7 @@ public class AncestralStateTreeLikelihoodTest extends TestCase {
 
         StringBuffer buffer = new StringBuffer();
 
-        Tree.Utils.newick(treeModel, treeModel.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+        TreeUtils.newick(treeModel, treeModel.getRoot(), false, TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
                 null, null, new TreeTraitProvider[] { treeLikelihood }, null, buffer); 
 
 

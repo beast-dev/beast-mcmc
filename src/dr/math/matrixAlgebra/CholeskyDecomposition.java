@@ -54,6 +54,10 @@ public class CholeskyDecomposition {
 
 	private double[][] L;
 
+	public CholeskyDecomposition(Matrix A) throws IllegalDimension{
+		this(A.components);
+	}
+
 	public CholeskyDecomposition(double[][] A) throws IllegalDimension {
 
 		n = A.length;
@@ -85,4 +89,30 @@ public class CholeskyDecomposition {
 
 	}
 
+    public static double[][] execute(double[] A, final int offset, final int n) {
+
+        final double[][] L = new double[n][n];
+//        boolean isspd = (A[0].length == n);
+//        if (!isspd)
+//            throw new IllegalDimension("Cholesky decomposition is only defined for square matrices");
+        // Main loop.
+        for (int j = 0; j < n; j++) {
+            double[] Lrowj = L[j];
+            double d = 0.0;
+            for (int k = 0; k < j; k++) {
+                double[] Lrowk = L[k];
+                double s = 0.0;
+                for (int i = 0; i < k; i++) {
+                    s += Lrowk[i] * Lrowj[i];
+                }
+                Lrowj[k] = s = (A[offset + j * n + k] - s) / L[k][k];
+                d = d + s * s;
+//                isspd = isspd & (A[k][j] == A[j][k]);
+            }
+            d = A[offset + j * n + j] - d;
+//            isspd = isspd & (d > 0.0);
+            L[j][j] = Math.sqrt(Math.max(d, 0.0));
+        }
+        return L;
+    }
 }

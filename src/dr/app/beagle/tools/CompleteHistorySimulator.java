@@ -25,17 +25,13 @@
 
 package dr.app.beagle.tools;
 
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.evolution.tree.*;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
@@ -344,10 +340,10 @@ public class CompleteHistorySimulator extends SimpleAlignment
 			sb.append("\n");
 			// tree output
 			sb.append("tree\n");
-			Tree.Utils.newick(tree,
+			TreeUtils.newick(tree,
 							tree.getRoot(),
 							true,
-							Tree.BranchLengthType.LENGTHS_AS_TIME,
+							TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
 							format,
 							null,
 							(nJumpProcesses > 0 || saveAlignment ? new TreeTraitProvider[] { this }

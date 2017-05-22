@@ -39,7 +39,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
+import dr.oldevomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
@@ -1132,7 +1132,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return Arrays.asList(new Citation(
                         new Author[]{new Author("M", "Hall"), new Author("M", "Woolhouse"), new Author("A", "Rambaut")},
             "Epidemic Reconstruction in a Phylogenetics Framework: Transmission Trees as Partitions of the Node Set",
-            "PLOS Comput Biol", Citation.Status.IN_PRESS));
+            2016, "PLOS Comput Biol",
+                11,
+                0, 0, "10.1371/journal.pcbi.1004613",
+                Citation.Status.PUBLISHED));
 }
 
     // **************************************************************

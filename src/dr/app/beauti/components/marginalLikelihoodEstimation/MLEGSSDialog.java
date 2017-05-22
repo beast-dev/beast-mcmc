@@ -46,14 +46,15 @@ public class MLEGSSDialog {
 
     private final OptionsPanel optionsPanel;
 
-    private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName;
+    private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName, labelResultFileName;
     private JLabel labelStepDistribution, labelTreeWorkingPrior, labelParameterWorkingPrior;
 
     private WholeNumberField pathStepsField = new WholeNumberField(1, Integer.MAX_VALUE);
     private WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
     private WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
-    private JTextArea logFileNameField = new JTextArea("MLE.log");
+    private JTextArea logFileNameField = new JTextArea("mle.log");
+    private JTextArea resultFileNameField = new JTextArea("mle.result.log");
 
     JCheckBox operatorAnalysis = new JCheckBox("Print operator analysis");
 
@@ -145,7 +146,25 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.mleFileName = logFileNameField.getText();
+                options.mleFileName = logFileNameField.getText();
+            }
+        });
+
+        optionsPanel.addSeparator();
+
+        resultFileNameField.setColumns(32);
+        resultFileNameField.setEditable(false);
+        resultFileNameField.setMinimumSize(resultFileNameField.getPreferredSize());
+        labelResultFileName = optionsPanel.addComponentWithLabel("Results file name:", resultFileNameField);
+        resultFileNameField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.mleResultFileName = resultFileNameField.getText();
             }
         });
 
@@ -219,8 +238,8 @@ public class MLEGSSDialog {
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
 
-        JTextArea citationText = new JTextArea("Baele G, Lemey P, Suchard MA (2015) Genealogical working " +
-                "distributions for Bayesian \nmodel testing with phylogenetic uncertainty [GSS Paper].");
+        JTextArea citationText = new JTextArea("Baele G, Lemey P, Suchard MA (2016) Genealogical working " +
+                "distributions for Bayesian \nmodel testing with phylogenetic uncertainty. Syst. Biol. 65(2), 250-264 [GSS Paper].");
         citationText.setColumns(45);
         optionsPanel.addComponentWithLabel("Citation:", citationText);
 
@@ -269,7 +288,9 @@ public class MLEGSSDialog {
 
     public void setFilenameStem(String fileNameStem, boolean addTxt) {
         logFileNameField.setText(fileNameStem + ".mle.log" + (addTxt ? ".txt" : ""));
+        resultFileNameField.setText(fileNameStem + ".mle.result.log" + (addTxt ? ".txt" : ""));
         options.mleFileName = logFileNameField.getText();
+        options.mleResultFileName = resultFileNameField.getText();
     }
 
     public void setOptions(MarginalLikelihoodEstimationOptions options) {
@@ -280,6 +301,7 @@ public class MLEGSSDialog {
         logEveryField.setValue(options.mleLogEvery);
 
         logFileNameField.setText(options.mleFileName);
+        resultFileNameField.setText(options.mleResultFileName);
 
         treeWorkingPrior.setSelectedItem(options.choiceTreeWorkingPrior);
         if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions") && options.performMLEGSS) {
@@ -298,6 +320,7 @@ public class MLEGSSDialog {
         options.mleLogEvery = logEveryField.getValue();
 
         options.mleFileName = logFileNameField.getText();
+        options.mleResultFileName = resultFileNameField.getText();
         options.choiceTreeWorkingPrior = treeWorkingPrior.getSelectedItem().toString();
         if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions") && options.performMLEGSS) {
             beautiOptions.logCoalescentEventsStatistic = true;

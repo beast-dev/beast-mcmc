@@ -3,8 +3,8 @@ package test.dr.evomodel.substmodel;
 import junit.framework.TestCase;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.NtdBMA;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.NtdBMA;
 import dr.evolution.datatype.Nucleotides;
 
 /**

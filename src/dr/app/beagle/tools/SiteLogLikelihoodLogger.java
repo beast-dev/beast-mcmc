@@ -25,7 +25,7 @@
 
 package dr.app.beagle.tools;
 
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;

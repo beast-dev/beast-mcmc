@@ -54,13 +54,14 @@ public class SetOperator extends SimpleMCMCOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() {
 
         int index = MathUtils.nextInt(values.length);
         double newValue = values[index];
 
         if (newValue < parameter.getBounds().getLowerLimit(index) || newValue > parameter.getBounds().getUpperLimit(index)) {
-            throw new OperatorFailedException("proposed value outside boundaries");
+//            throw new OperatorFailedException("proposed value outside boundaries");
+            return Double.NEGATIVE_INFINITY;
         }
 
         parameter.setParameterValue(index, newValue);

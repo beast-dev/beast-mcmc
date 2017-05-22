@@ -37,7 +37,8 @@ import dr.math.distributions.MultivariateNormalDistribution;
  * @author Max Tolkoff
  */
 
-public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel, GaussianProcessRandomGenerator {
+public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel,
+        GaussianProcessRandomGenerator, GradientProvider {
 
     public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
@@ -131,6 +132,25 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     protected void acceptState() {
     } // no additional state needs accepting
 
+    @Override
+    public int getDimension() {
+        return mean.getDimension();
+    }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        return precision.getParameterAsMatrix();
+    }
+
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return mean;
+    }
+
     // **************************************************************
     // Private instance variables and functions
     // **************************************************************
@@ -164,13 +184,11 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         return distribution.logPdf(x);
     }
 
+    // GradientWrtParameterProvider interface
     @Override
-    public int getDimension() {
-        return mean.getDimension();
+    public double[] getGradientLogDensity(Object x) {
+        checkDistribution();
+        return distribution.getGradientLogDensity(x);
     }
 
-    @Override
-    public double[][] getPrecisionMatrix() {
-        return precision.getParameterAsMatrix();
-    }
 }

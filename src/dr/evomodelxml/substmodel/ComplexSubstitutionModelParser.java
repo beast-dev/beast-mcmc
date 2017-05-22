@@ -1,7 +1,7 @@
 /*
  * ComplexSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,10 +26,7 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
-import dr.evoxml.util.DataTypeUtils;
+import dr.evomodel.substmodel.*;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -37,109 +34,137 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
+ * @author Marc Suchard
  */
 public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String COMPLEX_SUBSTITUTION_MODEL = "complexSubstitutionModel";
+    public static final String SVS_COMPLEX_SUBSTITUTION_MODEL = "svsComplexSubstitutionModel";
+    public static final String DATA_TYPE = "dataType";
     public static final String RATES = "rates";
+    public static final String FREQUENCIES = "frequencies";
     public static final String ROOT_FREQUENCIES = "rootFrequencies";
-    public static final String INDICATOR = "rateIndicator";
     public static final String RANDOMIZE = "randomizeIndicator";
-    public static final String NORMALIZATION = "normalize";
-    public static final String MAX_CONDITION_NUMBER = "maxConditionNumber";
-    public static final String CONNECTED = "mustBeConnected";
-    public static final String MAX_ITERATIONS = "maxIterations";
+    public static final String INDICATOR = "rateIndicator";
+    public static final String BSSVS_TOLERANCE = "bssvsTolerance";
+    public static final String BSSVS_SCALAR = "bssvsScalar";
     public static final String CHECK_CONDITIONING = "checkConditioning";
+    public static final String NORMALIZED = "normalized";
 
-    public String[] getParserNames() {
-        return new String[]{
-                getParserName(), "beast_" + getParserName()
-        };
-    }
+    public static final int maxRandomizationTries = 100;
 
     public String getParserName() {
         return COMPLEX_SUBSTITUTION_MODEL;
     }
 
+    public String[] getParserNames() {
+        return new String[]{COMPLEX_SUBSTITUTION_MODEL, SVS_COMPLEX_SUBSTITUTION_MODEL};
+    }
+
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        DataType dataType = DataTypeUtils.getDataType(xo);
+        Parameter ratesParameter;
 
-        if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
+        XMLObject cxo;
+        if (xo.hasChildNamed(FREQUENCIES)) {
+            cxo = xo.getChild(FREQUENCIES);
+        } else {
+            cxo = xo.getChild(ROOT_FREQUENCIES);
+        }
+        FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-        XMLObject cxo = xo.getChild(RATES);
+        DataType dataType = freqModel.getDataType();
 
-        Parameter ratesParameter = (Parameter) cxo.getChild(Parameter.class);
+        cxo = xo.getChild(RATES);
+
+        int states = dataType.getStateCount();
+
+        Logger.getLogger("dr.app.beagle.evomodel").info("  Complex Substitution Model (stateCount=" + states + ")");
+
+        ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
-        if (ratesParameter.getDimension() != rateCount) {
-            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount)
-                    + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
-        }
+        if (ratesParameter == null) {
 
-
-        cxo = xo.getChild(ROOT_FREQUENCIES);
-        FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-
-        if (dataType != rootFreq.getDataType()) {
-            throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
-        }
-
-        Parameter indicators = null;
-
-        if (xo.hasChildNamed(INDICATOR)) {
-            indicators = (Parameter) ((XMLObject) xo.getChild(INDICATOR)).getChild(Parameter.class);
-            if (ratesParameter.getDimension() != indicators.getDimension())
-                throw new XMLParseException("Rate parameter dimension must match indicator parameter dimension");
-        }
-
-        StringBuffer sb = new StringBuffer().append("Constructing a complex substitution model using\n")
-                .append("\tRate parameters: ").append(ratesParameter.getId())
-                .append("\n").append("\tRoot frequency model: ").append(rootFreq.getId()).append("\n");
-
-        ComplexSubstitutionModel model;
-
-        if (indicators == null)
-            model = new ComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter);
-        else {
-
-            boolean randomize = xo.getAttribute(RANDOMIZE, false);
-            boolean connected = xo.getAttribute(CONNECTED, false);
-            model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators);
-            if (randomize) {
-                BayesianStochasticSearchVariableSelection.Utils.randomize(indicators,
-                        dataType.getStateCount(), false);
-
-                boolean valid = !Double.isInfinite(model.getLogLikelihood());
-                if (!valid) {
-                    throw new XMLParseException("Poor tolerance in complex substitution model.  Please retry analysis using BEAGLE");
-                }
+            if (rateCount == 1) {
+                // simplest model for binary traits...
+            } else {
+                throw new XMLParseException("No rates parameter found in " + getParserName());
             }
-            sb.append("\tBSSVS indicators: ").append(indicators.getId()).append("\n");
-            sb.append("\tGraph must be connected: ").append(connected).append("\n");
+        } else if (ratesParameter.getDimension() != rateCount) {
+            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + rateCount + " dimensions.");
         }
-
-        boolean doNormalization = xo.getAttribute(NORMALIZATION, true);
-        model.setNormalization(doNormalization);
-        sb.append("\tNormalized: ").append(doNormalization).append("\n");
 
         boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);
-        model.setCheckConditioning(checkConditioning);
 
-        if (checkConditioning) {
-            double maxConditionNumber = xo.getAttribute(MAX_CONDITION_NUMBER, 1000);
-            model.setMaxConditionNumber(maxConditionNumber);
-            sb.append("\tMax. condition number: ").append(maxConditionNumber).append("\n");
+        if (!xo.hasChildNamed(INDICATOR)) {
+            if (!checkConditioning) {
+                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter) {
+                    protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                        return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                    }
+                };
+            } else {
+                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+            }
         }
 
-        int maxIterations = xo.getAttribute(MAX_ITERATIONS, 1000);
-        model.setMaxIterations(maxIterations);
-        sb.append("\tMax iterations: ").append(maxIterations).append("\n");
+        cxo = xo.getChild(INDICATOR);
 
-        sb.append("\t\tPlease cite Edwards, Suchard et al. (2011)\n");
+        Parameter indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
+        if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
+            throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
 
-        Logger.getLogger("dr.evomodel.substmodel").info(sb.toString());
+        if (xo.hasAttribute(BSSVS_TOLERANCE)) {
+            double tolerance = xo.getAttribute(BSSVS_TOLERANCE,
+                    BayesianStochasticSearchVariableSelection.Utils.getTolerance());
+            if (tolerance > BayesianStochasticSearchVariableSelection.Utils.getTolerance()) {
+                // Only increase smallest allowed tolerance
+                BayesianStochasticSearchVariableSelection.Utils.setTolerance(tolerance);
+                Logger.getLogger("dr.app.beagle.evomodel").info("\tIncreasing BSSVS tolerance to " + tolerance);
+            }
+        }
+
+        if (xo.hasAttribute(BSSVS_SCALAR)) {
+            double scalar = xo.getAttribute(BSSVS_SCALAR,
+                    BayesianStochasticSearchVariableSelection.Utils.getScalar());
+            if (scalar < BayesianStochasticSearchVariableSelection.Utils.getScalar()) {
+                BayesianStochasticSearchVariableSelection.Utils.setScalar(scalar);
+                Logger.getLogger("dr.app.beagle.evomodel").info("\tDecreasing BSSVS scalar to " + scalar);
+            }
+        }
+
+        SVSComplexSubstitutionModel model;
+        if (!checkConditioning) {
+            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter) {
+                protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                    return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                }
+            };
+        } else {
+            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter);
+        }
+        boolean randomize = xo.getAttribute(RANDOMIZE, false);
+        if (randomize) {
+            // Randomization may need multiple tries
+            int tries = 0;
+            boolean valid = false;
+
+            while (!valid && tries < maxRandomizationTries) {
+                BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
+                        dataType.getStateCount(), false);
+                valid = !Double.isInfinite(model.getLogLikelihood());
+                tries++;
+            }
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tRandomization attempts: " + tries);
+        }
+        if (!xo.getAttribute(NORMALIZED, true)) {
+            model.setNormalization(false);
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");
+        }
+        Logger.getLogger("dr.app.beagle.evomodel").info("\t\tPlease cite: Edwards, Suchard et al. (2011)\n");
         return model;
     }
 
@@ -148,11 +173,11 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "A general reversible model of sequence substitution for any data type with stochastic variable selection.";
+        return "A general irreversible model of sequence substitution for any data type.";
     }
 
     public Class getReturnType() {
-        return ComplexSubstitutionModelParser.class;
+        return SVSComplexSubstitutionModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -163,23 +188,24 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             new XORRule(
                     new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
                             DataType.getRegisteredDataTypeNames(), false),
-                    new ElementRule(DataType.class)
+                    new ElementRule(DataType.class),
+                    true // Optional
             ),
             AttributeRule.newBooleanRule(RANDOMIZE, true),
-            new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class),
+            new XORRule(
+                    new ElementRule(FREQUENCIES, FrequencyModel.class),
+                    new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class)),
             new ElementRule(RATES,
                     new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)}
+                            new ElementRule(Parameter.class, true)}
             ),
             new ElementRule(INDICATOR,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
                     }, true),
-            AttributeRule.newBooleanRule(NORMALIZATION, true),
-            AttributeRule.newDoubleRule(MAX_CONDITION_NUMBER, true),
-            AttributeRule.newBooleanRule(CONNECTED, true),
-            AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
+            AttributeRule.newDoubleRule(BSSVS_TOLERANCE, true),
+            AttributeRule.newDoubleRule(BSSVS_SCALAR, true),
             AttributeRule.newBooleanRule(CHECK_CONDITIONING, true),
+            AttributeRule.newBooleanRule(NORMALIZED, true),
     };
-
 }

@@ -27,10 +27,7 @@ package dr.app.tools;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.MigrateTreeImporter;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 
 import java.io.*;
 
@@ -98,7 +95,7 @@ public class ConvertMigrateTrees {
         writeNexusHeader(out);
         for (int i = 0; i < trees.length; i++) {
             out.println("tree tree_" + i + " = " +
-                    Tree.Utils.newick(trees[i], new TreeTraitProvider[] { popAttributes}));
+                    TreeUtils.newick(trees[i], new TreeTraitProvider[] { popAttributes}));
         }
         out.println("end;");
 

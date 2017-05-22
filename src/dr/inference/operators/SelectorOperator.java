@@ -70,7 +70,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return SelectorOperatorParser.SELECTOR_OPERATOR + "(" + selector.getParameterName() + ")";
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         final int[] s = vals();
         final List<Integer> poss = movesFrom_m2(s);

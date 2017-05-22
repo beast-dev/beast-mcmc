@@ -85,9 +85,9 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     }
 
     public int getDimension() {
-        if (length == 0)
-            throw new RuntimeException("Zero-dimensional parameter!");
-        // TODO Need non-fatal mechanism to check for zero-dimensional parameters
+//        if (length == 0)
+//            throw new RuntimeException("Zero-dimensional parameter!");
+//        // TODO Need non-fatal mechanism to check for zero-dimensional parameters
         return length;
     }
 

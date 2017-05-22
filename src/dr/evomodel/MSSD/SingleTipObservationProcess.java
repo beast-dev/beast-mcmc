@@ -1,7 +1,7 @@
 /*
  * SingleTipObservationProcess.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,12 +25,11 @@
 
 package dr.evomodel.MSSD;
 
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.MSSD.SingleTipObservationProcessParser;
 import dr.inference.model.Parameter;
 
 /**
@@ -48,7 +47,7 @@ public class SingleTipObservationProcess extends AnyTipObservationProcess {
 
     public SingleTipObservationProcess(TreeModel treeModel, PatternList patterns, SiteRateModel siteModel,
                                        BranchRateModel branchRateModel, Parameter mu, Parameter lam, Taxon sourceTaxon) {
-        super(SingleTipObservationProcessParser.MODEL_NAME, treeModel, patterns, siteModel, branchRateModel, mu, lam);
+        super("SingleTipObservationProcess", treeModel, patterns, siteModel, branchRateModel, mu, lam);
         this.sourceTaxon = sourceTaxon;
     }
 

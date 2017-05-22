@@ -104,7 +104,7 @@ public class SkylineReconstructor {
 
         List heights = traces.getValues(traces.getTraceIndex("treeModel.rootHeight"));
         TraceDistribution distribution = new TraceDistribution(heights,
-                traces.getTrace(traces.getTraceIndex("treeModel.rootHeight")).getTraceType(), traces.getStepSize());
+                traces.getTrace(traces.getTraceIndex("treeModel.rootHeight")).getTraceType());
 
         double timeMean = distribution.getMean();
         double timeMedian = distribution.getMedian();
@@ -141,7 +141,7 @@ public class SkylineReconstructor {
         }
 
         double delta = maxHeight / (binCount - 1);
-        int skip = burnin / traces.getStepSize();
+        int skip = (int) (burnin / traces.getStepSize());
         int state = 0;
 
         while (importer.hasTree() && state < skip) {

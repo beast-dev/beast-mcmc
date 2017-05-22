@@ -158,7 +158,7 @@ BEAST arguments:
 
 For example:
 
-     java -jar lib/beast.jar -seed 123456 -overwrite input.xml
+     java -jar lib/beast.jar -seed 12345 -overwrite input.xml
 
 
 Note: MCMC is not a black-box, and poor prior choices and starting values

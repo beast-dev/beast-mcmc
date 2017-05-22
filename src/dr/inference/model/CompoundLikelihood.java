@@ -25,7 +25,6 @@
 
 package dr.inference.model;
 
-import dr.app.beagle.evomodel.branchmodel.lineagespecific.BeagleBranchLikelihood;
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
 

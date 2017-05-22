@@ -25,10 +25,7 @@
 
 package dr.inference.trace;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A simple class that stores a trace for a single statistic
@@ -43,7 +40,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
 //    public static final int INCREMENT_SIZE = 1000;
 
     // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
-    protected TraceFactory.TraceType traceType = TraceFactory.TraceType.DOUBLE;
+    protected TraceType traceType = TraceType.REAL;
     protected List<T> values = new ArrayList<T>(); // TODO change to String only, and parse to double, int or string in getValues according to trace type
     //    protected int valueCount = 0;
     protected String name;
@@ -54,7 +51,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         this.name = name;
     }
 
-    public Trace(String name, TraceFactory.TraceType traceType) {
+    public Trace(String name, TraceType traceType) {
         this.name = name;
         setTraceType(traceType);
     }
@@ -79,28 +76,24 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         Collections.addAll(this.values, valuesArray);
     }
 
-    public int getValuesSize() {
+    public int getValueCount() {
         return values.size();
     }
 
+    public int getUniqueVauleCount() {
+        Set<T> uniqueValues = new HashSet<T>(values);
+        return uniqueValues.size();
+    }
+
     public T getValue(int index) {
-//        TODO filtered ?
-//        if (getFilter() != null && !getFilter().isIn(index)) {
-//           return null; // filtered
-//        }
         return values.get(index);
     }
 
-    public TreeSet<String> getRange() { // Double => bounds; Integer and String => unique values
-        TreeSet<String> range;
+    public double[] getRange() { // Double => bounds; Integer and String => unique values
 
-        if (getValuesSize() < 1) throw new IllegalArgumentException("Cannot find values in trace " + getName());
+        if (getValueCount() < 1) throw new IllegalArgumentException("Cannot find values in trace " + getName());
 
-        if (getTraceType() == TraceFactory.TraceType.STRING) {
-            range = new TreeSet<String>((List<String>) values);
-
-        } else {
-            range = new TreeSet<String>();
+        if (getTraceType().isNumber()) {
 
             Double min = Double.MAX_VALUE;
             Double max = Double.MIN_VALUE;
@@ -111,40 +104,39 @@ public class Trace<T> { // TODO get rid of generic to make things easy
                     max = (Double) t;
                 }
             }
-            range.add(min.toString());
-            if (max == Double.MIN_VALUE) {
-                range.add(min.toString()); // only 1 unique value
-            } else {
-                range.add(max.toString());
-            }
+            return new double[] {min, max};
+        } else {
+            throw new UnsupportedOperationException("cannot call getRange for categorical data");
         }
-
-        return range;
     }
 
+    public Set<String> getCategoricalValues() {
+        return new TreeSet<String>((List<String>) values);
+    }
     /**
      * @param fromIndex low endpoint (inclusive) of the subList.
      * @param toIndex   high endpoint (exclusive) of the subList.
      * @return The list of values (which are selected values if filter applied)
      */
     public List<T> getValues(int fromIndex, int toIndex) {
-        if (toIndex > getValuesSize() || fromIndex > toIndex)
-            throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
-                    + "; List size = " + getValuesSize() + "; in Trace " + name);
+        return getValues(fromIndex, toIndex, null);
+    }
 
-        if (getFilter() == null) {
+    public List<T> getValues(int fromIndex, int toIndex, boolean[] filtered) {
+        if (toIndex > getValueCount() || fromIndex > toIndex)
+            throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
+                    + "; List size = " + getValueCount() + "; in Trace " + name);
+
+        if (filtered == null || filtered.length < 1) {
             return values.subList(fromIndex, toIndex);
         } else {
-//            if (filter.selected.length != getValuesSize())
-//                throw new IllegalArgumentException("Trace " + name + " size of values is different with filter selected[] ! ");
-
             List<T> valuesList = new ArrayList<T>();
             for (int i = fromIndex; i < toIndex; i++) {
-                if (getFilter().isIn(values.get(i)))
+                if (!filtered[i])
                     valuesList.add(values.get(i));
             }
-
-            if (valuesList.size() < 1) throw new RuntimeException("There is no value left after applying filter !");
+            if (valuesList.size() < 1)
+                throw new RuntimeException("There is no value left after all filters are applied !");
 
             return valuesList;
         }
@@ -154,6 +146,10 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
 //    public Class getTraceType() {
 //        if (values.get(0) == null) {
 //            return null;
@@ -161,11 +157,11 @@ public class Trace<T> { // TODO get rid of generic to make things easy
 //        return values.get(0).getClass();
 //    }
 
-    public TraceFactory.TraceType getTraceType() {
+    public TraceType getTraceType() {
         return traceType;
     }
 
-    public void setTraceType(TraceFactory.TraceType traceType) {
+    public void setTraceType(TraceType traceType) {
         this.traceType = traceType;
     }
 
@@ -190,107 +186,4 @@ public class Trace<T> { // TODO get rid of generic to make things easy
     public Filter getFilter() {
         return filter;
     }
-
-    //******************** Trace Double ****************************
-/*    public class D extends Trace<Double> {
-
-        public D(String name, int initialSize) {
-            super.name = name;
-            super.values = new Double[initialSize];
-//            values[0] = initValue; // make getTraceType() working
-        }
-
-        public D(String name, Double[] values) {
-            this(name, values.length);
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public Double[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public Double[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            Double[] destination = new Double[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
-            }
-        }
-    }
-
-    //******************** Trace Integer ****************************
-    public class I extends Trace<Integer> {
-
-        public I(String name, int initialSize) {
-            super.name = name;
-            super.values = new Integer[initialSize];
-//            values[0] = initValue; // make getTraceType() working
-        }
-
-        public I(String name, Integer[] values) {
-            this(name, values.length);
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public Integer[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public Integer[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            Integer[] destination = new Integer[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
-            }
-        }
-    }
-
-    //******************** Trace String ****************************
-    public class S extends Trace<String> {
-
-        public S(String name, int initialSize, String initValue) {
-            super.name = name;
-            if (initialSize > 0) {
-                super.values = new String[initialSize];
-            }
-            values[0] = initValue; // make getTraceType() working
-        }
-
-        public S(String name, String[] values) {
-            super.name = name;
-            super.values = new String[values.length];
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public String[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public String[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            String[] destination = new String[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
-            }
-        }
-    } */
-
 }

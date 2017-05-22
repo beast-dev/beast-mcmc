@@ -28,14 +28,18 @@ package dr.inference.model;
 /**
  * @author Marc Suchard
  */
-public class DiagonalMatrix extends MatrixParameter {
+public class DiagonalMatrix extends MatrixParameter
+        implements MatrixParameterInterface, VariableListener {
 
     private Parameter diagonalParameter;
 
     public DiagonalMatrix(Parameter param) {
+//        super();
         super(MATRIX_PARAMETER);
         addParameter(param);
         diagonalParameter = param;
+
+//        diagonalParameter.addVariableListener(this);
     }
 
     public static DiagonalMatrix buildIdentityTimesElementMatrix(int dim, double value) {
@@ -46,6 +50,18 @@ public class DiagonalMatrix extends MatrixParameter {
 //	public DiagonalMatrix(String name, Parameter parameter) {
 //		Parameter.Default(name, parameters);
 //	}
+
+
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == diagonalParameter) {
+//            fireParameterChangedEvent();
+            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+        } else {
+//        System.err.println(variable.getClass().getCanonicalName() + " : " + variable.getId());
+            throw new IllegalArgumentException("Unknown variable");
+        }
+
+    }
 
     public Parameter getDiagonalParameter() { return diagonalParameter; }
 

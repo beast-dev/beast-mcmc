@@ -29,7 +29,6 @@ import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -41,6 +40,8 @@ import org.w3c.dom.Element;
  * @author Alexei Drummond
  * @version $Id: ColouredOperator.java,v 1.10 2006/07/28 11:41:23 rambaut Exp $
  */
+// Cleaning out untouched stuff. Can be resurrected if needed
+@Deprecated
 public class ColouredOperator implements CoercableMCMCOperator {
 
     public static final double ACCEPTANCE_FACTOR = 0.5;
@@ -57,7 +58,7 @@ public class ColouredOperator implements CoercableMCMCOperator {
         this.innerOperator = operator;
     }
 
-    public final double operate() throws OperatorFailedException {
+    public final double operate() {
 
         double logP = colouringModel.getTreeColouring().getLogProbabilityDensity();
 
@@ -160,23 +161,23 @@ public class ColouredOperator implements CoercableMCMCOperator {
         innerOperator.reset();
     }
 
-    public final int getCount() {
+    public final long getCount() {
         return innerOperator.getCount();
     }
 
-    public final int getAcceptCount() {
+    public final long getAcceptCount() {
         return innerOperator.getAcceptCount();
     }
 
-    public final void setAcceptCount(int accepted) {
+    public final void setAcceptCount(long accepted) {
         innerOperator.setAcceptCount(accepted);
     }
 
-    public final int getRejectCount() {
+    public final long getRejectCount() {
         return innerOperator.getRejectCount();
     }
 
-    public final void setRejectCount(int rejected) {
+    public final void setRejectCount(long rejected) {
         innerOperator.setRejectCount(rejected);
     }
 

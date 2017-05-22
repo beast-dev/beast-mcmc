@@ -25,9 +25,12 @@
 
 package dr.geo.operators;
 
+import dr.geo.AbstractPolygon2D;
 import dr.geo.GeoSpatialDistribution;
 import dr.geo.MultiRegionGeoSpatialDistribution;
 import dr.geo.Polygon2D;
+import dr.inference.distribution.AbstractDistributionLikelihood;
+import dr.inference.distribution.CachedDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
@@ -57,10 +60,22 @@ public class UniformGeoSpatialOperatorParser extends AbstractXMLObjectParser {
              throw new XMLParseException("parameter with 0 dimension.");
         }
 
+
+
         MultivariateDistributionLikelihood likelihood = (MultivariateDistributionLikelihood)
                 xo.getChild(MultivariateDistributionLikelihood.class);
 
-        List<Polygon2D> polygonList = new ArrayList<Polygon2D>();
+        if (likelihood == null) {
+            CachedDistributionLikelihood cached = (CachedDistributionLikelihood) xo.getChild(CachedDistributionLikelihood.class);
+            AbstractDistributionLikelihood ab = cached.getDistributionLikelihood();
+            if (!(ab instanceof MultivariateDistributionLikelihood)) {
+                throw new XMLParseException("invalid likelihood type in " + xo.getId());
+            }
+
+            likelihood = (MultivariateDistributionLikelihood) ab;
+        }
+
+        List<AbstractPolygon2D> polygonList = new ArrayList<AbstractPolygon2D>();
 
         if (likelihood.getDistribution() instanceof MultiRegionGeoSpatialDistribution) {
             for (GeoSpatialDistribution spatial : ((MultiRegionGeoSpatialDistribution) likelihood.getDistribution()).getRegions()) {
@@ -100,6 +115,9 @@ public class UniformGeoSpatialOperatorParser extends AbstractXMLObjectParser {
 //            AttributeRule.newDoubleRule(LOWER, true),
 //            AttributeRule.newDoubleRule(UPPER, true),
             new ElementRule(Parameter.class),
+            new XORRule(
             new ElementRule(MultivariateDistributionLikelihood.class),
+                    new ElementRule(CachedDistributionLikelihood.class)
+                    ),
     };
 }

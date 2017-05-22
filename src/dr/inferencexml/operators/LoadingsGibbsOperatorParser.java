@@ -44,6 +44,10 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     public static final String LOADINGS_GIBBS_OPERATOR = "loadingsGibbsOperator";
     public static final String WEIGHT = "weight";
     private final String RANDOM_SCAN = "randomScan";
+    private final String WORKING_PRIOR = "workingPrior";
+    private final String CUTOFF_PRIOR = "cutoffPrior";
+    private final String MULTI_THREADED = "multiThreaded";
+    private final String NUM_THREADS = "numThreads";
 
 
     @Override
@@ -53,16 +57,27 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
+        DistributionLikelihood cutoffPrior = null;
+        if(xo.hasChildNamed(CUTOFF_PRIOR)){
+            cutoffPrior = (DistributionLikelihood) xo.getChild(CUTOFF_PRIOR).getChild(DistributionLikelihood.class);
+        }
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
+        int numThreads = xo.getAttribute(NUM_THREADS, 4);
         MatrixParameterInterface loadings=null;
         if(xo.getChild(MatrixParameterInterface.class)!=null){
             loadings=(MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         }
+        DistributionLikelihood WorkingPrior = null;
+        if(xo.getChild(WORKING_PRIOR) != null){
+            System.out.println("here");
+            WorkingPrior = (DistributionLikelihood) xo.getChild(WORKING_PRIOR).getChild(DistributionLikelihood.class);
+        }
+        boolean multiThreaded = xo.getAttribute(MULTI_THREADED, false);
 
         if(prior!=null)
-        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan);  //To change body of implemented methods use File | Settings | File Templates.
+        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);  //To change body of implemented methods use File | Settings | File Templates.
         else
-            return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings);
+            return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings, cutoffPrior);
     }
 
     @Override
@@ -75,10 +90,18 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
 
             new XORRule(
             new ElementRule(DistributionLikelihood.class),
-            new ElementRule(MomentDistributionModel.class)
+                    new AndRule(
+            new ElementRule(MomentDistributionModel.class),
+
+                    new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{new ElementRule(DistributionLikelihood.class)}))
             ),
 //            new ElementRule(CompoundParameter.class),
             AttributeRule.newDoubleRule(WEIGHT),
+            AttributeRule.newBooleanRule(MULTI_THREADED, true),
+            AttributeRule.newIntegerRule(NUM_THREADS, true),
+            new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
+                    new ElementRule(DistributionLikelihood.class)
+            }, true),
     };
 
     @Override

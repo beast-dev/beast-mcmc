@@ -25,29 +25,31 @@
 
 package dr.app.beauti.generator;
 
+import dr.app.beauti.options.*;
+import dr.evomodel.substmodel.nucleotide.GTR;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.AbstractPartitionData;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
-import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.AsymmetricQuadraticModel;
-import dr.evomodel.substmodel.LinearBiasModel;
-import dr.evomodel.substmodel.NucModelType;
-import dr.evomodel.substmodel.TwoPhaseModel;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import dr.evomodelxml.substmodel.*;
+import dr.evomodelxml.substmodel.BinaryCovarionModelParser;
+import dr.evomodelxml.substmodel.BinarySubstitutionModelParser;
+import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
+import dr.evomodelxml.substmodel.FrequencyModelParser;
+import dr.evomodelxml.substmodel.GTRParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
+import dr.evomodelxml.substmodel.HKYParser;
+import dr.evomodelxml.substmodel.TN93Parser;
+import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
+import dr.oldevomodel.substmodel.LinearBiasModel;
+import dr.oldevomodel.substmodel.TwoPhaseModel;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MicrosatelliteParser;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.model.CompoundParameterParser;
+import dr.oldevomodelxml.substmodel.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -77,72 +79,41 @@ public class SubstitutionModelGenerator extends Generator {
 
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
-                // Jukes-Cantor model
-                if (model.getNucSubstitutionModel() == NucModelType.JC) {
-                    String prefix = model.getPrefix();
-                    writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
-                    writer.writeOpenTag(NucModelType.HKY.getXMLName(),
-                            new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "jc")}
-                    );
-                    writer.writeOpenTag(HKYParser.FREQUENCIES);
-                    writer.writeOpenTag(
-                            FrequencyModelParser.FREQUENCY_MODEL,
-                            new Attribute[]{
-                                    new Attribute.Default<String>("dataType", dataTypeDescription)
-                            }
-                    );
-                    writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-                    writer.writeTag(
-                            ParameterParser.PARAMETER,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                                    new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25"),
-                                    new Attribute.Default<String>(ParameterParser.LOWER, "0.0"),
-                                    new Attribute.Default<String>(ParameterParser.UPPER, "1.0")
-                            },
-                            true
-                    );
-                    writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
-
-                    writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
-                    writer.writeCloseTag(HKYParser.FREQUENCIES);
-
-                    writer.writeOpenTag(HKYParser.KAPPA);
-                    writeParameter("jc.kappa", 1, 1.0, Double.NaN, Double.NaN, writer);
-                    writer.writeCloseTag(HKYParser.KAPPA);
-                    writer.writeCloseTag(NucModelType.HKY.getXMLName());
-
-                } else {
-                    // Hasegawa Kishino and Yano 85 model
-                    if (model.getNucSubstitutionModel() == NucModelType.HKY) {
-                        if (model.isUnlinkedSubstitutionModel()) {
-                            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                if (model.isUnlinkedSubstitutionModel()) {
+                    for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                        switch (model.getNucSubstitutionModel()) {
+                            case JC:
+                                writeJCModel(i, writer, model);
+                                break;
+                            case HKY:
                                 writeHKYModel(i, writer, model);
-                            }
-                        } else {
-                            writeHKYModel(-1, writer, model);
-                        }
-
-                    } else if (model.getNucSubstitutionModel() == NucModelType.TN93) {
-                        if (model.isUnlinkedSubstitutionModel()) {
-                            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                                break;
+                            case TN93:
                                 writeTN93Model(i, writer, model);
-                            }
-                        } else {
+                                break;
+                            case GTR:
+                                writeGTRModel(i, writer, model);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("unknown substition model type");
+                        }
+                    }
+                } else {
+                    switch (model.getNucSubstitutionModel()) {
+                        case JC:
+                            writeJCModel(-1, writer, model);
+                            break;
+                        case HKY:
+                            writeHKYModel(-1, writer, model);
+                            break;
+                        case TN93:
                             writeTN93Model(-1, writer, model);
-                        }
-
-                    } else {
-                        // General time reversible model
-                        if (model.getNucSubstitutionModel() == NucModelType.GTR) {
-                            if (model.isUnlinkedSubstitutionModel()) {
-                                for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                                    writeGTRModel(i, writer, model);
-                                }
-                            } else {
-                                writeGTRModel(-1, writer, model);
-                            }
-                        }
+                            break;
+                        case GTR:
+                            writeGTRModel(-1, writer, model);
+                            break;
+                        default:
+                            throw new IllegalArgumentException("unknown substitution model type");
                     }
                 }
 
@@ -202,6 +173,32 @@ public class SubstitutionModelGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
+    }
+
+    /**
+     * Write the JC model XML block.
+     *
+     * @param num    the model number
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
+     */
+    public void writeJCModel(int num, XMLWriter writer, PartitionSubstitutionModel model) {
+
+        String prefix = model.getPrefix(num);
+
+        writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
+        writer.writeOpenTag(NucModelType.HKY.getXMLName(),
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "jc")}
+        );
+        writer.writeOpenTag(HKYParser.FREQUENCIES);
+        writeFrequencyModelDNA(writer, model, num);
+        writer.writeCloseTag(HKYParser.FREQUENCIES);
+
+        writer.writeOpenTag(HKYParser.KAPPA);
+        writeParameter("", 1, 1.0, Double.NaN, Double.NaN, writer);
+        writer.writeCloseTag(HKYParser.KAPPA);
+
+        writer.writeCloseTag(NucModelType.HKY.getXMLName());
     }
 
     /**
@@ -272,11 +269,22 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModelDNA(writer, model, num);
         writer.writeCloseTag(GTRParser.FREQUENCIES);
 
-        writeParameter(num, GTRParser.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
-        writeParameter(num, GTRParser.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
-        writeParameter(num, GTRParser.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
-        writeParameter(num, GTRParser.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
-        writeParameter(num, GTRParser.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+        if (options.NEW_GTR_PARAMETERIZATION) {
+            Parameter parameter = model.getParameter(model.getPrefixCodon(num) + PartitionSubstitutionModel.GTR_RATES);
+            String prefix1 = model.getPrefix(num);
+            writer.writeOpenTag(GTRParser.RATES);
+            // fix the initial value to give maintained sum
+            double initialValue = parameter.maintainedSum / parameter.getParent().getDimensionWeight();
+            writeParameter(prefix1 + PartitionSubstitutionModel.GTR_RATES, 6, initialValue, 0.0, Double.NaN, writer);
+            writer.writeCloseTag(GTRParser.RATES);
+        } else {
+            writeParameter(num, GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+            writeParameter(num, GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+            writeParameter(num, GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+            writeParameter(num, GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+            writeParameter(num, GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+        }
+
         writer.writeCloseTag(GTRParser.GTR_MODEL);
     }
 
@@ -486,8 +494,12 @@ public class SubstitutionModelGenerator extends Generator {
                     case GTR:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
-                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
+                                if (options.NEW_GTR_PARAMETERIZATION) {
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES);
+                                } else {
+                                    for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
+                                    }
                                 }
                             }
                         } else {
@@ -602,8 +614,8 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix2 = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
+        writer.writeOpenTag(GammaSiteModelParser.SITE_MODEL,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + GammaSiteModelParser.SITE_MODEL)});
 
 
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
@@ -650,11 +662,24 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (model.hasCodonPartitions()) {
-            writeParameter(num, GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            Parameter parameter;
+            if (model.hasCodonPartitions()) {
+                parameter = model.getParameter(model.getPrefixCodon(num) + "nu");
+            } else {
+                parameter = model.getParameter("nu");
+            }
+            if (parameter.getSubParameters().size() > 0) {
+                writeNuRelativeRateBlock(writer, prefix, parameter);
+            }
         } else {
-            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+            if (model.hasCodonPartitions()) {
+                writeParameter(num, dr.oldevomodelxml.sitemodel.GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+            } else {
+                writeParameter(dr.oldevomodelxml.sitemodel.GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+            }
         }
+
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(
@@ -691,7 +716,7 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeCloseTag(GammaSiteModelParser.PROPORTION_INVARIANT);
         }
 
-        writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
         writer.writeText("");
     }
 
@@ -706,8 +731,8 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
+        writer.writeOpenTag(GammaSiteModelParser.SITE_MODEL,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + GammaSiteModelParser.SITE_MODEL)});
 
 
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
@@ -728,7 +753,15 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            Parameter parameter = model.getParameter("nu");
+            String prefix1 = options.getPrefix();
+            if (parameter.getSubParameters().size() > 0) {
+                writeNuRelativeRateBlock(writer, prefix1, parameter);
+            }
+        } else {
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        }
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
@@ -741,7 +774,7 @@ public class SubstitutionModelGenerator extends Generator {
             writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
-        writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
     }
 
     /**
@@ -755,16 +788,24 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
+        writer.writeOpenTag(GammaSiteModelParser.SITE_MODEL, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + GammaSiteModelParser.SITE_MODEL)});
 
 
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            Parameter parameter = model.getParameter("nu");
+            String prefix1 = options.getPrefix();
+            if (parameter.getSubParameters().size() > 0) {
+                writeNuRelativeRateBlock(writer, prefix1, parameter);
+            }
 
+        } else {
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        }
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
@@ -778,7 +819,21 @@ public class SubstitutionModelGenerator extends Generator {
             writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
-        writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+    }
+
+    /**
+     * Write the relative rate block for site model XML block.
+     *
+     * @param writer the writer
+     */
+    private void writeNuRelativeRateBlock(XMLWriter writer, String prefix, Parameter parameter) {
+        int dim = parameter.getParent().getSubParameters().size();
+        double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
+        writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
+                new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
+        writeParameter(prefix + "nu", 1, parameter.getInitial() / dim, 0.0, Double.NaN, writer);
+        writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
     }
 
     private void writeMicrosatSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {

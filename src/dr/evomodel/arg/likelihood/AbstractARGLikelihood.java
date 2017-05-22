@@ -38,7 +38,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.arg.ARGModel;
-import dr.evomodel.treelikelihood.LikelihoodCore;
+import dr.oldevomodel.treelikelihood.LikelihoodCore;
 import dr.inference.model.*;
 
 /**

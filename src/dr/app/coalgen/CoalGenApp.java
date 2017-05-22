@@ -82,17 +82,15 @@ public class CoalGenApp {
     public static void simulate(String inputFileName, String treesFileName, String outputFileName) throws IOException, TraceException, Importer.ImportException {
         File logFile = new File(inputFileName);
 
-        BufferedReader reader = new BufferedReader(new FileReader(logFile));
-
         System.out.println("Loading trace file: " + inputFileName);
         LogFileTraces traces = new LogFileTraces(inputFileName, logFile);
-        traces.loadTraces(reader);
+        traces.loadTraces();
         traces.setBurnIn(0);
         System.out.println(traces.getStateCount() + " states loaded");
 
         System.out.println();
         System.out.println("Opening trees file: " + treesFileName);
-        reader = new BufferedReader(new FileReader(treesFileName));
+//        BufferedReader reader = new BufferedReader(new FileReader(treesFileName));
 
         System.out.println("Simulating...");
         System.out.println("0              25             50             75            100");

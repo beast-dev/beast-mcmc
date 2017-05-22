@@ -27,8 +27,6 @@ package dr.app.gui.chart;
 
 import dr.util.NumberFormatter;
 
-import java.lang.IllegalArgumentException;
-
 /**
  * Axis.java
  *
@@ -48,6 +46,7 @@ public interface Axis {
     static public final int AT_DATA=4;
     static public final int AT_ZERO=5;
     static public final int AT_VALUE=6;
+    static public final int AT_MAJOR_TICK_MINUS=7; // offset towards negatives, especially to raise 0 in y
 
     /**
      *	Set axis flags
@@ -427,7 +426,7 @@ public interface Axis {
 
         /**	autoCalibrate
          *	Attempt to find the optimum axis range and ticks.
-         *	This will attempt to use atleast numMajorTick ticks on the axis.
+         *	This will attempt to use at least numMajorTick ticks on the axis.
          */
         static private final int UNIT=0;
         static private final int HALFS=1;
@@ -666,6 +665,14 @@ public interface Axis {
                 if (minAxis==minData) {
                     majorTickCount++;
 //                    minTick-=majorTick;
+                    minAxis=minTick;
+                }
+            }
+
+            if (minAxisFlag==AT_MAJOR_TICK_MINUS) {
+                if (minAxis==minData) {
+                    majorTickCount++;
+                    minTick-=majorTick;
                     minAxis=minTick;
                 }
             }

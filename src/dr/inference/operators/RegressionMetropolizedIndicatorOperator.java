@@ -62,7 +62,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
         return MH_OPERATOR;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         double logHastingsRatio = 0.0;
 
@@ -71,7 +71,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
             for(int i=0; i<mask.getDimension(); i++)
                 sum += mask.getParameterValue(i);
             if (sum == 0)
-                throw new OperatorFailedException("Mask parameter has all zeros");
+                throw new RuntimeException("Mask parameter has all zeros");
         }
 
         if (mean == null) {

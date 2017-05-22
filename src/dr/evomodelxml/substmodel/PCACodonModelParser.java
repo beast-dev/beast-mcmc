@@ -1,7 +1,7 @@
 /*
  * PCACodonModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,10 +27,13 @@ package dr.evomodelxml.substmodel;
 
 import java.util.logging.Logger;
 
+import dr.evomodel.substmodel.PCARateMatrixMammalia;
+import dr.evomodel.substmodel.codon.PCACodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneticCode;
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.AbstractPCARateMatrix;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -102,7 +105,7 @@ public class PCACodonModelParser extends AbstractXMLObjectParser {
                 pcaType = new PCARateMatrixMammalia(pcaDimensionParameter.getDimension(), dirString);
             }
         }
-        
+
         // decide if getting frequencies from csv or estimating from MSA
         FrequencyModel freqModel = null;
         if (xo.getChild(FrequencyModel.class) != null) {

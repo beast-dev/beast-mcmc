@@ -58,10 +58,26 @@ public class LogCombiner {
     private final static Version version = new BeastVersion();
 
     public LogCombiner(long[] burnins, long resample, String[] inputFileNames, String outputFileName, boolean treeFiles,
-                       boolean convertToDecimal,
+                       boolean convertToDecimal, boolean stripAnnotations,
                        boolean renumberOutput, boolean useScale, double scale) throws IOException {
 
         System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName + "'");
+
+        if (convertToDecimal) {
+            System.out.println("Converting to decimal.");
+        }
+
+        if (treeFiles && stripAnnotations) {
+            System.out.println("Stripping annotations from trees.");
+        }
+
+        if (renumberOutput) {
+            System.out.println("Renumbering output.");
+        }
+
+        if (useScale) {
+            System.out.println("Rescaling using scale factor: " + scale);
+        }
 
         System.out.println();
 
@@ -110,7 +126,7 @@ public class LogCombiner {
 
             if (treeFiles) {
 
-                TreeImporter importer = new NexusImporter(new FileReader(inputFile));
+                TreeImporter importer = new NexusImporter(new FileReader(inputFile), stripAnnotations);
                 try {
                     while (importer.hasTree()) {
                         Tree tree = importer.importNextTree();
@@ -551,6 +567,7 @@ public class LogCombiner {
 
         boolean treeFiles;
         boolean convertToDecimal;
+        boolean stripAnnotations = false;
         boolean renumberOutput;
 
         long burnin;
@@ -611,7 +628,7 @@ public class LogCombiner {
 
             try {
                 new LogCombiner(burnins, resample, inputFiles, outputFileName, treeFiles, convertToDecimal,
-                        renumberOutput, useScale, scale);
+                        stripAnnotations, renumberOutput, useScale, scale);
 
             } catch (Exception ex) {
                 System.err.println("Exception: " + ex.getMessage());
@@ -636,6 +653,7 @@ public class LogCombiner {
                             new Arguments.IntegerOption("resample", "resample the log files to this frequency " +
                                     "(the original sampling frequency must be a factor of this value)"),
                             new Arguments.RealOption("scale", "a scaling factor that will multiply any time units by this value"),
+                            new Arguments.Option("strip", "strip out all annotations (trees only)"),
                             new Arguments.Option("renumber", "this option renumbers output states consecutively"),
                             new Arguments.Option("help", "option to print this message")
                     });
@@ -656,6 +674,8 @@ public class LogCombiner {
             treeFiles = arguments.hasOption("trees");
 
             convertToDecimal = arguments.hasOption("decimal");
+
+            stripAnnotations = arguments.hasOption("strip");
 
             renumberOutput = arguments.hasOption("renumber");
 
@@ -690,7 +710,7 @@ public class LogCombiner {
             String outputFileName = args2[args2.length - 1];
 
             new LogCombiner(new long[]{burnin}, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal,
-                    renumberOutput, useScale, scale);
+                    stripAnnotations, renumberOutput, useScale, scale);
 
             System.out.println("Finished.");
         }

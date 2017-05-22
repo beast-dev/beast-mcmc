@@ -1,7 +1,7 @@
 /*
  * VisualizeKMLNumericalProbs.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class VisualizeKMLNumericalProbs extends JComponent {
 
-    List<Polygon2D> polygons;
+    List<AbstractPolygon2D> polygons;
 
     Point2D brussels = new Point2D.Double(4.35, 50.85);
     Point2D amsterdam = new Point2D.Double(4.89, 52.37);
@@ -85,8 +85,8 @@ public class VisualizeKMLNumericalProbs extends JComponent {
 
         System.out.println("Converting polygons to shapes");
         shapes = new ArrayList<Shape>();
-        for (Polygon2D p : polygons) {
-            shapes.add(getShape(p));
+        for (AbstractPolygon2D p : polygons) {
+            shapes.add(p.getShape());
             System.out.print(".");
             System.out.flush();
         }
@@ -220,22 +220,6 @@ public class VisualizeKMLNumericalProbs extends JComponent {
         AffineTransform transform = getScale();
         transform.concatenate(getTranslate());
         return transform;
-    }
-
-
-    Shape getShape(Polygon2D poly) {
-        GeneralPath path = new GeneralPath();
-
-        List<Point2D> points = poly.point2Ds;
-        path.moveTo((float) points.get(0).getX(), (float) points.get(0).getY());
-
-        System.out.println("x=" + points.get(0).getX() + ", y=" + points.get(0).getY());
-
-        for (int i = 1; i < points.size(); i++) {
-            path.lineTo((float) points.get(i).getX(), (float) points.get(i).getY());
-        }
-        path.closePath();
-        return path;
     }
 
     AffineTransform getTranslate() {

@@ -28,7 +28,6 @@ package dr.evomodel.arg.operators;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.CompoundParameter;
-import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -77,31 +76,25 @@ public class ARGReassortmentOperator extends SimpleMCMCOperator {
     }
 
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         double logHastings = 0;
 
-        try {
-            if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size)))
-                logHastings = addOperation() - size;
-            else
-                logHastings = removeOperation() + size;
-        } catch (NoReassortmentEventException nree) {
-            return Double.NEGATIVE_INFINITY;
-        } catch (OperatorFailedException ofe) {
-            Logger.getLogger("dr.evomodel.operators").fine(ofe.getMessage());
-        }
+        if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size)))
+            logHastings = addOperation() - size;
+        else
+            logHastings = removeOperation() + size;
 
         return logHastings;
     }
 
-    private double addOperation() throws OperatorFailedException {
+    private double addOperation() {
         if (branchesFirst)
             return addOperationBranchesFirst();
 
         return addOperationHeightsFirst();
     }
 
-    private double addOperationBranchesFirst() throws OperatorFailedException {
+    private double addOperationBranchesFirst() {
 
         double logHastings = 0;
         double treeHeight = arg.getNodeHeight(arg.getRoot());
@@ -127,12 +120,12 @@ public class ARGReassortmentOperator extends SimpleMCMCOperator {
         return 0;
     }
 
-    private double addOperationHeightsFirst() throws OperatorFailedException {
+    private double addOperationHeightsFirst() {
 
         return 0;
     }
 
-    private double removeOperation() throws OperatorFailedException {
+    private double removeOperation() {
 
         return 0;
     }
@@ -145,7 +138,7 @@ public class ARGReassortmentOperator extends SimpleMCMCOperator {
         return "Try changing the add probability probability";
     }
 
-    private class NoReassortmentEventException extends OperatorFailedException {
+    private class NoReassortmentEventException extends Exception {
         private static final long serialVersionUID = 1L;
 
         public NoReassortmentEventException() {

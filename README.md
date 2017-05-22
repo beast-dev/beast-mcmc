@@ -9,7 +9,7 @@ We also include a program that can convert NEXUS files into this format.
 
 ## Download BEAST
 
-[Download BEAST v1.8.3 binaries for Mac, Windows and UNIX/Linux](http://tree.bio.ed.ac.uk/software/beast/)
+[Download BEAST v1.8.4 binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.8.4)
 
 [Older BEAST Downloads](https://code.google.com/p/beast-mcmc/downloads)
 

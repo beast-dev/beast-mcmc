@@ -1,7 +1,7 @@
 /*
  * BinarySubstitutionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,15 +25,15 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.TwoStates;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.TwoStates;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * @author Michael Defoin Platel
+ * @author Marc Suchard
  */
 public class BinarySubstitutionModelParser extends AbstractXMLObjectParser {
 
@@ -47,7 +47,7 @@ public class BinarySubstitutionModelParser extends AbstractXMLObjectParser {
 
         Parameter ratesParameter;
 
-        XMLObject cxo = xo.getChild(GeneralSubstitutionModelParser.FREQUENCIES);
+        XMLObject cxo = xo.getChild(dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser.FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
         DataType dataType = freqModel.getDataType();
@@ -59,7 +59,7 @@ public class BinarySubstitutionModelParser extends AbstractXMLObjectParser {
 
         ratesParameter = new Parameter.Default(0);
 
-        return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
+        return new GeneralSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, relativeTo);
     }
 
     //************************************************************************

@@ -136,6 +136,10 @@ public class NormalDistribution implements Distribution, RandomGenerator {
         return Math.log(a) + b;
     }
 
+    public static double gradLogPdf(double x, double m, double sd) {
+        return (m - x) / (sd * sd);
+    }
+
     /**
      * cumulative density function
      *

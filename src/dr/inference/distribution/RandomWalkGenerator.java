@@ -10,9 +10,11 @@ import dr.math.distributions.NormalDistribution;
  * Created by mkarcher on 4/3/17.
  */
 public class RandomWalkGenerator extends AbstractModelLikelihood implements GaussianProcessRandomGenerator {
-    public RandomWalkGenerator(int dimension, Parameter firstElementPrecision, Parameter precision) {
+
+    public RandomWalkGenerator(Parameter data, Parameter firstElementPrecision, Parameter precision) {
         super(RandomWalkGeneratorParser.RANDOM_WALK_GENERATOR);
-        this.dimension = dimension;
+        this.data = data;
+        this.dimension = data.getDimension();
         this.firstElementPrecision = firstElementPrecision;
         this.precision = precision;
 //        this.logScale = logScale;
@@ -68,7 +70,7 @@ public class RandomWalkGenerator extends AbstractModelLikelihood implements Gaus
 
     @Override
     public double getLogLikelihood() {
-        return 0;
+        return logPdf(data.getParameterValues());
     }
 
     @Override
@@ -101,6 +103,7 @@ public class RandomWalkGenerator extends AbstractModelLikelihood implements Gaus
 
     }
 
+    private final Parameter data;
     private int dimension;
     private Parameter firstElementPrecision;
     private Parameter precision;

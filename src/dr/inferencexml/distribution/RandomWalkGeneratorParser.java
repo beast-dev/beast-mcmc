@@ -9,6 +9,7 @@ import dr.xml.*;
  */
 public class RandomWalkGeneratorParser extends AbstractXMLObjectParser {
     public static final String RANDOM_WALK_GENERATOR = "randomWalkGenerator";
+    public static final String DATA = "data";
     public static final String FIRST_ELEM_PREC = "firstElementPrecision";
     public static final String PREC = "precision";
     public static final String DIM = "dimension";
@@ -24,10 +25,10 @@ public class RandomWalkGeneratorParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(PREC);
         Parameter prec = (Parameter) cxo.getChild(Parameter.class);
 
-        //cxo = xo.getChild(DIM); // May need to adapt to multiple trees, a la CoalescentLikelihoodParser
-        int dim = xo.getIntegerAttribute(DIM);
+        cxo = xo.getChild(DATA); // May need to adapt to multiple trees, a la CoalescentLikelihoodParser
+        Parameter data = (Parameter) cxo.getChild(Parameter.class);
 
-        return new RandomWalkGenerator(dim, firstElementPrecision, prec);
+        return new RandomWalkGenerator(data, firstElementPrecision, prec);
     }
 
     @Override
@@ -46,6 +47,11 @@ public class RandomWalkGeneratorParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            new ElementRule(DATA, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, "The data to evaluate the density"),
+
+
             new ElementRule(FIRST_ELEM_PREC, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, "The precision for the first element of the regular random walk"),

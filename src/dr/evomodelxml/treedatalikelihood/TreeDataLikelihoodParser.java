@@ -287,17 +287,18 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(SCALING_SCHEME,true),
 
             // really it should be this set of elements or the PARTITION elements
-            new ElementRule(PatternList.class, true),
-            new ElementRule(SiteRateModel.class, true),
-            new ElementRule(FrequencyModel.class, true),
-            new ElementRule(BranchModel.class, true),
-
-            new ElementRule(PARTITION, new XMLSyntaxRule[] {
+            new OrRule(new AndRule(new XMLSyntaxRule[]{
+                    new ElementRule(PatternList.class, true),
+                    new ElementRule(SiteRateModel.class, true),
+                    new ElementRule(FrequencyModel.class, true),
+                    new ElementRule(BranchModel.class, true)})
+                    ,
+                    new ElementRule(PARTITION, new XMLSyntaxRule[] {
                     new ElementRule(PatternList.class),
                     new ElementRule(SiteRateModel.class),
                     new ElementRule(FrequencyModel.class, true),
                     new ElementRule(BranchModel.class, true)
-            }, 0, Integer.MAX_VALUE),
+            }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TreeModel.class),

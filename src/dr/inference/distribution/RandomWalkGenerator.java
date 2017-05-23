@@ -6,6 +6,8 @@ import dr.math.MathUtils;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.NormalDistribution;
 
+import java.util.Arrays;
+
 /**
  * Created by mkarcher on 4/3/17.
  */
@@ -101,6 +103,30 @@ public class RandomWalkGenerator extends AbstractModelLikelihood implements Gaus
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
+    }
+
+    public static void main(String[] args) {
+        Parameter data = new Parameter.Default(100);
+        Parameter firstElemPrec = new Parameter.Default(0.25);
+        Parameter prec = new Parameter.Default(4.0);
+        RandomWalkGenerator gen = new RandomWalkGenerator(data, firstElemPrec, prec);
+
+        System.out.println("Data = " + Arrays.toString(data.getParameterValues()));
+
+        double[] newData = gen.nextRandom();
+
+        System.out.println("New Data = " + Arrays.toString(newData));
+
+        System.out.print("dat = c(");
+        for (int i = 0; i < newData.length; i++) {
+            data.setParameterValue(i, newData[i]);
+            System.out.printf("%.3f,", newData[i]);
+        }
+        System.out.println();
+
+        System.out.println("New Data too = " + Arrays.toString(data.getParameterValues()));
+
+        System.out.println("Log-likelihood = " + gen.getLogLikelihood());
     }
 
     private final Parameter data;

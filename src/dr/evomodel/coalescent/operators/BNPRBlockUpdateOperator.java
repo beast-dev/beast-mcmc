@@ -181,7 +181,7 @@ public class BNPRBlockUpdateOperator extends SimpleMCMCOperator { // implements 
         return returnValue;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         double currentPrecision = precisionParameter.getParameterValue(0);
         double proposedPrecision = this.getNewPrecision(currentPrecision);
 

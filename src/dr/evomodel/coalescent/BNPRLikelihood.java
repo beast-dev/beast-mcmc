@@ -5,6 +5,7 @@ import dr.evolution.coalescent.IntervalType;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.BNPRLikelihoodParser;
@@ -70,7 +71,7 @@ public class BNPRLikelihood extends AbstractCoalescentLikelihood implements Coal
                           Parameter precParameter,
                           double cutOff,
                           int numGridPoints,
-                          boolean samplingAware) throws Tree.MissingTaxonException {
+                          boolean samplingAware) throws TreeUtils.MissingTaxonException {
 
         super(BNPRLikelihoodParser.BNPR_LIKELIHOOD, tree, null, null);
 

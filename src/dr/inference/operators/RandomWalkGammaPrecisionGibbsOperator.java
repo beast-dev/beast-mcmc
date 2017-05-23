@@ -43,9 +43,8 @@ public class RandomWalkGammaPrecisionGibbsOperator extends SimpleMCMCOperator im
      * Called by operate(), does the actual operation.
      *
      * @return the hastings ratio
-     * @throws OperatorFailedException if operator fails and should be rejected
      */
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
 
         final double priorMean = prior.mean();
         final double priorVariance = prior.variance();

@@ -36,7 +36,7 @@ public class BNPRSamplingBetasUpdateOperator extends AbstractCoercableOperator {
         return newBeta;
     }
 
-    public double doOperation() throws OperatorFailedException {
+    public double doOperation() {
         int betaIndex = MathUtils.nextInt(numBetas);
         double[] currentBetas = betas.getParameterValues();
         double[] newBetas = currentBetas.clone();

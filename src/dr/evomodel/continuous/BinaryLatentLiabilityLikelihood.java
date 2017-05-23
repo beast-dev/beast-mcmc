@@ -62,9 +62,7 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
         this.patternList = patternList;
         this.tipTraitParameter = tipTraitParameter;
 
-
         addVariable(tipTraitParameter);
-
 
         setTipDataValuesForAllNodes();
 
@@ -94,7 +92,7 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
         int index = node.getNumber();
 //        System.err.println(index+"\t"+indexFromPatternList);
         if (index != indexFromPatternList) {
-            throw new RuntimeException("Need to figure out the indexing ");
+            throw new RuntimeException("Need to figure out the indexing");
         }
 
         for (int datum = 0; datum < patternList.getPatternCount(); ++datum) {

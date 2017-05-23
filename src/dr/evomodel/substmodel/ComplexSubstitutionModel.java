@@ -27,7 +27,6 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Likelihood;

@@ -494,6 +494,11 @@ public interface Parameter extends Statistic, Variable<Double> {
             this(dimension, 1.0);
         }
 
+        public Default(String id, double initialValue) {
+            this(initialValue);
+            setId(id);
+        }
+
         public Default(double initialValue) {
             values = new double[1];
             values[0] = initialValue;

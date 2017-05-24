@@ -37,11 +37,13 @@ import java.util.LinkedList;
 public class Polygon2DFactory {
 
     public static AbstractPolygon2D createPolygon2D(Element element) {
-        Attribute attrib = element.getAttribute("fillValue");
-        if (attrib != null) {
-            double fillValue = Double.parseDouble(attrib.getValue());
-            return new Polygon2DFill(element, fillValue);
-        } else {
+        //Attribute attrib = element.getAttribute("fillValue");
+        Attribute samplingAttrib = element.getAttribute("samplingProbability");
+        if (samplingAttrib != null) {
+            double fillValue = Double.parseDouble(samplingAttrib.getValue());
+            return new Polygon2DSampling(element, fillValue);
+        }
+        else {
             return new Polygon2D(element);
         }
     }

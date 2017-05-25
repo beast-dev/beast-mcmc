@@ -312,14 +312,20 @@ public class CheckPointTreeModifier {
      */
     public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
 
+        System.out.println("\nTree before adding taxa:\n" + treeModel.toString());
+
         ArrayList<NodeRef> newTaxaNodes = new ArrayList<NodeRef>();
         for (String str : newTaxaNames) {
             for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
                 if (treeModel.getNodeTaxon(treeModel.getExternalNode(i)).getId().equals(str)) {
                     newTaxaNodes.add(treeModel.getExternalNode(i));
+                    //always take into account Taxon dates vs. dates set through a TreeModel
+                    System.out.println(treeModel.getNodeTaxon(treeModel.getExternalNode(i)).getId() + " with height "
+                            + treeModel.getNodeHeight(treeModel.getExternalNode(i)) + " or " + treeModel.getNodeTaxon(treeModel.getExternalNode(i)).getHeight());
                 }
             }
         }
+        System.out.println("newTaxaNodes length = " + newTaxaNodes.size());
 
         ArrayList<Taxon> currentTaxa = new ArrayList<Taxon>();
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
@@ -330,8 +336,24 @@ public class CheckPointTreeModifier {
                 }
             }
             if (!taxonFound) {
-                System.out.println("Adding " + treeModel.getNodeTaxon(treeModel.getExternalNode(i)).getId());
+                System.out.println("Adding " + treeModel.getNodeTaxon(treeModel.getExternalNode(i)).getId() + " to list of current taxa");
                 currentTaxa.add(treeModel.getNodeTaxon(treeModel.getExternalNode(i)));
+            }
+        }
+        System.out.println("Current taxa count = " + currentTaxa.size());
+
+        //iterate over both current taxa and to be added taxa
+        boolean originTaxon = true;
+        for (Taxon taxon : currentTaxa) {
+            if (taxon.getHeight() == 0.0) {
+                originTaxon = false;
+                System.out.println("Current taxon " + taxon.getId() + " has node height 0.0");
+            }
+        }
+        for (NodeRef newTaxon : newTaxaNodes) {
+            if (treeModel.getNodeTaxon(newTaxon).getHeight() == 0.0) {
+                originTaxon = false;
+                System.out.println("New taxon " + treeModel.getNodeTaxon(newTaxon).getId() + " has node height 0.0");
             }
         }
 
@@ -381,6 +403,8 @@ public class CheckPointTreeModifier {
         choice.setPatterns(patterns);
 
         //add new taxa one at a time
+        System.out.println("Adding " + newTaxaNodes.size() + " taxa ...");
+
         for (NodeRef newTaxon : newTaxaNodes) {
             treeModel.setNodeHeight(newTaxon, treeModel.getNodeTaxon(newTaxon).getHeight());
             System.out.println("\nadding Taxon: " + newTaxon + " (height = " + treeModel.getNodeHeight(newTaxon) + ")");
@@ -389,12 +413,18 @@ public class CheckPointTreeModifier {
             System.out.println("Sampling date offset when adding " + newTaxon + " = " + offset);
             //if so, update all nodes current in the tree (i.e. recursively from the root)
             //AND set its current node height to 0.0
+            //TODO Not this simple!!!
+            //TODO Need to check if originTaxa has been provided
             if (offset < 0.0) {
-                System.out.println("Updating all node heights with offset " + Math.abs(offset));
-                updateAllTreeNodes(Math.abs(offset), treeModel.getRoot());
-                treeModel.setNodeHeight(newTaxon, 0.0);
+                if (!originTaxon) {
+                    System.out.println("Updating all node heights with offset " + Math.abs(offset));
+                    updateAllTreeNodes(Math.abs(offset), treeModel.getRoot());
+                    treeModel.setNodeHeight(newTaxon, 0.0);
+                }
             } else if (offset == 0.0) {
-                treeModel.setNodeHeight(newTaxon, 0.0);
+                if (!originTaxon) {
+                    treeModel.setNodeHeight(newTaxon, 0.0);
+                }
             }
             //get the closest Taxon to the Taxon that needs to be added
             //take into account which taxa can currently be chosen
@@ -403,6 +433,7 @@ public class CheckPointTreeModifier {
             //get the distance between these two taxa
             double distance = choice.getDistance(treeModel.getNodeTaxon(newTaxon), closest);
             System.out.println("at distance: " + distance);
+            //TODO what if distance == 0.0 ??? how to choose closest taxon then (in absence of geo info)?
             //find the NodeRef for the closest Taxon (do not rely on node numbering)
             NodeRef closestRef = null;
             //careful with node numbering and subtract number of new taxa

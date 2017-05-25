@@ -78,7 +78,8 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
         }
 
         if (mask.getDimension() != parameter.getDimension())
-            throw new XMLParseException("dim(" + parameter.getId() + ") != dim(" + mask.getId() + ")");
+            throw new XMLParseException("dim(" + parameter.getId() + ":" + parameter.getDimension()
+                    + ") != dim(" + mask.getId() + ":" + mask.getDimension() + ")");
 
         MaskedParameter maskedParameter = new MaskedParameter(parameter);
         boolean ones = !xo.getAttribute(COMPLEMENT, false);

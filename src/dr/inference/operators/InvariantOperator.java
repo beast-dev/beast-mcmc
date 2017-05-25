@@ -99,7 +99,7 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
         @Override
         protected void transform(Parameter parameter) {
 
-            boolean translationInvariant = false;
+            boolean translationInvariant = true;
             boolean rotationInvariant = true;
 
             double[] x = parameter.getParameterValues();

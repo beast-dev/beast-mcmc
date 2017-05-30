@@ -29,10 +29,11 @@ package dr.app.beauti.components.continuous;
  * @author Andrew Rambaut
  */
 public enum ContinuousSubstModelType {
-    HOMOGENOUS("Homogenous Brownian model"),
+    HOMOGENOUS("Brownian random walk model"),
     CAUCHY_RRW("Cauchy RRW model"),
     GAMMA_RRW("Gamma RRW model"),
     LOGNORMAL_RRW("Lognormal RRW model"),
+    DRIFT("Directional random walk model")
     ;
 
     ContinuousSubstModelType(String name) {

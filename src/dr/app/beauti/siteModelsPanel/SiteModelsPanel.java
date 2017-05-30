@@ -78,17 +78,17 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     private TitledBorder modelBorder;
     private CloneModelDialog cloneModelDialog = null;
 
-    BeautiFrame frame = null;
+    private final BeautiFrame frame;
     //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
     CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
-    public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
+    public SiteModelsPanel(final BeautiFrame frame, Action removeModelAction) {
 
         super();
 
-        this.frame = parent;
+        this.frame = frame;
 
         modelTableModel = new ModelTableModel();
         modelTable = new JTable(modelTableModel);
@@ -261,7 +261,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         if (currentModel != null) {
             PartitionModelPanel panel = modelPanels.get(currentModel);
             if (panel == null) {
-                panel = new PartitionModelPanel(currentModel);
+                panel = new PartitionModelPanel(frame, currentModel);
                 modelPanels.put(currentModel, panel);
             }
 

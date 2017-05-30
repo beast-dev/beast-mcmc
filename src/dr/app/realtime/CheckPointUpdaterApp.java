@@ -156,12 +156,16 @@ public class CheckPointUpdaterApp {
             //TODO Check if this works for multiple trees (e.g. for multiple partitions)
             long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 
+            //TODO Check if this can be uncommented again
+            //System.out.println("Pre-checking likelihood values ...");
             //probably don't need this but it's good to check
-            double logL = mc.evaluate();
-            System.out.println("likelihood = " + logL);
-            mc.getLikelihood().makeDirty();
-            logL = mc.evaluate();
-            System.out.println("likelihood = " + logL);
+            //double logL = mc.evaluate();
+            //System.out.println("likelihood = " + logL);
+            //mc.getLikelihood().makeDirty();
+            //logL = mc.evaluate();
+            //System.out.println("likelihood = " + logL);
+
+            double logL;
 
             if (ADD_TAXA) {
 

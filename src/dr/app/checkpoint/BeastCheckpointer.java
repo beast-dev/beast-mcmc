@@ -56,7 +56,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
     private static final boolean DEBUG = false;
 
     // A debugging flag to do a check that the state gives the same likelihood after loading
-    private static final boolean CHECK_LOAD_STATE = false;
+    private static final boolean CHECK_LOAD_STATE = true;
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -122,6 +122,8 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             //first perform a simple check for equality of two doubles
             //when this test fails, go over the digits
             if (lnL != savedLnL) {
+
+                System.out.println("COMPARING LIKELIHOODS: " + lnL + " vs. " + savedLnL);
 
                 //15 is the floor value for the number of decimal digits when representing a double
                 //checking for 15 identical digits below
@@ -434,6 +436,10 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             // Read in all (possibly more than one) trees
             while (fields[0].equals("tree")) {
 
+                if (DEBUG) {
+                    System.out.println("tree: " + fields[1]);
+                }
+
                 for (Model model : Model.CONNECTED_MODEL_SET) {
                     if (model instanceof TreeModel && fields[1].equals(model.getModelName())) {
                         line = in.readLine();
@@ -483,6 +489,9 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         }
 
                         //perform magic with the acquired information
+                        if (DEBUG) {
+                            System.out.println("adopting tree structure");
+                        }
 
                         //adopt the loaded tree structure; this does not yet copy the traits on the branches
                         ((TreeModel) model).beginTreeEdit();

@@ -312,7 +312,7 @@ public class CheckPointTreeModifier {
      */
     public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
 
-        System.out.println("\nTree before adding taxa:\n" + treeModel.toString());
+        System.out.println("Tree before adding taxa:\n" + treeModel.toString() + "\n");
 
         ArrayList<NodeRef> newTaxaNodes = new ArrayList<NodeRef>();
         for (String str : newTaxaNames) {
@@ -412,9 +412,7 @@ public class CheckPointTreeModifier {
             double offset = checkCurrentTreeNodes(newTaxon, treeModel.getRoot());
             System.out.println("Sampling date offset when adding " + newTaxon + " = " + offset);
             //if so, update all nodes current in the tree (i.e. recursively from the root)
-            //AND set its current node height to 0.0
-            //TODO Not this simple!!!
-            //TODO Need to check if originTaxa has been provided
+            //AND set its current node height to 0.0 IF no originTaxon has been found
             if (offset < 0.0) {
                 if (!originTaxon) {
                     System.out.println("Updating all node heights with offset " + Math.abs(offset));
@@ -451,19 +449,28 @@ public class CheckPointTreeModifier {
             NodeRef parent = treeModel.getParent(closestRef);
 
             //determine height of new node
-            //double insertHeight = Math.abs(treeModel.getNodeHeight(parent) + treeModel.getNodeHeight(closestRef))/2.0;
-            //TODO This insertion criterion needs a major update
             double insertHeight;
-            if (treeModel.getNodeHeight(closestRef) < treeModel.getNodeHeight(newTaxon)) {
-                insertHeight = treeModel.getNodeHeight(closestRef) + (timeForDistance + Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon)))/2.0;
-                System.out.println("treeModel.getNodeHeight(closestRef) < treeModel.getNodeHeight(newTaxon): " + insertHeight);
+            if (treeModel.getNodeHeight(closestRef) == treeModel.getNodeHeight(newTaxon)) {
+                insertHeight = treeModel.getNodeHeight(closestRef) + timeForDistance/2.0;
+                System.out.println("treeModel.getNodeHeight(closestRef) == treeModel.getNodeHeight(newTaxon): " + insertHeight);
+                if (insertHeight >= treeModel.getNodeHeight(parent)) {
+                    insertHeight = treeModel.getNodeHeight(closestRef) + EPSILON*(treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(closestRef));
+                }
             } else {
-                insertHeight = treeModel.getNodeHeight(closestRef) + (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon)))/2.0;
-                System.out.println("treeModel.getNodeHeight(closestRef) >= treeModel.getNodeHeight(newTaxon): " + insertHeight);
+                double remainder = (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon)))/2.0;
+                if (remainder > 0) {
+                    insertHeight = Math.max(treeModel.getNodeHeight(closestRef),treeModel.getNodeHeight(newTaxon)) + remainder;
+                    System.out.println("remainder > 0: " + insertHeight);
+                    if (insertHeight >= treeModel.getNodeHeight(parent)) {
+                        insertHeight = treeModel.getNodeHeight(closestRef) + EPSILON*(treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(closestRef));
+                    }
+                } else {
+                    insertHeight = EPSILON*(treeModel.getNodeHeight(parent) - Math.max(treeModel.getNodeHeight(closestRef),treeModel.getNodeHeight(newTaxon)));
+                    insertHeight += Math.max(treeModel.getNodeHeight(closestRef),treeModel.getNodeHeight(newTaxon));
+                    System.out.println("remainder <= 0: " + insertHeight);
+                }
             }
-            if (insertHeight > treeModel.getNodeHeight(parent) || insertHeight < treeModel.getNodeHeight(closestRef)) {
-                insertHeight = treeModel.getNodeHeight(parent) - EPSILON*(treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(closestRef));
-            }
+
             System.out.println("insert at height: " + insertHeight);
             //pass on all the necessary variables to a method that adds the new taxon to the tree
             addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);

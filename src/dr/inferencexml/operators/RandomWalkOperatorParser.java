@@ -25,6 +25,7 @@
 
 package dr.inferencexml.operators;
 
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
@@ -67,12 +68,31 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
                 upper = xo.getDoubleAttribute(UPPER);
             }
 
+            if (lower != null || upper != null) {
+                throw new XMLParseException("Do not provide lower/upper bounds on for a RandomWalkOperator; set these values are parameter bounds");
+            }
+
             RandomWalkOperator.BoundaryCondition condition = RandomWalkOperator.BoundaryCondition.valueOf(
                     xo.getAttribute(BOUNDARY_CONDITION, RandomWalkOperator.BoundaryCondition.reflecting.name()));
 
-            if (condition == RandomWalkOperator.BoundaryCondition.logit &&
-                    (lower == null || Double.isInfinite(lower) || upper == null || Double.isInfinite(upper))) {
-                throw new XMLParseException("The logit transformed RandomWalkOperator cannot be used on a parameter without bounds.");
+
+            if (condition == RandomWalkOperator.BoundaryCondition.logit) {
+                final Bounds<Double> bounds = parameter.getBounds();
+                final int dim = parameter.getDimension();
+
+                boolean boundsSet = true;
+                for (int i = 0; i < dim; ++i) {
+                    if (bounds.getLowerLimit(i) == null || Double.isInfinite(bounds.getLowerLimit(i))) {
+                        boundsSet = false;
+                    }
+                    if (bounds.getUpperLimit(i) == null || Double.isInfinite(bounds.getUpperLimit(i))) {
+                        boundsSet = false;
+                    }
+                }
+
+                if (!boundsSet) {
+                    throw new XMLParseException("The logit transformed RandomWalkOperator cannot be used on a parameter without bounds.");
+                }
             }
 
             if (xo.hasChildNamed(UPDATE_INDEX)) {

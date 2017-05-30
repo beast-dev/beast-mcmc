@@ -137,6 +137,9 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
 //                throw MathRuntimeException.createIllegalArgumentException(
 //                        "Cannot compute beta density at 0 when alpha = {0,number}", alpha);
             }
+            if (alpha == 1) {
+                return 0;
+            }
             return Double.NEGATIVE_INFINITY;
         } else if (x == 1) {
             if (beta < 1) {
@@ -145,6 +148,9 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
                 return Double.NaN;
 //                throw MathRuntimeException.createIllegalArgumentException(
 //                        "Cannot compute beta density at 1 when beta = %.3g", beta);
+            }
+            if (beta == 1) {
+                return 0;
             }
             return Double.NEGATIVE_INFINITY;
         } else {

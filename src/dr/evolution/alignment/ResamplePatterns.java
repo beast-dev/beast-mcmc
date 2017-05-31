@@ -104,11 +104,22 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		return patterns.getPattern(patternIndices[patternIndex]);
 	}
 
+	@Override
+	public double[][] getUncertainPattern(int patternIndex) {
+		if (patterns == null) throw new RuntimeException("ResamplePatterns has no source patterns");
+		return patterns.getUncertainPattern(patternIndices[patternIndex]);
+	}
+
 	/**
 	 * @return state at (taxonIndex, patternIndex)
 	 */
 	public int getPatternState(int taxonIndex, int patternIndex) {
 		return getPattern(patternIndex)[taxonIndex];
+	}
+
+	@Override
+	public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+		return getUncertainPattern(patternIndex)[taxonIndex];
 	}
 
 	/**
@@ -143,6 +154,11 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 	@Override
 	public boolean areUnique() {
 		return patterns.areUnique();
+	}
+
+	@Override
+	public boolean areUncertain() {
+		return patterns.areUncertain();
 	}
 
 	// **************************************************************

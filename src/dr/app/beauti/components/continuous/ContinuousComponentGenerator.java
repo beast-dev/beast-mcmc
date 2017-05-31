@@ -356,6 +356,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                  String diffusionModelId,
                                                  String treeModelId) {
 
+        int traitDimension = 1; // todo - set this to trait dimension
         writer.writeOpenTag("multivariateTraitLikelihood",
                 new Attribute[] {
                         new Attribute.Default<String>("id", partitionData.getName() + ".traitLikelihood"),
@@ -393,7 +394,21 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeTag("parameter", new Attribute.Default<String>("id", "leaf." + partitionData.getName()), true);
         writer.writeCloseTag("traitParameter");
 
-       if (model.getJitterWindow() > 0.0) {
+        if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
+            writer.writeOpenTag("driftModels");
+            for (int i = 0; i < traitDimension; i++) { 
+                writer.writeOpenTag("strictClockBranchRates");
+                writer.writeTag("parameter", new Attribute[]{
+                        new Attribute.Default<String>("id", partitionData.getName() + "." + ContinuousComponentOptions.DRIFT_RATE +
+                                (traitDimension > 1 ? "." + i : "")),
+                        new Attribute.Default<String>("value", "0.0"),
+                }, true);
+                writer.writeCloseTag("strictClockBranchRates");
+            }
+            writer.writeCloseTag("driftModels");
+        }
+
+        if (model.getJitterWindow() > 0.0) {
             StringBuilder sb = new StringBuilder(Double.toString(model.getJitterWindow()));
             for (int i = 1; i < model.getContinuousTraitCount(); i++) {
                 sb.append(" ").append(Double.toString(model.getJitterWindow()));
@@ -431,6 +446,16 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         }
 
         writer.writeCloseTag("multivariateTraitLikelihood");
+
+        if (traitDimension > 1) {
+            writer.writeOpenTag("compoundParameter",
+                    new Attribute.Default<String>("id", partitionData.getName() + "." + ContinuousComponentOptions.DRIFT_RATE));
+            for (int i = 0; i < traitDimension; i++) { // todo iterate over dimension of trait
+                writer.writeTag("parameter", new Attribute.Default<String>("idref", partitionData.getName() + "." + ContinuousComponentOptions.DRIFT_RATE + "." + i), true);
+            }
+            writer.writeCloseTag("priorSampleSize");
+        }
+
     }
 
     private void writeDiffusionStatistics(XMLWriter writer, AbstractPartitionData partitionData,

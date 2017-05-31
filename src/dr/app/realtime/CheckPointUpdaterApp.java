@@ -33,8 +33,11 @@ import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.Taxon;
+import dr.inference.loggers.Logger;
+import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
+import dr.inference.model.Likelihood;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;
@@ -44,7 +47,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * @author Guy Baele
@@ -145,6 +150,12 @@ public class CheckPointUpdaterApp {
             MCMC mcmc = (MCMC) parser.parse(fileReader, MCMC.class);
             MarkovChain mc = mcmc.getMarkovChain();
 
+            //make sure that no output files (i.e. logs) are being created
+            Logger[] loggers = mcmc.getLoggers();
+            for (int j = 0; j < loggers.length; j++) {
+                ((MCLogger) loggers[j]).setFormatters(Collections.EMPTY_LIST);
+            }
+
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
             // BeastCheckpointer checkpoint = new BeastCheckpointer();
@@ -171,11 +182,18 @@ public class CheckPointUpdaterApp {
 
                 checkpoint.extendLoadState(choice);
 
+                mc.getLikelihood().makeDirty();
                 logL = mc.evaluate();
                 System.out.println("likelihood = " + logL);
                 mc.getLikelihood().makeDirty();
                 logL = mc.evaluate();
                 System.out.println("likelihood = " + logL);
+
+                //TODO Print full compoundLikelihood evaluation
+                Set<Likelihood> likelihoodSet = mc.getLikelihood().getLikelihoodSet();
+                for (Likelihood l : likelihoodSet) {
+                    System.out.println("  " + l.getLogLikelihood());
+                }
 
             }
 

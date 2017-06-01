@@ -23,9 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.oldevomodelxml.substmodel;
+package dr.inferencexml.distribution;
 
-import dr.inference.distribution.MultivariateOUModel;
+import dr.inferencexml.distribution.MultivariateOUModel;
 import dr.oldevomodel.substmodel.SubstitutionModel;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.DesignMatrix;

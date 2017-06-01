@@ -277,9 +277,9 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
+            Parameter allMus = model.getParameter(NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
+            allMus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
-                Parameter allMus = model.getParameter(NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
-                allMus.clearSubParameters();
 
                 int totalWeight = 0;
                 for (Parameter mu : relativeRateParameters) {

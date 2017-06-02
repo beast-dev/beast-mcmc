@@ -25,6 +25,8 @@
 
 package dr.app.beauti.generator;
 
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
@@ -49,6 +51,8 @@ import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import java.util.List;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -56,8 +60,64 @@ import dr.xml.XMLParser;
  */
 public class TreeLikelihoodGenerator extends Generator {
 
+    private static final boolean GENERATE_TREE_LIKELIHOOD = false;
+
     public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
+    }
+
+    public void writeTreeDataLikelihood(List<PartitionData> partitions, XMLWriter writer) {
+        String treeLikelihoodTag = TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD;
+
+        PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
+        PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+
+        String prefix = treeModel.getPrefix(); // use the treemodel prefix
+        String idString = prefix + "treeLikelihood";
+
+        Attribute[] attributes = new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, idString),
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
+        };
+
+        writer.writeComment("Likelihood for tree given sequence data");
+        writer.writeOpenTag(treeLikelihoodTag, attributes);
+
+        for (PartitionData partition : partitions) {
+            substModel = partition.getPartitionSubstitutionModel();
+            PartitionClockModel clockModel = partition.getPartitionClockModel();
+
+            if (substModel.getCodonHeteroPattern() != null) {
+
+                for (int num = 1; num <= substModel.getCodonPartitionCount(); num++) {
+                    String prefix1 = partition.getPrefix() + substModel.getPrefixCodon(num);
+
+                    writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
+                    writeCodonPatternsRef(prefix1, num, substModel.getCodonPartitionCount(), writer);
+
+                    writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
+
+                    ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+
+                    writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
+                }
+
+
+            } else {
+                String prefix1 = partition.getPrefix();
+                writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
+                writer.writeIDref(SitePatternsParser.PATTERNS, prefix1 + SitePatternsParser.PATTERNS);
+                writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
+                ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+                writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
+            }
+
+        }
+
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+
+        writer.writeCloseTag(treeLikelihoodTag);
+
     }
 
     /**
@@ -185,8 +245,12 @@ public class TreeLikelihoodGenerator extends Generator {
                 .getComponentOptions(AncestralStatesComponentOptions.class);
 
         for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-            String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
+            String treeLikelihoodTag = TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD;
+            if (GENERATE_TREE_LIKELIHOOD) {
+                treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
+            }
             if (ancestralStatesOptions.usingAncestralStates(partition)) {
+                // For ancestral states and markov jumps we need to go back to tree likelihood:
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
                 if (ancestralStatesOptions.isCountingStates(partition)) {
                     // State change counting uses the MarkovJumpsTreeLikelihood but

@@ -28,6 +28,7 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -42,6 +43,8 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
+import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
@@ -49,6 +52,7 @@ import dr.evoxml.TaxonParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
+import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.AttributeParser;
@@ -583,11 +587,43 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
         try {
+            AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                    .getComponentOptions(AncestralStatesComponentOptions.class);
+
+            List<PartitionData> partitions = new ArrayList<PartitionData>();
+
+            for (AbstractPartitionData partition : options.dataPartitions) {
+                // generate tree likelihoods for alignment data partitions
+                if (partition.getTaxonList() != null) {
+                    if (partition instanceof PartitionData &&
+                            partition.getDataType().getType() != DataType.GENERAL &&
+                            partition.getDataType().getType() != DataType.CONTINUOUS) {
+
+                        // all sequence partitions of the same type as the first into the list for use in a
+                        // MultipartitionTreeDataLikelihood. Must also share the same tree and not be doing
+                        // ancestral reconstruction or counting
+                        if (partitions.size() == 0 ||
+                                (partition.getDataType() == partitions.get(0).getDataType() &&
+                                        partition.getPartitionTreeModel() == partitions.get(0).getPartitionTreeModel()) &&
+                                        !ancestralStatesOptions.usingAncestralStates(partition) &&
+                                        !ancestralStatesOptions.isCountingStates(partition)) {
+                            partitions.add((PartitionData) partition);
+                        }
+                    }
+                }
+            }
+
+            if (partitions.size() > 0) {
+                treeLikelihoodGenerator.writeTreeDataLikelihood(partitions, writer);
+                writer.writeText("");
+            }
+
             for (AbstractPartitionData partition : options.dataPartitions) {
                 // generate tree likelihoods for alignment data partitions
                 if (partition.getTaxonList() != null) {
                     if (partition instanceof PartitionData) {
-                        if (partition.getDataType().getType() != DataType.GENERAL &&
+                        if (!partitions.contains(partition) &&
+                                partition.getDataType().getType() != DataType.GENERAL &&
                                 partition.getDataType().getType() != DataType.CONTINUOUS) {
                             treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
                             writer.writeText("");

@@ -54,6 +54,7 @@ import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
+import dr.util.Pair;
 import dr.util.Version;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
@@ -62,10 +63,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class holds all the data for the current BEAUti Document
@@ -590,44 +588,47 @@ public class BeastGenerator extends Generator {
             AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
                     .getComponentOptions(AncestralStatesComponentOptions.class);
 
-            List<PartitionData> partitions = new ArrayList<PartitionData>();
+            Map<Pair<PartitionTreeModel, DataType>, List<PartitionData>> partitionLists = new HashMap<Pair<PartitionTreeModel, DataType>, List<PartitionData>>();
+            List<AbstractPartitionData> otherPartitions = new ArrayList<AbstractPartitionData>();
 
             for (AbstractPartitionData partition : options.dataPartitions) {
                 // generate tree likelihoods for alignment data partitions
                 if (partition.getTaxonList() != null) {
-                    if (partition instanceof PartitionData &&
-                            partition.getDataType().getType() != DataType.GENERAL &&
-                            partition.getDataType().getType() != DataType.CONTINUOUS) {
 
+                    if (partition.getDataType().getType() == DataType.NUCLEOTIDES ||
+                            partition.getDataType().getType() != DataType.AMINO_ACIDS) {
                         // all sequence partitions of the same type as the first into the list for use in a
                         // MultipartitionTreeDataLikelihood. Must also share the same tree and not be doing
                         // ancestral reconstruction or counting
-                        if (partitions.size() == 0 ||
-                                (partition.getDataType() == partitions.get(0).getDataType() &&
-                                        partition.getPartitionTreeModel() == partitions.get(0).getPartitionTreeModel()) &&
-                                        !ancestralStatesOptions.usingAncestralStates(partition) &&
-                                        !ancestralStatesOptions.isCountingStates(partition)) {
-                            partitions.add((PartitionData) partition);
+                        Pair<PartitionTreeModel, DataType> key = new Pair(partition.getPartitionTreeModel(), partition.getDataType());
+                        List<PartitionData> partitions = partitionLists.get(key);
+
+                        if (partitions == null) {
+                            partitions = new ArrayList<PartitionData>();
                         }
+
+                        partitions.add((PartitionData) partition);
+                        partitionLists.put(key, partitions);
+
+                    } else {
+                        otherPartitions.add(partition);
                     }
+
+
                 }
             }
 
-            if (partitions.size() > 0) {
+            for (List<PartitionData> partitions : partitionLists.values())  {
                 treeLikelihoodGenerator.writeTreeDataLikelihood(partitions, writer);
                 writer.writeText("");
             }
 
-            for (AbstractPartitionData partition : options.dataPartitions) {
-                // generate tree likelihoods for alignment data partitions
+            for (AbstractPartitionData partition : otherPartitions) {
+                // generate tree likelihoods for the other data partitions
                 if (partition.getTaxonList() != null) {
                     if (partition instanceof PartitionData) {
-                        if (!partitions.contains(partition) &&
-                                partition.getDataType().getType() != DataType.GENERAL &&
-                                partition.getDataType().getType() != DataType.CONTINUOUS) {
-                            treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
-                            writer.writeText("");
-                        }
+                        treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
+                        writer.writeText("");
                     } else if (partition instanceof PartitionPattern) { // microsat
                         treeLikelihoodGenerator.writeTreeLikelihood((PartitionPattern) partition, writer);
                         writer.writeText("");

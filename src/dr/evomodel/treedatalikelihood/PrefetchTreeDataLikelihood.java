@@ -32,10 +32,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 import java.util.List;
@@ -49,7 +46,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
+public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable, PrefetchableLikelihood {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -117,13 +114,21 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         return branchRateModel;
     }
 
+    // **************************************************************
+    // PrefetchableLikelihood IMPLEMENTATION
+    // **************************************************************
+
+    @Override
     public int getPrefetchCount() {
         return prefetchCount;
     }
 
-    public void setCurrentPrefetch(int currentPrefetch) {
+    @Override
+    public void setCurrentPrefetch(int prefetch) {
+        likelihoodDelegate.setCurrentPrefetch(prefetch);
+
         isPrefetching = !(currentPrefetch < 0);
-        this.currentPrefetch = currentPrefetch;
+        this.currentPrefetch = prefetch;
         likelihoodKnown = false;
     }
 
@@ -141,6 +146,10 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
             // If doing concurrently then this would just be done once for all the partitions
             likelihoodDelegate.restoreState();
         }
+    }
+
+    @Override
+    public void acceptPrefetch(int prefetch) {
     }
 
     // **************************************************************

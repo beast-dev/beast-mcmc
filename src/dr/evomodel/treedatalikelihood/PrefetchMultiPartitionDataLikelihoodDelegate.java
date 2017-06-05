@@ -460,9 +460,24 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
         }
     }
 
+    // **************************************************************
+    // Prefetchable methods
+    // **************************************************************
+
     public int getPrefetchCount() {
         return prefetchCount;
     }
+
+    public void setCurrentPrefetch(int prefetch) {
+        this.isPrefetching = true;
+        this.currentPrefetch = prefetch;
+    }
+
+    public void acceptPrefetch(int prefetch) {
+        this.isPrefetching = false;
+        this.currentPrefetch = prefetch;
+    }
+
 
     @Override
     public String getReport() {
@@ -891,7 +906,6 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
             }
         }
 
-
         beagle.updatePartialsByPartition(operations, operationCount);
 
         //double[] rootPartials = new double[totalPatternCount * stateCount];
@@ -1259,6 +1273,9 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
     private boolean updatePartition[];
     private boolean updateAllPartitions;
     private boolean partitionWasUpdated[];
+
+    private int currentPrefetch = -1;
+    private boolean isPrefetching = false;
 
     /**
      * the patternLists

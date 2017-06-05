@@ -1393,6 +1393,9 @@ public class BeautiOptions extends ModelOptions {
     public List<AbstractPartitionData> dataPartitions = new ArrayList<AbstractPartitionData>();
     public List<TraitData> traits = new ArrayList<TraitData>();
 
+    public List<List<PartitionData>> multiPartitionLists = new ArrayList<List<PartitionData>>();
+    public List<AbstractPartitionData> otherPartitions = new ArrayList<AbstractPartitionData>();
+
     // ClockModel <=> TreeModel
     private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();
     // ClockModel <=> SubstModel

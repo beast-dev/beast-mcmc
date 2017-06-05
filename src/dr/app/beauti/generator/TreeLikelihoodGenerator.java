@@ -67,7 +67,6 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     public void writeTreeDataLikelihood(List<PartitionData> partitions, XMLWriter writer) {
-        String treeLikelihoodTag = TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD;
 
         PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
@@ -81,7 +80,7 @@ public class TreeLikelihoodGenerator extends Generator {
         };
 
         writer.writeComment("Likelihood for tree given sequence data");
-        writer.writeOpenTag(treeLikelihoodTag, attributes);
+        writer.writeOpenTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, attributes);
 
         for (PartitionData partition : partitions) {
             substModel = partition.getPartitionSubstitutionModel();
@@ -116,7 +115,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
 
-        writer.writeCloseTag(treeLikelihoodTag);
+        writer.writeCloseTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD);
 
     }
 
@@ -240,43 +239,19 @@ public class TreeLikelihoodGenerator extends Generator {
         writer.writeCloseTag(tag);
     }
 
+    /**
+     * Write a list of idrefs to all treelikelihoods
+     * @param writer
+     */
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
-        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
-                .getComponentOptions(AncestralStatesComponentOptions.class);
+        for (List<PartitionData> partitions : options.multiPartitionLists)  {
+            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, partitions.get(0).getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+            writer.writeText("");
+        }
 
-        for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-            String treeLikelihoodTag = TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD;
-            if (GENERATE_TREE_LIKELIHOOD) {
-                treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
-            }
-            if (ancestralStatesOptions.usingAncestralStates(partition)) {
-                // For ancestral states and markov jumps we need to go back to tree likelihood:
-                treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-                if (ancestralStatesOptions.isCountingStates(partition)) {
-                    // State change counting uses the MarkovJumpsTreeLikelihood but
-                    // dNdS robust counting doesn't as it has its own counting code...
-                    if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
-                        treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
-                    }
-                }
-            }
-
-            if (partition.getTaxonList() != null) {
-                if (partition instanceof PartitionData && partition.getTraits() == null) {
-                    // is an alignment data partition
-                    PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-                    if (substModel.getDataType().getType() == DataType.NUCLEOTIDES && substModel.getCodonHeteroPattern() != null) {
-                        for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                            writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + substModel.getPrefixCodon(i) + TreeLikelihoodParser.TREE_LIKELIHOOD);
-                        }
-                    } else {
-                        writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
-                    }
-                } else if (partition instanceof PartitionPattern) { // microsat
-                    writer.writeIDref(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD,
-                            partition.getPrefix() + MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD);
-                }
-            }
+        for (AbstractPartitionData partition : options.otherPartitions) {
+            // generate tree likelihoods for the other data partitions
+            writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
         }
     }
 
@@ -327,6 +302,33 @@ public class TreeLikelihoodGenerator extends Generator {
         } else {
             writer.writeIDref(AsymmetricQuadraticModel.ASYMQUAD_MODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL);
         }
+    }
+
+    /**
+     * Is the data partition suitable for using the MultipartitionTreeDataLikelihoodDelegate.
+     *
+     * @param partition the partition  to write likelihood block for
+     */
+    public boolean canUseMultiPartition(AbstractPartitionData partition) {
+
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
+
+        PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+
+        if (model.isDolloModel()) {
+            return false;
+        }
+
+        if (ancestralStatesOptions.usingAncestralStates(partition)) {
+            return false;
+        }
+
+        if (model.getDataType().getType() != DataType.NUCLEOTIDES && model.getDataType().getType() != DataType.AMINO_ACIDS) {
+            return false;
+        }
+
+        return true;
     }
 
 }

@@ -585,18 +585,15 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
         try {
-            AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
-                    .getComponentOptions(AncestralStatesComponentOptions.class);
-
             Map<Pair<PartitionTreeModel, DataType>, List<PartitionData>> partitionLists = new HashMap<Pair<PartitionTreeModel, DataType>, List<PartitionData>>();
-            List<AbstractPartitionData> otherPartitions = new ArrayList<AbstractPartitionData>();
+            options.multiPartitionLists.clear();
+            options.otherPartitions.clear();
 
             for (AbstractPartitionData partition : options.dataPartitions) {
                 // generate tree likelihoods for alignment data partitions
                 if (partition.getTaxonList() != null) {
 
-                    if (partition.getDataType().getType() == DataType.NUCLEOTIDES ||
-                            partition.getDataType().getType() != DataType.AMINO_ACIDS) {
+                    if (treeLikelihoodGenerator.canUseMultiPartition(partition)) {
                         // all sequence partitions of the same type as the first into the list for use in a
                         // MultipartitionTreeDataLikelihood. Must also share the same tree and not be doing
                         // ancestral reconstruction or counting
@@ -605,25 +602,26 @@ public class BeastGenerator extends Generator {
 
                         if (partitions == null) {
                             partitions = new ArrayList<PartitionData>();
+                            options.multiPartitionLists.add(partitions);
                         }
 
                         partitions.add((PartitionData) partition);
                         partitionLists.put(key, partitions);
 
                     } else {
-                        otherPartitions.add(partition);
+                        options.otherPartitions.add(partition);
                     }
 
 
                 }
             }
 
-            for (List<PartitionData> partitions : partitionLists.values())  {
+            for (List<PartitionData> partitions : options.multiPartitionLists)  {
                 treeLikelihoodGenerator.writeTreeDataLikelihood(partitions, writer);
                 writer.writeText("");
             }
 
-            for (AbstractPartitionData partition : otherPartitions) {
+            for (AbstractPartitionData partition : options.otherPartitions) {
                 // generate tree likelihoods for the other data partitions
                 if (partition.getTaxonList() != null) {
                     if (partition instanceof PartitionData) {

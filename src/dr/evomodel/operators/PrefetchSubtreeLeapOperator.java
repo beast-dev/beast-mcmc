@@ -25,12 +25,11 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.PrefetchTreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.inference.model.PrefetchableLikelihood;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.Prefetchable;
+import dr.inference.operators.PrefetchableOperator;
 
 /**
  * PrefetchSubtreeLeapOperator
@@ -38,12 +37,12 @@ import dr.inference.operators.Prefetchable;
  * @author Andrew Rambaut
  */
 
-public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements Prefetchable {
+public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements PrefetchableOperator {
 
     private static final boolean NO_PARALLEL_PREFETCH = false;
     private static final boolean PREFETCH_DEBUG = false;
 
-    private final PrefetchTreeDataLikelihood treeDataLikelihood;
+    private final PrefetchableLikelihood prefetchableLikelihood;
     private final int prefetchCount;
     private int currentPrefetch;
     private final double[] hastingsRatios;
@@ -58,12 +57,12 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
      * @param accP
      * @param mode   coercion mode
      */
-    public PrefetchSubtreeLeapOperator(PrefetchTreeDataLikelihood treeDataLikelihood,
+    public PrefetchSubtreeLeapOperator(PrefetchableLikelihood prefetchableLikelihood,
                                        TreeModel tree, double weight, double size, double accP, CoercionMode mode) {
         super(tree, weight, size, accP, mode);
 
-        this.treeDataLikelihood = treeDataLikelihood;
-        this.prefetchCount = treeDataLikelihood.getPrefetchCount();
+        this.prefetchableLikelihood = prefetchableLikelihood;
+        this.prefetchCount = prefetchableLikelihood.getPrefetchCount();
         hastingsRatios = new double[prefetchCount];
         instances = new Instance[prefetchCount];
 
@@ -100,14 +99,14 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             } else {
 
                 for (int i = 0; i < prefetchCount; i++) {
-                    treeDataLikelihood.setCurrentPrefetch(i);
+                    prefetchableLikelihood.setCurrentPrefetch(i);
 
                     // temporarily store state of tree
                     getTreeModel().pushState();
 
                     hastingsRatios[i] = super.doOperation();
 
-                    treeDataLikelihood.collectOperations();
+//                    prefetchableLikelihood.collectOperations();
 
                     // restore temporary state
                     getTreeModel().popState();
@@ -115,7 +114,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
                     instances[i] = getLastInstance();
                 }
 
-                treeDataLikelihood.prefetchLogLikelihoods();
+                prefetchableLikelihood.prefetchLogLikelihoods();
             }
         }
 
@@ -126,7 +125,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         if (NO_PARALLEL_PREFETCH) {
             applyInstance(instances[currentPrefetch]);
         } else {
-            treeDataLikelihood.setCurrentPrefetch(currentPrefetch);
+            prefetchableLikelihood.setCurrentPrefetch(currentPrefetch);
         }
 
         return hastingsRatios[currentPrefetch];
@@ -146,11 +145,11 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             // todo - rather than rerunning the winning operation and then needing
             // todo   update all the touched partial likelihoods, it would be better
             // todo   shuffle the buffers in the deligate
-            treeDataLikelihood.setCurrentPrefetch(-1);
+            prefetchableLikelihood.setCurrentPrefetch(-1);
             applyInstance(instances[currentPrefetch]);
 
             // update the log likelihood (partials etc).
-            treeDataLikelihood.getLogLikelihood();
+            prefetchableLikelihood.getLogLikelihood();
         }
 
         if (PREFETCH_DEBUG) {

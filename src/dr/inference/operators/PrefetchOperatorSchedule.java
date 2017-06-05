@@ -54,13 +54,13 @@ public class PrefetchOperatorSchedule implements OperatorSchedule {
 
         if (currentPrefetchOperator != null) {
             operator = currentPrefetchOperator;
-            if (((Prefetchable)currentPrefetchOperator).prefetchingDone()) {
+            if (((PrefetchableOperator)currentPrefetchOperator).prefetchingDone()) {
                 currentPrefetchOperator = null;
             }
         } else {
             operator = operatorSchedule.getOperator(index);
 
-            if (operator instanceof Prefetchable) {
+            if (operator instanceof PrefetchableOperator) {
                 currentPrefetchOperator = operator;
             }
         }

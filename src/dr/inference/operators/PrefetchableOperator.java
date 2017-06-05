@@ -25,11 +25,11 @@
 
 package dr.inference.operators;
 /**
- * Prefetchable
+ * PrefetchableOperator
  *
  * @author Andrew Rambaut
  */
 
-public interface Prefetchable {
+public interface PrefetchableOperator {
     boolean prefetchingDone();
 }

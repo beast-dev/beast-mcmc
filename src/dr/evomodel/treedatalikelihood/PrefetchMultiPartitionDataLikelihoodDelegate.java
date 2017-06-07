@@ -1115,7 +1115,7 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
      *
      * @return the log likelihood.
      */
-    public void calculatePrefetchTransitionMatrices(int prefetchIndex, List<BranchOperation> branchOperations) throws LikelihoodException {
+    public boolean calculatePrefetchTransitionMatrices(int prefetchIndex, List<BranchOperation> branchOperations) throws LikelihoodException {
         int k = 0;
         for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
             if (updateSubstitutionModels[k]) {
@@ -1139,7 +1139,7 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
                 if (categoryRates == null) {
                     // If this returns null then there was a numerical error calculating the category rates
                     // (probably a very small alpha) so reject the move.
-                    return Double.NEGATIVE_INFINITY;
+                    return false;
                 }
 
                 if (flip[k]) {
@@ -1200,6 +1200,7 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
                     edgeLengths,
                     op);
         }
+        return true;
     }
 
         /**
@@ -1537,7 +1538,7 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
                 throw new LikelihoodUnderflowException();
             }
 
-            return Double.NEGATIVE_INFINITY;
+            return new double[] { Double.NEGATIVE_INFINITY };
         } else {
 
             for (int i = 0; i < updatedPartitionCount; i++) {
@@ -1567,7 +1568,7 @@ public class PrefetchMultiPartitionDataLikelihoodDelegate extends AbstractModel 
             logL += l;
         }
 
-        return logL;
+        return new double[] { logL };
     }
 
     @Override

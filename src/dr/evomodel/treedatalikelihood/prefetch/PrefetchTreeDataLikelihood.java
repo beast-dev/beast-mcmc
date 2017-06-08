@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood;
+package dr.evomodel.treedatalikelihood.prefetch;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -32,6 +32,8 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.LikelihoodTreeTraversal;
 import dr.inference.model.*;
 import dr.xml.Reportable;
 
@@ -127,7 +129,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     public void setCurrentPrefetch(int prefetch) {
         likelihoodDelegate.setCurrentPrefetch(prefetch);
 
-        isPrefetching = !(currentPrefetch < 0);
+        isPrefetching = true;
         this.currentPrefetch = prefetch;
         likelihoodKnown = false;
     }
@@ -149,7 +151,13 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     }
 
     @Override
+    /**
+     * When a prefetch operation is accepted, prefetching is turned off
+     */
     public void acceptPrefetch(int prefetch) {
+        likelihoodDelegate.acceptPrefetch(prefetch);
+        isPrefetching = false;
+        this.currentPrefetch = prefetch;
     }
 
     // **************************************************************
@@ -292,8 +300,6 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     @Override
     protected void acceptState() {
-        currentPrefetch = -1;
-        isPrefetching = false;
     } // nothing to do
 
     /**

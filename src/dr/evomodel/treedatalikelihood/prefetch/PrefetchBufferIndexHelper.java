@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood;
+package dr.evomodel.treedatalikelihood.prefetch;
 
 import java.io.Serializable;
 import java.util.Stack;
@@ -42,13 +42,13 @@ public class PrefetchBufferIndexHelper implements Serializable {
      * @param maxIndexValue the number of possible input values for the index
      * @param minIndexValue the minimum index value to have the mirrored buffers
      */
-    public PrefetchBufferIndexHelper(int prefetchCount, int maxIndexValue, int minIndexValue) {
+    public PrefetchBufferIndexHelper(int prefetchCount, int maxIndexValue, int minIndexValue, int bufferSetNumber) {
         this.minIndexValue = minIndexValue;
 
         this.prefetchCount = prefetchCount;
         doubleBufferCount = maxIndexValue - minIndexValue;
         indexOffsets = new int[prefetchCount][doubleBufferCount];
-        storedIndexOffsets = new int[doubleBufferCount];
+        storedIndexOffsets = new int[prefetchCount][doubleBufferCount];
 
         // set up all the indices to the first doubleBufferCount of buffers
         for (int i = 0; i < prefetchCount; i++) {
@@ -63,6 +63,7 @@ public class PrefetchBufferIndexHelper implements Serializable {
             }
         }
 
+        this.constantOffset = bufferSetNumber * getBufferCount();
     }
 
     public int getBufferCount() {
@@ -76,21 +77,25 @@ public class PrefetchBufferIndexHelper implements Serializable {
         indexOffsets[prefetch][i - minIndexValue] = availableIndices.pop();
     }
 
-    public int getOffsetIndex(int prefetch, int i) {
+    public int getBufferIndex(int prefetch, int i) {
         if (i < minIndexValue) {
             return i;
         }
-        return indexOffsets[prefetch][i - minIndexValue];
+        return indexOffsets[prefetch][i - minIndexValue] + constantOffset;
     }
 
     public void storeState() {
-//        System.arraycopy(indexOffsets[0], 0, storedIndexOffsets[0], 0, indexOffsets.length);
+        for (int i = 0; i < prefetchCount; i++) {
+            System.arraycopy(indexOffsets[0], 0, storedIndexOffsets[0], 0, doubleBufferCount);
+        }
     }
 
     public void restoreState() {
-//        int[] tmp = storedIndexOffsets;
-//        storedIndexOffsets = indexOffsets;
-//        indexOffsets = tmp;
+        for (int i = 0; i < prefetchCount; i++) {
+            int[] tmp = storedIndexOffsets[i];
+            storedIndexOffsets[i] = indexOffsets[i];
+            indexOffsets[i] = tmp;
+        }
     }
 
     public void acceptPrefetch(int prefetch) {
@@ -110,9 +115,10 @@ public class PrefetchBufferIndexHelper implements Serializable {
     private final int prefetchCount;
     private final int minIndexValue;
     private final int doubleBufferCount;
+    private final int constantOffset;
 
     private int[][] indexOffsets;
-    private int[] storedIndexOffsets;
+    private int[][] storedIndexOffsets;
 
     private Stack<Integer> availableIndices = new Stack<Integer>();
 

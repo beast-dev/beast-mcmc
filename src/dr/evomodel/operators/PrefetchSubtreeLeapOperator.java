@@ -26,7 +26,6 @@
 package dr.evomodel.operators;
 
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.PrefetchTreeDataLikelihood;
 import dr.inference.model.PrefetchableLikelihood;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.PrefetchableOperator;

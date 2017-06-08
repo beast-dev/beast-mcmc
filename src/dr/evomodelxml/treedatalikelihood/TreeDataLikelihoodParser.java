@@ -38,6 +38,8 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.prefetch.PrefetchMultiPartitionDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.prefetch.PrefetchTreeDataLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;

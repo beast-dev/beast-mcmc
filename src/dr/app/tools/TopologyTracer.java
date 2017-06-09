@@ -53,11 +53,11 @@ public class TopologyTracer {
     private final static boolean PROFILE = true;
 
     private static final String STATE = "state";
-    private static final String RFDISTANCE = "RFdistance (pseudo)";
+    private static final String RFDISTANCE = "RFdistance";
     private static final String BILLERA_METRIC = "BilleraMetric";
     private static final String CLADE_HEIGHT = "cladeHeight";
     private static final String BRANCH_SCORE_METRIC = "branchScoreMetric";
-    private static final String PATH_DIFFERENCE = "pathDifference (pseudo)";
+    private static final String PATH_DIFFERENCE = "pathDifference";
     private static final String KC_METRIC = "KCmetric";
 
     // output to stdout

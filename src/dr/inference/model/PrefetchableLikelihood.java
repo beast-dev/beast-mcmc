@@ -15,11 +15,34 @@ import dr.inference.model.Likelihood;
  * @version $Id$
  */
 public interface PrefetchableLikelihood extends Likelihood {
+    /**
+     * @return the number of prefetch operations that will be done in parallel
+     */
     int getPrefetchCount();
 
+    /**
+     * Set the current prefetch number. This is set before the particular prefetch operation is done
+     * so the likelihood can handle the operation appropriately (i.e., listening for changes).
+     * @param prefetch
+     */
     void setCurrentPrefetch(int prefetch);
 
+    /**
+     * Calculate the likelihood for all the prefetch operations in parallel
+     */
     void prefetchLogLikelihoods();
 
+    /**
+     * Specifies which of the prefetch operations was successful (if any). This allows the likelihood
+     * to update its current state to the successful one.
+     * @param prefetch
+     */
     void acceptPrefetch(int prefetch);
+
+    /**
+     * Called if all the prefetch operations were rejected. The likelihood should go back to its initial
+     * state. Note that the standard store/restore methods will be called as each prefetched operation
+     * is evaluated. It is likely that these will be ignored until this method is called.
+     */
+    void rejectPrefetch();
 }

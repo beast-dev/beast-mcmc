@@ -38,7 +38,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.prefetch.PrefetchMultiPartitionDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.prefetch.PrefetchDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.prefetch.PrefetchTreeDataLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
@@ -106,7 +106,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
             if (USE_PREFETCH) {
-                DataLikelihoodDelegate dataLikelihoodDelegate = new PrefetchMultiPartitionDataLikelihoodDelegate(
+                DataLikelihoodDelegate dataLikelihoodDelegate = new PrefetchDataLikelihoodDelegate(
                         treeModel,
                         patternLists,
                         branchModels,

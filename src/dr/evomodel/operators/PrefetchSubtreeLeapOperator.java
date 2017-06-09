@@ -44,7 +44,6 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
     private final PrefetchableLikelihood prefetchableLikelihood;
     private final int prefetchCount;
     private int currentPrefetch;
-    private final double[] hastingsRatios;
     private final Instance[] instances;
 
     /**
@@ -62,7 +61,6 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
         this.prefetchableLikelihood = prefetchableLikelihood;
         this.prefetchCount = prefetchableLikelihood.getPrefetchCount();
-        hastingsRatios = new double[prefetchCount];
         instances = new Instance[prefetchCount];
 
         currentPrefetch = -1;
@@ -93,7 +91,6 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
                 for (int i = 0; i < prefetchCount; i++) {
                     instances[i] = drawOperation();
-                    hastingsRatios[i] =  instances[i].logHastingsRatio;
                 }
             } else {
 
@@ -103,14 +100,10 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
                     // temporarily store state of tree
                     getTreeModel().pushState();
 
-                    hastingsRatios[i] = super.doOperation();
-
-//                    prefetchableLikelihood.collectOperations();
+                    applyInstance(instances[i] = drawOperation());
 
                     // restore temporary state
                     getTreeModel().popState();
-
-                    instances[i] = getLastInstance();
                 }
 
                 prefetchableLikelihood.prefetchLogLikelihoods();
@@ -127,7 +120,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             prefetchableLikelihood.setCurrentPrefetch(currentPrefetch);
         }
 
-        return hastingsRatios[currentPrefetch];
+        return instances[currentPrefetch].logHastingsRatio;
     }
 
     @Override
@@ -136,25 +129,14 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
         // clear the cached likelihoods, restore treemodel, TDL and apply successful operation instance
         if (!NO_PARALLEL_PREFETCH) {
-
-            // would be better to adopt the partial likelihoods of the successful move.
-            // getTreeModel().quietlyRestoreModelState();
-            // treeDataLikelihood.quietlyRestoreModelState();
-
-            // todo - rather than rerunning the winning operation and then needing
-            // todo   update all the touched partial likelihoods, it would be better
-            // todo   shuffle the buffers in the deligate
-            prefetchableLikelihood.setCurrentPrefetch(-1);
-            applyInstance(instances[currentPrefetch]);
-
-            // update the log likelihood (partials etc).
-            prefetchableLikelihood.getLogLikelihood();
+            prefetchableLikelihood.acceptPrefetch(currentPrefetch);
         }
 
         if (PREFETCH_DEBUG) {
             System.err.println("Prefetch: accepted");
         }
 
+        // done with this prefetch set of operations
         currentPrefetch = -1;
     }
 
@@ -165,6 +147,8 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         // move on to the next prefetched
         currentPrefetch += 1;
         if (currentPrefetch == prefetchCount) {
+            prefetchableLikelihood.rejectPrefetch();
+
             currentPrefetch = -1;
         }
 

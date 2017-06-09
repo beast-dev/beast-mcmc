@@ -257,7 +257,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             final NodeRef root = treeModel.getRoot();
 
             try {
-                logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+                logL = likelihoodDelegate.calculateLogLikelihood(branchOperations, nodeOperations, root.getNumber());
 
                 done = true;
             } catch (DataLikelihoodDelegate.LikelihoodException e) {

@@ -34,6 +34,8 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.LikelihoodTreeTraversal;
+import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.BranchOperation;
+import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.NodeOperation;
 import dr.inference.model.*;
 import dr.xml.Reportable;
 
@@ -68,11 +70,11 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
         logger.info("\nUsing TreeDataLikelihood");
 
-        if (!(likelihoodDelegate instanceof PrefetchMultiPartitionDataLikelihoodDelegate)) {
+        if (!(likelihoodDelegate instanceof PrefetchDataLikelihoodDelegate)) {
             throw new RuntimeException("DataLikelihoodDelegate in PrefetchTreeDataLikelihood " +
-                    "should be PrefetchMultiPartitionDataLikelihoodDelegate");
+                    "should be PrefetchDataLikelihoodDelegate");
         }
-        this.likelihoodDelegate = (PrefetchMultiPartitionDataLikelihoodDelegate)likelihoodDelegate;
+        this.likelihoodDelegate = (PrefetchDataLikelihoodDelegate)likelihoodDelegate;
         int prefetchCount = this.likelihoodDelegate.getPrefetchCount();
 
         addModel(likelihoodDelegate);
@@ -92,13 +94,15 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         }
         addModel(this.branchRateModel);
 
-        this.prefetchCount = prefetchCount;
-
         treeTraversalDelegates = new LikelihoodTreeTraversal[prefetchCount];
         for (int i = 0; i < prefetchCount; i++) {
             treeTraversalDelegates[i] = new LikelihoodTreeTraversal(treeModel, branchRateModel,
                     likelihoodDelegate.getOptimalTraversalType());
         }
+
+        branchOperations = new List[prefetchCount];
+        nodeOperations = new List[prefetchCount];
+
 
         prefetchedLogLikelihoods = new double[prefetchCount];
 
@@ -122,7 +126,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     @Override
     public int getPrefetchCount() {
-        return prefetchCount;
+        return likelihoodDelegate.getPrefetchCount();
     }
 
     @Override
@@ -140,14 +144,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     public void prefetchLogLikelihoods() {
         // todo this is currently calling sequentially. Needs to be concurrent for prefetching to be meaningful
-        for (int i = 0; i < prefetchCount; i++) {
-            setCurrentPrefetch(i);
-            prefetchedLogLikelihoods[i] = calculateLogLikelihood(treeTraversalDelegates[i]);
-
-            // restore the state so the next set of updates can be applied
-            // If doing concurrently then this would just be done once for all the partitions
-            likelihoodDelegate.restoreState();
-        }
+        prefetchedLogLikelihoods = calculateLogLikelihood(treeTraversalDelegates);
     }
 
     @Override
@@ -158,6 +155,13 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         likelihoodDelegate.acceptPrefetch(prefetch);
         isPrefetching = false;
         this.currentPrefetch = prefetch;
+    }
+
+    @Override
+    public void rejectPrefetch() {
+        likelihoodDelegate.rejectPrefetch();
+        isPrefetching = false;
+        this.currentPrefetch = -1;
     }
 
     // **************************************************************
@@ -179,7 +183,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
                 totalCalculateLikelihoodCount++;
 
             if (!isPrefetching) {
-                logLikelihood = calculateLogLikelihood(treeTraversalDelegates[0]);
+                logLikelihood = calculateLogLikelihood();
                 if (PREFETCH_DEBUG) {
                     System.err.println("PTDL calculated likelihood: " + logLikelihood);
                 }
@@ -306,19 +310,18 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
      * Calculate the log likelihood of the data for the current tree.
      *
      * @return the log likelihood.
-     * @param treeTraversalDelegate
      */
-    private final double calculateLogLikelihood(LikelihoodTreeTraversal treeTraversalDelegate) {
+    private final double calculateLogLikelihood() {
 
         double logL = Double.NEGATIVE_INFINITY;
         boolean done = false;
         long underflowCount = 0;
 
         do {
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            treeTraversalDelegates[0].dispatchTreeTraversalCollectBranchAndNodeOperations();
 
-            final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
-            final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+            final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegates[0].getBranchOperations();
+            final List<NodeOperation> nodeOperations = treeTraversalDelegates[0].getNodeOperations();
 
             if (COUNT_TOTAL_OPERATIONS) {
                 totalMatrixUpdateCount += branchOperations.size();
@@ -328,7 +331,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
             final NodeRef root = treeModel.getRoot();
 
             try {
-                logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+                logL = likelihoodDelegate.calculateLogLikelihood(branchOperations, nodeOperations, root.getNumber());
 
                 done = true;
             } catch (DataLikelihoodDelegate.LikelihoodException e) {
@@ -339,6 +342,52 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
                 underflowCount++;
             }
 
+        } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
+
+        // after traverse all nodes and patterns have been updated --
+        //so change flags to reflect this.
+        setAllNodesUpdated();
+
+        return logL;
+    }
+
+    /**
+     * Calculate the log likelihood of the data for the current tree.
+     *
+     * @return the log likelihood.
+     * @param treeTraversalDelegate
+     */
+    private final double[] calculateLogLikelihood(LikelihoodTreeTraversal[] treeTraversalDelegate) {
+
+        double[] logL = null;
+        boolean done = false;
+        long underflowCount = 0;
+
+        do {
+            for (int prefetch = 0; prefetch < likelihoodDelegate.getPrefetchCount(); prefetch++) {
+                branchOperations[prefetch] = treeTraversalDelegate[prefetch].getBranchOperations();
+                nodeOperations[prefetch] = treeTraversalDelegate[prefetch].getNodeOperations();
+
+                if (COUNT_TOTAL_OPERATIONS) {
+                    totalMatrixUpdateCount += branchOperations[prefetch].size();
+                    totalOperationCount += nodeOperations[prefetch].size();
+                }
+
+            }
+
+            final NodeRef root = treeModel.getRoot();
+
+            try {
+                logL = likelihoodDelegate.calculatePrefetchLikelihood(branchOperations, nodeOperations, root.getNumber());
+
+                done = true;
+            } catch (DataLikelihoodDelegate.LikelihoodException e) {
+
+                // if there is an underflow, assume delegate will attempt to rescale
+                // so flag all nodes to update and return to try again.
+                updateAllNodes();
+                underflowCount++;
+            }
         } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
 
         // after traverse all nodes and patterns have been updated --
@@ -490,7 +539,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     /**
      * The data likelihood delegate
      */
-    private final PrefetchMultiPartitionDataLikelihoodDelegate likelihoodDelegate;
+    private final PrefetchDataLikelihoodDelegate likelihoodDelegate;
 
     /**
      * the tree model
@@ -508,6 +557,8 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     private final Helper treeTraits = new Helper();
 
     private final LikelihoodTreeTraversal[] treeTraversalDelegates;
+    private final List[] branchOperations;
+    private final List[] nodeOperations;
 
     private double logLikelihood;
     private double storedLogLikelihood;
@@ -528,6 +579,5 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     private int currentPrefetch = 0;
     private boolean isPrefetching = false;
-    private final int prefetchCount;
     private double[] prefetchedLogLikelihoods;
 }

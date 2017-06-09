@@ -167,7 +167,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         try {
             outerProductDelegate.setComputeWishartStatistics(true);
-            outerProductDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+            outerProductDelegate.calculateLogLikelihood(branchOperations, nodeOperations, root.getNumber());
             outerProductDelegate.setComputeWishartStatistics(false);
 
         } catch (DataLikelihoodDelegate.LikelihoodException e) {

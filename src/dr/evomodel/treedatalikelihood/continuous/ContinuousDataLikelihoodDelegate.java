@@ -576,8 +576,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
      * @return the log likelihood.
      */
     @Override
-    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
-                                      int rootNodeNumber) throws LikelihoodException {
+    public double calculateLogLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
+                                         int rootNodeNumber) throws LikelihoodException {
 
         branchNormalization = rateTransformation.getNormalization();  // TODO Cache branchNormalization
 

@@ -105,17 +105,17 @@ public class Polygon2D extends AbstractPolygon2D {
 
     @Override
     public void setFillValue(double value) {
-        throw new RuntimeException("setFillValue() call not allowed in Polygon2D; try Polygon2DFill.");
+        throw new RuntimeException("setFillValue() call not allowed in Polygon2D; try Polygon2DSampling.");
     }
 
     @Override
     public double getFillValue() {
-        throw new RuntimeException("getFillValue() call not allowed in Polygon2D; try Polygon2DFill.");
+        throw new RuntimeException("getFillValue() call not allowed in Polygon2D; try Polygon2DSampling.");
     }
 
     @Override
     public double getLogFillValue() {
-        throw new RuntimeException("getLogFillValue() call not allowed in Polygon2D; try Polygon2DFill.");
+        throw new RuntimeException("getLogFillValue() call not allowed in Polygon2D; try Polygon2DSampling.");
     }
 
     @Override
@@ -124,6 +124,7 @@ public class Polygon2D extends AbstractPolygon2D {
     }
 
     public static void main(String[] args) {
+
         Polygon2D polygon = new Polygon2D();
         polygon.addPoint2D(new Point2D.Double(-10, -10));
         polygon.addPoint2D(new Point2D.Double(-10, 50));

@@ -273,6 +273,11 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return pattern;
     }
 
+    @Override
+    public double[][] getUncertainSitePattern(int siteIndex) {
+        throw new UnsupportedOperationException("getUncertainSitePattern not implemented yet");
+    }
+
     /**
      * Gets the pattern index at a particular site
      *
@@ -294,6 +299,11 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         }
 
         return seq.getState(siteIndex);
+    }
+
+    @Override
+    public double[] getUncertainState(int taxonIndex, int siteIndex) {
+        throw new UnsupportedOperationException("getUncertainState not implemented yet");
     }
 
     /**
@@ -417,11 +427,21 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return getSitePattern(patternIndex);
     }
 
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        throw new UnsupportedOperationException("getUncertainPattern not implemented yet");
+    }
+
     /**
      * @return state at (taxonIndex, patternIndex)
      */
     public int getPatternState(int taxonIndex, int patternIndex) {
         return getState(taxonIndex, patternIndex);
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        throw new UnsupportedOperationException("getUncertainPatternState not implemented yet");
     }
 
     /**
@@ -457,6 +477,11 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
     @Override
     public boolean areUnique() {
+        return false;
+    }
+
+    @Override
+    public boolean areUncertain() {
         return false;
     }
 

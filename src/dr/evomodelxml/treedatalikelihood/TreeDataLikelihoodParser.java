@@ -105,8 +105,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //                delayRescalingUntilUnderflow);
 
         boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
+        boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
 
-        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
+        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {
             DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                     treeModel,
                     patternLists,
@@ -287,17 +288,18 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(SCALING_SCHEME,true),
 
             // really it should be this set of elements or the PARTITION elements
-            new ElementRule(PatternList.class, true),
-            new ElementRule(SiteRateModel.class, true),
-            new ElementRule(FrequencyModel.class, true),
-            new ElementRule(BranchModel.class, true),
-
-            new ElementRule(PARTITION, new XMLSyntaxRule[] {
+            new OrRule(new AndRule(new XMLSyntaxRule[]{
+                    new ElementRule(PatternList.class, true),
+                    new ElementRule(SiteRateModel.class, true),
+                    new ElementRule(FrequencyModel.class, true),
+                    new ElementRule(BranchModel.class, true)})
+                    ,
+                    new ElementRule(PARTITION, new XMLSyntaxRule[] {
                     new ElementRule(PatternList.class),
                     new ElementRule(SiteRateModel.class),
                     new ElementRule(FrequencyModel.class, true),
                     new ElementRule(BranchModel.class, true)
-            }, true),
+            }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TreeModel.class),

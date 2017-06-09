@@ -41,7 +41,7 @@ import dr.xml.*;
  */
 public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
-    public static final String GLM_LIKELIHOOD = "glmModel";
+    public static final String GLM_LIKELIHOOD = "glmModelNew";
 
     public static final String DEPENDENT_VARIABLES = "dependentVariables";
     public static final String INDEPENDENT_VARIABLES = "independentVariables";
@@ -178,8 +178,8 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
         int realRank = svd.rank();
         if (realRank != fullRank) {
             throw new XMLParseException(
-                "rank(" + designMatrix.getId() + ") = " + realRank +
-                        ".\nMatrix is not of full rank as colDim(" + designMatrix.getId() + ") = " + fullRank        
+                    "rank(" + designMatrix.getId() + ") = " + realRank +
+                            ".\nMatrix is not of full rank as colDim(" + designMatrix.getId() + ") = " + fullRank
             );
         }
     }
@@ -251,6 +251,6 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return Likelihood.class;
+        return GeneralizedLinearModel.class;
     }
 }

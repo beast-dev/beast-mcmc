@@ -50,7 +50,11 @@ public class MultiRegionGeoSpatialDistribution extends GeoSpatialDistribution {
     public double logPdf(double[] x) {
 
         if (fillValue) {
+            //System.err.println("fillValue set to true");
+            //int test = 0;
             for (GeoSpatialDistribution region : regions) {
+                //System.err.println(test);
+                //test++;
                 if (!Double.isInfinite(region.logPdf(x))) {
                     return region.logPdf(x);
                 }

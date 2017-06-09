@@ -1,5 +1,5 @@
 /*
- * Polygon2DFactory.java
+ * LikelihoodWithGradient.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,33 +23,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.geo;
-
-import org.jdom.Attribute;
-import org.jdom.Element;
-
-import java.awt.geom.Point2D;
-import java.util.LinkedList;
+package dr.inference.model;
 
 /**
- * @author Guy Baele
+ * @author Marc A. Suchard
+ * @author Max Tolkoff
  */
-public class Polygon2DFactory {
 
-    public static AbstractPolygon2D createPolygon2D(Element element) {
-        //Attribute attrib = element.getAttribute("fillValue");
-        Attribute samplingAttrib = element.getAttribute("samplingProbability");
-        if (samplingAttrib != null) {
-            double fillValue = Double.parseDouble(samplingAttrib.getValue());
-            return new Polygon2DSampling(element, fillValue);
-        }
-        else {
-            return new Polygon2D(element);
-        }
-    }
+public interface LikelihoodWithGradient extends Likelihood {
 
-    public static AbstractPolygon2D createPolygon2D(LinkedList<Point2D> clippedPolygon, boolean closed) {
-        return new Polygon2D(clippedPolygon, closed);
-    }
+    int getGradientDimension();
 
+    double getDerivative(int dimension);
 }

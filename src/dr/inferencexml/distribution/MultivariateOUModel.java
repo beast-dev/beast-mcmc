@@ -23,8 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.distribution;
+package dr.inferencexml.distribution;
 
+import dr.inference.distribution.GeneralizedLinearModel;
 import dr.oldevomodel.substmodel.PositiveDefiniteSubstitutionModel;
 import dr.oldevomodel.substmodel.SubstitutionModel;
 import dr.inference.model.MatrixParameter;

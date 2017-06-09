@@ -147,6 +147,11 @@ public class GapStrippedAlignment extends Alignment.Abstract
         return alignment.getSitePattern(fullIndex(siteIndex));
     }
 
+    @Override
+    public double[][] getUncertainSitePattern(int siteIndex) {
+        return alignment.getUncertainSitePattern(fullIndex(siteIndex));
+    }
+
     public final int getPatternIndex(int siteIndex) {
         return alignment.getPatternIndex(fullIndex(siteIndex));
     }
@@ -156,8 +161,28 @@ public class GapStrippedAlignment extends Alignment.Abstract
         return alignment.getState(taxonIndex, fullIndex(siteIndex));
     }
 
+    @Override
+    public double[] getUncertainState(int taxonIndex, int siteIndex) {
+        return alignment.getUncertainState(taxonIndex, fullIndex(siteIndex));
+    }
+
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        return alignment.getUncertainPattern(fullIndex(patternIndex));
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        return new double[0];
+    }
+
     public final DataType getDataType() {
         return alignment.getDataType();
+    }
+
+    @Override
+    public boolean areUncertain() {
+        return false;
     }
 
     private final int fullIndex(int gapStrippedIndex) {

@@ -43,7 +43,6 @@ import java.util.List;
 
 public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser {
     public final static String HMC_OPERATOR = "HamiltonianMonteCarloOperator";
-    public static final String HMC_OPERATOR2 = "hamiltonianMonteCarloOperator";
 
     public final static String N_STEPS = "nSteps";
     public final static String STEP_SIZE = "stepSize";
@@ -54,12 +53,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public String getParserName() {
         return HMC_OPERATOR;
     }
-
-    @Override
-    public String[] getParserNames() {
-        return new String[] { HMC_OPERATOR, HMC_OPERATOR2 };
-    }
-
+    
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 

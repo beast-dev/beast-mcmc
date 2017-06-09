@@ -452,11 +452,9 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             int numTaxa = treeModel.getTaxonCount();
 
 
-
-
-                if (tipTraitParameter.getDimension() != numTaxa * numData * dimTrait) {
+            if (tipTraitParameter.getDimension() != numTaxa * numData * dimTrait) {
                     throw new XMLParseException("Tip trait parameter is wrong dimension in latent liability model");
-                }
+            }
 
             if (!isUnorderd){
 

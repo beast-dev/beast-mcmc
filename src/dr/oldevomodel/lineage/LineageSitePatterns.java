@@ -388,6 +388,11 @@ public class LineageSitePatterns extends AbstractModel implements SiteList, dr.u
         return sitePatternIndice >= 0 ? patterns[sitePatternIndice] : null;
     }
 
+    @Override
+    public double[][] getUncertainSitePattern(int siteIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
+    }
+
     /**
      * Gets the pattern index at a particular site
      *
@@ -404,6 +409,11 @@ public class LineageSitePatterns extends AbstractModel implements SiteList, dr.u
         final int sitePatternIndice = sitePatternIndices[siteIndex];
         // is that right?
         return sitePatternIndice >= 0 ? patterns[sitePatternIndice][taxonIndex] : getDataType().getGapState();
+    }
+
+    @Override
+    public double[] getUncertainState(int taxonIndex, int siteIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
     }
 
     // **************************************************************
@@ -444,11 +454,21 @@ public class LineageSitePatterns extends AbstractModel implements SiteList, dr.u
         return patterns[patternIndex];
     }
 
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
+    }
+
     /**
      * @return state at (taxonIndex, patternIndex)
      */
     public int getPatternState(int taxonIndex, int patternIndex) {
         return patterns[patternIndex][taxonIndex];
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
     }
 
     /**
@@ -483,6 +503,11 @@ public class LineageSitePatterns extends AbstractModel implements SiteList, dr.u
     @Override
     public boolean areUnique() {
         return unique;
+    }
+
+    @Override
+    public boolean areUncertain() {
+        return false;
     }
 
     // **************************************************************

@@ -25,6 +25,9 @@
 
 package dr.app.beauti.siteModelsPanel;
 
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.priorsPanel.PriorDialog;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
@@ -46,6 +49,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -101,6 +105,8 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox activateBSSVS = new JCheckBox(
             // "Activate BSSVS"
             "Infer social network with BSSVS");
+    private JButton setupGLMButton;
+    private GLMSettingsDialog glmSettingsDialog = null;
 
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
@@ -135,9 +141,13 @@ public class PartitionModelPanel extends OptionsPanel {
 
     protected final PartitionSubstitutionModel model;
 
-    public PartitionModelPanel(final PartitionSubstitutionModel partitionModel) {
+    final BeautiFrame frame;
+
+    public PartitionModelPanel(final BeautiFrame frame, final PartitionSubstitutionModel partitionModel) {
 
         super(12, (OSType.isMac() ? 6 : 24));
+
+        this.frame = frame;
 
         this.model = partitionModel;
 
@@ -323,6 +333,8 @@ public class PartitionModelPanel extends OptionsPanel {
                 model
                         .setDiscreteSubstType((DiscreteSubstModelType) discreteTraitSiteModelCombo
                                 .getSelectedItem());
+                activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST);
+                setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST);
             }
         });
 
@@ -353,7 +365,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(addJitterCheck);
         addJitterCheck
                 .setToolTipText("<html>Specify if the tip values should have some added random<br>" +
-                                       "noise. This can be useful if some tips have precisely<br>" +
+                        "noise. This can be useful if some tips have precisely<br>" +
                         "the same location.</html>");
 
         jitterWindowText.setValue(model.getJitterWindow());
@@ -399,6 +411,18 @@ public class PartitionModelPanel extends OptionsPanel {
         activateBSSVS
                 .setToolTipText("<html>Activates Bayesian stochastic search variable selection on the rates as described in<br>"
                         + "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
+        activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST);
+
+        setupGLMButton = new JButton("Setup GLM");
+        setupGLMButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                setupGLM();
+            }
+        });
+        PanelUtils.setupComponent(setupGLMButton);
+        setupGLMButton
+                .setToolTipText("<html>Set-up design of phylogenetic GLM.</html>");
+        setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST);
 
         // ============ micro-sat ================
         microsatName.setColumns(30);
@@ -524,7 +548,8 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.GENERAL:
                 discreteTraitSiteModelCombo.setSelectedItem(model
                         .getDiscreteSubstType());
-                activateBSSVS.setSelected(model.isActivateBSSVS());
+                activateBSSVS.setSelected(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST ?
+                        model.isActivateBSSVS() : false);
                 break;
 
             case DataType.CONTINUOUS:
@@ -610,6 +635,22 @@ public class PartitionModelPanel extends OptionsPanel {
         freqsUnlinkCheck.setSelected(false);
     }
 
+    private void setupGLM() {
+        if (glmSettingsDialog == null) {
+            glmSettingsDialog = new GLMSettingsDialog(frame);
+        }
+
+        glmSettingsDialog.setTrait(model.getName()  );
+
+        int result = glmSettingsDialog.showDialog();
+
+        if (result == JOptionPane.OK_OPTION) {
+            // Only do this if OK button is pressed (not cancel):
+
+            frame.setAllOptions();
+        }
+    }
+
     /**
      * Lays out the appropriate components in the panel for this partition
      * model.
@@ -685,6 +726,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Discrete Trait Substitution Model:",
                         discreteTraitSiteModelCombo);
                 addComponent(activateBSSVS);
+                addComponent(setupGLMButton);
                 break;
 
             case DataType.CONTINUOUS:

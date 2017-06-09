@@ -112,7 +112,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             cxo = xo.getChild(LAMBDA_PARAMETER);
             lambda = (Parameter) cxo.getChild(Parameter.class);
         } else {
-            lambda = new Parameter.Default(1.0);
+            lambda = new Parameter.Default(LAMBDA_PARAMETER, 1.0);
         }
 
         Parameter gridPoints = null;
@@ -155,7 +155,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             cxo = xo.getChild(PLOIDY);
             ploidyFactors = (Parameter) cxo.getChild(Parameter.class);
         } else {
-            ploidyFactors = new Parameter.Default(treeList.size());
+            ploidyFactors = new Parameter.Default(PLOIDY, treeList.size());
             for (int i = 0; i < treeList.size(); i++) {
                 ploidyFactors.setParameterValue(i, 1.0);
             }

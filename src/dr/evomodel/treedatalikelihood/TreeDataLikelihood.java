@@ -244,7 +244,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         long underflowCount = 0;
 
         do {
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            treeTraversalDelegate.doTreeTraversal();
 
             final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
             final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();

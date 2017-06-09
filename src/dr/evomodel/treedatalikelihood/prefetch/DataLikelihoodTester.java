@@ -41,6 +41,7 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.operators.PrefetchSubtreeLeapOperator;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -53,6 +54,7 @@ import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
+import dr.inference.operators.CoercionMode;
 
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -113,7 +115,8 @@ public class DataLikelihoodTester {
 
         double logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("\nTest BeagleDataLikelihoodDelegate: logLikelihood = " + logLikelihood);
+        System.out.println();
+        System.out.println("BeagleDataLikelihoodDelegate:         logLikelihood = " + logLikelihood);
 
         MultiPartitionDataLikelihoodDelegate multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                 treeModel,
@@ -131,7 +134,7 @@ public class DataLikelihoodTester {
 
         logLikelihood = treeDataLikelihood2.getLogLikelihood();
 
-        System.out.print("\nTest MultipartitionDataLikelihoodDelegate: logLikelihood = " + logLikelihood);
+        System.out.println("MultipartitionDataLikelihoodDelegate: logLikelihood = " + logLikelihood);
 
         PrefetchDataLikelihoodDelegate prefetchDataLikelihoodDelegate = new PrefetchDataLikelihoodDelegate(
                 treeModel,
@@ -150,8 +153,37 @@ public class DataLikelihoodTester {
 
         logLikelihood = prefetchTreeDataLikelihood.getLogLikelihood();
 
-        System.out.print("\nTest PrefetchDataLikelihoodDelegate: logLikelihood = " + logLikelihood);
+        prefetchTreeDataLikelihood.acceptPrefetch(0);
+        treeDataLikelihood2.storeModelState();
+        prefetchTreeDataLikelihood.storeModelState();
+
+        System.out.println("PrefetchDataLikelihoodDelegate:       logLikelihood = " + logLikelihood);
         System.out.println();
+
+        PrefetchSubtreeLeapOperator op = new PrefetchSubtreeLeapOperator(prefetchTreeDataLikelihood, treeModel, 1.0, 1.0, 0.23, CoercionMode.COERCION_OFF);
+
+        op.doOperation();
+
+        System.out.println("Operation 1, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
+        System.out.println("Operation 1, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
+        System.out.println();
+
+        treeDataLikelihood2.restoreModelState();
+        prefetchTreeDataLikelihood.acceptPrefetch(0);
+        prefetchTreeDataLikelihood.restoreModelState();
+
+        treeDataLikelihood2.storeModelState();
+        prefetchTreeDataLikelihood.storeModelState();
+
+        op.doOperation();
+
+        System.out.println("Operation 2, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
+        System.out.println("Operation 2, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
+        System.out.println();
+
+        treeDataLikelihood2.restoreModelState();
+        prefetchTreeDataLikelihood.acceptPrefetch(0);
+        prefetchTreeDataLikelihood.restoreModelState();
 
 
     }

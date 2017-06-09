@@ -55,7 +55,7 @@ public abstract class TreeTraversal {
         updateAllNodes();
     }
 
-    public abstract void dispatchTreeTraversalCollectBranchAndNodeOperations();
+    public abstract void doTreeTraversal();
 
     public final Tree getTree() {
         return treeModel;

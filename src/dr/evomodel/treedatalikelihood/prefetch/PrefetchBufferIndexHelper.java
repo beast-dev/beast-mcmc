@@ -56,10 +56,14 @@ public class PrefetchBufferIndexHelper implements Serializable {
                 indexOffsets[i][j] = j + minIndexValue;
             }
         }
+
         // then push all the remaining indices into the stack
-        for (int i = 1; i < prefetchCount; i++) {
+        // need twice as many as there are being used at any one time.
+        int k = doubleBufferCount + minIndexValue;
+        for (int i = 0; i < prefetchCount; i++) {
             for (int j = 0; j < doubleBufferCount; j++) {
-                availableIndices.push(j + (doubleBufferCount * i));
+                availableIndices.push(k);
+                k += 1;
             }
         }
 
@@ -67,11 +71,12 @@ public class PrefetchBufferIndexHelper implements Serializable {
     }
 
     public int getBufferCount() {
-        return (prefetchCount * doubleBufferCount) + minIndexValue;
+        return (2 * prefetchCount * doubleBufferCount) + minIndexValue;
     }
 
     public void flipOffset(int prefetch, int i) {
         assert(i >= minIndexValue) : "shouldn't be trying to flip the first 'static' indices";
+        assert(availableIndices.size() > 0) : "availableIndices is empty (should not be)";
 
         // pop a new available buffer index
         indexOffsets[prefetch][i - minIndexValue] = availableIndices.pop();
@@ -88,6 +93,8 @@ public class PrefetchBufferIndexHelper implements Serializable {
         for (int i = 0; i < prefetchCount; i++) {
             System.arraycopy(indexOffsets[0], 0, storedIndexOffsets[0], 0, doubleBufferCount);
         }
+        storedAvailableIndices.clear();
+        storedAvailableIndices.addAll(availableIndices);
     }
 
     public void restoreState() {
@@ -96,6 +103,9 @@ public class PrefetchBufferIndexHelper implements Serializable {
             storedIndexOffsets[i] = indexOffsets[i];
             indexOffsets[i] = tmp;
         }
+        Stack<Integer> tmp2 = availableIndices;
+        availableIndices = storedAvailableIndices;
+        storedAvailableIndices = tmp2;
     }
 
     public void acceptPrefetch(int prefetch) {
@@ -121,5 +131,6 @@ public class PrefetchBufferIndexHelper implements Serializable {
     private int[][] storedIndexOffsets;
 
     private Stack<Integer> availableIndices = new Stack<Integer>();
+    private Stack<Integer> storedAvailableIndices = new Stack<Integer>();
 
 }//END: class

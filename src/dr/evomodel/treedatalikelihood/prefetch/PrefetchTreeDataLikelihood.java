@@ -34,7 +34,6 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.LikelihoodTreeTraversal;
-import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.BranchOperation;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.NodeOperation;
 import dr.inference.model.*;
 import dr.xml.Reportable;
@@ -134,12 +133,8 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         likelihoodDelegate.setCurrentPrefetch(prefetch);
 
         isPrefetching = true;
-        this.currentPrefetch = prefetch;
+        currentPrefetch = prefetch;
         likelihoodKnown = false;
-    }
-
-    public void collectOperations() {
-        treeTraversalDelegates[currentPrefetch].dispatchTreeTraversalCollectBranchAndNodeOperations();
     }
 
     public void prefetchLogLikelihoods() {
@@ -318,7 +313,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         long underflowCount = 0;
 
         do {
-            treeTraversalDelegates[0].dispatchTreeTraversalCollectBranchAndNodeOperations();
+            treeTraversalDelegates[0].doTreeTraversal();
 
             final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegates[0].getBranchOperations();
             final List<NodeOperation> nodeOperations = treeTraversalDelegates[0].getNodeOperations();
@@ -365,6 +360,8 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
         do {
             for (int prefetch = 0; prefetch < likelihoodDelegate.getPrefetchCount(); prefetch++) {
+                treeTraversalDelegates[prefetch].doTreeTraversal();
+
                 branchOperations[prefetch] = treeTraversalDelegate[prefetch].getBranchOperations();
                 nodeOperations[prefetch] = treeTraversalDelegate[prefetch].getNodeOperations();
 
@@ -401,7 +398,9 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         if (PREFETCH_DEBUG) {
             System.err.println("TDL setting all nodes to updated - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
         }
-        treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].setAllNodesUpdated();
+        for (int i = 0; i < treeTraversalDelegates.length; i++) {
+            treeTraversalDelegates[i].setAllNodesUpdated();
+        }
     }
 
     /**

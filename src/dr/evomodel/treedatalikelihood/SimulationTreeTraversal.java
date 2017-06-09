@@ -45,7 +45,7 @@ public class SimulationTreeTraversal extends TreeTraversal {
     }
 
     @Override
-    public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
+    public final void doTreeTraversal() {
         branchNodeOperations.clear();
         nodeOperations.clear();
 

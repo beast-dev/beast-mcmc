@@ -44,7 +44,7 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
     }
 
     @Override
-    public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
+    public final void doTreeTraversal() {
         branchOperations.clear();
         nodeOperations.clear();
 

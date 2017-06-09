@@ -38,7 +38,10 @@ import dr.inference.operators.PrefetchableOperator;
 
 public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements PrefetchableOperator {
 
+    // for debugging purposes switch this on to calculate the moves in series.
     private static final boolean NO_PARALLEL_PREFETCH = false;
+
+    // provide debugging strings to stderr
     private static final boolean PREFETCH_DEBUG = false;
 
     private final PrefetchableLikelihood prefetchableLikelihood;

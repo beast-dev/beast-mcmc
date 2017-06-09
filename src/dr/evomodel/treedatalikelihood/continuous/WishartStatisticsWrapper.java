@@ -158,7 +158,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         }
 
         treeTraversalDelegate.updateAllNodes();
-        treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+        treeTraversalDelegate.doTreeTraversal();
 
         final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
         final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();

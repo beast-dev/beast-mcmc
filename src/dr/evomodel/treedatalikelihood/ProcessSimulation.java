@@ -33,8 +33,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 
-import java.util.List;
-
 /**
  * @author Marc A. Suchard
  * @author Andrew Rambaut
@@ -90,7 +88,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
             treeTraversalDelegate.updateAllNodes(); // TODO Fix - depends on targetNode
         }
 
-        treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+        treeTraversalDelegate.doTreeTraversal();
         final NodeRef root = tree.getRoot();
 
         simulationDelegate.simulate(treeTraversalDelegate, root.getNumber());

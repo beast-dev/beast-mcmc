@@ -28,11 +28,8 @@ package dr.inference.operators;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.model.PrefetchableLikelihood;
-import dr.inference.model.Variable;
 import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.math.MathUtils;
-
-import java.util.logging.Logger;
 
 /**
  * A generic scale operator for use with a multi-dimensional parameters.
@@ -103,7 +100,7 @@ public class PrefetchScaleOperator extends AbstractCoercableOperator implements 
 
             if (PARALLEL_PREFETCH) {
                 for (int i = 0; i < prefetchCount; i++) {
-                    prefetchableLikelihood.setCurrentPrefetch(i);
+                    prefetchableLikelihood.startPrefetchOperation(i);
 
                     parameter.setParameterValue(0, draws[i]);
                 }
@@ -117,7 +114,7 @@ public class PrefetchScaleOperator extends AbstractCoercableOperator implements 
         }
 
         if (PARALLEL_PREFETCH) {
-            prefetchableLikelihood.setCurrentPrefetch(currentPrefetch);
+            prefetchableLikelihood.startPrefetchOperation(currentPrefetch);
         } else {
             // A debugging option where there is no parallel processing of the operator
             // moves but they are simply done in sequence. The N operator instances

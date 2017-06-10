@@ -98,12 +98,13 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             } else {
 
                 for (int i = 0; i < prefetchCount; i++) {
-                    prefetchableLikelihood.setCurrentPrefetch(i);
 
                     // temporarily store state of tree
                     getTreeModel().pushState();
 
+                    prefetchableLikelihood.startPrefetchOperation(i);
                     applyInstance(instances[i] = drawOperation());
+                    prefetchableLikelihood.finishPrefetchOperation(i);
 
                     // restore temporary state
                     getTreeModel().popState();
@@ -120,7 +121,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         if (NO_PARALLEL_PREFETCH) {
             applyInstance(instances[currentPrefetch]);
         } else {
-            prefetchableLikelihood.setCurrentPrefetch(currentPrefetch);
+            prefetchableLikelihood.startPrefetchOperation(currentPrefetch);
         }
 
         return instances[currentPrefetch].logHastingsRatio;

@@ -431,8 +431,8 @@ public class BeastMain {
         boolean useJava = false;
 
         if (arguments.hasOption("tests")) {
-            double fullEvaluationCount = arguments.getLongOption("tests");
-            System.setProperty("mcmc.evaluation.count", Double.toString(fullEvaluationCount));
+            long fullEvaluationCount = arguments.getLongOption("tests");
+            System.setProperty("mcmc.evaluation.count", Long.toString(fullEvaluationCount));
         }
 
         if (arguments.hasOption("threshold")) {

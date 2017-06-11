@@ -95,7 +95,7 @@ public class NNI extends AbstractTreeOperator {
 
         double ran;
         do {
-            ran = Math.random();
+            ran = MathUtils.nextDouble();
         } while( ran == 0.0 || ran == 1.0 );
 
         // now calculate the new height for father between the height of the

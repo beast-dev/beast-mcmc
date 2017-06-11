@@ -6,6 +6,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -54,7 +55,7 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
        //int numSites = 330;
        int numSites = probSites.getDimension();
        
- 	   int whichSite = (int) (Math.floor(Math.random()*numSites)); //choose from possibilities
+ 	   int whichSite = (int) (Math.floor( MathUtils.nextDouble()*numSites)); //choose from possibilities
 
  	   //SHOULD GET IT FROM THE PRIOR SPECIFICATION COZ THEY SHOULD MATCH
  	   double value = Beta.staticNextDouble(causalCount[whichSite]+probSite_alpha, nonCausalCount[whichSite]+probSite_beta); //posterior

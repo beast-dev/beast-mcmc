@@ -26,6 +26,7 @@
 package dr.util;
 
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -271,7 +272,7 @@ public interface Transform {
 
             //add draw for normal distribution to transformed elements
             for (int i = 0; i < transformedValues.length; i++) {
-                transformedValues[i] += 0.20 * Math.random();
+                transformedValues[i] += 0.20 * MathUtils.nextDouble();
             }
 
             //perform inverse transformation

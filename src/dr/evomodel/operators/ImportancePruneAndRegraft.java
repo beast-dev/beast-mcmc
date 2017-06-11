@@ -193,7 +193,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
             }
         }
 
-        double ran = Math.random() * sum;
+        double ran = MathUtils.nextDouble() * sum;
         int index = 0;
         while (ran > 0.0) {
             ran -= probabilities.get(index);

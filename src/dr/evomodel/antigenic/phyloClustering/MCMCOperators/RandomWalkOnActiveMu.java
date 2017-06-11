@@ -64,7 +64,7 @@ public class RandomWalkOnActiveMu extends AbstractCoercableOperator {
         //first, randomly select an "on" node to overwrite
 		int originalNode = Tree_Clustering_Shared_Routines.findAnOnNodeIncludingRootRandomly(numNodes, indicators);			//find an on-node	
 		//unbounded walk
-		int dimSelect = (int) Math.floor( Math.random()* 2 );   		  	    			
+		int dimSelect = (int) Math.floor(  MathUtils.nextDouble()* 2 );
         double change = (2.0 * MathUtils.nextDouble() - 1.0) * windowSize;
 		double originalValue = mu.getParameter(originalNode).getParameterValue(dimSelect);
 		mu.getParameter(originalNode ).setParameterValue(dimSelect, originalValue + change);

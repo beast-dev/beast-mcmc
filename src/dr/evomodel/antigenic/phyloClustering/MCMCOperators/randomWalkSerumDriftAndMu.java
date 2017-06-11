@@ -6,6 +6,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.math.MathUtils;
 import dr.xml.*;
 
 
@@ -63,7 +64,7 @@ public class randomWalkSerumDriftAndMu extends SimpleMCMCOperator  {
         //perform proposal
     	
     	//random walk serum drift 1
-		double change = Math.random()*maxWalkSize- maxWalkSize/2 ; 
+		double change = MathUtils.nextDouble()*maxWalkSize- maxWalkSize/2 ;
 		double originalValue = serumDrift.getParameterValue(0);
 		double newValue = originalValue + change;
 		serumDrift.setParameterValue(0, newValue);

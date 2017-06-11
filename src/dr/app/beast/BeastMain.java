@@ -431,7 +431,7 @@ public class BeastMain {
         boolean useJava = false;
 
         if (arguments.hasOption("tests")) {
-            double fullEvaluationCount = arguments.getRealOption("tests");
+            double fullEvaluationCount = arguments.getLongOption("tests");
             System.setProperty("mcmc.evaluation.count", Double.toString(fullEvaluationCount));
         }
 

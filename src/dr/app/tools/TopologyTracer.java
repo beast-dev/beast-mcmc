@@ -53,11 +53,11 @@ public class TopologyTracer {
     private final static boolean PROFILE = true;
 
     private static final String STATE = "state";
-    private static final String RFDISTANCE = "RFdistance (pseudo)";
+    private static final String RFDISTANCE = "RFdistance";
     private static final String BILLERA_METRIC = "BilleraMetric";
     private static final String CLADE_HEIGHT = "cladeHeight";
     private static final String BRANCH_SCORE_METRIC = "branchScoreMetric";
-    private static final String PATH_DIFFERENCE = "pathDifference (pseudo)";
+    private static final String PATH_DIFFERENCE = "pathDifference";
     private static final String KC_METRIC = "KCmetric";
 
     // output to stdout
@@ -123,7 +123,7 @@ public class TopologyTracer {
                 //take into account first distance of focal tree to itself
                 treeStates.add((long) 0);
 
-                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree))*2.0);
                 billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
                 branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
@@ -145,9 +145,9 @@ public class TopologyTracer {
                 treeIds.add(tree.getId());
                 treeStates.add(Long.parseLong(tree.getId().split("_")[1]));
 
-                //TODO Does the BEAST/JEBL code report half the RF distance?
+                //BEAST/JEBL reports half the RF distance, corrected here
                 beforeTime = System.currentTimeMillis();
-                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
+                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree))*2.0);
                 afterTime = System.currentTimeMillis();
                 timings[0] += afterTime - beforeTime;
 

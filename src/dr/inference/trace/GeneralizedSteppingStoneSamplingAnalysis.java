@@ -191,9 +191,10 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
                         if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
                             throw new XMLParseException("The specified file name prefix is illegal.");
                         }
+                        file = new File(parent, fileNamePrefix+name);
+                    } else {
+                        file = new File(parent, name);
                     }
-
-                    file = new File(parent, fileNamePrefix+name);
 
     				fileName = file.getAbsolutePath();
 

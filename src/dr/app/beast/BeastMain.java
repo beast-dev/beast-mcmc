@@ -335,6 +335,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
+                        new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
 
                         new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
@@ -429,9 +430,14 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         boolean useJava = false;
 
+        if (arguments.hasOption("tests")) {
+            long fullEvaluationCount = arguments.getLongOption("tests");
+            System.setProperty("mcmc.evaluation.count", Long.toString(fullEvaluationCount));
+        }
+
         if (arguments.hasOption("threshold")) {
-            double evaluationThreshold = arguments.getRealOption("threshold");
-            System.setProperty("mcmc.evaluation.threshold", Double.toString(evaluationThreshold));
+            double fullEvaluationThreshold = arguments.getRealOption("threshold");
+            System.setProperty("mcmc.evaluation.threshold", Double.toString(fullEvaluationThreshold));
         }
 
         int threadCount = -1;

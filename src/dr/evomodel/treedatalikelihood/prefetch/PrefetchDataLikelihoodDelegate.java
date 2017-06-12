@@ -146,7 +146,8 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
         everUnderflowed = new boolean[partitionCount];
         flip = new boolean[partitionCount];
         for (int i = 0; i < partitionCount; i++) {
-            flip[i] = true;
+            // start with flip being false for the initial evaluation (will be set at storeState).
+            flip[i] = false;
         }
 
         updatePartition = new boolean[partitionCount];
@@ -1011,7 +1012,8 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
 
                 //TODO: probably better to only switch back those booleans that were actually altered
                 recomputeScaleFactors[partitionIndices[i]] = false;
-                flip[partitionIndices[i]] = true;
+                // this is reset on storeState()
+//                flip[partitionIndices[i]] = true;
             }
 
             firstRescaleAttempt = true;
@@ -1471,7 +1473,9 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
 
                 //TODO: probably better to only switch back those booleans that were actually altered
                 recomputeScaleFactors[partitionIndices[i]] = false;
-                flip[partitionIndices[i]] = true;
+
+                // this is reset on storeState()
+//                flip[partitionIndices[i]] = true;
             }
 
             firstRescaleAttempt = true;

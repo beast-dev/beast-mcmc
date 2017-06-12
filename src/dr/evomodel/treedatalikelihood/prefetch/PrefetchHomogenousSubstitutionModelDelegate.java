@@ -71,7 +71,6 @@ public final class PrefetchHomogenousSubstitutionModelDelegate implements Evolut
 
         // two matrices for each node less the root
         matrixBufferHelper = new PrefetchBufferIndexHelper(prefetchCount, nodeCount, 0, partitionNumber);
-
     }// END: Constructor
 
     @Override

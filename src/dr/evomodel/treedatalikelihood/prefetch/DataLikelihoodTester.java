@@ -162,27 +162,29 @@ public class DataLikelihoodTester {
 
         PrefetchSubtreeLeapOperator op = new PrefetchSubtreeLeapOperator(prefetchTreeDataLikelihood, treeModel, 1.0, 1.0, 0.23, CoercionMode.COERCION_OFF);
 
-        op.doOperation();
+        op.operate();
 
         System.out.println("Operation 1, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
         System.out.println("Operation 1, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
         System.out.println();
 
+        op.reject();
+
         treeDataLikelihood2.restoreModelState();
-        prefetchTreeDataLikelihood.acceptPrefetch(0);
         prefetchTreeDataLikelihood.restoreModelState();
 
         treeDataLikelihood2.storeModelState();
         prefetchTreeDataLikelihood.storeModelState();
 
-        op.doOperation();
+        op.operate();
 
         System.out.println("Operation 2, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
         System.out.println("Operation 2, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
         System.out.println();
 
+        op.accept(0.1);
+
         treeDataLikelihood2.restoreModelState();
-        prefetchTreeDataLikelihood.acceptPrefetch(0);
         prefetchTreeDataLikelihood.restoreModelState();
 
 

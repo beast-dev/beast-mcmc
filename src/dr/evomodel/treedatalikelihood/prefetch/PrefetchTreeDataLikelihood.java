@@ -129,12 +129,17 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     }
 
     @Override
-    public void setCurrentPrefetch(int prefetch) {
-        likelihoodDelegate.setCurrentPrefetch(prefetch);
+    public void startPrefetchOperation(int prefetch) {
+        likelihoodDelegate.startPrefetchOperation(prefetch);
 
         isPrefetching = true;
         currentPrefetch = prefetch;
         likelihoodKnown = false;
+    }
+
+    @Override
+    public void finishPrefetchOperation(int prefetch) {
+        treeTraversalDelegates[prefetch].doTreeTraversal();
     }
 
     public void prefetchLogLikelihoods() {
@@ -358,12 +363,12 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         boolean done = false;
         long underflowCount = 0;
 
+        int[] rootNodeNumbers = new int[getPrefetchCount()];
         do {
             for (int prefetch = 0; prefetch < likelihoodDelegate.getPrefetchCount(); prefetch++) {
-                treeTraversalDelegates[prefetch].doTreeTraversal();
-
                 branchOperations[prefetch] = treeTraversalDelegate[prefetch].getBranchOperations();
                 nodeOperations[prefetch] = treeTraversalDelegate[prefetch].getNodeOperations();
+                rootNodeNumbers[prefetch] = treeTraversalDelegate[prefetch].getRootNodeNumber();
 
                 if (COUNT_TOTAL_OPERATIONS) {
                     totalMatrixUpdateCount += branchOperations[prefetch].size();
@@ -372,10 +377,8 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
             }
 
-            final NodeRef root = treeModel.getRoot();
-
             try {
-                logL = likelihoodDelegate.calculatePrefetchLikelihood(branchOperations, nodeOperations, root.getNumber());
+                logL = likelihoodDelegate.calculatePrefetchLikelihoods(branchOperations, nodeOperations, rootNodeNumbers);
 
                 done = true;
             } catch (DataLikelihoodDelegate.LikelihoodException e) {

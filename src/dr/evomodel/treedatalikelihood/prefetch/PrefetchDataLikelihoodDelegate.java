@@ -115,6 +115,9 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
                                           int prefetchCount) {
 
         super("MultiPartitionDataLikelihoodDelegate");
+
+        assert BeagleInfo.getVersionNumbers()[0] >= 3 : "PrefetchDataLikelihoodDelegate will only work with BEAGLE v3 or greater";
+        
         final Logger logger = Logger.getLogger("dr.evomodel");
 
         logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 extensions");
@@ -184,7 +187,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
         scaleBufferIndices = new int[partitionCount][internalNodeCount];
         storedScaleBufferIndices = new int[partitionCount][internalNodeCount];
 
-        operations = new int[internalNodeCount * Beagle.PARTITION_OPERATION_TUPLE_SIZE * partitionCount];
+        operations = new int[internalNodeCount * Beagle.PARTITION_OPERATION_TUPLE_SIZE * partitionCount * prefetchCount];
 
         rescalingCount = new int[partitionCount];
         rescalingCountInner = new int[partitionCount];
@@ -346,11 +349,13 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
+            int partialBufferCount = partialBufferHelper[0].getBufferCount();
+            
             //TODO: check getBufferCount() calls with Daniel
             //TODO: should we multiple getBufferCount() by the number of partitions?
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
-                    partialBufferHelper[0].getBufferCount(),
+                    partialBufferCount,
                     compactPartialsCount,
                     stateCount,
                     totalPatternCount,
@@ -467,7 +472,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
         return prefetchCount;
     }
 
-    public void setCurrentPrefetch(int prefetch) {
+    public void startPrefetchOperation(int prefetch) {
         isPrefetching = true;
         currentPrefetch = prefetch;
     }
@@ -1089,14 +1094,18 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
             for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
                 if (updatePartition[partition] || updateAllPartitions) {
                     if (flip[partition]) {
-                        evolutionaryProcessDelegate.flipTransitionMatrices(branchUpdateIndices,
+                        ((PrefetchHomogenousSubstitutionModelDelegate)evolutionaryProcessDelegate).flipTransitionMatrices(
+                                (currentPrefetch >= 0 ? currentPrefetch : 0),
+                                branchUpdateIndices,
                                 branchUpdateCount);
                     }
 
                     for (int i = 0; i < branchUpdateCount; i++) {
                         eigenDecompositionIndices[op] = evolutionaryProcessDelegate.getEigenIndex(0);
                         categoryRateIndices[op] = categoryRateBufferHelper[partition].getOffsetIndex(0);
-                        probabilityIndices[op] = evolutionaryProcessDelegate.getMatrixIndex(branchUpdateIndices[i]);
+                        probabilityIndices[op] = ((PrefetchHomogenousSubstitutionModelDelegate)evolutionaryProcessDelegate).getMatrixIndex(
+                                (currentPrefetch >= 0 ? currentPrefetch : 0),
+                                branchUpdateIndices[i]);
                         edgeLengths[op] = branchLengths[i];
                         op++;
                     }
@@ -1122,7 +1131,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
      *
      * @return the log likelihood for each prefetch operation.
      */
-    public double[] calculatePrefetchLikelihood(List<BranchOperation>[] branchOperations, List<NodeOperation>[] nodeOperations, int rootNodeNumber) throws LikelihoodException {
+    public double[] calculatePrefetchLikelihoods(List<BranchOperation>[] branchOperations, List<NodeOperation>[] nodeOperations, int[] rootNodeNumbers) throws LikelihoodException {
 
         boolean throwLikelihoodRescalingException = false;
         if (!initialEvaluation) {
@@ -1185,8 +1194,11 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
                 // numerical problem calculating transition matrices - reject state
                 return null;
             }
+        }
 
+        int k = 0;
 
+        for (int prefetch = 0; prefetch < prefetchCount; prefetch++) {
             for (int i = 0; i < partitionCount; i++) {
                 if (updatePartition[i] || updateAllPartitions) {
 
@@ -1204,8 +1216,6 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
                 }
             }
 
-
-            int k = 0;
             for (NodeOperation op : nodeOperations[prefetch]) {
                 int nodeNum = op.getNodeNumber();
 
@@ -1354,7 +1364,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
                 if (updatePartition[i] || updateAllPartitions) {
                     partitionIndices[updatedPartitionCount] = i;
 
-                    rootIndices[updatedPartitionCount] = partialBufferHelper[i].getBufferIndex(currentPrefetch, rootNodeNumber);
+                    rootIndices[updatedPartitionCount] = partialBufferHelper[i].getBufferIndex(prefetch, rootNodeNumbers[prefetch]);
                     categoryWeightsIndices[updatedPartitionCount] = i % siteRateModels.size();
                     stateFrequenciesIndices[updatedPartitionCount] = i % siteRateModels.size();
                     cumulativeScaleIndices[updatedPartitionCount] = cumulativeScaleIndices[i];
@@ -1487,7 +1497,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
         for (int prefetch = 0; prefetch < prefetchCount; prefetch++) {
             prefetchLogL[prefetch] = 0.0;
             for (int i = 0; i < partitionCount; i++) {
-                logL += sumLogLikelihoodsByPartition[i * partitionCount + prefetch];
+                prefetchLogL[prefetch] += sumLogLikelihoodsByPartition[i * partitionCount + prefetch];
             }
         }
         return prefetchLogL;

@@ -41,12 +41,16 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
                                    final BranchRateModel branchRateModel,
                                    final TraversalType traversalType) {
         super(treeModel, branchRateModel, traversalType);
+
+        rootNodeNumber = -1;
     }
 
     @Override
     public final void doTreeTraversal() {
         branchOperations.clear();
         nodeOperations.clear();
+
+        rootNodeNumber = treeModel.getRoot().getNumber();
 
         switch (traversalType) {
 
@@ -67,6 +71,10 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
 
     public final List<DataLikelihoodDelegate.NodeOperation> getNodeOperations() {
         return nodeOperations;
+    }
+
+    public final int getRootNodeNumber() {
+        return rootNodeNumber;
     }
 
     /**
@@ -217,6 +225,5 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
     private final List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
     private final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
 
-    private List<DataLikelihoodDelegate.BranchNodeOperation> savedWholeTreeBranchOperations;
-    private List<DataLikelihoodDelegate.NodeOperation> savedWholeTreeNodeOperations;
+    private int rootNodeNumber;
 }

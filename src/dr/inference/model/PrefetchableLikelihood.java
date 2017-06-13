@@ -5,7 +5,7 @@ import dr.inference.model.Likelihood;
 /**
  * An interface for a prefetch-compatible likelihood.
  *
- * The calling operator calls setCurrentPrefetch to specify which prefetch buffer is being targeted.
+ * The calling operator calls startPrefetchOperation to specify which prefetch buffer is being targeted.
  * It then operates on the parameter, the likelihood is listening and records the change. Then
  * prefetchLogLikelihoods is called and all the updated likelihoods are calculated in parallel.
  * Finally acceptPrefetch is called to specify which (if any) of the prefetches has been accepted -
@@ -21,11 +21,18 @@ public interface PrefetchableLikelihood extends Likelihood {
     int getPrefetchCount();
 
     /**
-     * Set the current prefetch number. This is set before the particular prefetch operation is done
-     * so the likelihood can handle the operation appropriately (i.e., listening for changes).
+     * This is called before the particular prefetch operation is done so the likelihood can handle
+     * the operation appropriately (i.e., listening for changes).
      * @param prefetch
      */
-    void setCurrentPrefetch(int prefetch);
+    void startPrefetchOperation(int prefetch);
+
+    /**
+     * Called after a particular prefetch operation is done so the likelihood can clean up and store
+     * necessary info.
+     * @param prefetch
+     */
+    void finishPrefetchOperation(int prefetch);
 
     /**
      * Calculate the likelihood for all the prefetch operations in parallel

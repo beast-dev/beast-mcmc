@@ -113,6 +113,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                                                 boolean delayRescalingUntilUnderflow) {
 
         super("MultiPartitionDataLikelihoodDelegate");
+
+        int[] version = BeagleInfo.getVersionNumbers();
+
+        assert BeagleInfo.getVersionNumbers()[0] >= 3 : "MultiPartitionDataLikelihoodDelegate will only work with BEAGLE v3 or greater";
+
         final Logger logger = Logger.getLogger("dr.evomodel");
 
         logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 extensions");

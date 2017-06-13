@@ -648,7 +648,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     public void popState() {
         copyNodeStructure(pushedNodes, nodes);
         for (int i = 0, n = nodes.length; i < n; i++) {
-            nodes[i].heightParameter.setParameterValue(0, pushedHeights[i]);
+            nodes[i].heightParameter.setParameterValueQuietly(0, pushedHeights[i]);
         }
         root = nodes[pushedRootNumber];
     }

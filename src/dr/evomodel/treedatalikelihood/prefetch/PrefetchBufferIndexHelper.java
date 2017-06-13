@@ -71,7 +71,7 @@ public class PrefetchBufferIndexHelper implements Serializable {
     }
 
     public int getBufferCount() {
-        return (2 * prefetchCount * doubleBufferCount) + minIndexValue;
+        return (prefetchCount * doubleBufferCount) + doubleBufferCount + minIndexValue;
     }
 
     public void flipOffset(int prefetch, int i) {

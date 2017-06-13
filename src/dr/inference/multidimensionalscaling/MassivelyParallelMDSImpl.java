@@ -25,6 +25,8 @@
 
 package dr.inference.multidimensionalscaling;
 
+import dr.math.matrixAlgebra.Vector;
+
 /**
  * MassivelyParallelMDSImpl
  *
@@ -103,6 +105,20 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     @Override
     public void getGradient(double[] location) {
         singleton.getLocationGradient(instance, location);
+
+        if (CHECK_GRADIENT) {
+            for (double x : location) {
+                if (Double.isNaN(x) || Double.isInfinite(x)) {
+                    System.err.println("Poor gradient value: " + x);
+                    System.err.println(new Vector(location));
+                    if (CHECK_GRADIENT_KILL) {
+                        System.exit(-1);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -114,4 +130,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private double precision;
     private double storedPrecision;
     private boolean isLeftTruncated;
+
+    private static final boolean CHECK_GRADIENT = false;
+    private static final boolean CHECK_GRADIENT_KILL = true;
 }

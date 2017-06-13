@@ -63,6 +63,12 @@ public class DiagonalMatrix extends MatrixParameter
 
     }
 
+    public String getDimensionName(int dim) {
+        int row = dim / diagonalParameter.getDimension();
+        int col = dim % diagonalParameter.getDimension();
+        return getId() + "." + row + "." + col;
+    }
+
     public Parameter getDiagonalParameter() { return diagonalParameter; }
 
     public double getParameterValue(int row, int col) {

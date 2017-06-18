@@ -14,6 +14,8 @@ public class BNPRSamplingLikelihoodParser extends AbstractXMLObjectParser {
     public static final String MODEL = "model";
     public static final String BETAS = "betas";
     public static final String POPULATION_TREE = "populationTree";
+    public static final String EPOCH_WIDTHS = "epochWidths";
+    public static final String WIDTHS = "widths";
 
     @Override
     public String getParserName() {
@@ -36,7 +38,13 @@ public class BNPRSamplingLikelihoodParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(POPULATION_TREE); // May need to adapt to multiple trees, a la CoalescentLikelihoodParser
         TreeModel tree = (TreeModel) cxo.getChild(TreeModel.class);
 
-        return new BNPRSamplingLikelihood(tree, betas, demoModel);
+        double[] epochWidths = null;
+        if (xo.hasChildNamed(EPOCH_WIDTHS)) {
+            cxo = xo.getChild(EPOCH_WIDTHS);
+            epochWidths = cxo.getDoubleArrayAttribute(WIDTHS);
+        }
+
+        return new BNPRSamplingLikelihood(tree, betas, demoModel, epochWidths);
     }
 
     @Override
@@ -65,6 +73,9 @@ public class BNPRSamplingLikelihoodParser extends AbstractXMLObjectParser {
 
             new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
                     new ElementRule(TreeModel.class)
-            }, "Tree/sampling times to compute likelihood for")
+            }, "Tree/sampling times to compute likelihood for"),
+
+            new ElementRule(EPOCH_WIDTHS,
+                    new XMLSyntaxRule[]{AttributeRule.newDoubleArrayRule(WIDTHS)}, true)
     };
 }

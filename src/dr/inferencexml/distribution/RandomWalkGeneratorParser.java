@@ -60,6 +60,6 @@ public class RandomWalkGeneratorParser extends AbstractXMLObjectParser {
                     new ElementRule(Parameter.class)
             }, "The precision for the relationship between adjacent elements in the random walk"),
 
-            AttributeRule.newIntegerRule(DIM)
+//            AttributeRule.newIntegerRule(DIM)
     };
 }

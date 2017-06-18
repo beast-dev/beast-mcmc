@@ -2,11 +2,15 @@ package dr.inference.operators;
 
 import dr.inference.distribution.*;
 import dr.inference.model.Parameter;
+import dr.inference.model.TransformedParameter;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.GammaDistribution;
 import dr.util.Attribute;
+import dr.util.Transform;
 import dr.xml.*;
+
+import java.util.Arrays;
 
 /**
  * Created by mkarcher on 4/12/17.
@@ -98,15 +102,9 @@ public class RandomWalkGammaPrecisionGibbsOperator extends SimpleMCMCOperator im
 
             Parameter data = (Parameter) ((XMLObject) xo.getChild(DATA)).getChild(Parameter.class);
             Parameter precision = (Parameter) ((XMLObject) xo.getChild(PRECISION)).getChild(Parameter.class);
-            DistributionLikelihood prior = (DistributionLikelihood) ((XMLObject) xo.getChild(PRIOR)).getChild(DistributionLikelihood.class);
+            GammaDistributionModel prior = (GammaDistributionModel) ((XMLObject) xo.getChild(PRIOR)).getChild(GammaDistributionModel.class);
 
-//            System.err.println("class: " + prior.getDistribution().getClass());
-
-            if (!((prior.getDistribution() instanceof GammaDistribution) ||
-                    (prior.getDistribution() instanceof GammaDistributionModel)) )
-                throw new XMLParseException("Gibbs operator assumes normal-gamma model");
-
-            return new RandomWalkGammaPrecisionGibbsOperator(data, precision, prior.getDistribution(), weight);
+            return new RandomWalkGammaPrecisionGibbsOperator(data, precision, prior, weight);
         }
 
         //************************************************************************
@@ -137,11 +135,19 @@ public class RandomWalkGammaPrecisionGibbsOperator extends SimpleMCMCOperator im
                         }),
                 new ElementRule(PRIOR,
                         new XMLSyntaxRule[]{
-                                new ElementRule(DistributionLikelihood.class)
+                                new ElementRule(GammaDistributionModel.class)
                         }),
         };
 
     };
+
+    public static void main(String[] args) {
+        Parameter logPop = new Parameter.Default(new double[]{1.0, 2.0, 3.0, 4.0, 5.0});
+        Transform tr = new Transform.LogTransform();
+        Parameter effPop = new TransformedParameter(logPop, tr, true);
+
+
+    }
 
     private final Distribution prior;
     private final Parameter data;

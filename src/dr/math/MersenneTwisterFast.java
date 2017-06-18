@@ -72,12 +72,12 @@ import java.io.Serializable;
  * <p/>
  * - added gamma RV method (Marc Suchard)
  * <p/>
- * This is now package private - it should be accessed using the instance in Random
+ * This is package private - it should be accessed using the instance in Random
  */
 class MersenneTwisterFast implements Serializable {
-	/**
-	 *
-	 */
+	
+	private final static boolean DEBUG = false;
+
 	private static final long serialVersionUID = 6185086957226269797L;
 	// Period parameters
 	private static final int N = 624;
@@ -120,7 +120,7 @@ class MersenneTwisterFast implements Serializable {
 	/**
 	 * Constructor using the time of day as default seed.
 	 */
-	public MersenneTwisterFast() {
+	private MersenneTwisterFast() {
 		this(System.currentTimeMillis() + seedAdditive_);
 		seedAdditive_ += nextInt();
 	}
@@ -176,6 +176,8 @@ class MersenneTwisterFast implements Serializable {
 		return initializationSeed;
 	}
 
+	int count = 0;
+
 	public final int nextInt() {
 		int y;
 
@@ -203,6 +205,10 @@ class MersenneTwisterFast implements Serializable {
 		y ^= (y << 15) & TEMPERING_MASK_C;      // TEMPERING_SHIFT_T(y)
 		y ^= (y >>> 18);                        // TEMPERING_SHIFT_L(y)
 
+		if (DEBUG) {
+			System.out.println("RNG " + count + " : " + y);
+			count++;
+		}
 		return y;
 	}
 

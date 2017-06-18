@@ -35,6 +35,13 @@ public interface PrefetchableLikelihood extends Likelihood {
     void finishPrefetchOperation(int prefetch);
 
     /**
+     * This is called to specify which cached prefetch likelihood will be return at the next
+     * getLogLikelihood call.
+     * @param prefetch
+     */
+    void setPrefetchLikelihood(int prefetch);
+
+    /**
      * Calculate the likelihood for all the prefetch operations in parallel
      */
     void prefetchLogLikelihoods();
@@ -52,4 +59,9 @@ public interface PrefetchableLikelihood extends Likelihood {
      * is evaluated. It is likely that these will be ignored until this method is called.
      */
     void rejectPrefetch();
+
+    /**
+     * Turns off prefetch likelihood calculations (i.e., for a non-prefetch operator or a full evaluation).
+     */
+    void suspendPrefetch();
 }

@@ -51,9 +51,10 @@ import java.util.logging.Logger;
 
 public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable, PrefetchableLikelihood {
 
+    public static final boolean PREFETCH_DEBUG = false;
+
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
-    private static final boolean PREFETCH_DEBUG = false;
 
     public PrefetchTreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                                       TreeModel treeModel,
@@ -130,6 +131,9 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     @Override
     public void startPrefetchOperation(int prefetch) {
+
+        if (PREFETCH_DEBUG) System.err.println("TDL startPrefetchOperation " + prefetch);
+
         likelihoodDelegate.startPrefetchOperation(prefetch);
 
         isPrefetching = true;
@@ -139,7 +143,17 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     @Override
     public void finishPrefetchOperation(int prefetch) {
+        if (PREFETCH_DEBUG) System.err.println("TDL finishPrefetchOperation " + prefetch);
+
         treeTraversalDelegates[prefetch].doTreeTraversal();
+    }
+
+    @Override
+    public void setPrefetchLikelihood(int prefetch) {
+        if (PREFETCH_DEBUG) System.err.println("TDL setPrefetchLikelihood " + prefetch);
+
+        currentPrefetch = prefetch;
+        likelihoodKnown = false;
     }
 
     public void prefetchLogLikelihoods() {
@@ -152,6 +166,8 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
      * When a prefetch operation is accepted, prefetching is turned off
      */
     public void acceptPrefetch(int prefetch) {
+        if (PREFETCH_DEBUG) System.err.println("TDL acceptPrefetch " + prefetch);
+
         likelihoodDelegate.acceptPrefetch(prefetch);
         isPrefetching = false;
         this.currentPrefetch = prefetch;
@@ -159,12 +175,20 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     @Override
     public void rejectPrefetch() {
+        if (PREFETCH_DEBUG) System.err.println("TDL rejectPrefetch");
+
         likelihoodDelegate.rejectPrefetch();
         isPrefetching = false;
         this.currentPrefetch = -1;
     }
 
-    // **************************************************************
+    @Override
+    public void suspendPrefetch() {
+        likelihoodDelegate.rejectPrefetch();
+        isPrefetching = false;
+        this.currentPrefetch = 0;
+    }
+// **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
@@ -239,7 +263,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
+                     updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
 
                 } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
@@ -287,19 +311,24 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     @Override
     protected final void storeState() {
+        if (PREFETCH_DEBUG) System.err.println("TDL storeState " + (isPrefetching ? "ignoring" : ""));
 
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
 
-        storedLogLikelihood = logLikelihood;
-
+        if (!isPrefetching) {
+            storedLogLikelihood = logLikelihood;
+        }
     }
 
     @Override
     protected final void restoreState() {
+        if (PREFETCH_DEBUG) System.err.println("TDL restoreState " + (isPrefetching ? "ignoring" : ""));
 
-        // restore the likelihood and flag it as known
-        logLikelihood = storedLogLikelihood;
-        likelihoodKnown = true;
+        if (!isPrefetching) {
+            // restore the likelihood and flag it as known
+            logLikelihood = storedLogLikelihood;
+            likelihoodKnown = true;
+        }
     }
 
     @Override
@@ -399,7 +428,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
     private void setAllNodesUpdated() {
         if (PREFETCH_DEBUG) {
-            System.err.println("TDL setting all nodes to updated - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+            System.err.println("TDL setting all nodes to updated - " + (isPrefetching ? currentPrefetch : "no prefetch"));
         }
         for (int i = 0; i < treeTraversalDelegates.length; i++) {
             treeTraversalDelegates[i].setAllNodesUpdated();
@@ -414,7 +443,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
             totalRateUpdateSingleCount++;
 
         if (PREFETCH_DEBUG) {
-            System.err.println("TDL setting update for node " + node.getNumber() + " - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+            System.err.println("TDL setting update for node " + node.getNumber() + " - " + (isPrefetching ? currentPrefetch : "no prefetch"));
         }
 
         treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateNode(node);
@@ -429,7 +458,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
             totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
 
         if (PREFETCH_DEBUG) {
-            System.err.println("TDL setting update for node " + node.getNumber() + " and children - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+            System.err.println("TDL setting update for node " + node.getNumber() + " and children - " + (isPrefetching ? currentPrefetch : "no prefetch"));
         }
 
         treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateNodeAndChildren(node);
@@ -455,7 +484,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
             totalRateUpdateAllCount++;
 
         if (PREFETCH_DEBUG) {
-            System.err.println("TDL setting updating all nodes - " + (isPrefetching ? currentPrefetch + 1 : "no prefetch"));
+            System.err.println("TDL setting updating all nodes - " + (isPrefetching ? currentPrefetch : "no prefetch"));
         }
 
         treeTraversalDelegates[(isPrefetching ? currentPrefetch : 0)].updateAllNodes();

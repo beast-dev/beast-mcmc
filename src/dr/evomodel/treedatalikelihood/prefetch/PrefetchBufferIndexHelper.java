@@ -26,7 +26,7 @@
 package dr.evomodel.treedatalikelihood.prefetch;
 
 import java.io.Serializable;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * BufferIndexHelper - helper for keeping track of buffers across multiple prefetch operations. This maps
@@ -38,11 +38,13 @@ import java.util.Stack;
  */
 public class PrefetchBufferIndexHelper implements Serializable {
 
+    private static final boolean PREFETCH_DEBUG = false;
+
     /**
      * @param maxIndexValue the number of possible input values for the index
      * @param minIndexValue the minimum index value to have the mirrored buffers
      */
-    public PrefetchBufferIndexHelper(int prefetchCount, int maxIndexValue, int minIndexValue, int bufferSetNumber) {
+    public PrefetchBufferIndexHelper(String name, int prefetchCount, int maxIndexValue, int minIndexValue, int bufferSetNumber) {
         this.minIndexValue = minIndexValue;
 
         this.prefetchCount = prefetchCount;
@@ -68,6 +70,10 @@ public class PrefetchBufferIndexHelper implements Serializable {
         }
 
         this.constantOffset = bufferSetNumber * getBufferCount();
+
+        this.name = name;
+
+        if (PREFETCH_DEBUG) System.err.println(name + " BIH initial avail = " + availableIndices.size());
     }
 
     public int getBufferCount() {
@@ -75,11 +81,15 @@ public class PrefetchBufferIndexHelper implements Serializable {
     }
 
     public void flipOffset(int prefetch, int i) {
+
         assert(i >= minIndexValue) : "shouldn't be trying to flip the first 'static' indices";
-        assert(availableIndices.size() > 0) : "availableIndices is empty (should not be)";
+        assert(availableIndices.size() > 0) : name + " availableIndices is empty (should not be)";
 
         // pop a new available buffer index
         indexOffsets[prefetch][i - minIndexValue] = availableIndices.pop();
+
+        if (PREFETCH_DEBUG) System.err.println(name + " BIH flipOffset prefetch ="  + prefetch + " index = " + i +
+                " new index = " + indexOffsets[prefetch][i - minIndexValue] + " (avail = " + availableIndices.size() + ")");
     }
 
     public int getBufferIndex(int prefetch, int i) {
@@ -90,14 +100,18 @@ public class PrefetchBufferIndexHelper implements Serializable {
     }
 
     public void storeState() {
+        if (PREFETCH_DEBUG) System.err.println(name + " BIH storeState");
+
         for (int i = 0; i < prefetchCount; i++) {
-            System.arraycopy(indexOffsets[0], 0, storedIndexOffsets[0], 0, doubleBufferCount);
+            System.arraycopy(indexOffsets[i], 0, storedIndexOffsets[i], 0, doubleBufferCount);
         }
         storedAvailableIndices.clear();
         storedAvailableIndices.addAll(availableIndices);
     }
 
     public void restoreState() {
+        if (PREFETCH_DEBUG) System.err.println(name + " BIH restoreState");
+
         for (int i = 0; i < prefetchCount; i++) {
             int[] tmp = storedIndexOffsets[i];
             storedIndexOffsets[i] = indexOffsets[i];
@@ -109,17 +123,33 @@ public class PrefetchBufferIndexHelper implements Serializable {
     }
 
     public void acceptPrefetch(int prefetch) {
-        // copy the accepted prefetch buffer indices into all the other sets
-        for (int i = 0; i < prefetchCount; i++) {
-            if (i != prefetch) {
-                for (int j = 0; j < doubleBufferCount; j++) {
-                    if (indexOffsets[i][j] != indexOffsets[prefetch][j]) {
-                        availableIndices.push(indexOffsets[i][j]);
-                        indexOffsets[i][j] = indexOffsets[prefetch][j];
-                    }
+
+
+        Set<Integer> used = new HashSet<Integer>();
+        for (Integer i : indexOffsets[prefetch]) {
+            used.add(i);
+        }
+
+        availableIndices.clear();
+        
+        int k =  minIndexValue;
+        for (int i = 0; i < prefetchCount + 1; i++) {
+            for (int j = 0; j < doubleBufferCount; j++) {
+                if (!used.contains(k)) {
+                    if (PREFETCH_DEBUG) System.err.println(name + " BIH prefetch: " + prefetch + " pushing: " + k);
+                    availableIndices.push(k);
                 }
+                k += 1;
             }
         }
+
+        for (int i = 0; i < prefetchCount; i++) {
+            if (i != prefetch) {
+                System.arraycopy(indexOffsets[prefetch], 0, indexOffsets[i], 0, doubleBufferCount);
+            }
+        }
+
+        if (PREFETCH_DEBUG) System.err.println(name + " BIH acceptPrefetch " + prefetch + " (avail: " + availableIndices.size() + ")");
     }
 
     private final int prefetchCount;
@@ -132,5 +162,7 @@ public class PrefetchBufferIndexHelper implements Serializable {
 
     private Stack<Integer> availableIndices = new Stack<Integer>();
     private Stack<Integer> storedAvailableIndices = new Stack<Integer>();
+
+    String name;
 
 }//END: class

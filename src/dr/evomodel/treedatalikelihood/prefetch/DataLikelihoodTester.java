@@ -55,6 +55,7 @@ import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
+import dr.math.MathUtils;
 
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -63,6 +64,8 @@ public class DataLikelihoodTester {
 
     public static void main(String[] args) {
 
+        MathUtils.setSeed(666);
+        
         // turn off logging to avoid screen noise...
         Logger logger = Logger.getLogger("dr");
         logger.setUseParentHandlers(false);
@@ -150,43 +153,107 @@ public class DataLikelihoodTester {
                 prefetchDataLikelihoodDelegate,
                 treeModel,
                 branchRateModel);
-
+        
         logLikelihood = prefetchTreeDataLikelihood.getLogLikelihood();
-
-        prefetchTreeDataLikelihood.acceptPrefetch(0);
-        treeDataLikelihood2.storeModelState();
-        prefetchTreeDataLikelihood.storeModelState();
 
         System.out.println("PrefetchDataLikelihoodDelegate:       logLikelihood = " + logLikelihood);
         System.out.println();
 
-        PrefetchSubtreeLeapOperator op = new PrefetchSubtreeLeapOperator(prefetchTreeDataLikelihood, treeModel, 1.0, 1.0, 0.23, CoercionMode.COERCION_OFF);
-
-        op.operate();
-
-        System.out.println("Operation 1, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
-        System.out.println("Operation 1, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
-        System.out.println();
-
-        op.reject();
-
-        treeDataLikelihood2.restoreModelState();
-        prefetchTreeDataLikelihood.restoreModelState();
-
-        treeDataLikelihood2.storeModelState();
+//        treeDataLikelihood2.storeModelState();
+        System.out.println("Store state");
         prefetchTreeDataLikelihood.storeModelState();
 
+        PrefetchSubtreeLeapOperator op = new PrefetchSubtreeLeapOperator(prefetchTreeDataLikelihood, treeModel, 1.0, 1.0, 0.23, CoercionMode.COERCION_OFF);
+
+        System.out.println("Operate - prefetch operations 1 & 2");
         op.operate();
 
-        System.out.println("Operation 2, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
-        System.out.println("Operation 2, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
-        System.out.println();
+//        System.out.println("Operation 1, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
+        System.out.println("Operation 1, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
 
-        op.accept(0.1);
+        System.out.println("Reject operation 1");
+        op.reject();
 
-        treeDataLikelihood2.restoreModelState();
+//        treeDataLikelihood2.restoreModelState();
+        System.out.println("Restore state (ignored)");
         prefetchTreeDataLikelihood.restoreModelState();
 
+//        treeDataLikelihood2.storeModelState();
+        System.out.println("Store state (ignored)");
+        prefetchTreeDataLikelihood.storeModelState();
+
+        System.out.println("Operate - switch to operation 2");
+        op.operate();
+
+//        System.out.println("Operation 2, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
+        System.out.println("Operation 2, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
+
+        System.out.println("Accept operation 2");
+        op.accept(0.1);
+
+        System.out.println("Accept state");
+        prefetchTreeDataLikelihood.acceptModelState();
+
+        System.out.println();
+
+        //        treeDataLikelihood2.storeModelState();
+        System.out.println("Store state");
+        prefetchTreeDataLikelihood.storeModelState();
+
+        System.out.println("Operate - prefetch operations 3 & 4");
+        op.operate();
+
+//        System.out.println("Operation 2, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
+        System.out.println("Operation 3, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
+
+        System.out.println("Accept operation 3");
+        op.accept(0.1);
+
+        System.out.println("Accept state");
+        prefetchTreeDataLikelihood.acceptModelState();
+
+        System.out.println();
+
+        //        treeDataLikelihood2.storeModelState();
+        System.out.println("Store state");
+        prefetchTreeDataLikelihood.storeModelState();
+
+        System.out.println("Operate - prefetch operations 5 & 6");
+        op.operate();
+
+//        System.out.println("Operation 2, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
+        System.out.println("Operation 5, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
+
+        System.out.println("Reject operation 5");
+        op.reject();
+
+//        treeDataLikelihood2.restoreModelState();
+        System.out.println("Restore state (ignored)");
+        prefetchTreeDataLikelihood.restoreModelState();
+
+//        treeDataLikelihood2.storeModelState();
+        System.out.println("Store state (ignored)");
+        prefetchTreeDataLikelihood.storeModelState();
+
+        System.out.println("Operate - switch to operation 6");
+        op.operate();
+
+//        System.out.println("Operation 2, MultiPartitionDataLikelihoodDelegate: lnL = " + treeDataLikelihood2.getLogLikelihood());
+        System.out.println("Operation 6, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
+
+        System.out.println("Reject operation 6 (both prefetched 5 & 6 rejected)");
+        op.reject();
+
+        System.out.println();
+
+//        treeDataLikelihood2.restoreModelState();
+        System.out.println("Restore state");
+        prefetchTreeDataLikelihood.restoreModelState();
+
+        prefetchTreeDataLikelihood.suspendPrefetch();
+
+        System.out.println("Restored lnL, PrefetchTreeDataLikelihood:           lnL = " + prefetchTreeDataLikelihood.getLogLikelihood());
+        System.out.println();
 
     }
 

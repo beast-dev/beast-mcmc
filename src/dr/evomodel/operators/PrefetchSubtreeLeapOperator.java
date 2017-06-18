@@ -85,26 +85,23 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
                 System.err.println("Prefetch: Drawing " + prefetchCount + " subtree leaps");
             }
 
-            if (NO_PARALLEL_PREFETCH) {
-                // A debugging option where there is no parallel processing of the operator
-                // moves but they are simply done in sequence. The N operator instances
-                // are drawn so that the random number sequence is conserved (allowing for
-                // comparison with the parallel approach) and these are then just applied
-                // in sequence as doOperation is called.
+            for (int i = 0; i < prefetchCount; i++) {
+                instances[i] = drawOperation();
+            }
 
-                for (int i = 0; i < prefetchCount; i++) {
-                    instances[i] = drawOperation();
-                }
-            } else {
+            if (!NO_PARALLEL_PREFETCH) {
 
                 for (int i = 0; i < prefetchCount; i++) {
 
+//                    System.out.println("PSTL, before push: " +getTreeModel().getNewick());
                     // temporarily store state of tree
                     getTreeModel().pushState();
 
                     prefetchableLikelihood.startPrefetchOperation(i);
-                    applyInstance(instances[i] = drawOperation());
+                    applyInstance(instances[i], false);
                     prefetchableLikelihood.finishPrefetchOperation(i);
+
+//                    System.out.println("PSTL, after operation: " +getTreeModel().getNewick());
 
                     // restore temporary state
                     getTreeModel().popState();
@@ -119,9 +116,14 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         }
 
         if (NO_PARALLEL_PREFETCH) {
-            applyInstance(instances[currentPrefetch]);
+            // A debugging option where there is no parallel processing of the operator
+            // moves but they are simply done in sequence. The N operator instances
+            // are drawn so that the random number sequence is conserved (allowing for
+            // comparison with the parallel approach) and these are then just applied
+            // in sequence as doOperation is called.
+            applyInstance(instances[currentPrefetch], false);
         } else {
-            prefetchableLikelihood.startPrefetchOperation(currentPrefetch);
+            prefetchableLikelihood.setPrefetchLikelihood(currentPrefetch);
         }
 
         return instances[currentPrefetch].logHastingsRatio;
@@ -133,6 +135,8 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
         // clear the cached likelihoods, restore treemodel, TDL and apply successful operation instance
         if (!NO_PARALLEL_PREFETCH) {
+            // the original tree would have been popped so re-apply the accepted operation
+            applyInstance(instances[currentPrefetch], true);
             prefetchableLikelihood.acceptPrefetch(currentPrefetch);
         }
 
@@ -151,7 +155,11 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         // move on to the next prefetched
         currentPrefetch += 1;
         if (currentPrefetch == prefetchCount) {
-            prefetchableLikelihood.rejectPrefetch();
+            // depleted all the prefetched likelihoods so flag for a full
+            // restoreState
+            if (!NO_PARALLEL_PREFETCH) {
+                prefetchableLikelihood.rejectPrefetch();
+            }
 
             currentPrefetch = -1;
         }

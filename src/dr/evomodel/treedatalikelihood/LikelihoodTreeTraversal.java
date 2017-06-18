@@ -32,7 +32,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import java.util.*;
 
 /**
- * Created by msuchard on 10/6/16.
+ * @author Marc A Suchard
+ * @author Andrew Rambaut
  */
 public final class LikelihoodTreeTraversal extends TreeTraversal {
 
@@ -175,8 +176,6 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
 
         // First update the transition probability matrix(ices) for this branch
         if (tree.getParent(node) != null && updateNode[nodeNum]) {
-            // @todo - at the moment a matrix is updated even if a branch length doesn't change
-
             addBranchUpdateOperation(tree, node);
 
             update = true;

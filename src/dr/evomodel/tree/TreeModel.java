@@ -539,6 +539,10 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
     public void endTreeEdit() {
+        endTreeEdit(false);
+    }
+
+    public void endTreeEdit(boolean quietly) {
         if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
 
         inEdit = false;
@@ -555,8 +559,10 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             }
         }
 
-        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
-            listenerHelper.fireModelChanged(this, treeChangedEvent);
+        if (!quietly) {
+            for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+                listenerHelper.fireModelChanged(this, treeChangedEvent);
+            }
         }
         treeChangedEvents.clear();
     }
@@ -573,6 +579,9 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         ((Node) n).setHeight(height);
     }
 
+    public void setNodeHeight(NodeRef n, double height, boolean quietly) {
+        ((Node) n).setHeight(height, quietly);
+    }
 
     public void setNodeRate(NodeRef n, double rate) {
         if (!hasRates) throw new IllegalArgumentException("Rate parameters have not been created");
@@ -1438,7 +1447,15 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         }
 
         public final void setHeight(double height) {
-            heightParameter.setParameterValue(0, height);
+            setHeight(height, false);
+        }
+
+        public final void setHeight(double height, boolean quietly) {
+            if (quietly) {
+                heightParameter.setParameterValueQuietly(0, height);
+            } else {
+                heightParameter.setParameterValue(0, height);
+            }
         }
 
         public final void setRate(double rate) {

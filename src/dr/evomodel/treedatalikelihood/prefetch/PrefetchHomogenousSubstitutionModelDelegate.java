@@ -70,7 +70,7 @@ public final class PrefetchHomogenousSubstitutionModelDelegate implements Evolut
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);
 
         // two matrices for each node less the root
-        matrixBufferHelper = new PrefetchBufferIndexHelper(prefetchCount, nodeCount, 0, partitionNumber);
+        matrixBufferHelper = new PrefetchBufferIndexHelper("matrices", prefetchCount, nodeCount, 0, partitionNumber);
     }// END: Constructor
 
     @Override

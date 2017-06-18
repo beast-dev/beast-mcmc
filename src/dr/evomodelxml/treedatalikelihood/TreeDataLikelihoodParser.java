@@ -114,7 +114,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         useAmbiguities,
                         scalingScheme,
                         delayRescalingUntilUnderflow,
-                        2);
+                        4);
 
                 return new PrefetchTreeDataLikelihood(
                         dataLikelihoodDelegate,

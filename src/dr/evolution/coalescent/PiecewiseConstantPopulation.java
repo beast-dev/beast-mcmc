@@ -37,6 +37,7 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
     ArrayList<Double> cif = null;
     ArrayList<Double> endTime = null;
     final boolean cacheCumulativeIntensities = true;
+    private boolean intensitiesKnown = false;
 
     /**
      * Construct demographic model with default settings
@@ -81,6 +82,8 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
                 cif.add(getIntensity(i) + cif.get(i - 1));
                 endTime.add(intervals[i] + endTime.get(i - 1));
             }
+
+            intensitiesKnown = true;
         }
     }
 
@@ -104,6 +107,9 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
     public double getIntensity(double t) {
 
         if (cif != null) {
+            if (!intensitiesKnown) {
+                setIntervals(intervals, thetas);
+            }
 
             int epoch = Collections.binarySearch(endTime, t);
 
@@ -165,12 +171,18 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
 
     public void setArgument(int i, double value) {
         thetas[i] = value;
+
+        intensitiesKnown = false;
     }
 
     public DemographicFunction getCopy() {
         PiecewiseConstantPopulation df = new PiecewiseConstantPopulation(new double[intervals.length], new double[thetas.length], getUnits());
         System.arraycopy(intervals, 0, df.intervals, 0, intervals.length);
         System.arraycopy(thetas, 0, df.thetas, 0, thetas.length);
+
+        if (cacheCumulativeIntensities) {
+            df.setIntervals(intervals, thetas);
+        }
 
         return df;
     }

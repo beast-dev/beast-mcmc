@@ -58,7 +58,7 @@ public interface PrefetchableLikelihood extends Likelihood {
      * state. Note that the standard store/restore methods will be called as each prefetched operation
      * is evaluated. It is likely that these will be ignored until this method is called.
      */
-    void rejectPrefetch();
+    void rejectAllPrefetches();
 
     /**
      * Turns off prefetch likelihood calculations (i.e., for a non-prefetch operator or a full evaluation).

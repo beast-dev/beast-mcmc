@@ -164,7 +164,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             // depleted all the prefetched likelihoods so flag for a full
             // restoreState
             if (!NO_PARALLEL_PREFETCH) {
-                prefetchableLikelihood.rejectPrefetch();
+                prefetchableLikelihood.rejectAllPrefetches();
             }
 
             currentPrefetch = -1;

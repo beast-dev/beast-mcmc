@@ -120,77 +120,6 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         return branchRateModel;
     }
 
-    // **************************************************************
-    // PrefetchableLikelihood IMPLEMENTATION
-    // **************************************************************
-
-    @Override
-    public int getPrefetchCount() {
-        return likelihoodDelegate.getPrefetchCount();
-    }
-
-    @Override
-    public void startPrefetchOperation(int prefetch) {
-
-        if (PREFETCH_DEBUG) System.out.println("TDL startPrefetchOperation " + prefetch);
-
-        likelihoodDelegate.startPrefetchOperation(prefetch);
-
-        isPrefetching = true;
-        currentPrefetch = prefetch;
-//        likelihoodKnown = false;
-    }
-
-    @Override
-    public void finishPrefetchOperation(int prefetch) {
-        if (PREFETCH_DEBUG) System.out.println("TDL finishPrefetchOperation " + prefetch);
-
-        treeTraversalDelegates[prefetch].doTreeTraversal();
-    }
-
-    @Override
-    public void setPrefetchLikelihood(int prefetch) {
-        if (PREFETCH_DEBUG) System.out.println("TDL setPrefetchLikelihood " + prefetch);
-
-        currentPrefetch = prefetch;
-//        likelihoodKnown = false;
-    }
-
-    public void prefetchLogLikelihoods() {
-        // todo this is currently calling sequentially. Needs to be concurrent for prefetching to be meaningful
-        prefetchedLogLikelihoods = calculateLogLikelihood(treeTraversalDelegates);
-    }
-
-    @Override
-    /**
-     * When a prefetch operation is accepted, prefetching is turned off
-     */
-    public void acceptPrefetch(int prefetch) {
-        if (PREFETCH_DEBUG) System.out.println("TDL acceptPrefetch " + prefetch);
-
-        likelihoodDelegate.acceptPrefetch(prefetch);
-        isPrefetching = false;
-        this.currentPrefetch = prefetch;
-        ignoreTreeEvents = true;
-
-        logLikelihood = prefetchedLogLikelihoods[prefetch];
-        likelihoodKnown = true;
-    }
-
-    @Override
-    public void rejectPrefetch() {
-        if (PREFETCH_DEBUG) System.out.println("TDL rejectPrefetch");
-
-        likelihoodDelegate.rejectPrefetch();
-        isPrefetching = false;
-        this.currentPrefetch = -1;
-    }
-
-    @Override
-    public void suspendPrefetch() {
-        likelihoodDelegate.rejectPrefetch();
-        isPrefetching = false;
-    }
 // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
@@ -315,6 +244,78 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     }
 
     // **************************************************************
+    // PrefetchableLikelihood IMPLEMENTATION
+    // **************************************************************
+
+    @Override
+    public int getPrefetchCount() {
+        return likelihoodDelegate.getPrefetchCount();
+    }
+
+    @Override
+    public void startPrefetchOperation(int prefetch) {
+
+        if (PREFETCH_DEBUG) System.out.println("TDL startPrefetchOperation " + prefetch);
+
+        likelihoodDelegate.startPrefetchOperation(prefetch);
+
+        isPrefetching = true;
+        currentPrefetch = prefetch;
+//        likelihoodKnown = false;
+    }
+
+    @Override
+    public void finishPrefetchOperation(int prefetch) {
+        if (PREFETCH_DEBUG) System.out.println("TDL finishPrefetchOperation " + prefetch);
+
+        treeTraversalDelegates[prefetch].doTreeTraversal();
+    }
+
+    @Override
+    public void setPrefetchLikelihood(int prefetch) {
+        if (PREFETCH_DEBUG) System.out.println("TDL setPrefetchLikelihood " + prefetch);
+
+        currentPrefetch = prefetch;
+        likelihoodKnown = false;
+    }
+
+    public void prefetchLogLikelihoods() {
+        // todo this is currently calling sequentially. Needs to be concurrent for prefetching to be meaningful
+        prefetchedLogLikelihoods = calculateLogLikelihood(treeTraversalDelegates);
+    }
+
+    @Override
+    /**
+     * When a prefetch operation is accepted, prefetching is turned off
+     */
+    public void acceptPrefetch(int prefetch) {
+        if (PREFETCH_DEBUG) System.out.println("TDL acceptPrefetch " + prefetch);
+
+        likelihoodDelegate.acceptPrefetch(prefetch);
+        isPrefetching = false;
+        this.currentPrefetch = prefetch;
+        ignoreTreeEvents = true;
+
+        logLikelihood = prefetchedLogLikelihoods[prefetch];
+        likelihoodKnown = true;
+    }
+
+    @Override
+    public void rejectAllPrefetches() {
+        if (PREFETCH_DEBUG) System.out.println("TDL rejectAllPrefetches");
+
+        likelihoodDelegate.rejectPrefetch();
+        isPrefetching = false;
+        this.currentPrefetch = -1;
+    }
+
+    @Override
+    public void suspendPrefetch() {
+        likelihoodDelegate.rejectPrefetch();
+        isPrefetching = false;
+    }
+
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 
@@ -336,13 +337,13 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     protected final void restoreState() {
         if (PREFETCH_DEBUG) System.out.println("TDL restoreState " + (isPrefetching ? "ignoring" : ""));
 
-//        if (!isPrefetching) {
+        if (!isPrefetching) {
             // restore the likelihood and flag it as known
             logLikelihood = storedLogLikelihood;
             likelihoodKnown = true;
 
             currentPrefetch = storedCurrentPrefetch;
-//        }
+        }
     }
 
     @Override

@@ -138,7 +138,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 		for (int i : availableOperators) {
 			MCMCOperator op = operators.get(i);
-			if (op.getCount() > operatorUseThreshold) {
+			if (!(op instanceof CoercableMCMCOperator) && op.getCount() > operatorUseThreshold) {
 				double acceptanceRate = ((double)op.getAcceptCount()) / op.getCount();
 				if (acceptanceRate < operatorAcceptanceThreshold) {
 					toRemove.add(i);

@@ -35,9 +35,11 @@ import dr.math.MathUtils;
  */
 public abstract class InvariantOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public InvariantOperator(Parameter parameter, Likelihood likelihood, double weight) {
+    public InvariantOperator(Parameter parameter, Likelihood likelihood, double weight,
+                             boolean checkLikelihood) {
         this.parameter = parameter;
         this.likelihood = likelihood;
+        this.checkLikelihood = DEBUG ? true : checkLikelihood;
 
         setWeight(weight);
     }
@@ -54,7 +56,7 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
     public double doOperation() {
 
         double logLikelihood = 0;
-        if (DEBUG) {
+        if (checkLikelihood) {
             if (likelihood != null) {
                 logLikelihood = likelihood.getLogLikelihood();
             }
@@ -62,7 +64,7 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
 
         transform(parameter);
 
-        if (DEBUG) {
+        if (checkLikelihood) {
             if (likelihood != null) {
                 double newLogLikelihood = likelihood.getLogLikelihood();
 
@@ -86,21 +88,27 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
 
     private final Parameter parameter;
     private final Likelihood likelihood;
+    private final boolean checkLikelihood;
 
-    private final static boolean DEBUG = true;
+    private final static boolean DEBUG = false;
     private final static double tolerance = 1E-1;
 
     public static class Rotation extends InvariantOperator {
 
-        public Rotation(Parameter parameter, double weight, Likelihood likelihood) {
-            super(parameter, likelihood, weight);
+        private final boolean translationInvariant;
+        private final boolean rotationInvariant;
+
+        public Rotation(Parameter parameter, double weight, Likelihood likelihood,
+                        boolean translate, boolean rotate,
+                        boolean checkLikelihood) {
+            super(parameter, likelihood, weight, checkLikelihood);
+
+            this.translationInvariant = translate;
+            this.rotationInvariant = rotate;
         }
 
         @Override
         protected void transform(Parameter parameter) {
-
-            boolean translationInvariant = true;
-            boolean rotationInvariant = true;
 
             double[] x = parameter.getParameterValues();
 

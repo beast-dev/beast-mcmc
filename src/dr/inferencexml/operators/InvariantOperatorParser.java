@@ -40,6 +40,9 @@ import static dr.inference.operators.InvariantOperator.*;
 public class InvariantOperatorParser extends AbstractXMLObjectParser {
 
     public static final String OPERATOR_NAME = "invariantOperator";
+    public static final String CHECK_LIKELIHOOD = "checkLikelihood";
+    public static final String TRANSLATE = "translate";
+    public static final String ROTATE = "rotate";
 
     public String getParserName() {
         return OPERATOR_NAME;
@@ -53,7 +56,12 @@ public class InvariantOperatorParser extends AbstractXMLObjectParser {
 
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
 
-        return new InvariantOperator.Rotation(parameter, weight, likelihood);
+        boolean translate = xo.getAttribute(TRANSLATE, true);
+        boolean rotate = xo.getAttribute(ROTATE, true);
+        boolean checkLikelihood = xo.getAttribute(CHECK_LIKELIHOOD, true);
+
+        return new InvariantOperator.Rotation(parameter, weight, likelihood,
+                translate, rotate, checkLikelihood);
 
     }
 
@@ -76,6 +84,9 @@ public class InvariantOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             new ElementRule(Parameter.class),
+            AttributeRule.newBooleanRule(TRANSLATE, true),
+            AttributeRule.newBooleanRule(ROTATE, true),
+            AttributeRule.newBooleanRule(CHECK_LIKELIHOOD, true),
             new ElementRule(Likelihood.class, true),
     };
 }

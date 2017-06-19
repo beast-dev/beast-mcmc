@@ -82,7 +82,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             // store the hastings ratios. TreeDataLikelihood will also store likelihoods.
             currentPrefetch = 0;
             if (PREFETCH_DEBUG) {
-                System.err.println("Prefetch: Drawing " + prefetchCount + " subtree leaps");
+                System.out.println("Prefetch: Drawing " + prefetchCount + " subtree leaps");
             }
 
             for (int i = 0; i < prefetchCount; i++) {
@@ -93,7 +93,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
                 for (int i = 0; i < prefetchCount; i++) {
 
-//                    System.out.println("PSTL, before push: " +getTreeModel().getNewick());
+//                    System.out.println("PSTL, before push:     " +getTreeModel().getNewick());
                     // temporarily store state of tree
                     getTreeModel().pushState();
 
@@ -105,6 +105,8 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
                     // restore temporary state
                     getTreeModel().popState();
+//                    System.out.println("PSTL, after pop:       " +getTreeModel().getNewick());
+//                    System.out.println();
                 }
 
                 prefetchableLikelihood.prefetchLogLikelihoods();
@@ -112,7 +114,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         }
 
         if (PREFETCH_DEBUG) {
-            System.err.println("Prefetch: performing operation " + (currentPrefetch + 1));
+            System.out.println("Prefetch: performing operation " + (currentPrefetch + 1));
         }
 
         if (NO_PARALLEL_PREFETCH) {
@@ -121,7 +123,9 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             // are drawn so that the random number sequence is conserved (allowing for
             // comparison with the parallel approach) and these are then just applied
             // in sequence as doOperation is called.
+//            System.out.println("PSTL, before apply:     " +getTreeModel().getNewick());
             applyInstance(instances[currentPrefetch], false);
+//            System.out.println("PSTL, after apply:     " +getTreeModel().getNewick());
         } else {
             prefetchableLikelihood.setPrefetchLikelihood(currentPrefetch);
         }
@@ -135,13 +139,15 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
         // clear the cached likelihoods, restore treemodel, TDL and apply successful operation instance
         if (!NO_PARALLEL_PREFETCH) {
-            // the original tree would have been popped so re-apply the accepted operation
-            applyInstance(instances[currentPrefetch], true);
             prefetchableLikelihood.acceptPrefetch(currentPrefetch);
+            // the original tree would have been popped so re-apply the accepted operation
+            applyInstance(instances[currentPrefetch], false);
+
+            //            System.out.println("PSTL, after accept:    " + getTreeModel().getNewick());
         }
 
         if (PREFETCH_DEBUG) {
-            System.err.println("Prefetch: accepted");
+            System.out.println("Prefetch: accepted");
         }
 
         // done with this prefetch set of operations
@@ -165,7 +171,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         }
 
         if (PREFETCH_DEBUG) {
-            System.err.println("Prefetch: rejected");
+            System.out.println("Prefetch: rejected");
         }
 
     }

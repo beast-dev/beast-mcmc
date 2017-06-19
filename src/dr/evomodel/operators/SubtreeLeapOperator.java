@@ -158,6 +158,8 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
         if (destination == parent || destinationParent == parent) {
             // the subtree is not actually moving but the height will change
+
+            assert true;
         } else {
             if (grandParent == null) {
                 // if the parent of the original node is the root then the sibling becomes

@@ -55,12 +55,13 @@ import java.util.List;
  */
 public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
-    private static final boolean USE_PREFETCH = true;
+    private static final boolean USE_PREFETCH = false;
 
     public static final String TREE_DATA_LIKELIHOOD = "treeDataLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
+    public static final String PREFETCH_COUNT = "prefetchCount";
 
     public static final String PARTITION = "partition";
 
@@ -76,7 +77,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   TipStatesModel tipStatesModel,
                                                   boolean useAmbiguities,
                                                   PartialsRescalingScheme scalingScheme,
-                                                  boolean delayRescalingUntilUnderflow) throws XMLParseException {
+                                                  boolean delayRescalingUntilUnderflow,
+                                                  int prefetchCount) throws XMLParseException {
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
@@ -105,7 +107,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
 
         if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
-            if (USE_PREFETCH) {
+            if (prefetchCount > 1) {
                 DataLikelihoodDelegate dataLikelihoodDelegate = new PrefetchDataLikelihoodDelegate(
                         treeModel,
                         patternLists,
@@ -114,7 +116,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         useAmbiguities,
                         scalingScheme,
                         delayRescalingUntilUnderflow,
-                        4);
+                        prefetchCount);
 
                 return new PrefetchTreeDataLikelihood(
                         dataLikelihoodDelegate,
@@ -281,6 +283,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             delayScaling = xo.getBooleanAttribute(DELAY_SCALING);
         }
 
+        int prefetchCount = 0;
+        if (xo.hasAttribute(PREFETCH_COUNT)) {
+            prefetchCount = xo.getIntegerAttribute(PREFETCH_COUNT);
+        }
+
         if (tipStatesModel != null) {
             throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
         }
@@ -294,7 +301,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 null,
                 useAmbiguities,
                 scalingScheme,
-                delayScaling);
+                delayScaling,
+                prefetchCount);
     }
 
     //************************************************************************
@@ -311,7 +319,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-            AttributeRule.newStringRule(SCALING_SCHEME,true),
+            AttributeRule.newStringRule(SCALING_SCHEME, true),
+            AttributeRule.newIntegerRule(PREFETCH_COUNT, true),
 
             // really it should be this set of elements or the PARTITION elements
             new ElementRule(PatternList.class, true),

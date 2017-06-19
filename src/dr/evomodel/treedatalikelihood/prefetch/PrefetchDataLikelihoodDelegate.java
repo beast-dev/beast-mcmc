@@ -475,7 +475,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
     }
 
     public void startPrefetchOperation(int prefetch) {
-        if (PREFETCH_DEBUG) System.err.println("DLD startPrefetchOperation " + prefetch);
+        if (PREFETCH_DEBUG) System.out.println("DLD startPrefetchOperation " + prefetch);
 
         isPrefetching = true;
         currentPrefetch = prefetch;
@@ -487,7 +487,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
     }
 
     public void acceptPrefetch(int prefetch) {
-        if (PREFETCH_DEBUG) System.err.println("DLD acceptPrefetch " + prefetch);
+        if (PREFETCH_DEBUG) System.out.println("DLD acceptPrefetch " + prefetch);
 
         for (int i = 0; i < partitionCount; i++) {
             partialBufferHelper[i].acceptPrefetch(prefetch);
@@ -502,10 +502,10 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
     }
 
     public void rejectPrefetch() {
-        if (PREFETCH_DEBUG) System.err.println("DLD rejectPrefetch");
+        if (PREFETCH_DEBUG) System.out.println("DLD rejectPrefetch");
 
         isPrefetching = false;
-        currentPrefetch = 0;
+        currentPrefetch = -1;
     }
 
     @Override
@@ -1548,9 +1548,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
      */
     @Override
     public void storeState() {
-        if (PREFETCH_DEBUG) System.err.println("DLD storeState " + (isPrefetching ? "ignoring" : ""));
-
-        if (DEBUG) System.err.println("PMPDLD storing state");
+        if (PREFETCH_DEBUG) System.out.println("DLD storeState " + (isPrefetching ? "ignoring" : ""));
 
         if (!isPrefetching) {
             for (int i = 0; i < partitionCount; i++) {
@@ -1579,9 +1577,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
      */
     @Override
     public void restoreState() {
-        if (PREFETCH_DEBUG) System.err.println("DLD restoreState");
-
-        if (DEBUG) System.err.println("PMPDLD restoring state");
+        if (PREFETCH_DEBUG) System.out.println("DLD restoreState " + (isPrefetching ? "ignoring" : ""));
 
         if (!isPrefetching) {
             for (int i = 0; i < partitionCount; i++) {
@@ -1611,9 +1607,8 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
 
     @Override
     protected void acceptState() {
-        if (PREFETCH_DEBUG) System.err.println("DLD acceptState");
+        if (PREFETCH_DEBUG) System.out.println("DLD acceptState");
 
-        if (DEBUG) System.err.println("PMPDLD accepting state");
         if (!isPrefetching) {
             for (int i = 0; i < partitionCount; i++) {
                 partialBufferHelper[i].acceptPrefetch(currentPrefetch);

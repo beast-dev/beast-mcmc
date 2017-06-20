@@ -94,9 +94,9 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             int index = patternList.getTaxonIndex(id);
             setTipDataValuesForNode(node, index);
 
-            System.err.println("\t For node: " + i + " with ID " + id + " you get taxon " + index + " with ID " + patternList.getTaxonId(index));
-
-
+            if (DEBUG) {
+                System.err.println("\t For node: " + i + " with ID " + id + " you get taxon " + index + " with ID " + patternList.getTaxonId(index));
+            }
         }
     }
 

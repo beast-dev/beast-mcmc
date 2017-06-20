@@ -1,5 +1,5 @@
 /*
- * FullyConjugateTreeTipsPotentialDerivative.java
+ * TreeTipGradient.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,29 +23,94 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.continuous.hmc;
+package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 
 /**
- * @author Max Tolkoff
+ * @author Marc A. Suchard
  */
-public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider {
+public class TreeTipGradient implements GradientWrtParameterProvider {
 
-    private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;
+    private final String traitName;
+    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+    private final TreeDataLikelihood treeDataLikelihood;
+    private final TreeTrait<double[]> treeTraitProvider;
+    private final Tree tree;
     private final Parameter traitParameter;
 
-    public FullyConjugateTreeTipsPotentialDerivative(FullyConjugateMultivariateTraitLikelihood treeLikelihood){
-        this.treeLikelihood = treeLikelihood;
-        traitParameter = treeLikelihood.getTraitParameter();
+    private final int nTaxa;
+    private final int nTraits;
+    private final int dimTrait;
+    private final int dimPartial;
+
+    private final Parameter maskParameter;
+
+//    private final PartiallyMissingInformation missingInformation;
+
+//    private final boolean missingOnlyGradient;
+
+    public TreeTipGradient(String traitName,
+                           TreeDataLikelihood treeDataLikelihood,
+                           ContinuousDataLikelihoodDelegate likelihoodDelegate,
+//                           Parameter traitParameter,
+                           Parameter maskParameter) {
+        this.traitName = traitName;
+        this.treeDataLikelihood = treeDataLikelihood;
+        this.likelihoodDelegate = likelihoodDelegate;
+        this.tree = treeDataLikelihood.getTree();
+//        this.traitParameter = traitParameter;
+        this.maskParameter = maskParameter;
+
+//        this.missingOnlyGradient = missingOnly;
+
+        assert(treeDataLikelihood != null);
+
+        String name =
+                ProcessSimulationDelegate.TipGradientViaFullConditionalDelegate.getTraitName(traitName);
+
+        System.err.println("name: " + name);
+        System.exit(-1);
+
+        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
+        nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
+        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
+        dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+
+//        missingInformation = new PartiallyMissingInformation(treeDataLikelihood.getTree(),
+//                likelihoodDelegate.getDataModel(), likelihoodDelegate);
+
+        PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
+        dimPartial = precisionType.getMatrixLength(dimTrait);
+
+        if (precisionType != PrecisionType.SCALAR) {
+            throw new RuntimeException("Not yet implemented for full precision");
+        }
+
+        if (nTraits != 1) {
+            throw new RuntimeException("Not yet implemented for >1 traits");
+        }
+
+
+        this.traitParameter = likelihoodDelegate.getDataModel().getParameter();
+
+        if (maskParameter != null &&
+                (maskParameter.getDimension() != traitParameter.getDimension())) {
+            throw new RuntimeException("Trait and mask parameters must be the same size");
+        }
     }
 
     @Override
     public Likelihood getLikelihood() {
-        return treeLikelihood;
+        return treeDataLikelihood;
     }
 
     @Override
@@ -55,44 +120,29 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
 
     @Override
     public int getDimension() {
-        return traitParameter.getDimension();
+        return getParameter().getDimension();
     }
     
     @Override
     public double[] getGradientLogDensity() {
 
-        final int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
-        final int ntaxa = traitParameter.getDimension() / dimTraits;
+        double[] gradient = new double[nTaxa  * dimTrait * nTraits];
 
-        final double[] derivative = new double[traitParameter.getDimension()];
+        int offsetOutput = 0;
+        for (int taxon = 0; taxon < nTaxa; ++taxon) {
+            double[] taxonGradient = treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
+            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
+            offsetOutput += taxonGradient.length;
+        }
 
-        final double[][] allMeans = treeLikelihood.getConditionalMeans();
-        final double[] allScalars = treeLikelihood.getPrecisionFactors();
-        final double[][] precisionMatrix = treeLikelihood.getDiffusionModel().getPrecisionmatrix();
-
-        for (int i = 0; i < ntaxa; ++i) {
-
-            final double[] mean = allMeans[i];
-            final double scale = allScalars[i];
-
-            for (int j = 0; j < dimTraits; ++j) {
-
-                double sum = 0.0;
-                for (int k = 0; k < dimTraits; ++k) {
-                    sum += (mean[k] - traitParameter.getParameterValue(i * dimTraits + k)) * scale * precisionMatrix[j][k];
+        if (maskParameter != null) {
+            for (int i = 0; i < maskParameter.getDimension(); ++i) {
+                if (maskParameter.getParameterValue(i) == 0.0) {
+                    gradient[i] = 0.0;
                 }
-                derivative[i * dimTraits + j] = sum;
             }
         }
 
-//        for (int i = 0; i < dimTraits; i++) { // This only works for IDENTITY matrices
-//            for (int j = 0; j < ntaxa; j++) {
-//                derivative[j * dimTraits + i] -= (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
-//                /* Sign change */
-//            }
-//
-//        }
-
-        return derivative;
+        return gradient;
     }
 }

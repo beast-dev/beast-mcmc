@@ -248,6 +248,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return data;
     }
 
+    public ContinuousTraitDataModel getDataModel() { return dataModel; }
+
     public RootProcessDelegate getRootProcessDelegate() {
         return rootProcessDelegate;
     }

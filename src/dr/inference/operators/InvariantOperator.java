@@ -39,7 +39,7 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
                              boolean checkLikelihood) {
         this.parameter = parameter;
         this.likelihood = likelihood;
-        this.checkLikelihood = DEBUG ? true : checkLikelihood;
+        this.checkLikelihood = DEBUG || checkLikelihood;
 
         setWeight(weight);
     }

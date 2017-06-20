@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Matrix;
@@ -40,7 +41,7 @@ import java.util.List;
 
 public class PartiallyMissingInformation {
 
-    public PartiallyMissingInformation(MultivariateTraitTree tree, ContinuousTraitDataModel dataModel,
+    public PartiallyMissingInformation(Tree tree, ContinuousTraitDataModel dataModel,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         this.tipCount = tree.getExternalNodeCount();
         this.numTraits = dataModel.getTraitCount(); //likelihoodDelegate.getTraitCount();

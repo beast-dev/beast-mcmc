@@ -71,8 +71,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         if (parameter == null) {
 
-            Transform.Collection collection =
-                    (Transform.Collection) xo.getChild(Transform.Collection.class);
+            Transform.MultivariableTransformWithParameter collection =
+                    (Transform.MultivariableTransformWithParameter) xo.getChild(Transform.MultivariableTransformWithParameter.class);
             parameter = collection.getParameter();
             transform = collection;
         }
@@ -104,7 +104,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newIntegerRule(MODE, true),
             new XORRule(
                     new ElementRule(Parameter.class),
-                    new ElementRule(Transform.Collection.class)
+                    new ElementRule(Transform.MultivariableTransformWithParameter.class)
             ),
 
             new ElementRule(GradientWrtParameterProvider.class),

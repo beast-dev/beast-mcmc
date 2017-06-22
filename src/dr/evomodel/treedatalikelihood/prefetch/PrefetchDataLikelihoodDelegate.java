@@ -466,47 +466,6 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
         }
     }
 
-    // **************************************************************
-    // Prefetchable methods
-    // **************************************************************
-
-    public int getPrefetchCount() {
-        return prefetchCount;
-    }
-
-    public void startPrefetchOperation(int prefetch) {
-        if (PREFETCH_DEBUG) System.out.println("DLD startPrefetchOperation " + prefetch);
-
-        isPrefetching = true;
-        currentPrefetch = prefetch;
-        for (int i = 0; i < partitionCount; i++) {
-            // in case it was switched off by a rescale
-            flip[i] = true;
-        }
-
-    }
-
-    public void acceptPrefetch(int prefetch) {
-        if (PREFETCH_DEBUG) System.out.println("DLD acceptPrefetch " + prefetch);
-
-        for (int i = 0; i < partitionCount; i++) {
-            partialBufferHelper[i].acceptPrefetch(prefetch);
-        }
-
-        for (EvolutionaryProcessDelegate epd : evolutionaryProcessDelegates) {
-            ((PrefetchHomogenousSubstitutionModelDelegate)epd).acceptPrefetch(prefetch);
-        }
-
-        isPrefetching = false;
-        currentPrefetch = prefetch;
-    }
-
-    public void rejectPrefetch() {
-        if (PREFETCH_DEBUG) System.out.println("DLD rejectPrefetch");
-
-        isPrefetching = false;
-        currentPrefetch = -1;
-    }
 
     @Override
     public String getReport() {
@@ -1374,20 +1333,20 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
 
         double logL = 0.0;
 
-         for (int prefetch = 0; prefetch < prefetchCount; prefetch++) {
+        for (int prefetch = 0; prefetch < prefetchCount; prefetch++) {
 
             // create a list of partitions that have been updated
             int updatedPartitionCount = 0;
             for (int i = 0; i < partitionCount; i++) {
 //                if (updatePartition[i] || updateAllPartitions) {
-                    partitionIndices[updatedPartitionCount] = i;
+                partitionIndices[updatedPartitionCount] = i;
 
-                    rootIndices[updatedPartitionCount] = partialBufferHelper[i].getBufferIndex(prefetch, rootNodeNumbers[prefetch]);
-                    categoryWeightsIndices[updatedPartitionCount] = i % siteRateModels.size();
-                    stateFrequenciesIndices[updatedPartitionCount] = i % siteRateModels.size();
-                    cumulativeScaleIndices[updatedPartitionCount] = cumulativeScaleIndices[i];
+                rootIndices[updatedPartitionCount] = partialBufferHelper[i].getBufferIndex(prefetch, rootNodeNumbers[prefetch]);
+                categoryWeightsIndices[updatedPartitionCount] = i % siteRateModels.size();
+                stateFrequenciesIndices[updatedPartitionCount] = i % siteRateModels.size();
+                cumulativeScaleIndices[updatedPartitionCount] = cumulativeScaleIndices[i];
 
-                    updatedPartitionCount++;
+                updatedPartitionCount++;
 //                }
             }
 
@@ -1441,7 +1400,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
             }
 
             for (int i = 0; i < partitionCount; i++) {
-                    everUnderflowed[partitionIndices[i]] = true;
+                everUnderflowed[partitionIndices[i]] = true;
             }
 
 //            for (int i = 0; i < updatedPartitionCount; i++) {
@@ -1468,19 +1427,19 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
                 for (int i = 0; i < partitionCount; i++) {
                     if (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED) {
 //                        if (Double.isNaN(sumLogLikelihoodsByPartition[i]) || Double.isInfinite(sumLogLikelihoodsByPartition[i])) {
-                            useScaleFactors[partitionIndices[i]] = true;
-                            recomputeScaleFactors[partitionIndices[i]] = true;
-                            updatePartition[partitionIndices[i]] = true;
+                        useScaleFactors[partitionIndices[i]] = true;
+                        recomputeScaleFactors[partitionIndices[i]] = true;
+                        updatePartition[partitionIndices[i]] = true;
 
-                            // turn off double buffer flipping so the next call overwrites the
-                            // underflowed buffers. Flip will be turned on again in storeState for
-                            // next step
-                            flip[partitionIndices[i]] = false;
+                        // turn off double buffer flipping so the next call overwrites the
+                        // underflowed buffers. Flip will be turned on again in storeState for
+                        // next step
+                        flip[partitionIndices[i]] = false;
 
-                            updateAllPartitions = false;
-                            if (DEBUG) {
-                                System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (partition index: " + partitionIndices[i] + ")");
-                            }
+                        updateAllPartitions = false;
+                        if (DEBUG) {
+                            System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (partition index: " + partitionIndices[i] + ")");
+                        }
 //                        }
 
                     }
@@ -1608,15 +1567,53 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
     @Override
     protected void acceptState() {
         if (PREFETCH_DEBUG) System.out.println("DLD acceptState");
+    }
 
-        if (!isPrefetching) {
-            for (int i = 0; i < partitionCount; i++) {
-                partialBufferHelper[i].acceptPrefetch(currentPrefetch);
+    // **************************************************************
+    // Prefetchable methods
+    // **************************************************************
 
-            }
-            for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
-                ((PrefetchHomogenousSubstitutionModelDelegate)evolutionaryProcessDelegate).acceptPrefetch(currentPrefetch);
-            }
+    public int getPrefetchCount() {
+        return prefetchCount;
+    }
+
+    public void startPrefetchOperation(int prefetch) {
+        if (PREFETCH_DEBUG) System.out.println("DLD startPrefetchOperation " + prefetch);
+
+        isPrefetching = true;
+        currentPrefetch = prefetch;
+        for (int i = 0; i < partitionCount; i++) {
+            // in case it was switched off by a rescale
+            flip[i] = true;
+        }
+
+    }
+
+    public void acceptPrefetch(int prefetch) {
+        if (PREFETCH_DEBUG) System.out.println("DLD acceptPrefetch " + prefetch);
+
+        releaseBufferIndices(prefetch);
+
+        isPrefetching = false;
+        currentPrefetch = prefetch;
+    }
+
+    public void rejectAllPrefetches() {
+        if (PREFETCH_DEBUG) System.out.println("DLD rejectPrefetch");
+
+        isPrefetching = false;
+        currentPrefetch = -1;
+
+        // Don't need to do anything further because restoreState is about to be called.
+    }
+
+    public void releaseBufferIndices(int prefetch) {
+        for (int i = 0; i < partitionCount; i++) {
+            partialBufferHelper[i].acceptPrefetch(prefetch);
+
+        }
+        for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
+            ((PrefetchHomogenousSubstitutionModelDelegate)evolutionaryProcessDelegate).acceptPrefetch(prefetch);
         }
     }
 

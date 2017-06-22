@@ -92,7 +92,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
         lastInstance = drawOperation();
 
-        applyInstance(lastInstance, false);
+        applyInstance(lastInstance);
 
         return lastInstance.logHastingsRatio;
     }
@@ -147,7 +147,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         return lastInstance;
     }
 
-    protected void applyInstance(Instance instance, boolean quietly) {
+    protected void applyInstance(Instance instance) {
         tree.beginTreeEdit();
 
         NodeRef parent = instance.parent < 0 ? null : tree.getNode(instance.parent);
@@ -201,10 +201,10 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
                 tree.addChild(destinationParent, parent);
             }
         }
-        tree.endTreeEdit(quietly);
+        tree.endTreeEdit();
 
         if (DEBUG) System.err.println("STL: setting height of node " + parent.getNumber() + " to " + instance.destinationHeight);
-        tree.setNodeHeight(parent, instance.destinationHeight, quietly);
+        tree.setNodeHeight(parent, instance.destinationHeight);
     }
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {

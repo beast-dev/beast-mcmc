@@ -150,8 +150,11 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
                 }
             }
             likelihoodKnown = true;
-        } else if (PREFETCH_DEBUG) {
-            System.out.println("PTDL returning cached likelihood: " + logLikelihood);
+        } else {
+            assert true;
+            if (PREFETCH_DEBUG) {
+                System.out.println("PTDL returning cached likelihood: " + logLikelihood);
+            }
         }
 
         return logLikelihood;
@@ -262,6 +265,8 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         isPrefetching = true;
         currentPrefetch = prefetch;
 //        likelihoodKnown = false;
+
+        ignoreTreeEvents = false;
     }
 
     @Override
@@ -280,7 +285,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     }
 
     public void prefetchLogLikelihoods() {
-        // todo this is currently calling sequentially. Needs to be concurrent for prefetching to be meaningful
+
         prefetchedLogLikelihoods = calculateLogLikelihood(treeTraversalDelegates);
     }
 
@@ -293,27 +298,40 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
         likelihoodDelegate.acceptPrefetch(prefetch);
         isPrefetching = false;
-        this.currentPrefetch = prefetch;
-        ignoreTreeEvents = true;
+        this.currentPrefetch = -1;
 
         logLikelihood = prefetchedLogLikelihoods[prefetch];
         likelihoodKnown = true;
     }
 
     @Override
+    public void setIgnoreTreeEvents(boolean ignoreTreeEvents) {
+        this.ignoreTreeEvents = ignoreTreeEvents;
+    }
+
+    @Override
     public void rejectAllPrefetches() {
         if (PREFETCH_DEBUG) System.out.println("TDL rejectAllPrefetches");
 
-        likelihoodDelegate.rejectPrefetch();
+        likelihoodDelegate.rejectAllPrefetches();
         isPrefetching = false;
         this.currentPrefetch = -1;
     }
 
     @Override
     public void suspendPrefetch() {
-        likelihoodDelegate.rejectPrefetch();
+        // @todo - is this needed?
+        likelihoodDelegate.rejectAllPrefetches();
         isPrefetching = false;
     }
+
+    @Override
+    public void releaseBufferIndices(int prefetch) {
+        if (PREFETCH_DEBUG) System.out.println("TDL releaseBufferIndices " + prefetch);
+
+        likelihoodDelegate.releaseBufferIndices(prefetch);
+    }
+
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -325,25 +343,16 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
 
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
 
-        if (!isPrefetching) {
-            storedLogLikelihood = logLikelihood;
-            storedCurrentPrefetch = currentPrefetch;
-        }
-
-        ignoreTreeEvents = false;
+        storedLogLikelihood = logLikelihood;
     }
 
     @Override
     protected final void restoreState() {
         if (PREFETCH_DEBUG) System.out.println("TDL restoreState " + (isPrefetching ? "ignoring" : ""));
 
-        if (!isPrefetching) {
-            // restore the likelihood and flag it as known
-            logLikelihood = storedLogLikelihood;
-            likelihoodKnown = true;
-
-            currentPrefetch = storedCurrentPrefetch;
-        }
+        // restore the likelihood and flag it as known
+        logLikelihood = storedLogLikelihood;
+        likelihoodKnown = true;
     }
 
     @Override
@@ -442,7 +451,7 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
         if (PREFETCH_DEBUG) {
             System.out.println("TDL prefetched lnLs:" + logL[0] + ", " + logL[1]);
         }
-        
+
         return logL;
     }
 
@@ -629,7 +638,6 @@ public final class PrefetchTreeDataLikelihood extends AbstractModelLikelihood im
     private int totalRateUpdateSingleCount = 0;
 
     private int currentPrefetch = 0;
-    private int storedCurrentPrefetch = 0;
     private boolean isPrefetching = false;
     private double[] prefetchedLogLikelihoods;
     private boolean ignoreTreeEvents = false;

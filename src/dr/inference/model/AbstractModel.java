@@ -228,7 +228,8 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
 
         // todo AR - I am not sure this is required and may be overruling modelChange events on parts of the
         // model. If a parameter changes it should be handleVariableChangedEvent() job to fireModelChanged
-        // events
+        // events. On the other hand, the handlers of these events should be lazy with low overhead - and
+        // robust to multiple calls.
         listenerHelper.fireModelChanged(this, variable, index);
     }
 

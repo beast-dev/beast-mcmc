@@ -64,4 +64,12 @@ public interface PrefetchableLikelihood extends Likelihood {
      * Turns off prefetch likelihood calculations (i.e., for a non-prefetch operator or a full evaluation).
      */
     void suspendPrefetch();
+
+    /**
+     * Release the used buffer indices - used for debugging purposes when doing a non-parallel prefetch.
+     * @param prefetch
+     */
+    void releaseBufferIndices(int prefetch);
+
+    void setIgnoreTreeEvents(boolean ignoreTreeEvents);
 }

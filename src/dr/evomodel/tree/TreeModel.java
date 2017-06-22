@@ -539,10 +539,6 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
     public void endTreeEdit() {
-        endTreeEdit(false);
-    }
-
-    public void endTreeEdit(boolean quietly) {
         if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
 
         inEdit = false;
@@ -559,11 +555,10 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             }
         }
 
-        if (!quietly) {
-            for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
-                listenerHelper.fireModelChanged(this, treeChangedEvent);
-            }
+        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+            listenerHelper.fireModelChanged(this, treeChangedEvent);
         }
+
         treeChangedEvents.clear();
     }
 
@@ -578,11 +573,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     public void setNodeHeight(NodeRef n, double height) {
         ((Node) n).setHeight(height);
     }
-
-    public void setNodeHeight(NodeRef n, double height, boolean quietly) {
-        ((Node) n).setHeight(height, quietly);
-    }
-
+    
     public void setNodeRate(NodeRef n, double rate) {
         if (!hasRates) throw new IllegalArgumentException("Rate parameters have not been created");
         ((Node) n).setRate(rate);
@@ -1196,8 +1187,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
     public Parameter createNodeTraitsParameterAsMatrix(String name, int dim, double[] initialValues,
-                                               boolean rootNode, boolean internalNodes,
-                                               boolean leafNodes, boolean firesTreeEvents) {
+                                                       boolean rootNode, boolean internalNodes,
+                                                       boolean leafNodes, boolean firesTreeEvents) {
 
         checkValidFlags(rootNode, internalNodes, leafNodes);
 
@@ -1447,15 +1438,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         }
 
         public final void setHeight(double height) {
-            setHeight(height, false);
-        }
-
-        public final void setHeight(double height, boolean quietly) {
-            if (quietly) {
-                heightParameter.setParameterValueQuietly(0, height);
-            } else {
-                heightParameter.setParameterValue(0, height);
-            }
+            heightParameter.setParameterValue(0, height);
         }
 
         public final void setRate(double rate) {

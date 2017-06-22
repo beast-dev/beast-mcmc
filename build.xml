@@ -209,9 +209,7 @@
                 <include name="dr/evomodel/substmodel/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
-                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evomodelxml/**/*.class"/>
-                <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/chart/**"/>
                 <include name="dr/gui/table/**"/>

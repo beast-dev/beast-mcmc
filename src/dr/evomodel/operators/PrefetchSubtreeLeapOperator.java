@@ -30,6 +30,8 @@ import dr.inference.model.PrefetchableLikelihood;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.PrefetchableOperator;
 
+import java.util.logging.Logger;
+
 /**
  * PrefetchSubtreeLeapOperator
  *
@@ -62,6 +64,13 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
                                        TreeModel tree, double weight, double size, double accP, CoercionMode mode) {
         super(tree, weight, size, accP, mode);
 
+        final Logger logger = Logger.getLogger("dr.evomodel");
+        if (!NO_PARALLEL_PREFETCH) {
+            logger.info("\nUsing Parallel-Prefetch SubtreeLeapOperator");
+        } else {
+            logger.info("\nUsing Non-Parallel-Prefetch SubtreeLeapOperator");
+        }
+
         this.prefetchableLikelihood = prefetchableLikelihood;
         this.prefetchCount = prefetchableLikelihood.getPrefetchCount();
         instances = new Instance[prefetchCount];
@@ -91,11 +100,12 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
             if (!NO_PARALLEL_PREFETCH) {
 
+                getTreeModel().pushState();
+
                 for (int i = 0; i < prefetchCount; i++) {
 
 //                    System.out.println("PSTL, before push:     " +getTreeModel().getNewick());
                     // temporarily store state of tree
-                    getTreeModel().pushState();
 
                     prefetchableLikelihood.startPrefetchOperation(i);
                     prefetchableLikelihood.setIgnoreTreeEvents(false);
@@ -146,10 +156,13 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         // clear the cached likelihoods, restore treemodel, TDL and apply successful operation instance
         if (!NO_PARALLEL_PREFETCH) {
             prefetchableLikelihood.acceptPrefetch(currentPrefetch);
+
+            // This is not necessary any more - the operation would have been re-applied in the last call
+            // of doOperation().
             // the original tree would have been popped so re-apply the accepted operation but
             // tell the treeDataLikelihood to ignore the tree changed events.
-            prefetchableLikelihood.setIgnoreTreeEvents(true);
-            applyInstance(instances[currentPrefetch]);
+//            prefetchableLikelihood.setIgnoreTreeEvents(true);
+//            applyInstance(instances[currentPrefetch]);
 
             //            System.out.println("PSTL, after accept:    " + getTreeModel().getNewick());
         } else {

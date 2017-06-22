@@ -122,7 +122,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
 
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 extensions");
+        logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 extensions and Prefetch");
 
         setId(patternLists.get(0).getId());
 

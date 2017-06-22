@@ -38,8 +38,8 @@ import dr.inference.operators.GeneralOperator;
 public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator {
 
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                           Parameter parameter, double stepSize, int nSteps, double drawVariance) {
-        super(mode, weight, gradientProvider, parameter, null, stepSize, nSteps, drawVariance);
+                           Parameter parameter, Parameter mask, double stepSize, int nSteps, double drawVariance) {
+        super(mode, weight, gradientProvider, parameter, null, mask, stepSize, nSteps, drawVariance);
     }
 
     @Override

@@ -57,6 +57,9 @@ public class TreeTraitParserUtilities {
     public static final String STANDARDIZE = "standardize";
     public static final String SAMPLE_MISSING_TRAITS = "sampleMissingTraits";
 
+    public static final String LATENT_FROM = "latentFrom";
+    public static final String LATENT_TO = "latentTo";
+
     public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)
         for (int i = 0; i < trait.getDimension(); i++) {
@@ -417,10 +420,31 @@ public class TreeTraitParserUtilities {
 
             if (xo.hasChildNamed(MISSING)) {
                 XMLObject cxo = xo.getChild(MISSING);
+
                 Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
                 for (int i : missingIndices) {
                     missingParameter.setParameterValue(i, 1.0);
                 }
+
+                if (cxo.hasAttribute(LATENT_FROM) && cxo.hasAttribute(LATENT_TO)) {
+                    int from = cxo.getIntegerAttribute(LATENT_FROM);
+                    int to = cxo.getIntegerAttribute(LATENT_TO);
+
+                    final int dimTrait = allValues.length / taxonCount;
+
+                    if (from < 1 || to < 1 || from > dimTrait || to > dimTrait) {
+                        throw new XMLParseException("Invalid latent dimension specification");
+                    }
+
+                    int index = 0;
+                    for (int taxon = 0; taxon < taxonCount; ++taxon) {
+                        for (int trait = from - 1; trait < to; ++trait) {
+                            missingParameter.setParameterValue(index + trait, 1.0);
+                        }
+                        index += dimTrait;
+                    }
+                }
+
                 missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
                 ParameterParser.replaceParameter(cxo, missingParameter);
                 sampleMissingParameter = missingParameter;

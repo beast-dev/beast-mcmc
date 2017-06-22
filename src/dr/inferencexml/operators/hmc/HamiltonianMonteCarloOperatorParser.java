@@ -31,6 +31,7 @@ import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
+import dr.inferencexml.model.MaskedParameterParser;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -48,6 +49,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public final static String STEP_SIZE = "stepSize";
     public final static String DRAW_VARIANCE = "drawVariance";
     public static final String MODE = "mode";
+    public static final String MASKING = MaskedParameterParser.MASKING;
 
     @Override
     public String getParserName() {
@@ -82,12 +84,17 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
+        Parameter mask = null;
+        if (xo.hasChildNamed(MASKING)) {
+            mask = (Parameter) xo.getElementFirstChild(MASKING);
+        }
+
         if (mode == 0) {
-            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, transform, stepSize,
-                    nSteps, drawVariance);
+            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, transform, mask,
+                    stepSize, nSteps, drawVariance);
         } else {
-            return new NoUTurnOperator(CoercionMode.DEFAULT, weight, derivative, parameter, stepSize,
-                    nSteps, drawVariance);
+            return new NoUTurnOperator(CoercionMode.DEFAULT, weight, derivative, parameter, mask,
+                    stepSize, nSteps, drawVariance);
         }
     }
 
@@ -106,8 +113,12 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     new ElementRule(Parameter.class),
                     new ElementRule(Transform.MultivariableTransformWithParameter.class)
             ),
-
             new ElementRule(GradientWrtParameterProvider.class),
+            new ElementRule(MASKING,
+                                new XMLSyntaxRule[]{
+                                        new ElementRule(Parameter.class)
+                                }, true),
+
     };
 
     @Override

@@ -69,6 +69,10 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     }
 
     private void updateMask() {
+        length = updateMask(maskParameter, map, inverseMap, equalValue);
+    }
+
+    public static int updateMask(Parameter maskParameter, int[] map, int[] inverseMap, int equalValue) {
         int index = 0;
         for (int i = 0; i < maskParameter.getDimension(); i++) {
             // TODO Add a threshold attribute for continuous value masking
@@ -81,7 +85,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
                 inverseMap[i] = -1; // Keep track of indices from parameter than do NOT correspond to entries in mask
             }
         }
-        length = index;
+        return index;
     }
 
     public int getDimension() {

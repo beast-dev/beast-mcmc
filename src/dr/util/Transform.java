@@ -503,6 +503,8 @@ public interface Transform {
         private final UnivariableTransform inner;
     }
 
+    
+
     class Array extends MultivariableTransformWithParameter {
 
           private final List<Transform> array;
@@ -512,9 +514,9 @@ public interface Transform {
               this.parameter = parameter;
               this.array = array;
 
-              if (parameter.getDimension() != array.size()) {
-                  throw new IllegalArgumentException("Dimension mismatch");
-              }
+//              if (parameter.getDimension() != array.size()) {
+//                  throw new IllegalArgumentException("Dimension mismatch");
+//              }
           }
 
           public Parameter getParameter() { return parameter; }

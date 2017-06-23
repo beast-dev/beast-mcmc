@@ -69,31 +69,29 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        Transform transform = null;
+//        Transform transform = null;
+//
+//        if (parameter == null) {
+//
+//            Transform.MultivariableTransformWithParameter collection =
+//                    (Transform.MultivariableTransformWithParameter) xo.getChild(Transform.MultivariableTransformWithParameter.class);
+//            parameter = collection.getParameter();
+//            transform = collection;
+//        }
 
-        if (parameter == null) {
-
-            Transform.MultivariableTransformWithParameter collection =
-                    (Transform.MultivariableTransformWithParameter) xo.getChild(Transform.MultivariableTransformWithParameter.class);
-            parameter = collection.getParameter();
-            transform = collection;
-        }
+        Transform transform = (Transform.MultivariableTransformWithParameter)
+                xo.getChild(Transform.MultivariableTransformWithParameter.class);
 
         if (derivative.getDimension() != parameter.getDimension()) {
             throw new XMLParseException("Gradient (" + derivative.getDimension() +
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
-        Parameter mask = null;
-        if (xo.hasChildNamed(MASKING)) {
-            mask = (Parameter) xo.getElementFirstChild(MASKING);
-        }
-
         if (mode == 0) {
-            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, transform, mask,
+            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, transform,
                     stepSize, nSteps, drawVariance);
         } else {
-            return new NoUTurnOperator(CoercionMode.DEFAULT, weight, derivative, parameter, mask,
+            return new NoUTurnOperator(CoercionMode.DEFAULT, weight, derivative, parameter,
                     stepSize, nSteps, drawVariance);
         }
     }
@@ -109,16 +107,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newIntegerRule(MODE, true),
-            new XORRule(
-                    new ElementRule(Parameter.class),
-                    new ElementRule(Transform.MultivariableTransformWithParameter.class)
-            ),
+//            new XORRule(
+//                    new ElementRule(Parameter.class),
+//                    new ElementRule(Transform.MultivariableTransformWithParameter.class)
+//            ),
+            new ElementRule(Parameter.class),
+            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
-            new ElementRule(MASKING,
-                                new XMLSyntaxRule[]{
-                                        new ElementRule(Parameter.class)
-                                }, true),
-
     };
 
     @Override

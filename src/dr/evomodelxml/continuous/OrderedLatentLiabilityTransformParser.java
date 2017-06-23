@@ -25,10 +25,12 @@
 
 package dr.evomodelxml.continuous;
 
+import com.sun.prism.MaskTextureGraphics;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStates;
 import dr.evomodel.continuous.OrderedLatentLiabilityLikelihood;
-import dr.inference.model.CompoundParameter;
+import dr.inference.model.*;
+import dr.inferencexml.model.MaskedParameterParser;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -57,6 +59,11 @@ public class OrderedLatentLiabilityTransformParser extends AbstractXMLObjectPars
             throw new XMLParseException("Liability transformation is currently only implemented for binary traits");
         }
 
+        Parameter mask = null;
+        if (xo.hasChildNamed(MaskedParameterParser.MASKING)) {
+            mask = (Parameter) xo.getElementFirstChild(MaskedParameterParser.MASKING);
+        }
+
         List<Transform> transforms = new ArrayList<Transform>();
         int index = 0;
         for (int tip = 0; tip < parameter.getParameterCount(); ++tip) {
@@ -67,20 +74,24 @@ public class OrderedLatentLiabilityTransformParser extends AbstractXMLObjectPars
                 int discreteState = tipData[trait];
                 boolean valid = true;
 
+                Transform transform = null;
                 if (discreteState == 0) {
-                    transforms.add(Transform.LOG_NEGATE);
+                    transform = Transform.LOG_NEGATE;
+//                    transforms.add(Transform.LOG_NEGATE);
 
                     if (parameter.getParameterValue(index) >= 0.0) {
                         valid = false;
                     }
                 } else if (discreteState == 1) {
-                    transforms.add(Transform.LOG);
+                    transform = Transform.LOG;
+//                    transforms.add(Transform.LOG);
 
                     if (parameter.getParameterValue(index) <= 0.0) {
                         valid = false;
                     }
                 } else {
-                    transforms.add(Transform.NONE);
+                    transform = Transform.NONE;
+//                    transforms.add(Transform.NONE);
                 }
 
                 if (!valid) {
@@ -88,9 +99,40 @@ public class OrderedLatentLiabilityTransformParser extends AbstractXMLObjectPars
                             parameter.getParameter(tip).getId() + "'");
                 }
 
+                if (mask == null || mask.getParameterValue(index) == 1.0) {
+                    transforms.add(transform);
+                }
+
                 ++index;
             }
         }
+
+//        Parameter cast = parameter;
+//
+//        if (xo.hasChildNamed(MaskedParameterParser.MASKING)) {
+//            Parameter mask = (Parameter) xo.getElementFirstChild(MaskedParameterParser.MASKING);
+//            cast = new MaskedParameter(parameter, mask, true);
+//
+//            List<Transform> newTransforms = new ArrayList<Transform>();
+//            for (int i = 0; i < transforms.size(); ++i) {
+//                if (mask.getParameterValue(i) == 1.0) {
+//                    newTransforms.add(transforms.get(i));
+//                }
+//            }
+//            transforms = newTransforms;
+//        }
+
+
+//        Parameter cast = (mask == null) ? parameter :
+//                new MaskedParameter(parameter, mask, true);
+//                new MaskedParameter(parameter);
+
+
+//        System.err.println("dim = " + parameter.getDimension());
+//        System.err.println("dim = " + cast.getDimension());
+//        System.err.println("dim = " + transforms.size());
+//        System.exit(-1);
+//        cast = parameter; // TODO Remove
 
         Transform array = new Transform.Array(transforms, parameter);
         return array;
@@ -100,6 +142,10 @@ public class OrderedLatentLiabilityTransformParser extends AbstractXMLObjectPars
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
                 new ElementRule(OrderedLatentLiabilityLikelihood.class),
+                new ElementRule(MaskedParameterParser.MASKING,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }, true),
         };
     }
 

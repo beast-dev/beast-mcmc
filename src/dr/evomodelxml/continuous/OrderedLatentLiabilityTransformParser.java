@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.continuous;
 
-import com.sun.prism.MaskTextureGraphics;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStates;
 import dr.evomodel.continuous.OrderedLatentLiabilityLikelihood;
@@ -74,7 +73,7 @@ public class OrderedLatentLiabilityTransformParser extends AbstractXMLObjectPars
                 int discreteState = tipData[trait];
                 boolean valid = true;
 
-                Transform transform = null;
+                Transform transform;
                 if (discreteState == 0) {
                     transform = Transform.LOG_NEGATE;
 //                    transforms.add(Transform.LOG_NEGATE);
@@ -107,35 +106,7 @@ public class OrderedLatentLiabilityTransformParser extends AbstractXMLObjectPars
             }
         }
 
-//        Parameter cast = parameter;
-//
-//        if (xo.hasChildNamed(MaskedParameterParser.MASKING)) {
-//            Parameter mask = (Parameter) xo.getElementFirstChild(MaskedParameterParser.MASKING);
-//            cast = new MaskedParameter(parameter, mask, true);
-//
-//            List<Transform> newTransforms = new ArrayList<Transform>();
-//            for (int i = 0; i < transforms.size(); ++i) {
-//                if (mask.getParameterValue(i) == 1.0) {
-//                    newTransforms.add(transforms.get(i));
-//                }
-//            }
-//            transforms = newTransforms;
-//        }
-
-
-//        Parameter cast = (mask == null) ? parameter :
-//                new MaskedParameter(parameter, mask, true);
-//                new MaskedParameter(parameter);
-
-
-//        System.err.println("dim = " + parameter.getDimension());
-//        System.err.println("dim = " + cast.getDimension());
-//        System.err.println("dim = " + transforms.size());
-//        System.exit(-1);
-//        cast = parameter; // TODO Remove
-
-        Transform array = new Transform.Array(transforms, parameter);
-        return array;
+        return new Transform.Array(transforms, parameter);
     }
 
     @Override

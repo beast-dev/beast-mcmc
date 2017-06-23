@@ -429,7 +429,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
             }
 
             beagle.setPatternWeights(patternWeights);
-            beagle.setPatternPartitions(prefetchCount, patternPartitions);
+            beagle.setPatternPartitions(partitionCount, patternPartitions);
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO) {
@@ -1602,7 +1602,7 @@ public class PrefetchDataLikelihoodDelegate extends AbstractModel implements Dat
         if (PREFETCH_DEBUG) System.out.println("DLD rejectPrefetch");
 
         isPrefetching = false;
-        currentPrefetch = -1;
+        currentPrefetch = 0;
 
         // Don't need to do anything further because restoreState is about to be called.
     }

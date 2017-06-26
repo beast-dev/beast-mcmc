@@ -30,6 +30,7 @@ import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
@@ -123,6 +124,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         leafFropEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
+
+//        int randomSize = 2;
+//        int nSteps = Math.max(this.nSteps + MathUtils.nextInt(2 * randomSize) - randomSize, 1);
+
+        if (DEBUG) {
+            System.err.println("nSteps = " + nSteps);
+        }
 
         for (int i = 0; i < nSteps; i++) { // Leap-frog
 

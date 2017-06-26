@@ -27,6 +27,7 @@ package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
+import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
@@ -65,6 +66,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
         int mode = xo.getAttribute(MODE, 0);
 
+
+        CoercionMode coercionMode = CoercionMode.parseMode(xo);
+
+
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
@@ -88,10 +93,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         }
 
         if (mode == 0) {
-            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, transform,
+            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
                     stepSize, nSteps, drawVariance);
         } else {
-            return new NoUTurnOperator(CoercionMode.DEFAULT, weight, derivative, parameter,
+            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,
                     stepSize, nSteps, drawVariance);
         }
     }
@@ -106,6 +111,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
+            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newIntegerRule(MODE, true),
 //            new XORRule(
 //                    new ElementRule(Parameter.class),

@@ -70,6 +70,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     private void updateMask() {
         length = updateMask(maskParameter, map, inverseMap, equalValue);
+        bounds = null;
     }
 
     public static int updateMask(Parameter maskParameter, int[] map, int[] inverseMap, int equalValue) {
@@ -176,7 +177,23 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     }
 
     public Bounds<Double> getBounds() {
-        return parameter.getBounds();
+        if (bounds == null) {
+
+            // Create masked bounds
+            Bounds<Double> oldBounds = parameter.getBounds();
+            if (oldBounds != null) {
+                double[] upper = new double[length];
+                double[] lower = new double[length];
+
+                for (int i = 0; i < length; ++i) {
+                    upper[i] = oldBounds.getUpperLimit(map[i]);
+                    lower[i] = oldBounds.getLowerLimit(map[i]);
+                }
+
+                bounds = new DefaultBounds(upper, lower);
+            }
+        }
+        return bounds;
     }
 
     public void addDimension(int index, double value) {
@@ -202,6 +219,9 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     private final Parameter parameter;
     private Parameter maskParameter;
+
+    private Bounds<Double> bounds = null;
+
     private int[] map;
     private int[] inverseMap;
 

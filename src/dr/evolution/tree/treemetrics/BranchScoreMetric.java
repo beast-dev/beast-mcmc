@@ -28,16 +28,13 @@
  */
 package dr.evolution.tree.treemetrics;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import dr.evolution.tree.Clade;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+
+import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
 
 /**
  * @author Andrew Rambaut
@@ -56,11 +53,11 @@ public class BranchScoreMetric implements TreeMetric {
     public BranchScoreMetric(Tree focalTree) {
         this.focalTree = focalTree;
         this.fixedFocalTree = true;
-        List<Clade> focalClades = new ArrayList<Clade>();
-        getClades(focalTree, focalTree.getRoot(), focalClades, null);
+        focalClades = Clade.getCladeList(focalTree);
     }
 
 
+    @Override
     public double getMetric(Tree tree1, Tree tree2) {
 
         checkTreeTaxa(tree1, tree2);
@@ -74,53 +71,16 @@ public class BranchScoreMetric implements TreeMetric {
 
             // cache tree1 and the pre-computed path for future calls
             focalTree = tree1;
-            List<Clade> clades1 = new ArrayList<Clade>();
-            getClades(tree1, tree1.getRoot(), clades1, null);
+            focalClades = Clade.getCladeList(focalTree);
         }
 
-        List<Clade> clades1 = new ArrayList<Clade>();
-        getClades(tree1, tree1.getRoot(), clades1, null);
+        List<Clade> clades2 = Clade.getCladeList(tree2);
 
-        List<Clade> clades2 = new ArrayList<Clade>();
-        getClades(tree2, tree2.getRoot(), clades2, null);
-
-        return getDistance(clades1, clades2);
+        return getDistance(focalClades, clades2);
     }
 
-    private void checkTreeTaxa(Tree tree1, Tree tree2) {
-        //check if taxon lists are in the same order!!
-        if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
-            throw new RuntimeException("Different number of taxa in both trees.");
-        } else {
-            for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
-                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
-                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
-                }
-            }
-        }
-    }
+    protected double getDistance(List<Clade> clades1, List<Clade> clades2) {
 
-    private void getClades(Tree tree, NodeRef node, List<Clade> clades, BitSet bits) {
-
-        BitSet bits2 = new BitSet();
-
-        if (tree.isExternal(node)) {
-
-            int index = node.getNumber();
-            bits2.set(index);
-
-        } else {
-            getClades(tree, tree.getChild(node, 0), clades, bits2);
-            getClades(tree, tree.getChild(node, 1), clades, bits2);
-            clades.add(new Clade(bits2, tree.getNodeHeight(node)));
-        }
-
-        if (bits != null) {
-            bits.or(bits2);
-        }
-    }
-
-    private double getDistance(List<Clade> clades1, List<Clade> clades2) {
 
         Collections.sort(clades1);
         Collections.sort(clades2);

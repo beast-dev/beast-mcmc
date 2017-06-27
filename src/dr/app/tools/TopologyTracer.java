@@ -33,12 +33,8 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.*;
-import dr.evolution.tree.treemetrics.BranchScoreMetric;
-import dr.evolution.tree.treemetrics.SPPathDifferenceMetric;
+import dr.evolution.tree.treemetrics.*;
 import dr.util.Version;
-import jebl.evolution.treemetrics.BilleraMetric;
-import jebl.evolution.treemetrics.CladeHeightMetric;
-import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -106,7 +102,7 @@ public class TopologyTracer {
             ArrayList<Long> treeStates = new ArrayList<Long>();
             ArrayList<String> treeIds = new ArrayList<String>();
 
-            ArrayList<Double> jeblRFDistances = new ArrayList<Double>();
+            ArrayList<Double> rFDistances = new ArrayList<Double>();
             ArrayList<Double> billeraMetric = new ArrayList<Double>();
             ArrayList<Double> cladeHeightMetric = new ArrayList<Double>();
             ArrayList<Double> rootedBranchScoreMetric = new ArrayList<Double>();
@@ -124,10 +120,11 @@ public class TopologyTracer {
                 //take into account first distance of focal tree to itself
                 treeStates.add((long) 0);
 
-                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree))*2.0);
-                billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-                cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-                branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                rFDistances.add(new RobinsonsFouldMetric().getMetric(focalTree, focalTree)*2.0);
+                billeraMetric.add(new BilleraMetric().getMetric(focalTree, focalTree));
+                cladeHeightMetric.add(new CladeHeightMetric().getMetric(focalTree, focalTree));
+//                branchScoreMetric.add(new BranchScoreMetric().getMetric(focalTree, focalTree));
+                rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(focalTree, focalTree));
                 pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree, focalTree));
 //                for (int i = 0; i < allKCMetrics.size(); i++) {
 //                    kcMetrics.get(i).add(allKCMetrics.get(i));
@@ -148,22 +145,22 @@ public class TopologyTracer {
 
                 //BEAST/JEBL reports half the RF distance, corrected here
                 beforeTime = System.currentTimeMillis();
-                jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree))*2.0);
+                rFDistances.add(new RobinsonsFouldMetric().getMetric(focalTree, tree)*2.0);
                 afterTime = System.currentTimeMillis();
                 timings[0] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
+                billeraMetric.add(new BilleraMetric().getMetric(focalTree, tree));
                 afterTime = System.currentTimeMillis();
                 timings[1] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
+                cladeHeightMetric.add(new CladeHeightMetric().getMetric(focalTree, tree));
                 afterTime = System.currentTimeMillis();
                 timings[2] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
+                rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(focalTree, tree));
                 afterTime = System.currentTimeMillis();
                 timings[3] += afterTime - beforeTime;
 
@@ -205,7 +202,7 @@ public class TopologyTracer {
 
             for (int i = 0; i < treeStates.size(); i++) {
                 writer.write(treeStates.get(i) + "\t");
-                writer.write(jeblRFDistances.get(i) + "\t");
+                writer.write(rFDistances.get(i) + "\t");
                 writer.write(billeraMetric.get(i) + "\t");
                 writer.write(rootedBranchScoreMetric.get(i) + "\t");
                 writer.write(cladeHeightMetric.get(i) + "\t");

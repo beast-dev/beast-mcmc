@@ -25,6 +25,8 @@
 
 package dr.inference.operators;
 
+import dr.math.MathUtils;
+
 import java.util.List;
 
 /**
@@ -35,14 +37,30 @@ public class PrefetchOperatorSchedule implements OperatorSchedule {
 
     private final OperatorSchedule operatorSchedule;
 
-    private MCMCOperator currentPrefetchOperator = null;
+    private int currentPrefetchOperatorIndex = -1;
 
     public PrefetchOperatorSchedule(OperatorSchedule operatorSchedule) {
         this.operatorSchedule = operatorSchedule;
     }
 
     public int getNextOperatorIndex() {
-        return operatorSchedule.getNextOperatorIndex();
+
+        if (currentPrefetchOperatorIndex != -1) {
+            MCMCOperator operator = getOperator(currentPrefetchOperatorIndex);
+            if (!((PrefetchableOperator)operator).prefetchingDone()) {
+                return currentPrefetchOperatorIndex;
+            }
+        }
+
+        int index = operatorSchedule.getNextOperatorIndex();
+
+        MCMCOperator operator = operatorSchedule.getOperator(index);
+
+        if (operator instanceof PrefetchableOperator) {
+            currentPrefetchOperatorIndex = index;
+        }
+
+        return index;
     }
 
     public int getOperatorCount() {
@@ -50,22 +68,7 @@ public class PrefetchOperatorSchedule implements OperatorSchedule {
     }
 
     public MCMCOperator getOperator(int index) {
-        MCMCOperator operator;
-
-        if (currentPrefetchOperator != null) {
-            operator = currentPrefetchOperator;
-            if (((PrefetchableOperator)currentPrefetchOperator).prefetchingDone()) {
-                currentPrefetchOperator = null;
-            }
-        } else {
-            operator = operatorSchedule.getOperator(index);
-
-            if (operator instanceof PrefetchableOperator) {
-                currentPrefetchOperator = operator;
-            }
-        }
-
-        return operator;
+        return operatorSchedule.getOperator(index);
     }
 
     public void addOperator(MCMCOperator op) {

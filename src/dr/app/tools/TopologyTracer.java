@@ -33,6 +33,8 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.*;
+import dr.evolution.tree.treemetrics.BranchScoreMetric;
+import dr.evolution.tree.treemetrics.SPPathDifferenceMetric;
 import dr.util.Version;
 import jebl.evolution.treemetrics.BilleraMetric;
 import jebl.evolution.treemetrics.CladeHeightMetric;
@@ -40,7 +42,6 @@ import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -116,8 +117,8 @@ public class TopologyTracer {
             }
 
             SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
-            KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
-            List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
+//            KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
+//            List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
 
             if (!userProvidedTree) {
                 //take into account first distance of focal tree to itself
@@ -127,10 +128,10 @@ public class TopologyTracer {
                 billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
                 branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
-                for (int i = 0; i < allKCMetrics.size(); i++) {
-                    kcMetrics.get(i).add(allKCMetrics.get(i));
-                }
+                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree, focalTree));
+//                for (int i = 0; i < allKCMetrics.size(); i++) {
+//                    kcMetrics.get(i).add(allKCMetrics.get(i));
+//                }
             }
 
             int numberOfTrees = 1;
@@ -168,16 +169,16 @@ public class TopologyTracer {
 
                 beforeTime = System.currentTimeMillis();
                 //pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, tree));
-                pathDifferenceMetric.add(SPPathFocal.getMetric(tree));
+                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree, tree));
                 afterTime = System.currentTimeMillis();
                 timings[4] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
                 //allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
-                allKCMetrics = KCPathFocal.getMetric(tree, lambdaValues);
-                for (int i = 0; i < allKCMetrics.size(); i++) {
-                    kcMetrics.get(i).add(allKCMetrics.get(i));
-                }
+//                allKCMetrics = KCPathFocal.getMetric(focalTree, tree, lambdaValues);
+//                for (int i = 0; i < allKCMetrics.size(); i++) {
+//                    kcMetrics.get(i).add(allKCMetrics.get(i));
+//                }
                 afterTime = System.currentTimeMillis();
                 timings[5] += afterTime - beforeTime;
 

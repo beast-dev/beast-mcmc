@@ -23,78 +23,72 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evolution.tree;
+package dr.evolution.tree.treemetrics;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Guy Baele
+ * @author Andrew Rambaut
  * Path difference metric according to Steel & Penny (1993)
  */
-public class SPPathDifferenceMetric {
+public class SPPathDifferenceMetric implements TreeMetric {
 
     private Tree focalTree;
     private int dim;
     private double[] focalPath;
+    private final boolean fixedFocalTree;
 
     public SPPathDifferenceMetric() {
-
+        this.fixedFocalTree = false;
     }
 
     public SPPathDifferenceMetric(Tree focalTree) {
         this.focalTree = focalTree;
+        this.fixedFocalTree = true;
         this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
         this.focalPath = new double[dim];
 
         traverse(this.focalTree, this.focalTree.getRoot(), focalPath);
     }
 
-    public double getMetric(Tree tree) {
-
-        checkTreeTaxa(focalTree, tree);
-
-        double[] pathTwo = new double[dim];
-
-        traverse(tree, tree.getRoot(), pathTwo);
-
-        int n = tree.getExternalNodeCount();
-
-        double metric = 0.0;
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                int index = (i * n) + j;
-                metric += Math.pow(focalPath[index] - pathTwo[index], 2);
-            }
-        }
-        metric = Math.sqrt(metric);
-
-        return metric;
-    }
-
     /**
-     * This method bypasses the constructor entirely, computing the metric on the two provided trees
-     * and ignoring the internally stored tree.
-     * @param tree1 Focal tree that will be used for computing the metric
-     * @param tree2 Provided tree that will be compared to the focal tree
+     * Compute the metric between two trees. If tree1 is not the focal tree provided to the
+     * constructor then it will store this as the new focal tree. If the focal tree is constant
+     * from call to call then a cached set of precomputation will be used, increasing efficiency.
+     * @param tree1
+     * @param tree2
      * @return
      */
     public double getMetric(Tree tree1, Tree tree2) {
 
         checkTreeTaxa(tree1, tree2);
 
-//        int dim = (tree1.getExternalNodeCount() - 2) * (tree1.getExternalNodeCount() - 1) + tree1.getExternalNodeCount();
-        int dim = tree1.getExternalNodeCount() * tree1.getExternalNodeCount();
+        if (tree1 != focalTree) {
+            if (fixedFocalTree) {
+                // If we set a focal tree in the constructor then it makes sense to check it is the same
+                // as the one set here.
+                throw new RuntimeException("Focal tree is different from that set in the constructor.");
+            }
 
-        double[] pathOne = new double[dim];
+            // cache tree1 and the pre-computed path for future calls
+            focalTree = tree1;
+            if (focalPath == null) {
+                this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
+                this.focalPath = new double[dim];
+            }
+            traverse(focalTree, focalTree.getRoot(), focalPath);
+        }
+
         double[] pathTwo = new double[dim];
-
-        traverse(tree1, tree1.getRoot(), pathOne);
         traverse(tree2, tree2.getRoot(), pathTwo);
 
         int n = tree1.getExternalNodeCount();
@@ -103,7 +97,7 @@ public class SPPathDifferenceMetric {
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 int index = (i * n) + j;
-                metric += Math.pow(pathOne[index] - pathTwo[index], 2);
+                metric += Math.pow(focalPath[index] - pathTwo[index], 2);
             }
         }
         metric = Math.sqrt(metric);
@@ -118,7 +112,7 @@ public class SPPathDifferenceMetric {
         } else {
             for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
                 if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
-                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
+                    throw new RuntimeException("Mismatch between taxa (or taxon order) in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
                 }
             }
         }
@@ -184,7 +178,7 @@ public class SPPathDifferenceMetric {
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree
             SPPathDifferenceMetric fixed = new SPPathDifferenceMetric(treeOne);
-            metric = fixed.getMetric(treeTwo);
+            metric = fixed.getMetric(treeOne, treeTwo);
 
             System.out.println("path difference = " + metric);
 

@@ -23,11 +23,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evolution.tree;
+package dr.evolution.tree.treemetrics;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
-import dr.util.Pair;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -36,17 +38,25 @@ import java.util.*;
  * @author Guy Baele
  * Path difference metric according to Kendall & Colijn (2015)
  */
-public class KCPathDifferenceMetric {
+public class KCPathDifferenceMetric implements TreeMetric {
 
     private Tree focalTree;
     private int dim;
     private double[] focalSmallM, focalLargeM;
+    private final boolean fixedFocalTree;
+    private final double lambda;
 
-    public KCPathDifferenceMetric() {
+    public KCPathDifferenceMetric(double lambda) {
+        this.lambda = lambda;
+
+        this.fixedFocalTree = false;
     }
 
-    public KCPathDifferenceMetric(Tree focalTree) {
+    public KCPathDifferenceMetric(double lambda, Tree focalTree) {
+        this.lambda = lambda;
+
         this.focalTree = focalTree;
+        this.fixedFocalTree = true;
         //this.dim = (externalNodeCount-2)*(externalNodeCount-1)+externalNodeCount;
         this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
         this.focalSmallM = new double[dim];
@@ -55,56 +65,45 @@ public class KCPathDifferenceMetric {
         traverse(focalTree, focalTree.getRoot(), 0.0, 0, focalLargeM, focalSmallM);
     }
 
-    public List<Double> getMetric(Tree tree, ArrayList<Double> lambda) {
-
-        checkTreeTaxa(focalTree, tree);
-
-        double[] smallMTwo = new double[dim];
-        double[] largeMTwo = new double[dim];
-
-        traverse(tree, tree.getRoot(), 0.0, 0, largeMTwo, smallMTwo);
-
-        List<Double> results = new ArrayList<Double>();
-
-        int n = tree.getExternalNodeCount();
-        for (Double l : lambda) {
-            results.add(calculateMetric(focalSmallM, focalLargeM, smallMTwo, largeMTwo, n, l));
-        }
-
-        return results;
-
-    }
-
     /**
-     * This method bypasses the constructor entirely, computing the metric on the two provided trees
-     * and ignoring the internally stored tree.
-     * @param tree1 Focal tree that will be used for computing the metric
-     * @param tree2 Provided tree that will be compared to the focal tree
-     * @param lambda Collection of lambda values for which to compute the metric
+     * Compute the metric between two trees. If tree1 is not the focal tree provided to the
+     * constructor then it will store this as the new focal tree. If the focal tree is constant
+     * from call to call then a cached set of precomputation will be used, increasing efficiency.
+     * @param tree1
+     * @param tree2
      * @return
      */
-    public List<Double> getMetric(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
+    public double getMetric(Tree tree1, Tree tree2) {
 
         checkTreeTaxa(tree1, tree2);
 
-        int dim = tree1.getExternalNodeCount() * tree1.getExternalNodeCount();
+        if (tree1 != focalTree) {
+            if (fixedFocalTree) {
+                // If we set a focal tree in the constructor then it makes sense to check it is the same
+                // as the one set here.
+                throw new RuntimeException("Focal tree is different from that set in the constructor.");
+            }
 
-        double[] smallMOne = new double[dim];
-        double[] largeMOne = new double[dim];
+            // cache tree1 and the pre-computed path for future calls
+            focalTree = tree1;
+            if (focalSmallM == null) {
+                dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
+                focalSmallM = new double[dim];
+                focalLargeM = new double[dim];
+            }
+            traverse(focalTree, focalTree.getRoot(), 0.0, 0, focalLargeM, focalSmallM);
+        }
+
         double[] smallMTwo = new double[dim];
         double[] largeMTwo = new double[dim];
 
-        traverse(tree1, tree1.getRoot(), 0.0, 0, largeMOne, smallMOne);
         traverse(tree2, tree2.getRoot(), 0.0, 0, largeMTwo, smallMTwo);
 
         List<Double> results = new ArrayList<Double>();
 
         int n = tree1.getExternalNodeCount();
-        for (Double l : lambda) {
-            results.add(calculateMetric(smallMOne, largeMOne, smallMTwo, largeMTwo, n, l));
-        }
 
-        return results;
+        return calculateMetric(focalSmallM, focalLargeM, smallMTwo, largeMTwo, n, lambda);
     }
 
     private double calculateMetric(double[] smallMOne, double[] largeMOne, double[] smallMTwo, double[] largeMTwo, int n, double l) {
@@ -399,29 +398,34 @@ public class KCPathDifferenceMetric {
 
             importer = new NewickImporter("((('A':0.8,'B':1.4):0.3,'C':0.7):0.9,'D':1.0)");
             Tree treeTwo = importer.importNextTree();
-            System.out.println("4-taxa tree 2: " + treeTwo + "\n");
+            System.out.println("4-taxa tree 2: " + treeTwo);
+            System.out.println();
 
-            ArrayList<Double> lambdaValues = new ArrayList<Double>();
-            lambdaValues.add(0.0);
-            lambdaValues.add(0.5);
-            lambdaValues.add(1.0);
-            List<Double> metric = (new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues));
-            List<Double> metric_old = (new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues));
+            double metrics[] = new double[] {
+                    (new KCPathDifferenceMetric(0.0).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(1.0).getMetric(treeOne, treeTwo)),
+            };
 
-            System.out.println("\nPaired trees:");
-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
+            System.out.println("Paired trees:");
+            System.out.println("lambda (0.0) = " + metrics[0]);
+            System.out.println("lambda (0.5) = " + metrics[1]);
+            System.out.println("lambda (1.0) = " + metrics[2]);
+            System.out.println();
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree
-            metric = new KCPathDifferenceMetric(treeOne).getMetric(treeTwo, lambdaValues);
-            metric_old = new KCPathDifferenceMetric(treeOne).getMetric_old(treeTwo, lambdaValues);
+            metrics = new double[] {
+                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
+            };
 
-            System.out.println("\nFocal trees:");
-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
-
+            System.out.println("Focal trees:");
+            System.out.println("lambda (0.0) = " + metrics[0]);
+            System.out.println("lambda (0.5) = " + metrics[1]);
+            System.out.println("lambda (1.0) = " + metrics[2]);
+            System.out.println();
+            System.out.println();
 
             //5-taxa example
             importer = new NewickImporter("(((('A':0.6,'B':0.6):0.1,'C':0.5):0.4,'D':0.7):0.1,'E':1.3)");
@@ -430,43 +434,50 @@ public class KCPathDifferenceMetric {
 
             importer = new NewickImporter("((('A':0.8,'B':1.4):0.1,'C':0.7):0.2,('D':1.0,'E':0.9):1.3)");
             treeTwo = importer.importNextTree();
-            System.out.println("5-taxa tree 2: " + treeTwo + "\n");
+            System.out.println("5-taxa tree 2: " + treeTwo);
+            System.out.println();
 
             //lambda = 0.0 should yield: sqrt(7) = 2.6457513110645907162
             //lambda = 1.0 should yield: sqrt(2.96) = 1.7204650534085252911
 
-            lambdaValues = new ArrayList<Double>();
-            lambdaValues.add(0.0);
-            lambdaValues.add(0.5);
-            lambdaValues.add(1.0);
-            metric = (new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues));
+            metrics = new double[] {
+                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
+            };
 
-            System.out.println("\nPaired trees:");
-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
+            System.out.println("Paired trees:");
+            System.out.println("lambda (0.0) = " + metrics[0]);
+            System.out.println("lambda (0.5) = " + metrics[1]);
+            System.out.println("lambda (1.0) = " + metrics[2]);
+            System.out.println();
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree
-            metric = new KCPathDifferenceMetric(treeOne).getMetric(treeTwo, lambdaValues);
+            metrics = new double[] {
+                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
+            };
 
-            System.out.println("\nFocal trees:");
-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
+            System.out.println("Focal trees:");
+            System.out.println("lambda (0.0) = " + metrics[0]);
+            System.out.println("lambda (0.5) = " + metrics[1]);
+            System.out.println("lambda (1.0) = " + metrics[2]);
+            System.out.println();
 
 
             //timings
+//            long startTime = System.currentTimeMillis();
+//            for (int i = 0; i < 1000000; i++) {
+//                new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);
+//            }
+//            System.out.println("Old algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
+
             long startTime = System.currentTimeMillis();
             for (int i = 0; i < 1000000; i++) {
-                new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);
+                new KCPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo);
             }
-            System.out.println("Old algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
-
-            startTime = System.currentTimeMillis();
-            for (int i = 0; i < 1000000; i++) {
-                new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues);
-            }
-            System.out.println("New algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
+            System.out.println("New algorithm, 1M reps: " + (System.currentTimeMillis() - startTime) + " ms");
 
         } catch(Importer.ImportException ie) {
             System.err.println(ie);

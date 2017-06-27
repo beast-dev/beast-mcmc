@@ -31,6 +31,7 @@ package dr.evolution.tree.treemetrics;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Clade;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import jebl.evolution.graphs.Node;
@@ -64,18 +65,15 @@ public class RootedBranchScoreMetric extends BranchScoreMetric {
 
         double distance = 0.0;
 
-//        List<Taxon> taxaOne = new ArrayList<Taxon>(tree1.getTaxa());
-//        List<Taxon> taxaTwo = new ArrayList<Taxon>(tree2.getTaxa());
-//
-//        for (Taxon tOne : taxaOne) {
-//            for (Taxon tTwo : taxaTwo) {
-//                if (tOne.equals(tTwo)) {
-//                    Node parentOne = tree1.getParent(tree1.getNode(tOne));
-//                    Node parentTwo = tree2.getParent(tree2.getNode(tTwo));
-//                    distance += Math.pow((tree1.getHeight(parentOne)-tree1.getHeight(tree1.getNode(tOne)))-(tree2.getHeight(parentTwo)-tree2.getHeight(tree2.getNode(tTwo))),2);
-//                }
-//            }
-//        }
+        for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
+            NodeRef node1 = tree1.getExternalNode(i);
+            NodeRef node2 = tree2.getExternalNode(i);
+            NodeRef parent1 = tree1.getParent(node1);
+            NodeRef parent2 = tree2.getParent(node2);
+            distance += Math.pow(
+                    (tree1.getNodeHeight(parent1) - tree1.getNodeHeight(node1))-
+                            (tree2.getNodeHeight(parent2) - tree2.getNodeHeight(node2)), 2);
+        }
 
         return distance;
 

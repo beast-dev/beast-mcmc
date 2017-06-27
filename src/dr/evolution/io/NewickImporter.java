@@ -283,7 +283,6 @@ public class NewickImporter extends Importer implements TreeImporter {
             int index = taxonList.getTaxonIndex(label);
             if (index != -1) {
                 taxon = taxonList.getTaxon(index);
-                node.setNumber(index);
             } else {
                 throw new UnknownTaxonException("Taxon in tree, '" + label + "' is unknown");
             }

@@ -25,7 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import com.sun.tools.corba.se.idl.constExpr.Positive;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 
@@ -34,7 +33,7 @@ import java.util.*;
 /**
  * @author Marc A. Suchard
  */
-public class ContinuousTraitDataModel extends AbstractModel {
+public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider {
 
     private final CompoundParameter parameter;
     private final List<Integer> missingIndices;

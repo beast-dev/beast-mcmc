@@ -34,10 +34,8 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
-import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
-import org.apache.commons.math.stat.descriptive.moment.Mean;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -142,7 +140,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected final int dimNode;
 
         protected final MultivariateDiffusionModel diffusionModel;
-        protected final ContinuousTraitDataModel dataModel;
+        protected final ContinuousTraitPartialsProvider dataModel;
         protected final ConjugateRootTraitPrior rootPrior;
         protected final RootProcessDelegate rootProcessDelegate;
 
@@ -157,7 +155,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         AbstractContinuousTraitDelegate(String name,
                                         MultivariateTraitTree tree,
                                         MultivariateDiffusionModel diffusionModel,
-                                        ContinuousTraitDataModel dataModel,
+                                        ContinuousTraitPartialsProvider dataModel,
                                         ConjugateRootTraitPrior rootPrior,
                                         ContinuousRateTransformation rateTransformation,
                                         BranchRateModel rateModel,
@@ -258,7 +256,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         public AbstractValuesViaFullConditionalDelegate(String name, MultivariateTraitTree tree,
                                                            MultivariateDiffusionModel diffusionModel,
-                                                           ContinuousTraitDataModel dataModel,
+                                                           ContinuousTraitPartialsProvider dataModel,
                                                            ConjugateRootTraitPrior rootPrior,
                                                            ContinuousRateTransformation rateTransformation,
                                                            BranchRateModel rateModel,
@@ -361,7 +359,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         public TipRealizedValuesViaFullConditionalDelegate(String name, MultivariateTraitTree tree,
                                                            MultivariateDiffusionModel diffusionModel,
-                                                           ContinuousTraitDataModel dataModel,
+                                                           ContinuousTraitPartialsProvider dataModel,
                                                            ConjugateRootTraitPrior rootPrior,
                                                            ContinuousRateTransformation rateTransformation,
                                                            BranchRateModel rateModel,
@@ -451,7 +449,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         public TipFullConditionalDistributionDelegate(String name, MultivariateTraitTree tree,
                                                MultivariateDiffusionModel diffusionModel,
-                                               ContinuousTraitDataModel dataModel,
+                                                      ContinuousTraitPartialsProvider dataModel,
                                                ConjugateRootTraitPrior rootPrior,
                                                ContinuousRateTransformation rateTransformation,
                                                BranchRateModel rateModel,
@@ -624,7 +622,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         AbstractRealizedContinuousTraitDelegate(String name,
                                                 MultivariateTraitTree tree,
                                                 MultivariateDiffusionModel diffusionModel,
-                                                ContinuousTraitDataModel dataModel,
+                                                ContinuousTraitPartialsProvider dataModel,
                                                 ConjugateRootTraitPrior rootPrior,
                                                 ContinuousRateTransformation rateTransformation,
                                                 BranchRateModel rateModel,
@@ -752,7 +750,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         public ConditionalOnTipsRealizedDelegate(String name,
                                          MultivariateTraitTree tree,
                                          MultivariateDiffusionModel diffusionModel,
-                                         ContinuousTraitDataModel dataModel,
+                                         ContinuousTraitPartialsProvider dataModel,
                                          ConjugateRootTraitPrior rootPrior,
                                          ContinuousRateTransformation rateTransformation,
                                          BranchRateModel rateModel,
@@ -879,7 +877,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         public MultivariateConditionalOnTipsRealizedDelegate(String name, MultivariateTraitTree tree,
                                                              MultivariateDiffusionModel diffusionModel,
-                                                             ContinuousTraitDataModel dataModel,
+                                                             ContinuousTraitPartialsProvider dataModel,
                                                              ConjugateRootTraitPrior rootPrior,
                                                              ContinuousRateTransformation rateTransformation,
                                                              BranchRateModel rateModel,

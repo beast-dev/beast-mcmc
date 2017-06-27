@@ -55,6 +55,10 @@ public class IntegratedFactorTraitDataModel extends ContinuousTraitDataModel {
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            Parameter loadings = (Parameter) xo.getElementFirstChild(LOADINGS);
+            Parameter precision = (Parameter) xo.getElementFirstChild(PRECISION);
+
             return null;
         }
 

@@ -47,13 +47,8 @@ import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
-import dr.math.KroneckerOperation;
-import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -81,7 +76,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
                                             MultivariateDiffusionModel diffusionModel,
-                                            ContinuousTraitDataModel dataModel,
+                                            ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel) {
@@ -90,7 +85,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
                                             MultivariateDiffusionModel diffusionModel,
-                                            ContinuousTraitDataModel dataModel,
+                                            ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel,
@@ -105,7 +100,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         addModel(diffusionModel);
 
         this.dataModel = dataModel;
-        addModel(dataModel);
+        if (dataModel instanceof Model) {
+            addModel((Model) dataModel);
+        }
 
         if (rateModel != null) {
             addModel(rateModel);
@@ -248,7 +245,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return data;
     }
 
-    public ContinuousTraitDataModel getDataModel() { return dataModel; }
+    public ContinuousTraitPartialsProvider getDataModel() { return dataModel; }
 
     public RootProcessDelegate getRootProcessDelegate() {
         return rootProcessDelegate;
@@ -796,7 +793,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private final RootProcessDelegate rootProcessDelegate;
 
-    private final ContinuousTraitDataModel dataModel;
+    private final ContinuousTraitPartialsProvider dataModel;
 
     private final ContinuousDiffusionIntegrator cdi;
 

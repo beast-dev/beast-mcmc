@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
-import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -35,10 +34,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
@@ -95,7 +91,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         System.err.println("Using precisionType == " + precisionType + " for data model.");
 
-        ContinuousTraitDataModel dataModel = new ContinuousTraitDataModel(traitName,
+        ContinuousTraitPartialsProvider dataModel = new ContinuousTraitDataModel(traitName,
                 traitParameter,
                 missingIndices,
                 dim, precisionType);

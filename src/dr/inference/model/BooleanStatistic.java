@@ -32,19 +32,9 @@ package dr.inference.model;
  *
  * @author Andrew Rambaut
  */
-public abstract class BooleanStatistic extends Statistic.Abstract {
+public interface BooleanStatistic extends Statistic {
 	
-	public BooleanStatistic(String name) { super(name); }
-			
-	/** @return 1.0 if the value of the attribute is equal to the testValue or 0.0 otherwise. */
-	public double getStatisticValue(int dim) {
-		if (getBoolean(dim))
-			return 1.0;
-		else
-			return 0.0;
-	}
-	
-	public abstract boolean getBoolean(int dim);
+	boolean getBoolean(int dim);
 	
 }
 

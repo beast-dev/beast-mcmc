@@ -38,7 +38,7 @@ import dr.stats.DiscreteStatistics;
  * @author Alexei Drummond
  * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
-public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
+public class RateStatistic extends TreeStatistic {
 
     public RateStatistic(String name, Tree tree, BranchRateModel branchRateModel, boolean external, boolean internal, String mode) {
         super(name);

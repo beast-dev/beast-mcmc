@@ -26,6 +26,7 @@
 package dr.evomodelxml.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.treemetrics.TreeMetric;
 import dr.evomodel.tree.TreeMetricStatistic;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -45,17 +46,17 @@ public class TreeMetricStatisticParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeMetricStatistic.Method m = TreeMetricStatistic.Method.TOPOLOGY;
-        if (xo.hasAttribute(METHOD)) {
-            final String s = xo.getStringAttribute(METHOD);
-            m = TreeMetricStatistic.Method.valueOf(s.toUpperCase());
-        }
+        TreeMetric m = null;
+//        if (xo.hasAttribute(METHOD)) {
+//            final String s = xo.getStringAttribute(METHOD);
+//            m = TreeMetricStatistic.Method.valueOf(s.toUpperCase());
+//        }
 
-        final String name = xo.getAttribute(Statistic.NAME, xo.hasId() ? xo.getId() : m.name());
+//        final String name = xo.getAttribute(Statistic.NAME, xo.hasId() ? xo.getId() : m.name());
         final Tree target = (Tree) xo.getElementFirstChild(TARGET);
         final Tree reference = (Tree) xo.getElementFirstChild(REFERENCE);
 
-        return new TreeMetricStatistic(name, target, reference, m);
+        return new TreeMetricStatistic("topology", reference, target, m);
     }
 
     // ************************************************************************
@@ -81,8 +82,8 @@ public class TreeMetricStatisticParser extends AbstractXMLObjectParser {
             new StringAttributeRule(Statistic.NAME,
                     "A name for this statistic primarily for the purposes of logging",
                     true),
-            new StringAttributeRule(METHOD, "comparision method ("
-                    + TreeMetricStatistic.methodNames(",") + ")", true),
+//            new StringAttributeRule(METHOD, "comparision method ("
+//                    + TreeMetricStatistic.methodNames(",") + ")", true),
             new ElementRule(TARGET, new XMLSyntaxRule[]{new ElementRule(
                     Tree.class)}),
             new ElementRule(REFERENCE, new XMLSyntaxRule[]{new ElementRule(

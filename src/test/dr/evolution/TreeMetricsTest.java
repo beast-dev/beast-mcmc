@@ -3,6 +3,8 @@ package test.dr.evolution;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.*;
+import dr.evolution.tree.treemetrics.BranchScoreMetric;
+import dr.evolution.tree.treemetrics.SPPathDifferenceMetric;
 import jebl.evolution.treemetrics.BilleraMetric;
 //import jebl.evolution.treemetrics.CladeHeightMetric;
 import jebl.evolution.treemetrics.RobinsonsFouldMetric;
@@ -46,8 +48,7 @@ public class TreeMetricsTest extends TestCase {
             assertEquals(path, 0.7141428, 0.0000001);
             
             /* Branch Score*/
-            double bl = (new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(treeOne),
-            		TreeUtils.asJeblTree(treeTwo)));
+            double bl = (new BranchScoreMetric().getMetric(treeOne, treeTwo));
             System.out.println("bl score = " + bl);
             assertEquals(bl, Math.sqrt(Math.pow(0.5-0.1, 2) + Math.pow(.1, 2) + Math.pow(.1, 2)), 0.0000001);
             

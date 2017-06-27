@@ -46,14 +46,15 @@ public class TreeMetricStatistic extends TreeStatistic {
      * @param name
      * @param focalTree
      */
-    public TreeMetricStatistic(String name, Tree focalTree) {
-        this(name, focalTree, null);
+    public TreeMetricStatistic(String name, Tree focalTree, Tree targetTree) {
+        this(name, focalTree, targetTree, null);
     }
 
-    public TreeMetricStatistic(String name, Tree focalTree, TreeMetric treeMetric) {
+    public TreeMetricStatistic(String name, Tree focalTree, Tree targetTree, TreeMetric treeMetric) {
         super(name);
 
         this.focalTree = focalTree;
+        this.targetTree = targetTree;
         this.treeMetric = treeMetric;
         this.focalNewick = TreeUtils.uniqueNewick(focalTree, focalTree.getRoot());
 
@@ -77,11 +78,11 @@ public class TreeMetricStatistic extends TreeStatistic {
     }
 
     public void setTree(Tree tree) {
-        this.target = tree;
+        this.targetTree = tree;
     }
 
     public Tree getTree() {
-        return target;
+        return targetTree;
     }
 
     public int getDimension() {
@@ -98,15 +99,15 @@ public class TreeMetricStatistic extends TreeStatistic {
             return compareTreesByTopology();
         }
 
-        return treeMetric.getMetric(focalTree, target);
+        return treeMetric.getMetric(focalTree, targetTree);
     }
 
     private double compareTreesByTopology() {
-        final String targetNewick = TreeUtils.uniqueNewick(target, target.getRoot());
+        final String targetNewick = TreeUtils.uniqueNewick(targetTree, targetTree.getRoot());
         return targetNewick.equals(focalNewick) ? 1.0 : 0.0;
     }
 
-    private Tree target = null;
+    private Tree targetTree = null;
 
     private final Tree focalTree;
 

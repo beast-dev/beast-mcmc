@@ -56,7 +56,7 @@ public class TopologyTracer {
     private static final String RFDISTANCE = "RFdistance";
     private static final String BILLERA_METRIC = "BilleraMetric";
     private static final String CLADE_HEIGHT = "cladeHeight";
-    private static final String BRANCH_SCORE_METRIC = "branchScoreMetric";
+    private static final String BRANCH_SCORE_METRIC = "rootedBranchScoreMetric";
     private static final String PATH_DIFFERENCE = "pathDifference";
     private static final String KC_METRIC = "KCmetric";
 
@@ -108,7 +108,7 @@ public class TopologyTracer {
             ArrayList<Double> jeblRFDistances = new ArrayList<Double>();
             ArrayList<Double> billeraMetric = new ArrayList<Double>();
             ArrayList<Double> cladeHeightMetric = new ArrayList<Double>();
-            ArrayList<Double> branchScoreMetric = new ArrayList<Double>();
+            ArrayList<Double> rootedBranchScoreMetric = new ArrayList<Double>();
             ArrayList<Double> pathDifferenceMetric = new ArrayList<Double>();
             ArrayList<ArrayList<Double>> kcMetrics = new ArrayList();
             for (int i = 0; i < lambdaValues.size(); i++) {
@@ -126,7 +126,7 @@ public class TopologyTracer {
                 jeblRFDistances.add(new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree))*2.0);
                 billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
-                branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
                 pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
                 for (int i = 0; i < allKCMetrics.size(); i++) {
                     kcMetrics.get(i).add(allKCMetrics.get(i));
@@ -162,7 +162,7 @@ public class TopologyTracer {
                 timings[2] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
+                rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(tree)));
                 afterTime = System.currentTimeMillis();
                 timings[3] += afterTime - beforeTime;
 
@@ -206,7 +206,7 @@ public class TopologyTracer {
                 writer.write(treeStates.get(i) + "\t");
                 writer.write(jeblRFDistances.get(i) + "\t");
                 writer.write(billeraMetric.get(i) + "\t");
-                writer.write(branchScoreMetric.get(i) + "\t");
+                writer.write(rootedBranchScoreMetric.get(i) + "\t");
                 writer.write(cladeHeightMetric.get(i) + "\t");
                 for (int j = 0; j < lambdaValues.size(); j++) {
                     writer.write(kcMetrics.get(j).get(i) + "\t");
@@ -224,7 +224,7 @@ public class TopologyTracer {
                 progressStream.println("RF distance calculation took " + timings[0]/1000.0 + " seconds.");
                 progressStream.println("Billera metric calculation took " + timings[1]/1000.0 + " seconds.");
                 progressStream.println("Clade height metric calculation took " + timings[2]/1000.0 + " seconds.");
-                progressStream.println("Branch score metric calculation took " + timings[3]/1000.0 + " seconds.");
+                progressStream.println("Rooted branch score metric calculation took " + timings[3]/1000.0 + " seconds.");
                 progressStream.println("Path difference metric (Steel & Penny, 1993) took " + timings[4]/1000.0 + " seconds.");
                 progressStream.println("Path difference metric (Kendall & Colijn, 2015) took " + timings[5]/1000.0 + " seconds.");
             }

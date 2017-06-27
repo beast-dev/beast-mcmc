@@ -89,7 +89,7 @@ public class RootedBranchScoreMetric extends BranchScoreMetric {
             System.out.println("tree 1: " + treeOne);
 
             importer = new NewickImporter("(('A':0.2333369483,'B':0.3468381313):0.5562255983,('C':0.8732210915,('D':0.9124725792,'E':0.1983703848):0.5252404297):0.2000638912)");
-            Tree treeTwo = importer.importNextTree();
+            Tree treeTwo = importer.importTree(treeOne);
             System.out.println("tree 2: " + treeTwo + "\n");
 
             double metric = (new RootedBranchScoreMetric().getMetric(treeOne, treeTwo));

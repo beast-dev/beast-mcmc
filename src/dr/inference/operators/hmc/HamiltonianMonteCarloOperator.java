@@ -26,9 +26,11 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
@@ -100,12 +102,16 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private long count = 0;
 
+    private static final boolean DEBUG = false;
+
     protected double leafFrog() {
 
-        if (count % 10000 == 0) {
-            System.err.println(stepSize);
+        if (DEBUG) {
+            if (count % 5 == 0) {
+                System.err.println(stepSize);
+            }
+            ++count;
         }
-        ++count;
 
         final int dim = gradientProvider.getDimension();
         final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
@@ -118,6 +124,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         leafFropEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
+
+//        int randomSize = 2;
+//        int nSteps = Math.max(this.nSteps + MathUtils.nextInt(2 * randomSize) - randomSize, 1);
+
+        if (DEBUG) {
+            System.err.println("nSteps = " + nSteps);
+        }
 
         for (int i = 0; i < nSteps; i++) { // Leap-frog
 
@@ -145,6 +158,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     @Override
     public void setCoercableParameter(double value) {
+        if (DEBUG) {
+            System.err.println("Setting coercable paramter: " + getCoercableParameter() + " -> " + value);
+        }
         stepSize = Math.exp(value);
     }
 
@@ -215,7 +231,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 for (int j = 0; j < dim; ++j) {
                     parameter.setParameterValueQuietly(j, position[j]);
                 }
-                parameter.fireParameterChangedEvent();
+//                parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
+                parameter.setParameterValueNotifyChangedAll(0, position[0]);
             }
         }
 
@@ -241,7 +258,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             }
 
             @Override
-            public void updateMomentum(double[] position, double[] momentum, double[] gradient, double functionalStepSize) {
+            public void updateMomentum(double[] position, double[] momentum, double[] gradient,
+                                       double functionalStepSize) {
 
                 gradient = transform.updateGradientLogDensity(gradient, unTransformedPosition,
                         0, unTransformedPosition.length);

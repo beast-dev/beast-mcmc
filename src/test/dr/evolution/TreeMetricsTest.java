@@ -49,7 +49,7 @@ public class TreeMetricsTest extends TestCase {
             double bl = (new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(treeOne),
             		TreeUtils.asJeblTree(treeTwo)));
             System.out.println("bl score = " + bl);
-            assertEquals(bl, 0.3, 0.0000001);
+            assertEquals(bl, Math.sqrt(Math.pow(0.5-0.1, 2) + Math.pow(.1, 2) + Math.pow(.1, 2)), 0.0000001);
             
 
         } catch(Importer.ImportException ie) {

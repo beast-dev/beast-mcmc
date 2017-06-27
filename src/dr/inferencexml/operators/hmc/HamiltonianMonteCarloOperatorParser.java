@@ -27,10 +27,12 @@ package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
+import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
+import dr.inferencexml.model.MaskedParameterParser;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -48,6 +50,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public final static String STEP_SIZE = "stepSize";
     public final static String DRAW_VARIANCE = "drawVariance";
     public static final String MODE = "mode";
+    public static final String MASKING = MaskedParameterParser.MASKING;
 
     @Override
     public String getParserName() {
@@ -63,19 +66,26 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
         int mode = xo.getAttribute(MODE, 0);
 
+
+        CoercionMode coercionMode = CoercionMode.parseMode(xo);
+
+
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        Transform transform = null;
+//        Transform transform = null;
+//
+//        if (parameter == null) {
+//
+//            Transform.MultivariableTransformWithParameter collection =
+//                    (Transform.MultivariableTransformWithParameter) xo.getChild(Transform.MultivariableTransformWithParameter.class);
+//            parameter = collection.getParameter();
+//            transform = collection;
+//        }
 
-        if (parameter == null) {
-
-            Transform.Collection collection =
-                    (Transform.Collection) xo.getChild(Transform.Collection.class);
-            parameter = collection.getParameter();
-            transform = collection;
-        }
+        Transform transform = (Transform.MultivariableTransformWithParameter)
+                xo.getChild(Transform.MultivariableTransformWithParameter.class);
 
         if (derivative.getDimension() != parameter.getDimension()) {
             throw new XMLParseException("Gradient (" + derivative.getDimension() +
@@ -83,11 +93,11 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         }
 
         if (mode == 0) {
-            return new HamiltonianMonteCarloOperator(CoercionMode.DEFAULT, weight, derivative, parameter, transform, stepSize,
-                    nSteps, drawVariance);
+            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
+                    stepSize, nSteps, drawVariance);
         } else {
-            return new NoUTurnOperator(CoercionMode.DEFAULT, weight, derivative, parameter, stepSize,
-                    nSteps, drawVariance);
+            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,
+                    stepSize, nSteps, drawVariance);
         }
     }
 
@@ -101,12 +111,14 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
+            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newIntegerRule(MODE, true),
-            new XORRule(
-                    new ElementRule(Parameter.class),
-                    new ElementRule(Transform.Collection.class)
-            ),
-
+//            new XORRule(
+//                    new ElementRule(Parameter.class),
+//                    new ElementRule(Transform.MultivariableTransformWithParameter.class)
+//            ),
+            new ElementRule(Parameter.class),
+            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
     };
 

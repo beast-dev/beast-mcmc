@@ -174,6 +174,9 @@ public interface Transform {
         }
     }
 
+    abstract class MultivariableTransformWithParameter extends MultivariableTransform {
+        abstract public Parameter getParameter();
+    }
 
     class LogTransform extends UnivariableTransform {
 
@@ -500,7 +503,86 @@ public interface Transform {
         private final UnivariableTransform inner;
     }
 
-    class Collection extends MultivariableTransform {
+    
+
+    class Array extends MultivariableTransformWithParameter {
+
+          private final List<Transform> array;
+          private final Parameter parameter;
+
+          public Array(List<Transform> array, Parameter parameter) {
+              this.parameter = parameter;
+              this.array = array;
+
+//              if (parameter.getDimension() != array.size()) {
+//                  throw new IllegalArgumentException("Dimension mismatch");
+//              }
+          }
+
+          public Parameter getParameter() { return parameter; }
+
+          @Override
+          public double[] transform(double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).transform(values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public double[] inverse(double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).inverse(values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public double[] gradientInverse(double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).gradientInverse(values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public double[] updateGradientLogDensity(double[] gradient, double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).updateGradientLogDensity(gradient[i], values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public String getTransformName() {
+              return "array";
+          }
+
+          @Override
+          public double getLogJacobian(double[] values, int from, int to) {
+
+              double sum = 0.0;
+
+              for (int i = from; i < to; ++i) {
+                  sum += array.get(i).getLogJacobian(values[i]);
+              }
+              return sum;
+          }
+    }
+
+    class Collection extends MultivariableTransformWithParameter {
 
         private final List<ParsedTransform> segments;
         private final Parameter parameter;
@@ -528,11 +610,10 @@ public interface Transform {
                 contiguous.add(new ParsedTransform(NONE, current, parameter.getDimension()));
             }
 
-
-            System.err.println("Segments:");
-            for (ParsedTransform transform : contiguous) {
-                System.err.println(transform.transform.getTransformName() + " " + transform.start + " " + transform.end);
-            }
+//            System.err.println("Segments:");
+//            for (ParsedTransform transform : contiguous) {
+//                System.err.println(transform.transform.getTransformName() + " " + transform.start + " " + transform.end);
+//            }
 //            System.exit(-1);
 
             return contiguous;
@@ -691,6 +772,7 @@ public interface Transform {
     NoTransform NONE = new NoTransform();
     LogTransform LOG = new LogTransform();
     NegateTranform NEGATE = new NegateTranform();
+    Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTranform());
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
@@ -699,6 +781,7 @@ public interface Transform {
         NONE("none", new NoTransform()),
         LOG("log", new LogTransform()),
         NEGATE("negate", new NegateTranform()),
+        LOG_NEGATE("log-negate", new Compose(new LogTransform(), new NegateTranform())),
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
         LOGIT("logit", new LogitTransform()),
         FISHER_Z("fisherZ",new FisherZTransform());

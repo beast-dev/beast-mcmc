@@ -42,7 +42,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.PARTIAL;
+import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsRealizedDelegate.PARTIAL;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.MISSING;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 

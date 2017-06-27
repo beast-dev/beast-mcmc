@@ -26,6 +26,7 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
+import dr.inference.model.Statistic;
 
 /**
  * An interface for statistics on trees
@@ -35,10 +36,14 @@ import dr.evolution.tree.Tree;
  * @author Andrew Rambaut
  *
  */
-public interface TreeStatistic {
+public abstract class TreeStatistic extends Statistic.Abstract {
        
 	public static final String TREE = "tree";
 
-	void setTree(Tree tree);
-	Tree getTree();
+	public TreeStatistic(String name) {
+		super(name);
+	}
+
+	public abstract void setTree(Tree tree);
+	public abstract Tree getTree();
 }

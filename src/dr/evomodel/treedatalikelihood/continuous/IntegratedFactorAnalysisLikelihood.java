@@ -306,6 +306,15 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return det;
     }
 
+    private void makeCompletedUnobserved(final DenseMatrix64F matrix, double diagonal) {
+        for (int row = 0; row < numFactors; ++row) {
+            for (int col = 0; col < numFactors; ++col) {
+                double x = (row == col) ? diagonal : 0.0;
+                matrix.unsafe_set(row, col, x);
+            }
+        }
+    }
+
     private void computePartialsAndRemainders() {
         
         final DenseMatrix64F precision = new DenseMatrix64F(dimTrait, dimTrait);
@@ -314,26 +323,37 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         int partialsOffset = 0;
         for (int taxon = 0; taxon < numTaxa; ++taxon) {
 
-            computePrecisionForTaxon(precision, taxon);
-            InversionResult ci = safeInvert(precision, variance, true);
-            // store in precision and variance
-            unwrap(precision, partials, partialsOffset + dimTrait);
-            unwrap(variance, partials, partialsOffset + dimTrait + dimTrait * dimTrait);
-
             // Work with mean in-place
             final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
-            fillInMeanForTaxon(mean, variance, taxon);
 
-            final double factorDeterminant = ci.getDeterminant();
-            final double traitDeterminant = getTraitDeterminant(taxon);
+            computePrecisionForTaxon(precision, taxon);
+            InversionResult ci = safeInvert(precision, variance, true);
 
-            final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
-            final double traitInnerProduct = computeTraitInnerProduct(taxon);
+            double constant;
+            if (ci.getDeterminant() == 0.0) {
 
-            final double constant = 0.5 * (Math.log(traitDeterminant) - Math.log(factorDeterminant))
-                    - LOG_SQRT_2_PI * (ci.getEffectiveDimension() - numFactors)
-                    - 0.5 * (traitInnerProduct - factorInnerProduct);
-                    
+                makeCompletedUnobserved(precision, 0);
+                makeCompletedUnobserved(variance, Double.POSITIVE_INFINITY);
+                constant = 0.0;
+
+            } else {
+
+                fillInMeanForTaxon(mean, variance, taxon);
+
+                final double factorDeterminant = ci.getDeterminant();
+                final double traitDeterminant = getTraitDeterminant(taxon);
+
+                final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
+                final double traitInnerProduct = computeTraitInnerProduct(taxon);
+
+                constant = 0.5 * (Math.log(traitDeterminant) - Math.log(factorDeterminant))
+                        - LOG_SQRT_2_PI * (ci.getEffectiveDimension() - numFactors)
+                        - 0.5 * (traitInnerProduct - factorInnerProduct);
+            }
+
+            // store in precision, variance and normalization constant
+            unwrap(precision, partials, partialsOffset + dimTrait);
+            unwrap(variance, partials, partialsOffset + dimTrait + dimTrait * dimTrait);
             normalizationConstants[taxon] = constant;
 
             partialsOffset += dimPartial;

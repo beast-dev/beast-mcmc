@@ -140,7 +140,7 @@ public class Clade implements Comparable<Clade> {
 
         } else {
             bits.or(getClades(clades, tree, tree.getChild(node, 0)));
-            bits.or(getClades(clades, tree, tree.getChild(node, 0)));
+            bits.or(getClades(clades, tree, tree.getChild(node, 1)));
 
             clades.add(new Clade(bits, tree.getNodeHeight(node)));
         }

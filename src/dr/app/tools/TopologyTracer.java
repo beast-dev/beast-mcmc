@@ -112,7 +112,7 @@ public class TopologyTracer {
                 kcMetrics.add(new ArrayList<Double>());
             }
 
-            SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
+            SteelPennyPathDifferenceMetric SPPathFocal = new SteelPennyPathDifferenceMetric(focalTree);
 //            KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
 //            List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
 
@@ -120,8 +120,8 @@ public class TopologyTracer {
                 //take into account first distance of focal tree to itself
                 treeStates.add((long) 0);
 
-                rFDistances.add(new RobinsonsFouldMetric().getMetric(focalTree, focalTree)*2.0);
-                billeraMetric.add(new BilleraMetric().getMetric(focalTree, focalTree));
+                rFDistances.add(new RobinsonFouldsMetric().getMetric(focalTree, focalTree)*2.0);
+//                billeraMetric.add(new BilleraMetric().getMetric(focalTree, focalTree));
                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(focalTree, focalTree));
 //                branchScoreMetric.add(new BranchScoreMetric().getMetric(focalTree, focalTree));
                 rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(focalTree, focalTree));
@@ -145,12 +145,12 @@ public class TopologyTracer {
 
                 //BEAST/JEBL reports half the RF distance, corrected here
                 beforeTime = System.currentTimeMillis();
-                rFDistances.add(new RobinsonsFouldMetric().getMetric(focalTree, tree)*2.0);
+                rFDistances.add(new RobinsonFouldsMetric().getMetric(focalTree, tree)*2.0);
                 afterTime = System.currentTimeMillis();
                 timings[0] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                billeraMetric.add(new BilleraMetric().getMetric(focalTree, tree));
+//                billeraMetric.add(new BilleraMetric().getMetric(focalTree, tree));
                 afterTime = System.currentTimeMillis();
                 timings[1] += afterTime - beforeTime;
 

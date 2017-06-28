@@ -1,7 +1,6 @@
 package dr.evolution.tree.treemetrics;
 
 import dr.evolution.tree.Clade;
-import dr.evolution.tree.CladeSet;
 import dr.evolution.tree.Tree;
 
 import java.util.*;
@@ -12,9 +11,9 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class RobinsonsFouldMetric implements TreeMetric {
+public class RobinsonFouldsMetric implements TreeMetric {
 
-	public RobinsonsFouldMetric() {
+	public RobinsonFouldsMetric() {
 
 	}
 
@@ -28,7 +27,12 @@ public class RobinsonsFouldMetric implements TreeMetric {
 
 		clades1.removeAll(clades2);
 
+		// Technically RF would be twice this because it doesn't assume
+		// the same set of tips in both trees (so may have a different
+		// number of clades missing from each).
 		return clades1.size();
 	}
 
+	// todo - add in Citable:
+	// Robinson, D. R.; Foulds, L. R. (1981). "Comparison of phylogenetic trees". Mathematical Biosciences. 53: 131–147. doi:10.1016/0025-5564(81)90043-2.
 }

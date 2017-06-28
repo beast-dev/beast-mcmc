@@ -234,16 +234,16 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return precisionType;
     }
 
-    private double[] getTipObservations() {
-        final double[] data = new double[numTraits * dimTrait * tipCount];
-
-        for (int tip = 0; tip < tipCount; ++tip) {
-            double[] tipData = dataModel.getTipObservation(tip, precisionType);
-            System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
-        }
-
-        return data;
-    }
+//    private double[] getTipObservations() {
+//        final double[] data = new double[numTraits * dimTrait * tipCount];
+//
+//        for (int tip = 0; tip < tipCount; ++tip) {
+//            double[] tipData = dataModel.getTipObservation(tip, precisionType);
+//            System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
+//        }
+//
+//        return data;
+//    }
 
     public ContinuousTraitPartialsProvider getDataModel() { return dataModel; }
 
@@ -520,9 +520,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             partialBufferHelper.flipOffset(tipIndex);
         }
 
-        final double[] tipPartial = forceCompletelyObserved ?
-                dataModel.getTipPartial(tipIndex, true) :
-                dataModel.getTipPartial(tipIndex);
+//        final double[] tipPartial = forceCompletelyObserved ?
+//                dataModel.getTipPartial(tipIndex, true) :
+//                dataModel.getTipPartial(tipIndex);
+        final double[] tipPartial = dataModel.getTipPartial(tipIndex, forceCompletelyObserved);
 
 //        if (precisionType == PrecisionType.SCALAR) {
 //            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial));

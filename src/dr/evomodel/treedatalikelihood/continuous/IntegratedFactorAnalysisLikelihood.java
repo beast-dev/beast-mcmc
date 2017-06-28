@@ -89,21 +89,24 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
+        if (fullyObserved) {
+            throw new IllegalArgumentException("Unsure what these values should be"); // TODO
+        }
         checkStatistics();
         throw new RuntimeException("To implement");
     }
 
-    @Override
-    public double[] getTipPartial(int taxonIndex) {
-        checkStatistics();
-        throw new RuntimeException("To implement");
-    }
+//    @Override
+//    public double[] getTipPartial(int taxonIndex) {
+//        checkStatistics();
+//        throw new RuntimeException("To implement");
+//    }
 
-    @Override
-    public double[] getTipObservation(int taxonIndex, PrecisionType precisionType) {
-        checkStatistics();
-        throw new RuntimeException("To implement");
-    }
+//    @Override
+//    public double[] getTipObservation(int taxonIndex, PrecisionType precisionType) {
+//        checkStatistics();
+//        throw new RuntimeException("To implement");
+//    }
 
     @Override
     public List<Integer> getMissingIndices() {

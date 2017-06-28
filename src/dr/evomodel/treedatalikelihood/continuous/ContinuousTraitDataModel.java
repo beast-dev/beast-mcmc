@@ -170,25 +170,20 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
             final double precision = precisionType.getObservedPrecisionValue(false);
 
             double[] tipPartial = getTipPartial(taxonIndex, precisionType);
-//            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial) + "\n");
 
             for (int i = 0; i < numTraits; ++i) {
                 precisionType.fillPrecisionInPartials(tipPartial, i * offsetInc, 0, precision, dimTrait);
             }
 
-//            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial) + "\n");
-//            System.err.println(new dr.math.matrixAlgebra.Vector(getTipPartial(taxonIndex)) + "\n");
-//
-//            System.exit(-1);
             return tipPartial;
         } else {
             return getTipPartial(taxonIndex, precisionType);
         }
     }
 
-    public double[] getTipPartial(int taxonIndex) {
-        return getTipPartial(taxonIndex, false);
-    }
+//    public double[] getTipPartial(int taxonIndex) {
+//        return getTipPartial(taxonIndex, false);
+//    }
 
     private double[] getTipPartial(int taxonIndex, final PrecisionType precisionType) {
 

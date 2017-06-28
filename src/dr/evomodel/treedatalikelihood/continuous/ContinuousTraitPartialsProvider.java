@@ -46,9 +46,9 @@ public interface ContinuousTraitPartialsProvider {
 
     double[] getTipPartial(int taxonIndex, boolean fullyObserved);
 
-    double[] getTipPartial(int taxonIndex);
+//    double[] getTipPartial(int taxonIndex);
 
-    double[] getTipObservation(int taxonIndex, final PrecisionType precisionType);
+//    double[] getTipObservation(int taxonIndex, final PrecisionType precisionType);
 
     List<Integer> getMissingIndices();
 

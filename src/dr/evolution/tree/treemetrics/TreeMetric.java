@@ -1,6 +1,10 @@
 package dr.evolution.tree.treemetrics;
 
+import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
+
+import java.io.IOException;
 
 /**
  * @author Andrew Rambaut

@@ -121,7 +121,7 @@ public class TopologyTracer {
                 treeStates.add((long) 0);
 
                 rFDistances.add(new RobinsonFouldsMetric().getMetric(focalTree, focalTree)*2.0);
-                billeraMetric.add(new BilleraMetric().getMetric(focalTree, focalTree));
+//                billeraMetric.add(new BilleraMetric().getMetric(focalTree, focalTree));
                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(focalTree, focalTree));
 //                branchScoreMetric.add(new BranchScoreMetric().getMetric(focalTree, focalTree));
                 rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(focalTree, focalTree));
@@ -150,7 +150,7 @@ public class TopologyTracer {
                 timings[0] += afterTime - beforeTime;
 
                 beforeTime = System.currentTimeMillis();
-                billeraMetric.add(new BilleraMetric().getMetric(focalTree, tree));
+//                billeraMetric.add(new BilleraMetric().getMetric(focalTree, tree));
                 afterTime = System.currentTimeMillis();
                 timings[1] += afterTime - beforeTime;
 

@@ -30,10 +30,15 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
+import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
 
 /**
  * @author Marc A. Suchard
@@ -51,13 +56,15 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         this.traitParameter = traitParameter;
         this.loadings = loadings;
-        this.traitPrecision = traitPrecision;
-        this.missingIndices = missingIndices;
+        this.traitPrecision = traitPrecision; // TODO Generalize for non-diagonal precision
+//        this.missingIndices = missingIndices;
 
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
         this.dimPartial =  dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
-        this.numFactors = loadings.getRowDimension(); // TODO Confirm this is not column-dimension!
+        this.numFactors = loadings.getRowDimension();
+
+        assert(dimTrait == loadings.getColumnDimension());
 
         addVariable(traitParameter);
         addVariable(loadings);
@@ -92,8 +99,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (fullyObserved) {
             throw new IllegalArgumentException("Unsure what these values should be"); // TODO
         }
+
         checkStatistics();
-        throw new RuntimeException("To implement");
+
+        double[] partial = new double[dimPartial];
+        System.arraycopy(partials, taxonIndex * dimPartial, partial, 0, dimPartial);
+        return partial;
     }
 
 //    @Override
@@ -199,20 +210,70 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private void setupStatistics() {
         if (partials == null) {
             partials = new double[numTaxa * dimPartial];
+            storedPartials = new double[numTaxa * dimPartial];
         }
 
         if (remainders == null) {
             remainders = new double[numTaxa];
+            storedRemainders = new double[numTaxa];
         }
 
         computePartialsAndRemainders();
     }
 
+
+    private void fillPrecisionForTaxon(final DenseMatrix64F precision, final int taxon) {
+
+        final double[] observed = observedIndicators[taxon];
+
+        // Compute L D_i \Gamma L^t   // TODO Generalize for non-diagonal \Gamma
+        for (int row = 0; row < numFactors; ++row) {
+            for (int col = 0; col < numFactors; ++col) {
+                double sum = 0;
+                for (int k = 0; k < dimTrait; ++k) {
+                    sum += loadings.getParameterValue(row, k) *
+                            observed[k] * traitPrecision.getParameterValue(k) *
+                            loadings.getParameterValue(col, k);
+                }
+                precision.unsafe_set(row, col, sum);
+            }
+        }
+    }
+
+    private double getTraitDeterminant(final int taxon) {
+
+        final double[] observed = observedIndicators[taxon];
+
+        // Compute det( D_i \Gamma ) // TODO Generalize for non-diagonal \Gamma
+        double det = 1.0;
+        for (int k = 0; k < dimTrait; ++k) {
+            if (observed[k] == 1.0) {
+                det *= traitPrecision.getParameterValue(k);
+            }
+        }
+        return det;
+    }
+
     private void computePartialsAndRemainders() {
+        
+        final DenseMatrix64F precision = new DenseMatrix64F(dimTrait, dimTrait);
+        final DenseMatrix64F variance = new DenseMatrix64F(dimTrait, dimTrait);
+
         int partialsOffset = 0;
         for (int taxon = 0; taxon < numTaxa; ++taxon) {
 
-            // TODO Fill in partial means, precisions, (maybe?) variances and normalization constants
+            fillPrecisionForTaxon(precision, taxon);
+            InversionResult ci = safeInvert(precision, variance, true);
+
+            final double factorDeterminant = ci.getDeterminant();
+            final double traitDeterminant = getTraitDeterminant(taxon);
+
+            // TODO Fill in partial mean starting at partials[partialsOffset]
+
+            unwrap(precision, partials, partialsOffset + dimTrait);
+            unwrap(variance, partials, partialsOffset + dimTrait + dimTrait * dimTrait);
+
+            // TODO Fill in normalization constant into remainder[taxon]
 
             partialsOffset += dimPartial;
         }
@@ -276,7 +337,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final CompoundParameter traitParameter;
     private final MatrixParameterInterface loadings;
     private final Parameter traitPrecision;
-    private final List<Integer> missingIndices;
+//    private final List<Integer> missingIndices;
 
     private final double[][] observedIndicators;
     private final int[] observedDimensions;

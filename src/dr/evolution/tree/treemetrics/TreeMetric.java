@@ -7,8 +7,27 @@ import dr.evolution.tree.Tree;
  * @version $Id$
  */
 public interface TreeMetric {
-
     double getMetric(Tree tree1, Tree tree2);
+
+    enum Types {
+        ROBINSON_FOULDS("Robinson-Foulds"),
+        BRANCH_SCORE("branch score"),
+        ROOTED_BRANCH_SCORE("rooted branch score"),
+        CLADE_HEIGHT("clade height"),
+        KENDALL_COLIJN("Kendall-Colijn path difference"),
+        STEEL_PENNY("Steel-Penny path difference");
+
+        Types(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
+    }
 
     class Utils {
         static void checkTreeTaxa(Tree tree1, Tree tree2) {

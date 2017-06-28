@@ -40,7 +40,7 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  * @author Guy Baele
  * Path difference metric according to Kendall & Colijn (2015)
  */
-public class KCPathDifferenceMetric implements TreeMetric {
+public class KendallColijnPathDifferenceMetric implements TreeMetric {
 
     private Tree focalTree;
     private int dim;
@@ -48,13 +48,13 @@ public class KCPathDifferenceMetric implements TreeMetric {
     private final boolean fixedFocalTree;
     private final double lambda;
 
-    public KCPathDifferenceMetric(double lambda) {
+    public KendallColijnPathDifferenceMetric(double lambda) {
         this.lambda = lambda;
 
         this.fixedFocalTree = false;
     }
 
-    public KCPathDifferenceMetric(double lambda, Tree focalTree) {
+    public KendallColijnPathDifferenceMetric(double lambda, Tree focalTree) {
         this.lambda = lambda;
 
         this.focalTree = focalTree;
@@ -392,9 +392,9 @@ public class KCPathDifferenceMetric implements TreeMetric {
             System.out.println();
 
             double metrics[] = new double[] {
-                    (new KCPathDifferenceMetric(0.0).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(1.0).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.0).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(1.0).getMetric(treeOne, treeTwo)),
             };
 
             System.out.println("Paired trees:");
@@ -405,9 +405,9 @@ public class KCPathDifferenceMetric implements TreeMetric {
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree
             metrics = new double[] {
-                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
             };
 
             System.out.println("Focal trees:");
@@ -431,9 +431,9 @@ public class KCPathDifferenceMetric implements TreeMetric {
             //lambda = 1.0 should yield: sqrt(2.96) = 1.7204650534085252911
 
             metrics = new double[] {
-                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
             };
 
             System.out.println("Paired trees:");
@@ -444,9 +444,9 @@ public class KCPathDifferenceMetric implements TreeMetric {
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree
             metrics = new double[] {
-                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
-                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
+                    (new KendallColijnPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
             };
 
             System.out.println("Focal trees:");
@@ -465,7 +465,7 @@ public class KCPathDifferenceMetric implements TreeMetric {
 
             long startTime = System.currentTimeMillis();
             for (int i = 0; i < 1000000; i++) {
-                new KCPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo);
+                new KendallColijnPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo);
             }
             System.out.println("New algorithm, 1M reps: " + (System.currentTimeMillis() - startTime) + " ms");
 

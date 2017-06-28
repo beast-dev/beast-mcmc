@@ -12,9 +12,9 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class RobinsonsFouldMetric implements TreeMetric {
+public class RobinsonFouldsMetric implements TreeMetric {
 
-	public RobinsonsFouldMetric() {
+	public RobinsonFouldsMetric() {
 
 	}
 

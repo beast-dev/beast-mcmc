@@ -42,18 +42,18 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  * @author Andrew Rambaut
  * Path difference metric according to Steel & Penny (1993)
  */
-public class SPPathDifferenceMetric implements TreeMetric {
+public class SteelPennyPathDifferenceMetric implements TreeMetric {
 
     private Tree focalTree;
     private int dim;
     private double[] focalPath;
     private final boolean fixedFocalTree;
 
-    public SPPathDifferenceMetric() {
+    public SteelPennyPathDifferenceMetric() {
         this.fixedFocalTree = false;
     }
 
-    public SPPathDifferenceMetric(Tree focalTree) {
+    public SteelPennyPathDifferenceMetric(Tree focalTree) {
         this.focalTree = focalTree;
         this.fixedFocalTree = true;
         this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
@@ -160,13 +160,13 @@ public class SPPathDifferenceMetric implements TreeMetric {
             Tree treeTwo = importer.importNextTree();
             System.out.println("tree 2: " + treeTwo + "\n");
 
-            double metric = (new SPPathDifferenceMetric().getMetric(treeOne, treeTwo));
+            double metric = (new SteelPennyPathDifferenceMetric().getMetric(treeOne, treeTwo));
 
             System.out.println("path difference = " + metric);
 
 
             //Additional test for comparing a collection of trees against a (fixed) focal tree
-            SPPathDifferenceMetric fixed = new SPPathDifferenceMetric(treeOne);
+            SteelPennyPathDifferenceMetric fixed = new SteelPennyPathDifferenceMetric(treeOne);
             metric = fixed.getMetric(treeOne, treeTwo);
 
             System.out.println("path difference = " + metric);

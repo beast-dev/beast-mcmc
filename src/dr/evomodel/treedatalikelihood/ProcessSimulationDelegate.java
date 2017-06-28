@@ -36,6 +36,7 @@ import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -44,7 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.*;
+import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * ProcessSimulationDelegate - interface for a plugin delegate for data simulation on a tree.
@@ -1063,7 +1064,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                         final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
                         CommonOps.add(cP0, cP1, cP2);
 
-                        final ContinuousDiffusionIntegrator.Multivariate.InversionResult cc2 = safeInvert(cP2, cV2, false);
+                        final InversionResult cc2 = safeInvert(cP2, cV2, false);
                         double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
 
                         MultivariateNormalDistribution.nextMultivariateNormalCholesky(
@@ -1135,7 +1136,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
 
             CommonOps.add(P0, P1, P2);
-            final ContinuousDiffusionIntegrator.Multivariate.InversionResult c2 = safeInvert(P2, V2, false);
+            final InversionResult c2 = safeInvert(P2, V2, false);
             weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
             double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);

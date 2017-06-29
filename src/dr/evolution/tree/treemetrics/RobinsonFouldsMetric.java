@@ -12,6 +12,7 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  * @version $Id$
  */
 public class RobinsonFouldsMetric implements TreeMetric {
+	public static Type TYPE = Type.ROBINSON_FOULDS;
 
 	public RobinsonFouldsMetric() {
 
@@ -31,6 +32,11 @@ public class RobinsonFouldsMetric implements TreeMetric {
 		// the same set of tips in both trees (so may have a different
 		// number of clades missing from each).
 		return clades1.size();
+	}
+
+	@Override
+	public String toString() {
+		return TYPE.toString();
 	}
 
 	// todo - add in Citable:

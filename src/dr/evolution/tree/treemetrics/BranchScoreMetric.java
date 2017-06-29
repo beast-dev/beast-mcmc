@@ -42,6 +42,8 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  *
  */
 public class BranchScoreMetric implements TreeMetric {
+    public static Type TYPE = Type.BRANCH_SCORE;
+
     private Tree focalTree;
     private List<Clade> focalClades;
     private final boolean fixedFocalTree;
@@ -147,6 +149,11 @@ public class BranchScoreMetric implements TreeMetric {
         tmpBits.xor(child.getBits());
 
         return tmpBits.cardinality() < parent.getSize();
+    }
+
+    @Override
+    public String toString() {
+        return TYPE.toString();
     }
 
     BitSet tmpBits = new BitSet();

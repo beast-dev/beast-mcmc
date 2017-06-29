@@ -38,10 +38,12 @@ import dr.util.Version;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
  * @author Guy Baele
+ * @author Andrew Rambaut
  */
 public class TopologyTracer {
 
@@ -51,10 +53,9 @@ public class TopologyTracer {
 
     private static final String STATE = "state";
     private static final String RFDISTANCE = "RFdistance";
-    private static final String BILLERA_METRIC = "BilleraMetric";
     private static final String CLADE_HEIGHT = "cladeHeight";
     private static final String BRANCH_SCORE_METRIC = "rootedBranchScoreMetric";
-    private static final String PATH_DIFFERENCE = "pathDifference";
+    private static final String PATH_DIFFERENCE = "SteelPenny";
     private static final String KC_METRIC = "KCmetric";
 
     // output to stdout
@@ -99,36 +100,34 @@ public class TopologyTracer {
                 focalTree = importer.importNextTree();
             }
 
-            ArrayList<Long> treeStates = new ArrayList<Long>();
-            ArrayList<String> treeIds = new ArrayList<String>();
-
-            ArrayList<Double> rFDistances = new ArrayList<Double>();
-            ArrayList<Double> billeraMetric = new ArrayList<Double>();
-            ArrayList<Double> cladeHeightMetric = new ArrayList<Double>();
-            ArrayList<Double> rootedBranchScoreMetric = new ArrayList<Double>();
-            ArrayList<Double> pathDifferenceMetric = new ArrayList<Double>();
-            ArrayList<ArrayList<Double>> kcMetrics = new ArrayList();
-            for (int i = 0; i < lambdaValues.size(); i++) {
-                kcMetrics.add(new ArrayList<Double>());
+            List<TreeMetric> treeMetrics = new ArrayList<TreeMetric>();
+            treeMetrics.add(new RobinsonFouldsMetric());
+            treeMetrics.add(new CladeHeightMetric());
+            treeMetrics.add(new RootedBranchScoreMetric());
+            treeMetrics.add(new SteelPennyPathDifferenceMetric());
+            for (double lambda:  lambdaValues) {
+                treeMetrics.add(new KendallColijnPathDifferenceMetric(lambda));
             }
 
-            SteelPennyPathDifferenceMetric SPPathFocal = new SteelPennyPathDifferenceMetric(focalTree);
-//            KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
-//            List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
+
+            List<Long> treeStates = new ArrayList<Long>();
+            List<String> treeIds = new ArrayList<String>();
+            List<List<Double>> metricValues = new ArrayList<List<Double>>();
+            for (TreeMetric treeMetric : treeMetrics) {
+                metricValues.add(new ArrayList<Double>());
+            }
 
             if (!userProvidedTree) {
                 //take into account first distance of focal tree to itself
+                treeIds.add(focalTree.getId());
                 treeStates.add((long) 0);
 
-                rFDistances.add(new RobinsonFouldsMetric().getMetric(focalTree, focalTree)*2.0);
-//                billeraMetric.add(new BilleraMetric().getMetric(focalTree, focalTree));
-                cladeHeightMetric.add(new CladeHeightMetric().getMetric(focalTree, focalTree));
-//                branchScoreMetric.add(new BranchScoreMetric().getMetric(focalTree, focalTree));
-                rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(focalTree, focalTree));
-                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree, focalTree));
-//                for (int i = 0; i < allKCMetrics.size(); i++) {
-//                    kcMetrics.get(i).add(allKCMetrics.get(i));
-//                }
+                int i = 0;
+                for (TreeMetric treeMetric : treeMetrics) {
+                    metricValues.get(i).add(treeMetric.getMetric(focalTree, focalTree));
+                    i++;
+                }
+
             }
 
             int numberOfTrees = 1;
@@ -143,41 +142,11 @@ public class TopologyTracer {
                 treeIds.add(tree.getId());
                 treeStates.add(Long.parseLong(tree.getId().split("_")[1]));
 
-                //BEAST/JEBL reports half the RF distance, corrected here
-                beforeTime = System.currentTimeMillis();
-                rFDistances.add(new RobinsonFouldsMetric().getMetric(focalTree, tree)*2.0);
-                afterTime = System.currentTimeMillis();
-                timings[0] += afterTime - beforeTime;
-
-                beforeTime = System.currentTimeMillis();
-//                billeraMetric.add(new BilleraMetric().getMetric(focalTree, tree));
-                afterTime = System.currentTimeMillis();
-                timings[1] += afterTime - beforeTime;
-
-                beforeTime = System.currentTimeMillis();
-                cladeHeightMetric.add(new CladeHeightMetric().getMetric(focalTree, tree));
-                afterTime = System.currentTimeMillis();
-                timings[2] += afterTime - beforeTime;
-
-                beforeTime = System.currentTimeMillis();
-                rootedBranchScoreMetric.add(new RootedBranchScoreMetric().getMetric(focalTree, tree));
-                afterTime = System.currentTimeMillis();
-                timings[3] += afterTime - beforeTime;
-
-                beforeTime = System.currentTimeMillis();
-                //pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, tree));
-                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree, tree));
-                afterTime = System.currentTimeMillis();
-                timings[4] += afterTime - beforeTime;
-
-                beforeTime = System.currentTimeMillis();
-                //allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
-//                allKCMetrics = KCPathFocal.getMetric(focalTree, tree, lambdaValues);
-//                for (int i = 0; i < allKCMetrics.size(); i++) {
-//                    kcMetrics.get(i).add(allKCMetrics.get(i));
-//                }
-                afterTime = System.currentTimeMillis();
-                timings[5] += afterTime - beforeTime;
+                int i = 0;
+                for (TreeMetric treeMetric : treeMetrics) {
+                    metricValues.get(i).add(treeMetric.getMetric(focalTree, tree));
+                    i++;
+                }
 
                 numberOfTrees++;
 
@@ -193,23 +162,18 @@ public class TopologyTracer {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
             BeastVersion version = new BeastVersion();
             writer.write("# BEAST " + version.getVersionString() + "\n");
-            writer.write(STATE + "\t" + RFDISTANCE + "\t" + BILLERA_METRIC + "\t" +
-                    BRANCH_SCORE_METRIC + "\t" + CLADE_HEIGHT + "\t");
-            for (Double l : lambdaValues) {
-                writer.write(KC_METRIC + "-" + l + "\t");
+            writer.write(STATE);
+            for (TreeMetric treeMetric : treeMetrics) {
+                writer.write("\t" + treeMetric);
             }
-            writer.write(PATH_DIFFERENCE + "\n");
+            writer.write("\n");
 
             for (int i = 0; i < treeStates.size(); i++) {
-                writer.write(treeStates.get(i) + "\t");
-                writer.write(rFDistances.get(i) + "\t");
-                writer.write(billeraMetric.get(i) + "\t");
-                writer.write(rootedBranchScoreMetric.get(i) + "\t");
-                writer.write(cladeHeightMetric.get(i) + "\t");
-                for (int j = 0; j < lambdaValues.size(); j++) {
-                    writer.write(kcMetrics.get(j).get(i) + "\t");
+                writer.write(Long.toString(treeStates.get(i)));
+                for (List<Double> values : metricValues) {
+                    writer.write("\t" + values.get(i));
                 }
-                writer.write(pathDifferenceMetric.get(i) + "\n");
+                writer.write("\n");
             }
 
             progressStream.println("Done.");
@@ -217,15 +181,6 @@ public class TopologyTracer {
             long endTime = System.currentTimeMillis();
 
             progressStream.println("\nAnalyzed " + treeStates.size() + " trees, took " + (endTime-startTime)/1000.0 + " seconds.\n");
-
-            if (PROFILE) {
-                progressStream.println("RF distance calculation took " + timings[0]/1000.0 + " seconds.");
-                progressStream.println("Billera metric calculation took " + timings[1]/1000.0 + " seconds.");
-                progressStream.println("Clade height metric calculation took " + timings[2]/1000.0 + " seconds.");
-                progressStream.println("Rooted branch score metric calculation took " + timings[3]/1000.0 + " seconds.");
-                progressStream.println("Path difference metric (Steel & Penny, 1993) took " + timings[4]/1000.0 + " seconds.");
-                progressStream.println("Path difference metric (Kendall & Colijn, 2015) took " + timings[5]/1000.0 + " seconds.");
-            }
 
             progressStream.flush();
             progressStream.close();

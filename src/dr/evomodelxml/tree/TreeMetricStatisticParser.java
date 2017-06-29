@@ -46,10 +46,10 @@ public class TreeMetricStatisticParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeMetric.Types type = null;
+        TreeMetric.Type type = null;
         if (xo.hasAttribute(TYPE)) {
             final String s = xo.getStringAttribute(TYPE);
-            for (TreeMetric.Types t : TreeMetric.Types.values()) {
+            for (TreeMetric.Type t : TreeMetric.Type.values()) {
                 if (t.toString().toLowerCase().equals(s.toLowerCase())) {
                     type = t;
                     break;

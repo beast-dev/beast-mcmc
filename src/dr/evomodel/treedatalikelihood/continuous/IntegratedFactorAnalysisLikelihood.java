@@ -30,10 +30,16 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
+import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
 
 /**
  * @author Marc A. Suchard
@@ -51,13 +57,15 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         this.traitParameter = traitParameter;
         this.loadings = loadings;
-        this.traitPrecision = traitPrecision;
-        this.missingIndices = missingIndices;
+        this.traitPrecision = traitPrecision; // TODO Generalize for non-diagonal precision
+//        this.missingIndices = missingIndices;
 
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
         this.dimPartial =  dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
-        this.numFactors = loadings.getRowDimension(); // TODO Confirm this is not column-dimension!
+        this.numFactors = loadings.getRowDimension();
+
+        assert(dimTrait == loadings.getColumnDimension());
 
         addVariable(traitParameter);
         addVariable(loadings);
@@ -92,8 +100,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (fullyObserved) {
             throw new IllegalArgumentException("Unsure what these values should be"); // TODO
         }
+
         checkStatistics();
-        throw new RuntimeException("To implement");
+
+        double[] partial = new double[dimPartial];
+        System.arraycopy(partials, taxonIndex * dimPartial, partial, 0, dimPartial);
+        return partial;
     }
 
 //    @Override
@@ -165,7 +177,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         storedStatisticsKnown = statisticsKnown;
 
         System.arraycopy(partials, 0, storedPartials, 0, partials.length);
-        System.arraycopy(remainders, 0, storedRemainders, 0, remainders.length);
+        System.arraycopy(normalizationConstants, 0, storeedNormalizationConstants, 0, normalizationConstants.length);
     }
 
     @Override
@@ -178,9 +190,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         partials = storedPartials;
         storedPartials = tmp1;
 
-        double[] tmp2 = remainders;
-        remainders = storedRemainders;
-        storedRemainders = tmp2;
+        double[] tmp2 = normalizationConstants;
+        normalizationConstants = storeedNormalizationConstants;
+        storeedNormalizationConstants = tmp2;
     }
 
     @Override
@@ -190,7 +202,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private double calculateLogLikelihood() {
         double logLikelihood = 0.0;
-        for (double r : remainders) {
+        for (double r : normalizationConstants) {
             logLikelihood += r;
         }
         return logLikelihood;
@@ -199,20 +211,150 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private void setupStatistics() {
         if (partials == null) {
             partials = new double[numTaxa * dimPartial];
+            storedPartials = new double[numTaxa * dimPartial];
         }
 
-        if (remainders == null) {
-            remainders = new double[numTaxa];
+        if (normalizationConstants == null) {
+            normalizationConstants = new double[numTaxa];
+            storeedNormalizationConstants = new double[numTaxa];
         }
 
         computePartialsAndRemainders();
     }
 
+
+    private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon) {
+
+        final double[] observed = observedIndicators[taxon];
+
+        // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
+        for (int row = 0; row < numFactors; ++row) {
+            for (int col = 0; col < numFactors; ++col) {
+                double sum = 0;
+                for (int k = 0; k < dimTrait; ++k) {
+                    sum += loadings.getParameterValue(row, k) *
+                            observed[k] * traitPrecision.getParameterValue(k) *
+                            loadings.getParameterValue(col, k);
+                }
+                precision.unsafe_set(row, col, sum);
+            }
+        }
+    }
+
+    private void fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F variance, final int taxon) {
+
+        final double[] observed = observedIndicators[taxon];
+        final Parameter Y = traitParameter.getParameter(taxon);
+
+        // \mu_i = V_i (L D_i Y_i)
+
+        final double[] tmp = new double[numFactors];
+        for (int row = 0; row < numFactors; ++row) {
+            double sum = 0;
+            for (int k = 0; k < dimTrait; ++k) {
+                sum += loadings.getParameterValue(row, k) *
+                        observed[k] * traitPrecision.getParameterValue(k) *
+                        Y.getParameterValue(k);
+            }
+            tmp[row] = sum;
+        }
+
+        for (int row = 0; row < numFactors; ++row) {
+            double sum = 0;
+            for (int k = 0; k < numFactors; ++k) {
+                sum += variance.unsafe_get(row,k) * tmp[k];
+            }
+            output.set(row, sum);
+        }
+    }
+
+    private double computeTraitInnerProduct(final int taxon) {
+        final double[] observed = observedIndicators[taxon];
+        final Parameter Y = traitParameter.getParameter(taxon);
+
+        // Compute Y_i^t D_i^t \Gamma D_i Y_i // TODO Generalize for non-diagonal \Gamma
+        double sum = 0;
+        for (int k = 0; k < dimTrait; ++k) {
+            sum += Y.getParameterValue(k) * Y.getParameterValue(k) *
+                    observed[k] * traitPrecision.getParameterValue(k);
+        }
+        return sum;
+    }
+
+    private double computeFactorInnerProduct(final WrappedVector mean, final DenseMatrix64F precision) {
+        // Compute \mu_i^t P_i \mu^t
+        double sum = 0;
+        for (int row = 0; row < numFactors; ++row) {
+            for (int col = 0; col < numFactors; ++col) {
+                sum += mean.get(row) * precision.unsafe_get(row, col) * mean.get(col);
+            }
+        }
+        return sum;
+    }
+
+    private double getTraitDeterminant(final int taxon) {
+
+        final double[] observed = observedIndicators[taxon];
+
+        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
+        double det = 1.0;
+        for (int k = 0; k < dimTrait; ++k) {
+            if (observed[k] == 1.0) {
+                det *= traitPrecision.getParameterValue(k);
+            }
+        }
+        return det;
+    }
+
+    private void makeCompletedUnobserved(final DenseMatrix64F matrix, double diagonal) {
+        for (int row = 0; row < numFactors; ++row) {
+            for (int col = 0; col < numFactors; ++col) {
+                double x = (row == col) ? diagonal : 0.0;
+                matrix.unsafe_set(row, col, x);
+            }
+        }
+    }
+
     private void computePartialsAndRemainders() {
+        
+        final DenseMatrix64F precision = new DenseMatrix64F(dimTrait, dimTrait);
+        final DenseMatrix64F variance = new DenseMatrix64F(dimTrait, dimTrait);
+
         int partialsOffset = 0;
         for (int taxon = 0; taxon < numTaxa; ++taxon) {
 
-            // TODO Fill in partial means, precisions, (maybe?) variances and normalization constants
+            // Work with mean in-place
+            final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
+
+            computePrecisionForTaxon(precision, taxon);
+            InversionResult ci = safeInvert(precision, variance, true);
+
+            double constant;
+            if (ci.getDeterminant() == 0.0) {
+
+                makeCompletedUnobserved(precision, 0);
+                makeCompletedUnobserved(variance, Double.POSITIVE_INFINITY);
+                constant = 0.0;
+
+            } else {
+
+                fillInMeanForTaxon(mean, variance, taxon);
+
+                final double factorDeterminant = ci.getDeterminant();
+                final double traitDeterminant = getTraitDeterminant(taxon);
+
+                final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
+                final double traitInnerProduct = computeTraitInnerProduct(taxon);
+
+                constant = 0.5 * (Math.log(traitDeterminant) - Math.log(factorDeterminant))
+                        - LOG_SQRT_2_PI * (ci.getEffectiveDimension() - numFactors)
+                        - 0.5 * (traitInnerProduct - factorInnerProduct);
+            }
+
+            // store in precision, variance and normalization constant
+            unwrap(precision, partials, partialsOffset + dimTrait);
+            unwrap(variance, partials, partialsOffset + dimTrait + dimTrait * dimTrait);
+            normalizationConstants[taxon] = constant;
 
             partialsOffset += dimPartial;
         }
@@ -266,8 +408,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private double[] partials;
     private double[] storedPartials;
 
-    private double[] remainders;
-    private double[] storedRemainders;
+    private double[] normalizationConstants;
+    private double[] storeedNormalizationConstants;
 
     private final int numTaxa;
     private final int dimTrait;
@@ -276,10 +418,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final CompoundParameter traitParameter;
     private final MatrixParameterInterface loadings;
     private final Parameter traitPrecision;
-    private final List<Integer> missingIndices;
+//    private final List<Integer> missingIndices;
 
     private final double[][] observedIndicators;
     private final int[] observedDimensions;
+
+    public static double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 
     // TODO Move remainder into separate class file
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {

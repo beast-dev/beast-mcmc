@@ -74,7 +74,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        // No sub-models
     }
 
     @Override
@@ -167,7 +167,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
             final PrecisionType precisionType = PrecisionType.SCALAR;
             final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
-            final double precision = precisionType.getObservedPrecisionValue(false);
+            final double precision = PrecisionType.getObservedPrecisionValue(false);
 
             double[] tipPartial = getTipPartial(taxonIndex, precisionType);
 
@@ -205,7 +205,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 partial[offset + j] = p.getParameterValue(pIndex);
 
                 final boolean missing = missingIndices != null && missingIndices.contains(missingIndex);
-                final double precision = precisionType.getObservedPrecisionValue(missing);
+                final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);
             }
@@ -216,6 +216,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         return partial;
     }
 
+    /*
     public double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
         final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
 
@@ -233,8 +234,9 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     private Map<Integer, boolean[]> missingCache;
     private boolean[] hasAnyMissing;
+    */
 
-    /**
+    /*
      * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
      *
      *      \mu = (\mu_1, \mu_2)^t

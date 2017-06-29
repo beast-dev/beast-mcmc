@@ -42,6 +42,8 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  */
 public class KendallColijnPathDifferenceMetric implements TreeMetric {
 
+    public static Type TYPE = Type.KENDALL_COLIJN;
+
     private Tree focalTree;
     private int dim;
     private double[] focalSmallM, focalLargeM;
@@ -476,5 +478,11 @@ public class KendallColijnPathDifferenceMetric implements TreeMetric {
         }
 
     }
+
+    @Override
+    public String toString() {
+        return TYPE + "(" + lambda + ")";
+    }
+
 
 }

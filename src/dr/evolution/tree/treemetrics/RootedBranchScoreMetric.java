@@ -46,6 +46,7 @@ import java.util.*;
  *
  */
 public class RootedBranchScoreMetric extends BranchScoreMetric {
+    public static Type TYPE = Type.ROOTED_BRANCH_SCORE;
 
     public RootedBranchScoreMetric() {
     }
@@ -79,29 +80,9 @@ public class RootedBranchScoreMetric extends BranchScoreMetric {
 
     }
 
-
-    public static void main(String[] args) {
-
-        try {
-
-            NewickImporter importer = new NewickImporter("((('C':0.03365591238,'A':0.7225157402):0.306488578,'B':0.4572411443):0.4673149632,('D':0.7966438427,'E':0.8063645191):0.7478901469)");
-            Tree treeOne = importer.importNextTree();
-            System.out.println("tree 1: " + treeOne);
-
-            importer = new NewickImporter("(('A':0.2333369483,'B':0.3468381313):0.5562255983,('C':0.8732210915,('D':0.9124725792,'E':0.1983703848):0.5252404297):0.2000638912)");
-            Tree treeTwo = importer.importTree(treeOne);
-            System.out.println("tree 2: " + treeTwo + "\n");
-
-            double metric = (new RootedBranchScoreMetric().getMetric(treeOne, treeTwo));
-
-            System.out.println("rooted branch score metric = " + metric);
-
-        } catch(Importer.ImportException ie) {
-            System.err.println(ie);
-        } catch(IOException ioe) {
-            System.err.println(ioe);
-        }
-
+    @Override
+    public String toString() {
+        return TYPE.toString();
     }
 
 }

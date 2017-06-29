@@ -70,6 +70,7 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  * @version $Id$
  */
 public class CladeHeightMetric implements TreeMetric {
+	public static Type TYPE = Type.CLADE_HEIGHT;
 
 	public CladeHeightMetric() {
 
@@ -132,6 +133,11 @@ public class CladeHeightMetric implements TreeMetric {
 	    tmpBits.and(clade2.getBits());
 
 	    return tmpBits.cardinality() == clade1.getSize();
+	}
+
+	@Override
+	public String toString() {
+		return TYPE.toString();
 	}
 
 	BitSet tmpBits = new BitSet();

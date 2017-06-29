@@ -49,19 +49,13 @@ public class TopologyTracer {
 
     private final static Version version = new BeastVersion();
 
-    private final static boolean PROFILE = true;
-
     private static final String STATE = "state";
-    private static final String RFDISTANCE = "RFdistance";
-    private static final String CLADE_HEIGHT = "cladeHeight";
-    private static final String BRANCH_SCORE_METRIC = "rootedBranchScoreMetric";
-    private static final String PATH_DIFFERENCE = "SteelPenny";
-    private static final String KC_METRIC = "KCmetric";
 
-    // output to stdout
-    private static PrintStream progressStream = System.out;
 
     public TopologyTracer(int burnin, String treeFile, String userProvidedTreeFile, String outputFile, ArrayList<Double> lambdaValues) {
+
+        // output to stdout
+        PrintStream progressStream = System.out;
 
         try {
 
@@ -189,11 +183,11 @@ public class TopologyTracer {
             writer.close();
 
         } catch (FileNotFoundException fnf) {
-            System.err.println(fnf);
+            System.err.println(fnf.getMessage());
         } catch (IOException ioe) {
-            System.err.println(ioe);
+            System.err.println(ioe.getMessage());
         } catch (Importer.ImportException ime) {
-            System.err.println(ime);
+            System.err.println(ime.getMessage());
         }
 
     }
@@ -222,7 +216,7 @@ public class TopologyTracer {
         try {
             arguments.parseArguments(args);
         } catch (Arguments.ArgumentException ae) {
-            System.out.println(ae);
+            System.out.println(ae.getMessage());
             printUsage(arguments);
             System.exit(1);
         }

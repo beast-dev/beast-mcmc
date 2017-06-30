@@ -342,8 +342,16 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             computePrecisionForTaxon(precision, taxon);
             InversionResult ci = safeInvert(precision, variance, true);
 
+            if (DEBUG) {
+                System.err.println("taxon " + taxon);
+                System.err.println("\tprecision: " + precision);
+                System.err.println("\tvariance : " + variance);
+            }
+
             double constant;
             if (ci.getDeterminant() == 0.0) {
+
+                assert(false); // TODO Should not get here yet
 
                 makeCompletedUnobserved(precision, 0);
                 makeCompletedUnobserved(variance, Double.POSITIVE_INFINITY);
@@ -353,15 +361,28 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
                 fillInMeanForTaxon(mean, variance, taxon);
 
+                if (DEBUG) {
+                    System.err.println("\tmean: " + mean);
+                    System.err.println("\n");
+                }
+
                 final double factorDeterminant = ci.getDeterminant();
                 final double traitDeterminant = getTraitDeterminant(taxon);
+                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
 
                 final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
                 final double traitInnerProduct = computeTraitInnerProduct(taxon);
+                final double innerProductChange = traitInnerProduct - factorInnerProduct;
 
-                constant = 0.5 * (Math.log(traitDeterminant) - Math.log(factorDeterminant))
-                        - LOG_SQRT_2_PI * (ci.getEffectiveDimension() - numFactors)
-                        - 0.5 * (traitInnerProduct - factorInnerProduct);
+                final int dimensionChange = dimTrait - numFactors;
+
+                if (DEBUG) {
+                    System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange);
+                }
+
+                assert(ci.getEffectiveDimension() == numFactors); // TODO Remove
+
+                constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange);
             }
 
             // store in precision, variance and normalization constant
@@ -372,6 +393,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             partialsOffset += dimPartial;
         }
     }
+
+    private static final boolean DEBUG = false;
 
     private void checkStatistics() {
         if (!statisticsKnown) {

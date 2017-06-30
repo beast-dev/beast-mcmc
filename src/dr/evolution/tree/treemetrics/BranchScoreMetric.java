@@ -31,7 +31,6 @@ package dr.evolution.tree.treemetrics;
 import java.util.*;
 
 import dr.evolution.tree.Clade;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
 import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
@@ -152,8 +151,13 @@ public class BranchScoreMetric implements TreeMetric {
     }
 
     @Override
+    public Type getType() {
+        return TYPE;
+    }
+
+    @Override
     public String toString() {
-        return TYPE.toString();
+        return getType().getShortName();
     }
 
     BitSet tmpBits = new BitSet();

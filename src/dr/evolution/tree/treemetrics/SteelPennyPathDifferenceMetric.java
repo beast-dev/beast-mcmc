@@ -151,9 +151,13 @@ public class SteelPennyPathDifferenceMetric implements TreeMetric {
     }
 
     @Override
-    public String toString() {
-        return TYPE.toString();
+    public Type getType() {
+        return TYPE;
     }
 
+    @Override
+    public String toString() {
+        return getType().getShortName();
+    }
 
 }

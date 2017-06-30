@@ -136,8 +136,13 @@ public class CladeHeightMetric implements TreeMetric {
 	}
 
 	@Override
+	public Type getType() {
+		return TYPE;
+	}
+
+	@Override
 	public String toString() {
-		return TYPE.toString();
+		return getType().getShortName();
 	}
 
 	BitSet tmpBits = new BitSet();

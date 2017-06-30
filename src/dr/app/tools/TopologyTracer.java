@@ -52,7 +52,13 @@ public class TopologyTracer {
     private static final String STATE = "state";
 
 
-    public TopologyTracer(int burnin, String treeFile, String userProvidedTreeFile, String outputFile, ArrayList<Double> lambdaValues) {
+    public TopologyTracer(final int burninTrees,
+                          final int burninStates,
+                          final String metric,
+                          final String treeFile,
+                          final String userProvidedTreeFile,
+                          final String outputFile,
+                          final ArrayList<Double> lambdaValues) {
 
         // output to stdout
         PrintStream progressStream = System.out;
@@ -89,18 +95,29 @@ public class TopologyTracer {
                     userImporter = new NewickImporter(focalReader);
                 }
                 focalTree = userImporter.importNextTree();
-            } else {
-                //pick first tree as focal tree
-                focalTree = importer.importNextTree();
             }
 
             List<TreeMetric> treeMetrics = new ArrayList<TreeMetric>();
-            treeMetrics.add(new RobinsonFouldsMetric());
-            treeMetrics.add(new CladeHeightMetric());
-            treeMetrics.add(new RootedBranchScoreMetric());
-            treeMetrics.add(new SteelPennyPathDifferenceMetric());
-            for (double lambda:  lambdaValues) {
-                treeMetrics.add(new KendallColijnPathDifferenceMetric(lambda));
+            if (metric.equals("all") || metric.equals("rf")) {
+                treeMetrics.add(new RobinsonFouldsMetric());
+            }
+            if (metric.equals("all") || metric.equals("clade")) {
+                treeMetrics.add(new CladeHeightMetric());
+            }
+            if (metric.equals("all") || metric.equals("branch")) {
+                treeMetrics.add(new RootedBranchScoreMetric());
+            }
+            if (metric.equals("all") || metric.equals("sp")) {
+                treeMetrics.add(new SteelPennyPathDifferenceMetric());
+            }
+            if (metric.equals("all") || metric.equals("kc")) {
+                for (double lambda : lambdaValues) {
+                    treeMetrics.add(new KendallColijnPathDifferenceMetric(lambda));
+                }
+            }
+
+            if (treeMetrics.size() == 0){
+                throw new IllegalArgumentException("Unknown metric name");
             }
 
 
@@ -111,35 +128,42 @@ public class TopologyTracer {
                 metricValues.add(new ArrayList<Double>());
             }
 
-            if (!userProvidedTree) {
-                //take into account first distance of focal tree to itself
-                treeIds.add(focalTree.getId());
-                treeStates.add((long) 0);
-
-                int i = 0;
-                for (TreeMetric treeMetric : treeMetrics) {
-                    metricValues.get(i).add(treeMetric.getMetric(focalTree, focalTree));
-                    i++;
-                }
-
-            }
+//            if (!userProvidedTree) {
+//                //take into account first distance of focal tree to itself
+//                treeIds.add(focalTree.getId());
+//                treeStates.add((long) 0);
+//
+//                int i = 0;
+//                for (TreeMetric treeMetric : treeMetrics) {
+//                    metricValues.get(i).add(treeMetric.getMetric(focalTree, focalTree));
+//                    i++;
+//                }
+//
+//            }
 
             int numberOfTrees = 1;
-
-            long[] timings = new long[6];
-            long beforeTime, afterTime;
 
             while (importer.hasTree()) {
 
                 //no need to keep trees in memory
                 Tree tree = importer.importNextTree();
-                treeIds.add(tree.getId());
-                treeStates.add(Long.parseLong(tree.getId().split("_")[1]));
+                long state = Long.parseLong(tree.getId().split("_")[1]);
 
-                int i = 0;
-                for (TreeMetric treeMetric : treeMetrics) {
-                    metricValues.get(i).add(treeMetric.getMetric(focalTree, tree));
-                    i++;
+                // one or other of burninTrees and burninStates should be 0
+                if (numberOfTrees >= burninTrees && state >= burninStates) {
+                    if (focalTree == null) {
+                        // if we haven't set a user focal tree then use the first tree
+                        focalTree = tree;
+                    }
+
+                    treeIds.add(tree.getId());
+                    treeStates.add(state);
+
+                    int i = 0;
+                    for (TreeMetric treeMetric : treeMetrics) {
+                        metricValues.get(i).add(treeMetric.getMetric(focalTree, tree));
+                        i++;
+                    }
                 }
 
                 numberOfTrees++;
@@ -158,7 +182,7 @@ public class TopologyTracer {
             writer.write("# BEAST " + version.getVersionString() + "\n");
             writer.write(STATE);
             for (TreeMetric treeMetric : treeMetrics) {
-                writer.write("\t" + treeMetric);
+                writer.write("\t" + treeMetric.getType().getShortName());
             }
             writer.write("\n");
 
@@ -208,7 +232,11 @@ public class TopologyTracer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.StringOption("tree", "tree file name", "a focal tree provided by the user [default = first tree in .trees file]"),
+                        new Arguments.StringOption("metric", new String[] {"kc", "sp", "rf", "clade", "branch", "all"}, false,
+                                "which tree metric to use ('kc', 'sp', 'rf', 'clade', 'branch') [default = all]"
+                        ),
                         new Arguments.RealOption("lambda", "the lambda value to be used for the 'Kendall-Colijn metric' [default = {0,0.5,1}]"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -221,10 +249,18 @@ public class TopologyTracer {
             System.exit(1);
         }
 
-        int burnin = 0;
-
+        int burninStates = -1;
+        int burninTrees = -1;
         if (arguments.hasOption("burnin")) {
-            burnin = arguments.getIntegerOption("burnin");
+            burninStates = arguments.getIntegerOption("burnin");
+        }
+        if (arguments.hasOption("burninTrees")) {
+            burninTrees = arguments.getIntegerOption("burninTrees");
+        }
+
+        String metric = "all";
+        if (arguments.hasOption("metric")) {
+            metric = arguments.getStringOption("metric");
         }
 
         ArrayList<Double> lambdaValues = new ArrayList<Double>();
@@ -266,7 +302,7 @@ public class TopologyTracer {
             inputFileName = Utils.getLoadFileName("TopologyTracer " + version.getVersionString() + " - Select log file to analyse");
         }
 
-        new TopologyTracer(burnin, inputFileName, providedFileName, outputFileName, lambdaValues);
+        new TopologyTracer(burninStates, burninTrees, metric, inputFileName, providedFileName, outputFileName, lambdaValues);
 
         System.exit(0);
 

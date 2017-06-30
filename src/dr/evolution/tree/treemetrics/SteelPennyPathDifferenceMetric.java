@@ -44,6 +44,8 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  */
 public class SteelPennyPathDifferenceMetric implements TreeMetric {
 
+    public static Type TYPE = Type.STEEL_PENNY;
+
     private Tree focalTree;
     private int dim;
     private double[] focalPath;
@@ -148,35 +150,14 @@ public class SteelPennyPathDifferenceMetric implements TreeMetric {
         return tips;
     }
 
-    public static void main(String[] args) {
+    @Override
+    public Type getType() {
+        return TYPE;
+    }
 
-        try {
-
-            NewickImporter importer = new NewickImporter("(('A':1.2,'B':0.8):0.5,('C':0.8,'D':1.0):1.1)");
-            Tree treeOne = importer.importNextTree();
-            System.out.println("tree 1: " + treeOne);
-
-            importer = new NewickImporter("((('A':0.8,'B':1.4):0.3,'C':0.7):0.9,'D':1.0)");
-            Tree treeTwo = importer.importNextTree();
-            System.out.println("tree 2: " + treeTwo + "\n");
-
-            double metric = (new SteelPennyPathDifferenceMetric().getMetric(treeOne, treeTwo));
-
-            System.out.println("path difference = " + metric);
-
-
-            //Additional test for comparing a collection of trees against a (fixed) focal tree
-            SteelPennyPathDifferenceMetric fixed = new SteelPennyPathDifferenceMetric(treeOne);
-            metric = fixed.getMetric(treeOne, treeTwo);
-
-            System.out.println("path difference = " + metric);
-
-        } catch(Importer.ImportException ie) {
-            System.err.println(ie);
-        } catch(IOException ioe) {
-            System.err.println(ioe);
-        }
-
+    @Override
+    public String toString() {
+        return getType().getShortName();
     }
 
 }

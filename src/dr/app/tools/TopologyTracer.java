@@ -56,6 +56,7 @@ public class TopologyTracer {
                           final int burninStates,
                           final String metric,
                           final String treeFile,
+                          final String treeFile2,
                           final String userProvidedTreeFile,
                           final String outputFile,
                           final ArrayList<Double> lambdaValues) {
@@ -80,10 +81,21 @@ public class TopologyTracer {
                 importer = new NewickImporter(reader);
             }
 
+            BufferedReader reader2 = null;
+            TreeImporter importer2 = null;
+            if (treeFile2 != null) {
+                reader2 = new BufferedReader(new FileReader(treeFile2));
+                String line2 = reader2.readLine();
+
+                if (line2.toUpperCase().startsWith("#NEXUS")) {
+                    importer2 = new NexusImporter(reader2);
+                } else {
+                    importer2 = new NewickImporter(reader2);
+                }
+            }
+
             Tree focalTree = null;
-            boolean userProvidedTree = false;
             if (!userProvidedTreeFile.equals("")) {
-                userProvidedTree = true;
                 progressStream.println("User-provided focal tree.");
                 //get tree from user provided tree file
                 BufferedReader focalReader = new BufferedReader(new FileReader(userProvidedTreeFile));
@@ -95,6 +107,7 @@ public class TopologyTracer {
                     userImporter = new NewickImporter(focalReader);
                 }
                 focalTree = userImporter.importNextTree();
+                focalReader.close();
             }
 
             List<TreeMetric> treeMetrics = new ArrayList<TreeMetric>();
@@ -116,7 +129,7 @@ public class TopologyTracer {
                 }
             }
 
-            if (treeMetrics.size() == 0){
+            if (treeMetrics.size() == 0) {
                 throw new IllegalArgumentException("Unknown metric name");
             }
 
@@ -149,11 +162,25 @@ public class TopologyTracer {
                 Tree tree = importer.importNextTree();
                 long state = Long.parseLong(tree.getId().split("_")[1]);
 
+                Tree tree2 = null;
+                if (importer2 != null) {
+                    tree2 = importer2.importNextTree();
+                    long state2 = Long.parseLong(tree2.getId().split("_")[1]);
+
+                    if (state != state2) {
+                        throw new RuntimeException("State numbers in paired tree files are not in synchrony");
+                    }
+                }
+
                 // one or other of burninTrees and burninStates should be 0
                 if (numberOfTrees >= burninTrees && state >= burninStates) {
-                    if (focalTree == null) {
-                        // if we haven't set a user focal tree then use the first tree
-                        focalTree = tree;
+                    if (tree2 == null) {
+                        if (focalTree == null) {
+                            // if we haven't set a user focal tree then use the first tree
+                            focalTree = tree;
+                        }
+                    } else {
+                        focalTree = tree2;
                     }
 
                     treeIds.add(tree.getId());
@@ -233,6 +260,7 @@ public class TopologyTracer {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.Option("paired", "take 2 input tree files and compute metric between tree pairs"),
                         new Arguments.StringOption("tree", "tree file name", "a focal tree provided by the user [default = first tree in .trees file]"),
                         new Arguments.StringOption("metric", new String[] {"kc", "sp", "rf", "clade", "branch", "all"}, false,
                                 "which tree metric to use ('kc', 'sp', 'rf', 'clade', 'branch') [default = all]"
@@ -258,6 +286,8 @@ public class TopologyTracer {
             burninTrees = arguments.getIntegerOption("burninTrees");
         }
 
+        boolean paired = arguments.hasOption("paired");
+
         String metric = "all";
         if (arguments.hasOption("metric")) {
             metric = arguments.getStringOption("metric");
@@ -278,22 +308,24 @@ public class TopologyTracer {
         }
 
         String inputFileName = null;
+        String inputFileName2 = null;
         String outputFileName = null;
 
         String[] args2 = arguments.getLeftoverArguments();
 
-        if (args2.length > 3) {
-            System.err.println("Unknown option: " + args2[2]);
+        if (args2.length > (paired ? 3 : 2)) {
+            System.err.println("Unknown option: " + args2[(paired ? 3 : 2)]);
             System.err.println();
             printUsage(arguments);
             System.exit(1);
         }
 
-        if (args2.length > 0) {
+        if (paired) {
             inputFileName = args2[0];
-        }
-
-        if (args2.length > 1) {
+            inputFileName2 = args2[1];
+            outputFileName = args2[2];
+        } else {
+            inputFileName = args2[0];
             outputFileName = args2[1];
         }
 
@@ -302,7 +334,7 @@ public class TopologyTracer {
             inputFileName = Utils.getLoadFileName("TopologyTracer " + version.getVersionString() + " - Select log file to analyse");
         }
 
-        new TopologyTracer(burninStates, burninTrees, metric, inputFileName, providedFileName, outputFileName, lambdaValues);
+        new TopologyTracer(burninStates, burninTrees, metric, inputFileName, inputFileName2, providedFileName, outputFileName, lambdaValues);
 
         System.exit(0);
 

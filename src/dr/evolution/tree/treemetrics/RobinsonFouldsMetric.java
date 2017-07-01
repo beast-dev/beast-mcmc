@@ -35,8 +35,13 @@ public class RobinsonFouldsMetric implements TreeMetric {
 	}
 
 	@Override
+	public Type getType() {
+		return TYPE;
+	}
+
+	@Override
 	public String toString() {
-		return TYPE.toString();
+		return getType().getShortName();
 	}
 
 	// todo - add in Citable:

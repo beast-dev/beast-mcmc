@@ -7,26 +7,39 @@ import dr.evolution.tree.Tree;
  * @version $Id$
  */
 public interface TreeMetric {
+
     double getMetric(Tree tree1, Tree tree2);
 
-    enum Type {
-        ROBINSON_FOULDS("Robinson-Foulds"),
-        BRANCH_SCORE("branch score"),
-        ROOTED_BRANCH_SCORE("rooted branch score"),
-        CLADE_HEIGHT("clade height"),
-        KENDALL_COLIJN("Kendall-Colijn path difference"),
-        STEEL_PENNY("Steel-Penny path difference");
+    Type getType();
 
-        Type(String name) {
+    enum Type {
+        ROBINSON_FOULDS("Robinson-Foulds", "rf"),
+        BRANCH_SCORE("branch score", "branchscore"),
+        ROOTED_BRANCH_SCORE("rooted branch score", "branch"),
+        CLADE_HEIGHT("clade height", "clade"),
+        KENDALL_COLIJN("Kendall-Colijn path difference", "kc"),
+        STEEL_PENNY("Steel-Penny path difference", "sp");
+
+        Type(String name, String stortName) {
             this.name = name;
+            this.stortName = stortName;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getShortName() {
+            return stortName;
         }
 
         @Override
         public String toString() {
-            return name;
+            return getName();
         }
 
         private final String name;
+        private final String stortName;
     }
 
     class Utils {

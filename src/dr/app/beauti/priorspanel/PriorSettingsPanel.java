@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.priorspanel;
 
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.PriorType;
@@ -37,7 +37,6 @@ import dr.util.NumberFormatter;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;

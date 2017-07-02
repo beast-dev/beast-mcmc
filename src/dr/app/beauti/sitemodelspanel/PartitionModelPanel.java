@@ -23,11 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.priorsPanel.PriorDialog;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
@@ -49,7 +47,6 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**

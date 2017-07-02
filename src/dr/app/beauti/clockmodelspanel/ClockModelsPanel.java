@@ -1,5 +1,5 @@
 /*
- * SiteModelsPanel.java
+ * ClockModelsPanel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,20 +23,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.clockmodelspanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
-import dr.app.beauti.options.AbstractPartitionData;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.types.SequenceErrorType;
+import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.TableEditorStopper;
-import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
-import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -49,18 +44,16 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
- * @author Alexei Drummond
  * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class SiteModelsPanel extends BeautiPanel implements Exportable {
+public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     public final static boolean DEBUG = false;
 
@@ -72,23 +65,27 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     private ModelTableModel modelTableModel = null;
     private BeautiOptions options = null;
 
-    private JPanel modelPanelParent;
-    private PartitionSubstitutionModel currentModel = null;
-    private Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
-    private TitledBorder modelBorder;
-    private CloneModelDialog cloneModelDialog = null;
+    JPanel modelPanelParent;
+    PartitionClockModel currentModel = null;
+    Map<PartitionClockModel, PartitionClockModelPanel> modelPanels = new HashMap<PartitionClockModel, PartitionClockModelPanel>();
+    TitledBorder modelBorder;
 
-    private final BeautiFrame frame;
+    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean rate of molecular clock model to: ");
+    RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
+
+    BeautiFrame frame = null;
     //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
+    private CloneModelDialog cloneModelDialog = null;
+
     CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
-    public SiteModelsPanel(final BeautiFrame frame, Action removeModelAction) {
+    public ClockModelsPanel(BeautiFrame parent) {
 
         super();
 
-        this.frame = frame;
+        this.frame = parent;
 
         modelTableModel = new ModelTableModel();
         modelTable = new JTable(modelTableModel);
@@ -168,12 +165,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             currentModel = null;
             modelPanels.clear();
             modelPanelParent.removeAll();
-            modelBorder.setTitle("Substitution Model");
+            modelBorder.setTitle("Clock Model");
 
-//            if (currentDiscreteTraitOption != null) {
-//                this.remove(d_splitPane);
-//                currentDiscreteTraitOption = null;
-//            }
             return;
         }
     }
@@ -199,7 +192,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
 
-        if (currentModel == null && options.getPartitionSubstitutionModels().size() > 0) {
+        if (currentModel == null && options.getPartitionClockModels().size() > 0) {
             modelTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
@@ -210,7 +203,11 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
+        if (settingOptions) return;
+
+//        options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
     }
+
 
     private void fireModelsChanged() {
         options.updatePartitionAllLinks();
@@ -221,13 +218,13 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         if (modelTable.getSelectedRowCount() == 1) {
             int selRow = modelTable.getSelectedRow();
 
-            if (selRow >= options.getPartitionSubstitutionModels().size()) {
+            if (selRow >= options.getPartitionClockModels().size()) {
                 selRow = 0;
                 modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             }
 
             if (selRow >= 0) {
-                setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
+                setCurrentModel(options.getPartitionClockModels().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
             }
         } else {
@@ -235,14 +232,14 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    private List<PartitionSubstitutionModel> getSelectedModels() {
-        java.util.List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
+    private java.util.List<PartitionClockModel> getSelectedModels() {
+        java.util.List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
 
         for (int row : modelTable.getSelectedRows()) {
-            models.add(options.getPartitionSubstitutionModels().get(row));
+            models.add(options.getPartitionClockModels().get(row));
         }
         if (models.size() == 0) {
-            models.addAll(options.getPartitionSubstitutionModels());
+            models.addAll(options.getPartitionClockModels());
         }
 
         return models;
@@ -253,19 +250,13 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
      *
      * @param model the new model to display
      */
-    private void setCurrentModel(PartitionSubstitutionModel model) {
+    private void setCurrentModel(PartitionClockModel model) {
         modelPanelParent.removeAll();
 
         currentModel = model;
 
         if (currentModel != null) {
-            PartitionModelPanel panel = modelPanels.get(currentModel);
-            if (panel == null) {
-                panel = new PartitionModelPanel(frame, currentModel);
-                modelPanels.put(currentModel, panel);
-            }
-
-            panel.setOptions();
+            PartitionClockModelPanel panel = setPanelSettings(model);
             modelPanelParent.add(panel);
 
         } else {
@@ -277,85 +268,75 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         updateBorder();
     }
 
-    private void setCurrentModels(List<PartitionSubstitutionModel> models) {
+    private PartitionClockModelPanel setPanelSettings(PartitionClockModel model) {
+        PartitionClockModelPanel panel = modelPanels.get(currentModel);
+        if (panel == null) {
+            panel = new PartitionClockModelPanel(model);
+            modelPanels.put(model, panel);
+        }
+
+        panel.setOptions();
+        return panel;
+    }
+
+    private void setCurrentModels(java.util.List<PartitionClockModel> models) {
         modelPanelParent.removeAll();
 
         currentModel = null;
 
-        Set<DataType> dataTypes = new HashSet<DataType>();
-        for (PartitionSubstitutionModel model : models) {
-            dataTypes.add(model.getDataType());
-        }
-
-        if (dataTypes.size() == 1) {
-            DataType dataType = dataTypes.iterator().next();
-            modelBorder.setTitle("Multiple " + dataType.getName() + " substitution models selected");
-        } else {
-            modelBorder.setTitle("Multiple mixed type substitution models selected");
-        }
-
-        cloneModelsAction.setEnabled(dataTypes.size() == 1);
+        updateBorder();
+        cloneModelsAction.setEnabled(true);
 
         repaint();
     }
 
     private void updateBorder() {
-
         if (currentModel != null) {
-            modelBorder.setTitle(currentModel.getDataType().getName() + " Substitution Model - " + currentModel.getName());
+            modelBorder.setTitle("Clock Model - " + currentModel.getName());
         } else {
-            modelBorder.setTitle("Multiple substitution models selected");
+            modelBorder.setTitle("Multiple clock models selected");
         }
         repaint();
     }
+
+    private boolean isUsed(int row) {
+        PartitionClockModel model = options.getPartitionClockModels().get(row);
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            if (partition.getPartitionClockModel() == model) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private void cloneModelSettings() {
         if (cloneModelDialog == null) {
             cloneModelDialog = new CloneModelDialog(frame);
         }
 
-        Set<DataType> dataTypes = new HashSet<DataType>();
-        for (PartitionSubstitutionModel model : getSelectedModels()) {
-            dataTypes.add(model.getDataType());
+
+        java.util.List<PartitionClockModel> sourceModels = new ArrayList<PartitionClockModel>();
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            sourceModels.add(model);
         }
 
-        if (dataTypes.size() == 1) {
-            DataType dataType = dataTypes.iterator().next();
+        int result = cloneModelDialog.showDialog(sourceModels);
 
-            List<PartitionSubstitutionModel> sourceModels = new ArrayList<PartitionSubstitutionModel>();
-
-            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-                if (model.getDataType().equals(dataType)) {
-                    sourceModels.add(model);
-                }
-            }
-
-            int result = cloneModelDialog.showDialog(sourceModels);
-
-            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            PartitionSubstitutionModel sourceModel = cloneModelDialog.getSourceModel();
-            for (PartitionSubstitutionModel model : getSelectedModels()) {
-                if (!model.equals(sourceModel)) {
-                    model.copyFrom(sourceModel);
-                }
-            }
-
-            repaint();
-
+        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+            return;
         }
-    }
 
-    private boolean isUsed(int row) {
-        PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-        for (AbstractPartitionData partition : options.dataPartitions) {
-            if (partition.getPartitionSubstitutionModel() == model) {
-                return true;
+        PartitionClockModel sourceModel = cloneModelDialog.getSourceModel();
+        for (PartitionClockModel model : getSelectedModels()) {
+            if (!model.equals(sourceModel)) {
+                model.copyFrom(sourceModel);
             }
         }
-        return false;
+
+        selectionChanged();
+
     }
 
     public JComponent getExportableComponent() {
@@ -364,11 +345,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     class ModelTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Substitution Model"};
+        String[] columnNames = {"Clock Model"};
 
         public ModelTableModel() {
         }
@@ -379,11 +357,11 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.getPartitionSubstitutionModels().size();
+            return options.getPartitionClockModels().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
+            PartitionClockModel model = options.getPartitionClockModels().get(row);
             switch (col) {
                 case 0:
                     return model.getName();
@@ -399,7 +377,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object value, int row, int col) {
             String name = ((String) value).trim();
             if (name.length() > 0) {
-                PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
+                PartitionClockModel model = options.getPartitionClockModels().get(row);
                 model.setName(name); //TODO: update every same model in diff PD?
                 updateBorder();
                 fireModelsChanged();
@@ -439,6 +417,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             return buffer.toString();
         }
     }
+
 
     class ModelsTableCellRenderer extends TableRenderer {
 

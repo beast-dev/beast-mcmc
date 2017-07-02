@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.sitemodelspanel;
 
 import dr.app.util.OSType;
 import jam.panels.OptionsPanel;

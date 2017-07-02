@@ -47,8 +47,10 @@ import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
+import dr.math.KroneckerOperation;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
+import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -230,6 +232,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
+//    protected Tree getTree() {
+//        return (callbackLikelihood != null) ? callbackLikelihood.getTree() : null;
+//    }
+
+    protected TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
+
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
@@ -250,6 +258,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     public RootProcessDelegate getRootProcessDelegate() {
         return rootProcessDelegate;
     }
+
+    private static boolean EXTENDED_DEBUG_INFO = true;
 
     @Override
     public String getReport() {

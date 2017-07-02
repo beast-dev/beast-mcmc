@@ -81,8 +81,13 @@ public class RootedBranchScoreMetric extends BranchScoreMetric {
     }
 
     @Override
+    public Type getType() {
+        return TYPE;
+    }
+
+    @Override
     public String toString() {
-        return TYPE.toString();
+        return getType().getShortName();
     }
 
 }

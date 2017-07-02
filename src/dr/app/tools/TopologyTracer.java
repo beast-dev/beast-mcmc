@@ -52,7 +52,15 @@ public class TopologyTracer {
     private static final String STATE = "state";
 
 
-    public TopologyTracer(int burnin, String treeFile, String userProvidedTreeFile, String outputFile, ArrayList<Double> lambdaValues) {
+    public TopologyTracer(final int burninStates,
+                          final int burninTrees,
+                          final String metric,
+                          final String treeFile,
+                          final String treeFile2,
+                          final String focalTreeFileName,
+                          final String outputFile,
+                          final ArrayList<Double> lambdaValues,
+                          final boolean pairwise) {
 
         // output to stdout
         PrintStream progressStream = System.out;
@@ -74,13 +82,24 @@ public class TopologyTracer {
                 importer = new NewickImporter(reader);
             }
 
+            BufferedReader reader2 = null;
+            TreeImporter importer2 = null;
+            if (treeFile2 != null) {
+                reader2 = new BufferedReader(new FileReader(treeFile2));
+                String line2 = reader2.readLine();
+
+                if (line2.toUpperCase().startsWith("#NEXUS")) {
+                    importer2 = new NexusImporter(reader2);
+                } else {
+                    importer2 = new NewickImporter(reader2);
+                }
+            }
+
             Tree focalTree = null;
-            boolean userProvidedTree = false;
-            if (!userProvidedTreeFile.equals("")) {
-                userProvidedTree = true;
+            if (focalTreeFileName != null) {
                 progressStream.println("User-provided focal tree.");
                 //get tree from user provided tree file
-                BufferedReader focalReader = new BufferedReader(new FileReader(userProvidedTreeFile));
+                BufferedReader focalReader = new BufferedReader(new FileReader(focalTreeFileName));
                 TreeImporter userImporter;
                 String userLine = focalReader.readLine();
                 if (userLine.toUpperCase().startsWith("#NEXUS")) {
@@ -89,104 +108,204 @@ public class TopologyTracer {
                     userImporter = new NewickImporter(focalReader);
                 }
                 focalTree = userImporter.importNextTree();
-            } else {
-                //pick first tree as focal tree
-                focalTree = importer.importNextTree();
+                focalReader.close();
             }
 
             List<TreeMetric> treeMetrics = new ArrayList<TreeMetric>();
-            treeMetrics.add(new RobinsonFouldsMetric());
-            treeMetrics.add(new CladeHeightMetric());
-            treeMetrics.add(new RootedBranchScoreMetric());
-            treeMetrics.add(new SteelPennyPathDifferenceMetric());
-            for (double lambda:  lambdaValues) {
-                treeMetrics.add(new KendallColijnPathDifferenceMetric(lambda));
+            if (metric.equals("all") || metric.equals("rf")) {
+                treeMetrics.add(new RobinsonFouldsMetric());
+            }
+            if (metric.equals("all") || metric.equals("clade")) {
+                treeMetrics.add(new CladeHeightMetric());
+            }
+            if (metric.equals("all") || metric.equals("branch")) {
+                treeMetrics.add(new RootedBranchScoreMetric());
+            }
+            if (metric.equals("all") || metric.equals("sp")) {
+                treeMetrics.add(new SteelPennyPathDifferenceMetric());
+            }
+            if (metric.equals("all") || metric.equals("kc")) {
+                for (double lambda : lambdaValues) {
+                    treeMetrics.add(new KendallColijnPathDifferenceMetric(lambda));
+                }
+            }
+
+            if (treeMetrics.size() == 0) {
+                throw new IllegalArgumentException("Unknown metric name");
             }
 
 
             List<Long> treeStates = new ArrayList<Long>();
             List<String> treeIds = new ArrayList<String>();
-            List<List<Double>> metricValues = new ArrayList<List<Double>>();
-            for (TreeMetric treeMetric : treeMetrics) {
-                metricValues.add(new ArrayList<Double>());
-            }
 
-            if (!userProvidedTree) {
-                //take into account first distance of focal tree to itself
-                treeIds.add(focalTree.getId());
-                treeStates.add((long) 0);
+//            if (!userProvidedTree) {
+//                //take into account first distance of focal tree to itself
+//                treeIds.add(focalTree.getId());
+//                treeStates.add((long) 0);
+//
+//                int i = 0;
+//                for (TreeMetric treeMetric : treeMetrics) {
+//                    metricValues.get(i).add(treeMetric.getMetric(focalTree, focalTree));
+//                    i++;
+//                }
+//
+//            }
 
-                int i = 0;
+            if (!pairwise) {
+                List<List<Double>> metricValues = new ArrayList<List<Double>>();
                 for (TreeMetric treeMetric : treeMetrics) {
-                    metricValues.get(i).add(treeMetric.getMetric(focalTree, focalTree));
-                    i++;
+                    metricValues.add(new ArrayList<Double>());
                 }
 
-            }
+                int numberOfTrees = 1;
 
-            int numberOfTrees = 1;
+                while (importer.hasTree()) {
 
-            long[] timings = new long[6];
-            long beforeTime, afterTime;
+                    //no need to keep trees in memory
+                    Tree tree = importer.importNextTree();
+                    long state = Long.parseLong(tree.getId().split("_")[1]);
 
-            while (importer.hasTree()) {
+                    Tree tree2 = null;
+                    if (importer2 != null) {
+                        tree2 = importer2.importNextTree();
+                        long state2 = Long.parseLong(tree2.getId().split("_")[1]);
 
-                //no need to keep trees in memory
-                Tree tree = importer.importNextTree();
-                treeIds.add(tree.getId());
-                treeStates.add(Long.parseLong(tree.getId().split("_")[1]));
+                        if (state != state2) {
+                            throw new RuntimeException("State numbers in paired tree files are not in synchrony");
+                        }
+                    }
 
-                int i = 0;
+                    // one or other of burninTrees and burninStates should be 0
+                    if (numberOfTrees >= burninTrees && state >= burninStates) {
+                        if (tree2 == null) {
+                            if (focalTree == null) {
+                                // if we haven't set a user focal tree then use the first tree
+                                focalTree = tree;
+                            }
+                        } else {
+                            focalTree = tree2;
+                        }
+
+                        treeIds.add(tree.getId());
+                        treeStates.add(state);
+
+                        int i = 0;
+                        for (TreeMetric treeMetric : treeMetrics) {
+                            metricValues.get(i).add(treeMetric.getMetric(focalTree, tree));
+                            i++;
+                        }
+                    }
+
+                    numberOfTrees++;
+
+                    if (numberOfTrees % 25 == 0) {
+                        progressStream.println(numberOfTrees + " trees parsed ...");
+                        progressStream.flush();
+                    }
+
+                }
+
+                progressStream.println("\nWriting log file ...");
+
+                BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+                BeastVersion version = new BeastVersion();
+                writer.write("# BEAST " + version.getVersionString() + "\n");
+                writer.write(STATE);
                 for (TreeMetric treeMetric : treeMetrics) {
-                    metricValues.get(i).add(treeMetric.getMetric(focalTree, tree));
-                    i++;
-                }
-
-                numberOfTrees++;
-
-                if (numberOfTrees % 25 == 0) {
-                    progressStream.println(numberOfTrees + " trees parsed ...");
-                    progressStream.flush();
-                }
-
-            }
-
-            progressStream.println("\nWriting log file ...");
-
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
-            BeastVersion version = new BeastVersion();
-            writer.write("# BEAST " + version.getVersionString() + "\n");
-            writer.write(STATE);
-            for (TreeMetric treeMetric : treeMetrics) {
-                writer.write("\t" + treeMetric);
-            }
-            writer.write("\n");
-
-            for (int i = 0; i < treeStates.size(); i++) {
-                writer.write(Long.toString(treeStates.get(i)));
-                for (List<Double> values : metricValues) {
-                    writer.write("\t" + values.get(i));
+                    writer.write("\t" + treeMetric.getType().getShortName());
                 }
                 writer.write("\n");
+
+                for (int i = 0; i < treeStates.size(); i++) {
+                    writer.write(Long.toString(treeStates.get(i)));
+                    for (List<Double> values : metricValues) {
+                        writer.write("\t" + values.get(i));
+                    }
+                    writer.write("\n");
+                }
+
+                progressStream.println("Done.");
+
+                long endTime = System.currentTimeMillis();
+
+                progressStream.println("\nAnalyzed " + treeStates.size() + " trees, took " + (endTime - startTime) / 1000.0 + " seconds.\n");
+
+                progressStream.flush();
+                progressStream.close();
+
+                writer.flush();
+                writer.close();
+            } else {
+                int numberOfTrees = 1;
+
+                TreeMetric treeMetric = treeMetrics.get(0);
+
+                List<Tree> trees = new ArrayList<Tree>();
+                while (importer.hasTree()) {
+
+                    Tree tree = importer.importNextTree();
+                    long state = Long.parseLong(tree.getId().split("_")[1]);
+
+                    // one or other of burninTrees and burninStates should be 0
+                    if (numberOfTrees >= burninTrees && state >= burninStates) {
+                        trees.add(tree);
+                        treeIds.add(tree.getId());
+                        treeStates.add(state);
+                    }
+
+                    numberOfTrees++;
+
+                    if (numberOfTrees % 25 == 0) {
+                        progressStream.println(numberOfTrees + " trees parsed ...");
+                        progressStream.flush();
+                    }
+
+                }
+
+                progressStream.println("\nWriting log file ...");
+
+                BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+
+                writer.write(STATE);
+                for (long state : treeStates) {
+                    writer.write("," + state);
+                }
+                writer.write("\n");
+
+                for (int i = 0; i < trees.size(); i++) {
+                    writer.write(Long.toString(treeStates.get(i)));
+
+                    Tree tree1 = trees.get(i);
+                    for (int j = 0; j < trees.size(); j++) {
+                        if (j < i) {
+                            Tree tree2 = trees.get(j);
+
+                            writer.write("," + treeMetric.getMetric(tree1, tree2));
+                        } else {
+                            writer.write(",");
+                        }
+                    }
+                    writer.write("\n");
+                }
+
+                progressStream.println("Done.");
+
+                long endTime = System.currentTimeMillis();
+
+                progressStream.println("\nAnalyzed " + treeStates.size() + " trees, took " + (endTime - startTime) / 1000.0 + " seconds.\n");
+
+                progressStream.flush();
+                progressStream.close();
+
+                writer.flush();
+                writer.close();
+
             }
-
-            progressStream.println("Done.");
-
-            long endTime = System.currentTimeMillis();
-
-            progressStream.println("\nAnalyzed " + treeStates.size() + " trees, took " + (endTime-startTime)/1000.0 + " seconds.\n");
-
-            progressStream.flush();
-            progressStream.close();
-
-            writer.flush();
-            writer.close();
-
-        } catch (FileNotFoundException fnf) {
+        }catch(FileNotFoundException fnf){
             System.err.println(fnf.getMessage());
-        } catch (IOException ioe) {
+        }catch(IOException ioe){
             System.err.println(ioe.getMessage());
-        } catch (Importer.ImportException ime) {
+        }catch(Importer.ImportException ime){
             System.err.println(ime.getMessage());
         }
 
@@ -208,7 +327,13 @@ public class TopologyTracer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.Option("paired", "take 2 input tree files and compute metric between tree pairs"),
+                        new Arguments.Option("pairwise", "compute all pairs in a tree file (output: lower triangular CSV file)"),
                         new Arguments.StringOption("tree", "tree file name", "a focal tree provided by the user [default = first tree in .trees file]"),
+                        new Arguments.StringOption("metric", new String[] {"kc", "sp", "rf", "clade", "branch", "all"}, false,
+                                "which tree metric to use ('kc', 'sp', 'rf', 'clade', 'branch') [default = all]"
+                        ),
                         new Arguments.RealOption("lambda", "the lambda value to be used for the 'Kendall-Colijn metric' [default = {0,0.5,1}]"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -221,43 +346,81 @@ public class TopologyTracer {
             System.exit(1);
         }
 
-        int burnin = 0;
-
+        int burninStates = 0;
+        int burninTrees = 0;
         if (arguments.hasOption("burnin")) {
-            burnin = arguments.getIntegerOption("burnin");
+            burninStates = arguments.getIntegerOption("burnin");
+        }
+        if (arguments.hasOption("burninTrees")) {
+            burninTrees = arguments.getIntegerOption("burninTrees");
+        }
+
+        boolean paired = arguments.hasOption("paired");
+
+        boolean pairwise = arguments.hasOption("pairwise");
+
+        if (paired && pairwise) {
+            System.err.println("Cannot combine the 'paired' and 'pairwise' options");
+            System.err.println();
+            System.exit(1);
+        }
+
+        String metric = "all";
+        if (arguments.hasOption("metric")) {
+            metric = arguments.getStringOption("metric");
+        }
+
+        if (pairwise && metric.equals("all")) {
+            System.err.println("Must specify a single metric to use the 'pairwise' options");
+            System.err.println();
+            System.exit(1);
         }
 
         ArrayList<Double> lambdaValues = new ArrayList<Double>();
-        lambdaValues.add(0.0);
-        lambdaValues.add(0.5);
-        lambdaValues.add(1.0);
-
         if (arguments.hasOption("lambda")) {
             lambdaValues.add(arguments.getRealOption("lambda"));
         }
 
-        String providedFileName = "";
+        if (metric.equals("all")) {
+            lambdaValues.add(0.0);
+            lambdaValues.add(0.5);
+            lambdaValues.add(1.0);
+        }
+
+        if (lambdaValues.size() == 0) {
+            lambdaValues.add(0.5);
+        }
+
+        String focalTreeFileName = null;
         if (arguments.hasOption("tree")) {
-            providedFileName = arguments.getStringOption("tree");
+            focalTreeFileName = arguments.getStringOption("tree");
+        }
+
+        if (paired && focalTreeFileName != null) {
+            System.err.println("Cannot combine the 'tree' and 'pairwise' options");
+            System.err.println();
+            System.exit(1);
         }
 
         String inputFileName = null;
+        String inputFileName2 = null;
         String outputFileName = null;
 
         String[] args2 = arguments.getLeftoverArguments();
 
-        if (args2.length > 3) {
-            System.err.println("Unknown option: " + args2[2]);
+        if (args2.length > (paired ? 3 : 2)) {
+            System.err.println("Unknown option: " + args2[(paired ? 3 : 2)]);
             System.err.println();
             printUsage(arguments);
             System.exit(1);
         }
 
-        if (args2.length > 0) {
+        if (paired) {
             inputFileName = args2[0];
-        }
-
-        if (args2.length > 1) {
+            inputFileName2 = args2[1];
+            outputFileName = args2[2];
+        } else {
+            inputFileName = args2[0];
             outputFileName = args2[1];
         }
 
@@ -266,7 +429,7 @@ public class TopologyTracer {
             inputFileName = Utils.getLoadFileName("TopologyTracer " + version.getVersionString() + " - Select log file to analyse");
         }
 
-        new TopologyTracer(burnin, inputFileName, providedFileName, outputFileName, lambdaValues);
+        new TopologyTracer(burninStates, burninTrees, metric, inputFileName, inputFileName2, focalTreeFileName, outputFileName, lambdaValues, pairwise);
 
         System.exit(0);
 

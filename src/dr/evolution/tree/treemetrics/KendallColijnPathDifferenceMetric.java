@@ -480,8 +480,13 @@ public class KendallColijnPathDifferenceMetric implements TreeMetric {
     }
 
     @Override
+    public Type getType() {
+        return TYPE;
+    }
+
+    @Override
     public String toString() {
-        return TYPE + "(" + lambda + ")";
+        return getType().getShortName() + "(" + lambda + ")";
     }
 
 

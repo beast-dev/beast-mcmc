@@ -403,6 +403,80 @@ public class BEAUTiImporter {
         setData(file.getName(), taxa, null, null, null, importedTraits, null);
     }
 
+    public void importPredictors(final File file) throws Exception {
+        List<TraitData> importedTraits = new ArrayList<TraitData>();
+        Taxa taxa = options.taxonList;
+
+        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+
+        String[] traitNames = dataTable.getColumnLabels();
+        String[] taxonNames = dataTable.getRowLabels();
+
+        for (int i = 0; i < dataTable.getColumnCount(); i++) {
+            boolean warningGiven = false;
+
+            String traitName = traitNames[i];
+
+            String[] values = dataTable.getColumn(i);
+            Class c = null;
+            if (!isMissingValue(values[0])) {
+                c = Utils.detectType(values[0]);
+            }
+            for (int j = 1; j < values.length; j++) {
+                if (!isMissingValue(values[j])) {
+                    if (c == null) {
+                        c = Utils.detectType(values[j]);
+                    } else {
+                        Class c1 = Utils.detectType(values[j]);
+                        if (c == Integer.class && c1 == Double.class) {
+                            // change the type to double
+                            c = Double.class;
+                        }
+
+                        if (c1 != c &&
+                                !(c == Double.class && c1 == Integer.class) &&
+                                !warningGiven ) {
+                            JOptionPane.showMessageDialog(frame, "Not all values of same type for trait" + traitName,
+                                    "Incompatible values", JOptionPane.WARNING_MESSAGE);
+                            warningGiven = true;
+                        }
+                    }
+                }
+            }
+
+            TraitData.TraitType t = (c == Boolean.class || c == String.class || c == null) ? TraitData.TraitType.DISCRETE :
+                    (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
+            TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
+
+            if (validateTraitName(traitName)) {
+                importedTraits.add(newTrait);
+            }
+
+            int j = 0;
+            for (final String taxonName : taxonNames) {
+
+                final int index = taxa.getTaxonIndex(taxonName);
+                Taxon taxon;
+                if (index >= 0) {
+                    taxon = taxa.getTaxon(index);
+                } else {
+                    taxon = new Taxon(taxonName);
+                    taxa.addTaxon(taxon);
+                }
+                if (!isMissingValue(values[j])) {
+                    taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
+                } else {
+                    // AR - merge rather than replace existing trait values
+                    if (taxon.getAttribute(traitName) == null) {
+                        taxon.setAttribute(traitName, "?");
+                    }
+                }
+                j++;
+            }
+        }
+        setData(file.getName(), taxa, null, null, null, importedTraits, null);
+    }
+
     public boolean validateTraitName(String traitName) {
         // check that the name is valid
         if (traitName.trim().length() == 0) {

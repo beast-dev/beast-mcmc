@@ -921,7 +921,7 @@ public class BeautiFrame extends DocumentFrame {
         return importTraitsAction;
     }
 
-    protected AbstractAction importTraitsAction = new AbstractAction("Import Traits") {
+    protected AbstractAction importTraitsAction = new AbstractAction("Import Traits...") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {

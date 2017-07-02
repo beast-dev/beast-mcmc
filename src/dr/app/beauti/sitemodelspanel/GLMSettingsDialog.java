@@ -25,6 +25,7 @@
 
 package dr.app.beauti.sitemodelspanel;
 
+import dr.app.beauti.BeautiFrame;
 import dr.app.util.OSType;
 
 import javax.swing.*;
@@ -36,12 +37,12 @@ import java.awt.*;
  */
 public class GLMSettingsDialog  {
 
-    private final JFrame frame;
+    private final BeautiFrame frame;
 
     private final GLMSettingsPanel glmSettingsPanel;
     private String trait;
 
-    public GLMSettingsDialog(JFrame frame) {
+    public GLMSettingsDialog(BeautiFrame frame) {
         this.frame = frame;
 
         glmSettingsPanel = new GLMSettingsPanel(frame);
@@ -67,6 +68,9 @@ public class GLMSettingsDialog  {
         JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setOpaque(false);
+
+        Object importName = frame.getImportTraitsAction().getValue(Action.NAME);
+        frame.getImportTraitsAction().putValue(Action.NAME, "Import Predictors...");
 
         JOptionPane optionPane = new JOptionPane(scrollPane,
                 JOptionPane.PLAIN_MESSAGE,
@@ -105,6 +109,8 @@ public class GLMSettingsDialog  {
         if (value != null && value != -1) {
             result = value;
         }
+
+        frame.getImportTraitsAction().putValue(Action.NAME, importName);
 
         return result;
     }

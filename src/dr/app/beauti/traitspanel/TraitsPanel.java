@@ -103,13 +103,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         traitsTableModel = new TraitsTableModel();
 //        TableSorter sorter = new TableSorter(traitsTableModel);
-//        traitsTable = new JTable(sorter);
-//        sorter.setTableHeader(traitsTable.getTableHeader());
+//        predictorsTable = new JTable(sorter);
+//        sorter.setTableHeader(predictorsTable.getTableHeader());
         traitsTable = new JTable(traitsTableModel);
 
         traitsTable.getTableHeader().setReorderingAllowed(false);
         traitsTable.getTableHeader().setResizingAllowed(false);
-//        traitsTable.getTableHeader().setDefaultRenderer(
+//        predictorsTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = traitsTable.getColumnModel().getColumn(1);
@@ -246,17 +246,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         updateButtons();
 
-//        int selRow = traitsTable.getSelectedRow();
+//        int selRow = predictorsTable.getSelectedRow();
 //        traitsTableModel.fireTableDataChanged();
 //
 //        if (selRow < 0) {
 //            selRow = 0;
 //        }
-//        traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+//        predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
 
 //        if (selectedTrait == null) {
-//            traitsTable.getSelectionModel().setSelectionInterval(0, 0);
+//            predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
 //        }
 
         traitsTableModel.fireTableDataChanged();
@@ -267,7 +267,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-//        int selRow = traitsTable.getSelectedRow();
+//        int selRow = predictorsTable.getSelectedRow();
 //        if (selRow >= 0 && options.traitsOptions.selecetedTraits.size() > 0) {
 //            selectedTrait = options.traitsOptions.selecetedTraits.get(selRow);
 //        }
@@ -289,9 +289,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             }
 
 //            if (selRow > 0) {
-//                traitsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
+//                predictorsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
 //            } else if (selRow == 0 && options.traitsOptions.traits.size() > 0) { // options.traitsOptions.traits.size() after remove
-//                traitsTable.getSelectionModel().setSelectionInterval(0, 0);
+//                predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
 //            }
 
             traitsTableModel.fireTableDataChanged();
@@ -304,7 +304,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         int selRow = traitsTable.getSelectedRow();
         if (selRow >= 0) {
             currentTrait = options.traits.get(selRow);
-//            traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+//            predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             removeTraitAction.setEnabled(true);
 //        } else {
 //            currentTrait = null;

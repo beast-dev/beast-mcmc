@@ -232,7 +232,7 @@ public class GLMSettingsPanel extends JPanel {
         if (files != null && files.length != 0) {
             try {
                 BEAUTiImporter beautiImporter = new BEAUTiImporter(frame, options);
-                beautiImporter.importPredictors(files[0]);
+                beautiImporter.importPredictors(files[0], trait);
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                         "Unable to open file",

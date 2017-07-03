@@ -30,6 +30,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.stats.DiscreteStatistics;
+import dr.util.DataTable;
 
 import java.io.Serializable;
 import java.util.*;
@@ -61,30 +63,21 @@ public class Predictor implements Serializable {
     private boolean isOrigin;
     private boolean isDestination;
 
+    private double[][] data;
+
     protected final BeautiOptions options;
 
-    public Predictor(BeautiOptions options, String name, TraitData trait, Map<String, Double> vector, PredictorType predictorType) {
+    public Predictor(BeautiOptions options, String name, TraitData trait, double[][] data, PredictorType predictorType) {
         this.options = options;
         this.name = name;
         this.trait = trait;
+        this.data = data;
         this.predictorType = predictorType;
         this.isIncluded = true;
         this.isLogged = true;
         this.isStandardized = true;
         this.isOrigin = predictorType == PredictorType.ORIGIN_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
         this.isDestination = predictorType == PredictorType.DESTINATION_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
-    }
-
-    public Predictor(BeautiOptions options, String name, TraitData trait, Map<String, List<Double>> matrix) {
-        this.options = options;
-        this.name = name;
-        this.trait = trait;
-        this.predictorType = PredictorType.MATRIX;
-        this.isIncluded = true;
-        this.isLogged = true;
-        this.isStandardized = true;
-        this.isOrigin = false;
-        this.isDestination = false;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -139,6 +132,105 @@ public class Predictor implements Serializable {
 
     public void setStandardized(boolean standardized) {
         isStandardized = standardized;
+    }
+
+    public double[][] getMatrixValues(PredictorType predictorType) {
+        double[][] matrixValues = new double[data.length][];
+
+        if (getType() == PredictorType.MATRIX) {
+            if (predictorType != PredictorType.MATRIX) {
+                throw new IllegalArgumentException("Predictor is a matrix");
+            }
+            for (int i = 0; i < data.length; i++) {
+                matrixValues[i] = new double[data.length];
+                System.arraycopy(data[i], 0, matrixValues[i], 0, data.length);
+            }
+        } else {
+
+            if (predictorType != PredictorType.ORIGIN_VECTOR && predictorType != PredictorType.DESTINATION_VECTOR) {
+                throw new IllegalArgumentException("Predictor is a vector");
+            }
+
+            for (int i = 0; i < data.length; i++) {
+                matrixValues[i] = new double[data.length];
+                for (int j = 0; j < data.length; j++) {
+                    if (predictorType == PredictorType.ORIGIN_VECTOR) {
+                        matrixValues[i][j] = data[i][0];
+                    } else {
+                        matrixValues[j][i] = data[i][0];
+                    }
+                }
+            }
+        }
+
+        // set the diagonal to NaN
+        for (int i = 0; i < data.length; i++) {
+            matrixValues[i][i] = Double.NaN;
+        }
+
+        if (isLogged()) {
+            for (int i = 0; i < matrixValues.length; i++) {
+                for (int j = 0; j < matrixValues[i].length; j++) {
+                    if (i != j) {
+                        matrixValues[i][j] = Math.log(matrixValues[i][j]);
+                    }
+                }
+            }
+        }
+
+        if (isStandardized()) {
+            for (int i = 0; i < matrixValues.length; i++) {
+
+                // remove the diagonal values...
+                double[] values = new double[matrixValues.length];
+                int k = 0;
+                for (int j = 0; j < i; j++) {
+                    values[k] = matrixValues[i][j];
+                    k++;
+                }
+                for (int j = i + 1; j < matrixValues.length; j++) {
+                    values[k] = matrixValues[i][j];
+                    k++;
+                }
+
+                double mean = DiscreteStatistics.mean(values);
+                double stdev = Math.sqrt(DiscreteStatistics.variance(values));
+
+
+                for (int j = 0; j < matrixValues[i].length; j++) {
+                    if (i != j) {
+                        matrixValues[i][j] = ((matrixValues[i][j] - mean) / stdev);
+                    }
+                }
+            }
+        }
+
+        return matrixValues;
+    }
+
+    /**
+     * Return string with the values in the linear top triangle, bottom triangle format
+     * @return
+     */
+    public String getValueString(PredictorType predictorType) {
+        StringBuilder valueString = new StringBuilder();
+        double[][] matrix = getMatrixValues(predictorType);
+
+        // upper triangle
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = i + 1; j < matrix[i].length; j++) {
+                valueString.append(" ");
+                valueString.append(matrix[i][j]);
+            }
+        }
+        // lower triangle
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = i + 1; j < matrix[i].length; j++) {
+                valueString.append(" ");
+                valueString.append(matrix[j][i]);
+            }
+        }
+        return valueString.toString();
     }
 
     public String toString() {

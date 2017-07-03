@@ -1055,7 +1055,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public boolean isActivateBSSVS() {
-        return activateBSSVS;
+        return discreteSubstType != DiscreteSubstModelType.GLM_SUBST && activateBSSVS;
     }
 
     public void setActivateBSSVS(boolean activateBSSVS) {

@@ -452,27 +452,25 @@ public class BEAUTiImporter {
         }
 
         if (isMatrix) {
-            Map<String, List<Double>> matrix = new HashMap<String, List<Double>>();
+            double[][] data = new double[dataTable.getRowCount()][dataTable.getRowCount()];
 
             String name = stateNamesCol[0];
             for (int i = 0; i < dataTable.getRowCount(); i++) {
                 String rowName = stateNamesRow[i];
 
                 String[] row = dataTable.getRow(i);
-                List<Double> values = new ArrayList<Double>();
-                for (String value : row) {
+                for (int j = 0; j < row.length; j++) {
                     try {
-                        values.add(Double.parseDouble(value));
+                        data[i][j] = Double.parseDouble(row[j]);
                     } catch (NumberFormatException nfe) {
                         JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at row " + (i+1),
                                 "Missing value", JOptionPane.ERROR_MESSAGE);
                     }
                 }
 
-                matrix.put(rowName, values);
 
             }
-            Predictor predictor = new Predictor(options, fileName, trait, matrix);
+            Predictor predictor = new Predictor(options, fileName, trait, data, Predictor.PredictorType.MATRIX);
             importedPredictors.add(predictor);
 
         } else {
@@ -481,17 +479,19 @@ public class BEAUTiImporter {
             for (int i = 0; i < dataTable.getColumnCount(); i++) {
                 String name = stateNamesCol[i];
 
+                double[][] data = new double[dataTable.getRowCount()][1];
+
                 String[] values = dataTable.getColumn(i);
                 for (int j = 0; j < values.length; j++) {
                     try {
-                        vector.put(stateNamesRow[j], Double.parseDouble(values[i]));
+                        data[j][0] =  Double.parseDouble(values[i]);
                     } catch (NumberFormatException nfe) {
                         JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j+1),
                                 "Missing value", JOptionPane.ERROR_MESSAGE);
                     }
                 }
 
-                Predictor predictor = new Predictor(options, name, trait, vector, Predictor.PredictorType.BOTH_VECTOR);
+                Predictor predictor = new Predictor(options, name, trait, data, Predictor.PredictorType.BOTH_VECTOR);
                 importedPredictors.add(predictor);
             }
         }

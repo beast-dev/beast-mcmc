@@ -33,8 +33,10 @@ import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.GeneralDataType;
+import dr.inference.distribution.BinomialLikelihood;
 import dr.inference.model.DesignMatrix;
 import dr.inference.operators.MultivariateNormalOperator;
+import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.inferencexml.operators.UpDownOperatorParser;
@@ -99,7 +101,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_OPERATORS:
                 return hasGLM;
             case IN_MCMC_PRIOR:
-                return hasBSSVS();
+                return hasGLM || hasBSSVS();
             default:
                 return false;
         }
@@ -127,6 +129,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 break;
 
             case IN_MCMC_PRIOR:
+                for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+                    if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                        writeGLMBinomialLikelihood(model, writer);
+                    }
+                }
                 writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
@@ -371,7 +378,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     private void writeDiscreteTraitsSubstitutionModelReferences(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                // not strictly necessary but makes the XML consistent
+                writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+            } else {
+                writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+            }
         }
     }
 
@@ -561,7 +573,30 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         writer.writeCloseTag(MultivariateNormalOperator.MVN_OPERATOR);
     }
-    
+
+    private void writeGLMBinomialLikelihood(PartitionSubstitutionModel model, XMLWriter writer) {
+        double proportion = 1.0 - Math.exp(Math.log(0.5) / model.getTraitData().getPredictors().size());
+
+        String prefix = model.getName() + ".";
+
+        writer.writeComment("Using the binomialLikelihood we specify a 50% prior mass on no predictors being included.");
+        writer.writeOpenTag(BinomialLikelihood.BINOMIAL_LIKELIHOOD);
+        writer.writeOpenTag(BinomialLikelihoodParser.PROPORTION);
+        writer.writeTag("parameter", new Attribute.Default<Double>("value", proportion), true);
+        writer.writeCloseTag(BinomialLikelihoodParser.PROPORTION);
+        writer.writeOpenTag(BinomialLikelihoodParser.TRIALS);
+        writer.writeTag("parameter", new Attribute[]{
+                new Attribute.Default<Double>("value", 1.0),
+                new Attribute.Default<Integer>("dimension", 1),
+        }, true);
+        writer.writeCloseTag(BinomialLikelihoodParser.TRIALS);
+        writer.writeOpenTag(BinomialLikelihoodParser.COUNTS);
+        writeParameterRef(prefix + "coefIndicators", writer);
+        writer.writeCloseTag(BinomialLikelihoodParser.COUNTS);
+
+        writer.writeCloseTag(BinomialLikelihood.BINOMIAL_LIKELIHOOD);
+    }
+
     public void writeScreenLogEntries(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = model.getName() + ".";

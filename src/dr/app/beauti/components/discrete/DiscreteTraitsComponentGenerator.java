@@ -276,20 +276,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeCloseTag(ROOT_FREQUENCIES);
 
-            writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
+            writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD, new Attribute[] {
+                            new Attribute.Default<String>("family", "logLinear"),
+                            new Attribute.Default<String>("checkIdentifiability", "true")
+                    });
 
             writer.writeOpenTag(GeneralizedLinearModelParser.INDEPENDENT_VARIABLES);
 
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefficients")
-            }, true);
+            writeParameter(options.getParameter(prefix + "coefficients"), 1, writer);
 
-            writer.writeOpenTag(GeneralizedLinearModelParser.INDICATOR);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefIndicators")
-            }, true);
-
-            writer.writeCloseTag(GeneralizedLinearModelParser.INDICATOR);
+            writeParameter(GeneralizedLinearModelParser.INDICATOR, prefix + "coefIndicators", 1, writer);
 
             writer.writeOpenTag(DesignMatrix.DESIGN_MATRIX);
             for (Predictor predictor : model.getTraitData().getPredictors()) {
@@ -599,7 +595,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
                     new Attribute.Default<String>(LoggerParser.FILE_NAME, prefix + ".rates.log")});
         }
-        
+
         writeLogEntries(model, writer);
 
         writer.writeCloseTag(LoggerParser.LOG);

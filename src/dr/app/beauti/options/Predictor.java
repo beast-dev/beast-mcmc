@@ -1,0 +1,239 @@
+/*
+ * TraitData.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.app.beauti.options;
+
+import dr.evolution.datatype.ContinuousDataType;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.stats.DiscreteStatistics;
+import dr.util.DataTable;
+
+import java.io.Serializable;
+import java.util.*;
+
+/**
+ * @author Andrew Rambaut
+ */
+public class Predictor implements Serializable {
+    private static final long serialVersionUID = -9152518508699327745L;
+
+    public enum PredictorType {
+        MATRIX,
+        ORIGIN_VECTOR,
+        DESTINATION_VECTOR,
+        BOTH_VECTOR;
+
+        public String toString() {
+            return name().toLowerCase();
+        }
+    }
+
+    private final PredictorType predictorType;
+    private final TraitData trait;
+
+    private String name;
+    private boolean isIncluded;
+    private boolean isLogged;
+    private boolean isStandardized;
+    private boolean isOrigin;
+    private boolean isDestination;
+
+    private double[][] data;
+
+    protected final BeautiOptions options;
+
+    public Predictor(BeautiOptions options, String name, TraitData trait, double[][] data, PredictorType predictorType) {
+        this.options = options;
+        this.name = name;
+        this.trait = trait;
+        this.data = data;
+        this.predictorType = predictorType;
+        this.isIncluded = true;
+        this.isLogged = true;
+        this.isStandardized = true;
+        this.isOrigin = predictorType == PredictorType.ORIGIN_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
+        this.isDestination = predictorType == PredictorType.DESTINATION_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+
+    public PredictorType getType() {
+        return predictorType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    public boolean isIncluded() {
+        return isIncluded;
+    }
+
+    public void setIncluded(boolean included) {
+        isIncluded = included;
+    }
+
+    public boolean isLogged() {
+        return isLogged;
+    }
+
+    public void setLogged(boolean logged) {
+        isLogged = logged;
+    }
+
+    public boolean isStandardized() {
+        return isStandardized;
+    }
+
+    public boolean isOrigin() {
+        return isOrigin;
+    }
+
+    public void setOrigin(boolean origin) {
+        isOrigin = origin;
+    }
+
+    public boolean isDestination() {
+        return isDestination;
+    }
+
+    public void setDestination(boolean destination) {
+        isDestination = destination;
+    }
+
+    public void setStandardized(boolean standardized) {
+        isStandardized = standardized;
+    }
+
+    public double[][] getMatrixValues(PredictorType predictorType) {
+        double[][] matrixValues = new double[data.length][];
+
+        if (getType() == PredictorType.MATRIX) {
+            if (predictorType != PredictorType.MATRIX) {
+                throw new IllegalArgumentException("Predictor is a matrix");
+            }
+            for (int i = 0; i < data.length; i++) {
+                matrixValues[i] = new double[data.length];
+                System.arraycopy(data[i], 0, matrixValues[i], 0, data.length);
+            }
+        } else {
+
+            if (predictorType != PredictorType.ORIGIN_VECTOR && predictorType != PredictorType.DESTINATION_VECTOR) {
+                throw new IllegalArgumentException("Predictor is a vector");
+            }
+
+            for (int i = 0; i < data.length; i++) {
+                matrixValues[i] = new double[data.length];
+                for (int j = 0; j < data.length; j++) {
+                    if (predictorType == PredictorType.ORIGIN_VECTOR) {
+                        matrixValues[i][j] = data[i][0];
+                    } else {
+                        matrixValues[j][i] = data[i][0];
+                    }
+                }
+            }
+        }
+
+        // set the diagonal to NaN
+        for (int i = 0; i < data.length; i++) {
+            matrixValues[i][i] = Double.NaN;
+        }
+
+        if (isLogged()) {
+            for (int i = 0; i < matrixValues.length; i++) {
+                for (int j = 0; j < matrixValues[i].length; j++) {
+                    if (i != j) {
+                        matrixValues[i][j] = Math.log(matrixValues[i][j]);
+                    }
+                }
+            }
+        }
+
+        if (isStandardized()) {
+            for (int i = 0; i < matrixValues.length; i++) {
+
+                // remove the diagonal values...
+                double[] values = new double[matrixValues.length];
+                int k = 0;
+                for (int j = 0; j < i; j++) {
+                    values[k] = matrixValues[i][j];
+                    k++;
+                }
+                for (int j = i + 1; j < matrixValues.length; j++) {
+                    values[k] = matrixValues[i][j];
+                    k++;
+                }
+
+                double mean = DiscreteStatistics.mean(values);
+                double stdev = Math.sqrt(DiscreteStatistics.variance(values));
+
+
+                for (int j = 0; j < matrixValues[i].length; j++) {
+                    if (i != j) {
+                        matrixValues[i][j] = ((matrixValues[i][j] - mean) / stdev);
+                    }
+                }
+            }
+        }
+
+        return matrixValues;
+    }
+
+    /**
+     * Return string with the values in the linear top triangle, bottom triangle format
+     * @return
+     */
+    public String getValueString(PredictorType predictorType) {
+        StringBuilder valueString = new StringBuilder();
+        double[][] matrix = getMatrixValues(predictorType);
+
+        // upper triangle
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = i + 1; j < matrix[i].length; j++) {
+                valueString.append(" ");
+                valueString.append(matrix[i][j]);
+            }
+        }
+        // lower triangle
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = i + 1; j < matrix[i].length; j++) {
+                valueString.append(" ");
+                valueString.append(matrix[j][i]);
+            }
+        }
+        return valueString.toString();
+    }
+
+    public String toString() {
+        return name;
+    }
+}

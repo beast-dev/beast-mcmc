@@ -49,13 +49,13 @@ public class PartitionClockModelSubstModelLink extends PartitionOptions {
 
     public void initModelParametersAndOpererators() {
         // <svsGeneralSubstitutionModel idref="originModel"/>
-//        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString(), getPrefix() + "trait.mu",
+//        createParameterAndStringOperator(OperatorType.BITFLIP_IN_SUBST.toString(), getPrefix() + "trait.mu",
 //                "bit Flip In Substitution Model Operator",
 //                substModel.getParameter("trait.mu").getName(),  TODO trait.mu belongs Clock Model?
 //                GeneralTraitGenerator.getLocationSubstModelTag(substModel), substModel.getPrefix() + substModel.getName(),
-//                OperatorType.BITFIP_IN_SUBST, demoTuning, 30);
+//                OperatorType.BITFLIP_IN_SUBST, demoTuning, 30);
 
-        createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString(), "clock.rate",
+        createBitFlipInSubstitutionModelOperator(OperatorType.BITFLIP_IN_SUBST.toString(), "clock.rate",
                 "bit Flip In Substitution Model Operator on clock.rate", clockModel.getParameter("clock.rate"), substModel, demoTuning, 30);
 
     }
@@ -68,7 +68,7 @@ public class PartitionClockModelSubstModelLink extends PartitionOptions {
     @Override
     public List<Operator> selectOperators(List<Operator> ops) {
         if (substModel.isActivateBSSVS()) {
-            ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()));
+            ops.add(getOperator(OperatorType.BITFLIP_IN_SUBST.toString()));
         }
         return ops;
     }

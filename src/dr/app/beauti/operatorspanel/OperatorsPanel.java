@@ -87,6 +87,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         operatorTable.getColumnModel().getColumn(0).setMinWidth(40);
+        operatorTable.getColumnModel().getColumn(0).setMaxWidth(40);
 
         operatorTable.getColumnModel().getColumn(1).setCellRenderer(
                 new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));

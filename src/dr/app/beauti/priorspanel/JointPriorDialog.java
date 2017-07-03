@@ -29,30 +29,22 @@
  * @author Marc A. Suchard
  */
 
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.priorspanel;
 
-import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.components.linkedparameters.LinkedParameter;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.TraitData;
-import dr.app.beauti.traitspanel.CreateTraitDialog;
-import dr.app.beauti.types.PriorType;
-import dr.app.gui.components.RealNumberField;
-import dr.app.gui.table.TableEditorStopper;
 import dr.app.util.OSType;
 import jam.panels.ActionPanel;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;

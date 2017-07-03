@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.priorspanel;
 
 import dr.app.beauti.options.Parameter;
 import dr.app.util.OSType;
@@ -34,36 +34,39 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @author Walter Xie
+ * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
-public class GLMSettingsDialog  {
+public class PriorDialog implements AbstractPriorDialog {
 
     private final JFrame frame;
 
-    private final GLMSettingsPanel glmSettingsPanel;
-    private String trait;
+    private final PriorSettingsPanel priorSettingsPanel;
+    private Parameter parameter;
 
-    public GLMSettingsDialog(JFrame frame) {
+    public PriorDialog(JFrame frame) {
         this.frame = frame;
 
-        glmSettingsPanel = new GLMSettingsPanel(frame);
+         priorSettingsPanel = new PriorSettingsPanel(frame);
 
     }
 
     /**
-     * Set the trait to be controlled
+     * Set the parameter to be controlled
      *
-     * @param trait
+     * @param parameter
      */
-    public void setTrait(final String trait) {
-        this.trait = trait;
-        glmSettingsPanel.setTrait(trait);
+    public void setParameter(final Parameter parameter) {
+        this.parameter = parameter;
+        priorSettingsPanel.setParameter(parameter);
     }
 
     public int showDialog() {
 
         JPanel panel = new JPanel(new BorderLayout(0, 6));
-        panel.add(new JLabel("Set GLM design for " + trait), BorderLayout.NORTH);
-        panel.add(glmSettingsPanel, BorderLayout.CENTER);
+        panel.add(new JLabel("Select prior distribution for " + parameter.getName()), BorderLayout.NORTH);
+        panel.add(priorSettingsPanel, BorderLayout.CENTER);
 
         JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
@@ -77,20 +80,20 @@ public class GLMSettingsDialog  {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "GLM settings for " + trait);
+        final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter " + parameter.getName());
 
-        glmSettingsPanel.setDialog(dialog);
+        priorSettingsPanel.setDialog(dialog);
 
         if (OSType.isMac()) {
             dialog.setMinimumSize(new Dimension(dialog.getBounds().width, 300));
         } else {
             Toolkit tk = Toolkit.getDefaultToolkit();
             Dimension d = tk.getScreenSize();
-            if (d.height < 700 && glmSettingsPanel.getHeight() > 450) {
-                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, 550));
+            if (d.height < 700 && priorSettingsPanel.getHeight() > 450) {
+                dialog.setSize(new java.awt.Dimension(priorSettingsPanel.getWidth() + 100, 550));
             } else {
                 // setSize because optionsPanel is shrunk in dialog
-                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, glmSettingsPanel.getHeight() + 100));
+                dialog.setSize(new java.awt.Dimension(priorSettingsPanel.getWidth() + 100, priorSettingsPanel.getHeight() + 100));
             }
 
 //            System.out.println("panel width = " + panel.getWidth());
@@ -108,5 +111,13 @@ public class GLMSettingsDialog  {
         }
 
         return result;
+    }
+
+    public void getArguments(Parameter parameter) {
+            priorSettingsPanel.getArguments(parameter);
+    }
+
+    public boolean hasInvalidInput(boolean showError) {
+        return priorSettingsPanel.hasInvalidInput(showError);
     }
 }

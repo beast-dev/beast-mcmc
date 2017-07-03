@@ -23,9 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.sitemodelspanel;
 
-import dr.app.beauti.options.Parameter;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.TraitData;
 import dr.app.util.OSType;
 
 import javax.swing.*;
@@ -34,43 +35,43 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @author Alexei Drummond
- * @author Walter Xie
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
-public class PriorDialog implements AbstractPriorDialog {
+public class GLMSettingsDialog  {
 
-    private final JFrame frame;
+    private final BeautiFrame frame;
 
-    private final PriorSettingsPanel priorSettingsPanel;
-    private Parameter parameter;
+    private final GLMSettingsPanel glmSettingsPanel;
+    private TraitData trait;
 
-    public PriorDialog(JFrame frame) {
+    public GLMSettingsDialog(BeautiFrame frame) {
         this.frame = frame;
 
-         priorSettingsPanel = new PriorSettingsPanel(frame);
+        glmSettingsPanel = new GLMSettingsPanel(frame);
 
     }
 
     /**
-     * Set the parameter to be controlled
+     * Set the trait to be controlled
      *
-     * @param parameter
+     * @param trait
      */
-    public void setParameter(final Parameter parameter) {
-        this.parameter = parameter;
-        priorSettingsPanel.setParameter(parameter);
+    public void setTrait(final TraitData trait) {
+        this.trait = trait;
+        glmSettingsPanel.setTrait(trait);
     }
 
     public int showDialog() {
 
         JPanel panel = new JPanel(new BorderLayout(0, 6));
-        panel.add(new JLabel("Select prior distribution for " + parameter.getName()), BorderLayout.NORTH);
-        panel.add(priorSettingsPanel, BorderLayout.CENTER);
+        panel.add(new JLabel("Set GLM design for " + trait), BorderLayout.NORTH);
+        panel.add(glmSettingsPanel, BorderLayout.CENTER);
 
         JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setOpaque(false);
+
+        Object importName = frame.getImportTraitsAction().getValue(Action.NAME);
+        frame.getImportTraitsAction().putValue(Action.NAME, "Import Predictors...");
 
         JOptionPane optionPane = new JOptionPane(scrollPane,
                 JOptionPane.PLAIN_MESSAGE,
@@ -80,20 +81,20 @@ public class PriorDialog implements AbstractPriorDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter " + parameter.getName());
+        final JDialog dialog = optionPane.createDialog(frame, "GLM settings for " + trait);
 
-        priorSettingsPanel.setDialog(dialog);
+        glmSettingsPanel.setDialog(dialog);
 
         if (OSType.isMac()) {
             dialog.setMinimumSize(new Dimension(dialog.getBounds().width, 300));
         } else {
             Toolkit tk = Toolkit.getDefaultToolkit();
             Dimension d = tk.getScreenSize();
-            if (d.height < 700 && priorSettingsPanel.getHeight() > 450) {
-                dialog.setSize(new java.awt.Dimension(priorSettingsPanel.getWidth() + 100, 550));
+            if (d.height < 700 && glmSettingsPanel.getHeight() > 450) {
+                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, 550));
             } else {
                 // setSize because optionsPanel is shrunk in dialog
-                dialog.setSize(new java.awt.Dimension(priorSettingsPanel.getWidth() + 100, priorSettingsPanel.getHeight() + 100));
+                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, glmSettingsPanel.getHeight() + 100));
             }
 
 //            System.out.println("panel width = " + panel.getWidth());
@@ -110,14 +111,8 @@ public class PriorDialog implements AbstractPriorDialog {
             result = value;
         }
 
+        frame.getImportTraitsAction().putValue(Action.NAME, importName);
+
         return result;
-    }
-
-    public void getArguments(Parameter parameter) {
-            priorSettingsPanel.getArguments(parameter);
-    }
-
-    public boolean hasInvalidInput(boolean showError) {
-        return priorSettingsPanel.hasInvalidInput(showError);
     }
 }

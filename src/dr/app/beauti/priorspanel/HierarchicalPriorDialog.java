@@ -29,7 +29,7 @@
  * @author Marc A. Suchard
  */
 
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.priorspanel;
 
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;

@@ -23,14 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
-import dr.evolution.datatype.AminoAcids;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.datatype.TwoStates;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;

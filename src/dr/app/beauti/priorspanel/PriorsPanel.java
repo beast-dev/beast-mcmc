@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.priorspanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
@@ -33,7 +33,6 @@ import dr.app.beauti.components.linkedparameters.LinkedParameter;
 import dr.app.beauti.components.linkedparameters.LinkedParameterComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;

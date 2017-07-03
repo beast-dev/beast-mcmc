@@ -33,12 +33,16 @@ import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.GeneralDataType;
+import dr.inference.model.DesignMatrix;
+import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.oldevomodel.substmodel.GLMSubstitutionModel;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.FrequencyModelParser;
+import dr.oldevomodelxml.substmodel.GLMSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -54,6 +58,8 @@ import dr.util.Attribute;
 import dr.xml.XMLParser;
 
 import java.util.Set;
+
+import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQUENCIES;
 
 /**
  * @author Andrew Rambaut
@@ -255,12 +261,96 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeRatesAndIndicators(model, stateCount * (stateCount - 1), null, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-        } else {
+        } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            writer.writeComment("GLM substitution model");
 
+            writer.writeOpenTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
+                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)
+            });
+
+            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
+
+            writer.writeOpenTag(ROOT_FREQUENCIES);
+
+            writer.writeOpenTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
+                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)
+            });
+
+            writer.writeCloseTag(ROOT_FREQUENCIES);
+
+            writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
+
+            writer.writeOpenTag(GeneralizedLinearModelParser.INDEPENDENT_VARIABLES);
+
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefficients")
+            }, true);
+
+            writer.writeOpenTag(GeneralizedLinearModelParser.INDICATOR);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefIndicators")
+            }, true);
+
+            writer.writeCloseTag(GeneralizedLinearModelParser.INDICATOR);
+
+            writer.writeOpenTag(DesignMatrix.DESIGN_MATRIX);
+            for (Predictor predictor : model.getTraitData().getPredictors()) {
+                if (predictor.getType() == Predictor.PredictorType.ORIGIN_VECTOR || predictor.getType() == Predictor.PredictorType.BOTH_VECTOR) {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + predictor + "_origin"),
+                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.PredictorType.ORIGIN_VECTOR))
+                    }, true);
+                }
+                if (predictor.getType() == Predictor.PredictorType.DESTINATION_VECTOR || predictor.getType() == Predictor.PredictorType.BOTH_VECTOR) {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + predictor + "_destination"),
+                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.PredictorType.DESTINATION_VECTOR))
+                    }, true);
+                }
+                if (predictor.getType() == Predictor.PredictorType.MATRIX) {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + predictor),
+                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.PredictorType.MATRIX))
+                    }, true);
+                }
+            }
+            writer.writeCloseTag(DesignMatrix.DESIGN_MATRIX);
+
+            writer.writeCloseTag(GeneralizedLinearModelParser.INDEPENDENT_VARIABLES);
+
+            writer.writeCloseTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
+
+            writer.writeCloseTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL);
+
+            writer.writeComment("GLM: statistic that returns the product of the coefficients and the respective indicators for the predictors");
+
+            writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[] {
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "coefficientsTimesIndicators"),
+                    new Attribute.Default<String>(ProductStatisticParser.ELEMENT_WISE, "false")
+            });
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefficients")
+            }, true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefIndicators")
+            }, true);
+            writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
+
+            writer.writeComment("GLM: the number of predictors included in the model (non-zero indicators)");
+            writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "includedPredictors"),
+                    new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "coefIndicators");
+            writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
+
+        } else {
+            throw new IllegalArgumentException("Unknown discreteSubstType");
         }
 
-        if (model.isActivateBSSVS()) // If "BSSVS" is not activated, rateIndicator should not b§e there.
+        if (model.isActivateBSSVS()) {
+            // If "BSSVS" is not activated, rateIndicator should not be there.
             writeStatisticModel(model, writer);
+        }
     }
 
     private void writeDiscreteTraitsSubstitutionModelReferences(XMLWriter writer) {
@@ -302,7 +392,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
 
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            // not strictly necessary but makes the XML consistent
+            writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        } else {
+            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        }
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         writer.writeCloseTag(SiteModel.SITE_MODEL);
@@ -390,6 +485,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
+
+        if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            // not strictly necessary but makes the XML consistent
+            writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        } else {
+            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        }
+
         writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getName() + "." + AbstractSubstitutionModel.MODEL);
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
@@ -432,12 +535,25 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 writer.writeOpenTag(ColumnsParser.COLUMN,
                         new Attribute[]{
                                 new Attribute.Default<String>(ColumnsParser.LABEL, prefix + "nonZeroRates"),
-                                new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
-                                new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
+                                new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "0"),
+                                new Attribute.Default<String>(ColumnsParser.WIDTH, "6")
                         }
                 );
 
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+
+                writer.writeCloseTag(ColumnsParser.COLUMN);
+            }
+            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                writer.writeOpenTag(ColumnsParser.COLUMN,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ColumnsParser.LABEL, prefix + "incPredictors"),
+                                new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "0"),
+                                new Attribute.Default<String>(ColumnsParser.WIDTH, "6")
+                        }
+                );
+
+                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "includedPredictors");
 
                 writer.writeCloseTag(ColumnsParser.COLUMN);
             }
@@ -448,11 +564,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = model.getName() + ".";
 
-            writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "includedPredictors");
+                writer.writeIDref(ProductStatisticParser.PRODUCT_STATISTIC, prefix + "coefficientsTimesIndicators");
+            } else {
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
 
-            if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
-                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+                    writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                }
             }
         }
 
@@ -469,11 +590,18 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         String prefix = options.fileNameStem + "." + model.getName();
 
-        writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, prefix + "rateMatrixLog"),
-                new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
-                new Attribute.Default<String>(LoggerParser.FILE_NAME, prefix + ".rates.log")});
-
+        if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "glmLog"),
+                    new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
+                    new Attribute.Default<String>(LoggerParser.FILE_NAME, prefix + ".glm.log")});
+        } else {
+            writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "rateMatrixLog"),
+                    new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
+                    new Attribute.Default<String>(LoggerParser.FILE_NAME, prefix + ".rates.log")});
+        }
+        
         writeLogEntries(model, writer);
 
         writer.writeCloseTag(LoggerParser.LOG);
@@ -482,11 +610,17 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeLogEntries(PartitionSubstitutionModel model, XMLWriter writer) {
         String prefix = model.getName() + ".";
 
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+        if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "coefficients");
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "coefIndicators");
+            writer.writeIDref(ProductStatisticParser.PRODUCT_STATISTIC, prefix + "coefficientsTimesIndicators");
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
 
-        if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-            writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
-            writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+            if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+            }
         }
     }
 

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.clockModelsPanel;
+package dr.app.beauti.clockmodelspanel;
 
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.util.PanelUtils;

@@ -407,7 +407,15 @@ public class BEAUTiImporter {
 
         Set<String> states = trait.getStatesOfTrait();
 
-        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+        String fileName = file.getName();
+        String extension = "";
+        if (fileName.lastIndexOf(".") != -1) {
+            extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+            fileName =  fileName.substring(0, fileName.lastIndexOf("."));
+        }
+        boolean isCSV = extension.toUpperCase().equals("CSV");
+
+        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file), isCSV);
 
         String[] stateNamesCol = dataTable.getColumnLabels();
         String[] stateNamesRow = dataTable.getRowLabels();
@@ -464,7 +472,7 @@ public class BEAUTiImporter {
                 matrix.put(rowName, values);
 
             }
-            Predictor predictor = new Predictor(options, name, trait, matrix);
+            Predictor predictor = new Predictor(options, fileName, trait, matrix);
             importedPredictors.add(predictor);
 
         } else {

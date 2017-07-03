@@ -42,8 +42,8 @@ public class Predictor implements Serializable {
 
     public enum PredictorType {
         MATRIX,
-        FROM_VECTOR,
-        TO_VECTOR,
+        ORIGIN_VECTOR,
+        DESTINATION_VECTOR,
         BOTH_VECTOR;
 
         public String toString() {
@@ -58,6 +58,8 @@ public class Predictor implements Serializable {
     private boolean isIncluded;
     private boolean isLogged;
     private boolean isStandardized;
+    private boolean isOrigin;
+    private boolean isDestination;
 
     protected final BeautiOptions options;
 
@@ -66,6 +68,11 @@ public class Predictor implements Serializable {
         this.name = name;
         this.trait = trait;
         this.predictorType = predictorType;
+        this.isIncluded = true;
+        this.isLogged = true;
+        this.isStandardized = true;
+        this.isOrigin = predictorType == PredictorType.ORIGIN_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
+        this.isDestination = predictorType == PredictorType.DESTINATION_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
     }
 
     public Predictor(BeautiOptions options, String name, TraitData trait, Map<String, List<Double>> matrix) {
@@ -73,6 +80,11 @@ public class Predictor implements Serializable {
         this.name = name;
         this.trait = trait;
         this.predictorType = PredictorType.MATRIX;
+        this.isIncluded = true;
+        this.isLogged = true;
+        this.isStandardized = true;
+        this.isOrigin = false;
+        this.isDestination = false;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -107,6 +119,22 @@ public class Predictor implements Serializable {
 
     public boolean isStandardized() {
         return isStandardized;
+    }
+
+    public boolean isOrigin() {
+        return isOrigin;
+    }
+
+    public void setOrigin(boolean origin) {
+        isOrigin = origin;
+    }
+
+    public boolean isDestination() {
+        return isDestination;
+    }
+
+    public void setDestination(boolean destination) {
+        isDestination = destination;
     }
 
     public void setStandardized(boolean standardized) {

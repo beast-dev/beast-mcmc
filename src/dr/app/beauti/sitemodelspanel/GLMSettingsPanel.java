@@ -91,6 +91,10 @@ public class GLMSettingsPanel extends JPanel {
         predictorsTable.getColumnModel().getColumn(2).setMaxWidth(40);
         predictorsTable.getColumnModel().getColumn(3).setMinWidth(40);
         predictorsTable.getColumnModel().getColumn(3).setMaxWidth(40);
+        predictorsTable.getColumnModel().getColumn(4).setMinWidth(40);
+        predictorsTable.getColumnModel().getColumn(4).setMaxWidth(40);
+        predictorsTable.getColumnModel().getColumn(5).setMinWidth(40);
+        predictorsTable.getColumnModel().getColumn(5).setMaxWidth(40);
 
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(predictorsTable);
@@ -295,7 +299,7 @@ public class GLMSettingsPanel extends JPanel {
     class PredictorsTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"", "Predictor", "Log", "Std"};
+        String[] columnNames = {"", "Predictor", "Log", "Std", "Origin", "Dest"};
 
         public PredictorsTableModel() {
         }
@@ -319,6 +323,10 @@ public class GLMSettingsPanel extends JPanel {
                     return predictor.isLogged();
                 case 3:
                     return predictor.isStandardized();
+                case 4:
+                    return predictor.isOrigin();
+                case 5:
+                    return predictor.isDestination();
             }
             return null;
         }
@@ -327,17 +335,25 @@ public class GLMSettingsPanel extends JPanel {
             Predictor predictor =  trait.getPredictors().get(row);
             switch (col) {
                 case 0:
-                    predictor.setIncluded((Boolean)aValue);
+                    predictor.setIncluded((Boolean)aValue); break;
                 case 1:
-                     predictor.setName((String)aValue);
+                     predictor.setName((String)aValue); break;
                 case 2:
-                    predictor.setLogged((Boolean)aValue);
+                    predictor.setLogged((Boolean)aValue); break;
                 case 3:
-                    predictor.setStandardized((Boolean)aValue);
+                    predictor.setStandardized((Boolean)aValue); break;
+                case 4:
+                    predictor.setOrigin((Boolean)aValue); break;
+                case 5:
+                    predictor.setDestination((Boolean)aValue); break;
             }
         }
 
         public boolean isCellEditable(int row, int col) {
+            Predictor predictor =  trait.getPredictors().get(row);
+            if (predictor.getType() == Predictor.PredictorType.MATRIX) {
+                return (col < 4);
+            }
             return true;
         }
 

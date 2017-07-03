@@ -27,7 +27,9 @@ package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.ComboBoxRenderer;
+import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Predictor;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
@@ -65,6 +67,8 @@ public class GLMSettingsPanel extends JPanel {
     private JDialog dialog;
     private BeautiOptions options;
 
+    private TraitData trait;
+
     public final JTable predictorsTable;
     private final PredictorsTableModel predictorsTableModel;
 
@@ -81,18 +85,20 @@ public class GLMSettingsPanel extends JPanel {
 //        predictorsTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableColumn col = predictorsTable.getColumnModel().getColumn(1);
-        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitData.TraitType.values());
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        col.setCellRenderer(comboBoxRenderer);
+        predictorsTable.getColumnModel().getColumn(0).setMinWidth(40);
+        predictorsTable.getColumnModel().getColumn(0).setMaxWidth(40);
+        predictorsTable.getColumnModel().getColumn(2).setMinWidth(40);
+        predictorsTable.getColumnModel().getColumn(2).setMaxWidth(40);
+        predictorsTable.getColumnModel().getColumn(3).setMinWidth(40);
+        predictorsTable.getColumnModel().getColumn(3).setMaxWidth(40);
+
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(predictorsTable);
 
         predictorsTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         predictorsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
-//                traitSelectionChanged();
-//                dataTableModel.fireTableDataChanged();
+                updateButtons();
             }
         });
 
@@ -141,12 +147,24 @@ public class GLMSettingsPanel extends JPanel {
         add(toolBar1, BorderLayout.NORTH);
     }
 
+    public void setOptions(BeautiOptions options) {
+        this.options = options;
+    }
+
+    public void getOptions(BeautiOptions options) {
+    }
+
+    public void setDialog(final JDialog dialog) {
+        this.dialog = dialog;
+    }
+
     /**
      * Set the trait to be controlled
-     *                                                                                                       q
+     *
      * @param trait
      */
-    public void setTrait(final String trait) {
+    public void setTrait(final TraitData trait) {
+        this.trait = trait;
 //        this.parameter = parameter;
 //
 //        priorCombo = new JComboBox();
@@ -181,29 +199,6 @@ public class GLMSettingsPanel extends JPanel {
 //        }
     }
 
-    public void setOptions(BeautiOptions options) {
-        this.options = options;
-    }
-
-    public void getOptions(BeautiOptions options) {
-    }
-
-    private void setupComponents() {
-        removeAll();
-
-        OptionsPanel optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
-
-        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        panel1.add(optionsPanel);
-
-
-        repaint();
-    }
-
-    public void setDialog(final JDialog dialog) {
-        this.dialog = dialog;
-    }
-
     public void firePredictorsChanged() {
 //        if (currentTrait != null) {
 ////        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
@@ -227,120 +222,8 @@ public class GLMSettingsPanel extends JPanel {
     }
 
     private void updateButtons() {
-//        boolean hasData = options.hasData();
-//
-//        addTraitAction.setEnabled(hasData);
-//        importTraitsAction.setEnabled(hasData);
+        removePredictorAction.setEnabled(predictorsTable.getSelectedRows().length > 0);
     }
-
-//    public boolean addTrait() {
-//        return addTrait("Untitled");
-//    }
-//
-//    public boolean addTrait(String traitName) {
-//        return addTrait(null, traitName, false);
-//    }
-//
-//    public boolean addTrait(String message, String traitName, boolean isSpeciesTrait) {
-//        if (createTraitDialog == null) {
-//            createTraitDialog = new CreateTraitDialog(frame);
-//        }
-//
-//        createTraitDialog.setSpeciesTrait(isSpeciesTrait);
-//        createTraitDialog.setTraitName(traitName);
-//        createTraitDialog.setMessage(message);
-//
-//        int result = createTraitDialog.showDialog();
-//        if (result == JOptionPane.OK_OPTION) {
-//            frame.tabbedPane.setSelectedComponent(this);
-//
-//            String name = createTraitDialog.getName();
-//            TraitData.TraitType type = createTraitDialog.getType();
-//            TraitData newTrait = new TraitData(options, name, "", type);
-//            currentTrait = newTrait;
-//
-//            // The createTraitDialog will have already checked if the
-//            // user is overwriting an existing trait
-//            addTrait(newTrait);
-//
-//            if (createTraitDialog.createTraitPartition()) {
-//                options.createPartitionForTraits(name, newTrait);
-//            }
-//
-//            fireTraitsChanged();
-//            updateButtons();
-//
-//        } else if (result == CreateTraitDialog.OK_IMPORT) {
-//            boolean done = frame.doImportTraits();
-//            if (done) {
-//                if (isSpeciesTrait) {
-//                    // check that we did indeed import a 'species' trait
-//                    if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-//                        JOptionPane.showMessageDialog(this,
-//                                "The imported trait file didn't contain a trait\n" +
-//                                        "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
-//                                        "Please edit it or select a different file.",
-//                                "Reserved trait name",
-//                                JOptionPane.WARNING_MESSAGE);
-//
-//                        return false;
-//                    }
-//                }
-//                updateButtons();
-//            }
-//            return done;
-//        } else if (result == JOptionPane.CANCEL_OPTION) {
-//            return false;
-//        }
-//
-//        return true;
-//    }
-//
-//    public void createTraitPartition() {
-//        int[] selRows = predictorsTable.getSelectedRows();
-//        java.util.List<TraitData> traits = new ArrayList<TraitData>();
-//        int discreteCount = 0;
-//        int continuousCount = 0;
-//        for (int row : selRows) {
-//            TraitData trait = options.traits.get(row);
-//            traits.add(trait);
-//
-//            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-//                discreteCount ++;
-//            }
-//            if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
-//                continuousCount ++;
-//            }
-//        }
-//
-//        boolean success = false;
-//        if (discreteCount > 0) {
-//            if (continuousCount > 0)  {
-//                JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
-//                return;
-//            }
-//
-//            // with discrete traits, create a separate partition for each
-//            for (TraitData trait : traits) {
-//                java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
-//                singleTrait.add(trait);
-//                if (dataPanel.createFromTraits(singleTrait)) {
-//                    success = true;
-//                }
-//            }
-//        } else {
-//            // with
-//            success = dataPanel.createFromTraits(traits);
-//        }
-//        if (success) {
-//            frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
-//        }
-//    }
-//
-//    public void addTrait(TraitData newTrait) {
-//        int selRow = options.addTrait(newTrait);
-//        predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-//    }
 
     private boolean importPredictors() {
         File[] files = frame.selectImportFiles("Import Predictors File...", false, new FileNameExtensionFilter[] {
@@ -385,7 +268,7 @@ public class GLMSettingsPanel extends JPanel {
     }
 
     public void removePredictor(String traitName) {
-//        TraitData traitData = options.getTrait(traitName);
+        TraitData traitData = options.getTrait(traitName);
 //        if (options.getTraitPartitions(traitData).size() > 0) {
 //            JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
 //            return;
@@ -412,7 +295,7 @@ public class GLMSettingsPanel extends JPanel {
     class PredictorsTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Trait", "Type"};
+        String[] columnNames = {"", "Predictor", "Log", "Std"};
 
         public PredictorsTableModel() {
         }
@@ -422,43 +305,40 @@ public class GLMSettingsPanel extends JPanel {
         }
 
         public int getRowCount() {
-//            if (options == null) return 0;
-//            return options.traits.size();
-            return 0;
+            return (trait == null ? 0 : trait.getPredictors().size());
         }
 
         public Object getValueAt(int row, int col) {
-//            switch (col) {
-//                case 0:
-//                    return options.traits.get(row).getName();
-//                case 1:
-//                    return options.traits.get(row).getTraitType();
-//            }
+            Predictor predictor =  trait.getPredictors().get(row);
+            switch (col) {
+                case 0:
+                    return predictor.isIncluded();
+                case 1:
+                    return predictor.getName();
+                case 2:
+                    return predictor.isLogged();
+                case 3:
+                    return predictor.isStandardized();
+            }
             return null;
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-//            switch (col) {
-//                case 0:
-//                    String oldName = options.traits.get(row).getName();
-//                    options.traits.get(row).setName(aValue.toString());
-//                    Object value;
-//                    for (Taxon t : options.taxonList) {
-//                        value = t.getAttribute(oldName);
-//                        t.setAttribute(aValue.toString(), value);
-//                        // cannot remvoe attribute in Attributable inteface
-//                    }
-//                    fireTraitsChanged();
-//                    break;
-//                case 1:
-//                    options.traits.get(row).setTraitType((TraitData.TraitType) aValue);
-//                    break;
-//            }
+            Predictor predictor =  trait.getPredictors().get(row);
+            switch (col) {
+                case 0:
+                    predictor.setIncluded((Boolean)aValue);
+                case 1:
+                     predictor.setName((String)aValue);
+                case 2:
+                    predictor.setLogged((Boolean)aValue);
+                case 3:
+                    predictor.setStandardized((Boolean)aValue);
+            }
         }
 
         public boolean isCellEditable(int row, int col) {
-//            return !options.useStarBEAST || !options.traits.get(row).getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString());
-            return false;
+            return true;
         }
 
         public String getColumnName(int column) {

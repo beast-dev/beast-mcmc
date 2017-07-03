@@ -52,9 +52,7 @@ import org.jdom.JDOMException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 
@@ -403,81 +401,101 @@ public class BEAUTiImporter {
         setData(file.getName(), taxa, null, null, null, importedTraits, null);
     }
 
-    public void importPredictors(final File file) throws Exception {
-        List<TraitData> importedTraits = new ArrayList<TraitData>();
-        Taxa taxa = options.taxonList;
+    public boolean importPredictors(final File file, final TraitData trait) throws Exception {
+        List<Predictor> importedPredictors = new ArrayList<Predictor>();
+//        Taxa taxa = options.taxonList;
+
+        Set<String> states = trait.getStatesOfTrait();
 
         DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
 
-        String[] traitNames = dataTable.getColumnLabels();
-        String[] taxonNames = dataTable.getRowLabels();
+        String[] stateNamesCol = dataTable.getColumnLabels();
+        String[] stateNamesRow = dataTable.getRowLabels();
 
-        for (int i = 0; i < dataTable.getColumnCount(); i++) {
-            boolean warningGiven = false;
-
-            String traitName = traitNames[i];
-
-            String[] values = dataTable.getColumn(i);
-            Class c = null;
-            if (!isMissingValue(values[0])) {
-                c = Utils.detectType(values[0]);
-            }
-            for (int j = 1; j < values.length; j++) {
-                if (!isMissingValue(values[j])) {
-                    if (c == null) {
-                        c = Utils.detectType(values[j]);
-                    } else {
-                        Class c1 = Utils.detectType(values[j]);
-                        if (c == Integer.class && c1 == Double.class) {
-                            // change the type to double
-                            c = Double.class;
-                        }
-
-                        if (c1 != c &&
-                                !(c == Double.class && c1 == Integer.class) &&
-                                !warningGiven ) {
-                            JOptionPane.showMessageDialog(frame, "Not all values of same type for trait" + traitName,
-                                    "Incompatible values", JOptionPane.WARNING_MESSAGE);
-                            warningGiven = true;
-                        }
-                    }
-                }
-            }
-
-            TraitData.TraitType t = (c == Boolean.class || c == String.class || c == null) ? TraitData.TraitType.DISCRETE :
-                    (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
-            TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
-
-            if (validateTraitName(traitName)) {
-                importedTraits.add(newTrait);
-            }
-
-            int j = 0;
-            for (final String taxonName : taxonNames) {
-
-                final int index = taxa.getTaxonIndex(taxonName);
-                Taxon taxon;
-                if (index >= 0) {
-                    taxon = taxa.getTaxon(index);
-                } else {
-                    taxon = new Taxon(taxonName);
-                    taxa.addTaxon(taxon);
-                }
-                if (!isMissingValue(values[j])) {
-                    taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
-                } else {
-                    // AR - merge rather than replace existing trait values
-                    if (taxon.getAttribute(traitName) == null) {
-                        taxon.setAttribute(traitName, "?");
-                    }
-                }
-                j++;
+        for (String name : stateNamesRow) {
+            if (!states.contains(name)) {
+                JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
+                        "Unrecognized state", JOptionPane.ERROR_MESSAGE);
+                return false;
             }
         }
-        setData(file.getName(), taxa, null, null, null, importedTraits, null);
+
+        boolean isMatrix = false;
+
+        if (dataTable.getColumnCount() == states.size()) {
+            // likely this is a matrix
+            int matches = states.size();
+            for (String name : stateNamesCol) {
+                if (!states.contains(name)) {
+                    matches -= 1;
+                }
+            }
+            if (((double)matches) / states.size() > 0.5) { // arbitrary cut off but if 50% matching then presumably they all should
+                for (String name : stateNamesCol) {
+                    if (!states.contains(name)) {
+                        JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
+                                "Unrecognized state", JOptionPane.ERROR_MESSAGE);
+                        return false;
+                    }
+                }
+
+                isMatrix = true;
+            }
+        }
+
+        if (isMatrix) {
+            Map<String, List<Double>> matrix = new HashMap<String, List<Double>>();
+
+            String name = stateNamesCol[0];
+            for (int i = 0; i < dataTable.getRowCount(); i++) {
+                String rowName = stateNamesRow[i];
+
+                String[] row = dataTable.getRow(i);
+                List<Double> values = new ArrayList<Double>();
+                for (String value : row) {
+                    try {
+                        values.add(Double.parseDouble(value));
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at row " + (i+1),
+                                "Missing value", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+
+                matrix.put(rowName, values);
+
+            }
+            Predictor predictor = new Predictor(options, name, trait, matrix);
+            importedPredictors.add(predictor);
+
+        } else {
+            Map<String, Double> vector = new HashMap<String, Double>();
+            // a series of vectors
+            for (int i = 0; i < dataTable.getColumnCount(); i++) {
+                String name = stateNamesCol[i];
+
+                String[] values = dataTable.getColumn(i);
+                for (int j = 0; j < values.length; j++) {
+                    try {
+                        vector.put(stateNamesRow[j], Double.parseDouble(values[i]));
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j+1),
+                                "Missing value", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+
+                Predictor predictor = new Predictor(options, name, trait, vector, Predictor.PredictorType.BOTH_VECTOR);
+                importedPredictors.add(predictor);
+            }
+        }
+
+        for (Predictor predictor : importedPredictors) {
+            trait.addPredictor(predictor);
+        }
+
+        return true;
     }
 
-    public boolean validateTraitName(String traitName) {
+    private boolean validateTraitName(String traitName) {
         // check that the name is valid
         if (traitName.trim().length() == 0) {
             Toolkit.getDefaultToolkit().beep();

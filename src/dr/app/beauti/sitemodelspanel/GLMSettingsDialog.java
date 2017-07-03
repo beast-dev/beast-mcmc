@@ -26,6 +26,7 @@
 package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.TraitData;
 import dr.app.util.OSType;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ public class GLMSettingsDialog  {
     private final BeautiFrame frame;
 
     private final GLMSettingsPanel glmSettingsPanel;
-    private String trait;
+    private TraitData trait;
 
     public GLMSettingsDialog(BeautiFrame frame) {
         this.frame = frame;
@@ -54,7 +55,7 @@ public class GLMSettingsDialog  {
      *
      * @param trait
      */
-    public void setTrait(final String trait) {
+    public void setTrait(final TraitData trait) {
         this.trait = trait;
         glmSettingsPanel.setTrait(trait);
     }

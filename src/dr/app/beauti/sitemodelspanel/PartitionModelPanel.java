@@ -637,7 +637,7 @@ public class PartitionModelPanel extends OptionsPanel {
             glmSettingsDialog = new GLMSettingsDialog(frame);
         }
 
-        glmSettingsDialog.setTrait(model.getName()  );
+        glmSettingsDialog.setTrait(model.getTraitData());
 
         int result = glmSettingsDialog.showDialog();
 

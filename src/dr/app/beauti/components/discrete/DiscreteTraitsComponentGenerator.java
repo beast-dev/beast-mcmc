@@ -280,16 +280,9 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(GeneralizedLinearModelParser.INDEPENDENT_VARIABLES);
 
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefficients")
-            }, true);
-
-            writer.writeOpenTag(GeneralizedLinearModelParser.INDICATOR);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefIndicators")
-            }, true);
-
-            writer.writeCloseTag(GeneralizedLinearModelParser.INDICATOR);
+            writeParameter(options.getParameter(prefix + "coefficients"), 1, writer);
+            
+            writeParameter(GeneralizedLinearModelParser.INDICATOR, prefix + "coefIndicators", 1, writer);
 
             writer.writeOpenTag(DesignMatrix.DESIGN_MATRIX);
             for (Predictor predictor : model.getTraitData().getPredictors()) {
@@ -599,7 +592,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
                     new Attribute.Default<String>(LoggerParser.FILE_NAME, prefix + ".rates.log")});
         }
-        
+
         writeLogEntries(model, writer);
 
         writer.writeCloseTag(LoggerParser.LOG);

@@ -272,9 +272,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(ROOT_FREQUENCIES);
 
-            writer.writeOpenTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
-                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)
-            });
+            writeDiscreteFrequencyModel(prefix, prefix, stateCount, true, writer);
 
             writer.writeCloseTag(ROOT_FREQUENCIES);
 

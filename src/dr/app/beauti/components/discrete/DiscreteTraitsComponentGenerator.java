@@ -276,12 +276,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeCloseTag(ROOT_FREQUENCIES);
 
-            writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
+            writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD, new Attribute[] {
+                            new Attribute.Default<String>("family", "logLinear"),
+                            new Attribute.Default<String>("checkIdentifiability", "true")
+                    });
 
             writer.writeOpenTag(GeneralizedLinearModelParser.INDEPENDENT_VARIABLES);
 
             writeParameter(options.getParameter(prefix + "coefficients"), 1, writer);
-            
+
             writeParameter(GeneralizedLinearModelParser.INDICATOR, prefix + "coefIndicators", 1, writer);
 
             writer.writeOpenTag(DesignMatrix.DESIGN_MATRIX);

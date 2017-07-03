@@ -34,7 +34,10 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.GeneralDataType;
 import dr.inference.model.DesignMatrix;
+import dr.inference.operators.MultivariateNormalOperator;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
+import dr.inferencexml.operators.ScaleOperatorParser;
+import dr.inferencexml.operators.UpDownOperatorParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -77,6 +80,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             return false;
         }
 
+        boolean hasGLM = false;
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                hasGLM = true;
+            }
+        }
 
         switch (point) {
             case AFTER_PATTERNS:
@@ -87,6 +96,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_FILE_LOG_LIKELIHOODS:
             case AFTER_FILE_LOG:
                 return true;
+            case IN_OPERATORS:
+                return hasGLM;
             case IN_MCMC_PRIOR:
                 return hasBSSVS();
             default:
@@ -105,6 +116,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case AFTER_TREE_LIKELIHOOD:
                 writeDiscreteTraitsModels(writer);
                 writeTreeLikelihoods(writer, comp);
+                break;
+
+            case IN_OPERATORS:
+                for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+                    if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                        writeGLMCoefficientOperator(model, writer);
+                    }
+                }
                 break;
 
             case IN_MCMC_PRIOR:
@@ -277,9 +296,9 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeCloseTag(ROOT_FREQUENCIES);
 
             writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD, new Attribute[] {
-                            new Attribute.Default<String>("family", "logLinear"),
-                            new Attribute.Default<String>("checkIdentifiability", "true")
-                    });
+                    new Attribute.Default<String>("family", "logLinear"),
+                    new Attribute.Default<String>("checkIdentifiability", "true")
+            });
 
             writer.writeOpenTag(GeneralizedLinearModelParser.INDEPENDENT_VARIABLES);
 
@@ -287,7 +306,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writeParameter(GeneralizedLinearModelParser.INDICATOR, prefix + "coefIndicators", 1, writer);
 
-            writer.writeOpenTag(DesignMatrix.DESIGN_MATRIX);
+            writer.writeOpenTag(DesignMatrix.DESIGN_MATRIX, new Attribute[] {
+                    new Attribute.Default<String>("id", prefix + DesignMatrix.DESIGN_MATRIX)
+            } );
+
             for (Predictor predictor : model.getTraitData().getPredictors()) {
                 if (predictor.getType() == Predictor.PredictorType.ORIGIN_VECTOR || predictor.getType() == Predictor.PredictorType.BOTH_VECTOR) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
@@ -521,6 +543,25 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
+    private void writeGLMCoefficientOperator(PartitionSubstitutionModel model, XMLWriter writer) {
+        writer.writeOpenTag(MultivariateNormalOperator.MVN_OPERATOR,
+                new Attribute[]{
+                        new Attribute.Default<Double>(MultivariateNormalOperator.SCALE_FACTOR, 1.0),
+                        new Attribute.Default<Double>(MultivariateNormalOperator.WEIGHT,5.0),
+                        new Attribute.Default<String>(MultivariateNormalOperator.FORM_XTX, "true")
+                }
+        );
+        String prefix = model.getName() + ".";
+
+        writeParameterRef(prefix + "coefficients", writer);
+
+        writer.writeOpenTag(MultivariateNormalOperator.VARIANCE_MATRIX);
+        writeParameterRef(prefix + DesignMatrix.DESIGN_MATRIX, writer);
+        writer.writeCloseTag(MultivariateNormalOperator.VARIANCE_MATRIX);
+
+        writer.writeCloseTag(MultivariateNormalOperator.MVN_OPERATOR);
+    }
+    
     public void writeScreenLogEntries(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = model.getName() + ".";

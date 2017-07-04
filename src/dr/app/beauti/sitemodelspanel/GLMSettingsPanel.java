@@ -296,7 +296,7 @@ public class GLMSettingsPanel extends JPanel {
     class PredictorsTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"", "Predictor", "Log", "Std", "Origin", "Dest"};
+        String[] columnNames = {"Include", "Predictor", "Log", "Std", "Origin", "Dest"};
 
         public PredictorsTableModel() {
         }

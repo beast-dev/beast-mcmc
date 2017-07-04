@@ -25,6 +25,7 @@
 
 package dr.app.beauti.components.discrete;
 
+import dr.app.beauti.generator.Generator;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -74,6 +75,19 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     public DiscreteTraitsComponentGenerator(final BeautiOptions options) {
         super(options);
+    }
+
+    @Override
+    public void checkOptions() throws GeneratorException {
+        super.checkOptions();
+
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                if (model.getTraitData().getIncludedPredictors().size() < 1) {
+                    throw new GeneratorException("The GLM model for trait, " + model.getTraitData().getName() + ", has no predictors included.");
+                }
+            }
+        }
     }
 
     public boolean usesInsertionPoint(final InsertionPoint point) {
@@ -317,7 +331,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     new Attribute.Default<String>("id", prefix + DesignMatrix.DESIGN_MATRIX)
             } );
 
-            for (Predictor predictor : model.getTraitData().getPredictors()) {
+            for (Predictor predictor : model.getTraitData().getIncludedPredictors()) {
                 if (predictor.getType() == Predictor.PredictorType.ORIGIN_VECTOR || predictor.getType() == Predictor.PredictorType.BOTH_VECTOR) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + predictor + "_origin"),
@@ -575,7 +589,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeGLMBinomialLikelihood(PartitionSubstitutionModel model, XMLWriter writer) {
-        double proportion = 1.0 - Math.exp(Math.log(0.5) / model.getTraitData().getPredictors().size());
+        double proportion = 1.0 - Math.exp(Math.log(0.5) / model.getTraitData().getIncludedPredictors().size());
 
         String prefix = model.getName() + ".";
 

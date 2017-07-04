@@ -186,6 +186,16 @@ public class TraitData implements Serializable {
         predictorList.remove(predictor);
     }
 
+    public List<Predictor> getIncludedPredictors() {
+        List<Predictor> includedPredictors = new ArrayList<Predictor>();
+        for (Predictor predictor : getPredictors()) {
+            if (predictor.isIncluded()) {
+                includedPredictors.add(predictor);
+            }
+        }
+        return includedPredictors;
+    }
+
     public List<Predictor> getPredictors() {
         return predictorList;
     }

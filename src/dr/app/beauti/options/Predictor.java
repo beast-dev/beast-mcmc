@@ -63,14 +63,16 @@ public class Predictor implements Serializable {
     private boolean isOrigin;
     private boolean isDestination;
 
-    private double[][] data;
+    private final double[][] data;
+    private final String[] rowLabels;
 
     protected final BeautiOptions options;
 
-    public Predictor(BeautiOptions options, String name, TraitData trait, double[][] data, PredictorType predictorType) {
+    public Predictor(BeautiOptions options, String name, TraitData trait, String[] rowLabels, double[][] data, PredictorType predictorType) {
         this.options = options;
         this.name = name;
         this.trait = trait;
+        this.rowLabels = rowLabels;
         this.data = data;
         this.predictorType = predictorType;
         this.isIncluded = true;
@@ -137,13 +139,23 @@ public class Predictor implements Serializable {
     public double[][] getMatrixValues(PredictorType predictorType) {
         double[][] matrixValues = new double[data.length][];
 
+        // create a mapping of the states in order the trait has them to that
+        // of the imported data.
+        List<String> states = new ArrayList<String>(trait.getStatesOfTrait());
+        int[] stateIndices = new int[data.length];
+        for (int i = 0; i < data.length; i++) {
+            stateIndices[states.indexOf(rowLabels[i])] = i;
+        }
+
         if (getType() == PredictorType.MATRIX) {
             if (predictorType != PredictorType.MATRIX) {
                 throw new IllegalArgumentException("Predictor is a matrix");
             }
             for (int i = 0; i < data.length; i++) {
                 matrixValues[i] = new double[data.length];
-                System.arraycopy(data[i], 0, matrixValues[i], 0, data.length);
+                for (int j = 0; j < data.length; j++) {
+                    matrixValues[i][j] = data[stateIndices[i]][stateIndices[j]];
+                }
             }
         } else {
 
@@ -155,15 +167,15 @@ public class Predictor implements Serializable {
                 matrixValues[i] = new double[data.length];
                 for (int j = 0; j < data.length; j++) {
                     if (predictorType == PredictorType.ORIGIN_VECTOR) {
-                        matrixValues[i][j] = data[i][0];
+                        matrixValues[i][j] = data[stateIndices[i]][0];
                     } else {
-                        matrixValues[j][i] = data[i][0];
+                        matrixValues[j][i] = data[stateIndices[i]][0];
                     }
                 }
             }
         }
 
-        // set the diagonal to NaN
+        // set the diagonal to NaN - this doesn't enter the final vector but helps debugging
         for (int i = 0; i < data.length; i++) {
             matrixValues[i][i] = Double.NaN;
         }
@@ -179,32 +191,30 @@ public class Predictor implements Serializable {
         }
 
         if (isStandardized()) {
+            double[] values = new double[matrixValues.length * (matrixValues.length - 1)];
+
+            int k = 0;
             for (int i = 0; i < matrixValues.length; i++) {
+                for (int j = 0; j < matrixValues.length; j++) {
 
-                // remove the diagonal values...
-                double[] values = new double[matrixValues.length];
-                int k = 0;
-                for (int j = 0; j < i; j++) {
-                    values[k] = matrixValues[i][j];
-                    k++;
-                }
-                for (int j = i + 1; j < matrixValues.length; j++) {
-                    values[k] = matrixValues[i][j];
-                    k++;
-                }
-
-                double mean = DiscreteStatistics.mean(values);
-                double stdev = Math.sqrt(DiscreteStatistics.variance(values));
-
-
-                for (int j = 0; j < matrixValues[i].length; j++) {
                     if (i != j) {
-                        matrixValues[i][j] = ((matrixValues[i][j] - mean) / stdev);
+                        values[k] = matrixValues[i][j];
+                        k++;
                     }
                 }
             }
-        }
+            double mean = DiscreteStatistics.mean(values);
+            double stdev = DiscreteStatistics.stdev(values);
 
+            for (int i = 0; i < matrixValues.length; i++) {
+                for (int j = 0; j < matrixValues.length; j++) {
+                    if (i != j) {
+                        matrixValues[i][j] = ((matrixValues[i][j] - mean) / stdev);
+                    }
+
+                }
+            }
+        }
         return matrixValues;
     }
 
@@ -216,16 +226,24 @@ public class Predictor implements Serializable {
         StringBuilder valueString = new StringBuilder();
         double[][] matrix = getMatrixValues(predictorType);
 
+        boolean first = true;
+
+        int n = matrix.length;
+
         // upper triangle
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = i + 1; j < matrix[i].length; j++) {
-                valueString.append(" ");
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (!first) {
+                    valueString.append(" ");
+                } else {
+                    first = false;
+                }
                 valueString.append(matrix[i][j]);
             }
         }
         // lower triangle
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = i + 1; j < matrix[i].length; j++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
                 valueString.append(" ");
                 valueString.append(matrix[j][i]);
             }

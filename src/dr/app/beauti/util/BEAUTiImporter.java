@@ -405,6 +405,7 @@ public class BEAUTiImporter {
         List<Predictor> importedPredictors = new ArrayList<Predictor>();
 //        Taxa taxa = options.taxonList;
 
+        // This is the order that states will be in...
         Set<String> states = trait.getStatesOfTrait();
 
         String fileName = file.getName();
@@ -420,6 +421,12 @@ public class BEAUTiImporter {
         String[] stateNamesCol = dataTable.getColumnLabels();
         String[] stateNamesRow = dataTable.getRowLabels();
 
+        if (dataTable.getRowCount() != states.size()) {
+            JOptionPane.showMessageDialog(frame, "Predictor data does not have the same number of rows as trait states",
+                    "Mismatched states", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
         for (String name : stateNamesRow) {
             if (!states.contains(name)) {
                 JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
@@ -456,8 +463,6 @@ public class BEAUTiImporter {
 
             String name = stateNamesCol[0];
             for (int i = 0; i < dataTable.getRowCount(); i++) {
-                String rowName = stateNamesRow[i];
-
                 String[] row = dataTable.getRow(i);
                 for (int j = 0; j < row.length; j++) {
                     try {
@@ -470,11 +475,10 @@ public class BEAUTiImporter {
 
 
             }
-            Predictor predictor = new Predictor(options, fileName, trait, data, Predictor.PredictorType.MATRIX);
+            Predictor predictor = new Predictor(options, fileName, trait, stateNamesRow, data, Predictor.PredictorType.MATRIX);
             importedPredictors.add(predictor);
 
         } else {
-            Map<String, Double> vector = new HashMap<String, Double>();
             // a series of vectors
             for (int i = 0; i < dataTable.getColumnCount(); i++) {
                 String name = stateNamesCol[i];
@@ -491,7 +495,7 @@ public class BEAUTiImporter {
                     }
                 }
 
-                Predictor predictor = new Predictor(options, name, trait, data, Predictor.PredictorType.BOTH_VECTOR);
+                Predictor predictor = new Predictor(options, name, trait, stateNamesRow, data, Predictor.PredictorType.BOTH_VECTOR);
                 importedPredictors.add(predictor);
             }
         }

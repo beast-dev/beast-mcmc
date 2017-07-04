@@ -228,16 +228,24 @@ public class Predictor implements Serializable {
         StringBuilder valueString = new StringBuilder();
         double[][] matrix = getMatrixValues(predictorType);
 
+        boolean first = true;
+
+        int n = matrix.length;
+
         // upper triangle
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = i + 1; j < matrix[i].length; j++) {
-                valueString.append(" ");
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (!first) {
+                    valueString.append(" ");
+                } else {
+                    first = false;
+                }
                 valueString.append(matrix[i][j]);
             }
         }
         // lower triangle
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = i + 1; j < matrix[i].length; j++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
                 valueString.append(" ");
                 valueString.append(matrix[j][i]);
             }

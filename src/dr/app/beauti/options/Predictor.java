@@ -191,32 +191,30 @@ public class Predictor implements Serializable {
         }
 
         if (isStandardized()) {
-            double[] values = new double[matrixValues.length - 1];
+            double[] values = new double[matrixValues.length * (matrixValues.length - 1)];
 
+            int k = 0;
             for (int i = 0; i < matrixValues.length; i++) {
+                for (int j = 0; j < matrixValues.length; j++) {
 
-                // skip the diagonal values...
-                int k = 0;
-                for (int j = 0; j < i; j++) {
-                    values[k] = matrixValues[i][j];
-                    k++;
-                }
-                for (int j = i + 1; j < matrixValues.length; j++) {
-                    values[k] = matrixValues[i][j];
-                    k++;
-                }
-
-                double mean = DiscreteStatistics.mean(values);
-                double stdev = DiscreteStatistics.stdev(values);
-
-                for (int j = 0; j < matrixValues[i].length; j++) {
                     if (i != j) {
-                        matrixValues[i][j] = ((matrixValues[i][j] - mean) / stdev);
+                        values[k] = matrixValues[i][j];
+                        k++;
                     }
                 }
             }
-        }
+            double mean = DiscreteStatistics.mean(values);
+            double stdev = DiscreteStatistics.stdev(values);
 
+            for (int i = 0; i < matrixValues.length; i++) {
+                for (int j = 0; j < matrixValues.length; j++) {
+                    if (i != j) {
+                        matrixValues[i][j] = ((matrixValues[i][j] - mean) / stdev);
+                    }
+
+                }
+            }
+        }
         return matrixValues;
     }
 

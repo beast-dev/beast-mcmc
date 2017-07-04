@@ -51,6 +51,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * @author Andrew Rambaut
@@ -267,21 +268,17 @@ public class GLMSettingsPanel extends JPanel {
     }
 
     private void removePredictor() {
-        int selRow = predictorsTable.getSelectedRow();
-        removePredictor(predictorsTable.getValueAt(selRow, 0).toString());
-    }
-
-    public void removePredictor(String traitName) {
-        TraitData traitData = options.getTrait(traitName);
-//        if (options.getTraitPartitions(traitData).size() > 0) {
-//            JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//        options.removeTrait(traitName);
-//
-//        updateButtons();
-//        fireTraitsChanged();
-//        traitSelectionChanged();
+        int[] rows = predictorsTable.getSelectedRows();
+        // get the list of predictors before removing them
+        java.util.List<Predictor> predictorList = new ArrayList<Predictor>();
+        for (int row: rows) {
+            predictorList.add(trait.getPredictors().get(row));
+        }
+        // or the indices will be wrong
+        for (Predictor predictor : predictorList) {
+            trait.removePredictor(predictor);
+        }
+        firePredictorsChanged();
     }
 
     AbstractAction importPredictorsAction = new AbstractAction("Import Predictors...") {

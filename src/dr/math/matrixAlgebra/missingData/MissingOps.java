@@ -1,11 +1,18 @@
 package dr.math.matrixAlgebra.missingData;
 
+import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.Transform;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
+import org.ejml.alg.dense.decomposition.qr.QRColPivDecompositionHouseholderColumn_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
 import org.ejml.alg.dense.misc.UnrolledInverseFromMinor;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.LinearSolverFactory;
+import org.ejml.interfaces.decomposition.QRPDecomposition;
+import org.ejml.interfaces.decomposition.SingularValueDecomposition;
+import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
@@ -220,6 +227,107 @@ public class MissingOps {
 
         }
     }
+
+    public static InversionResult safeDeterminant(DenseMatrix64F source, boolean invert) {
+        final int finiteCount = countFiniteNonZeroDiagonals(source);
+
+        InversionResult result;
+
+        if (finiteCount == 0) {
+            result = new InversionResult(NOT_OBSERVED, 0, 0);
+        } else {
+            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
+            solver.setA(source);
+
+            SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+            double[] values = svd.getSingularValues();
+
+
+            if (values == null) {
+                System.err.println("Error: " + source);
+            }
+
+            int dim = 0;
+            double det = 1;
+            for (int i = 0; i < values.length; ++i) {
+                final double lambda = values[i];
+                if (lambda != 0.0) {
+                    det *= lambda;
+                    ++dim;
+                }
+            }
+
+            System.err.println("svd: " + new Vector(svd.getSingularValues()));
+
+            if (invert) {
+                det = 1.0 / det;
+            }
+
+            result = new InversionResult(dim == source.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, det);
+        }
+
+        return result;
+    }
+
+    public static InversionResult safeSolve(DenseMatrix64F A,
+                                            WrappedVector b,
+                                            WrappedVector x,
+                                            boolean getDeterminat) {
+        final int dim = b.getDim();
+
+        assert(A.getNumRows() == dim && A.getNumCols() == dim);
+
+        final DenseMatrix64F B = wrap(b.getBuffer(), b.getOffset(), dim, 1);
+        final DenseMatrix64F X = new DenseMatrix64F(dim, 1);
+
+        InversionResult ir = safeSolve(A, B, X, getDeterminat);
+
+
+        for (int row = 0; row < dim; ++row) {
+            x.set(row, X.unsafe_get(row, 0));
+        }
+
+        return ir;
+    }
+
+    public static InversionResult safeSolve(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X, boolean getDeterminant) {
+
+        final int finiteCount = countFiniteNonZeroDiagonals(A);
+
+        InversionResult result;
+        if (finiteCount == 0) {
+            Arrays.fill(X.getData(), 0);
+            result = new InversionResult(NOT_OBSERVED, 0, 0);
+        } else {
+
+            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
+            solver.setA(A);
+            solver.solve(B, X);
+
+            int dim = 0;
+            double det = 1;
+
+            if (getDeterminant) {
+                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+                double[] values = svd.getSingularValues();
+
+                for (int i = 0; i < values.length; ++i) {
+                    final double lambda = values[i];
+                    if (lambda != 0.0) {
+                        det *= lambda;
+                        ++dim;
+                    }
+                }
+
+                System.err.println("svd: " + new Vector(svd.getSingularValues()));
+            }
+
+            result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, 1 / det);
+        }
+
+        return result;
+    }
+
 
     public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 

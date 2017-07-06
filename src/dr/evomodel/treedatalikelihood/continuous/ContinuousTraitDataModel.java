@@ -216,7 +216,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         return partial;
     }
 
-    /*
+
     public double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
         final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
 
@@ -229,6 +229,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
         return data;
     }
+    /*
 
     private static double[] NON_MISSING = new double[] { Double.POSITIVE_INFINITY };
 

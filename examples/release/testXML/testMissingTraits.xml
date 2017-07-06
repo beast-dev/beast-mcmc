@@ -20,10 +20,10 @@
 
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">11 NA</attr>
+			<attr name="X">11 12</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">NA 1</attr> <!-- 1 2 1 2 -->
+			<attr name="X">1 NA</attr> <!-- 1 2 1 2 -->
 		</taxon>
 		<taxon id="C">
 			<attr name="X">3 3</attr>
@@ -101,36 +101,13 @@
 	</multivariateWishartPrior>
  -->
 
-	<integratedFactorModel id="factorModel" traitName="X" nugget="0">
-		<loadings>
-			<matrixParameter id="loadings">
-				<parameter value="2 2"/>
-				<parameter value="0 2"/>
-			</matrixParameter>
-<!--
-			<matrixParameter id="loadings">
-				<parameter value="1 2"/>
-			</matrixParameter>
- -->
-		</loadings>
-		<precision>
-			<parameter id="precision" value="2 1"/>
-		</precision>
-		<treeModel idref="treeModel"/>
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
-	</integratedFactorModel>
-
-	<traitDataLikelihood id="traitLikelihood" traitName="latent">
+	<traitDataLikelihood id="traitLikelihood" traitName="X">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
-		<integratedFactorModel idref="factorModel"/>
-<!--
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
- -->
+
         <conjugateRootPrior>
             <meanParameter>
                 <parameter value="0.0 0.0"/>
@@ -197,8 +174,8 @@
 
 	<report>
 <!-- 		logL = <multivariateTraitLikelihood idref="traitLikelihood"/> -->
-		<integratedFactorModel idref="factorModel"/>
-<!-- 		<traitDataLikelihood idref="traitLikelihood"/> -->
+<!-- 		<integratedFactorModel idref="factorModel"/> -->
+		<traitDataLikelihood idref="traitLikelihood"/>
 	</report>
 
 
@@ -236,71 +213,4 @@
 # R script
 library(mvtnorm)
 
--->
-
-<!--
-
-NO MISSING DATA:
-
-# -overwrite -beagle -seed 666 new_traits.xml
-state	posterior
-0	-394.7939523709884	-
-1000	-36.37427532716558	-
-2000	-37.04981479092325	-
-3000	-36.61844759176243	-
-4000	-35.196247837650795	-
-5000	-38.581383922812066	-
-6000	-34.676920570499746	-
-7000	-34.9434608561104	-
-8000	-35.04719504815088	-
-9000	-35.63573264148823	-
-10000	-35.55350998983423	-
-
-
-TOTAL DEBUG logLikelihood = -212.2681254133979
-dr.evomodel.treedatalikelihood.TreeDataLikelihood(-212.26812541339797)
-
-END OF PRE-ORDER
-Missing tip = 1 (6), trait = 1
-post: [ 0.0, 0.0 ]
-pre : [ 5.82258064516129, 6.620967741935483 ]
-V: Type = dense real , numRows = 2 , numCols = 2
- 0.921   0.302
- 0.302   0.619
-
-
-cM: [ 8.666666666666668 ]
-CV: Type = dense real , numRows = 1 , numCols = 1
- 0.667
-
-
- cM: [ 5.791666666666666 ]
-CV: Type = dense real , numRows = 1 , numCols = 1
- 0.542
-
--->
-
-
-<!--
-
-
-CHECK CONDITIONAL NORMAL
-
-m <- c(5.82258064516129, 6.620967741935483)
-t <- c(0.921, 0.302, 0.302, 0.619)
-v <- matrix(t, ncol = 2)
-condMVN(mean = m, sigma = v, dependent.ind = 2, given.ind = 1, X.given = 1)
-
-
-
-
-
-t <- c(1.26,0.42000, 0.66,  0.22,  0.06  ,0.020, 0.42, 0.84,  0.22,  0.44, 0.020,  0.04, 0.66 ,0.22,  1.26 , 0.42, 0.06 , 0.02, 0.22,  0.44,  0.42,  0.84,  0.02,  0.04, 0.06 , 0.02,  0.06 , 0.02, 1.26  , 0.42, 0.02, 0.04,  0.02,  0.04,  0.42,  0.84)
-v <- matrix(t, ncol = 6)
-m <- rep(0,6)
-condMVN(m, v, dependent.ind = 4, given.ind = c(1,2,3,5,6), X.given = c(11.0, 12.0, 1.0, 3.0, 3.0))
-
-t <- c(1, 0, 0.5, 0, 0, 1, 0, 0.5, 0.5, 0, 1, 0, 0, 0.5, 0, 1)
-v <- matrix(t, ncol = 4)
-condMVN(m, v, dependent.ind = 4, given.ind = c(1,2,3), X.given = c(11, 12, 1))
 -->

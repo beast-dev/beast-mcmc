@@ -55,7 +55,7 @@ public class InversionResult {
     }
 
     public String toString() {
-        return code + ":" + dim;
+        return code + ":" + dim + ":" + determinant;
     }
 
     final private Code code;

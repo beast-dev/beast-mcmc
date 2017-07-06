@@ -40,6 +40,7 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+import org.w3c.dom.Attr;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     public static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
+    public static final String ALLOW_SINGULAR = "allowSingular";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -118,10 +120,19 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
         }
 
-
+        final boolean allowSingular;
+        if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
+            if (xo.hasAttribute(ALLOW_SINGULAR)) {
+                allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
+            } else {
+                allowSingular = true;
+            }
+        } else {
+            allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
+        }
 
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionModel, dataModel, rootPrior, rateTransformation, rateModel);
+                diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
             ((IntegratedFactorAnalysisLikelihood)dataModel).setLikelihoodDelegate(delegate);
@@ -204,6 +215,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
             AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
+            AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

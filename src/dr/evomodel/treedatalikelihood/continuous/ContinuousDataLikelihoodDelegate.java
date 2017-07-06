@@ -76,6 +76,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private double branchNormalization;
     private double storedBranchNormalization;
 
+    private boolean allowSingular = false;
 
     private TreeDataLikelihood callbackLikelihood = null;
 
@@ -84,8 +85,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
-                                            BranchRateModel rateModel) {
-        this(tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, false);
+                                            BranchRateModel rateModel,
+                                            boolean allowSingular) {
+        this(tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, false, allowSingular);
     }
 
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
@@ -94,7 +96,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel,
-                                            boolean forceCompletelyObserved) {
+                                            boolean forceCompletelyObserved,
+                                            boolean allowSingular) {
 
         super("ContinousDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel.treedatalikelihood");
@@ -121,6 +124,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         this.rateModel = rateModel;
         this.rootPrior = rootPrior;
         this.forceCompletelyObserved = forceCompletelyObserved;
+        this.allowSingular = allowSingular;
 
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
@@ -150,7 +154,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         try {
 
             boolean USE_OLD = false;
-            boolean USE_SAFE = true;
 
             ContinuousDiffusionIntegrator base = null;
 
@@ -166,7 +169,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                if (USE_SAFE) {
+                if (allowSingular) {
                     
                     base = new SafeMultivariateIntegrator(
                             precisionType,

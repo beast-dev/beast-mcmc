@@ -23,17 +23,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.ancestralStatesPanel;
+package dr.app.beauti.ancestralstatespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
-import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -44,7 +42,6 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut

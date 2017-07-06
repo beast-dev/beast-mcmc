@@ -24,7 +24,7 @@
  */
 
 
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.priorspanel;
 
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;

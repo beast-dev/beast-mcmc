@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.priorspanel;
 
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.BeautiFrame;
@@ -95,10 +95,10 @@ public class DefaultPriorTableDialog {
             priorsPanel.setContinueButton(button);
         }
 
-//       if (priorsPanel.hasUndefinedPrior) {
+//       if (priorspanel.hasUndefinedPrior) {
 //            buttons = new String[] {"OK"};
 //            title = "Undefined Priors";
-//            optionPane = new JOptionPane(priorsPanel,
+//            optionPane = new JOptionPane(priorspanel,
 //                    JOptionPane.ERROR_MESSAGE,
 //                    JOptionPane.OK_OPTION,
 //                    null,
@@ -107,7 +107,7 @@ public class DefaultPriorTableDialog {
 //        } else {
 //            buttons = new String[] {"Continue", "Cancel"};
 //            title = "Unchanged Default Priors";
-//            optionPane = new JOptionPane(priorsPanel,
+//            optionPane = new JOptionPane(priorspanel,
 //                    JOptionPane.PLAIN_MESSAGE,
 //                    JOptionPane.OK_CANCEL_OPTION,
 //                    null,

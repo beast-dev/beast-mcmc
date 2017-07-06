@@ -52,7 +52,7 @@ public enum OperatorType {
     INTEGER_DELTA_EXCHANGE("integerDeltaExchange"),
     SWAP("swap"),
     BITFLIP("bitFlip"),
-    BITFIP_IN_SUBST(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR),// bitFlipInSubstitutionModelOperator
+    BITFLIP_IN_SUBST(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR),// bitFlipInSubstitutionModelOperator
     RATE_BIT_EXCHANGE(RateBitExchangeOperator.OPERATOR_NAME), // rateBitExchangeOperator
     TREE_BIT_MOVE("treeBitMove"),
     SAMPLE_NONACTIVE("sampleNoneActiveOperator"),

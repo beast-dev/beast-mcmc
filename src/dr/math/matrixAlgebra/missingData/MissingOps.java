@@ -244,7 +244,7 @@ public class MissingOps {
 
 
             if (values == null) {
-                System.err.println("Error: " + source);
+                throw new RuntimeException("Unable to perform SVD");
             }
 
             int dim = 0;
@@ -256,8 +256,6 @@ public class MissingOps {
                     ++dim;
                 }
             }
-
-            System.err.println("svd: " + new Vector(svd.getSingularValues()));
 
             if (invert) {
                 det = 1.0 / det;
@@ -318,8 +316,6 @@ public class MissingOps {
                         ++dim;
                     }
                 }
-
-                System.err.println("svd: " + new Vector(svd.getSingularValues()));
             }
 
             result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, 1 / det);

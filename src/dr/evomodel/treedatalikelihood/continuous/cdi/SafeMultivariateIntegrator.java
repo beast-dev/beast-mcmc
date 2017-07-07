@@ -18,7 +18,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic {
 
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
 
     public SafeMultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
                                       int diffusionCount) {

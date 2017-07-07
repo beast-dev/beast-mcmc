@@ -240,28 +240,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         computePartialsAndRemainders();
     }
 
-    private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
-                                          final int numFactors) {
-
-        final double[] observed = observedIndicators[taxon];
-
-        // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
-        for (int row = 0; row < numFactors; ++row) {
-            for (int col = 0; col < numFactors; ++col) {
-                double sum = 0;
-                for (int k = 0; k < dimTrait; ++k) {
-                    sum += loadings.getParameterValue(k, row) *
-                            observed[k] * traitPrecision.getParameterValue(k) *
-                            loadings.getParameterValue(k, col);
-                }
-                precision.unsafe_set(row, col, sum);
-            }
-        }
-    }
-
     private final double nuggetPrecision;
 
-    private void computePrecisionForTaxon2(final DenseMatrix64F precision, final int taxon,
+    private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
                                            final int numFactors) {
 
         final double[] observed = observedIndicators[taxon];
@@ -281,34 +262,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
     }
 
-    private void fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F variance, final int taxon) {
-
-        final double[] observed = observedIndicators[taxon];
-        final Parameter Y = traitParameter.getParameter(taxon);
-
-        // \mu_i = V_i (L D_i Y_i)
-
-        final double[] tmp = new double[numFactors];
-        for (int row = 0; row < numFactors; ++row) {
-            double sum = 0;
-            for (int k = 0; k < dimTrait; ++k) {
-                sum += loadings.getParameterValue(k, row) *
-                        observed[k] * traitPrecision.getParameterValue(k) *
-                        Y.getParameterValue(k);
-            }
-            tmp[row] = sum;
-        }
-
-        for (int row = 0; row < numFactors; ++row) {
-            double sum = 0;
-            for (int k = 0; k < numFactors; ++k) {
-                sum += variance.unsafe_get(row,k) * tmp[k];
-            }
-            output.set(row, sum);
-        }
-    }
-
-    private InversionResult fillInMeanForTaxon2(final WrappedVector output, final DenseMatrix64F precision, final int taxon) {
+    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision, final int taxon) {
 
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
@@ -399,19 +353,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             // Work with mean in-place
             final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
 
-            computePrecisionForTaxon2(precision, taxon, numFactors);
-            InversionResult ci = fillInMeanForTaxon2(mean, precision, taxon);
-
-//            computePrecisionForTaxon(precision, taxon, numFactors);
-//            InversionResult ci = safeInvert(precision, variance, true);
-//            fillInMeanForTaxon(mean, variance, taxon);
+            computePrecisionForTaxon(precision, taxon, numFactors);
+            InversionResult ci = fillInMeanForTaxon(mean, precision, taxon);
 
             if (DEBUG) {
                 System.err.println("taxon " + taxon);
                 System.err.println("\tprecision: " + precision);
             }
-
-          //  int estimableFactors = numFactors;
 
             double constant;
             double nuggetDensity = 0;
@@ -439,12 +387,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 final double traitInnerProduct = computeTraitInnerProduct(taxon);
                 final double innerProductChange = traitInnerProduct - factorInnerProduct;
 
-//                assert(ci.getEffectiveDimension() == numFactors); // TODO Remove
-//                final int dimensionChange = observedDimensions[taxon] - estimableFactors;
-//                final int dimensionChange = observedDimensions[taxon] - numFactors;
-
                 int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension();
-//                        - numFactors;
 
                 if (DEBUG) {
                     System.err.println("fIP: " + factorInnerProduct);
@@ -475,7 +418,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private static final boolean STORE_VARIANCE = false;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private void checkStatistics() {
         if (!statisticsKnown) {

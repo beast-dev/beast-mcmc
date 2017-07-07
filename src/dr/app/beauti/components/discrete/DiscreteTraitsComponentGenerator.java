@@ -601,7 +601,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(BinomialLikelihoodParser.TRIALS);
         writer.writeTag("parameter", new Attribute[]{
                 new Attribute.Default<Double>("value", 1.0),
-                new Attribute.Default<Integer>("dimension", 1),
+                new Attribute.Default<Integer>("dimension", model.getTraitData().getIncludedPredictors().size()),
         }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.TRIALS);
         writer.writeOpenTag(BinomialLikelihoodParser.COUNTS);

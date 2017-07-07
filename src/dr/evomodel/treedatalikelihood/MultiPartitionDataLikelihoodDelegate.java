@@ -64,10 +64,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     public static boolean IS_MULTI_PARTITION_COMPATIBLE() {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        if (versionNumbers == null || versionNumbers.length == 0) {
-            return false;
-        }
-        return versionNumbers[0] >= 3;
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3;
     }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to

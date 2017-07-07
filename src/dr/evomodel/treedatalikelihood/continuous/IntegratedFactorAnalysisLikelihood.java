@@ -219,6 +219,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private double calculateLogLikelihood() {
+
+        checkStatistics();
+
         double logLikelihood = 0.0;
         for (double r : normalizationConstants) {
             logLikelihood += r;

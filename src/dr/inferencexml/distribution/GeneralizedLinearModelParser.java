@@ -161,7 +161,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                 Parameter indicator = null;
                 if (cxo != null) {
                     indicator = (Parameter) cxo.getChild(Parameter.class);
-                    if (indicator.getDimension() == 0) {
+                    if (indicator.getDimension() <= 1) {
                         // if a dimension hasn't been set, then set it automatically
                         indicator.setDimension(independentParam.getDimension());
                     }
@@ -202,7 +202,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     private void checkRandomEffectsDimensions(Parameter randomEffect, Parameter dependentParam)
             throws XMLParseException {
         if (dependentParam != null) {
-            if (randomEffect.getDimension() == 0) {
+            if (randomEffect.getDimension() <= 1) {
                 // if a dimension hasn't been set, then set it automatically
                 randomEffect.setDimension(dependentParam.getDimension());
             }
@@ -217,7 +217,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     private void checkDimensions(Parameter independentParam, Parameter dependentParam, DesignMatrix designMatrix)
             throws XMLParseException {
         if (dependentParam != null) {
-            if (dependentParam.getDimension() == 0) {
+            if (dependentParam.getDimension() <= 1) {
                 // if a dimension hasn't been set, then set it automatically
                 dependentParam.setDimension(designMatrix.getRowDimension());
             }
@@ -227,7 +227,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                         "dim(" + dependentParam.getId() + ") != dim(" + designMatrix.getId() + " %*% " + independentParam.getId() + ")"
                 );
         } else {
-            if (independentParam.getDimension() == 0) {
+            if (independentParam.getDimension() <= 1) {
                 // if a dimension hasn't been set, then set it automatically
                 independentParam.setDimension(designMatrix.getColumnDimension());
             }

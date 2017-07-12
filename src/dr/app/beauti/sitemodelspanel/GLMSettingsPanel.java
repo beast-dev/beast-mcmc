@@ -26,8 +26,6 @@
 package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.ComboBoxRenderer;
-import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Predictor;
 import dr.app.beauti.options.TraitData;
@@ -35,9 +33,7 @@ import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
-import dr.app.util.OSType;
 import jam.panels.ActionPanel;
-import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -45,7 +41,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -348,7 +343,7 @@ public class GLMSettingsPanel extends JPanel {
 
         public boolean isCellEditable(int row, int col) {
             Predictor predictor =  trait.getPredictors().get(row);
-            if (predictor.getType() == Predictor.PredictorType.MATRIX) {
+            if (predictor.getType() == Predictor.Type.MATRIX) {
                 return (col < 4);
             }
             return true;

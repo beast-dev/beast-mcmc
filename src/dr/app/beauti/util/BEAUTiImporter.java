@@ -475,7 +475,7 @@ public class BEAUTiImporter {
 
 
             }
-            Predictor predictor = new Predictor(options, fileName, trait, stateNamesRow, data, Predictor.PredictorType.MATRIX);
+            Predictor predictor = new Predictor(options, fileName, trait, stateNamesRow, data, Predictor.Type.MATRIX);
             importedPredictors.add(predictor);
 
         } else {
@@ -495,7 +495,7 @@ public class BEAUTiImporter {
                     }
                 }
 
-                Predictor predictor = new Predictor(options, name, trait, stateNamesRow, data, Predictor.PredictorType.BOTH_VECTOR);
+                Predictor predictor = new Predictor(options, name, trait, stateNamesRow, data, Predictor.Type.BOTH_VECTOR);
                 importedPredictors.add(predictor);
             }
         }

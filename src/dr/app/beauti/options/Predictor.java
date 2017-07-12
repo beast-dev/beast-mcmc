@@ -25,13 +25,7 @@
 
 package dr.app.beauti.options;
 
-import dr.evolution.datatype.ContinuousDataType;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
 import dr.stats.DiscreteStatistics;
-import dr.util.DataTable;
 
 import java.io.Serializable;
 import java.util.*;
@@ -42,7 +36,7 @@ import java.util.*;
 public class Predictor implements Serializable {
     private static final long serialVersionUID = -9152518508699327745L;
 
-    public enum PredictorType {
+    public enum Type {
         MATRIX,
         ORIGIN_VECTOR,
         DESTINATION_VECTOR,
@@ -53,7 +47,7 @@ public class Predictor implements Serializable {
         }
     }
 
-    private final PredictorType predictorType;
+    private final Type predictorType;
     private final TraitData trait;
 
     private String name;
@@ -68,7 +62,7 @@ public class Predictor implements Serializable {
 
     protected final BeautiOptions options;
 
-    public Predictor(BeautiOptions options, String name, TraitData trait, String[] rowLabels, double[][] data, PredictorType predictorType) {
+    public Predictor(BeautiOptions options, String name, TraitData trait, String[] rowLabels, double[][] data, Type predictorType) {
         this.options = options;
         this.name = name;
         this.trait = trait;
@@ -78,13 +72,13 @@ public class Predictor implements Serializable {
         this.isIncluded = true;
         this.isLogged = true;
         this.isStandardized = true;
-        this.isOrigin = predictorType == PredictorType.ORIGIN_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
-        this.isDestination = predictorType == PredictorType.DESTINATION_VECTOR || predictorType == PredictorType.BOTH_VECTOR;
+        this.isOrigin = predictorType == Type.ORIGIN_VECTOR || predictorType == Type.BOTH_VECTOR;
+        this.isDestination = predictorType == Type.DESTINATION_VECTOR || predictorType == Type.BOTH_VECTOR;
     }
 
     /////////////////////////////////////////////////////////////////////////
 
-    public PredictorType getType() {
+    public Type getType() {
         return predictorType;
     }
 
@@ -136,7 +130,7 @@ public class Predictor implements Serializable {
         isStandardized = standardized;
     }
 
-    public double[][] getMatrixValues(PredictorType predictorType) {
+    public double[][] getMatrixValues(Type predictorType) {
         double[][] matrixValues = new double[data.length][];
 
         // create a mapping of the states in order the trait has them to that
@@ -147,8 +141,8 @@ public class Predictor implements Serializable {
             stateIndices[states.indexOf(rowLabels[i])] = i;
         }
 
-        if (getType() == PredictorType.MATRIX) {
-            if (predictorType != PredictorType.MATRIX) {
+        if (getType() == Type.MATRIX) {
+            if (predictorType != Type.MATRIX) {
                 throw new IllegalArgumentException("Predictor is a matrix");
             }
             for (int i = 0; i < data.length; i++) {
@@ -159,7 +153,7 @@ public class Predictor implements Serializable {
             }
         } else {
 
-            if (predictorType != PredictorType.ORIGIN_VECTOR && predictorType != PredictorType.DESTINATION_VECTOR) {
+            if (predictorType != Type.ORIGIN_VECTOR && predictorType != Type.DESTINATION_VECTOR) {
                 throw new IllegalArgumentException("Predictor is a vector");
             }
 
@@ -168,7 +162,7 @@ public class Predictor implements Serializable {
             }
             for (int i = 0; i < data.length; i++) {
                 for (int j = 0; j < data.length; j++) {
-                    if (predictorType == PredictorType.ORIGIN_VECTOR) {
+                    if (predictorType == Type.ORIGIN_VECTOR) {
                         matrixValues[i][j] = data[stateIndices[i]][0];
                     } else {
                         matrixValues[j][i] = data[stateIndices[i]][0];
@@ -224,7 +218,7 @@ public class Predictor implements Serializable {
      * Return string with the values in the linear top triangle, bottom triangle format
      * @return
      */
-    public String getValueString(PredictorType predictorType) {
+    public String getValueString(Type predictorType) {
         StringBuilder valueString = new StringBuilder();
         double[][] matrix = getMatrixValues(predictorType);
 

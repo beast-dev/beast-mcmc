@@ -30,6 +30,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.RestrictedPartials;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
@@ -61,6 +62,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     public static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
     public static final String ALLOW_SINGULAR = "allowSingular";
+    public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -106,7 +108,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
             PrecisionType precisionType = PrecisionType.SCALAR;
 
-            if (missingIndices.size() > 0 && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false)) {
+            if (xo.getAttribute(FORCE_FULL_PRECISION, false) ||
+                    (missingIndices.size() > 0 && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
                 precisionType = PrecisionType.FULL;
             }
 
@@ -130,6 +133,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         } else {
             allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
         }
+
+        List<RestrictedPartials> restrictedPartialsList =
+                AbstractMultivariateTraitLikelihood.parseRestrictedPartials(xo, true);
 
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
                 diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
@@ -210,12 +216,14 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                     }),
                     new ElementRule(ContinuousTraitPartialsProvider.class)
             ),
+            new ElementRule(RestrictedPartials.class, 0, Integer.MAX_VALUE),
             AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
             AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
+            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

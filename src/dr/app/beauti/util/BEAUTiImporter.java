@@ -488,7 +488,7 @@ public class BEAUTiImporter {
                 String[] values = dataTable.getColumn(i);
                 for (int j = 0; j < values.length; j++) {
                     try {
-                        data[j][0] =  Double.parseDouble(values[i]);
+                        data[j][0] =  Double.parseDouble(values[j]);
                     } catch (NumberFormatException nfe) {
                         JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j+1),
                                 "Missing value", JOptionPane.ERROR_MESSAGE);

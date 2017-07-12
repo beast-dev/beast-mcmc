@@ -186,6 +186,20 @@ public class TraitData implements Serializable {
         predictorList.remove(predictor);
     }
 
+    /**
+     * Returns the number of included predictors (counting origin and destination ones separately)
+     * @return
+     */
+    public int getIncludedPredictorCount() {
+        int count = 0;
+        for (Predictor predictor : getPredictors()) {
+            if (predictor.isIncluded()) {
+                count +=  1 + (predictor.getType() == Predictor.Type.BOTH_VECTOR ? 1 : 0);
+            }
+        }
+        return count;
+    }
+
     public List<Predictor> getIncludedPredictors() {
         List<Predictor> includedPredictors = new ArrayList<Predictor>();
         for (Predictor predictor : getPredictors()) {

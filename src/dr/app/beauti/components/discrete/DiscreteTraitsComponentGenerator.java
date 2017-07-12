@@ -25,7 +25,6 @@
 
 package dr.app.beauti.components.discrete;
 
-import dr.app.beauti.generator.Generator;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -39,12 +38,9 @@ import dr.inference.model.DesignMatrix;
 import dr.inference.operators.MultivariateNormalOperator;
 import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
-import dr.inferencexml.operators.ScaleOperatorParser;
-import dr.inferencexml.operators.UpDownOperatorParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.substmodel.GLMSubstitutionModel;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.FrequencyModelParser;
@@ -332,22 +328,22 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             } );
 
             for (Predictor predictor : model.getTraitData().getIncludedPredictors()) {
-                if (predictor.getType() == Predictor.PredictorType.ORIGIN_VECTOR || predictor.getType() == Predictor.PredictorType.BOTH_VECTOR) {
+                if (predictor.getType() == Predictor.Type.ORIGIN_VECTOR || predictor.getType() == Predictor.Type.BOTH_VECTOR) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + predictor + "_origin"),
-                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.PredictorType.ORIGIN_VECTOR))
+                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.Type.ORIGIN_VECTOR))
                     }, true);
                 }
-                if (predictor.getType() == Predictor.PredictorType.DESTINATION_VECTOR || predictor.getType() == Predictor.PredictorType.BOTH_VECTOR) {
+                if (predictor.getType() == Predictor.Type.DESTINATION_VECTOR || predictor.getType() == Predictor.Type.BOTH_VECTOR) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + predictor + "_destination"),
-                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.PredictorType.DESTINATION_VECTOR))
+                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.Type.DESTINATION_VECTOR))
                     }, true);
                 }
-                if (predictor.getType() == Predictor.PredictorType.MATRIX) {
+                if (predictor.getType() == Predictor.Type.MATRIX) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + predictor),
-                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.PredictorType.MATRIX))
+                            new Attribute.Default<String>(ParameterParser.VALUE, predictor.getValueString(Predictor.Type.MATRIX))
                     }, true);
                 }
             }
@@ -589,7 +585,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeGLMBinomialLikelihood(PartitionSubstitutionModel model, XMLWriter writer) {
-        double proportion = 1.0 - Math.exp(Math.log(0.5) / model.getTraitData().getIncludedPredictors().size());
+        double proportion = 1.0 - Math.exp(Math.log(0.5) / model.getTraitData().getIncludedPredictorCount());
 
         String prefix = model.getName() + ".";
 
@@ -601,7 +597,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(BinomialLikelihoodParser.TRIALS);
         writer.writeTag("parameter", new Attribute[]{
                 new Attribute.Default<Double>("value", 1.0),
-                new Attribute.Default<Integer>("dimension", model.getTraitData().getIncludedPredictors().size()),
+                new Attribute.Default<Integer>("dimension", model.getTraitData().getIncludedPredictorCount()),
         }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.TRIALS);
         writer.writeOpenTag(BinomialLikelihoodParser.COUNTS);

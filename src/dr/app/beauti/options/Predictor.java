@@ -165,6 +165,8 @@ public class Predictor implements Serializable {
 
             for (int i = 0; i < data.length; i++) {
                 matrixValues[i] = new double[data.length];
+            }
+            for (int i = 0; i < data.length; i++) {
                 for (int j = 0; j < data.length; j++) {
                     if (predictorType == PredictorType.ORIGIN_VECTOR) {
                         matrixValues[i][j] = data[stateIndices[i]][0];

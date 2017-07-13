@@ -20,7 +20,7 @@
 
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">11 NA</attr>
+			<attr name="X">11 12</attr>
 		</taxon>
 		<taxon id="B">
 			<attr name="X">NA 1</attr> <!-- 1 2 1 2 -->
@@ -104,8 +104,8 @@
 	<integratedFactorModel id="factorModel" traitName="X" nugget="0">
 		<loadings>
 			<matrixParameter id="loadings">
-				<parameter value="2 2"/>
-				<parameter value="0 2"/>
+				<parameter value="1 1"/>
+				<parameter value="0 1"/>
 			</matrixParameter>
 <!--
 			<matrixParameter id="loadings">
@@ -114,7 +114,7 @@
  -->
 		</loadings>
 		<precision>
-			<parameter id="precision" value="2 1"/>
+			<parameter id="precision" value="1 1"/>
 		</precision>
 		<treeModel idref="treeModel"/>
 		<traitParameter>

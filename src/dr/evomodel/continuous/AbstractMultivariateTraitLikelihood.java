@@ -25,6 +25,7 @@
 
 package dr.evomodel.continuous;
 
+import com.sun.org.apache.regexp.internal.RE;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -859,21 +860,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             }
 
-            List<RestrictedPartials> restrictedPartialsList = null;
-            for (int i = 0; i < xo.getChildCount(); ++i) {
-                Object cxo = xo.getChild(i);
-
-                if (cxo instanceof RestrictedPartials) {
-                    if (!integrate) {
-                        throw new XMLParseException("Restricted partials are currently only implements" +
-                                "for integrated multivariate trait likelihood models");
-                    }
-                    if (restrictedPartialsList == null) {
-                        restrictedPartialsList = new ArrayList<RestrictedPartials>();
-                    }
-                    restrictedPartialsList.add((RestrictedPartials) cxo);
-                }
-            }
+            List<RestrictedPartials> restrictedPartialsList = parseRestrictedPartials(xo, integrate);
             
             AbstractMultivariateTraitLikelihood like;
 
@@ -1060,6 +1047,27 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             return AbstractMultivariateTraitLikelihood.class;
         }
     };
+
+    public static List<RestrictedPartials> parseRestrictedPartials(XMLObject xo, boolean integrate)
+            throws XMLParseException {
+        
+        List<RestrictedPartials> restrictedPartialsList = null;
+        for (int i = 0; i < xo.getChildCount(); ++i) {
+            Object cxo = xo.getChild(i);
+
+            if (cxo instanceof RestrictedPartials) {
+                if (!integrate) {
+                    throw new XMLParseException("Restricted partials are currently only implements" +
+                            "for integrated multivariate trait likelihood models");
+                }
+                if (restrictedPartialsList == null) {
+                    restrictedPartialsList = new ArrayList<RestrictedPartials>();
+                }
+                restrictedPartialsList.add((RestrictedPartials) cxo);
+            }
+        }
+        return restrictedPartialsList;
+    }
 
     protected void addRestrictedPartials(RestrictedPartials restrictedPartials) {
         throw new IllegalArgumentException("Not implemented for this model type");

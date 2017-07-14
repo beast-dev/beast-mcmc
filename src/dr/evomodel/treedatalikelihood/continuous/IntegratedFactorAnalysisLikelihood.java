@@ -40,8 +40,6 @@ import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
-import org.w3c.dom.Attr;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -125,18 +123,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         System.arraycopy(partials, taxonIndex * dimPartial, partial, 0, dimPartial);
         return partial;
     }
-
-//    @Override
-//    public double[] getTipPartial(int taxonIndex) {
-//        checkStatistics();
-//        throw new RuntimeException("To implement");
-//    }
-
-//    @Override
-//    public double[] getTipObservation(int taxonIndex, PrecisionType precisionType) {
-//        checkStatistics();
-//        throw new RuntimeException("To implement");
-//    }
 
     @Override
     public List<Integer> getMissingIndices() {
@@ -348,7 +334,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         
         final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
         final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
-//        final DenseMatrix64F X = new DenseMatrix64F(numFactors, 1);
 
         int partialsOffset = 0;
         for (int taxon = 0; taxon < numTaxa; ++taxon) {
@@ -697,13 +682,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (logComponents != 0.0) {
             sb.append("total likelihood = " + (getLogLikelihood() + logComponents) + "\n");
         }
-
-
-//        System.err.println(sb.toString());
-//        System.err.println("All fine");
-//        System.exit(-1);
-
-
+        
         return sb.toString();
     }
 }

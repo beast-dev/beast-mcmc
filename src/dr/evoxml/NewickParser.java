@@ -145,6 +145,11 @@ public class NewickParser extends AbstractXMLObjectParser {
 
         if (usingDates) {
 
+            // are all the tips just being translated by a fixed amount?
+            // in which case we can just translate the internal nodes.
+            double fixedDiff = 0.0;
+            boolean translateNodes = true;
+
             for (int i = 0; i < tree.getTaxonCount(); i++) {
 
                 NodeRef node = tree.getExternalNode(i);
@@ -160,19 +165,36 @@ public class NewickParser extends AbstractXMLObjectParser {
                 if (date != null) {
                     height = Taxon.getHeightFromDate(date);
                 }
-                if (Math.abs(nodeHeight - height) > 1e-5) {
+
+                double diff = height - nodeHeight;
+
+                if (i == 0) {
+                    fixedDiff = diff;
+                } else if (Math.abs(diff - fixedDiff) > 1e-5) {
+                    translateNodes = false;
+                }
+
+                if (Math.abs(diff) > 1e-8 && (i == 0 || !translateNodes) ) {
 
                     System.out.println("  Changing height of node " + tree.getTaxon(node.getNumber()) + " from " + nodeHeight + " to " + height);
                     tree.setNodeHeight(node, height);
                 }
             }
 
+            if (translateNodes) {
+                System.out.println("  Changing height of all nodes by " + fixedDiff);
+            }
+
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
+                NodeRef node = tree.getInternalNode(i);
+
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(node, dr.evolution.util.Date.DATE);
 
                 if (date != null) {
                     double height = Taxon.getHeightFromDate(date);
-                    tree.setNodeHeight(tree.getInternalNode(i), height);
+                    tree.setNodeHeight(node, height);
+                } else if (translateNodes) {
+                    tree.setNodeHeight(node, tree.getNodeHeight(node) + fixedDiff);
                 }
 
             }// END: i loop

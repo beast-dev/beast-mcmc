@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -76,6 +77,16 @@ public class RestrictedPartials extends AbstractModel {
     final double getPartial(int i) { return meanParameter.getParameterValue(i); }
 
     final double getPriorSampleSize() { return priorSampleSize.getParameterValue(0); }
+
+    final double[] getRestrictionPartial() {
+        assert(false);
+        return null;
+    }
+
+    final PrecisionType getPrecisionType() {
+        assert(false);
+        return PrecisionType.SCALAR;
+    }
 
     final int getIndex() { return index; }
 

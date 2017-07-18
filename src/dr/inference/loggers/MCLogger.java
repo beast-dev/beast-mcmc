@@ -25,12 +25,16 @@
 
 package dr.inference.loggers;
 
+import dr.util.Keywordable;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A class for a general purpose logger.
@@ -131,6 +135,10 @@ public class MCLogger implements Logger {
 
     public final void addColumn(LogColumn column) {
 
+        if (column instanceof Keywordable) {
+            keywords.addAll(((Keywordable)column).getKeywords());
+        }
+
         columns.add(column);
     }
 
@@ -192,6 +200,14 @@ public class MCLogger implements Logger {
 
         if (title != null) {
             logHeading(title);
+        }
+        if (keywords.size() > 0) {
+            StringBuffer sb = new StringBuffer("keywords:");
+            for (String keyword: keywords) {
+                sb.append(" ");
+                sb.append(keyword);
+            }
+            logHeading(sb.toString());
         }
 
         if (logEvery > 0) {
@@ -271,7 +287,9 @@ public class MCLogger implements Logger {
 
     private String title = null;
 
-    private ArrayList<LogColumn> columns = new ArrayList<LogColumn>();
+    private Set<String> keywords = new HashSet<String>();
+
+    private List<LogColumn> columns = new ArrayList<LogColumn>();
 
     protected int logEvery = 0;
 

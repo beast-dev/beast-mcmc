@@ -73,7 +73,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     public double doOperation() {
         double logq;
 
-        final double alpha =  (arctanTransform ? Math.atan(bias) * SCALE_ALPHA : Math.log(bias) );
+        final double alpha = transformBias(bias);
 
         final NodeRef root = tree.getRoot();
 
@@ -145,6 +145,15 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         logq = Math.log(reverseProbability) - Math.log(forwardProbability);
         return logq;
     }
+
+    double transformBias(double bias) {
+        return (arctanTransform ? Math.atan(bias) * SCALE_ALPHA : Math.log(bias) );
+    }
+
+    double inverseTransformBias(double alpha) {
+        return (arctanTransform ? Math.tan(alpha / SCALE_ALPHA) : Math.exp(alpha) );
+    }
+
 
     /**
      * Gets a list of edges that subtend the given height
@@ -239,7 +248,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
         double targetProb = getTargetAcceptanceProbability();
 
-        double ws = OperatorUtils.optimizeWindowSize(bias, Double.MAX_VALUE, prob, targetProb);
+        double ws = inverseTransformBias(OperatorUtils.optimizeWindowSize(transformBias(bias), Double.MAX_VALUE, prob, targetProb));
 
         if (prob < getMinimumGoodAcceptanceLevel()) {
             return "Try decreasing size to about " + ws;

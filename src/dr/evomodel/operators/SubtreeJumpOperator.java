@@ -248,7 +248,11 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
         double targetProb = getTargetAcceptanceProbability();
 
-        double ws = inverseTransformBias(OperatorUtils.optimizeWindowSize(transformBias(bias), Double.MAX_VALUE, prob, targetProb));
+        if (bias <=0) {
+            return "";
+        }
+
+        double ws = OperatorUtils.optimizeWindowSize(bias, Double.MAX_VALUE, prob, targetProb);
 
         if (prob < getMinimumGoodAcceptanceLevel()) {
             return "Try decreasing size to about " + ws;

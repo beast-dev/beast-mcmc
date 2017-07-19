@@ -57,7 +57,7 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport, int performanceReportDelay) {
+    public MCLogger(LogFormatter formatter, long logEvery, boolean performanceReport, int performanceReportDelay) {
 
         addFormatter(formatter);
         this.logEvery = logEvery;
@@ -71,7 +71,7 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
+    public MCLogger(LogFormatter formatter, long logEvery, boolean performanceReport) {
         this(formatter, logEvery, performanceReport, 0);
     }
 
@@ -80,7 +80,7 @@ public class MCLogger implements Logger {
      *
      * @param logEvery logging frequency
      */
-    public MCLogger(String fileName, int logEvery, boolean performanceReport, int performanceReportDelay) throws IOException {
+    public MCLogger(String fileName, long logEvery, boolean performanceReport, int performanceReportDelay) throws IOException {
         this(new TabDelimitedFormatter(new PrintWriter(new FileWriter(fileName))), logEvery, performanceReport, performanceReportDelay);
     }
 
@@ -99,7 +99,7 @@ public class MCLogger implements Logger {
      *
      * @param logEvery logging frequency
      */
-    public MCLogger(int logEvery) {
+    public MCLogger(long logEvery) {
         this(new TabDelimitedFormatter(System.out), logEvery, true, 0);
     }
 
@@ -111,11 +111,11 @@ public class MCLogger implements Logger {
         return title;
     }
 
-    public int getLogEvery() {
+    public long getLogEvery() {
         return logEvery;
     }
 
-    public void setLogEvery(int logEvery) {
+    public void setLogEvery(long logEvery) {
         this.logEvery = logEvery;
     }
 
@@ -228,6 +228,7 @@ public class MCLogger implements Logger {
         // just to prevent overriding of the old 32 bit signature
     }
 
+    @Override
     public void log(long state) {
 
         if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {
@@ -256,13 +257,12 @@ public class MCLogger implements Logger {
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
                     String hpm = formatter.format(hoursPerMillionStates);
-                    if (hpm.equals("0")) {
-                        // test cases can run fast :)
-                        hpm = formatter.format(1000 * hoursPerMillionStates);
-                        values[columnCount + 1] = hpm + " hours/billion states";
-                    } else {
-                        values[columnCount + 1] = hpm + " hours/million states";
+                    String units = " hours/million states";
+                    if (hoursPerMillionStates < 0.1) {
+                        hpm = formatter.format(hoursPerMillionStates * 1000);
+                        units = " hours/billion states";
                     }
+                    values[columnCount + 1] = hpm + units;
 
                 } else {
                     values[columnCount + 1] = "-";
@@ -291,7 +291,7 @@ public class MCLogger implements Logger {
 
     private List<LogColumn> columns = new ArrayList<LogColumn>();
 
-    protected int logEvery = 0;
+    protected long logEvery = 0;
 
     public List<LogFormatter> getFormatters() {
         return formatters;

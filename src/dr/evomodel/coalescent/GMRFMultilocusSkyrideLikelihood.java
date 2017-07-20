@@ -99,6 +99,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
+        // adding the key word to the the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("skygrid");
+        if (treeList.size() > 1) {
+            this.addKeyword("multilocus");
+        }
 
         this.popSizeParameter = popParameter;
         this.groupSizeParameter = groupParameter;
@@ -202,6 +208,13 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                                            List<Parameter> betaList) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
+
+        // adding the key word to the the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("skygrid");
+        if (treeList.size() > 1) {
+            this.addKeyword("multilocus");
+        }
 
         this.gridPoints = specGridPoints.getParameterValues();
         this.numGridPoints = gridPoints.length;

@@ -129,8 +129,8 @@ public class LogFileTraces extends AbstractTraceList {
         return traces.get(index);
     }
 
-    public void setBurnIn(long burnin2) {
-        this.burnIn = (int) burnin2;
+    public void setBurnIn(long burnin) {
+        this.burnIn = burnin;
         for (Trace trace : traces) {
             trace.setTraceStatistics(null);
         }

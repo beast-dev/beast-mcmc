@@ -210,7 +210,7 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
     				LogFileTraces traces = new LogFileTraces(fileName, file);
     				traces.loadTraces();
                 
-    				int burnin = 0;
+    				long burnin = 0;
                 
     				traces.setBurnIn(burnin);
 

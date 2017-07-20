@@ -227,7 +227,8 @@ public class BeastMain {
                     dome.getMessage());
             throw new RuntimeException("Terminate");
         } catch (dr.xml.XMLParseException pxe) {
-            pxe.printStackTrace(System.err);
+            // Leave the printing of the stack trace until the end - too noisy otherwise
+            //pxe.printStackTrace(System.err);
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
                 infoLogger.severe("Error running file: " + fileName);
                 infoLogger.severe(
@@ -240,7 +241,7 @@ public class BeastMain {
 
             } else {
                 infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
-                        pxe.getMessage());
+                        pxe.getMessage() + "\n\nError thrown at: " + pxe.getStackTrace()[0] + "\n");
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
@@ -803,7 +804,8 @@ public class BeastMain {
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
-            rte.printStackTrace(System.err);
+            // The stack trace here is not useful
+//            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
                 System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");

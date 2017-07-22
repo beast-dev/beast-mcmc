@@ -135,9 +135,11 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         try {
             return parseXMLObject(xo);
         } catch (XMLParseException xpe) {
-            throw new XMLParseException("Error parsing '<" + getParserName() +
+            XMLParseException e = new XMLParseException("Error parsing '<" + getParserName() +
                     ">' element with id, '" + id + "':\n" +
                     xpe.getMessage());
+            e.setStackTrace(xpe.getStackTrace());
+            throw e;
         }
     }
 

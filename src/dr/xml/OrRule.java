@@ -100,7 +100,7 @@ public class OrRule implements XMLSyntaxRule {
      * Describes the rule.
      */
     public String markdownRuleString(XMLDocumentationHandler handler, String prefix) {
-        String html = prefix + "At least one of:\n";
+        String html = prefix + "* At least one of:\n";
         for (XMLSyntaxRule rule : rules) {
             html += rule.markdownRuleString(handler, prefix + "    ");
         }

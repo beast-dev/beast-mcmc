@@ -117,7 +117,7 @@ public class XORRule implements XMLSyntaxRule {
      * Describes the rule.
      */
     public String markdownRuleString(XMLDocumentationHandler handler, String prefix) {
-        StringBuffer buffer = new StringBuffer(prefix + "One of:\n");
+        StringBuffer buffer = new StringBuffer(prefix + "* One of:\n");
         for (XMLSyntaxRule rule : rules) {
             buffer.append(rule.markdownRuleString(handler, prefix + "    "));
         }

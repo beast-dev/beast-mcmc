@@ -1,4 +1,4 @@
-package dr.evomodel.antigenic.phyloClustering.statistics;
+package dr.evomodel.antigenic.phyloclustering.statistics;
 
 import dr.evolution.datatype.Nucleotides;
 
@@ -9,7 +9,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.antigenic.phyloClustering.TreeClusteringVirusesPrior;
+import dr.evomodel.antigenic.phyloclustering.TreeClusteringVirusesPrior;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
@@ -23,7 +23,7 @@ public class MutationsTreeTrait implements TreeTraitProvider {
     protected Helper treeTraits = new Helper();
     private TreeModel treeModel;
     private TreeClusteringVirusesPrior clusterPrior;
-    public static final String MUTATIONS_TREETRAIT = "MutationsTreeTrait";
+    public static final String MUTATIONS_TREETRAIT = "mutationsTreeTrait";
 
     
     private String[] mutationString;

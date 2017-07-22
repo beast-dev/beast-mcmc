@@ -1,4 +1,4 @@
-package dr.evomodel.antigenic.phyloClustering;
+package dr.evomodel.antigenic.phyloclustering;
 
 import java.util.LinkedList;
 
@@ -9,7 +9,7 @@ import dr.inference.model.Parameter;
 
 
 
-public class Tree_Clustering_Shared_Routines {
+public class TreeClusteringSharedRoutines {
 
 	
 	public static int[] setMembershipTreeToVirusIndexes(int numdata, MatrixParameter virusLocations, int numNodes, TreeModel treeModel ){

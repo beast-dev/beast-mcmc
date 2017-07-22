@@ -1,4 +1,4 @@
-package dr.evomodel.antigenic.phyloClustering.statistics;
+package dr.evomodel.antigenic.phyloclustering.statistics;
 
 
 import dr.evolution.tree.NodeRef;
@@ -21,7 +21,7 @@ public class AnnotateLocationParameterTreeTrait implements TreeTraitProvider {
 	
     protected Helper treeTraits = new Helper();
     private TreeModel treeModel;
-    public static final String ANNOTATELOCATIONPARAMETERTREETRAIT = "AnnotateLocationParameterTreeTrait";
+    public static final String ANNOTATELOCATIONPARAMETERTREETRAIT = "annotateLocationParameterTreeTrait";
     public final static String locationParameterStr = "virusLocationsTreeNodes";
     //public final static String serumDriftStr = "serumDrift";  //but maybe serum drift is off
     public final static String indicatorsStr = "indicators";

@@ -1,7 +1,7 @@
 /*
- * WikiDocumentationHandler.java
+ * MarkdownDocumentationHandler.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,44 +28,43 @@ package dr.xml;
 import dr.app.beast.BeastParser;
 import dr.app.tools.BeastParserDoc;
 
-import java.io.*;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.TreeSet;
 
 /**
- * A subclass of XMLDocumentationHandler that creates output in MediaWiki format
+ * A subclass of XMLDocumentationHandler that creates output in Markdown format
  */
-public class WikiDocumentationHandler extends XMLDocumentationHandler {
+public class MarkdownDocumentationHandler extends XMLDocumentationHandler {
 
-    private final static String WIKILINK = "[[Main Page|BEAST Documentation]]-> BEAST v1.5.x XML Reference";
-
-    public WikiDocumentationHandler(BeastParser parser) {
+    public MarkdownDocumentationHandler(BeastParser parser) {
         super(parser);
     }
 
     public void outputElements(PrintWriter writer) {
 
-        printDocWikiTitle(writer);
+        printDocTitle(writer);
 
         Iterator iterator = parser.getParsers();
         while (iterator.hasNext()) {
             XMLObjectParser xmlParser = (XMLObjectParser)iterator.next();
-            writer.println(xmlParser.toWiki(this));
+            writer.println(xmlParser.toMarkdown(this));
 
-            // convert the html into wiki...
+            // convert the html into markdown...
 
-            System.out.println("  outputting Wiki for element " + xmlParser.getParserName());
+            System.out.println("  outputting Markdown for element " + xmlParser.getParserName());
         }
 
     }
 
-    private void printDocWikiTitle(PrintWriter writer) {
+    private void printDocTitle(PrintWriter writer) {
 
         Calendar date = Calendar.getInstance();
         SimpleDateFormat dateformatter = new SimpleDateFormat("'updated on' d MMMM yyyy zzz");
 
-        writer.println(WIKILINK + "\n");
-        writer.println("==" + BeastParserDoc.TITLE + "==\n");
+        writer.println("#" + BeastParserDoc.TITLE + "\n");
 
         if (parser.parsers != null) {
             if (parser.parsers.equalsIgnoreCase(BeastParser.RELEASE)) {
@@ -89,7 +88,7 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
      */
     public void outputTypes(PrintWriter writer) {
 
-        writer.println("==BEAST types==");
+        writer.println("## BEAST types");
         writer.println("");
         writer.println("The following is a list of generic types that elements represent in a beast file.");
         writer.println("");
@@ -102,7 +101,7 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
                 String name = ClassComparator.getName(requiredType);
 
-                System.out.println("  outputting Wiki for generic type " + name);
+                System.out.println("  outputting md for generic type " + name);
 
 
                 TreeSet<String> matchingParserNames = new TreeSet<String>();
@@ -112,7 +111,7 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
                 while (i.hasNext()) {
                     XMLObjectParser xmlParser = (XMLObjectParser) i.next();
                     Class returnType = xmlParser.getReturnType();
-                    if (requiredType.isAssignableFrom(returnType)) {
+                    if (returnType != null && requiredType.isAssignableFrom(returnType)) {
                         matchingParserNames.add(xmlParser.getParserName());
                     }
                 }
@@ -120,14 +119,14 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
                 if (!(matchingParserNames.size() == 1 && matchingParserNames.iterator().next().equals(name))) {
                     
                     // output table row containing the type and the matching parser names
-                    writer.println("===" + name + "===");
+                    writer.println("### " + name + "");
                     writer.println();
                     writer.println("Elements of this type include:");
                     writer.println();
                     i = matchingParserNames.iterator();
                     while (i.hasNext()) {
                         String parserName = (String) i.next();
-                        writer.println(":*" + getWikiLink(parserName));
+                        writer.println("- " + getLink(parserName));
                     }
                     writer.println();
                 }
@@ -137,16 +136,16 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
     }
 
     public String getHTMLForClass(Class c) {
-        return getWikiLink(ClassComparator.getName(c));
+        return getLink(ClassComparator.getName(c));
     }
 
-    public String getWikiLink(String name) {
+    public String getLink(String name) {
         if (Character.isUpperCase(name.charAt(0))) {
             // linking to a 'type'
-            return "[[#" + name + "|" + name + "]]";
+            return "[" + name + "](#" + name.toLowerCase() + ")";
         } else {
             // linking to an 'element'
-            return "[[#&lt;" + name + "&gt; element|" + name + "]]";
+            return "[&lt;" + name + "&gt; element](#codelt" + name.toLowerCase() + "gtcode-element)";
         }
     }
 }

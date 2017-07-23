@@ -260,7 +260,7 @@ public class BeastMain {
                                 "values. This will result in Priors with zero probability.\n\n" +
                                 "The individual components of the posterior are as follows:\n" +
                                 rex.getMessage() + "\n" +
-                                "For more information go to <http://beast.bio.ed.ac.uk/>.");
+                                "For more information go to <http://beast.community>.");
             } else {
                 // This call never returns as another RuntimeException exception is raised by
                 // the error log handler???

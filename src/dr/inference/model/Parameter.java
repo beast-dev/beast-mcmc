@@ -451,8 +451,14 @@ public interface Parameter extends Statistic, Variable<Double> {
                 sb.append(String.valueOf(getParameterValue(i)));
 
                 if (bounds != null) {
-                    sb.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
-                    sb.append(", ").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+                    sb.append("[");
+                    try {
+                        sb.append(String.valueOf(bounds.getLowerLimit(i)));
+                        sb.append(", ").append(String.valueOf(bounds.getUpperLimit(i)));
+                    } catch (NullPointerException npe) {
+                        sb.append("no bounds");
+                    }
+                    sb.append("]");
                 }
 
                 if (i < getDimension() - 1) {

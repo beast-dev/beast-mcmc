@@ -25,12 +25,14 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.RestrictedPartials;
+import dr.evomodel.continuous.RestrictedPartialsModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
@@ -72,7 +74,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        Tree treeModel = (Tree) xo.getChild(Tree.class);
         MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
         BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
@@ -137,14 +139,19 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         List<RestrictedPartials> restrictedPartialsList =
                 AbstractMultivariateTraitLikelihood.parseRestrictedPartials(xo, true);
 
+//        RestrictedPartialsModel restrictedPartialsModel = (restrictedPartialsList.size() > 0) ?
+//                new RestrictedPartialsModel("TODO", restrictedPartialsList) : null;
+
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
+                diffusionModel, dataModel, rootPrior, rateTransformation, rateModel,
+                restrictedPartialsList, allowSingular);
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
             ((IntegratedFactorAnalysisLikelihood)dataModel).setLikelihoodDelegate(delegate);
         }
 
-        TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel, rateModel);
+        TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel,
+                rateModel, null);
 
         boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
@@ -206,7 +213,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public static final XMLSyntaxRule[] rules = {
-            new ElementRule(TreeModel.class),
+            new ElementRule(Tree.class),
             new ElementRule(MultivariateDiffusionModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(CONJUGATE_ROOT_PRIOR, ConjugateRootTraitPrior.rules),

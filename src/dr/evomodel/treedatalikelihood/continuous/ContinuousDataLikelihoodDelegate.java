@@ -43,6 +43,8 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.RestrictedPartials;
+import dr.evomodel.continuous.RestrictedPartialsModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
@@ -68,8 +70,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final int dimTrait;
     private final PrecisionType precisionType;
     private final ContinuousRateTransformation rateTransformation;
-    private final MultivariateTraitTree tree;
+    private final Tree tree;
     private final BranchRateModel rateModel;
+    private final List<RestrictedPartials> restrictedPartialsList;
+    private final RestrictedPartialsModel restrictedPartialsModel;
     private final ConjugateRootTraitPrior rootPrior;
     private final boolean forceCompletelyObserved;
 
@@ -80,22 +84,25 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private TreeDataLikelihood callbackLikelihood = null;
 
-    public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
+    public ContinuousDataLikelihoodDelegate(Tree tree,
                                             MultivariateDiffusionModel diffusionModel,
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel,
+                                            List<RestrictedPartials> restrictedPartialsList,
                                             boolean allowSingular) {
-        this(tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, false, allowSingular);
+        this(tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel,
+                restrictedPartialsList, false, allowSingular);
     }
 
-    public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
+    public ContinuousDataLikelihoodDelegate(Tree tree,
                                             MultivariateDiffusionModel diffusionModel,
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel,
+                                            List<RestrictedPartials> restrictedPartialsList,
                                             boolean forceCompletelyObserved,
                                             boolean allowSingular) {
 
@@ -122,6 +129,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         this.rateTransformation = rateTransformation;
         this.tree = tree;
         this.rateModel = rateModel;
+        this.restrictedPartialsList = restrictedPartialsList;
         this.rootPrior = rootPrior;
         this.forceCompletelyObserved = forceCompletelyObserved;
         this.allowSingular = allowSingular;
@@ -147,6 +155,30 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         partialBufferCount += rootProcessDelegate.getExtraPartialBufferCount();
         matrixBufferCount += rootProcessDelegate.getExtraMatrixBufferCount();
+
+        if (restrictedPartialsList != null && restrictedPartialsList.size() > 0) {
+
+            if (precisionType != PrecisionType.SCALAR) {
+                throw new RuntimeException("Restricted partials currently are only implemented for scalar diffusion");
+            }
+
+            System.err.println("Before restrictions: " + partialBufferCount + " "
+                    + matrixBufferCount);
+
+            restrictedPartialsModel = new RestrictedPartialsModel("restrictedPartials",
+                    restrictedPartialsList, partialBufferCount, matrixBufferCount);
+            addModel(restrictedPartialsModel);
+
+            partialBufferCount += restrictedPartialsModel.getExtraPartialBufferCount();
+            matrixBufferCount += restrictedPartialsModel.getExtraMatrixBufferCount();
+
+            System.err.println("After restrictions: " + partialBufferCount + " "
+                    + matrixBufferCount);
+            System.exit(-1);
+
+        } else {
+            restrictedPartialsModel = null;
+        }
 
         operations = new int[(internalNodeCount + rootProcessDelegate.getExtraPartialBufferCount())
                 * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
@@ -231,7 +263,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             for (int i = 0; i < tipCount; i++) {
                 final NodeRef node = tree.getExternalNode(i);
                 final int index = node.getNumber();
-                
+
                 assert (i == index);
 
                 if (!checkDataAlignment(node, tree)) {
@@ -621,6 +653,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
         int index = node.getNumber();
+        System.err.println("check data for: " + index);
         String name1 = dataModel.getParameter().getParameter(index).getParameterName();
         Taxon taxon = tree.getNodeTaxon(node);
         return name1.contains(taxon.getId());
@@ -893,6 +926,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 likelihoodDelegate.rootPrior,
                 likelihoodDelegate.rateTransformation,
                 likelihoodDelegate.rateModel,
+                likelihoodDelegate.restrictedPartialsList,
                 true);
     }
 

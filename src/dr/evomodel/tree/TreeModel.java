@@ -218,7 +218,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         return inEdit;
     }
 
-    public class TreeChangedEvent {
+    public static class TreeChangedEvent {
         static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
 
         final Node node;
@@ -520,7 +520,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     private Node oldRoot;
 
     public boolean beginTreeEdit() {
-        if (inEdit) throw new RuntimeException("Alreading in edit transaction mode!");
+        if (inEdit) throw new RuntimeException("Already in edit transaction mode!");
 
         oldRoot = root;
 
@@ -1613,7 +1613,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         return isTipDateSampled;
     }
 
-    public boolean isTreeRandom() {
+    @Override
+    public boolean isVariable() {
         return isTreeRandom;
     }
 

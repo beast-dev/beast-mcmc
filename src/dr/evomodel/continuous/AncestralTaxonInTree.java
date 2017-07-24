@@ -26,11 +26,10 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -40,64 +39,69 @@ import java.util.BitSet;
 import java.util.Set;
 
 /**
- * Created by msuchard on 6/4/16.
+ * @author Marc A. Suchard
  */
-public class RestrictedPartials extends AbstractModel {
+public class AncestralTaxonInTree extends AbstractModel {
 
-    public RestrictedPartials(String name,
-                              TreeModel treeModel,
-                              TaxonList taxonList, Parameter meanParameter,
-                              Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
-        this(name, treeModel, taxonList, meanParameter, priorSampleSize, null, -1);
+    public AncestralTaxonInTree(Taxon ancestor,
+                                TreeModel treeModel,
+                                TaxonList taxonList,
+                                Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
+        this(ancestor, treeModel, taxonList, priorSampleSize, null, -1);
     }
 
-    public RestrictedPartials(String name,
-                              TreeModel treeModel,
-                              TaxonList taxonList, Parameter meanParameter,
-                              Parameter priorSampleSize,
-                              NodeRef node, int index) throws TreeUtils.MissingTaxonException {
-        super(name);
+    public AncestralTaxonInTree(Taxon ancestor,
+                                TreeModel treeModel,
+                                TaxonList descendents,
+                                Parameter priorSampleSize,
+                                NodeRef node, int index) throws TreeUtils.MissingTaxonException {
+
+        super(ancestor.getId());
+
+        this.ancestor = ancestor;
         this.treeModel = treeModel;
-        this.taxonList = taxonList;
-        this.meanParameter = meanParameter;
-        this.priorSampleSize = priorSampleSize;
+        this.descendents = descendents;
+        this.pseudoBranchLength = priorSampleSize;
         this.index = index;
         this.node = node;
 
-        this.tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
-        this.tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
+        this.tips = TreeUtils.getTipsForTaxa(treeModel, descendents);
+        this.tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, descendents);
 
-        addVariable(meanParameter);
         addVariable(priorSampleSize);
     }
 
     // Public API
 
+    final public double getPseudoBranchLength() {
+        return pseudoBranchLength.getParameterValue(0);
+    }
+
     final TreeModel getTreeModel() { return treeModel; }
 
-    final double[] getPartials() { return meanParameter.getParameterValues(); }
+//    final double[] getPartials() { return meanParameter.getParameterValues(); }
 
-    final double getPartial(int i) { return meanParameter.getParameterValue(i); }
+//    final double getPartial(int i) { return meanParameter.getParameterValue(i); }
 
-    final double getPriorSampleSize() { return priorSampleSize.getParameterValue(0); }
+//    final double getPriorSampleSize() { return pseudoBranchLength.getParameterValue(0); }
 
     final double[] getRestrictedPartials() {
         assert(false);
         return null;
     }
 
-    final PrecisionType getPrecisionType() {
-        assert(false);
-        return PrecisionType.SCALAR;
-    }
+//    final PrecisionType getPrecisionType() {
+//        assert(false);
+//        return PrecisionType.SCALAR;
+//    }
 
-    final int getIndex() { return index; }
+    final public int getIndex() { return index; }
 
-    final void setIndex(int index) { this.index = index; }
+    final public void setIndex(int index) { this.index = index; }
 
-    final NodeRef getNode() { return node; }
+    final public NodeRef getNode() { return node; }
 
-    final void setNode(NodeRef node) { this.node = node; }
+    final public void setNode(NodeRef node) { this.node = node; }
 
     // AbstractModel implementation
 
@@ -126,23 +130,27 @@ public class RestrictedPartials extends AbstractModel {
         fireModelChanged(variable, index);
     }
 
+    final private Taxon ancestor;
     final private TreeModel treeModel;
-    final private TaxonList taxonList;
+    final private TaxonList descendents;
 
     final private Set<Integer> tips;
     final private BitSet tipBitSet;
 
-    final private Parameter meanParameter;
-    final private Parameter priorSampleSize;
+    final private Parameter pseudoBranchLength;
 
     private int index;
     private NodeRef node;
 
     public TaxonList getTaxonList() {
-        return taxonList;
+        return descendents;
     }
 
     public BitSet getTipBitSet() {
         return tipBitSet;
+    }
+
+    public Taxon getTaxon() {
+        return ancestor;
     }
 }

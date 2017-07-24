@@ -26,6 +26,7 @@
 package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.StandardizeTraits;
 import dr.inference.model.*;
 import dr.math.MathUtils;
@@ -249,7 +250,7 @@ public class TreeTraitParserUtilities {
     public TraitsAndMissingIndices parseTraitsFromTaxonAttributes(
             XMLObject xo,
             String inTraitName,
-            MultivariateTraitTree treeModel,
+            Tree treeModel,
             boolean integrateOutInternalStates) throws XMLParseException {
 
         XMLObject xoc = xo.getChild(TRAIT_PARAMETER);

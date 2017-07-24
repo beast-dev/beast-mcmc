@@ -32,10 +32,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 import java.util.List;
@@ -55,7 +52,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
-                              TreeModel treeModel,
+                              Tree treeModel,
                               BranchRateModel branchRateModel) {
 
         super("TreeDataLikelihood");  // change this to use a const once the parser exists
@@ -73,9 +70,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.setCallback(this);
 
         this.treeModel = treeModel;
-        isTreeRandom = treeModel.isTreeRandom();
+        isTreeRandom = (treeModel instanceof AbstractModel) ?
+                ((AbstractModel) treeModel).isVariable() : false;
         if (isTreeRandom) {
-            addModel(treeModel);
+            addModel(((AbstractModel)treeModel));
         }
 
         likelihoodKnown = false;
@@ -409,7 +407,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     /**
      * the tree model
      */
-    private final TreeModel treeModel;
+    private final Tree treeModel;
 
     /**
      * the branch rate model

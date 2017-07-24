@@ -126,6 +126,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
         return listenerHelper.getListenerCount() > 0;
     }
 
+    public boolean isVariable() { return true; }
 
     /**
      * Fires a model changed event.

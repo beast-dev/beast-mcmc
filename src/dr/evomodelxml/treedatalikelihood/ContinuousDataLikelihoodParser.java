@@ -151,7 +151,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel,
-                rateModel, null);
+                rateModel);
 
         boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {

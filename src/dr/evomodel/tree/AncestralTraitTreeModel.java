@@ -29,17 +29,16 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.AncestralTaxonInTree;
-import dr.evomodel.continuous.RestrictedPartials;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
-import sun.security.provider.SHA;
 
 import java.util.*;
-import java.util.logging.Logger;
+
+import static dr.evomodel.tree.TreeModel.*;
 
 /**
  * A tree model with additional ancestral taxon nodes for peeling
@@ -349,7 +348,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
 
             assert (nodes[treeExternalCount + ancestor.getIndex()].ancestor == ancestor);
 
-            fireModelChanged(new TreeModel.TreeChangedEvent());
+            fireModelChanged(treeModel.createTreeChangeEvent());
         } else {
             throw new IllegalArgumentException("Illegal model");
         }

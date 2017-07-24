@@ -161,6 +161,10 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         pushTreeChangedEvent(new TreeChangedEvent());
     }
 
+    public TreeChangedEvent createTreeChangeEvent() {
+        return new TreeChangedEvent();
+    }
+
     /**
      * Push a tree changed event into the event stack.
      */
@@ -218,7 +222,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         return inEdit;
     }
 
-    public static class TreeChangedEvent {
+    public class TreeChangedEvent {
         static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
 
         final Node node;

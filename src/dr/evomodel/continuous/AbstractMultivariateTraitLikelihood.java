@@ -445,8 +445,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         // ignoring object instance Parameter case
 
         else if (model == treeModel) {
-            if (object instanceof TreeChangedEvent) {
-                TreeChangedEvent event = (TreeChangedEvent) object;
+            if (object instanceof TreeModel.TreeChangedEvent) {
+                TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
                 if (event.isTreeChanged()) {
                     recalculateTreeLength();
                     updateAllNodes();

@@ -19,9 +19,5 @@ public interface TreeChangedEvent {
 
     boolean isTreeChanged();
 
-    boolean isHeightChanged();
-
-    boolean isNodeParameterChanged();
-
-    boolean areAllInternalHeightsChanged();
+//    boolean isHeightChanged();
 }

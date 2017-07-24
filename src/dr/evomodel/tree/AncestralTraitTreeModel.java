@@ -31,6 +31,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.AncestralTaxonInTree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -323,35 +324,66 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
         root = nodes[storedRootNumber];
     }
 
+    class AncestralTreeChangeEvent implements TreeChangedEvent {
+
+        final private TreeChangedEvent event;
+        final private NodeRef node;
+
+        private AncestralTreeChangeEvent(TreeChangedEvent event, final int number) {
+            this.event = event;
+            this.node = new NodeRef() {
+
+                @Override public int getNumber() { return number; }
+
+                @Override public void setNumber(int n) {
+                    throw new IllegalArgumentException("Not mutable");
+                }
+            };
+        }
+
+        @Override public int getIndex() { return event.getIndex(); }
+
+        @Override public NodeRef getNode() { return node; }
+
+        @Override public Parameter getParameter() { return event.getParameter(); }
+
+        @Override public boolean isNodeChanged() { return event.isNodeChanged(); }
+
+        @Override public boolean isTreeChanged() { return event.isTreeChanged(); }
+
+//        @Override public boolean isHeightChanged() { return event.isHeightChanged(); }
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeModel) {
+
             if (object instanceof TreeChangedEvent) {
-                TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
-                if (treeChangedEvent.isHeightChanged()) {
-                    // TODO should not have to rebuild whole shadow tree
 
-                    NodeRef node = treeChangedEvent.getNode();
-                    final int originalNumber = node.getNumber();
+                final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
+                final NodeRef originalNode = treeChangedEvent.getNode();
+
+                if (originalNode != null) { // Remap
+
+                    final int originalNumber = treeChangedEvent.getNode().getNumber();
                     final int newNumber = mapOriginalToShadowNumber(originalNumber);
-                  //  treeChangedEvent.
-                    nodes = null;
-                    fireModelChanged(object, index);
-                } else {
+                    object =  new AncestralTreeChangeEvent(treeChangedEvent, newNumber);
 
-                    nodes = null;
-                    fireModelChanged(object, index);
                 }
+
+                fireModelChanged(object, index);
+
             } else {
                 throw new IllegalArgumentException("TreeModel should not generate other events");
             }
 
         } else if (ancestors.contains(model)) {
+
             AncestralTaxonInTree ancestor = (AncestralTaxonInTree) model;
             NodeRef node = nodes[treeExternalCount + ancestor.getIndex()];
 
             assert (nodes[treeExternalCount + ancestor.getIndex()].ancestor == ancestor);
-
             fireModelChanged(treeModel.createTreeChangeEvent());
+
         } else {
             throw new IllegalArgumentException("Illegal model");
         }

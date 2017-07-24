@@ -38,8 +38,6 @@ import dr.util.CommonCitations;
 
 import java.util.*;
 
-import static dr.evomodel.tree.TreeModel.*;
-
 /**
  * A tree model with additional ancestral taxon nodes for peeling
  *
@@ -327,10 +325,15 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
-                if (((TreeModel.TreeChangedEvent) object).isHeightChanged()) {
+            if (object instanceof TreeChangedEvent) {
+                TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
+                if (treeChangedEvent.isHeightChanged()) {
                     // TODO should not have to rebuild whole shadow tree
 
+                    NodeRef node = treeChangedEvent.getNode();
+                    final int originalNumber = node.getNumber();
+                    final int newNumber = mapOriginalToShadowNumber(originalNumber);
+                  //  treeChangedEvent.
                     nodes = null;
                     fireModelChanged(object, index);
                 } else {

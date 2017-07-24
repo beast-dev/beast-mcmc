@@ -161,7 +161,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         pushTreeChangedEvent(new TreeChangedEvent());
     }
 
-    public TreeChangedEvent createTreeChangeEvent() {
+    public dr.evomodel.tree.TreeChangedEvent createTreeChangeEvent() {
         return new TreeChangedEvent();
     }
 
@@ -182,7 +182,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     /**
      * Push a tree changed event into the event stack.
      */
-    public void pushTreeChangedEvent(TreeChangedEvent event) {
+    public void pushTreeChangedEvent(dr.evomodel.tree.TreeChangedEvent event) {
 
         if (!isTreeRandom) throw new IllegalStateException("Attempting state change in fixed tree");
 
@@ -212,7 +212,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
 
-    private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
+    private final List<dr.evomodel.tree.TreeChangedEvent> treeChangedEvents = new ArrayList<dr.evomodel.tree.TreeChangedEvent>();
 
     public boolean hasRates() {
         return hasRates;
@@ -222,7 +222,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         return inEdit;
     }
 
-    public class TreeChangedEvent {
+    public class TreeChangedEvent implements dr.evomodel.tree.TreeChangedEvent {
         static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
 
         final Node node;
@@ -243,10 +243,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             this.index = index;
         }
 
+        @Override
         public int getIndex() {
             return index;
         }
 
+        @Override
         public Node getNode() {
             return node;
         }
@@ -259,6 +261,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             return parameter == null;
         }
 
+        @Override
         public boolean isNodeChanged() {
             return node != null;
         }
@@ -550,7 +553,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             }
         }
 
-        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+        for (dr.evomodel.tree.TreeChangedEvent treeChangedEvent : treeChangedEvents) {
             listenerHelper.fireModelChanged(this, treeChangedEvent);
         }
         treeChangedEvents.clear();

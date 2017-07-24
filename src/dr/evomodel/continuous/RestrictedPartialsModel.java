@@ -2,8 +2,8 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -118,8 +118,8 @@ public class RestrictedPartialsModel extends AbstractModel {
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
-                TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
+            if (object instanceof TreeChangedEvent) {
+                TreeChangedEvent event = (TreeChangedEvent) object;
                 if (event.isTreeChanged()) {
                     updateTreeMapping = true;
                 } else if (event.isNodeChanged()) {

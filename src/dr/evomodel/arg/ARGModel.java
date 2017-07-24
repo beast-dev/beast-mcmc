@@ -38,6 +38,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.likelihood.ARGLikelihood;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -1053,7 +1054,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
      * Push a tree changed event into the event stack.
      */
     public void pushTreeChangedEvent() {
-        pushTreeChangedEvent(new TreeChangedEvent());
+        pushTreeChangedEvent(new ARGTreeChangedEvent());
     }
 
     public void pushTreeSizeChangedEvent() {
@@ -1061,25 +1062,25 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     public void pushTreeSizeIncreasedEvent() {
-        pushTreeChangedEvent(new TreeChangedEvent(+1));
+        pushTreeChangedEvent(new ARGTreeChangedEvent(+1));
     }
 
     public void pushTreeSizeDecreasedEvent() {
-        pushTreeChangedEvent(new TreeChangedEvent(-1));
+        pushTreeChangedEvent(new ARGTreeChangedEvent(-1));
     }
 
     /**
      * Push a tree changed event into the event stack.
      */
     public void pushTreeChangedEvent(NodeRef nodeRef) {
-        pushTreeChangedEvent(new TreeChangedEvent((Node) nodeRef));
+        pushTreeChangedEvent(new ARGTreeChangedEvent((Node) nodeRef));
     }
 
     /**
      * Push a tree changed event into the event stack.
      */
     public void pushTreeChangedEvent(Node node, Parameter parameter, int index) {
-        pushTreeChangedEvent(new TreeChangedEvent(node, parameter, index));
+        pushTreeChangedEvent(new ARGTreeChangedEvent(node, parameter, index));
     }
 
     /**
@@ -1133,7 +1134,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
     protected final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
 
-    public class TreeChangedEvent {
+    public class ARGTreeChangedEvent implements TreeChangedEvent {
 
         final Node node;
 
@@ -1143,7 +1144,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         int size = 0;
 
-        public TreeChangedEvent() {
+        public ARGTreeChangedEvent() {
             this(null, null, -1);
         }
 
@@ -1152,17 +1153,17 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 //            size = true;
 //        }
 
-        public TreeChangedEvent(Node node) {
+        public ARGTreeChangedEvent(Node node) {
             this(node, null, -1);
         }
 
-        public TreeChangedEvent(Node node, Parameter parameter, int index) {
+        public ARGTreeChangedEvent(Node node, Parameter parameter, int index) {
             this.node = node;
             this.parameter = parameter;
             this.index = index;
         }
 
-        public TreeChangedEvent(int sizeChanged) {
+        public ARGTreeChangedEvent(int sizeChanged) {
             this(null, null, -1);
             size = sizeChanged;
         }
@@ -1197,6 +1198,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         public boolean isNodeParameterChanged() {
             return parameter != null;
+        }
+
+        @Override
+        public boolean areAllInternalHeightsChanged() {
+            return false;
         }
 
         public boolean isHeightChanged() {

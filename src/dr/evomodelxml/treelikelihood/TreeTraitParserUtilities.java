@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.treelikelihood;
 
-import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.StandardizeTraits;
 import dr.inference.model.*;

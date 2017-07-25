@@ -25,11 +25,11 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -44,14 +44,14 @@ import java.util.Set;
 public class AncestralTaxonInTree extends AbstractModel {
 
     public AncestralTaxonInTree(Taxon ancestor,
-                                TreeModel treeModel,
+                                MutableTreeModel treeModel,
                                 TaxonList taxonList,
                                 Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
         this(ancestor, treeModel, taxonList, priorSampleSize, null, -1);
     }
 
     public AncestralTaxonInTree(Taxon ancestor,
-                                TreeModel treeModel,
+                                MutableTreeModel treeModel,
                                 TaxonList descendents,
                                 Parameter priorSampleSize,
                                 NodeRef node, int index) throws TreeUtils.MissingTaxonException {
@@ -77,7 +77,7 @@ public class AncestralTaxonInTree extends AbstractModel {
         return pseudoBranchLength.getParameterValue(0);
     }
 
-    final TreeModel getTreeModel() { return treeModel; }
+    final MutableTreeModel getTreeModel() { return treeModel; }
 
 //    final double[] getPartials() { return meanParameter.getParameterValues(); }
 
@@ -131,7 +131,7 @@ public class AncestralTaxonInTree extends AbstractModel {
     }
 
     final private Taxon ancestor;
-    final private TreeModel treeModel;
+    final private MutableTreeModel treeModel;
     final private TaxonList descendents;
 
     final private Set<Integer> tips;

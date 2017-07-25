@@ -36,7 +36,6 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @version $Id$
  */
 
-import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;

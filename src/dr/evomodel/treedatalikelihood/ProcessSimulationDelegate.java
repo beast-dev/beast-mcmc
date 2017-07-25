@@ -394,7 +394,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
 //        final private PartiallyMissingInformation missingInformation;
 
-         public TipGradientViaFullConditionalDelegate(String name, MultivariateTraitTree tree,
+         public TipGradientViaFullConditionalDelegate(String name, MutableTreeModel tree,
                                                             MultivariateDiffusionModel diffusionModel,
                                                             ContinuousTraitDataModel dataModel,
                                                             ConjugateRootTraitPrior rootPrior,
@@ -649,7 +649,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
                 public double[] getTrait(Tree t, NodeRef node) {
 
-                    assert t == tree;
+//                    assert t == tree; // Does not hold for transformed trees
                     return getTraitForNode(node);
                 }
             };
@@ -1215,7 +1215,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     class ConditionalOnPartiallyMissingTipsRealizedDelegate extends ConditionalOnTipsRealizedDelegate {
 
-        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, MultivariateTraitTree tree,
+        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, MutableTreeModel tree,
                                                          MultivariateDiffusionModel diffusionModel,
                                                          ContinuousTraitDataModel dataModel,
                                                          ConjugateRootTraitPrior rootPrior,
@@ -1227,7 +1227,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                     new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate));
         }
 
-        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, MultivariateTraitTree tree,
+        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, MutableTreeModel tree,
                                                          MultivariateDiffusionModel diffusionModel,
                                                          ContinuousTraitDataModel dataModel,
                                                          ConjugateRootTraitPrior rootPrior,
@@ -1641,7 +1641,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     class UnconditionalOnTipsDelegate extends AbstractRealizedContinuousTraitDelegate {
 
         public UnconditionalOnTipsDelegate(String name,
-                                           MultivariateTraitTree tree,
+                                           MutableTreeModel tree,
                                            MultivariateDiffusionModel diffusionModel,
                                            ContinuousTraitDataModel dataModel,
                                            ConjugateRootTraitPrior rootPrior,

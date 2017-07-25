@@ -25,7 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -480,7 +480,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(TreeModel.class);
+            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(TreeModel.class);
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
@@ -532,7 +532,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     new ElementRule(Parameter.class),
             }),
             // Tree trait parser
-            new ElementRule(MultivariateTraitTree.class),
+            new ElementRule(MutableTreeModel.class),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
             new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)

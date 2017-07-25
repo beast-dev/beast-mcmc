@@ -45,7 +45,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
+public class TreeModel extends AbstractModel implements MutableTreeModel, Citable {
 
     //
     // Public stuff
@@ -159,10 +159,6 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      */
     public void pushTreeChangedEvent() {
         pushTreeChangedEvent(new TreeChangedEvent());
-    }
-
-    public dr.evomodel.tree.TreeChangedEvent createTreeChangeEvent() {
-        return new TreeChangedEvent();
     }
 
     /**

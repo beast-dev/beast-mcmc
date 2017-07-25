@@ -35,7 +35,7 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.LatentTruncation;
@@ -72,7 +72,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     protected double rootPriorSampleSize;
 
     private final MatrixParameter precisionParam;
-    private final MultivariateTraitTree treeModel;
+    private final MutableTreeModel treeModel;
     private final int dim;
 
     public double[][] postMeans;

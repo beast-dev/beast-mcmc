@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.tree;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
@@ -32,7 +33,6 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.continuous.AncestralTaxonInTree;
-import dr.evomodel.continuous.RestrictedPartials;
 import dr.evomodel.tree.*;
 import dr.inference.model.FastMatrixParameter;
 import dr.inference.model.Parameter;
@@ -62,7 +62,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel tree = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         List<AncestralTaxonInTree> ancestors = parseAllAncestors(tree, xo);
 
         int index = tree.getExternalNodeCount();
@@ -138,7 +138,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
         ParameterParser.replaceParameter(cxo, parameter);
     }
 
-    private static List<AncestralTaxonInTree> parseAllAncestors(TreeModel tree, XMLObject xo) throws XMLParseException {
+    private static List<AncestralTaxonInTree> parseAllAncestors(MutableTreeModel tree, XMLObject xo) throws XMLParseException {
         int index = tree.getExternalNodeCount();
         List<AncestralTaxonInTree> ancestors = new ArrayList<AncestralTaxonInTree>();
         for (XMLObject cxo : xo.getAllChildren(ANCESTOR)) {
@@ -148,7 +148,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
         return ancestors;
     }
 
-    private static AncestralTaxonInTree parseAncestor(TreeModel tree, XMLObject xo, final int index) throws XMLParseException {
+    private static AncestralTaxonInTree parseAncestor(MutableTreeModel tree, XMLObject xo, final int index) throws XMLParseException {
 
         Taxon ancestor = (Taxon) xo.getChild(Taxon.class);
 
@@ -199,7 +199,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules =
             new XMLSyntaxRule[]{
-                    new ElementRule(TreeModel.class),
+                    new ElementRule(MutableTreeModel.class),
 //                    AttributeRule.newStringRule(PSEUDO_BRANCH_LENGTH_NAME),
                     new ElementRule(ANCESTOR, new XMLSyntaxRule[] {
                             new ElementRule(Taxon.class),

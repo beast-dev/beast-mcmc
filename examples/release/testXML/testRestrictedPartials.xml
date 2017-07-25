@@ -105,7 +105,6 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-<!--
 	<multivariateTraitLikelihood id="oldVanillaLikelihood" traitName="X" integrateInternalTraits="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
@@ -126,7 +125,6 @@
 		Old vanilla =
 		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
 	</report>
--->
 
 	<multivariateTraitLikelihood id="oldRestrictedLikelihood" traitName="X" integrateInternalTraits="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
@@ -151,7 +149,6 @@
 		<multivariateTraitLikelihood idref="oldRestrictedLikelihood"/>
 	</report>
 
-<!--
 	<traitDataLikelihood id="newVanillaLikelihood" traitName="X" forceFullPrecision="false">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
@@ -172,7 +169,6 @@
 		New vanilla =
 		<traitDataLikelihood idref="newVanillaLikelihood"/>
 	</report>
- -->
 
 	<traitDataLikelihood id="newRestrictedLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
@@ -195,36 +191,27 @@
 		<traitDataLikelihood idref="newRestrictedLikelihood"/>
 	</report>
 
-
-<!--
-	<report>
-		<parameter idref="leafAndAncestorTraits"/>
-	</report>
- -->
-
 	<operators id="operators">
-<!--
-        <dirtyLikelihood weight="1">
-            <treeLikelihood idref="traitLikelihood"/>
-        </dirtyLikelihood>
- -->
  		<scaleOperator scaleFactor="0.75" weight="1">
  			<parameter idref="pseudoBranchLengthAB"/>
  		</scaleOperator>
-		<uniformOperator weight="30">
+		<uniformOperator weight="1">
 			<parameter idref="treeModel.internalNodeHeights"/>
 		</uniformOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
 	</operators>
 
-	<mcmc id="mcmc" chainLength="10">
+	<mcmc id="mcmc" chainLength="1000">
 		<posterior id="posterior">
 			<traitDataLikelihood idref="newRestrictedLikelihood"/>
 		</posterior>
 		<operators idref="operators"/>
-		<log logEvery="1">
+		<log logEvery="10">
 			<posterior idref="posterior"/>
 		</log>
-		<logTree logEvery="1" nexusFormat="true" fileName="testRestrictedTraitLikelihood.trees">
+		<logTree logEvery="10" nexusFormat="true" fileName="testRestrictedTraitLikelihood.trees">
 			<traitDataLikelihood idref="newRestrictedLikelihood"/>
 			<treeModel idref="ancestralTraitTreeModel"/>
 		</logTree>

@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.tree;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.tree.*;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -49,7 +50,7 @@ public class TransformedTreeModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel tree = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         Parameter scale = (Parameter) xo.getChild(Parameter.class);
 
         String id = tree.getId();
@@ -95,7 +96,7 @@ public class TransformedTreeModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules =
             new XMLSyntaxRule[]{
-                    new ElementRule(TreeModel.class),
+                    new ElementRule(MutableTreeModel.class),
                     new ElementRule(Parameter.class),
                     AttributeRule.newStringRule(VERSION, true),
             };

@@ -61,9 +61,8 @@ import java.util.logging.Logger;
 /**
  * A model component for trees.
  *
- * @author Andrew Rambaut
- * @author Alexei Drummond
- * @version $Id: ARGModel.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
+ * @author Marc A. Suchard
+ * @author Eric Bloomquist
  */
 public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 

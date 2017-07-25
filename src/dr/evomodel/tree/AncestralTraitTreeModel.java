@@ -44,7 +44,7 @@ import java.util.*;
  *
  * @author Marc A. Suchard
  */
-public class AncestralTraitTreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
+public class AncestralTraitTreeModel extends AbstractModel implements MutableTreeModel, Citable {
 
     private final int ancestorCount;
 
@@ -112,7 +112,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
         public boolean isExternal() { return child0 == null && child1 == null; }
     }
 
-    public AncestralTraitTreeModel(String id, TreeModel tree, List<AncestralTaxonInTree> ancestors) {
+    public AncestralTraitTreeModel(String id, MutableTreeModel tree, List<AncestralTaxonInTree> ancestors) {
         super(id);
         this.treeModel = tree;
         this.ancestors = ancestors;
@@ -249,7 +249,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
     }
 
     public boolean isVariable() {
-        return treeModel.isVariable();
+        if (treeModel instanceof AbstractModel) {
+            return ((AbstractModel) treeModel).isVariable();
+        } else {
+            return false;
+        }
     }
 
     public double getNodeHeight(NodeRef inode) {
@@ -325,53 +329,15 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
         root = nodes[storedRootNumber];
     }
 
-    class AncestralTreeChangeEvent implements TreeChangedEvent {
+    private class RemappedTreeChangeEvent implements TreeChangedEvent {
 
         final private TreeChangedEvent event;
         final private NodeRef node;
 
-        private AncestralTreeChangeEvent(TreeChangedEvent event, NodeRef node) {
+        private RemappedTreeChangeEvent(TreeChangedEvent event, NodeRef node) {
             this.event = event;
             this.node = node;
         }
-
-//        private AncestralTreeChangeEvent(TreeChangedEvent event, NodeRef originalNode, boolean propogate) {
-//            this.event = event;
-////            System.err.println("Original # is " + originalNode.getNumber());
-////            this.node = originalToShadowMap.get(originalNode);
-//            ShadowNode shadow = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
-////            System.err.println("Shadow # is " + shadow.getNumber());
-//
-//            if (!shadow.isExternal() && propogate) {
-//                if (shadow.child1.ancestor != null) {
-//                    shadow = shadow.child0;
-//                }
-//            }
-////            if (shadow.child1.ancestor != null) {
-////                System.err.println("Yep");
-////            } else {
-////                System.err.println("Nope");
-////            }
-////            if (shadow.ancestor != null) {
-////                shadow = shadow.child0;
-////            }
-//
-//            this.node = shadow;
-////            System.err.println("New node # is " + node.getNumber());
-////            System.exit(-1);
-//        }
-
-//        private AncestralTreeChangeEvent(TreeChangedEvent event, final int number) {
-//            this.event = event;
-//            this.node = new NodeRef() {
-//
-//                @Override public int getNumber() { return number; }
-//
-//                @Override public void setNumber(int n) {
-//                    throw new IllegalArgumentException("Not mutable");
-//                }
-//            };
-//        }
 
         @Override public int getIndex() { return event.getIndex(); }
 
@@ -382,8 +348,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
         @Override public boolean isNodeChanged() { return event.isNodeChanged(); }
 
         @Override public boolean isTreeChanged() { return event.isTreeChanged(); }
-
-//        @Override public boolean isHeightChanged() { return event.isHeightChanged(); }
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -394,21 +358,23 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
                 final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
 
                 if (treeChangedEvent.isNodeChanged()) {
-                    System.err.println("node changed");
 
                     final NodeRef originalNode = treeChangedEvent.getNode();
                     if (originalNode != null) { // Remap
-
                         ShadowNode shadow = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
                         if (!shadow.isExternal()) {
                             if (shadow.child1.ancestor != null) {
-
-                                fireModelChanged(new AncestralTreeChangeEvent(treeChangedEvent, shadow), index);
-                                shadow = shadow.child0;
+                                /* If there is an ancestor (and zero-branch-length internal node),
+                                 * we apparently need to hit the both the parent of the ancestor and the
+                                 * zero-branch-length internal node.  MAS is unsure why we must hit the
+                                 * ancestor parent.
+                                 */
+                                fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
+                                shadow = shadow.child0;  // Get zero-branch-length internal node
                             }
                         }
 
-                        object = new AncestralTreeChangeEvent(treeChangedEvent, shadow);
+                        object = new RemappedTreeChangeEvent(treeChangedEvent, shadow);
 
                     }
 
@@ -418,13 +384,13 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
                     System.err.println("tree changed!");
                     fireModelChanged(object, index);
                 } else {
-                    throw new IllegalArgumentException("Illegal");
+                    throw new IllegalArgumentException("TreeModel should not generate other events");
                 }
 
             } else if (object instanceof Parameter) {
                 // Do nothing
             } else {
-                throw new IllegalArgumentException("TreeModel should not generate other events");
+                throw new IllegalArgumentException("TreeModel should not generate other objects");
             }
 
         } else if (ancestors.contains(model)) {
@@ -433,7 +399,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
             NodeRef node = nodes[treeExternalCount + ancestor.getIndex()];
 
             assert (nodes[treeExternalCount + ancestor.getIndex()].ancestor == ancestor);
-            fireModelChanged(treeModel.createTreeChangeEvent());
+            fireModelChanged(new TreeChangedEvent.WholeTree());
 
         } else {
             throw new IllegalArgumentException("Illegal model");
@@ -552,7 +518,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
         // Do nothing
     }
 
-    private final TreeModel treeModel;
+    private final MutableTreeModel treeModel;
     private final List<AncestralTaxonInTree> ancestors;
 
     public double[] getMultivariateNodeTrait(NodeRef node, String name) {
@@ -668,12 +634,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements Multivaria
     }
 
     public int getTaxonIndex(String id) {
-        int index = treeModel.getTaxonIndex(id);
-        if (index != -1) {
-            return index;
-        } else {
-            throw new RuntimeException("Not yet implemented");
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            if (getTaxonId(i).equals(id)) return i;
         }
+        return -1;
     }
 
     public int getTaxonIndex(Taxon taxon) {

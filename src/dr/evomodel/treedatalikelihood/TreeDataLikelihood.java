@@ -167,8 +167,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
                     updateNodeAndChildren(((TreeChangedEvent) object).getNode());
-
-                    System.err.println("Just tagged: " + TreeUtils.uniqueNewick(treeModel, ((TreeChangedEvent) object).getNode() ));
                 } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.

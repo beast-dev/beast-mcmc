@@ -25,22 +25,11 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
-import dr.evomodel.continuous.RestrictedPartials;
-import dr.math.KroneckerOperation;
-import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.distributions.WishartSufficientStatistics;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.Vector;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -142,7 +131,7 @@ public class MultivariateTraitDebugUtilities {
 //        sb.append("Tree:\n");
 //        sb.append(traitLikelihood.getId()).append("\t");
 //
-//        final MultivariateTraitTree treeModel = traitLikelihood.getTreeModel();
+//        final MutableTreeModel treeModel = traitLikelihood.getTreeModel();
 //        sb.append(treeModel.toString());
 //        sb.append("\n\n");
 //

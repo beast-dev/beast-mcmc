@@ -25,7 +25,7 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.operators.AbstractCoercableOperator;
@@ -348,7 +348,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
 
     private Map<Point2D, List<WeightedPoint2D>> nearestNeighborMap;
     private Set<Point2D> allLocations;
-    private final MultivariateTraitTree treeModel;
+    private final MutableTreeModel treeModel;
     private String traitName;
     private double autoOptimize;
     private boolean onlyInternalNodes = true;

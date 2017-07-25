@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -35,11 +35,8 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
-import dr.util.Author;
 import dr.util.Citable;
-import dr.util.Citation;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -54,7 +51,7 @@ import java.util.logging.Logger;
 public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMultivariateTraitLikelihood {
 
     public NonPhylogeneticMultivariateTraitLikelihood(String traitName,
-                                                     MultivariateTraitTree treeModel,
+                                                     MutableTreeModel treeModel,
                                                      MultivariateDiffusionModel diffusionModel,
                                                      CompoundParameter traitParameter,
                                                      Parameter deltaParameter,

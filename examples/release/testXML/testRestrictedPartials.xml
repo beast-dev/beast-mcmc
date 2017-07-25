@@ -211,6 +211,9 @@
  		<scaleOperator scaleFactor="0.75" weight="1">
  			<parameter idref="pseudoBranchLengthAB"/>
  		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="treeModel.internalNodeHeights"/>
+		</uniformOperator>
 	</operators>
 
 	<mcmc id="mcmc" chainLength="10">

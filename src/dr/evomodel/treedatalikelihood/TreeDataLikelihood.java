@@ -25,10 +25,7 @@
 
 package dr.evomodel.treedatalikelihood;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
@@ -171,6 +168,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     // rate changes.
                     updateNodeAndChildren(((TreeChangedEvent) object).getNode());
 
+                    System.err.println("Just tagged: " + TreeUtils.uniqueNewick(treeModel, ((TreeChangedEvent) object).getNode() ));
                 } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.

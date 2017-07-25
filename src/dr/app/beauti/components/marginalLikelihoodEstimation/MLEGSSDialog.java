@@ -293,7 +293,7 @@ public class MLEGSSDialog {
 
     public int showDialog() {
 
-        JOptionPane optionPane = new JOptionPane(optionsPanel,
+        final JOptionPane optionPane = new JOptionPane(optionsPanel,
                 JOptionPane.QUESTION_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
                 null,

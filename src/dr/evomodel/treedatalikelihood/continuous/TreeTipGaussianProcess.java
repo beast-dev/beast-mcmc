@@ -124,6 +124,14 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
         return sample;
     }
 
+    private double[] drawSelectedTraits() {
+        double[] draw = drawAllTraits();
+        if (truncateToMissingOnly) {
+             draw = maskDraw(draw, doSample);
+         }
+         return draw;
+    }
+
     private double[] crop(double[] in, int length) {
         double[] out = new double[length];
         System.arraycopy(in, 0, out, 0, length);
@@ -162,11 +170,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
 
     @Override
     public Object nextRandom() {
-        double[] draw = drawAllTraits();
-        if (truncateToMissingOnly) {
-            draw = maskDraw(draw, doSample);
-        }
-        return draw;
+        return drawSelectedTraits();
     }
 
     @Override
@@ -177,7 +181,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
     @Override
     public LogColumn[] getColumns() {
 
-        double[] sample = drawAllTraits();
+        double[] sample = drawSelectedTraits();
 
         LogColumn[] columns = new LogColumn[sample.length];
 
@@ -203,7 +207,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
         public double getDoubleValue() {
 
             if (index == 0) {
-                currentSample = drawAllTraits();
+                currentSample = drawSelectedTraits();
             }
 
             return currentSample[index];

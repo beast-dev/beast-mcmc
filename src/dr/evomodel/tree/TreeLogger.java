@@ -29,6 +29,7 @@ import dr.app.tools.NexusExporter;
 import dr.evolution.tree.*;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
+import dr.util.Keywordable;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -149,6 +150,19 @@ public class TreeLogger extends MCLogger {
             logLine("End;");
             logLine("");
             logLine("Begin trees;");
+
+            if (tree instanceof Keywordable) {
+                List<String> keywords = ((Keywordable)tree).getKeywords();
+                if (keywords.size() > 0) {
+                    StringBuffer sb = new StringBuffer("[keywords:");
+                    for (String keyword: keywords) {
+                        sb.append(" ");
+                        sb.append(keyword);
+                    }
+                    sb.append("]");
+                    logLine(sb.toString());
+                }
+            }
 
             if (mapNames) {
                 // This is needed if the trees use numerical taxon labels

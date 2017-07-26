@@ -191,7 +191,7 @@ public class MLEDialog {
         optionsPanel.addSeparator();
 
         JTextArea mleTutorial = new JTextArea("Additional information on marginal likelihood estimation in BEAST " +
-                "can be found on http://beast.bio.ed.ac.uk/Model-selection");
+                "can be found on http://beast.community/model_selection");
         mleTutorial.setColumns(56);
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);

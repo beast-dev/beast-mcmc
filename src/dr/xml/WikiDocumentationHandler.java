@@ -65,7 +65,7 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
         SimpleDateFormat dateformatter = new SimpleDateFormat("'updated on' d MMMM yyyy zzz");
 
         writer.println(WIKILINK + "\n");
-        writer.println("==" + BeastParserDoc.TITTLE + "==\n");
+        writer.println("==" + BeastParserDoc.TITLE + "==\n");
 
         if (parser.parsers != null) {
             if (parser.parsers.equalsIgnoreCase(BeastParser.RELEASE)) {

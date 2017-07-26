@@ -240,16 +240,15 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
         if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
-
             return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                     lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
 
         } else {
-            if(xo.getChild(GRID_POINTS) != null){
+            if (xo.getChild(GRID_POINTS) != null) {
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                         lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
                         lastObservedIndex, covPrecParam, betaList);
-            }else {
+            } else {
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                         lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
             }

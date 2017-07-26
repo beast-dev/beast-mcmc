@@ -33,14 +33,17 @@ import dr.xml.*;
  * Created by max on 12/9/14.
  */
 public class GaussianProcessFromTreeParser extends AbstractXMLObjectParser {
-    public static final String GAUSSIAN_PROCESS_FROM_TREE="gaussianProcessFromTree";
+
+    public static final String GAUSSIAN_PROCESS_FROM_TREE = "gaussianProcessFromTree";
+
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
     };
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        FullyConjugateMultivariateTraitLikelihood traitModel=(FullyConjugateMultivariateTraitLikelihood)xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
+        FullyConjugateMultivariateTraitLikelihood traitModel = (FullyConjugateMultivariateTraitLikelihood)
+                xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
         return new GaussianProcessFromTree(traitModel);
     }
 

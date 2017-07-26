@@ -165,6 +165,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
     public PrecisionMatrixGibbsOperator(
             ConjugateWishartStatisticsProvider wishartStatisticsProvider,
+            MatrixParameterInterface extraPrecisionParam,
             WishartStatistics priorDistribution,
             double weight,
             AbstractMultivariateTraitLikelihood debugModel) {
@@ -173,7 +174,8 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.debugModel = debugModel;
         this.conjugateWishartProvider = wishartStatisticsProvider;
         this.meanParam = null;
-        this.precisionParam = conjugateWishartProvider.getPrecisionParamter();
+        this.precisionParam = (extraPrecisionParam != null ? extraPrecisionParam :
+                conjugateWishartProvider.getPrecisionParamter());
         isSampledTraitLikelihood = false;
         this.treeModel = null;
         this.traitName = null;
@@ -540,8 +542,19 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                         traitModel, (WishartStatistics) prior.getDistribution(), weight
                 );
             } else if (ws != null) {
+
+                if (precMatrix instanceof DiagonalConstrainedMatrixView) {
+                    precMatrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+
+                    if (precMatrix == null) {
+                        throw new XMLParseException("Must provide unconstrained precision matrix");
+                    }
+                } else {
+                    precMatrix = null;
+                }
+                
                 return new PrecisionMatrixGibbsOperator(
-                        ws, (WishartStatistics) prior.getDistribution(), weight, traitModel
+                        ws, precMatrix, (WishartStatistics) prior.getDistribution(), weight, traitModel
                 );
 
             } else {

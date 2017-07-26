@@ -55,10 +55,11 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         final Parameter variable = (Parameter) xo.getChild(Parameter.class);
-        boolean drawByRowTemp=false;
-        if(xo.hasAttribute(DRAW_BY_ROW))
-            drawByRowTemp=xo.getBooleanAttribute(DRAW_BY_ROW);
-        final boolean drawByRow=drawByRowTemp;
+        boolean drawByRowTemp = false;
+        if (xo.hasAttribute(DRAW_BY_ROW)) {
+            drawByRowTemp = xo.getBooleanAttribute(DRAW_BY_ROW);
+        }
+        final boolean drawByRow = drawByRowTemp;
 
         boolean signal = xo.getAttribute(SIGNAL_CONSTITUENT_PARAMETERS, true);
         if (!signal && !(variable instanceof CompoundParameter)) signal = true;
@@ -81,13 +82,14 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
             }
 
 
-            if(likelihood.getDistribution() instanceof MultivariateNormalDistribution)
+            if (likelihood.getDistribution() instanceof MultivariateNormalDistribution)
                 gaussianProcess = (MultivariateNormalDistribution) likelihood.getDistribution();
 
-            if(likelihood.getDistribution() instanceof MultivariateNormalDistributionModel)
+            if (likelihood.getDistribution() instanceof MultivariateNormalDistributionModel)
                 gaussianProcess = (MultivariateNormalDistributionModel) likelihood.getDistribution();
 
         }
+
         EllipticalSliceOperator operator = new EllipticalSliceOperator(variable, gaussianProcess,
                 drawByRow, signal, bracketAngle,
                 translationInvariant, rotationInvariant);

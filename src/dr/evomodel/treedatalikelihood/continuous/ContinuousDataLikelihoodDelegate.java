@@ -893,6 +893,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 likelihoodDelegate.rootPrior,
                 likelihoodDelegate.rateTransformation,
                 likelihoodDelegate.rateModel,
+                true,
+                true);
+    }
+
+    public ContinuousDataLikelihoodDelegate createWithMissingData(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+        return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
+                likelihoodDelegate.diffusionModel,
+                likelihoodDelegate.dataModel,
+                likelihoodDelegate.rootPrior,
+                likelihoodDelegate.rateTransformation,
+                likelihoodDelegate.rateModel,
+                false,
                 true);
     }
 

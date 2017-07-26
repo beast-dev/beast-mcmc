@@ -42,12 +42,14 @@ import dr.xml.*;
 public class GaussianProcessFromTreeParser extends AbstractXMLObjectParser {
 
     public static final String GAUSSIAN_PROCESS_FROM_TREE = "gaussianProcessFromTree";
+    public static final String MASK_TO_MISSING = "maskDrawToMissingOnly";
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new XORRule(
                     new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
                     new ElementRule(TreeDataLikelihood.class)
             ),
+            AttributeRule.newBooleanRule(MASK_TO_MISSING, true),
     };
 
     @Override
@@ -63,14 +65,12 @@ public class GaussianProcessFromTreeParser extends AbstractXMLObjectParser {
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         ContinuousDataLikelihoodDelegate dataDelegate =
                 GibbsSampleMissingTraitsOperator.parseContinuousDataLikelihoodDelegate(xo);
-//        TreeTrait treeTrait =
-//                GibbsSampleMissingTraitsOperator.parseTreeTrait(xo, "hello");
 
+        boolean mask = xo.getAttribute(MASK_TO_MISSING, true);
 
-        TreeTipGaussianProcess process = new TreeTipGaussianProcess("hello", treeDataLikelihood, dataDelegate, null);
+        TreeTipGaussianProcess process = new TreeTipGaussianProcess(dataDelegate.getDataModel().getModelName(),
+                treeDataLikelihood, dataDelegate, null, true);
 
-//        System.err.println("Doh");
-//        System.exit(-1);
         return process;
 
     }

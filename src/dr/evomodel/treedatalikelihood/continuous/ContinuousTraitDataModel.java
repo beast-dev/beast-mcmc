@@ -37,6 +37,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     private final CompoundParameter parameter;
     private final List<Integer> missingIndices;
+    private final List<Integer> originalMissingIndices;
 
     private final int numTraits;
     private final int dimTrait;
@@ -45,10 +46,12 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
                                     List<Integer> missingIndices,
+                                    boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
-        this.missingIndices = missingIndices;
+        this.originalMissingIndices = missingIndices;
+        this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<Integer>());
         addVariable(parameter);
 
         this.dimTrait = dimTrait;
@@ -71,6 +74,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     public CompoundParameter getParameter() { return parameter; }
 
     public List<Integer> getMissingIndices() { return missingIndices; }
+
+    public List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {

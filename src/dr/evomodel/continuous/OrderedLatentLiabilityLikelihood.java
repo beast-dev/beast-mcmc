@@ -26,8 +26,6 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.TwoStates;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;

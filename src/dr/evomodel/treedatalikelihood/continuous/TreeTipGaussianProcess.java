@@ -27,13 +27,19 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.GaussianProcessRandomGenerator;
+
+import javax.swing.text.html.HTMLDocument;
+import java.util.List;
+
+import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
+import static dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate.createWithMissingData;
 
 /**
  * @author Marc A. Suchard
@@ -43,72 +49,97 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator {
     private final String traitName;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait<double[]> treeTraitProvider;
     private final Tree tree;
-    private final Parameter traitParameter;
-
-    private final int nTaxa;
-    private final int nTraits;
-    private final int dimTrait;
-    private final int dimPartial;
 
     private final Parameter maskParameter;
 
-//    private final PartiallyMissingInformation missingInformation;
+    private final List<Integer> sampleIndices;
+    private final int missingLength;
+    private final int drawLength;
 
-//    private final boolean missingOnlyGradient;
+    private final boolean[] doSample;
+    private final boolean[] doNotSample;
+
+    private final TreeTrait<double[]> tipSampleTrait;
+
+    private final boolean truncateToMissingOnly;
 
     public TreeTipGaussianProcess(String traitName,
                                   TreeDataLikelihood treeDataLikelihood,
                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                  Parameter maskParameter) {
-        this.traitName = traitName;
+                                  Parameter maskParameter,
+                                  boolean truncateToMissingOnly) {
+
         this.treeDataLikelihood = treeDataLikelihood;
-        this.likelihoodDelegate = likelihoodDelegate;
         this.tree = treeDataLikelihood.getTree();
-//        this.traitParameter = traitParameter;
         this.maskParameter = maskParameter;
 
-//        this.missingOnlyGradient = missingOnly;
+        List<Integer> indices = likelihoodDelegate.getDataModel().getMissingIndices();
+        if (indices == null || indices.size() == 0) {
+            traitName = traitName + ".missing";
+            likelihoodDelegate = createWithMissingData(likelihoodDelegate);
 
-        System.err.println(likelihoodDelegate.getIntegrator().getClass().getCanonicalName());
-        System.exit(-1);
+            ProcessSimulationDelegate simulationDelegate =
+                            new ProcessSimulationDelegate.MultivariateConditionalOnTipsRealizedDelegate(traitName, treeDataLikelihood.getTree(),
+                                    likelihoodDelegate.getDiffusionModel(), likelihoodDelegate.getDataModel(), likelihoodDelegate.getRootPrior(),
+                                    likelihoodDelegate.getRateTransformation(), treeDataLikelihood.getBranchRateModel(), likelihoodDelegate);
 
+            TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
+                    treeDataLikelihood, simulationDelegate);
 
-        assert(treeDataLikelihood != null);
-
-        String name =
-                ProcessSimulationDelegate.TipGradientViaFullConditionalDelegate.getTraitName(traitName);
-
-        System.err.println("name: " + name);
-        System.exit(-1);
-
-        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
-        nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
-        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
-        dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-
-//        missingInformation = new PartiallyMissingInformation(treeDataLikelihood.getTree(),
-//                likelihoodDelegate.getDataModel(), likelihoodDelegate);
-
-        PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
-        dimPartial = precisionType.getMatrixLength(dimTrait);
-
-        if (precisionType != PrecisionType.SCALAR) {
-            throw new RuntimeException("Not yet implemented for full precision");
+            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }
 
-        if (nTraits != 1) {
-            throw new RuntimeException("Not yet implemented for >1 traits");
+        this.likelihoodDelegate = likelihoodDelegate;
+        this.sampleIndices = likelihoodDelegate.getDataModel().getMissingIndices();
+        this.missingLength = sampleIndices.size();
+        this.traitName = traitName;
+
+        String tipTraitName = getTipTraitName(traitName);
+        tipSampleTrait = treeDataLikelihood.getTreeTrait(tipTraitName);
+
+        assert(tipSampleTrait != null);
+
+        double[] draw = drawAllTraits();
+        this.drawLength = draw.length;
+
+        doSample = new boolean[drawLength];
+        for (int i : sampleIndices) {
+            doSample[i] = true;
         }
 
-
-        this.traitParameter = likelihoodDelegate.getDataModel().getParameter();
-
-        if (maskParameter != null &&
-                (maskParameter.getDimension() != traitParameter.getDimension())) {
-            throw new RuntimeException("Trait and mask parameters must be the same size");
+        doNotSample = new boolean[drawLength];
+        for (int i = 0; i < drawLength; ++i) {
+            doNotSample[i] = !doSample[i];
         }
+
+        this.truncateToMissingOnly = truncateToMissingOnly;
+    }
+
+    private double[] drawAllTraits() {
+        treeDataLikelihood.fireModelChanged();
+        double[] sample = tipSampleTrait.getTrait(treeDataLikelihood.getTree(), null);
+        return sample;
+    }
+
+    private double[] crop(double[] in, int length) {
+        double[] out = new double[length];
+        System.arraycopy(in, 0, out, 0, length);
+        return out;
+    }
+
+    private double[] maskDraw(double[] in, boolean[] mask) {
+        double[] out = new double[missingLength];
+
+        int index = 0;
+        for (int i = 0; i < in.length; ++i) {
+            if (mask[i]) {
+                out[index] = in[i];
+                ++index;
+            }
+        }
+
+        return out;
     }
 
     @Override
@@ -116,51 +147,28 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator {
         return treeDataLikelihood;
     }
 
-//    @Override
-//    public Parameter getParameter() {
-//        return traitParameter;
-//    }
 
     @Override
     public int getDimension() {
-        return 0;
+        return truncateToMissingOnly ? missingLength : drawLength;
     }
 
     @Override
     public double[][] getPrecisionMatrix() {
-        return new double[0][];
+        throw new RuntimeException("Precision matrix is never formed");
     }
-
-//    @Override
-//    public double[] getGradientLogDensity() {
-//
-//        double[] gradient = new double[nTaxa  * dimTrait * nTraits];
-//
-//        int offsetOutput = 0;
-//        for (int taxon = 0; taxon < nTaxa; ++taxon) {
-//            double[] taxonGradient = treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
-//            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
-//            offsetOutput += taxonGradient.length;
-//        }
-//
-//        if (maskParameter != null) {
-//            for (int i = 0; i < maskParameter.getDimension(); ++i) {
-//                if (maskParameter.getParameterValue(i) == 0.0) {
-//                    gradient[i] = 0.0;
-//                }
-//            }
-//        }
-//
-//        return gradient;
-//    }
 
     @Override
     public Object nextRandom() {
-        return null;
+        double[] draw = drawAllTraits();
+        if (truncateToMissingOnly) {
+            draw = maskDraw(draw, doSample);
+        }
+        return draw;
     }
 
     @Override
     public double logPdf(Object x) {
-        return 0;
+        throw new RuntimeException("Density is never evaluated");
     }
 }

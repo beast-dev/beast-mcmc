@@ -25,14 +25,9 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.treemetrics.BranchScoreMetric;
-import dr.evolution.tree.CladeMetric;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.tree.treemetrics.TreeMetric;
-import jebl.evolution.treemetrics.BilleraMetric;
-import jebl.evolution.treemetrics.CladeHeightMetric;
-import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 
 /**
  * A statistic that returns the distance between two trees.
@@ -44,44 +39,27 @@ public class TreeMetricStatistic extends TreeStatistic {
     /**
      * Constructor which creates statistic that just says whether two trees have the same topology
      * @param name
-     * @param focalTree
+     * @param referenceTree
      */
-    public TreeMetricStatistic(String name, Tree focalTree) {
-        this(name, focalTree, null);
+    public TreeMetricStatistic(String name, Tree referenceTree, Tree targetTree) {
+        this(name, referenceTree, targetTree, null);
     }
 
-    public TreeMetricStatistic(String name, Tree focalTree, TreeMetric treeMetric) {
+    public TreeMetricStatistic(String name, Tree referenceTree, Tree targetTree, TreeMetric treeMetric) {
         super(name);
 
-        this.focalTree = focalTree;
+        this.referenceTree = referenceTree;
+        this.targetTree = targetTree;
         this.treeMetric = treeMetric;
-        this.focalNewick = TreeUtils.uniqueNewick(focalTree, focalTree.getRoot());
-
-//        switch (method) {
-//            case BILLERA:
-//                metric = new BilleraMetric();
-//                break;
-//            case ROBINSONSFOULD:
-//                metric = new RobinsonsFouldMetric();
-//                break;
-//            case CLADEHEIGHTM:
-//                metric = new CladeHeightMetric();
-//                break;
-//            case BRANCHSCORE:
-//                metric = new BranchScoreMetric();
-//                break;
-//            case CLADEMETRIC:
-//                metric = new CladeMetric();
-//                break;
-//        }
+        this.focalNewick = TreeUtils.uniqueNewick(referenceTree, referenceTree.getRoot());
     }
 
     public void setTree(Tree tree) {
-        this.target = tree;
+        this.targetTree = tree;
     }
 
     public Tree getTree() {
-        return target;
+        return targetTree;
     }
 
     public int getDimension() {
@@ -98,17 +76,16 @@ public class TreeMetricStatistic extends TreeStatistic {
             return compareTreesByTopology();
         }
 
-        return treeMetric.getMetric(focalTree, target);
+        return treeMetric.getMetric(referenceTree, targetTree);
     }
 
     private double compareTreesByTopology() {
-        final String targetNewick = TreeUtils.uniqueNewick(target, target.getRoot());
+        final String targetNewick = TreeUtils.uniqueNewick(targetTree, targetTree.getRoot());
         return targetNewick.equals(focalNewick) ? 1.0 : 0.0;
     }
 
-    private Tree target = null;
-
-    private final Tree focalTree;
+    private Tree targetTree;
+    private final Tree referenceTree;
 
     private final String focalNewick;
 

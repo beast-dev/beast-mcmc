@@ -43,7 +43,7 @@ public class TraceAnalysis {
      * @throws java.io.IOException if general error reading file
      * @throws TraceException      if trace file in wrong format or corrupted
      */
-    public static LogFileTraces analyzeLogFile(String fileName, int burnin) throws java.io.IOException, TraceException {
+    public static LogFileTraces analyzeLogFile(String fileName, long burnin) throws java.io.IOException, TraceException {
 
         File file = new File(fileName);
         LogFileTraces traces = new LogFileTraces(fileName, file);
@@ -176,14 +176,14 @@ public class TraceAnalysis {
         return traces;
     }
 
-    public static void reportTrace(String fileName, int inBurnin, String traceName) throws IOException, TraceException {
+    public static void reportTrace(String fileName, long inBurnin, String traceName) throws IOException, TraceException {
         File file = new File(fileName);
 
         LogFileTraces traces = new LogFileTraces(fileName, file);
         traces.loadTraces();
-        int burnin = inBurnin;
+        long burnin = inBurnin;
         if (burnin == -1) {
-            burnin = (int) (traces.getMaxState() / 10);
+            burnin = traces.getMaxState() / 10;
         }
 
         traces.setBurnIn(burnin);

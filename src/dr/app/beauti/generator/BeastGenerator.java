@@ -361,7 +361,7 @@ public class BeastGenerator extends Generator {
                 "      Department of Computer Science, University of Auckland and",
                 "      Institute of Evolutionary Biology, University of Edinburgh",
                 "      David Geffen School of Medicine, University of California, Los Angeles",
-                "      http://beast.bio.ed.ac.uk/");
+                "      http://beast.community/");
         writer.writeOpenTag("beast");
         writer.writeText("");
 

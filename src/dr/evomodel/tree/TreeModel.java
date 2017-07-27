@@ -29,10 +29,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.inference.model.*;
-import dr.util.Attributable;
-import dr.util.Author;
-import dr.util.Citable;
-import dr.util.Citation;
+import dr.util.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -45,7 +42,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
+public class TreeModel extends AbstractModel implements MultivariateTraitTree, Keywordable, Citable {
 
     //
     // Public stuff
@@ -1564,6 +1561,22 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
 
         private Parameter nodeHeightParameter = null;
     }
+
+    // ***********************************************************************
+    // Interface: Keywordable
+    // ***********************************************************************
+
+    @Override
+    public void addKeyword(String keyword) {
+        keywords.add(keyword);
+    }
+
+    @Override
+    public List<String> getKeywords() {
+        return keywords;
+    }
+
+    private final List<String> keywords = new ArrayList<String>();
 
     // ***********************************************************************
     // Private members

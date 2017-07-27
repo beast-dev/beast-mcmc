@@ -152,31 +152,24 @@ public class XMLWriter extends java.io.PrintWriter {
     }
 
     public void writeText(String string) {
-
-        int subLength = 2000;
-
-        for (int l = 0; l < string.length(); l += subLength) {
-            int e = l + subLength;
-            if (e > string.length()) e = string.length();
-            for (int i = 0; i < level; i++) {
-                write('\t');
-            }
-            println(string.substring(l, e));
-            flush();
+        for (int i = 0; i < level; i++) {
+            write('\t');
         }
+        println(string);
 
-    }
+        // wrapping lines at a fixed length can only do bad things...
+//        int subLength = 2000;
+//
+//        for (int l = 0; l < string.length(); l += subLength) {
+//            int e = l + subLength;
+//            if (e > string.length()) e = string.length();
+//            for (int i = 0; i < level; i++) {
+//                write('\t');
+//            }
+//            println(string.substring(l, e));
+//            flush();
+//        }
 
-    public void checkText(String string) {
-        int count = 0;
-        for (char ch : string.toCharArray()) {
-            if (ch == 'A' || ch == 'C' || ch == 'G' || ch == 'T') {
-
-            } else {
-                System.out.println("invalid char = " + ch + ", count = " + count);
-            }
-            count++;
-        }
     }
 
     public void writeIDref(String tagName, String paramName) {

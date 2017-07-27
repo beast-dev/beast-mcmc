@@ -31,7 +31,6 @@ package dr.evolution.tree.treemetrics;
 import java.util.*;
 
 import dr.evolution.tree.Clade;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
 import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
@@ -42,6 +41,8 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  *
  */
 public class BranchScoreMetric implements TreeMetric {
+    public static Type TYPE = Type.BRANCH_SCORE;
+
     private Tree focalTree;
     private List<Clade> focalClades;
     private final boolean fixedFocalTree;
@@ -147,6 +148,16 @@ public class BranchScoreMetric implements TreeMetric {
         tmpBits.xor(child.getBits());
 
         return tmpBits.cardinality() < parent.getSize();
+    }
+
+    @Override
+    public Type getType() {
+        return TYPE;
+    }
+
+    @Override
+    public String toString() {
+        return getType().getShortName();
     }
 
     BitSet tmpBits = new BitSet();

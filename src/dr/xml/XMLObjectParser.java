@@ -78,6 +78,7 @@ public interface XMLObjectParser {
 
     String toWiki(XMLDocumentationHandler handler);
 
+    String toMarkdown(XMLDocumentationHandler handler);
 
     /**
      * @return an array of syntax rules required by this element.

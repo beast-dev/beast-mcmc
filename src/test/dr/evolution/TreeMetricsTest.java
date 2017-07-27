@@ -3,7 +3,8 @@ package test.dr.evolution;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.*;
-import jebl.evolution.treemetrics.BilleraMetric;
+import dr.evolution.tree.treemetrics.BranchScoreMetric;
+import dr.evolution.tree.treemetrics.SteelPennyPathDifferenceMetric;
 //import jebl.evolution.treemetrics.CladeHeightMetric;
 import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 import junit.framework.TestCase;
@@ -41,13 +42,12 @@ public class TreeMetricsTest extends TestCase {
             assertEquals(RF, 2.0, 0.0000001);
             
             /* Penny and Hendy, 1993*/
-            double path = (new SPPathDifferenceMetric().getMetric(treeOne, treeTwo));
+            double path = (new SteelPennyPathDifferenceMetric().getMetric(treeOne, treeTwo));
             System.out.println("path difference = " + path);
             assertEquals(path, 0.7141428, 0.0000001);
             
             /* Branch Score*/
-            double bl = (new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(treeOne),
-            		TreeUtils.asJeblTree(treeTwo)));
+            double bl = (new BranchScoreMetric().getMetric(treeOne, treeTwo));
             System.out.println("bl score = " + bl);
             assertEquals(bl, Math.sqrt(Math.pow(0.5-0.1, 2) + Math.pow(.1, 2) + Math.pow(.1, 2)), 0.0000001);
             

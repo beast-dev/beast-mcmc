@@ -117,44 +117,14 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
             return OPERATOR_NAME;
         }
 
-        private List<String> matchedTraitNames(final TreeTrait[] traits, final String prefix) {
-            List<String> names = new ArrayList<String>();
-            for (TreeTrait trait : traits) {
-                if (trait.getTraitName().startsWith(prefix)) {
-                    names.add(trait.getTraitName());
-                }
-            }
-            return names;
-        }
-
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-            DataLikelihoodDelegate delegate = treeLikelihood.getDataLikelihoodDelegate();
+            ContinuousDataLikelihoodDelegate traitDelegate = parseContinuousDataLikelihoodDelegate(xo);
 
-            if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
-                throw new XMLParseException("Not implemented for multivariate trait diffusion models");
-            }
-
-            String traitName = null;
-            if (xo.hasAttribute(TRAIT_NAME)) {
-                traitName = (String) xo.getAttribute(TRAIT_NAME);
-            } else {
-                TreeTrait[] traits = treeLikelihood.getTreeTraits();
-                List<String> traitNames = matchedTraitNames(traits, PARTIAL + ".");
-
-                if (traitNames.size() == 1) {
-                    traitName = traitNames.get(0);
-                }
-            }
-
-            TreeTrait treeTrait = treeLikelihood.getTreeTrait(traitName);
-
-            if (treeTrait == null) {
-                throw new XMLParseException("Unknown partially observed tree trait");
-            }
+            TreeTrait treeTrait = parseTreeTrait(xo, PARTIAL);
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
             Parameter missing = (Parameter) xo.getElementFirstChild(MISSING);
@@ -163,12 +133,11 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
                 throw new XMLParseException("Unequal parameter lengths");
             }
 
-            ContinuousDataLikelihoodDelegate traitDelegate = (ContinuousDataLikelihoodDelegate) delegate;
-
             GibbsSampleMissingTraitsOperator operator = new GibbsSampleMissingTraitsOperator(treeLikelihood,
                     treeTrait,
                     parameter, missing,
                     traitDelegate);
+
             operator.setWeight(weight);
 
             return operator;
@@ -203,6 +172,54 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
         }
 
     };
+
+    public static ContinuousDataLikelihoodDelegate parseContinuousDataLikelihoodDelegate(XMLObject xo)
+            throws XMLParseException {
+
+        TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        DataLikelihoodDelegate delegate = treeLikelihood.getDataLikelihoodDelegate();
+
+        if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+            throw new XMLParseException("Only implemented for multivariate trait diffusion models");
+        }
+
+        return (ContinuousDataLikelihoodDelegate) delegate;
+    }
+
+    public static TreeTrait parseTreeTrait(XMLObject xo, String prefix) throws XMLParseException {
+
+        TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
+        String traitName = null;
+        if (xo.hasAttribute(TRAIT_NAME)) {
+            traitName = (String) xo.getAttribute(TRAIT_NAME);
+        } else {
+            TreeTrait[] traits = treeLikelihood.getTreeTraits();
+            List<String> traitNames = matchedTraitNames(traits, prefix + ".");
+
+            if (traitNames.size() == 1) {
+                traitName = traitNames.get(0);
+            }
+        }
+
+        TreeTrait treeTrait = treeLikelihood.getTreeTrait(traitName);
+
+        if (treeTrait == null) {
+            throw new XMLParseException("Unknown partially observed tree trait");
+        }
+
+        return treeTrait;
+    }
+
+    public static List<String> matchedTraitNames(final TreeTrait[] traits, final String prefix) {
+        List<String> names = new ArrayList<String>();
+        for (TreeTrait trait : traits) {
+            if (trait.getTraitName().startsWith(prefix)) {
+                names.add(trait.getTraitName());
+            }
+        }
+        return names;
+    }
 
     public static final String OPERATOR_NAME = "gibbsSampleMissingTraitsOperator";
 

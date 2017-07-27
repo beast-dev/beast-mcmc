@@ -80,7 +80,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         for (int i = 0;i < chainLength;i++){
             nut = nutsOneStep(position,i,likelihood,gradientProvider,nut,targetAcceptanceRatio,maxDepth);
             position = nut.position;
-            result[i][] = position;
+//            result[i][] = position;
         }
         return result;
     }
@@ -105,7 +105,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
 
         double[] momentum = drawInitialMomentum(drawDistribution, dim);
-        double sliceU = Math.random()*Math.exp(likelihood - getScaledDotProduct(momentum, sigmaSquared));
+        double sliceU = 0.0; //Math.random()*Math.exp(likelihood - getScaledDotProduct(momentum, sigmaSquared));
         double[] positionMinus = position;
         double[] positionPlus = position;
         double[] momentumMinus = momentum;
@@ -158,19 +158,19 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         double[] positionPlus;
         double[] momentumPlus;
 
-        double logprobBefore = likelihood(initialPosition) + getScaledDotProduct(initialMomentum, sigmaSquared);
+        double logprobBefore = 0.0; //likelihood(initialPosition) + getScaledDotProduct(initialMomentum, sigmaSquared);
         if (j == 0) {
             leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize);
             leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
 
-            double logprobAfter = likelihood(position) + getScaledDotProduct(momentum, sigmaSquared);
+            double logprobAfter = 0.0; //likelihood(position) + getScaledDotProduct(momentum, sigmaSquared);
             tree.momentumMinus = momentum;
             tree.positionMinus = position;
             tree.momentumPlus = momentum;
             tree.positionPlus = position;
             tree.positionFinal = position;
-            tree.numNodes = Math.log(sliceU) <= likelihood - getScaledDotProduct(momentum, sigmaSquared) ? 1 : 0;
-            tree.flagError = Math.log(sliceU) < 1000 + likelihood - getScaledDotProduct(momentum, sigmaSquared) ? true : false;
+//            tree.numNodes = Math.log(sliceU) <= likelihood - getScaledDotProduct(momentum, sigmaSquared) ? 1 : 0;
+//            tree.flagError = Math.log(sliceU) < 1000 + likelihood - getScaledDotProduct(momentum, sigmaSquared) ? true : false;
             tree.alpha = Math.min(1, Math.exp(logprobAfter / logprobBefore));
             tree.nAlpha = 1;
 
@@ -218,13 +218,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         int count = 1;
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);
 
-        double probBefore = Math.exp(likelihood + getScaledDotProduct(momentum, sigmaSquared));
+        double probBefore = 0.0; //Math.exp(likelihood + getScaledDotProduct(momentum, sigmaSquared));
 
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize);
         leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared); //zy: after "updateposition"
         // the interested parameters changed.
 
-        double probAfter = Math.exp(likelihood + getScaledDotProduct(momentum, sigmaSquared));
+        double probAfter = 0.0; //Math.exp(likelihood + getScaledDotProduct(momentum, sigmaSquared));
 
         double probRatio = probAfter / probBefore;
 

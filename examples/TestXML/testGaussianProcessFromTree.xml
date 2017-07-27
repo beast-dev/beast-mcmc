@@ -65,6 +65,23 @@
         </missingIndicator>
 	</traitDataLikelihood>
 
+	<traitDataLikelihood id="traitLikelihoodNoSample" traitName="X">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+	</traitDataLikelihood>
+
 	<maskedParameter id="missing">
 		<parameter idref="leafTraits"/>
 		<mask>
@@ -74,6 +91,10 @@
 
 	<gaussianProcessFromTree id="gp">
 		<traitDataLikelihood idref="traitLikelihood"/>
+	</gaussianProcessFromTree>
+
+	<gaussianProcessFromTree id="gpNoSample">
+		<traitDataLikelihood idref="traitLikelihoodNoSample"/>
 	</gaussianProcessFromTree>
 
 	<operators id="operators">
@@ -102,18 +123,24 @@
 		<traitDataLikelihood idref="traitLikelihood"/>
 	</report>
 
-	<mcmc id="mcmc" chainLength="10000">
+	<report>
+		<traitDataLikelihood idref="traitLikelihoodNoSample"/>
+	</report>
+
+	<mcmc id="mcmc" chainLength="100000">
 		<posterior id="posterior">
 			<traitDataLikelihood idref="traitLikelihood"/>
+			<traitDataLikelihood idref="traitLikelihoodNoSample"/>
 		</posterior>
 		<operators idref="operators"/>
 		<log logEvery="100">
 			<traitDataLikelihood idref="traitLikelihood"/>
 		</log>
-		<log logEvery="1" fileName="testGaussianProcessFromTree.log">
+		<log logEvery="10" fileName="testGaussianProcessFromTree.log">
 			<traitDataLikelihood idref="traitLikelihood"/>
 			<gaussianProcessFromTree idref="gp"/>
 			<parameter idref="missing"/>
+			<gaussianProcessFromTree idref="gpNoSample"/>
 		</log>
 	</mcmc>
 

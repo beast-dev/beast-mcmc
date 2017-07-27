@@ -25,12 +25,11 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
-import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -66,6 +65,8 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
 
     private final boolean truncateToMissingOnly;
 
+    private final LikelihoodTreeTraversal treeTraversalDelegate;
+
     public TreeTipGaussianProcess(String traitName,
                                   TreeDataLikelihood treeDataLikelihood,
                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -90,6 +91,14 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
                     treeDataLikelihood, simulationDelegate);
 
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+
+            this.treeTraversalDelegate = new LikelihoodTreeTraversal(
+                    treeDataLikelihood.getTree(),
+                    treeDataLikelihood.getBranchRateModel(),
+                    TreeTraversal.TraversalType.POST_ORDER);
+
+        } else {
+            this.treeTraversalDelegate = null; // No extra post-order traversal necessary
         }
 
         this.likelihoodDelegate = likelihoodDelegate;
@@ -119,7 +128,8 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
     }
 
     private double[] drawAllTraits() {
-        treeDataLikelihood.fireModelChanged();
+        //treeDataLikelihood.fireModelChanged();
+        doPostOrderTraversal();
         double[] sample = tipSampleTrait.getTrait(treeDataLikelihood.getTree(), null);
         return sample;
     }
@@ -130,6 +140,29 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
              draw = maskDraw(draw, doSample);
          }
          return draw;
+    }
+
+    private void doPostOrderTraversal() {
+
+        if (treeTraversalDelegate != null) {
+            
+            treeTraversalDelegate.updateAllNodes();
+            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+
+            final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
+            final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+
+            final NodeRef root = treeDataLikelihood.getTree().getRoot();
+
+            try {
+                likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+
+            } catch (DataLikelihoodDelegate.LikelihoodException e) {
+                throw new RuntimeException("Unhandled exception");
+            }
+        } else {
+            treeDataLikelihood.fireModelChanged();
+        }
     }
 
     private double[] crop(double[] in, int length) {

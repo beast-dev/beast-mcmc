@@ -117,9 +117,17 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         inverseMap = tmp;
     }
 
-//    public void fireParameterChangedEvent() {
-//        parameter.fireParameterChangedEvent(); // TODO This could be wrong
-//    }
+    public void fireParameterChangedEvent() {
+        doNotPropogateChangeUp = true;
+        parameter.fireParameterChangedEvent();
+        doNotPropogateChangeUp = false;
+    }
+
+    public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
+        doNotPropogateChangeUp = true;
+        parameter.fireParameterChangedEvent(index, type);
+        doNotPropogateChangeUp = false;
+    }
 
     protected void acceptValues() {
         parameter.acceptParameterValues();
@@ -196,6 +204,10 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         return bounds;
     }
 
+    public Parameter getUnmaskedParameter() {
+        return parameter;
+    }
+
     public void addDimension(int index, double value) {
         throw new RuntimeException("Not yet implemented.");
     }
@@ -209,10 +221,12 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
             updateMask();
             fireParameterChangedEvent();
         } else { // variable == parameter
-            if (index == -1) {
-                fireParameterChangedEvent();
-            } else if (inverseMap[index] != -1) {
-                fireParameterChangedEvent(inverseMap[index], type);
+            if (!doNotPropogateChangeUp) {
+                if (index == -1) {
+                    fireParameterChangedEvent();
+                } else if (inverseMap[index] != -1) {
+                    fireParameterChangedEvent(inverseMap[index], type);
+                }
             }
         }
     }
@@ -230,4 +244,6 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     private int length;
     private int equalValue;
+
+    private boolean doNotPropogateChangeUp = false;
 }

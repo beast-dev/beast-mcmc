@@ -28,12 +28,14 @@ package dr.inferencexml.operators;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.EllipticalSliceOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
+import org.ejml.ops.CommonOps;
 
 /**
  */
@@ -62,7 +64,15 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
         final boolean drawByRow = drawByRowTemp;
 
         boolean signal = xo.getAttribute(SIGNAL_CONSTITUENT_PARAMETERS, true);
-        if (!signal && !(variable instanceof CompoundParameter)) signal = true;
+        if (!signal) {
+            Parameter possiblyCompound = variable;
+            if (variable instanceof MaskedParameter) {
+                possiblyCompound = ((MaskedParameter) variable).getUnmaskedParameter();
+            }
+            if (!(possiblyCompound instanceof CompoundParameter)) {
+                signal = true;
+            }
+        }
 
         double bracketAngle = xo.getAttribute(BRACKET_ANGLE, 0.0);
 

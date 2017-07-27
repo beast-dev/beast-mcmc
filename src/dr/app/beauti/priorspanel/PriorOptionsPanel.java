@@ -544,11 +544,15 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             if (meanInRealSpaceCheck.isSelected()) {
                 addField("Mean", 0.01, 0.0, false, Double.POSITIVE_INFINITY, true);
             } else {
-                addField("Log(Mean)", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                addField("mu", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             }
-            addField("Log(Stdev)", 1.0, 0.0, Double.POSITIVE_INFINITY);
+            if (meanInRealSpaceCheck.isSelected()) {
+                addField("Stdev", 1.0, 0.0, Double.POSITIVE_INFINITY);
+            } else {
+                addField("sigma", 1.0, 0.0, Double.POSITIVE_INFINITY);
+            }
             addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
-            addCheckBox("Mean In Real Space", meanInRealSpaceCheck);
+            addCheckBox("Mean/Stdev in real space", meanInRealSpaceCheck);
 
             meanInRealSpaceCheck.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent ev) {
@@ -559,9 +563,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                             getField(0).setValue(0.01);
                         }
                         getField(0).setRange(0.0, Double.POSITIVE_INFINITY);
+                        replaceFieldName(1, "Stdev");
                     } else {
-                        replaceFieldName(0, "Log(Mean)");
+                        replaceFieldName(0, "mu");
                         getField(0).setRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                        replaceFieldName(0, "sigma");
                     }
 
                     for (Listener listener : listeners) {
@@ -572,15 +578,20 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
 
         public Distribution getDistribution() {
-            double mean = getValue(0);
+            double mu = getValue(0);
+            double sigma = getValue(1);
             if (meanInRealSpaceCheck.isSelected()) {
-                if (mean <= 0) {
-                    throw new IllegalArgumentException("meanInRealSpace works only for a positive mean");
+                double mean = getValue(0);
+                double stdev = getValue(1);
+                 if (getValue(0) <= 0) {
+                    throw new IllegalArgumentException("'Mean in real space' works only for a positive mean");
                 }
-                mean = Math.log(getValue(0)) - 0.5 * getValue(1) * getValue(1);
+                mu = Math.log(mean) - 0.5 * stdev * stdev;
+                sigma = Math.sqrt(Math.log(1 + (stdev * stdev) / (mean * mean)));
             }
             return new OffsetPositiveDistribution(
-                    new LogNormalDistribution(mean, getValue(1)), getValue(2));
+                    new LogNormalDistribution(mu, sigma),
+                    getValue(2));
         }
 
         public void setArguments(Parameter parameter) {

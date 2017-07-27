@@ -56,7 +56,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public String getParserName() {
         return HMC_OPERATOR;
     }
-    
+
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 

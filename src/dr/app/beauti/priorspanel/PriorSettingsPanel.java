@@ -284,9 +284,6 @@ public class PriorSettingsPanel extends JPanel {
             priorCombo.setSelectedItem(priorType);
         }
 
-        // ExponentialDistribution(1.0 / mean)
-//        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1;
-
         PriorOptionsPanel priorOptionsPanel = optionsPanels.get(priorType);
 
         double offset = 0.0; // TODO is this used or duplicated to OffsetPositiveDistribution?

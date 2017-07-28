@@ -36,7 +36,7 @@ import java.util.List;
 public class PartiallyMissingContinuousTraitDataModel extends ContinuousTraitDataModel {
 
     public PartiallyMissingContinuousTraitDataModel(String name, CompoundParameter parameter,
-                                                    List<Integer> missingIndices, int dimTrait) {
-        super(name, parameter, missingIndices, dimTrait, PrecisionType.MIXED);
+                                                    List<Integer> missingIndices, boolean useMissingIndices, int dimTrait) {
+        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.MIXED);
     }
 }

@@ -65,10 +65,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         addVariable(tipTraitParameter);
         addVariable(thresholdParameter);
 
-        for (int i = 0; i < tipTraitParameter.getParameterCount(); i++) {
-            tipTraitParameter.getParameter(i).addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, tipTraitParameter.getParameter(0).getDimension()));
-        }
-
         setTipDataValuesForAllNodes();
 
         StringBuilder sb = new StringBuilder();
@@ -90,7 +86,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         if (tipData == null) {
             tipData = new int[treeModel.getExternalNodeCount()][patternList.getPatternCount()];
         }
-
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
             String id = treeModel.getTaxonId(i);
@@ -101,20 +96,53 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                 System.err.println("\t For node: " + i + " with ID " + id + " you get taxon " + index + " with ID " + patternList.getTaxonId(index));
             }
         }
+
+        if (DEBUG) {
+            Bounds<Double> bounds = tipTraitParameter.getBounds();
+            for (int i = 0; i < tipTraitParameter.getDimension(); ++i) {
+                double value = tipTraitParameter.getParameterValue(i);
+                if (value <= bounds.getLowerLimit(i) || value >= bounds.getUpperLimit(i)) {
+                    System.err.println("tipTrait error: " + i);
+                    System.exit(-1);
+                }
+            }
+
+            System.err.println("Setup bounds correctly");
+        }
     }
 
     private void setTipDataValuesForNode(NodeRef node, int index) {
         // Set tip data values
-        int Nindex = node.getNumber();
+        final int Nindex = node.getNumber();
+        final int dim = tipTraitParameter.getParameter(0).getDimension();
+
+        // TODO - This class appears to work for only binary data; how does it handle ordered-multistate data?
+
+        // boolean isBinary = patternList.getDataType() == TwoStates.INSTANCE;
+
+        double[] upperBounds = new double[dim];
+        double[] lowerBounds = new double[dim];
 
         for (int datum = 0; datum < patternList.getPatternCount(); ++datum) {
             tipData[Nindex][datum] = (int) patternList.getPattern(datum)[index];
 
-            if (DEBUG) {
-                Parameter oneTipTraitParameter = tipTraitParameter.getParameter(Nindex);
-                System.err.println("Data = " + tipData[Nindex][datum] + " : " + oneTipTraitParameter.getParameterValue(datum));
+            switch(tipData[Nindex][datum]) {
+                case 0:
+                    upperBounds[datum] = 0;
+                    lowerBounds[datum] = Double.NEGATIVE_INFINITY;
+                    break;
+                case 1:
+                    upperBounds[datum] = Double.POSITIVE_INFINITY;
+                    lowerBounds[datum] = 0;
+                    break;
+                default:
+                    upperBounds[datum] = Double.POSITIVE_INFINITY;
+                    lowerBounds[datum] = Double.NEGATIVE_INFINITY;
+                    break;
             }
         }
+
+        tipTraitParameter.getParameter(Nindex).addBounds(new Parameter.DefaultBounds(upperBounds,lowerBounds));
     }
 
     @Override

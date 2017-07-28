@@ -262,69 +262,17 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
         setAllParameterValues(x);
 
-////        boolean switchSign = x[0] > 0.0;
-//        for (int i = 0; i < x.length; ++i) {
-////            if (switchSign) {
-////                x[i] *= -1;
-////            }
-//            variable.setParameterValueQuietly(i, x[i]);
-//        }
-
         if (signalConstituentParameters) {
             variable.fireParameterChangedEvent();
         } else {
-            ((CompoundParameter)variable).fireParameterChangedEvent(-1, Variable.ChangeType.ALL_VALUES_CHANGED);
+            variable.fireParameterChangedEvent(-1, Variable.ChangeType.ALL_VALUES_CHANGED);
         }
     }
-//
-//        if(!(variable instanceof CompoundParameter))
-//        {variable.setParameterValueNotifyChangedAll(0, x[0]);
-//        for (int i = 1; i < x.length; ++i) {
-//            variable.setParameterValueQuietly(i, x[i]);
-//        }}
-//        else{
-//            if(!drawByRow) {
-//                ((CompoundParameter) variable).setParameterValueNotifyChangedAll(0, current, x[0]);
-//                for (int i = 1; i < x.length; ++i) {
-//                    ((CompoundParameter) variable).setParameterValueQuietly(i, current, x[i]);
-//                }
-//            }
-//            else{
-//                for (int i = 0; i < x.length; i++) {
-//                    ((CompoundParameter) variable).setParameterValue(current, i, x[i]);
-//                }
-//            }
-//        }
-
 
     private void drawFromSlice(Likelihood likelihood, double cutoffDensity) {
-        // Do nothing
+
         double[] x = variable.getParameterValues();
         double[] nu = (double[]) gaussianProcess.nextRandom();
-
-//        double[] x;
-//        if(!(variable instanceof CompoundParameter))
-//            x = variable.getParameterValues();
-//        else{
-//            if(drawByRow){
-//                current=MathUtils.nextInt(((CompoundParameter) variable).getParameter(0).getDimension());
-//                x=new double[((CompoundParameter) variable).getParameterCount()];
-//                for (int i = 0; i <x.length ; i++) {
-//                    x[i]=((CompoundParameter) variable).getParameter(i).getParameterValue(current);
-//                }
-//            }
-//            else {
-//                current = MathUtils.nextInt(((CompoundParameter) variable).getParameterCount());
-//                x=((CompoundParameter) variable).getParameter(current).getParameterValues();
-//            }
-//
-//        }
-
-//        double[] nu;
-//        if(normalPrior!=null)
-//            nu = normalPrior.nextMultivariateNormal();
-//        else
-//            nu = treePrior.nextRandomFast(0);
 
         double phi;
         Interval phiInterval;
@@ -357,7 +305,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     private void drawFromSlice(CompoundLikelihood likelihood, double cutoffDensity) {
-        // Do nothing
+
         double[] x = variable.getParameterValues();
         double[] nu = (double[]) gaussianProcess.nextRandom();
 

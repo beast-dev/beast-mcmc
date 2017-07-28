@@ -87,7 +87,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         addModel(this.branchRateModel);
 
         treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                likelihoodDelegate.getOptimalTraversalType());
+                    likelihoodDelegate.getOptimalTraversalType()
+        );
 
         hasInitialized = true;
     }

@@ -32,9 +32,7 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -288,6 +286,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             copy(i, draws);
         }
 
+        if (DEBUG) {
+            System.err.println("draw: " + new Vector(draws));
+        }
+
 //       copy(i, draws);
 
     }
@@ -307,11 +309,22 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         return "loadingsGibbsOperator";  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    private static boolean DEBUG = false;
+
     @Override
     public double doOperation() {
 
+        if (DEBUG) {
+            System.err.println("Start doOp");
+        }
+
         int size = LFM.getLoadings().getRowDimension();
         if(LFM.getFactorDimension() != precisionArray.listIterator().next().length){
+
+            if (DEBUG) {
+                System.err.println("!= length");
+            }
+
             precisionArray.clear();
             meanArray.clear();
             meanMidArray.clear();
@@ -349,6 +362,11 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         }
 
         if(pool != null){
+
+            if (DEBUG) {
+                System.err.println("!= poll");
+            }
+            
             try {
                 pool.invokeAll(drawCallers);
                 LFM.getLoadings().fireParameterChangedEvent();
@@ -358,6 +376,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         }
 
         else {
+
+            if (DEBUG) {
+                System.err.println("inner");
+            }
 
             if (!randomScan) {
                 ListIterator<double[][]> currentPrecision = precisionArray.listIterator();
@@ -396,6 +418,26 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             }
 
         }
+
+        if (DEBUG) {
+            for (double[] m : meanArray) {
+                System.err.println(new Vector(m));
+            }
+
+            for (double[] m : meanMidArray) {
+                System.err.println(new Vector(m));
+            }
+
+            for (double[][] p : precisionArray) {
+                System.err.println(new Matrix(p));
+            }
+//            System.err.println(new Matrix(precisionArray));
+        }
+
+        if (DEBUG) {
+            System.err.println("End doOp");
+        }
+
         return 0;
     }
 

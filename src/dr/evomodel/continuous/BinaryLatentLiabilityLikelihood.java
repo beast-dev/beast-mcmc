@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.TwoStates;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.math.distributions.Distribution;
@@ -76,11 +77,12 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
         if (tipData == null) {
             tipData = new boolean[treeModel.getExternalNodeCount()][patternList.getPatternCount()];
         }
-
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
             String id = treeModel.getTaxonId(i);
             int index = patternList.getTaxonIndex(id);
+            System.err.println("\t For node: " + i + " with ID " + id + " you get taxon " + index + " with ID " + patternList.getTaxonId(index));
+            System.err.println("taxon: "+id+", index: "+index);
             setTipDataValuesForNode(node, index);
         }
     }
@@ -88,6 +90,7 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
     private void setTipDataValuesForNode(NodeRef node, int indexFromPatternList) {
         // Set tip data values
         int index = node.getNumber();
+//        System.err.println(index+"\t"+indexFromPatternList);
         if (index != indexFromPatternList) {
             throw new RuntimeException("Need to figure out the indexing");
         }

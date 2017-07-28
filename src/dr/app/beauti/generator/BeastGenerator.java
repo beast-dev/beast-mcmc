@@ -28,6 +28,7 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -42,6 +43,8 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
+import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
@@ -49,7 +52,9 @@ import dr.evoxml.TaxonParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
+import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
+import dr.util.Pair;
 import dr.util.Version;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
@@ -58,10 +63,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class holds all the data for the current BEAUti Document
@@ -359,7 +361,7 @@ public class BeastGenerator extends Generator {
                 "      Department of Computer Science, University of Auckland and",
                 "      Institute of Evolutionary Biology, University of Edinburgh",
                 "      David Geffen School of Medicine, University of California, Los Angeles",
-                "      http://beast.bio.ed.ac.uk/");
+                "      http://beast.community/");
         writer.writeOpenTag("beast");
         writer.writeText("");
 
@@ -583,15 +585,48 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
         try {
+            Map<Pair<PartitionTreeModel, DataType>, List<PartitionData>> partitionLists = new HashMap<Pair<PartitionTreeModel, DataType>, List<PartitionData>>();
+            options.multiPartitionLists.clear();
+            options.otherPartitions.clear();
+
             for (AbstractPartitionData partition : options.dataPartitions) {
                 // generate tree likelihoods for alignment data partitions
                 if (partition.getTaxonList() != null) {
-                    if (partition instanceof PartitionData) {
-                        if (partition.getDataType().getType() != DataType.GENERAL &&
-                                partition.getDataType().getType() != DataType.CONTINUOUS) {
-                            treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
-                            writer.writeText("");
+
+                    if (treeLikelihoodGenerator.canUseMultiPartition(partition)) {
+                        // all sequence partitions of the same type as the first into the list for use in a
+                        // MultipartitionTreeDataLikelihood. Must also share the same tree and not be doing
+                        // ancestral reconstruction or counting
+                        Pair<PartitionTreeModel, DataType> key = new Pair(partition.getPartitionTreeModel(), partition.getDataType());
+                        List<PartitionData> partitions = partitionLists.get(key);
+
+                        if (partitions == null) {
+                            partitions = new ArrayList<PartitionData>();
+                            options.multiPartitionLists.add(partitions);
                         }
+
+                        partitions.add((PartitionData) partition);
+                        partitionLists.put(key, partitions);
+
+                    } else {
+                        options.otherPartitions.add(partition);
+                    }
+
+
+                }
+            }
+
+            for (List<PartitionData> partitions : options.multiPartitionLists)  {
+                treeLikelihoodGenerator.writeTreeDataLikelihood(partitions, writer);
+                writer.writeText("");
+            }
+
+            for (AbstractPartitionData partition : options.otherPartitions) {
+                // generate tree likelihoods for the other data partitions
+                if (partition.getTaxonList() != null) {
+                    if (partition instanceof PartitionData) {
+                        treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
+                        writer.writeText("");
                     } else if (partition instanceof PartitionPattern) { // microsat
                         treeLikelihoodGenerator.writeTreeLikelihood((PartitionPattern) partition, writer);
                         writer.writeText("");

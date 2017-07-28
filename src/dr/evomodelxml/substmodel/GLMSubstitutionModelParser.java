@@ -39,7 +39,7 @@ import dr.xml.*;
 
 public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
-    public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
+    public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModelNew";
 
 
     public String getParserName() {

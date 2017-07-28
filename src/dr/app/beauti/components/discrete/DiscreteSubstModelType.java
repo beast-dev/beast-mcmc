@@ -31,7 +31,8 @@ package dr.app.beauti.components.discrete;
  */
 public enum DiscreteSubstModelType {
     SYM_SUBST("Symmetric substitution model"),
-    ASYM_SUBST("Asymmetric substitution model");
+    ASYM_SUBST("Asymmetric substitution model"),
+    GLM_SUBST("Generalized Linear Model");
 
     DiscreteSubstModelType(String name) {
         this.name = name;

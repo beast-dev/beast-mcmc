@@ -71,7 +71,7 @@ public class LatentFactorModelPrecisionGibbsOperatorParser extends AbstractXMLOb
 
     @Override
     public Class getReturnType() {
-        return null;
+        return LatentFactorModelPrecisionGibbsOperator.class;
     }
 
     @Override

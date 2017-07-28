@@ -40,9 +40,9 @@ public class MLLogger extends MCLogger {
     private double bestLikelihood;
     private long bestState;
     private String[] bestValues = null;
-    private int logEvery = 0;
+    private long logEvery = 0;
 
-    public MLLogger(Likelihood likelihood, LogFormatter formatter, int logEvery) {
+    public MLLogger(Likelihood likelihood, LogFormatter formatter, long logEvery) {
 
         super(formatter, logEvery, false);
 

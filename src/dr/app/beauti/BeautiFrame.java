@@ -33,8 +33,8 @@
  */
 package dr.app.beauti;
 
-import dr.app.beauti.ancestralStatesPanel.AncestralStatesPanel;
-import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
+import dr.app.beauti.ancestralstatespanel.AncestralStatesPanel;
+import dr.app.beauti.clockmodelspanel.ClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentFactory;
@@ -54,9 +54,9 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.options.TraitData;
-import dr.app.beauti.priorsPanel.DefaultPriorTableDialog;
-import dr.app.beauti.priorsPanel.PriorsPanel;
-import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
+import dr.app.beauti.priorspanel.DefaultPriorTableDialog;
+import dr.app.beauti.priorspanel.PriorsPanel;
+import dr.app.beauti.sitemodelspanel.SiteModelsPanel;
 import dr.app.beauti.taxonsetspanel.SpeciesSetPanel;
 import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
@@ -187,7 +187,7 @@ public class BeautiFrame extends DocumentFrame {
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         ancestralStatesPanel = new AncestralStatesPanel(this);
         clockModelsPanel = new ClockModelsPanel(this);
-//        clockModelsPanel = new OldClockModelsPanel(this);
+//        clockmodelspanel = new OldClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
@@ -921,7 +921,7 @@ public class BeautiFrame extends DocumentFrame {
         return importTraitsAction;
     }
 
-    protected AbstractAction importTraitsAction = new AbstractAction("Import Traits") {
+    protected AbstractAction importTraitsAction = new AbstractAction("Import Traits...") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {

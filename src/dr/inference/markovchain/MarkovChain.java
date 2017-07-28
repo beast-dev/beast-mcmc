@@ -343,7 +343,7 @@ public final class MarkovChain implements Serializable {
             } else {
                 if (DEBUG) {
                     System.out.println("** Move rejected: new score = " + score
-                            + ", old score = " + oldScore);
+                            + ", old score = " + oldScore + " (logr = " + logr[0] + ")");
                 }
 
                 mcmcOperator.reject();

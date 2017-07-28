@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
-public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatistic {
+public class MRCATraitStatistic extends TreeStatistic {
 
     public MRCATraitStatistic(String name, String trait, TreeModel tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
         super(name);

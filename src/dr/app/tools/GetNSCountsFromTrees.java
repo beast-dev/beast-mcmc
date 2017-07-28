@@ -484,7 +484,7 @@ public class GetNSCountsFromTrees {
                         new Arguments.RealOption(MRSD, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
                         new Arguments.StringOption(EXCLUDECLADES, "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
                         new Arguments.IntegerOption(SITESUM, "the number of nucleotide sites to summarize rates in per site per time unit [default = 1]"),
-                        new Arguments.StringOption(CODONSITELIST, "list of sites", "siets for which the summary is restricted to"),
+                        new Arguments.StringOption(CODONSITELIST, "list of sites", "sites for which the summary is restricted to"),
                         new Arguments.Option("help", "option to print this message")
                 });
 

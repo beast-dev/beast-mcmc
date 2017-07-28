@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author Marc Suchard
  */
-public class NotBooleanStatistic extends BooleanStatistic {
+public class NotBooleanStatistic extends Statistic.Abstract implements BooleanStatistic {
 
     public NotBooleanStatistic(BooleanStatistic originalStatistic) {
         this(originalStatistic, null);
@@ -40,6 +40,13 @@ public class NotBooleanStatistic extends BooleanStatistic {
         super(originalStatistic.getStatisticName());
         this.originalStatistic = originalStatistic;
         this.mark = mark;
+    }
+
+    /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
     }
 
     @Override

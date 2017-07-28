@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class for importing Newick tree file format
@@ -95,7 +97,17 @@ public class NewickImporter extends Importer implements TreeImporter {
 //				throw new BadFormatException("Expecting ';' after tree");
 //			}
 
-            return new FlexibleTree(root, false, true);
+            Map<Taxon, Integer> taxonNumberMap = null;
+            if (taxonList != null) {
+                taxonNumberMap = new HashMap<Taxon, Integer>();
+                int i = 0;
+                for (Taxon taxon : taxonList) {
+                    taxonNumberMap.put(taxon, i);
+                    i++;
+                }
+            }
+
+            return new FlexibleTree(root, false, true, taxonNumberMap);
 
         } catch (EOFException e) {
             throw new ImportException("incomplete tree");

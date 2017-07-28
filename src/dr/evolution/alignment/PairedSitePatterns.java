@@ -98,6 +98,11 @@ public class PairedSitePatterns implements SiteList {
 		return pattern;
 	}
 
+	@Override
+	public double[][] getUncertainSitePattern(int siteIndex) {
+		throw new UnsupportedOperationException("uncertain patterns not implemented yet");
+	}
+
 	/**
 	 * Gets the pattern index at a particular site
 	 * @return the patternIndex
@@ -111,6 +116,11 @@ public class PairedSitePatterns implements SiteList {
 	 */
 	public int getState(int taxonIndex, int siteIndex) {
 		return getSitePattern(siteIndex)[taxonIndex];
+	}
+
+	@Override
+	public double[] getUncertainState(int taxonIndex, int siteIndex) {
+		throw new UnsupportedOperationException("uncertain patterns not implemented yet");
 	}
 
 	// **************************************************************
@@ -148,11 +158,21 @@ public class PairedSitePatterns implements SiteList {
 		return getSitePattern(patternIndex);
 	}
 
+	@Override
+	public double[][] getUncertainPattern(int patternIndex) {
+		throw new UnsupportedOperationException("uncertain patterns not implemented yet");
+	}
+
 	/**
 	 * @return state at (taxonIndex, patternIndex)
 	 */
 	public int getPatternState(int taxonIndex, int patternIndex) {
 		return getSitePattern(patternIndex)[taxonIndex];
+	}
+
+	@Override
+	public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+		throw new UnsupportedOperationException("uncertain patterns not implemented yet");
 	}
 
 	/**
@@ -189,6 +209,11 @@ public class PairedSitePatterns implements SiteList {
 
 	@Override
 	public boolean areUnique() {
+		return false;
+	}
+
+	@Override
+	public boolean areUncertain() {
 		return false;
 	}
 

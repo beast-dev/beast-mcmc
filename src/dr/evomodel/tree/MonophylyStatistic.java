@@ -41,7 +41,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @version $Id: MonophylyStatistic.java,v 1.16 2005/07/11 14:06:25 rambaut Exp $
  */
-public class MonophylyStatistic extends BooleanStatistic implements TreeStatistic {
+public class MonophylyStatistic extends TreeStatistic implements BooleanStatistic {
 
     public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore) throws TreeUtils.MissingTaxonException {
 
@@ -73,6 +73,13 @@ public class MonophylyStatistic extends BooleanStatistic implements TreeStatisti
 
     public int getDimension() {
         return 1;
+    }
+
+    /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
     }
 
     /**

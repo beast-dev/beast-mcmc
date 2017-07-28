@@ -47,14 +47,15 @@ public class ContinuousComponentOptions implements ComponentOptions {
     public final static String STDEV = "stdev";
     public final static String LAMBDA = "lambda";
     public final static String RRW_CATEGORIES = "rrwCategories";
+    public final static String DRIFT_RATE = "driftRate";
 
     final private BeautiOptions options;
 
-	public ContinuousComponentOptions(final BeautiOptions options) {
-		this.options = options;
-	}
+    public ContinuousComponentOptions(final BeautiOptions options) {
+        this.options = options;
+    }
 
-	public void createParameters(ModelOptions modelOptions) {
+    public void createParameters(ModelOptions modelOptions) {
         for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
             String prefix = partitionData.getName() + ".";
 
@@ -87,49 +88,64 @@ public class ContinuousComponentOptions implements ComponentOptions {
                         prefix + RRW_CATEGORIES, OperatorType.INTEGER_UNIFORM, 1, 10);
             }
 
-        }
-	}
+            if (!modelOptions.parameterExists(prefix + DRIFT_RATE)) {
+                modelOptions.createParameterNormalPrior(prefix + DRIFT_RATE,
+                        "random walk drift rate parameter",  PriorScaleType.NONE,
+                        0.0, 0.0, 1.0, 0.0);
+                modelOptions.createOperator(prefix + DRIFT_RATE, OperatorType.RANDOM_WALK_ABSORBING, 0.3, 5.0, true);
+            }
 
-	public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
+
+        }
+    }
+
+    public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
         for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
             String prefix = partitionData.getName() + ".";
 
+            boolean isRRW = false;
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 ops.add(modelOptions.getOperator(prefix + HALF_DF));
+                isRRW = true;
             } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.LOGNORMAL_RRW) {
                 ops.add(modelOptions.getOperator(prefix + STDEV));
+                isRRW = true;
+            } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
+                ops.add(modelOptions.getOperator(prefix + DRIFT_RATE));
             }
             if (useLambda(partitionData.getPartitionSubstitutionModel())) {
                 ops.add(modelOptions.getOperator(prefix + LAMBDA));
             }
-            if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
+            if (isRRW) {
                 ops.add(modelOptions.getOperator(prefix + "swap." + RRW_CATEGORIES));
                 ops.add(modelOptions.getOperator(prefix + "draw." + RRW_CATEGORIES));
             }
         }
-	}
+    }
 
-	public void selectParameters(ModelOptions modelOptions, List<Parameter> params) {
+    public void selectParameters(ModelOptions modelOptions, List<Parameter> params) {
         for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 params.add(modelOptions.getParameter(partitionData.getName() + "." + HALF_DF));
             } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.LOGNORMAL_RRW) {
                 params.add(modelOptions.getParameter(partitionData.getName() + "." + STDEV));
+            } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
+                params.add(modelOptions.getParameter(partitionData.getName() + "." + DRIFT_RATE));
             }
             if (useLambda(partitionData.getPartitionSubstitutionModel())) {
                 params.add(modelOptions.getParameter(partitionData.getName() + "." + LAMBDA));
             }
         }
-	}
+    }
 
-	public void selectStatistics(ModelOptions modelOptions,
-			List<Parameter> stats) {
-		// Do nothing
-	}
+    public void selectStatistics(ModelOptions modelOptions,
+                                 List<Parameter> stats) {
+        // Do nothing
+    }
 
-	public BeautiOptions getOptions() {
-		return options;
-	}
+    public BeautiOptions getOptions() {
+        return options;
+    }
 
     public boolean useLambda(PartitionSubstitutionModel model) {
         Boolean useLambda = useLambdaMap.get(model);

@@ -586,7 +586,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                  if (getValue(0) <= 0) {
                     throw new IllegalArgumentException("'Mean in real space' works only for a positive mean");
                 }
-                mu = Math.log(mean) - 0.5 * stdev * stdev;
+                mu = Math.log(mean/Math.sqrt(1 + (stdev * stdev) / (mean * mean)));
                 sigma = Math.sqrt(Math.log(1 + (stdev * stdev) / (mean * mean)));
             }
             return new OffsetPositiveDistribution(

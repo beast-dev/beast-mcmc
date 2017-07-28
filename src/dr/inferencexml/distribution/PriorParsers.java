@@ -522,7 +522,7 @@ public class PriorParsers {
                 if (mean <= 0) {
                     throw new XMLParseException("If specified with a mean in real space, the value should be positive.");
                 }
-                mu = Math.log(mean) - 0.5 * stdev * stdev;
+                mu = Math.log(mean/Math.sqrt(1 + (stdev * stdev) / (mean * mean)));;
                 sigma = Math.sqrt(Math.log(1 + (stdev * stdev) / (mean * mean)));
             } else {
                 if (meanInRealSpace) {

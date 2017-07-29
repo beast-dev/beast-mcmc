@@ -578,12 +578,20 @@ public class JChart extends JPanel {
         }
     }
 
+    protected String getXAxisLabel(double value) {
+        return xAxis.format(value);
+    }
+
+    protected String getYAxisLabel(double value) {
+        return yAxis.format(value);
+    }
+
     protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
     {
         g2.setPaint(axisPaint);
         g2.setStroke(axisStroke);
         if (horizontalAxis) {
-            String label = xAxis.format(value);
+            String label = getXAxisLabel(value);
             double pos = transformX(value);
 
             Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
@@ -593,7 +601,7 @@ public class JChart extends JPanel {
             double width = g2.getFontMetrics().stringWidth(label);
             g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
         } else {
-            String label = yAxis.format(value);
+            String label = getXAxisLabel(value);
             double pos = transformY(value);
 
             Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);

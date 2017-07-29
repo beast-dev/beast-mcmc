@@ -40,6 +40,8 @@ public class JChartPanel extends JPanel implements Printable {
 	private static final long serialVersionUID = -737128752110140264L;
 	public JChartPanel(JChart chart, String title, String xAxisTitle, String yAxisTitle) {
 
+	    this.chart = chart;
+
 		setOpaque(false);
 		ChartLayout layout = new ChartLayout(4, 4);
 		setLayout(layout);
@@ -51,6 +53,10 @@ public class JChartPanel extends JPanel implements Printable {
 		setXAxisTitle(xAxisTitle);
 		setYAxisTitle(yAxisTitle);
 	}
+
+	public JChart getChart() {
+	    return chart;
+    }
 
 	public void setTitle(String title) {
 
@@ -141,7 +147,9 @@ public class JChartPanel extends JPanel implements Printable {
 		}
 	}
 
-	private JLabel titleLabel = null;
+    private final JChart chart;
+
+    private JLabel titleLabel = null;
 	private JLabel xAxisLabel = null;
 	private JLabel yAxisLabel = null;
 }

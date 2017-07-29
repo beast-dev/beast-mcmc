@@ -59,7 +59,7 @@ public class PriorParsers {
     public static final String STDEV = "stdev";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
     public static final String MU = "mu";
-    public static final String SIGMA = "stdev";
+    public static final String SIGMA = "sigma";
     public static final String SHAPE = "shape";
     public static final String SHAPEB = "shapeB";
     public static final String SCALE = "scale";

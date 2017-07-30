@@ -532,7 +532,7 @@ public class PriorParsers {
                 if (!xo.hasAttribute(SIGMA)) {
                     throw new XMLParseException("Lognormal should be specified either with mean and stdev or mu and sigma.");
                 }
-                sigma = xo.getDoubleAttribute(STDEV);
+                sigma = xo.getDoubleAttribute(SIGMA);
             }
             final double offset = xo.getAttribute(OFFSET, 0.0);
 

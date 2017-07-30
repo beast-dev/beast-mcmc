@@ -132,13 +132,13 @@ public class PDFPlot extends Plot.AbstractPlot {
      * Paint actual plot
      */
     public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                          double xOffset, double yOffset) {
+                          double xOffset, double yOffset, int plotNumber) {
 
         if (distribution == null) {
             return;
         }
 
-        super.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+        super.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber);
 
         g2.setPaint(linePaint);
         g2.setStroke(lineStroke);

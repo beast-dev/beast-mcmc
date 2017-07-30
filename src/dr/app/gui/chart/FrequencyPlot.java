@@ -59,6 +59,11 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         this.traceDistribution = traceDistribution;
     }
 
+    public FrequencyPlot(List<Double> data, int minimumBinCount) {
+        super();
+        setData(data, minimumBinCount);
+    }
+
     public FrequencyPlot(Variate.D data, int minimumBinCount) {
         super();
         setData(data, minimumBinCount);

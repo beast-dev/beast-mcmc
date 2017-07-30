@@ -42,44 +42,74 @@ import java.util.*;
  * @author Andrew Rambaut
  */
 public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
-    private final static boolean DEBUG = false;
 
-    private final double violinOffset;
+    private final boolean isVertical;
     private final double violinWidth;
 
-    public ViolinPlot(double violinOffset, double violinWidth, java.util.List<Double> data, int minimumBinCount, TraceDistribution traceD) {
-        super(data, minimumBinCount, traceD); // TODO Remove when all linked together
+    public ViolinPlot(double violinWidth, java.util.List<Double> data, int minimumBinCount) {
+        this(true, violinWidth, data, minimumBinCount);
+    }
 
-//        kde = new GammaKDEDistribution(data);
-//
-//        System.err.println("Making KDE with " + minimumBinCount + " points");
-//
-//        Variate xData = getXCoordinates(minimumBinCount);
-//        Variate yData = getYCoordinates(xData);
-//        setData(xData, yData);
-        this.violinOffset = violinOffset;
+    public ViolinPlot(boolean isVertical, double violinWidth, java.util.List<Double> data, int minimumBinCount) {
+        super(data, minimumBinCount); // TODO Remove when all linked together
+
+        this.isVertical = isVertical;
         this.violinWidth = violinWidth;
 
-        // setData again because in super, the offset and width weren't set.
+        // setData again because in super, the width weren't set.
         setData(data, minimumBinCount);
     }
 
     /**
      * Set data
+     * X data is values, y data is density
      */
     public void setData(Variate.N xData, Variate.N yData) {
-        // reverse X and Y because violin plots are rotated
-        
+
         double scale = (0.5 * violinWidth) / ((Number)yData.getMax()).doubleValue();
         this.xData = new Variate.D();
         this.yData = new Variate.D();
         for (int i = 0; i < yData.getCount(); i++) {
-            this.xData.add((((Number)yData.get(i)).doubleValue() * scale) + violinOffset);
-            this.yData.add((((Number)xData.get(i)).doubleValue()));
+            this.xData.add(((Number) xData.get(i)).doubleValue());
+            this.yData.add(((Number) yData.get(i)).doubleValue() * scale);
         }
         for (int i = yData.getCount() - 1; i >= 0; i--) {
-            this.xData.add((-((Number)yData.get(i)).doubleValue() * scale) + violinOffset);
-            this.yData.add((((Number)xData.get(i)).doubleValue()));
+            this.xData.add(((Number) xData.get(i)).doubleValue());
+            this.yData.add(-((Number) yData.get(i)).doubleValue() * scale);
+        }
+    }
+
+    /**
+     * Set up the axis with some data
+     */
+    public void setupAxis(Axis xAxis, Axis yAxis, Variate xData, Variate yData) {
+        Axis valueAxis = (isVertical ? yAxis : xAxis);
+        Axis densityAxis = (isVertical ? xAxis : yAxis);
+        Variate valueData = xData;
+        Variate densityData = yData;
+
+        if (valueData != null) {
+            if (valueAxis instanceof LogAxis) {
+                double minValue = java.lang.Double.POSITIVE_INFINITY;
+
+                for (int i = 0; i < valueData.getCount(); i++) {
+                    double value = (Double) valueData.get(i);
+                    if (value > 0.0 && value < minValue)
+                        minValue = value;
+                }
+
+                valueAxis.addRange(minValue, (Double) valueData.getMax());
+            } else {
+                valueAxis.addRange((Double) valueData.getMin(), (Double) valueData.getMax());
+            }
+        }
+
+        if (densityData != null) {
+            if (densityAxis instanceof LogAxis) {
+                throw new IllegalArgumentException("The density axis shouldn't be log scale");
+            } else {
+                // do nothing - the range will be set up by the chart
+            }
         }
     }
 
@@ -90,20 +120,35 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
 
         int n = xData.getCount();
 
-        float x = (float) transformX((((Number)xData.get(0)).doubleValue()));
-        float y = (float) transformY(((Number)yData.get(0)).doubleValue());
-
-
         GeneralPath path = new GeneralPath();
-        path.moveTo(x, y);
 
-        for (int i = 1; i < n; i++) {
-            x = (float) transformX((((Number)xData.get(i)).doubleValue()));
-            y = (float) transformY(((Number)yData.get(i)).doubleValue());
+        if (isVertical) {
+            // rotate -90
+            float y = (float) transformY(((Number)xData.get(0)).doubleValue());
+            float x = (float) transformX(((Number)yData.get(0)).doubleValue() + plotNumber + 1);
 
-            path.lineTo(x, y);
+            path.moveTo(x, y);
+
+            for (int i = 1; i < n; i++) {
+                y = (float) transformY(((Number) xData.get(i)).doubleValue());
+                x = (float) transformX(((Number) yData.get(i)).doubleValue() + plotNumber + 1);
+
+                path.lineTo(x, y);
+            }
+        } else {
+            float x = (float) transformX(((Number)xData.get(0)).doubleValue());
+            float y = (float) transformY(((Number)yData.get(0)).doubleValue() + plotNumber + 1);
+
+            path.moveTo(x, y);
+
+            for (int i = 1; i < n; i++) {
+                x = (float) transformX(((Number) xData.get(i)).doubleValue());
+                y = (float) transformY(((Number) yData.get(i)).doubleValue() + plotNumber + 1);
+
+                path.lineTo(x, y);
+            }
         }
-
+        
         if (solid) {
             path.closePath();
             Paint fillPaint = new Color(

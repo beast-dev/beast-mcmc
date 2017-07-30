@@ -33,7 +33,8 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JChart extends JPanel {
 
@@ -42,7 +43,7 @@ public class JChart extends JPanel {
      */
     private static final long serialVersionUID = -7064065852204509247L;
     protected Axis yAxis, xAxis;
-    private Vector<Plot> plots = new Vector<Plot>();
+    protected List<Plot> plots = new ArrayList<Plot>();
 
     private Paint plotBackgroundPaint = Color.white;
 
@@ -387,13 +388,15 @@ public class JChart extends JPanel {
     }
 
     protected void paintContents(Graphics2D g2) {
+        int plotNumber = 0;
         for (Plot plot : plots) {
-            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber);
+            plotNumber += 1;
         }
     }
 
     protected void paintFrame(Graphics2D g2) {
-        g2.setPaint(framePaint);
+        g2.setPaint(framePaint);     
         g2.setStroke(frameStroke);
         g2.draw(plotBounds);
     }
@@ -601,7 +604,7 @@ public class JChart extends JPanel {
             double width = g2.getFontMetrics().stringWidth(label);
             g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
         } else {
-            String label = getXAxisLabel(value);
+            String label = getYAxisLabel(value);
             double pos = transformY(value);
 
             Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);

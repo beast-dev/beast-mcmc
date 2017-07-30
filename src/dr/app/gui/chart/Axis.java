@@ -225,6 +225,7 @@ public interface Axis {
         protected boolean isCalibrated = false;
 
         protected final NumberFormatter formatter = new NumberFormatter(8);
+        protected final NumberFormatter discreteFormatter = new NumberFormatter(0);
 
         // Used internally
         private double epsilon;
@@ -312,6 +313,9 @@ public interface Axis {
 
 
         public String format(double value) {
+            if (isDiscrete) {
+                return discreteFormatter.format(value);
+            }
             return formatter.format(value);
         }
 

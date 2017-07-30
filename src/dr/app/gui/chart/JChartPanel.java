@@ -42,7 +42,8 @@ public class JChartPanel extends JPanel implements Printable {
 
 	    this.chart = chart;
 
-		setOpaque(false);
+	    setOpaque(false);
+	    
 		ChartLayout layout = new ChartLayout(4, 4);
 		setLayout(layout);
 		if (chart != null) {

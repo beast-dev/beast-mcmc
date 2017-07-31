@@ -98,7 +98,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
 
     public final double getS() {
-        //System.out.println(isStdevInRealSpace+"\t" + isMeanInRealSpace + "\t" + Math.sqrt(Math.log(1 + scaleParameter.getParameterValue(0)/Math.pow(meanParameter.getParameterValue(0), 2))) + "\t" + scaleParameter.getParameterValue(0));
+        //System.out.println(isStdevInRealSpace+"\t" + isInRealSpace + "\t" + Math.sqrt(Math.log(1 + scaleParameter.getParameterValue(0)/Math.pow(meanParameter.getParameterValue(0), 2))) + "\t" + scaleParameter.getParameterValue(0));
         if(isStdevInRealSpace) {
 
             if(isMeanInRealSpace) {

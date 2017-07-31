@@ -392,8 +392,8 @@ public abstract class Generator {
             case LOGNORMAL_PRIOR:
                 writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
                         new Attribute[]{
-                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, parameter.isMeanInRealSpace()),
-                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE, parameter.isMeanInRealSpace())
+                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, parameter.isInRealSpace()),
+                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE, parameter.isInRealSpace())
                         });
                 writer.writeOpenTag(LogNormalDistributionModelParser.MEAN);
                 writer.writeText(Double.toString(parameter.mean));

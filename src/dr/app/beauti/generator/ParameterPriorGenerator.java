@@ -39,7 +39,6 @@ import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -190,7 +189,7 @@ public class ParameterPriorGenerator extends Generator {
                 writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
                 break;
             case LOGNORMAL_PRIOR:
-                if (parameter.isMeanInRealSpace()) {
+                if (parameter.isInRealSpace()) {
                     writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
                             new Attribute[]{
                                     new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
@@ -198,8 +197,8 @@ public class ParameterPriorGenerator extends Generator {
                                     new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
                             });
                 } else {
-                    // if the log normal parameters are not set in real space then the parameter mean and
-                    // stdev are actually the mu and sigma parameters.
+                    // if the log normal parameters are not set in real space then the parameter use the mu
+                    // and sigma parameters (the mean and stdev of the underlying normal).
                     writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
                             new Attribute[]{
                                     new Attribute.Default<String>(PriorParsers.MU, "" + parameter.mean),

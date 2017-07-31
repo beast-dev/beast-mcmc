@@ -537,27 +537,27 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     };
 
     static final PriorOptionsPanel LOG_NORMAL = new PriorOptionsPanel(true) {
-        private JCheckBox meanInRealSpaceCheck;
+        private JCheckBox parametersInRealSpaceCheck;
 
         void setup() {
-            meanInRealSpaceCheck = new JCheckBox();
-            if (meanInRealSpaceCheck.isSelected()) {
+            parametersInRealSpaceCheck = new JCheckBox();
+            addCheckBox("Mean/Stdev in real space", parametersInRealSpaceCheck);
+            if (parametersInRealSpaceCheck.isSelected()) {
                 addField("Mean", 0.01, 0.0, false, Double.POSITIVE_INFINITY, true);
             } else {
                 addField("mu", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             }
-            if (meanInRealSpaceCheck.isSelected()) {
+            if (parametersInRealSpaceCheck.isSelected()) {
                 addField("Stdev", 1.0, 0.0, Double.POSITIVE_INFINITY);
             } else {
                 addField("sigma", 1.0, 0.0, Double.POSITIVE_INFINITY);
             }
             addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
-            addCheckBox("Mean/Stdev in real space", meanInRealSpaceCheck);
 
-            meanInRealSpaceCheck.addItemListener(new ItemListener() {
+            parametersInRealSpaceCheck.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent ev) {
 
-                    if (meanInRealSpaceCheck.isSelected()) {
+                    if (parametersInRealSpaceCheck.isSelected()) {
                         replaceFieldName(0, "Mean");
                         if (getValue(0) <= 0) {
                             getField(0).setValue(0.01);
@@ -580,7 +580,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         public Distribution getDistribution() {
             double mu = getValue(0);
             double sigma = getValue(1);
-            if (meanInRealSpaceCheck.isSelected()) {
+            if (parametersInRealSpaceCheck.isSelected()) {
                 double mean = getValue(0);
                 double stdev = getValue(1);
                  if (getValue(0) <= 0) {
@@ -598,7 +598,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(0).setValue(parameter.mean);
             getField(1).setValue(parameter.stdev);
             getField(2).setValue(parameter.offset);
-            meanInRealSpaceCheck.setSelected(parameter.isMeanInRealSpace());
+            parametersInRealSpaceCheck.setSelected(parameter.isInRealSpace());
 
             getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
             getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
@@ -609,7 +609,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
             parameter.offset = getValue(2);
-            parameter.setMeanInRealSpace(meanInRealSpaceCheck.isSelected());
+            parameter.setMeanInRealSpace(parametersInRealSpaceCheck.isSelected());
         }
 
         @Override

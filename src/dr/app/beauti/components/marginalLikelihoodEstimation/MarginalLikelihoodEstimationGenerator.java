@@ -761,7 +761,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     break;
 
                                 case LOGNORMAL:
-                                    if (model.getClockRateParameter().isMeanInRealSpace()) {
+                                    if (model.getClockRateParameter().isInRealSpace()) {
                                         writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                                 new Attribute[]{
                                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),

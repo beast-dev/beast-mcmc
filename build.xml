@@ -31,7 +31,7 @@
     </description>
 
     <property name="JDK_SOURCE_VERSION" value="1.6"/>
-    <property name="JDK_TARGET_VERSION" value="1.7"/>
+    <property name="JDK_TARGET_VERSION" value="1.6"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
@@ -319,9 +319,9 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.9pre20161007"/>
+    <property name="version" value="1.10pre20170801"/>
 
-    <property name="version_number" value="1.9.0"/>
+    <property name="version_number" value="1.10.0"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEAUti_name" value="BEAUti"/>
@@ -358,7 +358,7 @@
             <fileset dir="${common_dir}/doc"/>
         </copy>
         <copy todir="${Windows_package_dir}/examples">
-            <fileset dir="examples/release"/>
+            <fileset dir="examples"/>
         </copy>
         <copy todir="${Windows_package_dir}/native">
             <fileset dir="native">
@@ -452,7 +452,7 @@
             <fileset dir="${common_dir}/doc"/>
         </copy>
         <copy todir="${Linux_package_dir}/examples">
-            <fileset dir="examples/release"/>
+            <fileset dir="examples"/>
         </copy>
         <copy todir="${Linux_package_dir}/native">
             <fileset dir="native">
@@ -501,7 +501,7 @@
             <fileset dir="${common_dir}/doc"/>
         </copy>
         <copy todir="${Mac_package_dir}/examples">
-            <fileset dir="examples/release"/>
+            <fileset dir="examples"/>
         </copy>
         <copy todir="${Mac_package_dir}/native">
             <fileset dir="native">

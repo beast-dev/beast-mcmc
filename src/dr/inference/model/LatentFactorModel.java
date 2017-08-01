@@ -106,7 +106,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     public LatentFactorModel(MatrixParameterInterface data, MatrixParameterInterface factors, MatrixParameterInterface loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
                              Parameter missingIndicator,
-                             boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeResiduals, boolean recomputeFactors, boolean recomputeLoadings
+                             boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeResiduals,
+                             boolean recomputeFactors, boolean recomputeLoadings
     ) {
         super("");
         this.RecomputeResiduals = recomputeResiduals;
@@ -854,7 +855,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        System.out.println(expPart);
 
 
-        return -.5 * trace + .5 * logDetCol + .5 * data.getRowDimension()
+        return -.5 * trace + .5 * logDetCol //+ .5 * data.getRowDimension()
 
                 - .5 * nmeasurements * Math.log(2.0 * StrictMath.PI);
     }

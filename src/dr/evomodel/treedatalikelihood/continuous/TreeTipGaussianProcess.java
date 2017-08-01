@@ -190,7 +190,6 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
         return treeDataLikelihood;
     }
 
-
     @Override
     public int getDimension() {
         return truncateToMissingOnly ? missingLength : drawLength;

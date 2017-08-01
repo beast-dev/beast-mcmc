@@ -119,7 +119,7 @@ public interface Plot {
      * Paint actual plot
      */
     void paintPlot(Graphics2D g2, double xScale, double yScale,
-                   double xOffset, double yOffset);
+                   double xOffset, double yOffset, int plotNumber);
 
     /**
      * Set name
@@ -213,6 +213,7 @@ public interface Plot {
         protected double xScale, yScale, xOffset, yOffset;
 
         private String name;
+        protected int plotNumber;
 
         private Set<Integer> selectedPoints = new HashSet<Integer>();
 
@@ -520,7 +521,7 @@ public interface Plot {
          * Paint actual plot
          */
         public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                              double xOffset, double yOffset) {
+                              double xOffset, double yOffset, int plotNumber) {
             if (xAxis == null || yAxis == null)
                 return;
 
@@ -529,11 +530,11 @@ public interface Plot {
             this.xOffset = xOffset;
             this.yOffset = yOffset;
 
-            // variable is assigned to itself
-            //this.bounds = bounds;
+            this.plotNumber = plotNumber;
 
-            if (xData != null && yData != null && xData.getCount() > 0)
+            if (xData != null && yData != null && xData.getCount() > 0) {
                 paintData(g2, xData, yData);
+            }
         }
 
         /**

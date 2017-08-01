@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  *
  * @author Marc Suchard
  */
-public class TransformedTreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
+public class TransformedTreeModel extends TreeModel implements MultivariateTraitTree, Citable {
 
     public TransformedTreeModel(String id, TreeModel tree, TreeTransform treeTransform) {
         super(id);
@@ -90,10 +90,11 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
             throw new IllegalArgumentException("Illegal model");
         }
     }
-
-    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        // Do nothing; no variables
-    }
+//
+//    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+//
+//        // Do nothing; no variables
+//    }
 
     // Delegate the rest to treeModel
 

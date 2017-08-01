@@ -481,7 +481,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     /**
      * Set a new node as root node.
      */
-    public final void setRoot(NodeRef newRoot) {
+    public void setRoot(NodeRef newRoot) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 

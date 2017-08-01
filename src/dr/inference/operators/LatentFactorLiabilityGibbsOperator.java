@@ -11,10 +11,11 @@ import dr.math.distributions.NormalDistribution;
 /**
  * Created by Max on 9/1/16.
  */
-public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator{
+public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, PathDependentOperator{
 
     LatentFactorModel lfm;
     OrderedLatentLiabilityLikelihood liabilityLikelihood;
+    double pathParameter = 1;
 
     public LatentFactorLiabilityGibbsOperator(double weight, LatentFactorModel lfm, OrderedLatentLiabilityLikelihood liabilityLikelihood) {
         setWeight(weight);
@@ -190,11 +191,20 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
 
     double drawTruncatedNormalDistribution(double mean, double precision, double lower, double upper){
         double sd = Math.sqrt(1 / precision);
-        NormalDistribution normal = new NormalDistribution(mean, sd);
+        double adjVar = 1 / (pathParameter * precision + 1 - pathParameter);
+        double adjMean = adjVar * (mean * pathParameter * precision);
+
+
+        NormalDistribution normal = new NormalDistribution(adjMean, Math.sqrt(adjVar));
+//        NormalDistribution normal = new NormalDistribution(mean, 1 / Math.sqrt(precision));
         double newLower = normal.cdf(lower);
         double newUpper = normal.cdf(upper);
 
+        double outsideProportion = (1 - (newUpper - newLower)) * (1 - pathParameter);
+        double totalProportion = newUpper - newLower + outsideProportion;
+        double outsideProbability = outsideProportion / totalProportion;
 
+        if(outsideProbability < MathUtils.nextDouble()){
         double cdfDraw = 1.0;
         int iterator = 0;
         boolean invalid = true;
@@ -226,10 +236,43 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
         }
         else
             return draw;
+        }
+        else{
+            double cdfDraw;
+            double draw = 0;
+            int iterator = 0;
+            boolean invalid = true;
+            double total = 1 - newUpper + newLower;
+            if(newLower / total < MathUtils.nextDouble()){
+                while(iterator < 10000 && invalid){
+                    cdfDraw = MathUtils.nextDouble() * (1 - newUpper) + newUpper;
+                    draw = normal.quantile(cdfDraw);
+                    if(!Double.isNaN(draw) && draw > upper) {
+                        invalid = false;
+                    }
+                    iterator++;
+                }
+            }
+            else{
+                while(iterator < 10000 && invalid){
+                    cdfDraw = MathUtils.nextDouble() * newLower;
+                    draw = normal.quantile(cdfDraw);
+                    if(!Double.isNaN(draw) && draw < lower) {
+                        invalid = false;
+                    }
+                    iterator++;
+                }
+            }
+            return draw;
+        }
     }
 
     @Override
     public int getStepCount() {
         return 0;
+    }
+
+    public void setPathParameter(double pathParameter){
+        this.pathParameter = pathParameter;
     }
 }

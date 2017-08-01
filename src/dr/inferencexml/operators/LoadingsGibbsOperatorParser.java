@@ -48,6 +48,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final String CUTOFF_PRIOR = "cutoffPrior";
     private final String MULTI_THREADED = "multiThreaded";
     private final String NUM_THREADS = "numThreads";
+    public final String PATH_PARAMETER = "pathParameter";
 
 
     @Override
@@ -74,8 +75,14 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         }
         boolean multiThreaded = xo.getAttribute(MULTI_THREADED, false);
 
-        if(prior!=null)
-        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);  //To change body of implemented methods use File | Settings | File Templates.
+        if(prior!=null){
+            LoadingsGibbsOperator lfmOp = new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
+            if(xo.hasAttribute(PATH_PARAMETER)){
+                System.out.println("WARNING: Setting Path Parameter is intended for debugging purposes only!");
+                lfmOp.setPathParameter(xo.getDoubleAttribute(PATH_PARAMETER));
+            }
+        return lfmOp;
+    }
         else
             return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings, cutoffPrior);
     }
@@ -102,6 +109,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),
+            AttributeRule.newDoubleRule(PATH_PARAMETER, true),
     };
 
     @Override

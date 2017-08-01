@@ -1373,6 +1373,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         public void store() {
             // if (cacheBranches) {
+            if(storedMeanCache.length != meanCache.length)
+                storedMeanCache = new double[meanCache.length];
             System.arraycopy(meanCache, 0, storedMeanCache, 0, meanCache.length);
             // }
         }

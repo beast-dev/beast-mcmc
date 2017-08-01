@@ -48,7 +48,7 @@ import java.util.concurrent.Executors;
  * Time: 2:23 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class LoadingsGibbsOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator {
     NormalDistribution prior;
     NormalDistribution workingPrior;
     LatentFactorModel LFM;
@@ -165,8 +165,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         for (int i = 0; i < newRowDimension; i++) {
             for (int j = i; j < newRowDimension; j++) {
                 double sum = 0;
-                for (int k = 0; k < p; k++)
+                for (int k = 0; k < p; k++){
+                    if(missingIndicator == null || missingIndicator.getParameterValue(k * LFM.getScaledData().getRowDimension() + row) != 1)
                     sum += full.getParameterValue(i, k) * full.getParameterValue(j, k);
+                }
                 answer[i][j] = sum * LFM.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
                     answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();

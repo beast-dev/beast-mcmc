@@ -248,7 +248,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             int threshNum = 0;
 
         for (int index = 0; index < data.length && (valid < 1 || pathParameter !=1); ++index) {
-            for (int index = 0; index < data.length && valid; ++index) {
 
                 int datum = data[index];
                 double trait = oneTipTraitParameter.getParameterValue(index);

@@ -1,6 +1,7 @@
 package dr.inferencexml.distribution;
 
 
+import dr.inference.distribution.DeterminentalPointProcessPrior;
 import dr.inference.distribution.RowDimensionPoissonPrior;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
 import dr.xml.*;
@@ -15,13 +16,22 @@ public class RowDimensionPoissonPriorParser extends AbstractXMLObjectParser{
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        AdaptableSizeFastMatrixParameter parameter = (AdaptableSizeFastMatrixParameter) xo.getChild(AdaptableSizeFastMatrixParameter.class);
+        AdaptableSizeFastMatrixParameter parameter;
+        DeterminentalPointProcessPrior DPP;
+        if(xo.getChild(AdaptableSizeFastMatrixParameter.class) != null)
+           parameter= (AdaptableSizeFastMatrixParameter) xo.getChild(AdaptableSizeFastMatrixParameter.class);
+        else
+            parameter= null;
+        if(xo.getChild(DeterminentalPointProcessPrior.class) != null)
+            DPP = (DeterminentalPointProcessPrior) xo.getChild(DeterminentalPointProcessPrior.class);
+        else
+            DPP = null;
         double untruncatedMean = xo.getDoubleAttribute(UNTRUNCATED_MEAN);
         boolean transpose = false;
         if(xo.hasAttribute(TRANSPOSE))
             transpose = xo.getBooleanAttribute(TRANSPOSE);
 
-        return new RowDimensionPoissonPrior(untruncatedMean, parameter, transpose);
+        return new RowDimensionPoissonPrior(untruncatedMean, parameter, DPP, transpose);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -31,7 +41,10 @@ public class RowDimensionPoissonPriorParser extends AbstractXMLObjectParser{
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(UNTRUNCATED_MEAN, true),
             AttributeRule.newBooleanRule(TRANSPOSE, true),
-            new ElementRule(AdaptableSizeFastMatrixParameter.class)
+            new OrRule(
+            new ElementRule(AdaptableSizeFastMatrixParameter.class),
+                    new ElementRule(DeterminentalPointProcessPrior.class)
+            )
     };
 
     @Override

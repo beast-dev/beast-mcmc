@@ -185,8 +185,8 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         } else if (dataType != sequence.getDataType()) {
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
-
-        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
+        
+        int invalidCharAt = sequence.getInvalidChar();
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
@@ -212,31 +212,14 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
 
-        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
+        int invalidCharAt = sequence.getInvalidChar();
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
 
         super.insertSequence(position, sequence);
     }
-
-    /**
-     * search invalid character in the sequence by given data type, and return its index
-     */
-    protected int getInvalidChar(String sequence, DataType dataType) {
-        final char[] validChars = dataType.getValidChars();
-        if (validChars != null) {
-            String validString = new String(validChars);
-
-            for (int i = 0; i < sequence.length(); i++) {
-                char c = sequence.charAt(i);
-
-                if (validString.indexOf(c) < 0) return i;
-            }
-        }
-        return -1;
-    }
-
+    
     // **************************************************************
     // SiteList IMPLEMENTATION
     // **************************************************************

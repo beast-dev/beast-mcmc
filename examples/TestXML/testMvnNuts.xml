@@ -40,10 +40,11 @@
         </randomWalkOperator>
 
 	</operators>    
+
         
 	<operators id="operators.hmc">
 
- 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.1" drawVariance="1.0">
+ 		<hamiltonianMonteCarloOperator mode = "1" weight="1" nSteps="10" stepSize="0.002" drawVariance="1.0">
  			<gradient>
 				<distributionLikelihood idref="distribution"/>							
 			</gradient>
@@ -52,7 +53,7 @@
 
 	</operators>
 
-	<mcmc id="mcmc.hmc" chainLength="100000" autoOptimize="true">
+	<mcmc id="mcmc.hmc" chainLength="1000000" autoOptimize="false">
         <posterior>
             <likelihood id="likelihood.hmc">
 	            <distributionLikelihood idref="distribution"/>
@@ -83,7 +84,7 @@
 		</property>
 	</report>	
 	
-	<mcmc id="mcmc.rw" chainLength="100000" autoOptimize="true">
+	<mcmc id="mcmc.rw" chainLength="1000000" autoOptimize="true">
         <posterior>
             <likelihood id="likelihood.rw">
 	            <distributionLikelihood idref="distribution"/>
@@ -107,16 +108,18 @@
 			<parameter idref="draw"/>        
 		</log>
 	</mcmc>
+
 	 
 	<report>
 		<property name="timer">
 			<object idref="mcmc.rw"/>
 		</property>
-	</report>			
+	</report>	
+		
  
 	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>	
-	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>
-	
+
+	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/> 
 </beast>
 
 <!--  

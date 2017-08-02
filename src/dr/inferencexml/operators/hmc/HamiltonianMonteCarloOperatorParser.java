@@ -92,6 +92,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
+//        System.err.println("mode = " + mode);
+//        System.exit(-1);
+
         if (mode == 0) {
             return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
                     stepSize, nSteps, drawVariance);

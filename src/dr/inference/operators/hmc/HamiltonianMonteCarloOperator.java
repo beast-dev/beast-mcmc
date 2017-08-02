@@ -185,6 +185,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                             final double functionalStepSize,
                             final double sigmaSquared);
 
+        void setParameter(double[] position); // TODO Remove from interface
+
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
@@ -225,14 +227,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 setParameter(position); // Write back into BEAST model
             }
 
-            protected void setParameter(double[] position) {
+            public void setParameter(double[] position) {
 
                 final int dim = position.length;
                 for (int j = 0; j < dim; ++j) {
                     parameter.setParameterValueQuietly(j, position[j]);
                 }
 //                parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
-                parameter.setParameterValueNotifyChangedAll(0, position[0]);//zy: why is it postion[0] but not all dimensions?
+                parameter.setParameterValueNotifyChangedAll(0, position[0]);
             }
         }
 
@@ -268,7 +270,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             }
 
             @Override
-            protected void setParameter(double[] position) {
+            public void setParameter(double[] position) {
                 unTransformedPosition = transform.inverse(position, 0, position.length);
                 super.setParameter(unTransformedPosition);
             }

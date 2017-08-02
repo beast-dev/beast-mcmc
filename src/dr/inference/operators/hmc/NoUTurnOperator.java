@@ -1,8 +1,4 @@
 
-/**
- * @author Marc A. Suchard
- */
-
 /*
  * NoUTurnOperator.java
  *
@@ -28,7 +24,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -36,205 +31,254 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
-
-import dr.math.distributions.UniformDistribution;
-import jebl.math.Random;
+import dr.inference.operators.GibbsOperator;
+import dr.math.MathUtils;
+import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
+ * @author Zhenyu Zhang
  */
 
-public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator {
+public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator, GibbsOperator {
 
     private final int dim = gradientProvider.getDimension();
-    private final int chainLength = 1000000;
     private final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
-    private final Likelihood likelihood;
+    final double kappa = 0.75;
+    final double t0 = 10;
+    final double gamma = 0.05;
+    final int adaptLength = 10;
+    final double delta = 0.5;
+    double deltaMax = 1000;
+    int maxDepth = 100; // TODO Make an option for these.
+    final Likelihood likelihood;
+    OneNut nut = new OneNut();
+    OneNut previousnut = new OneNut();
+    double initialStepsize;
+
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                           Parameter parameter, double stepSize, int nSteps, double drawVariance, Likelihood likelihood)
-    {
+                           Parameter parameter, double stepSize, int nSteps, double drawVariance) {
         super(mode, weight, gradientProvider, parameter, null, stepSize, nSteps, drawVariance);
-        this.likelihood = likelihood;
+        this.likelihood = gradientProvider.getLikelihood();
     }
 
     @Override
     public String getOperatorName() {
-        return "no U turn HMC operator";
+        return "NUTS operator";
     }
 
     @Override
     public double doOperation(Likelihood likelihood) {
-        return leapFrog();
-        // TODO Implement NUTS algorithm
+
+        long m = getCount() + 1;
+
+        if (m == 1) {
+            previousnut.position = leapFrogEngine.getInitialPosition();
+            initialStepsize = findReasonableEpsilon(leapFrogEngine.getInitialPosition());
+            previousnut.stepSize = initialStepsize;
+            previousnut.logStepsize = Math.log(previousnut.stepSize);
+            previousnut.logstepSizeAve = 0;
+            previousnut.h = 0;
+            previousnut.mu = Math.log(10 * initialStepsize);
+
+        }
+        nut = nutsOneStep(m, previousnut);
+
+        previousnut.logstepSizeAve = nut.logstepSizeAve;
+        previousnut.logStepsize = nut.logStepsize;
+        previousnut.stepSize = nut.stepSize;
+        previousnut.h = nut.h;
+        previousnut.mu = nut.mu;
+        previousnut.logstepSizeAve = nut.logstepSizeAve;
+        previousnut.position = Arrays.copyOf(nut.position, dim);
+
+        leapFrogEngine.setParameter(nut.position); // zy: necessary step, since other leapfrogEngine step update the parameters .
+
+        return 233;
     }
 
     @Override
     public double doOperation() {
         throw new IllegalStateException("Should not be called.");
-    } //zy: when throw?
-/**************************************************** BEGIN ***************************************************************************************************************/
-    private double[][] nuts(double[] position,Likelihood likelihood,GradientWrtParameterProvider gradientProvider,double targetAcceptanceRatio,
-                             int maxDepth){
-        double[][] result = new double[chainLength][dim];
-        OneNut nut = new OneNut();
-        for (int i = 0;i < chainLength;i++){
-            nut = nutsOneStep(position,i,likelihood,gradientProvider,nut,targetAcceptanceRatio,maxDepth);
-            position = nut.position;
-//            result[i][] = position;
-        }
-        return result;
     }
 
-    private OneNut nutsOneStep(double[] position,int iter,Likelihood likelihood, GradientWrtParameterProvider gradientProvider,OneNut nut,
-                               double targetAcceptance, int maxdepth){
-        final double kappa = 0.75;
-        final double t0 = 10;
-        final double gamma = 0.05;
-        final int adaptLength = 50;
-        double h = 0;
-        double log_eps;
-        OneNut returnnut = new OneNut();
+    private OneNut nutsOneStep(long m, OneNut previousnut) {
 
-        if(iter == 1){
-            returnnut.stepSize = findReasonableEpsilon(position);
-            returnnut.stepSizeAve = 1;
-            returnnut.mu = Math.log(10*returnnut.stepSize);
-            returnnut.h = 0;
-        } else {
-            returnnut = nut;
+        if (previousnut == null) {
+            System.exit(3);
         }
+
+        OneNut returnNut = new OneNut();
+        returnNut.logstepSizeAve = previousnut.logstepSizeAve;
+        returnNut.logStepsize = previousnut.logStepsize;
+        returnNut.h = previousnut.h;
+        returnNut.mu = previousnut.mu;
+        returnNut.logstepSizeAve = previousnut.logstepSizeAve;
+        returnNut.position = Arrays.copyOf(previousnut.position, dim); //todo: write a copy constructor.
 
         double[] momentum = drawInitialMomentum(drawDistribution, dim);
-        double sliceU = 0.0; //Math.random()*Math.exp(likelihood - getScaledDotProduct(momentum, sigmaSquared));
-        double[] positionMinus = position;
-        double[] positionPlus = position;
-        double[] momentumMinus = momentum;
-        double[] momentumPlus = momentum;
-        int j=0;
-        int n=1;
+        double sliceU = MathUtils.nextDouble() * Math.exp(getJointProbability(likelihood, momentum));
+        double[] positionMinus = Arrays.copyOf(previousnut.position, dim);
+        double[] positionPlus = Arrays.copyOf(previousnut.position, dim);
+        double[] momentumMinus = Arrays.copyOf(momentum, dim);
+        double[] momentumPlus = Arrays.copyOf(momentum, dim);
+
+        int j = 0;
+        int n = 1;
         boolean s = true;
+
         BinaryTree temp = new BinaryTree();
-        while(s){
-            if (Math.random()<0.5){ 
-                temp = buildTree(positionMinus,momentumMinus,sliceU,-1,j,stepSize,position,momentum);
-                positionMinus = temp.positionMinus;
-                momentumMinus = temp.momentumMinus;
+
+        while (s) {
+
+            double random = MathUtils.nextDouble();
+            if (random < 0.5) {
+
+                temp = buildTree(positionMinus, momentumMinus, sliceU, -1, j, previousnut.stepSize, momentum);
+
+                positionMinus = Arrays.copyOf(temp.positionMinus, dim);
+                momentumMinus = Arrays.copyOf(temp.momentumMinus, dim);
+
             } else {
-                temp = buildTree(positionPlus,momentumPlus,sliceU,-1,j,stepSize,position,momentum);
-                positionPlus = temp.positionPlus;
-                momentumPlus = temp.momentumPlus;
+
+                temp = buildTree(positionPlus, momentumPlus, sliceU, 1, j, previousnut.stepSize, momentum);
+
+                positionPlus = Arrays.copyOf(temp.positionPlus, dim);
+                momentumPlus = Arrays.copyOf(temp.momentumPlus, dim);
             }
-            if (temp.flagError){
-                if (Math.random() < temp.numNodes/n){
-                    position = temp.positionFinal;
+
+            if (temp.flagContinue) {
+
+                if (MathUtils.nextDouble() < temp.numNodes / n) {
+                    returnNut.position = Arrays.copyOf(temp.positionFinal, dim);
                 }
             }
+
             n += temp.numNodes;
-            s = computeStopCriterion(temp.flagError,positionPlus,positionMinus,momentumPlus,momentumMinus);
+            s = computeStopCriterion(temp.flagContinue, positionPlus, positionMinus, momentumPlus, momentumMinus);
             j++;
-            if(j>maxdepth){
+            if (j > maxDepth) {
                 System.err.println("reach maximum tree depth");
-                break;
+                System.exit(-1);
+
             }
         }
-        if (iter < adaptLength){
-            h = (1 - 1/(iter + t0))*h + 1/(iter + t0) * (targetAcceptance - temp.alpha / temp.nAlpha);
-            log_eps = returnnut.mu - Math.sqrt(iter)/gamma * h;
-            returnnut.stepSizeAve = Math.exp(Math.pow(iter,-kappa)*log_eps + (1 - Math.pow(iter,-kappa)) * Math.log(returnnut.stepSizeAve));
-            returnnut.stepSize = Math.exp(log_eps);
+        if (m <= adaptLength) { //todo: fix dual averaging step
+
+            returnNut.h = (1 - 1 / (m + t0)) * previousnut.h + 1 / (m + t0) * (delta - (temp.alpha / temp.nAlpha));
+            returnNut.logStepsize = previousnut.mu - Math.sqrt(m) / gamma * returnNut.h;
+            returnNut.logstepSizeAve = Math.pow(m, -kappa) * returnNut.logStepsize + (1 - Math.pow(m, -kappa)) * previousnut.logstepSizeAve;
+
+            returnNut.stepSize = Math.exp(returnNut.logStepsize);
+
         } else {
-            returnnut.stepSize = returnnut.stepSizeAve;
+            returnNut.stepSize = Math.exp(returnNut.logstepSizeAve);
         }
-        return returnnut;
+        returnNut.stepSize = initialStepsize; //todo : add random noise to step size ?
+
+        return returnNut;
     }
 
-
     private BinaryTree buildTree(double[] position, double[] momentum, double sliceU, int direction, int j, double
-            stepSize,
-                                 double[] initialPosition, double[] initialMomentum) {
-        BinaryTree tree = new BinaryTree();
-        double[] positionMinus;
-        double[] momentumMinus;
-        double[] positionPlus;
-        double[] momentumPlus;
+            stepSize, double[] initialMomentum) {
 
-        double logprobBefore = 0.0; //likelihood(initialPosition) + getScaledDotProduct(initialMomentum, sigmaSquared);
+
         if (j == 0) {
-            leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize);
-            leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
+            BinaryTree tree = new BinaryTree();
+            double logjointprob1 = likelihood.getLogLikelihood() - getScaledDotProduct(initialMomentum, sigmaSquared);
 
-            double logprobAfter = 0.0; //likelihood(position) + getScaledDotProduct(momentum, sigmaSquared);
-            tree.momentumMinus = momentum;
-            tree.positionMinus = position;
-            tree.momentumPlus = momentum;
-            tree.positionPlus = position;
-            tree.positionFinal = position;
-//            tree.numNodes = Math.log(sliceU) <= likelihood - getScaledDotProduct(momentum, sigmaSquared) ? 1 : 0;
-//            tree.flagError = Math.log(sliceU) < 1000 + likelihood - getScaledDotProduct(momentum, sigmaSquared) ? true : false;
-            tree.alpha = Math.min(1, Math.exp(logprobAfter / logprobBefore));
+            leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
+            leapFrogEngine.updatePosition(position, momentum, direction * stepSize, sigmaSquared); //zy: after "updateposition"
+            leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
+
+//
+            double logjointprob2 = likelihood.getLogLikelihood() - getScaledDotProduct(momentum, sigmaSquared);
+
+            tree.momentumMinus = Arrays.copyOf(momentum, dim);
+            tree.positionMinus = Arrays.copyOf(position, dim);
+            tree.momentumPlus = Arrays.copyOf(momentum, dim);
+            tree.positionPlus = Arrays.copyOf(position, dim);
+            tree.positionFinal = Arrays.copyOf(position, dim);
+            tree.alpha = Math.min(1, Math.exp(logjointprob2 - logjointprob1));
+
             tree.nAlpha = 1;
+            tree.numNodes = (sliceU <= Math.exp(logjointprob2) ? 1 : 0);
+
+            tree.flagContinue = (sliceU <= Math.exp(deltaMax + logjointprob2) ? true : false);
 
             return tree;
         } else {
+
             BinaryTree newNodes;
-            tree = buildTree(position, momentum, sliceU, direction, j - 1, stepSize, initialPosition, initialMomentum);
-            positionMinus = tree.positionMinus;
-            momentumMinus = tree.momentumMinus;
-            positionPlus = tree.positionPlus;
-            momentumPlus = tree.momentumPlus;
-            while (tree.flagError) {
+            BinaryTree tree = buildTree(position, momentum, sliceU, direction, j - 1, stepSize, initialMomentum);
+
+            double[] positionMinus = Arrays.copyOf(tree.positionMinus, dim);
+            double[] positionPlus = Arrays.copyOf(tree.positionPlus, dim);
+            double[] momentumMinus = Arrays.copyOf(tree.momentumMinus, dim);
+            double[] momentumPlus = Arrays.copyOf(tree.momentumPlus, dim);
+
+            if (tree.flagContinue) {
                 if (direction == -1) {
-                    newNodes = buildTree(tree.positionMinus, tree.momentumMinus, sliceU, direction, j - 1, stepSize,
-                            initialPosition, initialMomentum);
-                    positionMinus = newNodes.positionMinus;
-                    momentumMinus = newNodes.momentumMinus;
+                    newNodes = buildTree(tree.positionMinus, tree.momentumMinus, sliceU, direction, j - 1, stepSize, initialMomentum);
+                    positionMinus = Arrays.copyOf(newNodes.positionMinus, dim);
+                    momentumMinus = Arrays.copyOf(newNodes.momentumMinus, dim);
                 } else {
-                    newNodes = buildTree(tree.positionPlus, tree.momentumPlus, sliceU, direction, j - 1, stepSize,
-                            initialPosition, initialMomentum);
-                    positionPlus = newNodes.positionPlus;
-                    momentumPlus = newNodes.momentumPlus;
+                    newNodes = buildTree(tree.positionPlus, tree.momentumPlus, sliceU, direction, j - 1, stepSize, initialMomentum);
+                    positionPlus = Arrays.copyOf(newNodes.positionPlus, dim);
+                    momentumPlus = Arrays.copyOf(newNodes.momentumPlus, dim);
                 }
-                double randomNum = Math.random();
+                double randomNum = MathUtils.nextDouble();
                 if (randomNum < (double) newNodes.numNodes / (tree.numNodes + newNodes.numNodes)) {
-                    tree.positionFinal = newNodes.positionFinal;
+                    tree.positionFinal = Arrays.copyOf(newNodes.positionFinal, dim);
                 }
                 tree.alpha += newNodes.alpha;
                 tree.nAlpha += newNodes.nAlpha;
                 tree.numNodes += newNodes.numNodes;
 
-                tree.flagError = computeStopCriterion(newNodes.flagError,newNodes.positionPlus,newNodes.positionMinus,newNodes.momentumPlus,newNodes.momentumMinus);
-                tree.positionPlus = positionPlus;
-                tree.positionMinus = positionMinus;
-                tree.momentumMinus = momentumMinus;
-                tree.momentumPlus = momentumPlus;
+                tree.flagContinue = computeStopCriterion(newNodes.flagContinue, positionPlus, positionMinus, momentumPlus, momentumMinus);
+                tree.positionPlus = Arrays.copyOf(positionPlus, dim);
+                tree.positionMinus = Arrays.copyOf(positionMinus, dim);
+                tree.momentumMinus = Arrays.copyOf(momentumMinus, dim);
+                tree.momentumPlus = Arrays.copyOf(momentumPlus, dim);
             }
             return tree;
-        }
 
+        }
     }
 
     private double findReasonableEpsilon(double[] position) {
-        double stepSize = 1;
-        int count = 1;
+
+        double stepSize = 0.1;
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);
+        int count = 1;
 
-        double probBefore = 0.0; //Math.exp(likelihood + getScaledDotProduct(momentum, sigmaSquared));
+        double probBefore = Math.exp(getJointProbability(likelihood, momentum));
 
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize);
-        leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared); //zy: after "updateposition"
-        // the interested parameters changed.
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+        leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-        double probAfter = 0.0; //Math.exp(likelihood + getScaledDotProduct(momentum, sigmaSquared));
+        double probAfter = Math.exp(getJointProbability(likelihood, momentum));
 
         double probRatio = probAfter / probBefore;
 
         double a = (probRatio > 0.5 ? 1 : -1);
 
         while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
+
+            leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+            leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared); //zy: after "updateposition"
+            leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+
+            probRatio = Math.exp(getJointProbability(likelihood, momentum)) / probBefore;
+
             stepSize = Math.pow(2, a) * stepSize;
+
             count++;
+
             if (count > 100) {
-                System.out.println("cannot find a reasonable epsilon in 100 iterations!");
+                System.out.println("cannot find a reasonable stepsize in 100 iterations!");
+                System.exit(-100);
                 break;
             }
         }
@@ -242,8 +286,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return stepSize;
     }
 
-    private boolean computeStopCriterion(boolean flagError, double[] positionPlus,double[] positionMinus,double[] momentumPlus,double[] momentumMinus) {
-        boolean flag = flagError && getDotProduct(sumArray(positionPlus, positionMinus, false),
+    private boolean computeStopCriterion(boolean flagContinue, double[] positionPlus, double[] positionMinus, double[] momentumPlus, double[] momentumMinus) {
+        boolean flag = flagContinue && getDotProduct(sumArray(positionPlus, positionMinus, false),
                 momentumMinus) >= 0 &&
                 getDotProduct(sumArray(positionPlus, positionMinus, false), momentumPlus) >= 0;
         return flag;
@@ -272,6 +316,31 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return result;
     }
 
+    private double getJointProbability(Likelihood likelihood, double[] momentum) {
+
+        double logjointprob;
+
+        if (likelihood != null && momentum != null) {
+            logjointprob = likelihood.getLogLikelihood() - getScaledDotProduct(momentum, sigmaSquared);
+            return logjointprob;
+
+        } else if (likelihood == null) {
+            System.err.println("null in get joint prob (likelihood)!!");
+            System.exit(-99);
+            return -99;
+        } else {
+            System.err.println("null in get joint prob (momentum)!!");
+            System.exit(-99);
+            return -99;
+        }
+
+    }
+
+    @Override
+    public int getStepCount() {
+        return (int) getCount();
+    }
+
     public class BinaryTree {
         double[] positionMinus;
         double[] momentumMinus;
@@ -279,67 +348,27 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         double[] momentumPlus;
         double[] positionFinal;
         int numNodes;
-        boolean flagError;
+        boolean flagContinue;
         double alpha;
         int nAlpha;
 
-        public BinaryTree() {
+        private BinaryTree() {
         }
     }
 
-    public class OneNut{
+    public class OneNut {
         double[] position;
         double stepSize;
-        double stepSizeAve;
+        double logStepsize;
+        double logstepSizeAve;
         double h;
         double mu;
 
-        public OneNut(){};
+        private OneNut() {
+        }
+
     }
+
 }
 
-
-//package dr.inference.operators.hmc;
-//
-//        import dr.inference.hmc.GradientWrtParameterProvider;
-//        import dr.inference.model.Likelihood;
-//        import dr.inference.model.Parameter;
-//        import dr.inference.operators.CoercionMode;
-//        import dr.inference.operators.GeneralOperator;
-//
-///**
-// * @author Marc A. Suchard
-// */
-//
-
-
-//public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator {
-//
-//    public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-//                           Parameter parameter, double stepSize, int nSteps, double drawVariance) {
-//        super(mode, weight, gradientProvider, parameter, null, stepSize, nSteps, drawVariance);
-//    }
-//
-//    @Override
-//    public double doOperation(Likelihood likelihood) {
-//        return leapFrog(); // TODO Implement NUTS algorithm
-//    }
-//
-//    @Override
-//    public double doOperation() {
-//        throw new IllegalStateException("Should not be called.");
-//    }
-//
-//    private void buildTree() {
-//
-//    }
-//
-//    private double findReasonableEpsilon() {
-//        return 0.0;
-//    }
-//
-//    private double computeStopCriterion() {
-//        return 0.0;
-//    }
-//}
 

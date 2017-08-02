@@ -107,6 +107,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         }
 
         double logL = 0.0;
+        int count = 0;
 
         for( Attribute<double[]> data : dataList ) {
 
@@ -125,15 +126,16 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
                     // at zero anyway.
                     return Double.NEGATIVE_INFINITY;
                 }
-                logL += getLogPDF(value);
+                logL += getLogPDF(value, count);
+                count += 1;
             }
 
         }
         return logL;
     }
 
-    protected double getLogPDF(double value){
-        return distribution.logPdf(value/scale)/scale;
+    protected double getLogPDF(double value, int i){
+        return distribution.logPdf(value/scale) - Math.log(scale);
     }
 
     @Override

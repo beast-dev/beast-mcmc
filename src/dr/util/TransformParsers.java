@@ -258,4 +258,5 @@ public class TransformParsers {
     public static final String OUTER = "outer";
     public static final String INNER = "inner";
     public static final String COMPOUND = "compoundTransform";
+    public static final String MASKED = "maskedTransform";
 }

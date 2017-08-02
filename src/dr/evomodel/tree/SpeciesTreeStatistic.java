@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: SpeciesTreeStatistic.java,v 1.14 2005/07/11 14:06:25 rambaut Exp $
  */
-public class SpeciesTreeStatistic extends BooleanStatistic implements TreeStatistic {
+public class SpeciesTreeStatistic extends TreeStatistic implements BooleanStatistic {
 
     public SpeciesTreeStatistic(String name, Tree speciesTree, Tree populationTree) {
 
@@ -59,6 +59,13 @@ public class SpeciesTreeStatistic extends BooleanStatistic implements TreeStatis
 
     public int getDimension() {
         return 1;
+    }
+
+    /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
     }
 
     /**

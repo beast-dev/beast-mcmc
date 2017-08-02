@@ -62,6 +62,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private final int continuousTraitCount;
 
+    private final TraitData traitData;
+
     private boolean activateBSSVS = false;
     public boolean useAmbiguitiesTreeLikelihood = false;
 
@@ -83,6 +85,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean isLatitudeLongitude = false;
     private double jitterWindow = 0.0;
 
+    public TraitData getTraitData() {
+        return traitData;
+    }
+
     public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
 //        this(options, partition.getName(),(partition.getTrait() == null)
 //                ? partition.getDataType() : GeneralDataType.INSTANCE);
@@ -92,6 +98,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             continuousTraitCount = partition.getTraits().size();
         } else {
             continuousTraitCount = 0;
+        }
+
+        if (partition.getTraits() != null && partition.getDataType().getType() == DataType.GENERAL) {
+            traitData = partition.getTraits().get(0);
+        } else {
+            traitData = null;
         }
     }
 
@@ -112,6 +124,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         continuousSubstModelType = source.continuousSubstModelType;
 
         continuousTraitCount = source.continuousTraitCount;
+
+        traitData = source.traitData;
 
         activateBSSVS = source.activateBSSVS;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
@@ -137,6 +151,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
         super(options, name);
         continuousTraitCount = 0;
+        traitData = null;
     }
 
     // only init in PartitionSubstitutionModel
@@ -1040,7 +1055,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public boolean isActivateBSSVS() {
-        return activateBSSVS;
+        return discreteSubstType != DiscreteSubstModelType.GLM_SUBST && activateBSSVS;
     }
 
     public void setActivateBSSVS(boolean activateBSSVS) {

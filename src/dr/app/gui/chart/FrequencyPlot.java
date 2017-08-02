@@ -37,8 +37,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 
     protected Variate raw = null;
 
-//    protected Paint barPaint = Color.blue;
-    protected Paint barPaint = new Color(124, 164, 221);
+    //    protected Paint barPaint = Color.blue;
+    private Paint barPaint = new Color(124, 164, 221);
     private Paint quantilePaint = new Color(232, 114, 103);
 
     private boolean hasQuantiles = false;
@@ -57,6 +57,11 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     protected FrequencyPlot(TraceDistribution traceDistribution) {
         super();
         this.traceDistribution = traceDistribution;
+    }
+
+    public FrequencyPlot(List<Double> data, int minimumBinCount) {
+        super();
+        setData(data, minimumBinCount);
     }
 
     public FrequencyPlot(Variate.D data, int minimumBinCount) {
@@ -85,6 +90,14 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     public void setData(List<Double> data, int minimumBinCount) {
         Variate.D d = new Variate.D(data);
         setData(d, minimumBinCount);
+    }
+
+    /**
+     * Set data
+     */
+    public void setPaints(Paint barPaint, Paint quantilePaint) {
+        this.barPaint = barPaint;
+        this.quantilePaint = quantilePaint;
     }
 
     /**
@@ -285,10 +298,10 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                     g2.setStroke(lineStroke);
                     g2.setPaint(linePaint);
                     drawRect(g2, x1, y1, x2, y2);
-				}
-			}
-		}
-	}
+                }
+            }
+        }
+    }
 
     protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
         if (traceDistribution != null && traceDistribution.getTraceType() != TraceType.REAL) {

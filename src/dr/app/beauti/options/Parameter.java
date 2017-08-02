@@ -543,7 +543,7 @@ public class Parameter implements Serializable {
         }
     }
 
-    public boolean isMeanInRealSpace() {
+    public boolean isInRealSpace() {
         return meanInRealSpace;
     }
 

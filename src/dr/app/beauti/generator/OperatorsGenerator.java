@@ -176,7 +176,7 @@ public class OperatorsGenerator extends Generator {
             case BITFLIP:
                 writeBitFlipOperator(operator, writer);
                 break;
-            case BITFIP_IN_SUBST:
+            case BITFLIP_IN_SUBST:
                 writeBitFlipInSubstOperator(operator, writer);
                 break;
             case RATE_BIT_EXCHANGE:

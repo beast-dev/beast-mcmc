@@ -35,6 +35,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 
 /**
@@ -177,23 +181,49 @@ public class MLEGSSDialog {
         PanelUtils.setupComponent(betaInfo);
         optionsPanel.addSpanningComponent(betaInfo);
 
+        treeWorkingPrior.addItem("None");
+        options.choiceTreeWorkingPrior = "None";
         treeWorkingPrior.addItem("Product of exponential distributions");
         treeWorkingPrior.addItem("Matching coalescent model");
+        treeWorkingPrior.addItem("Matching speciation model");
+
         treeWorkingPrior.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 String selection = (String)((JComboBox)e.getSource()).getSelectedItem();
-                if (selection.equals("Matching coalescent model")) {
+                TreePriorType treePrior = beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior();
+                //System.err.println(treePrior.toString());
+                if (selection.equals("None")) {
+                    JOptionPane.showMessageDialog(frame,
+                            "A suitable tree working prior needs to be selected. \n" +
+                                    "Trying to determine a tree working prior based on selected models.",
+                            "Tree working prior selection warning",
+                            JOptionPane.WARNING_MESSAGE);
+                    if (treePrior.equals(TreePriorType.YULE)) {
+                        treeWorkingPrior.setSelectedItem("Matching speciation model");
+                        options.choiceTreeWorkingPrior = "Matching speciation model";
+                    } else if (treePrior.equals(TreePriorType.CONSTANT) || treePrior.equals(TreePriorType.EXPONENTIAL)
+                            || treePrior.equals(TreePriorType.EXPANSION) || treePrior.equals(TreePriorType.LOGISTIC)) {
+                        treeWorkingPrior.setSelectedItem("Matching coalescent model");
+                        options.choiceTreeWorkingPrior = "Matching coalescent model";
+                    } else {
+                        treeWorkingPrior.setSelectedItem("Product of exponential distributions");
+                        options.choiceTreeWorkingPrior = "Product of exponential distributions";
+                    }
+                }
+                if (selection.equals("Matching coalescent model") || (selection.equals("Matching speciation model"))) {
                     beautiOptions.logCoalescentEventsStatistic = false;
                 } else {
                     beautiOptions.logCoalescentEventsStatistic = true;
                 }
-                TreePriorType treePrior = beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior();
                 boolean mcmAllowed = false;
+                boolean msmAllowed = false;
                 if (treePrior.equals(TreePriorType.CONSTANT) || treePrior.equals(TreePriorType.EXPONENTIAL)
                         || treePrior.equals(TreePriorType.EXPANSION) || treePrior.equals(TreePriorType.LOGISTIC)) {
                     mcmAllowed = true;
+                } else if (treePrior.equals(TreePriorType.YULE)) {
+                    msmAllowed = true;
                 }
-                if (selection.equals("Matching coalescent model") && !mcmAllowed) {
+                if (selection.equals("Matching coalescent model") && !mcmAllowed && !msmAllowed) {
                     JOptionPane.showMessageDialog(frame,
                             "The selected coalescent model can't be equipped with a \n" +
                                     "matching working prior. Reverting back to use a product \n" +
@@ -202,6 +232,9 @@ public class MLEGSSDialog {
                             JOptionPane.WARNING_MESSAGE);
                     treeWorkingPrior.setSelectedItem("Product of exponential distributions");
                     options.choiceTreeWorkingPrior = "Product of exponential distributions";
+                } else if (msmAllowed) {
+                    treeWorkingPrior.setSelectedItem("Matching speciation model");
+                    options.choiceTreeWorkingPrior = "Matching speciation model";
                 } else {
                     options.choiceTreeWorkingPrior = selection;
                 }
@@ -233,7 +266,7 @@ public class MLEGSSDialog {
         optionsPanel.addSeparator();
 
         JTextArea mleTutorial = new JTextArea("Additional information on marginal likelihood estimation in BEAST " +
-                "can be found on http://beast.bio.ed.ac.uk/Model-selection");
+                "can be found on http://beast.community/model_selection");
         mleTutorial.setColumns(56);
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
@@ -260,7 +293,7 @@ public class MLEGSSDialog {
 
     public int showDialog() {
 
-        JOptionPane optionPane = new JOptionPane(optionsPanel,
+        final JOptionPane optionPane = new JOptionPane(optionsPanel,
                 JOptionPane.QUESTION_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
                 null,
@@ -269,8 +302,36 @@ public class MLEGSSDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         final JDialog dialog = optionPane.createDialog(frame, description);
-        dialog.pack();
 
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                //do nothing
+            }
+        });
+
+        optionPane.addPropertyChangeListener(
+                new PropertyChangeListener() {
+                    public void propertyChange(PropertyChangeEvent e) {
+                        String prop = e.getPropertyName();
+                        //if (dialog.isVisible() && (e.getSource() == optionPane)  && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
+                        if (!dialog.isVisible() && (e.getSource() == optionPane)  && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
+                            //checking if a tree working prior has been selected
+                            if (((String)treeWorkingPrior.getSelectedItem()).equals("None")) {
+                                JOptionPane.showMessageDialog(frame,
+                                        "Please select a suitable tree working prior.",
+                                        "Tree working prior selection warning",
+                                        JOptionPane.WARNING_MESSAGE);
+                                dialog.setVisible(true);
+                            } else {
+                                dialog.setVisible(false);
+                            }
+                        }
+                    }
+                }
+        );
+
+        dialog.pack();
         dialog.setVisible(true);
 
         int result = JOptionPane.CANCEL_OPTION;

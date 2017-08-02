@@ -41,7 +41,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
-public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TMRCAStatistic extends TreeStatistic {
 
     public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean absoluteTime, boolean forParent)
             throws TreeUtils.MissingTaxonException {

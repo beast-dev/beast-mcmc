@@ -413,7 +413,11 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     }
 
     public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
+        if (getAlphaParameter() != null) {
+            return Collections.singletonList(CITATION);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     public final static Citation CITATION = new Citation(

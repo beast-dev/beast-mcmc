@@ -38,7 +38,7 @@ import java.util.Arrays;
  * @author Andrew Rambaut
  * @version $Id:$
  */
-public class NodeHeightsStatistic extends Statistic.Abstract implements TreeStatistic {
+public class NodeHeightsStatistic extends TreeStatistic {
 
     public NodeHeightsStatistic(String name, Tree tree) {
         this(name, tree, null);

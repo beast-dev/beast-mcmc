@@ -40,7 +40,7 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  */
-public class CompatibilityStatistic extends BooleanStatistic implements TreeStatistic {
+public class CompatibilityStatistic extends TreeStatistic implements BooleanStatistic {
 
     public CompatibilityStatistic(String name, Tree tree1, Tree tree2) throws TreeUtils.MissingTaxonException {
 
@@ -69,6 +69,13 @@ public class CompatibilityStatistic extends BooleanStatistic implements TreeStat
 
     public int getDimension() {
         return 1;
+    }
+
+    /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
     }
 
     /**

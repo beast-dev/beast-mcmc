@@ -94,7 +94,7 @@ public class ScaleData extends AbstractXMLObjectParser{
         return rules;
     }
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new XORRule(new ElementRule(MatrixParameterInterface.class), new ElementRule(CompoundParameter.class))};
+            new OrRule(new ElementRule(MatrixParameterInterface.class), new ElementRule(CompoundParameter.class))};
 
     @Override
     public String getParserDescription() {

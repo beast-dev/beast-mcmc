@@ -33,6 +33,8 @@ import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
 import dr.inference.operators.GibbsOperator;
 import dr.math.MathUtils;
+import dr.util.Transform;
+
 import java.util.Arrays;
 
 /**
@@ -51,15 +53,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     final double delta = 0.5;
     double deltaMax = 1000;
     int maxDepth = 100; // TODO Make an option for these.
-    final Likelihood likelihood;
+//    final Likelihood likelihood;
     OneNut nut = new OneNut();
     OneNut previousnut = new OneNut();
     double initialStepsize;
 
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                           Parameter parameter, double stepSize, int nSteps, double drawVariance) {
-        super(mode, weight, gradientProvider, parameter, null, stepSize, nSteps, drawVariance);
-        this.likelihood = gradientProvider.getLikelihood();
+                           Parameter parameter, double stepSize, int nSteps, Transform transform, double drawVariance) {
+        super(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, drawVariance);
     }
 
     @Override
@@ -69,7 +70,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     @Override
     public double doOperation(Likelihood likelihood) {
-
+       // System.err.println(dim);
         long m = getCount() + 1;
 
         if (m == 1) {
@@ -92,15 +93,18 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         previousnut.logstepSizeAve = nut.logstepSizeAve;
         previousnut.position = Arrays.copyOf(nut.position, dim);
 
-        leapFrogEngine.setParameter(nut.position); // zy: necessary step, since other leapfrogEngine step update the parameters .
+//        System.err.println("the count is " + m + "the log likelihood from gradientProvider " + gradientProvider.getLikelihood().getLogLikelihood());
+//        System.err.println("the count is " + m + "the log likelihood from likelihood " + likelihood.getLogLikelihood())
+//        System.err.println("the count is " + m + "the nut.position " + java.util.Arrays.toString(nut.position));
+        leapFrogEngine.setParameter(nut.position); // zy: necessary step, since other leapfrogEngine step update the parameters.
 
         return 233;
     }
 
-    @Override
-    public double doOperation() {
-        throw new IllegalStateException("Should not be called.");
-    }
+//    @Override
+//    public double doOperation() {
+//        throw new IllegalStateException("Should not be called.");
+//    }
 
     private OneNut nutsOneStep(long m, OneNut previousnut) {
 
@@ -117,7 +121,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         returnNut.position = Arrays.copyOf(previousnut.position, dim); //todo: write a copy constructor.
 
         double[] momentum = drawInitialMomentum(drawDistribution, dim);
-        double sliceU = MathUtils.nextDouble() * Math.exp(getJointProbability(likelihood, momentum));
+        double sliceU = MathUtils.nextDouble() * Math.exp(getJointProbability(gradientProvider, momentum));
         double[] positionMinus = Arrays.copyOf(previousnut.position, dim);
         double[] positionPlus = Arrays.copyOf(previousnut.position, dim);
         double[] momentumMinus = Arrays.copyOf(momentum, dim);
@@ -185,14 +189,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         if (j == 0) {
             BinaryTree tree = new BinaryTree();
-            double logjointprob1 = likelihood.getLogLikelihood() - getScaledDotProduct(initialMomentum, sigmaSquared);
+            double logjointprob1 = getJointProbability( gradientProvider, momentum);
 
             leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
             leapFrogEngine.updatePosition(position, momentum, direction * stepSize, sigmaSquared); //zy: after "updateposition"
             leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
 
 //
-            double logjointprob2 = likelihood.getLogLikelihood() - getScaledDotProduct(momentum, sigmaSquared);
+            double logjointprob2 = getJointProbability( gradientProvider, momentum);;
 
             tree.momentumMinus = Arrays.copyOf(momentum, dim);
             tree.positionMinus = Arrays.copyOf(position, dim);
@@ -252,13 +256,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);
         int count = 1;
 
-        double probBefore = Math.exp(getJointProbability(likelihood, momentum));
+        double probBefore = Math.exp(getJointProbability(gradientProvider, momentum));
 
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
         leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-        double probAfter = Math.exp(getJointProbability(likelihood, momentum));
+        double probAfter = Math.exp(getJointProbability(gradientProvider, momentum));
 
         double probRatio = probAfter / probBefore;
 
@@ -270,7 +274,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared); //zy: after "updateposition"
             leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-            probRatio = Math.exp(getJointProbability(likelihood, momentum)) / probBefore;
+            probRatio = Math.exp(getJointProbability(gradientProvider, momentum)) / probBefore;
 
             stepSize = Math.pow(2, a) * stepSize;
 
@@ -316,15 +320,15 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return result;
     }
 
-    private double getJointProbability(Likelihood likelihood, double[] momentum) {
+    private double getJointProbability(GradientWrtParameterProvider gradientProvider, double[] momentum) {
 
         double logjointprob;
 
-        if (likelihood != null && momentum != null) {
-            logjointprob = likelihood.getLogLikelihood() - getScaledDotProduct(momentum, sigmaSquared);
+        if (gradientProvider != null && momentum != null) {
+            logjointprob = gradientProvider.getLikelihood().getLogLikelihood() - getScaledDotProduct(momentum, sigmaSquared);
             return logjointprob;
 
-        } else if (likelihood == null) {
+        } else if (gradientProvider == null) {
             System.err.println("null in get joint prob (likelihood)!!");
             System.exit(-99);
             return -99;

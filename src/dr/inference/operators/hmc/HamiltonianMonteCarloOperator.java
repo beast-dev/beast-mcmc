@@ -26,6 +26,7 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Likelihood;
 import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
@@ -45,6 +46,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     protected double stepSize;
     protected final int nSteps;
     protected final NormalDistribution drawDistribution;
+    private Likelihood likelihood;//todo delete
 
     protected final LeapFrogEngine leapFrogEngine;
 
@@ -53,16 +55,17 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                                          double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
-        setTargetAcceptanceProbability(0.8); // Stan default
+        setTargetAcceptanceProbability(0.8); // Stan default todo check if correct
 
         this.gradientProvider = gradientProvider;
         this.stepSize = stepSize;
         this.nSteps = nSteps;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
-
         this.leapFrogEngine = (transform != null ? //zy: what transform?
                 new LeapFrogEngine.WithTransform(parameter, transform) :
                 new LeapFrogEngine.Default(parameter));
+        this.likelihood = gradientProvider.getLikelihood(); //todo delete
+
     }
 
     @Override
@@ -97,6 +100,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     @Override
     public double doOperation() {
+//        System.err.println("get the log likelihood" + gradientProvider.getLikelihood());
+//        System.err.println("get the log likelihood" + likelihood.getLogLikelihood());
+
         return leapFrog();
     }
 
@@ -114,6 +120,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         }
 
         final int dim = gradientProvider.getDimension();
+
         final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
 
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);

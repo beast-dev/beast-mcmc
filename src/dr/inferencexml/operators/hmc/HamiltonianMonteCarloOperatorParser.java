@@ -100,9 +100,14 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     stepSize, nSteps, drawVariance);
         } else {
             return new NoUTurnOperator(coercionMode, weight, derivative, parameter,
-                    stepSize, nSteps, drawVariance);
+                    stepSize, nSteps, transform,drawVariance);
         }
     }
+
+
+//    public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+//                           Parameter parameter, double stepSize, int nSteps, Transform transform, double drawVariance) {
+//        super(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, drawVariance);
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {

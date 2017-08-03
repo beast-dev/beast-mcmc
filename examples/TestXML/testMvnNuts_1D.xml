@@ -7,7 +7,7 @@
 
 	<multivariateNormalDistributionModel id="normal">
 		<meanParameter>
-   			<parameter id="mu" value="10"/>
+   			<parameter id="mu" value="101"/>
  		</meanParameter>
  		<precisionParameter>
  			<matrixParameter>
@@ -25,6 +25,7 @@
  		</data>
 	</multivariateDistributionLikelihood>
    
+<!-- 
 	<operators id="operators.rw">
 	
         <randomWalkOperator windowSize="0.75" weight="1">
@@ -32,6 +33,7 @@
         </randomWalkOperator>
 
 	</operators>  
+ -->
   
         
 	<operators id="operators.hmc">
@@ -46,7 +48,7 @@
 
 	</operators>
 
-	<mcmc id="mcmc.hmc" chainLength="100000" autoOptimize="false">
+	<mcmc id="mcmc.hmc" chainLength="20000" autoOptimize="false">
         <posterior>
             <likelihood id="likelihood.hmc">
 	            <distributionLikelihood idref="distribution"/>
@@ -57,7 +59,7 @@
             </likelihood>
         </posterior>
         <operators idref="operators.hmc"/>
-		<log logEvery="1000">
+		<log logEvery="1">
 			<column label="posterior" dp="4" width="12">
 				<likelihood idref="likelihood.hmc"/>                
 			</column>
@@ -77,6 +79,7 @@
 		</property>
 	</report>	
 	
+<!-- 
 	<mcmc id="mcmc.rw" chainLength="100000" autoOptimize="true">
         <posterior>
             <likelihood id="likelihood.rw">
@@ -101,14 +104,17 @@
 			<parameter idref="draw"/>        
 		</log>
 	</mcmc>
+ -->
 	 
+<!-- 
 	<report>
 		<property name="timer">
 			<object idref="mcmc.rw"/>
 		</property>
-	</report>			
+	</report>	
+ -->		
  
-	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>	
+<!-- 	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>	 -->
 
 	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>	
 </beast>

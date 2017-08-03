@@ -49,6 +49,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -321,12 +322,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
-            if (patternList instanceof UncertainSiteList) {
+            if (patternList instanceof UncertainSiteList) { // TODO Remove
                 useAmbiguities = true;
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+
+            if (patternList.areUncertain() && !useAmbiguities) {
+                logger.info("  WARNING: Uncertain site patterns will be ignored.");
+                System.exit(-1);
+            }
 
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
@@ -461,13 +467,31 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
-
+            
             if (patternList instanceof UncertainSiteList) {
                 ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
                 v += stateCount;
                 // TODO Add this functionality to SimpleSiteList to avoid if statement here
-            } else {
+            } else if (patternList.areUncertain()) {
 
+                double[] prob = patternList.getUncertainPatternState(sequenceIndex, i);
+                System.arraycopy(prob, 0, partials, 0, stateCount);
+                v += stateCount;
+
+
+                System.err.println("s=" + i + " t=" + sequenceIndex + " " + new Vector(prob));
+
+                double sum = 0;
+                for (double p : prob) {
+                    sum += p;
+                }
+                if (sum == 0.0) {
+                    System.err.println("Zero!");
+                    System.exit(-1);
+                }
+//                System.err.println(patternList.getClass().getCanonicalName());
+//                System.exit(-1);
+            } else {
                 int state = patternList.getPatternState(sequenceIndex, i);
                 stateSet = dataType.getStateSet(state);
 

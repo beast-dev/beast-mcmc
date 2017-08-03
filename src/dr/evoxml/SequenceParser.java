@@ -27,7 +27,7 @@ package dr.evoxml;
 
 import dr.evolution.datatype.*;
 import dr.evolution.sequence.Sequence;
-import dr.evolution.sequence.WeightedSequence;
+import dr.evolution.sequence.UncertainSequence;
 import dr.evolution.util.Taxon;
 import dr.xml.*;
 
@@ -90,8 +90,8 @@ public class SequenceParser extends AbstractXMLObjectParser {
         }
 
         Sequence sequence;
-        if (WeightedSequence.containsWeights(sequenceString)) {
-            sequence = new WeightedSequence();
+        if (UncertainSequence.containsWeights(sequenceString)) {
+            sequence = new UncertainSequence();
         } else {
             sequence = new Sequence();
         }

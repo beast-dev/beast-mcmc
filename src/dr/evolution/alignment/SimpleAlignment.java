@@ -32,6 +32,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.sequence.Sequences;
+import dr.evolution.sequence.UncertainSequence;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.NumberFormatter;
@@ -39,6 +40,7 @@ import dr.util.NumberFormatter;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -191,6 +193,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
 
+        System.err.println(sequence.getClass().getCanonicalName());
         super.addSequence(sequence);
         updateSiteCount();
     }
@@ -258,7 +261,33 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
     @Override
     public double[][] getUncertainSitePattern(int siteIndex) {
-        throw new UnsupportedOperationException("getUncertainSitePattern not implemented yet");
+        if (areUncertain())   {
+
+            double[][] pattern = new double[getSequenceCount()][];
+            for (int i = 0; i < getSequenceCount(); ++i) {
+
+                Sequence seq = getSequence(i);
+                if (siteIndex > seq.getLength()) {
+                    pattern[i] = new double[dataType.getStateCount()];
+                    Arrays.fill(pattern[i], 1.0);
+                } else {
+                    if (seq instanceof UncertainSequence) {
+                        System.err.println("here");
+                        pattern[i] = ((UncertainSequence) seq).getUncertainPattern(siteIndex);
+                    } else {
+                        pattern[i] = new double[dataType.getStateCount()];
+                        int[] states = dataType.getStates(seq.getState(siteIndex));
+                        for (int state : states) {
+                            pattern[i][state] = 1.0;
+                        }
+                    }
+                }
+            }
+
+            return pattern;
+        } else {
+            throw new UnsupportedOperationException("getUncertainSitePattern not implemented yet");
+        }
     }
 
     /**
@@ -465,7 +494,21 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
     @Override
     public boolean areUncertain() {
+
+        System.err.println("SA.aU");
+        boolean value = false;
+        for (Sequence seq : sequences) {
+            if (seq instanceof UncertainSequence) {
+                value = true;
+                return true;
+//                return true;
+            }
+        }
         return false;
+
+//        System.err.println("HERE??? " + getId() + " " + value);
+//        System.exit(-1);
+//        return value;
     }
 
     public void setReportCountStatistics(boolean report) {

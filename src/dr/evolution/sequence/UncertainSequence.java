@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
 /**
  * @author Marc A. Suchard
  */
-public class WeightedSequence extends Sequence {
+public class UncertainSequence extends Sequence {
 
     public static char openDelimitor = '{';
     public static char closeDelimitor = '}';
@@ -18,7 +18,7 @@ public class WeightedSequence extends Sequence {
     public char getChar(int index) {
 
         checkParsed();
-        WeightedCharacterList list = characters.get(index);
+        UncertainCharacterList list = characters.get(index);
         if (list.size() == 1) {
             return list.get(0).getCharacter();
         } else {
@@ -35,7 +35,7 @@ public class WeightedSequence extends Sequence {
     public int getState(int index) {
 
         checkParsed();
-        WeightedCharacterList list = characters.get(index);
+        UncertainCharacterList list = characters.get(index);
         if (list.size() == 1) {
             return dataType.getState(list.get(0).getCharacter());
         } else {
@@ -59,8 +59,8 @@ public class WeightedSequence extends Sequence {
             String validSet = new String(validChars);
 
             int index = 0;
-            for (WeightedCharacterList list : characters) {
-                for (WeightedCharacter testChar : list) {
+            for (UncertainCharacterList list : characters) {
+                for (UncertainCharacter testChar : list) {
                     if (!testChar.isValidCharacter(validSet)) {
                         return index;
                     }
@@ -84,7 +84,7 @@ public class WeightedSequence extends Sequence {
 
     private void parseSequenceString() {  // TODO Should throw exceptions if unable to parse information
 
-        characters = new ArrayList<WeightedCharacterList>();
+        characters = new ArrayList<UncertainCharacterList>();
 
         final String string = sequenceString.toString();
         int bufferIndex = 0;
@@ -97,7 +97,7 @@ public class WeightedSequence extends Sequence {
                 end = string.indexOf(closeDelimitor, bufferIndex);
             }
 
-            WeightedCharacterList list = new WeightedCharacterList();
+            UncertainCharacterList list = new UncertainCharacterList();
             if (end != -1) {
 
                 String subString = string.substring(bufferIndex + 1, end);
@@ -109,13 +109,13 @@ public class WeightedSequence extends Sequence {
                     String charString = traits.nextToken();
                     String weightString = traits.nextToken();
 
-                    list.add(new WeightedCharacter(charString.charAt(0), Double.valueOf(weightString)));
+                    list.add(new UncertainCharacter(charString.charAt(0), Double.valueOf(weightString)));
                 }
                 bufferIndex = end + 1;
 
             } else {
 
-                list.add(new WeightedCharacter(current));
+                list.add(new UncertainCharacter(current));
                 ++bufferIndex;
 
             }
@@ -124,16 +124,29 @@ public class WeightedSequence extends Sequence {
         isParsed = true;
     }
 
-    private class WeightedCharacter {
+    public double[] getUncertainPattern(int siteIndex) {
+        double[] pattern = new double[dataType.getStateCount()];
+        UncertainCharacterList list = characters.get(siteIndex);
+        for (UncertainCharacter uc : list) {
+            int[] states = dataType.getStates(dataType.getState(uc.getCharacter()));
+            for (int state : states) {
+                pattern[state] = uc.getWeight();
+            }
+        }
+
+        return pattern;
+    }
+
+    private class UncertainCharacter {
         char character;
         double weight;
 
-        WeightedCharacter(char character) {
+        UncertainCharacter(char character) {
             this.character = character;
             this.weight = 1.0;
         }
 
-        WeightedCharacter(char character, double weight) {
+        UncertainCharacter(char character, double weight) {
             this.character = character;
             this.weight = weight;
         }
@@ -151,9 +164,9 @@ public class WeightedSequence extends Sequence {
         }
     }
 
-    private class WeightedCharacterList extends ArrayList<WeightedCharacter> { }
+    private class UncertainCharacterList extends ArrayList<UncertainCharacter> { }
 
-    private List<WeightedCharacterList> characters;
+    private List<UncertainCharacterList> characters;
 
     private boolean isParsed = false;
 }

@@ -627,7 +627,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         if (files != null && files.length != 0) {
             try {
                 // Load the file as a table
-                dataTable = DataTable.Text.parse(new FileReader(files[0]));
+                dataTable = DataTable.Text.parse(new FileReader(files[0]), true, true, true, false);
 
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
@@ -663,16 +663,23 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         String[] columnLabels = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
 
-        // assume the first column contains the dates
+        if (columnLabels.length < 2) {
+            // only one column so leave it
+            return;
+        }
+
+        boolean hasColumnHeadings = options.taxonList.getTaxonIndex(columnLabels[0]) < 0;
+
+        // assume the second column contains the dates
         int dateColumn = 0;
 
-        if (columnLabels.length > 1) {
+        if (hasColumnHeadings && columnLabels.length > 1) {
             List<Integer> dateColumns = new ArrayList<Integer>();
 
             // see if there is a column labelled 'dates' or something
-            for (int i = 0; i < dataTable.getColumnCount(); i++) {
+            for (int i = 1; i < dataTable.getColumnCount(); i++) {
                 if (columnLabels[i].toLowerCase().contains("date")) {
-                    dateColumns.add(i);
+                    dateColumns.add(i - 1);
                 }
             }
 
@@ -684,10 +691,15 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         }
 
         Map<Taxon, String> taxonDateMap = new HashMap<Taxon, String>();
-        int matchCount = 0;
-        int mismatchCount = 0;
 
         String[] values = dataTable.getColumn(dateColumn);
+
+        if (!hasColumnHeadings) {
+            final int index = options.taxonList.getTaxonIndex(columnLabels[0]);
+            if (index >= 0) {
+                taxonDateMap.put(options.taxonList.getTaxon(index), columnLabels[dateColumn + 1]);
+            }
+        }
 
         int j = 0;
         for (final String taxonName : taxonNames) {
@@ -695,9 +707,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             final int index = options.taxonList.getTaxonIndex(taxonName);
             if (index >= 0) {
                 taxonDateMap.put(options.taxonList.getTaxon(index), values[j]);
-                matchCount ++;
-            } else {
-                mismatchCount ++;
             }
             j++;
         }

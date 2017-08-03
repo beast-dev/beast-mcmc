@@ -331,7 +331,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             if (patternList.areUncertain() && !useAmbiguities) {
                 logger.info("  WARNING: Uncertain site patterns will be ignored.");
-                System.exit(-1);
             }
 
             for (int i = 0; i < tipCount; i++) {
@@ -463,8 +462,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                    int nodeIndex) {
         double[] partials = new double[patternCount * stateCount * categoryCount];
 
-        boolean[] stateSet;
-
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
             
@@ -475,25 +472,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             } else if (patternList.areUncertain()) {
 
                 double[] prob = patternList.getUncertainPatternState(sequenceIndex, i);
-                System.arraycopy(prob, 0, partials, 0, stateCount);
+                System.arraycopy(prob, 0, partials, v, stateCount);
                 v += stateCount;
 
-
-                System.err.println("s=" + i + " t=" + sequenceIndex + " " + new Vector(prob));
-
-                double sum = 0;
-                for (double p : prob) {
-                    sum += p;
-                }
-                if (sum == 0.0) {
-                    System.err.println("Zero!");
-                    System.exit(-1);
-                }
-//                System.err.println(patternList.getClass().getCanonicalName());
-//                System.exit(-1);
             } else {
                 int state = patternList.getPatternState(sequenceIndex, i);
-                stateSet = dataType.getStateSet(state);
+                boolean[] stateSet = dataType.getStateSet(state);
 
                 for (int j = 0; j < stateCount; j++) {
                     if (stateSet[j]) {
@@ -561,18 +545,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         beagle.setTipStates(nodeIndex, states);
     }
-
-
-    //    public void setStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:setStates");
-//        beagle.setTipStates(tipIndex, states);
-//        makeDirty();
-//    }
-//
-//    public void getStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:getStates");
-//        beagle.getTipStates(tipIndex, states);
-//    }
 
     /**
      * Calculate the log likelihood of the current state.

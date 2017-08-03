@@ -193,7 +193,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
 
-        System.err.println(sequence.getClass().getCanonicalName());
         super.addSequence(sequence);
         updateSiteCount();
     }
@@ -272,7 +271,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
                     Arrays.fill(pattern[i], 1.0);
                 } else {
                     if (seq instanceof UncertainSequence) {
-                        System.err.println("here");
                         pattern[i] = ((UncertainSequence) seq).getUncertainPattern(siteIndex);
                     } else {
                         pattern[i] = new double[dataType.getStateCount()];
@@ -495,20 +493,12 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     @Override
     public boolean areUncertain() {
 
-        System.err.println("SA.aU");
-        boolean value = false;
         for (Sequence seq : sequences) {
             if (seq instanceof UncertainSequence) {
-                value = true;
                 return true;
-//                return true;
             }
         }
         return false;
-
-//        System.err.println("HERE??? " + getId() + " " + value);
-//        System.exit(-1);
-//        return value;
     }
 
     public void setReportCountStatistics(boolean report) {

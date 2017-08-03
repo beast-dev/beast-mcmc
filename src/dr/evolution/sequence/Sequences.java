@@ -220,7 +220,6 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
      * @param sequence the sequence add to the end of the sequence list
      */
     public void addSequence(Sequence sequence) {
-        System.err.println("  " + sequence.getClass().getCanonicalName());
         sequences.add(sequence);
     }
 

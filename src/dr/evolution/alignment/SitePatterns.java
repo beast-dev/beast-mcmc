@@ -285,16 +285,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         for (int i = from; i <= to; i += every) {
             int[] pattern = siteList.getSitePattern(i);
-
-//            System.err.println("For pattern #" + i + " uncertain? " + siteList.hasUncertainSites());
-            //}
             double[][] probs = null;
 
             if (uncertainSites) {
                 probs = siteList.getUncertainSitePattern(i);
             }
-
-//            System.err.println(new Vector(pattern));
 
             if (!strip || !isInvariant(pattern) ||
                     (!isGapped(pattern) &&

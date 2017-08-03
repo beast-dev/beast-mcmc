@@ -400,10 +400,6 @@ public class TreeTraitParserUtilities {
             // Standardize
             if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
 
-                System.err.println(traitParameter.getClass().getCanonicalName());
-
-                System.err.println("Yes, standardize");
-
                 StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter);
                 String message = st.doStandardization(false);
 

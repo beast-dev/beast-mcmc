@@ -110,7 +110,12 @@ public class DateGuesser implements Serializable {
 
                 if (taxonDateMap != null) {
                     String dateString = taxonDateMap.get(taxon);
+                    if (dateString == null) {
+                        continue;
+                    }
+
                     parseDate(taxon.getId(), dateString, values);
+
                 } else {
                     switch (guessType) {
                         case ORDER:

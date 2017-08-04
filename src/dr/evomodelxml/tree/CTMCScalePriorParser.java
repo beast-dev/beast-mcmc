@@ -50,7 +50,7 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        TaxonList taxa = (TreeModel) xo.getChild(TaxonList.class);
+        TaxonList taxa = (TaxonList) xo.getChild(TaxonList.class);
 
         Parameter ctmcScale = (Parameter) xo.getElementFirstChild(SCALEPARAMETER);
         boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
@@ -58,7 +58,9 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
         Logger.getLogger("dr.evolution").info("Creating CTMC Scale Reference Prior model.");
-
+        if (taxa != null) {
+            Logger.getLogger("dr.evolution").info("Acting on subtree of size " + taxa.getTaxonCount());
+        }
         return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel, taxa, reciprocal, substitutionModel, trial);
     }
 

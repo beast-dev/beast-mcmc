@@ -1266,36 +1266,35 @@
 				<uniformPrior lower="0.0" upper="1.0">
 					<parameter idref="frequencies"/>
 				</uniformPrior>
-				<gammaPrior shape="0.001" scale="1000.0" offset="0.0">
-					<parameter idref="human.rate"/>
-				</gammaPrior>
-				<gammaPrior shape="0.001" scale="1000.0" offset="0.0">
-					<parameter idref="swine.rate"/>
-				</gammaPrior>				
 
 				<ctmcScalePrior>
 					<ctmcScale>
-						<parameter idref="clock.rate"/>
+						<parameter idref="human.rate"/>
 					</ctmcScale>
-					<treeModel idref="treeModel"/>
 					<taxa idref="human"/>
+					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
-				
 				<ctmcScalePrior>
 					<ctmcScale>
 						<parameter idref="swine.rate"/>
 					</ctmcScale>
-					<treeModel idref="treeModel"/>
 					<taxa idref="swine"/>
+					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
-				
 				<ctmcScalePrior>
 					<ctmcScale>
 						<parameter idref="clock.rate"/>
 					</ctmcScale>
+					<taxa>
+						<taxa idref="taxa"/>
+						<exclude>
+							<taxa idref="human"/>
+							<taxa idref="swine"/>
+						</exclude>
+					</taxa>
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
-				
+
 				<oneOnXPrior>
 					<parameter idref="constant.popSize"/>
 				</oneOnXPrior>
@@ -1306,6 +1305,7 @@
 				<treeLikelihood idref="treeLikelihood"/>
 			</likelihood>
 		</posterior>
+		
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->

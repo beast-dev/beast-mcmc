@@ -64,7 +64,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.leapFrogEngine = (transform != null ? //zy: what transform?
                 new LeapFrogEngine.WithTransform(parameter, transform) :
                 new LeapFrogEngine.Default(parameter));
-        this.likelihood = gradientProvider.getLikelihood(); //todo delete
 
     }
 
@@ -100,8 +99,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     @Override
     public double doOperation() {
-//        System.err.println("get the log likelihood" + gradientProvider.getLikelihood());
-//        System.err.println("get the log likelihood" + likelihood.getLogLikelihood());
+        System.err.println(java.util.Arrays.toString(leapFrogEngine.getInitialPosition()));
+
+    System.err.println("get the log likelihood" + gradientProvider.getLikelihood().getLogLikelihood());
+    //System.err.println("get the log likelihood" + likelihood.getLogLikelihood());
 
         return leapFrog();
     }
@@ -126,14 +127,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);
         final double[] position = leapFrogEngine.getInitialPosition();
 
-        final double prop = getScaledDotProduct(momentum, sigmaSquared) + //zy: prop = density?
+        final double prop = getScaledDotProduct(momentum, sigmaSquared) +
                 leapFrogEngine.getParameterLogJacobian();
 
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-//        int randomSize = 2;
-//        int nSteps = Math.max(this.nSteps + MathUtils.nextInt(2 * randomSize) - randomSize, 1);
 
         if (DEBUG) {
             System.err.println("nSteps = " + nSteps);
@@ -147,7 +146,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 leapFrogEngine.updateMomentum(position, momentum,
                         gradientProvider.getGradientLogDensity(), stepSize);
             }
-        } // end of loop over steps
+        }
 
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);

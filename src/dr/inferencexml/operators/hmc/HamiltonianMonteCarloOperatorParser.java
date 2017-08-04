@@ -99,8 +99,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
                     stepSize, nSteps, drawVariance);
         } else {
-            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,
-                    stepSize, nSteps, transform,drawVariance);
+            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
+                    stepSize, nSteps, drawVariance);
         }
     }
 

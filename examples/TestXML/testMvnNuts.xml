@@ -55,7 +55,7 @@
 
 	</operators>
 
-	<mcmc id="mcmc.hmc" chainLength="1000" autoOptimize="false">
+	<mcmc id="mcmc.hmc" chainLength="10000" autoOptimize="false">
         <posterior>
             <likelihood id="likelihood.hmc">
 	            <distributionLikelihood idref="distribution"/>

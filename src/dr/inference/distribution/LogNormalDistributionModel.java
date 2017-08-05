@@ -51,40 +51,33 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         MEAN_STDEV
     }
 
-    //if mean is not in real space then exponentiate to get value in the lognormal space
-    boolean isMeanInRealSpace;
-    boolean isStdevInRealSpace;
 
     /**
      * Constructor.
      * This is the old constructor left for backwards compatibility
      */
-    public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace, boolean stdevInRealSpace) {
+    public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean parametersInRealSpace) {
 
         super(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
 
-        isMeanInRealSpace = meanInRealSpace;
-        isStdevInRealSpace = stdevInRealSpace;
-
         this.offset = offset;
 
-        if (isMeanInRealSpace) {
+        if (parametersInRealSpace) {
             this.meanParameter = meanParameter;
             this.muParameter = null;
             addVariable(this.meanParameter);
             this.meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        } else {
-            this.muParameter = meanParameter;
-            this.meanParameter = null;
-            addVariable(this.muParameter);
-            this.muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        }
-        if (stdevInRealSpace) {
+
             this.stdevParameter = stdevParameter;
             this.sigmaParameter = null;
             addVariable(this.stdevParameter);
             this.stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         } else {
+            this.muParameter = meanParameter;
+            this.meanParameter = null;
+            addVariable(this.muParameter);
+            this.muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+
             this.sigmaParameter = stdevParameter;
             this.stdevParameter = null;
             addVariable(this.sigmaParameter);
@@ -139,31 +132,26 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         if (this.muParameter != null) {
             addVariable(this.muParameter);
             this.muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-            isMeanInRealSpace = false;
         }
 
         if (meanParameter != null) {
             addVariable(this.meanParameter);
             this.meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isMeanInRealSpace = true;
         }
 
         if (sigmaParameter != null) {
             addVariable(this.sigmaParameter);
             this.sigmaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isStdevInRealSpace = false;
         }
 
         if (stdevParameter != null) {
             addVariable(this.stdevParameter);
             this.stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isStdevInRealSpace = true;
         }
 
         if (precisionParameter != null) {
             addVariable(this.precisionParameter);
             this.precisionParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isStdevInRealSpace = false;
         }
     }
 

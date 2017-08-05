@@ -46,7 +46,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     protected double stepSize;
     protected final int nSteps;
     protected final NormalDistribution drawDistribution;
-    private Likelihood likelihood;//todo delete
 
     protected final LeapFrogEngine leapFrogEngine;
 
@@ -55,13 +54,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                                          double stepSize, int nSteps, double drawVariance) {
         super(mode);
         setWeight(weight);
-        setTargetAcceptanceProbability(0.8); // Stan default todo check if correct
+        setTargetAcceptanceProbability(0.8); // Stan default
 
         this.gradientProvider = gradientProvider;
         this.stepSize = stepSize;
         this.nSteps = nSteps;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
-        this.leapFrogEngine = (transform != null ? //zy: what transform?
+        this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform) :
                 new LeapFrogEngine.Default(parameter));
 
@@ -99,15 +98,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     @Override
     public double doOperation() {
-        System.err.println(java.util.Arrays.toString(leapFrogEngine.getInitialPosition()));
-
-    System.err.println("get the log likelihood" + gradientProvider.getLikelihood().getLogLikelihood());
-    //System.err.println("get the log likelihood" + likelihood.getLogLikelihood());
-
         return leapFrog();
     }
 
-    private long count = 0; //zy: what is count?
+    private long count = 0;
 
     private static final boolean DEBUG = false;
 
@@ -230,8 +224,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     position[j] += functionalStepSize * momentum[j] / sigmaSquared;
                 }
 
-                setParameter(position); // Write back into BEAST model
+                setParameter(position); // Write back into BEAST model TODO DELETE COMMENT
             }
+
 
             public void setParameter(double[] position) {
 

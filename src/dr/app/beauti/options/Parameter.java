@@ -27,6 +27,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
+import dr.evolution.util.Taxa;
 import dr.math.distributions.Distribution;
 
 import java.io.Serializable;
@@ -78,7 +79,10 @@ public class Parameter implements Serializable {
 
     public final boolean isPriorFixed;
     public PriorType priorType;
+
     private Parameter parent;
+
+    private Taxa taxonSet = null;
 
     public double getInitial() {
         return initial;
@@ -128,6 +132,8 @@ public class Parameter implements Serializable {
         private boolean isCached = false;
 
         private PartitionOptions options = null;
+
+        private Taxa taxonSet = null;
 
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private boolean isPriorFixed = false;
@@ -236,6 +242,10 @@ public class Parameter implements Serializable {
             return this;
         }
 
+        public Builder taxonSet(Taxa taxonSet) {
+            this.taxonSet = taxonSet;
+            return this;
+        }
         public Builder prior(PriorType priorType) {
             this.priorType = priorType;
             return this;
@@ -384,6 +394,8 @@ public class Parameter implements Serializable {
         isPriorFixed = builder.isPriorFixed;
         isAdaptiveMultivariateCompatible = builder.isAdaptiveMultivariateCompatible;
 
+        taxonSet = builder.taxonSet;
+        
 //        upper = builder.upper;
 //        lower = builder.lower;
         isTruncated = builder.isTruncated;
@@ -474,6 +486,15 @@ public class Parameter implements Serializable {
         this.options = options;
     }
 
+    public Taxa getTaxonSet() {
+        return taxonSet;
+    }
+
+    public void setTaxonSet(Taxa taxonSet) {
+        this.taxonSet = taxonSet;
+    }
+
+
     public void setPriorEdited(boolean priorEdited) {
         this.priorEdited = priorEdited;
     }
@@ -543,7 +564,7 @@ public class Parameter implements Serializable {
         }
     }
 
-    public boolean isMeanInRealSpace() {
+    public boolean isInRealSpace() {
         return meanInRealSpace;
     }
 

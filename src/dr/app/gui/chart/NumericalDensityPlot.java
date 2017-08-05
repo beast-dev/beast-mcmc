@@ -32,6 +32,7 @@ import dr.util.FrequencyDistribution;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
+import java.util.*;
 
 public class NumericalDensityPlot extends FrequencyPlot {
 
@@ -49,25 +50,15 @@ public class NumericalDensityPlot extends FrequencyPlot {
 
     boolean solid = true;
 
-    public NumericalDensityPlot(Variate.D data, int minimumBinCount) {
+    public NumericalDensityPlot(java.util.List<Double> data, int minimumBinCount) {
         super(data, minimumBinCount);
         this.minimumBinCount = minimumBinCount;
     }
 
-//    public NumericalDensityPlot(double[] data, int minimumBinCount) {
-//        super(data, minimumBinCount);
-//        this.minimumBinCount = minimumBinCount;
-//    }
-
-    public NumericalDensityPlot(java.util.List<Double> data, int minimumBinCount, TraceDistribution traceD) {
-        super(data, minimumBinCount, traceD);
+    public NumericalDensityPlot(Variate.D data, int minimumBinCount) {
+        super(data, minimumBinCount);
         this.minimumBinCount = minimumBinCount;
     }
-
-//    public NumericalDensityPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD) {
-//        super(data, minimumBinCount, traceD);
-//        this.minimumBinCount = minimumBinCount;
-//    }
 
     public void setRelativeDensity(boolean relative) {
         relativeDensity = relative;

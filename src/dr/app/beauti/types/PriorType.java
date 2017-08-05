@@ -191,7 +191,7 @@ public enum PriorType {
                 break;
             case LOGNORMAL_PRIOR:
                 buffer.append("LogNormal [");
-                if (parameter.isMeanInRealSpace()) buffer.append("R");
+                if (parameter.isInRealSpace()) buffer.append("R");
                 buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
                 buffer.append(", ");
                 buffer.append(NumberUtil.formatDecimal(parameter.stdev, 10, 6));

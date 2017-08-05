@@ -59,7 +59,7 @@ public class PriorParsers {
     public static final String STDEV = "stdev";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
     public static final String MU = "mu";
-    public static final String SIGMA = "stdev";
+    public static final String SIGMA = "sigma";
     public static final String SHAPE = "shape";
     public static final String SHAPEB = "shapeB";
     public static final String SCALE = "scale";
@@ -513,26 +513,45 @@ public class PriorParsers {
 
             final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
 
-            if (xo.hasAttribute(MEAN)) {
+            if (xo.hasAttribute(MEAN_IN_REAL_SPACE)) {
+                // if the meanInRealSpace attribute is given then respect the old
+                // parser choices (i.e., specify mean and stdev but change their
+                // meaning to mu and sigma).
+
                 final double mean = xo.getDoubleAttribute(MEAN);
-                if (!xo.hasAttribute(STDEV)) {
-                    throw new XMLParseException("Lognormal should be specified either with mean and stdev or mu and sigma.");
-                }
                 final double stdev = xo.getDoubleAttribute(STDEV);
-                if (mean <= 0) {
-                    throw new XMLParseException("If specified with a mean in real space, the value should be positive.");
-                }
-                mu = Math.log(mean) - 0.5 * stdev * stdev;
-                sigma = Math.sqrt(Math.log(1 + (stdev * stdev) / (mean * mean)));
-            } else {
+
                 if (meanInRealSpace) {
-                    throw new XMLParseException("Lognormal with 'meanInRealSpace' should be specified with mean and stdev.");
+                    mu = Math.log(mean / Math.sqrt(1 + (stdev * stdev) / (mean * mean)));
+                } else {
+                    mu = mean;
                 }
-                mu = xo.getDoubleAttribute(MU);
-                if (!xo.hasAttribute(SIGMA)) {
-                    throw new XMLParseException("Lognormal should be specified either with mean and stdev or mu and sigma.");
+
+                // in the previous version, the stdev (or 'Log(stdev)') parameter is sigma.
+                sigma = stdev;
+            } else {
+                // decide parameterization by whether mean, stdev or mu, sigma are given.
+                if (xo.hasAttribute(MEAN)) {
+                    final double mean = xo.getDoubleAttribute(MEAN);
+                    if (!xo.hasAttribute(STDEV)) {
+                        throw new XMLParseException("Lognormal should be specified either with mean and stdev or mu and sigma.");
+                    }
+                    final double stdev = xo.getDoubleAttribute(STDEV);
+                    if (mean <= 0) {
+                        throw new XMLParseException("If specified with a mean in real space, the value should be positive.");
+                    }
+                    mu = Math.log(mean / Math.sqrt(1 + (stdev * stdev) / (mean * mean)));
+                    sigma = Math.sqrt(Math.log(1 + (stdev * stdev) / (mean * mean)));
+                } else {
+                    if (meanInRealSpace) {
+                        throw new XMLParseException("Lognormal with 'meanInRealSpace' should be specified with mean and stdev.");
+                    }
+                    mu = xo.getDoubleAttribute(MU);
+                    if (!xo.hasAttribute(SIGMA)) {
+                        throw new XMLParseException("Lognormal should be specified either with mean and stdev or mu and sigma.");
+                    }
+                    sigma = xo.getDoubleAttribute(SIGMA);
                 }
-                sigma = xo.getDoubleAttribute(STDEV);
             }
             final double offset = xo.getAttribute(OFFSET, 0.0);
 

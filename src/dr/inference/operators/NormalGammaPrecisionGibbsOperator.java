@@ -88,7 +88,6 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
      * Called by operate(), does the actual operation.
      *
      * @return the hastings ratio
-     * @throws OperatorFailedException if operator fails and should be rejected
      */
     public double doOperation() {
 

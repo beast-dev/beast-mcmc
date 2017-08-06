@@ -79,7 +79,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     GuessDatesAction guessDatesAction = new GuessDatesAction();
     ImportDatesAction importDatesAction = new ImportDatesAction();
 
-    SetPrecisionAction setPrecisionAction = new SetPrecisionAction();
+    SetUncertaintyAction setUncertaintyAction = new SetUncertaintyAction();
 
     JCheckBox usingTipDates = new JCheckBox("Use tip dates");
     JCheckBox specifyOriginDate = new JCheckBox("Specify origin date:");
@@ -183,7 +183,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-        button = new JButton(setPrecisionAction);
+        button = new JButton(setUncertaintyAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
@@ -277,7 +277,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         guessDatesAction.setEnabled(false);
         importDatesAction.setEnabled(false);
         setDatesAction.setEnabled(false);
-        setPrecisionAction.setEnabled(false);
+        setUncertaintyAction.setEnabled(false);
         directionCombo.setEnabled(false);
         unitsLabel.setEnabled(false);
         unitsCombo.setEnabled(false);
@@ -298,7 +298,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 guessDatesAction.setEnabled(enabled);
                 importDatesAction.setEnabled(enabled);
                 setDatesAction.setEnabled(enabled);
-                setPrecisionAction.setEnabled(enabled);
+                setUncertaintyAction.setEnabled(enabled);
                 unitsLabel.setEnabled(enabled);
                 unitsCombo.setEnabled(enabled);
                 directionCombo.setEnabled(enabled);
@@ -810,15 +810,15 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public class SetPrecisionAction extends AbstractAction {
+    public class SetUncertaintyAction extends AbstractAction {
         /**
          *
          */
         private static final long serialVersionUID = -7281309694753868639L;
 
-        public SetPrecisionAction() {
-            super("Set Precision");
-            setToolTipText("Use this tool to set precision values for the selected taxa");
+        public SetUncertaintyAction() {
+            super("Set Uncertainty");
+            setToolTipText("Use this tool to set uncertainty in the date for the selected taxa");
         }
 
         public void actionPerformed(ActionEvent ae) {

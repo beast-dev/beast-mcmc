@@ -574,9 +574,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         int[] selRows = dataTable.getSelectedRows();
 
         if (selRows.length > 0) {
-            guessDatesDialog.setDescription("Guess date values for selected taxa");
+            guessDatesDialog.setDescription("Parse date values for selected taxa");
         } else {
-            guessDatesDialog.setDescription("Guess date values for all taxa");
+            guessDatesDialog.setDescription("Parse date values for all taxa");
         }
 
 
@@ -607,7 +607,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         if (warningMessage != null) {
             JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-                    "Error guessing dates",
+                    "Error parsing dates",
                     JOptionPane.WARNING_MESSAGE);
         }
 
@@ -734,7 +734,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         if (warningMessage != null) {
             JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-                    "Error guessing dates",
+                    "Error extacting dates",
                     JOptionPane.WARNING_MESSAGE);
         }
 
@@ -788,8 +788,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         private static final long serialVersionUID = 8514706149822252033L;
 
         public GuessDatesAction() {
-            super("Guess Dates");
-            setToolTipText("Use this tool to guess the sampling dates from the taxon labels");
+            super("Parse Dates");
+            setToolTipText("Use this tool to parse the sampling dates from the taxon labels");
         }
 
         public void actionPerformed(ActionEvent ae) {

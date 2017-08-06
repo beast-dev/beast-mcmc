@@ -455,7 +455,7 @@ public class Parameter implements Serializable {
 
     public String getDescription() {
         if (taxaId != null && options != null) {
-            return description + " on tree " + options.getName();
+            return description + " " + taxaId + " on tree " + options.getName();
         }
         return description;
     }

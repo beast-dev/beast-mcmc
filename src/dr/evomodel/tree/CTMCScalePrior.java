@@ -146,7 +146,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
         if (trial) return calculateTrialLikelihood();
 
         double totalTreeTime = getTreeLength();
-        if (reciprocal) {
+            if (reciprocal) {
             totalTreeTime = 1.0 / totalTreeTime;
         }
         if (substitutionModel != null) {
@@ -170,13 +170,14 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     }
 
     private double getTreeLength() {
-        if (!treeLengthKnown) {
+        //if (!treeLengthKnown) {
             if (taxa == null) {
                 treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
             } else {
                 treeLength = TreeUtils.getSubTreeLength(treeModel, taxa);
             }
-        }
+        //    treeLengthKnown = true;
+        //}
         
         return treeLength;
     }

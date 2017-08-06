@@ -155,7 +155,7 @@ public class DateGuesser implements Serializable {
             // @todo if any taxa aren't set then return warning
 
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            date.setPrecision(values[1]);
+            date.setUncertainty(values[1]);
             taxon.setAttribute("date", date);
         }
     }

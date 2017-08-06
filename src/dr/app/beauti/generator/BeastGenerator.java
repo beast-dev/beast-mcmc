@@ -28,7 +28,6 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -43,8 +42,6 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
-import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
-import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
@@ -52,7 +49,6 @@ import dr.evoxml.TaxonParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 import dr.util.Pair;
 import dr.util.Version;
@@ -810,12 +806,12 @@ public class BeastGenerator extends Generator {
             dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
 
             Attribute[] attributes;
-            if (date.getPrecision() > 0.0) {
+            if (date.getUncertainty() > 0.0) {
                 attributes = new Attribute[] {
                         new Attribute.Default<Double>(DateParser.VALUE, date.getTimeValue()),
                         new Attribute.Default<String>(DateParser.DIRECTION, date.isBackwards() ? DateParser.BACKWARDS : DateParser.FORWARDS),
                         new Attribute.Default<String>(DateParser.UNITS, Units.Utils.getDefaultUnitName(options.units)),
-                        new Attribute.Default<Double>(DateParser.PRECISION, date.getPrecision())
+                        new Attribute.Default<Double>(DateParser.UNCERTAINTY, date.getUncertainty())
                 };
             } else {
                 attributes = new Attribute[] {

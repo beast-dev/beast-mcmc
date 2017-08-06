@@ -29,14 +29,11 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentOptions;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TipDateSamplingType;
-import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
-import dr.app.util.Utils;
 import dr.evolution.util.*;
 import dr.evolution.util.Date;
 import dr.evoxml.util.DateUnitsType;
@@ -348,7 +345,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
             Date newDate = createDate(d, units, backwards, 0.0);
 
-            newDate.setPrecision(date.getPrecision());
+            newDate.setUncertainty(date.getUncertainty());
 
             options.taxonList.getTaxon(i).setDate(newDate);
         }
@@ -537,7 +534,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
             if (selRows.length > 0) {
                 for (int row : selRows) {
-                    options.taxonList.getTaxon(row).getDate().setPrecision(value);
+                    options.taxonList.getTaxon(row).getDate().setUncertainty(value);
                 }
             } else {
                 for (Taxon taxon : options.taxonList) {
@@ -870,7 +867,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Date", "Precision", "Height"};
+        String[] columnNames = {"Name", "Date", "Uncertainty", "Height"};
 
         public DataTableModel() {
         }
@@ -900,7 +897,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                     }
                 case 2:
                     if (date != null) {
-                        return date.getPrecision();
+                        return date.getUncertainty();
                     } else {
                         return "-";
                     }
@@ -929,7 +926,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 if (date != null) {
                     double d = (Double) aValue;
                     if (d >= 0.0) {
-                        date.setPrecision(d);
+                        date.setUncertainty(d);
                     }
                 }
             }

@@ -392,8 +392,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     public void setOptions(BeautiOptions options) {
         this.options = options;
 
-        setupTable();
-
         unitsCombo.setSelectedItem(options.datesUnits);
         directionCombo.setSelectedItem(options.datesDirection);
 
@@ -413,6 +411,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         if (item != null) {
             tipDateTaxonSetCombo.setSelectedItem(item);
         }
+
+        setupTable();
     }
 
     private void setupTable() {

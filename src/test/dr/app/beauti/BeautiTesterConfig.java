@@ -353,7 +353,7 @@ public class BeautiTesterConfig {
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
 
-                        importer.parseAssumptionsBlock(charSets);
+                        importer.parseAssumptionsBlock(charSets, null);
 
                     } else {
                         // Ignore the block..

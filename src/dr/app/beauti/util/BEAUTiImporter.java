@@ -163,7 +163,7 @@ public class BEAUTiImporter {
                         name += count;
                     }
                 }
-                setData(name, taxa, alignment, null, null, null, null);
+                setData(name, taxa, alignment, null, null, null, null, null);
 
                 count++;
             }
@@ -196,6 +196,7 @@ public class BEAUTiImporter {
         List<Tree> trees = new ArrayList<Tree>();
         PartitionSubstitutionModel model = null;
         List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
+        List<NexusApplicationImporter.TaxSet> taxSets = new ArrayList<NexusApplicationImporter.TaxSet>();
 
         try {
             FileReader reader = new FileReader(file);
@@ -274,7 +275,7 @@ public class BEAUTiImporter {
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK || block == NexusApplicationImporter.SETS_BLOCK) {
 
-                        importer.parseAssumptionsBlock(charSets);
+                        importer.parseAssumptionsBlock(charSets, taxSets);
 
                     } else {
                         // Ignore the block..
@@ -300,7 +301,7 @@ public class BEAUTiImporter {
 //            throw new Exception(e.getMessage());
         }
 
-        setData(file.getName(), taxa, alignment, charSets, model, null, trees);
+        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees);
     }
 
     // FASTA
@@ -315,7 +316,7 @@ public class BEAUTiImporter {
 
             reader.close();
 
-            setData(file.getName(), alignment, alignment, null, null, null, null);
+            setData(file.getName(), alignment, alignment, null, null, null, null, null);
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
         } catch (IOException e) {
@@ -398,7 +399,7 @@ public class BEAUTiImporter {
                 j++;
             }
         }
-        setData(file.getName(), taxa, null, null, null, importedTraits, null);
+        setData(file.getName(), taxa, null, null, null, null, importedTraits, null);
     }
 
     public boolean importPredictors(final File file, final TraitData trait) throws Exception {
@@ -426,7 +427,7 @@ public class BEAUTiImporter {
                     "Mismatched states", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        
+
         for (String name : stateNamesRow) {
             if (!states.contains(name)) {
                 JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
@@ -545,7 +546,9 @@ public class BEAUTiImporter {
 
     // for Alignment
     private void setData(String fileName, TaxonList taxonList, Alignment alignment,
-                         List<NexusApplicationImporter.CharSet> charSets, PartitionSubstitutionModel model,
+                         List<NexusApplicationImporter.CharSet> charSets,
+                         List<NexusApplicationImporter.TaxSet> taxSets,
+                         PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
@@ -556,6 +559,8 @@ public class BEAUTiImporter {
         addTaxonList(taxonList);
 
         addAlignment(alignment, charSets, model, fileName, fileNameStem);
+
+        addTaxonSets(taxonList, taxSets);
 
         addTraits(traits);
 
@@ -619,10 +624,28 @@ public class BEAUTiImporter {
                 taxonList.getTaxon(i).setAttribute("date", date);
             }
         }
-
     }
 
-    private void addAlignment(Alignment alignment, List<NexusApplicationImporter.CharSet> charSets,
+    private void addTaxonSets(TaxonList taxonList, List<NexusApplicationImporter.TaxSet> taxSets) throws ImportException {
+        if (taxSets != null) {
+            for (NexusApplicationImporter.TaxSet taxSet : taxSets) {
+                Taxa taxa = new Taxa();
+                for (NexusApplicationImporter.CharSetBlock block : taxSet.getBlocks()) {
+                    for (int i = block.getFromSite(); i <= block.getToSite(); i++) {
+                        taxa.addTaxon(taxonList.getTaxon(i - 1));
+                    }
+                }
+                options.taxonSets.add(taxa);
+                options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+                options.taxonSetsMono.put(taxa, false);
+                options.taxonSetsIncludeStem.put(taxa, false);
+                options.taxonSetsHeights.put(taxa, 0.0);
+            }
+        }
+    }
+
+    private void addAlignment(Alignment alignment,
+                              List<NexusApplicationImporter.CharSet> charSets,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
         if (alignment != null) {

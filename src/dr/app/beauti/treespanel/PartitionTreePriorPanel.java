@@ -69,7 +69,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
             TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());
 
-    private JComboBox skyGridPointsCombo = new JComboBox(new Integer[]{10, 20, 50, 100});
+    private WholeNumberField skyGridPointsField = new WholeNumberField(2, Integer.MAX_VALUE);
+//    private JComboBox skyGridPointsCombo = new JComboBox(new Integer[]{10, 20, 50, 100});
     private RealNumberField skyGridInterval = new RealNumberField(0.0, Double.MAX_VALUE);
 
 //    private JComboBox skyGridCombo = new JComboBox(EnumSet.range())
@@ -163,11 +164,16 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         });
 
-        PanelUtils.setupComponent(skyGridPointsCombo);
-        skyGridPointsCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent itemEvent) {
-                partitionTreePrior.setSkyGridCount((Integer) skyGridPointsCombo.getSelectedItem());
-                parent.fireTreePriorsChanged();
+//        PanelUtils.setupComponent(skyGridPointsCombo);
+//        skyGridPointsCombo.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent itemEvent) {
+//                partitionTreePrior.setSkyGridCount((Integer) skyGridPointsCombo.getSelectedItem());
+//                parent.fireTreePriorsChanged();
+//            }
+//        });
+        PanelUtils.setupComponent(skyGridPointsField);
+        skyGridPointsField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
             }
         });
 
@@ -285,8 +291,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                     break;
 
                 case SKYGRID:
+                    skyGridPointsField.setColumns(6);
+                    addComponentWithLabel("# parameters ( = # grid-points + 1):", skyGridPointsField);
                     skyGridInterval.setColumns(6);
-                    addComponentWithLabel("# parameters ( = # grid-points + 1):", skyGridPointsCombo);
                     addComponentWithLabel("Time at last point:", skyGridInterval);
                     addLabel("It is advisable to set this cut-off time commensurate with the expected root height for optimal model interpretability.");
                     treesPanel.linkTreePriorCheck.setSelected(true);
@@ -375,7 +382,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 
-        skyGridPointsCombo.setSelectedItem(partitionTreePrior.getSkyGridCount());
+//        skyGridPointsCombo.setSelectedItem(partitionTreePrior.getSkyGridCount());
+        skyGridPointsField.setValue(partitionTreePrior.getSkyGridCount());
 
         double initialCutOff = partitionTreePrior.getOptions().getPartitionTreeModels().get(0).getInitialRootHeight();
         final double arbitraryScalar = 1.0;
@@ -427,6 +435,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             Double interval = skyGridInterval.getValue();
             // TODO is != null check necessary like above?
             partitionTreePrior.setSkyGridInterval(interval);
+            partitionTreePrior.setSkyGridCount(skyGridPointsField.getValue());
         } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH) {
 //            Double samplingProportion = samplingProportionField.getValue();
 //            if (samplingProportion != null) {

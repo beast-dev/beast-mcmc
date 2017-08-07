@@ -167,8 +167,8 @@ public class DateParser extends AbstractXMLObjectParser {
             new StringAttributeRule(UNITS, "The units of the timescale", new String[]{YEARS, MONTHS, DAYS}, true),
             new StringAttributeRule(DIRECTION, "The direction of the timescale", new String[]{FORWARDS, BACKWARDS}, true),
             new XORRule(
-                    AttributeRule.newDoubleRule(UNCERTAINTY, true, "The uncertainty to which the date is specified"),
-                    AttributeRule.newDoubleRule(PRECISION, true, "The uncertainty to which the date is specified")
+                    AttributeRule.newDoubleRule(UNCERTAINTY, false, "The uncertainty to which the date is specified"),
+                    AttributeRule.newDoubleRule(PRECISION, false, "The uncertainty to which the date is specified"), true
             )
     };
 

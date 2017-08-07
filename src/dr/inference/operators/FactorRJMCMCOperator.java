@@ -474,9 +474,4 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                 cutoffs.setParameterValue(i, storedCutoffs.getParameterValue(i));
         }
     }
-
-    @Override
-    public int getStepCount() {
-        return 0;
-    }
 }

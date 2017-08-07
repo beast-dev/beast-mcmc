@@ -33,7 +33,6 @@ import jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Locale;
@@ -46,7 +45,7 @@ import java.util.Set;
  * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class BeautiApp extends MultiDocApplication {
-    private final static Version version = new BeastVersion();
+    public final static Version VERSION = new BeastVersion();
 
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
@@ -64,9 +63,9 @@ public class BeautiApp extends MultiDocApplication {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAUti " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAUti " + VERSION.getVersionString() + ", " + VERSION.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Utility", 60);
-        for (String creditLine : version.getCredits()) {
+        for (String creditLine : VERSION.getCredits()) {
             centreLine(creditLine, 60);
         }
         System.out.println();
@@ -238,22 +237,22 @@ public class BeautiApp extends MultiDocApplication {
                 }
 
                 final String nameString = "BEAUti";
-                final String versionString = version.getVersionString();
+                final String versionString = VERSION.getVersionString();
 
                 String aboutString = "<html>" +
                         "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
                         "<center>" +
                         "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
-                        "Version " + versionString + ", " + version.getDateString() + "</p>" +
+                        "Version " + versionString + ", " + VERSION.getDateString() + "</p>" +
                         "<p>by Alexei J. Drummond, Andrew Rambaut, Marc A. Suchard and Walter Xie</p></div>" +
                         "<hr><div style=\"font-size:11;\">Part of the BEAST package:" +
-                        version.getHTMLCredits() +
+                        VERSION.getHTMLCredits() +
                         "</div></center></div></html>";
 
                 String websiteURLString = "http://beast.community/BEAUti";
                 String helpURLString = "http://beast.community/BEAUti";
 
-                System.setProperty("BEAST & BEAUTi Version", version.getVersion());
+                System.setProperty("BEAST & BEAUTi Version", VERSION.getVersion());
 
                 BeautiApp app = new BeautiApp(nameString, aboutString, icon,
                         websiteURLString, helpURLString);

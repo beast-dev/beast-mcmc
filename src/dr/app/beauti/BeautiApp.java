@@ -25,7 +25,6 @@
 
 package dr.app.beauti;
 
-import ch.randelshofer.quaqua.util.Methods;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.OSType;
@@ -200,10 +199,7 @@ public class BeautiApp extends MultiDocApplication {
 //                                }
 
                             //set the Quaqua Look and Feel in the UIManager
-                            Class quaquaManagerClass = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-                            String lafName =  (String) Methods.invokeStatic(quaquaManagerClass, "getLookAndFeelClassName");
-
-                            UIManager.setLookAndFeel(lafName );
+                            UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
                             lafLoaded = true;
                         } catch (Exception e) {
                         }

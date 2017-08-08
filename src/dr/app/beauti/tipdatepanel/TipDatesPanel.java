@@ -165,6 +165,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
+        toolBar1.setBorder(BorderFactory.createEmptyBorder());
 
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         JButton button = new JButton(guessDatesAction);
@@ -196,6 +197,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar3 = new JToolBar();
         toolBar3.setFloatable(false);
         toolBar3.setOpaque(false);
+        toolBar3.setBorder(BorderFactory.createEmptyBorder());
 
         toolBar3.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
@@ -217,6 +219,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar2 = new JToolBar();
         toolBar2.setFloatable(false);
         toolBar2.setOpaque(false);
+        toolBar2.setBorder(BorderFactory.createEmptyBorder());
 
         toolBar2.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 

@@ -47,6 +47,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -108,22 +109,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         TableColumn col = dataTable.getColumnModel().getColumn(5);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
-
-//        col = dataTable.getColumnModel().getColumn(5);
-//        comboBoxRenderer = new ComboBoxRenderer();
-//        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-//        col.setCellRenderer(comboBoxRenderer);
 
         col = dataTable.getColumnModel().getColumn(6);
         comboBoxRenderer = new ComboBoxRenderer();
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
         col = dataTable.getColumnModel().getColumn(7);
         comboBoxRenderer = new ComboBoxRenderer();
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
@@ -141,6 +134,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 }
             }
         });
+//        dataTable.setFocusable(false);
 
         scrollPane = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -151,6 +145,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
         toolBar1.setLayout(new BoxLayout(toolBar1, BoxLayout.X_AXIS));
+        toolBar1.setBorder(BorderFactory.createEmptyBorder());
 
         JButton button = new JButton(unlinkModelsAction);
         unlinkModelsAction.setEnabled(false);
@@ -290,7 +285,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         col = dataTable.getColumnModel().getColumn(7);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(options.getPartitionTreeModels().toArray())));
-
     }
 
     public class ComboBoxCellEditor extends DefaultCellEditor {

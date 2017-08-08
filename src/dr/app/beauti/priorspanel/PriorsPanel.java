@@ -204,6 +204,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             JToolBar toolBar1 = new JToolBar();
             toolBar1.setFloatable(false);
             toolBar1.setOpaque(false);
+            toolBar1.setBorder(BorderFactory.createEmptyBorder());
             toolBar1.setLayout(new BoxLayout(toolBar1, BoxLayout.X_AXIS));
 
             PanelUtils.setupComponent(linkButton);
@@ -735,7 +736,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
 //            setFont(UIManager.getFont("SmallSystemFont"));
 //            putClientProperty("JComponent.sizeVariant", "small");
-//            putClientProperty("JButton.buttonType", "square");
+            putClientProperty("JButton.buttonType", "tableHeader");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value,
@@ -786,7 +787,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             });
 //            button.setFont(UIManager.getFont("SmallSystemFont"));
 //            button.putClientProperty("JComponent.sizeVariant", "small");
-//            button.putClientProperty("JButton.buttonType", "square");
+            button.putClientProperty("JButton.buttonType", "tableHeader");
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value,

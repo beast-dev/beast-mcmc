@@ -43,6 +43,7 @@ import jam.table.TableRenderer;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -150,6 +151,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
+        toolBar1.setBorder(BorderFactory.createEmptyBorder());
 
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         JButton button = new JButton(importTaxonSetsAction);
@@ -765,7 +767,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             taxonSetEditingPanel.setEnabled(false);
         } else {
             taxonSetEditingPanel.setEnabled(true);
-            taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder(TAXON + ": " + currentTaxonSet.getId()));
+            taxonSetEditingPanel.setBorder(new TitledBorder(null, TAXON + ": " + currentTaxonSet.getId(), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.ABOVE_TOP));
         }
     }
 

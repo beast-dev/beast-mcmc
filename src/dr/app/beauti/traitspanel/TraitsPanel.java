@@ -166,6 +166,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
+        toolBar1.setBorder(BorderFactory.createEmptyBorder());
 
         toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 

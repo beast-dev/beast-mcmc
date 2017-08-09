@@ -82,9 +82,16 @@ public class TreeLikelihoodGenerator extends Generator {
         writer.writeComment("Likelihood for tree given sequence data");
         writer.writeOpenTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, attributes);
 
+        PartitionClockModel clockModel = null;
+
         for (PartitionData partition : partitions) {
             substModel = partition.getPartitionSubstitutionModel();
-            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            PartitionClockModel cm = partition.getPartitionClockModel();
+            if (clockModel == null) {
+                clockModel = cm;
+            } else if (clockModel != cm) {
+                throw new RuntimeException("All the partitions in a TreeDataLikelihood should share the same clock model.");
+            }
 
             if (substModel.getCodonHeteroPattern() != null) {
 
@@ -96,8 +103,6 @@ public class TreeLikelihoodGenerator extends Generator {
 
                     writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
 
-                    ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
-
                     writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
                 }
 
@@ -107,13 +112,15 @@ public class TreeLikelihoodGenerator extends Generator {
                 writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
                 writer.writeIDref(SitePatternsParser.PATTERNS, prefix1 + SitePatternsParser.PATTERNS);
                 writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
-                ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
                 writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
             }
+
 
         }
 
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+
 
         writer.writeCloseTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD);
 

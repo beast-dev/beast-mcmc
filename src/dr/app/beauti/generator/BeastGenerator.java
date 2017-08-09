@@ -582,7 +582,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
         try {
-            Map<Pair<PartitionTreeModel, DataType>, List<PartitionData>> partitionLists = new HashMap<Pair<PartitionTreeModel, DataType>, List<PartitionData>>();
+            Map<Pair<Pair<PartitionTreeModel, PartitionClockModel>, DataType>, List<PartitionData>> partitionLists = new HashMap<Pair<Pair<PartitionTreeModel, PartitionClockModel>, DataType>, List<PartitionData>>();
             options.multiPartitionLists.clear();
             options.otherPartitions.clear();
 
@@ -592,9 +592,9 @@ public class BeastGenerator extends Generator {
 
                     if (treeLikelihoodGenerator.canUseMultiPartition(partition)) {
                         // all sequence partitions of the same type as the first into the list for use in a
-                        // MultipartitionTreeDataLikelihood. Must also share the same tree and not be doing
+                        // MultipartitionTreeDataLikelihood. Must also share the same tree, clock model and not be doing
                         // ancestral reconstruction or counting
-                        Pair<PartitionTreeModel, DataType> key = new Pair(partition.getPartitionTreeModel(), partition.getDataType());
+                        Pair<Pair<PartitionTreeModel, PartitionClockModel>, DataType> key = new Pair(new Pair(partition.getPartitionTreeModel(),partition.getPartitionClockModel()), partition.getDataType());
                         List<PartitionData> partitions = partitionLists.get(key);
 
                         if (partitions == null) {

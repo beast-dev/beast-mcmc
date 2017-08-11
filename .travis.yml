@@ -5,9 +5,9 @@ jdk:
     - oraclejdk8
 #    - openjdk6
 
-addons:
-  apt:
-    packages:
-    - ant-junit
+#addons:
+#  apt:
+#    packages:
+#    - ant-junit
 
-install: ant
+script: ant

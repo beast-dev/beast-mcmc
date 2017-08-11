@@ -62,8 +62,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     // TODO Magic numbers; pass as options
     private final Options options = new Options();
 
-    Step nut = new Step();
-    Step previousNut = new Step();
+//    Step nut = new Step();
+//    Step previousNut = new Step();
 
 //    private double initialStepSize;
 
@@ -128,74 +128,111 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         final double initialLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
 
         if (stepSizeInformation == null) { // First call
-            final double initialStepSize = 0.0625;
+            final double initialStepSize = 0.0625; // TODO Magic number
 //            final double initialStepSize = findReasonableStepSize(initialPosition);
             stepSizeInformation = new StepSize(initialStepSize);
+            leapFrogEngine.setParameter(initialPosition); // Restart at initial possible
 
-            // TODO Debug
-            leapFrogEngine.setParameter(initialPosition);
+            // TODO For debug purposes
             final double testLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
             assert (testLogLikelihood == initialLogLikelihood);
         }
 
-        previousNut.position = initialPosition; // TODO Remove
-        Step step = takeOneStep(getCount() + 1, previousNut); // TODO Remove previousNut
-
-        leapFrogEngine.setParameter(step.position);  // zy: not sure if necessary
+//        double[] position = takeOneStep(getCount() + 1, initialPosition);
+        double[] position = takeOneStepNew(getCount() + 1, initialPosition);
+        leapFrogEngine.setParameter(position);
 
         return 0.0;
     }
 
-    private Step takeOneStep(long m, Step previousNut) {
+    private double[] takeOneStep(long m, double[] initialPosition) {
 
-        assert (previousNut != null);
+        double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
+        final double[] initialMomentum = drawInitialMomentum(drawDistribution, dim);
 
-        Step returnNut = new Step(previousNut);
+        final double logSliceU = Math.log(MathUtils.nextDouble()) + getJointProbability(gradientProvider, initialMomentum);
 
-        final double[] momentum = drawInitialMomentum(drawDistribution, dim);
-
-        final double logSliceU = Math.log(MathUtils.nextDouble()) + getJointProbability(gradientProvider, momentum);
-
-        double[] positionMinus = Arrays.copyOf(previousNut.position, dim);
-        double[] positionPlus = Arrays.copyOf(previousNut.position, dim);
-        double[] momentumMinus = Arrays.copyOf(momentum, dim);
-        double[] momentumPlus = Arrays.copyOf(momentum, dim);
+        double[] positionMinus = Arrays.copyOf(initialPosition, dim); // TODO Why are copies necessary?
+        double[] positionPlus = Arrays.copyOf(initialPosition, dim);
+        double[] momentumMinus = Arrays.copyOf(initialMomentum, dim);
+        double[] momentumPlus = Arrays.copyOf(initialMomentum, dim);
 
         int j = 0;
+        
         int n = 1;
+
         boolean growTree = true;  // Variable `s` in paper
 
-        BinaryTree temp = new BinaryTree();
+        TreeNode child = new TreeNode(); // TODO Do no initialize here
         while (growTree) {
 
-            double random = MathUtils.nextDouble();
+            double uniform = MathUtils.nextDouble();
+            int direction = (uniform < 0.5) ? -1 : 1;
 
-            if (random < 0.5) {
+//            child = buildTree(state.getPosition(direction), state.getMomentum(direction),
+//                    logSliceU, direction, j, stepSizeInformation.stepSize, initialMomentum);
 
-                temp = buildTree(positionMinus, momentumMinus, logSliceU, -1, j, stepSizeInformation.stepSize, momentum);
+            if (uniform < 0.5) {
 
-                positionMinus = Arrays.copyOf(temp.positionMinus, dim);
-                momentumMinus = Arrays.copyOf(temp.momentumMinus, dim);
+                child = buildTree(positionMinus, momentumMinus, logSliceU, -1, j, stepSizeInformation.stepSize, initialMomentum);
+
+                positionMinus = Arrays.copyOf(child.positionMinus, dim);
+                momentumMinus = Arrays.copyOf(child.momentumMinus, dim);
 
             } else {
 
-                temp = buildTree(positionPlus, momentumPlus, logSliceU, 1, j, stepSizeInformation.stepSize, momentum);
+                child = buildTree(positionPlus, momentumPlus, logSliceU, 1, j, stepSizeInformation.stepSize, initialMomentum);
 
-                positionPlus = Arrays.copyOf(temp.positionPlus, dim);
-                momentumPlus = Arrays.copyOf(temp.momentumPlus, dim);
+                positionPlus = Arrays.copyOf(child.positionPlus, dim);
+                momentumPlus = Arrays.copyOf(child.momentumPlus, dim);
             }
 
-            if (temp.flagContinue) {
+            if (child.flagContinue) {
 
-                if (MathUtils.nextDouble() < temp.numNodes / n) { //todo : (BUG) here the position may or may not be updated, but the gradientProvider is already updated.
-                    returnNut.position = Arrays.copyOf(temp.positionFinal, dim);
+                if (MathUtils.nextDouble() < (double) (child.numNodes / n)) { //todo : (BUG) here the position may or may not be updated, but the gradientProvider is already updated.
+                    endPosition = Arrays.copyOf(child.positionFinal, dim);
                 }
 
             }
 
-            n += temp.numNodes;
+            n += child.numNodes;
 
-            growTree = computeStopCriterion(temp.flagContinue, positionPlus, positionMinus, momentumPlus, momentumMinus);
+            growTree = computeStopCriterion(child.flagContinue, positionPlus, positionMinus, momentumPlus, momentumMinus);
+            j++;
+//            state = child;
+
+            if (j > options.maxDepth) {
+                throw new RuntimeException("Reach maximum tree depth"); // TODO Handle more gracefully
+            }
+        }
+
+        stepSizeInformation.update(m, child.alpha, child.nAlpha, options);
+
+        return endPosition;
+    }
+
+
+    private double[] takeOneStepNew(long m, double[] initialPosition) {
+
+        double[] endPosition = null; //Arrays.copyOf(initialPosition, initialPosition.length);
+        final double[] initialMomentum = drawInitialMomentum(drawDistribution, dim);
+
+        // TODO Could save a likelihood evaluation by computing likelihood before guessing step size
+        final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
+
+        final double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
+
+        TreeState root = new TreeState(initialPosition, initialMomentum, 1, true);
+
+        int j = 0;
+
+        while (root.flagContinue) {
+
+            double[] tmp = updateRoot(root, j, logSliceU, initialJointDensity);
+            if (tmp != null) {
+                endPosition = tmp;
+            }
+
             j++;
 
             if (j > options.maxDepth) {
@@ -203,17 +240,116 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             }
         }
 
-        stepSizeInformation.update(m, temp.alpha, temp.nAlpha, options);
+        stepSizeInformation.update(m, root.alpha, root.nAlpha, options);
 
-        return returnNut;
+        return endPosition;
     }
 
-    private BinaryTree buildTree(double[] position, double[] momentum, double logSliceU, int direction, int j, double
+    private double[] updateRoot(TreeState root, int j, double logSliceU, double initialJointDensity) {
+
+        double[] endPosition = null;
+
+        final double uniform1 = MathUtils.nextDouble();
+        final int direction = (uniform1 < 0.5) ? -1 : 1;
+
+        TreeState node = buildTreeNew(root.getPosition(direction), root.getMomentum(direction), direction,
+                            logSliceU, j, stepSizeInformation.stepSize, initialJointDensity);
+
+        root.setPosition(direction, node.getPosition(direction));
+        root.setMomentum(direction, node.getMomentum(direction));
+
+        if (node.flagContinue) {
+
+            final double uniform2 = MathUtils.nextDouble();
+            if (uniform2 < (double) (node.numNodes / root.numNodes)) {
+                endPosition = node.getPosition(0);
+            }
+        }
+
+        // Recursion
+        root.numNodes += node.numNodes;
+        root.flagContinue = computeStopCriterion(node.flagContinue, root);
+
+        // Dual-averaging
+        root.alpha += node.alpha;
+        root.nAlpha += node.nAlpha;
+
+        return endPosition;
+    }
+
+    private TreeState buildTreeNew(double[] position, double[] momentum, int direction,
+                                   double logSliceU, int j, double stepSize, double initialJointDensity) {
+        if (j == 0) {
+            return buildBaseCase(position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
+        } else {
+            return buildRecursiveCase(position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
+        }
+    }
+
+    private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, int direction,
+                                    double logSliceU, int j, double stepSize, double initialJointDensity) {
+
+//        double logJointProbBefore = getJointProbability(gradientProvider, initialMomentum);
+
+        // Make deep copy of position and momentum
+        double[] position = Arrays.copyOf(inPosition, inPosition.length);
+        double[] momentum = Arrays.copyOf(inMomentum, inMomentum.length);
+
+        // "one frog jump!"
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
+        leapFrogEngine.updatePosition(position, momentum, direction * stepSize, 1.0);
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
+
+        double logJointProbAfter = getJointProbability(gradientProvider, momentum);
+
+        // Values for recursion
+        final int numNodes = (logSliceU <= logJointProbAfter ? 1 : 0);
+        final boolean flagContinue = (logSliceU < options.deltaMax + logJointProbAfter);
+
+        // Values for dual-averaging
+        final double alpha = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity)); // TODO Is this current?
+        final int nAlpha = 1;
+
+        return new TreeState(position, momentum, numNodes, flagContinue, alpha, nAlpha);
+    }
+
+    private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
+                                         double logSliceU, int j, double stepSize, double initialJointDensity) {
+        
+        TreeState node = buildTreeNew(inPosition, inMomentum, direction, logSliceU,
+                j - 1, // Recursion
+                stepSize, initialJointDensity);
+
+        if (node.flagContinue) {
+
+            TreeState child = buildTreeNew(node.getPosition(direction), node.getMomentum(direction), direction,
+                      logSliceU, j - 1, stepSizeInformation.stepSize, initialJointDensity);
+
+            node.setPosition(direction, child.getPosition(direction));
+            node.setMomentum(direction, child.getMomentum(direction));
+
+            final double uniform = MathUtils.nextDouble();
+            if (child.numNodes > 0
+                    && uniform <  ((double) child.numNodes / (double) (node.numNodes + child.numNodes))) {
+                node.setPosition(0, child.getPosition(0));
+            }
+
+            node.numNodes += child.numNodes;
+            node.flagContinue = computeStopCriterion(child.flagContinue, node);
+
+            node.alpha += child.alpha;
+            node.nAlpha += child.nAlpha;
+
+        }
+        return node;
+    }
+
+    private TreeNode buildTree(double[] position, double[] momentum, double logSliceU, int direction, int j, double
             stepSize, double[] initialMomentum) {
 
         if (j == 0) {
 
-            BinaryTree tree = new BinaryTree();
+            TreeNode tree = new TreeNode();
 
             double logJointProbBefore = getJointProbability(gradientProvider, initialMomentum);
 
@@ -221,7 +357,6 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
             leapFrogEngine.updatePosition(position, momentum, direction * stepSize, 1.0);
             leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
-
 
             double logJointProbAfter = getJointProbability(gradientProvider, momentum);
             
@@ -231,22 +366,18 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             tree.positionPlus = Arrays.copyOf(position, dim);
             tree.positionFinal = Arrays.copyOf(position, dim);
 
-            tree.alpha = Math.min(1, Math.exp(logJointProbAfter - logJointProbBefore));
-
-            tree.nAlpha = 1;
-
-//            tree.numNodes = (sliceU <= Math.exp(logJointProbAfter) ? 1 : 0);
             tree.numNodes = (logSliceU <= logJointProbAfter ? 1 : 0);
-
-//            tree.flagContinue = (sliceU <= Math.exp(options.deltaMax + logJointProbAfter) ? true : false);
             tree.flagContinue = (logSliceU <= options.deltaMax + logJointProbAfter ? true : false);
+
+            tree.alpha = Math.min(1, Math.exp(logJointProbAfter - logJointProbBefore));
+            tree.nAlpha = 1;
 
             return tree;
 
         } else {
 
-            BinaryTree newNodes;
-            BinaryTree tree = buildTree(position, momentum, logSliceU, direction, j - 1, stepSize, initialMomentum);
+            TreeNode newNodes;
+            TreeNode tree = buildTree(position, momentum, logSliceU, direction, j - 1, stepSize, initialMomentum);
 
             double[] positionMinus = Arrays.copyOf(tree.positionMinus, dim);
             double[] positionPlus = Arrays.copyOf(tree.positionPlus, dim);
@@ -254,6 +385,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             double[] momentumPlus = Arrays.copyOf(tree.momentumPlus, dim);
 
             if (tree.flagContinue) {
+
                 if (direction == -1) {
 
                     newNodes = buildTree(tree.positionMinus, tree.momentumMinus, logSliceU, direction, j - 1, stepSize, initialMomentum);
@@ -273,16 +405,18 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                     tree.positionFinal = Arrays.copyOf(newNodes.positionFinal, dim);
                 }
 
-                tree.flagContinue = computeStopCriterion(newNodes.flagContinue, positionPlus, positionMinus, momentumPlus, momentumMinus);
                 tree.positionPlus = Arrays.copyOf(positionPlus, dim);
                 tree.positionMinus = Arrays.copyOf(positionMinus, dim);
                 tree.momentumMinus = Arrays.copyOf(momentumMinus, dim);
                 tree.momentumPlus = Arrays.copyOf(momentumPlus, dim);
 
+                tree.numNodes += newNodes.numNodes;
+                tree.flagContinue = computeStopCriterion(newNodes.flagContinue, positionPlus, positionMinus, momentumPlus, momentumMinus);
+
                 //values for dual averaging use..
                 tree.alpha += newNodes.alpha;
                 tree.nAlpha += newNodes.nAlpha;
-                tree.numNodes += newNodes.numNodes;
+
             }
             return tree;
         }
@@ -330,20 +464,29 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return stepSize;
     }
 
+    private static boolean computeStopCriterion(boolean flagContinue, TreeState state) {
+        return computeStopCriterion(flagContinue,
+                state.getPosition(1), state.getPosition(-1),
+                state.getMomentum(1), state.getMomentum(-1));
+    }
+
     private static boolean computeStopCriterion(boolean flagContinue,
                                                 double[] positionPlus, double[] positionMinus,
                                                 double[] momentumPlus, double[] momentumMinus) {
 
-        double[] positionDifference =  subtractArray(positionPlus, positionMinus);
+        double[] positionDifference = subtractArray(positionPlus, positionMinus);
 
         boolean flag = flagContinue &&
                         getDotProduct(positionDifference, momentumMinus) >= 0 &&
-                        getDotProduct(positionDifference, momentumPlus) >= 0; // TODO check signs
+                        getDotProduct(positionDifference, momentumPlus) >= 0;
         return flag;
     }
 
     private static double getDotProduct(double[] x, double[] y) {
+
+        assert (x.length == y.length);
         final int dim = x.length;
+
         double total = 0.0;
         for (int i = 0; i < dim; i++) {
             total += x[i] * y[i];
@@ -364,72 +507,122 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return result;
     }
 
-    private static double[] sumArray(double[] a, double[] b) {
-
-        assert (a.length == b.length);
-        final int dim = a.length;
-
-        double result[] = new double[dim];
-
-        for (int i = 0; i < dim; i++) {
-            result[i] = a[i] + b[i];
-        }
-
-        return result;
-    }
+//    private static double[] sumArray(double[] a, double[] b) {
+//
+//        assert (a.length == b.length);
+//        final int dim = a.length;
+//
+//        double result[] = new double[dim];
+//
+//        for (int i = 0; i < dim; i++) {
+//            result[i] = a[i] + b[i];
+//        }
+//
+//        return result;
+//    }
 
     private static double getJointProbability(GradientWrtParameterProvider gradientProvider, double[] momentum) {
 
         assert (gradientProvider != null);
         assert (momentum != null);
 
-        final double logJointProb = gradientProvider.getLikelihood().getLogLikelihood()
-                - getScaledDotProduct(momentum, 1.0);
-        return logJointProb;
+        return gradientProvider.getLikelihood().getLogLikelihood() - getScaledDotProduct(momentum, 1.0);
     }
 
-    public class BinaryTree {
+    private class TreeState {
+
+        public TreeState(double[] position, double[] moment) {
+            this(position, moment, 1, true);
+        }
+
+        public TreeState(double[] position, double[] moment,
+                         int numNodes, boolean flagContinue) {
+            this(position, moment, numNodes, flagContinue, 0.0, 0);
+        }
+
+        public TreeState(double[] position, double[] moment,
+                         int numNodes, boolean flagContinue,
+                         double alpha, int nAlpha) {
+            this.position = new double[3][];
+            this.momentum = new double[3][];
+
+            for (int i = 0; i < 3; ++i) {
+                this.position[i] = position;
+                this.momentum[i] = moment;
+            }
+
+            // Recursion variables
+            this.numNodes = numNodes;
+            this.flagContinue = flagContinue;
+
+            // Dual-averaging variables
+            this.alpha = alpha;
+            this.nAlpha = nAlpha;
+        }
+
+        public double[] getPosition(int direction) {
+            return position[getIndex(direction)];
+        }
+
+        public double[] getMomentum(int direction) {
+            return momentum[getIndex(direction)];
+        }
+
+        public void setPosition(int direction, double[] position) {
+            this.position[getIndex(direction)] = position;
+        }
+
+        public void setMomentum(int direction, double[] momentum) {
+            this.momentum[getIndex(direction)] = momentum;
+        }
+
+        private int getIndex(int direction) { // valid directions: -1, 0, +1
+            return direction + 1; // TODO Check bounds;
+        }
+
+        final private double[][] position;
+        final private double[][] momentum;
+
+        private int numNodes;
+        private boolean flagContinue;
+
+        private double alpha;
+        private int nAlpha;
+    }
+
+    public class TreeNode {
         double[] positionMinus;
         double[] momentumMinus;
+
         double[] positionPlus;
         double[] momentumPlus;
+
         double[] positionFinal;
+
         int numNodes;
         boolean flagContinue;
         double alpha;
         int nAlpha;
 
-        public BinaryTree() {
-        }
-    }
-
-    public class Step {
-        double[] position;
-//        double stepSize;
-//        double logStepSize;
-//        double logStepSizeAve;
-//        double h;
-//        double mu;
-
-        public Step() {
+        public TreeNode() {
         }
 
-        public Step(double[] inPosition) { // TODO Remove
-            this.position = Arrays.copyOf(inPosition, inPosition.length);
-        }
-
-        public Step(Step copy) {
-
-            this.position = java.util.Arrays.copyOf(copy.position, dim);
-//            this.stepSize = copy.stepSize;
-//            this.logStepSize = copy.logStepSize;
-//            this.logStepSizeAve = copy.logStepSizeAve;
-//            this.h = copy.h;
-//            this.mu = copy.mu;
-        }
+//        public TreeNode(double[] positionMinus, double[] momentumMinus,
+//                        double[] positionPlus, double[] momentumPlus) {
+//            this.positionMinus = positionMinus;
+//            this.momentumMinus = momentumMinus;
+//            this.positionPlus = positionPlus;
+//            this.momentumPlus = momentumPlus;
+//        }
+//
+//        public TreeNode(double[] initialPosition, double[] initialMomentum) {
+//            this.positionMinus = initialPosition;
+//            this.momentumMinus = initialMomentum;
+//            this.positionPlus = initialPosition;
+//            this.momentumMinus = initialMomentum;
+//        }
 
     }
-
 }
 
 

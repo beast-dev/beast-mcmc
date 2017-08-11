@@ -36,7 +36,6 @@
 package dr.evomodel.operators;
 
 
-import com.sun.org.apache.xpath.internal.functions.FuncFalse;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;

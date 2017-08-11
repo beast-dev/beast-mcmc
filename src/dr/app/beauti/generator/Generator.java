@@ -312,8 +312,8 @@ public abstract class Generator {
         writer.writeCloseTag(wrapperName);
     }
 
-    protected void writeCodonPatternsRef(String prefix, int num, int CodonPartitionCount, XMLWriter writer) {
-        if (CodonPartitionCount == 2 && num == 1) { // "11" of "112", num start from 1
+    protected void writeCodonPatternsRef(String prefix, int num, int codonPartitionCount, XMLWriter writer) {
+        if (codonPartitionCount == 2 && num == 1) { // "11" of "112", num start from 1
             writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + SitePatternsParser.PATTERNS);
         } else { // "2" of "112" and "123"
             writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);

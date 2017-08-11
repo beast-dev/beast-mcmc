@@ -5,3 +5,4 @@ jdk:
     - oraclejdk8
 #    - openjdk6
 
+install: ant

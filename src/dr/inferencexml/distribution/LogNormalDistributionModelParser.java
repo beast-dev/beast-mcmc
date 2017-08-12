@@ -54,7 +54,7 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
 
         if (xo.hasAttribute(MEAN_IN_REAL_SPACE) || xo.hasAttribute(STDEV_IN_REAL_SPACE)) {
             // If either of these set then use the old logic for parsing. This means that mean
-            // means mu if meanInRealSpace is false and stdev means signma if stdevInRealSpace
+            // means mu if meanInRealSpace is false and stdev means sigma if stdevInRealSpace
             // is false
 
             if (!xo.hasAttribute(MEAN) || !xo.hasAttribute(STDEV)) {
@@ -80,15 +80,19 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
                 meanParam = new Parameter.Default(cxo.getDoubleChild(0));
             }
 
-            cxo = xo.getChild(STDEV);
-            Parameter stdevParam;
-            if (cxo.getChild(0) instanceof Parameter) {
-                stdevParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
+            if (xo.hasChildNamed(STDEV)) {
+                cxo = xo.getChild(STDEV);
+                Parameter stdevParam;
+                if (cxo.getChild(0) instanceof Parameter) {
+                    stdevParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
 
-            return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
+                return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
+            } else {
+                throw new RuntimeException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
+            }
         } else {
             // otherwise we decide the parameterization by which parameters are specified.
 

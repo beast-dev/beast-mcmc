@@ -47,7 +47,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -272,7 +271,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireDataChanged() {
-        options.updatePartitionAllLinks();
+        // options.updatePartitionAllLinks();
         frame.setDirty();
     }
 
@@ -439,7 +438,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         return true;
     }
 
-    public void unlinkModels() {
+    public void unlinkSubstitutionModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             AbstractPartitionData partition = options.dataPartitions.get(row);
@@ -457,7 +456,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void linkModels() {
+    public void linkSubstitutionModels() {
         int[] selRows = dataTable.getSelectedRows();
         List<AbstractPartitionData> selectedPartitionData = new ArrayList<AbstractPartitionData>();
         DataType dateType = null;
@@ -507,16 +506,19 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void unlinkClocks() { // reuse previous PartitionTreePrior
+    public void unlinkClockModels() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             AbstractPartitionData partition = options.dataPartitions.get(row);
 
-            PartitionClockModel model = partition.getPartitionClockModel();
-            if (!model.getName().equals(partition.getName())) {
-                PartitionClockModel newModel = new PartitionClockModel(options, partition.getName(), model);
-                partition.setPartitionClockModel(newModel);
+            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            if (!clockModel.getName().equals(partition.getName())) {
+                clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
+                partition.setPartitionClockModel(clockModel);
             }
+
+            // Clock models need to refer to the same tree as the data (many to one relationship).
+            clockModel.setPartitionTreeModel(partition.getPartitionTreeModel());
         }
 
         modelsChanged();
@@ -525,15 +527,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void linkClocks() { // keep previous PartitionTreePrior for reuse
+    public void linkClockModels() {
         int[] selRows = dataTable.getSelectedRows();
 
         List<AbstractPartitionData> selectedPartitionData = new ArrayList<AbstractPartitionData>();
         for (int row : selRows) {
             AbstractPartitionData partition = options.dataPartitions.get(row);
 
-            if (!selectedPartitionData.contains(partition))
+            if (!selectedPartitionData.contains(partition)) {
                 selectedPartitionData.add(partition);
+            }
         }
         Object[] modelArray = options.getPartitionClockModels(selectedPartitionData).toArray();
 
@@ -543,13 +546,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         int result = selectClockDialog.showDialog(modelArray);
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionClockModel model = selectClockDialog.getModel();
+            PartitionClockModel clockModel = selectClockDialog.getModel();
             if (selectClockDialog.getMakeCopy()) {
-                model.setName(selectClockDialog.getName());
+                clockModel.setName(selectClockDialog.getName());
             }
 
             for (AbstractPartitionData partition : selectedPartitionData) {
-                partition.setPartitionClockModel(model);
+                partition.setPartitionClockModel(clockModel);
+
+                // Clock models need to refer to the same tree as the data (many to one relationship).
+                partition.setPartitionTreeModel(clockModel.getPartitionTreeModel());
             }
         }
 
@@ -559,22 +565,29 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void unlinkTrees() { // reuse previous PartitionTreePrior
+    public void unlinkTreeModels() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             AbstractPartitionData partition = options.dataPartitions.get(row);
 
-            PartitionTreeModel model = partition.getPartitionTreeModel();
-            if (!model.getName().equals(partition.getName()) && partition.getTraits() == null) {// not a trait
-                PartitionTreeModel newTree = new PartitionTreeModel(options, partition.getName(), model);
-
-                // this prevents partition not broken, and used for unsharing tree prior only,
-                // because sharing uses shareSameTreePrior, unsharing uses getPartitionTreePrior
-//                newTree.setPartitionTreePrior(newPrior); // important
-
-                partition.setPartitionTreeModel(newTree);
+            PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+            if (!treeModel.getName().equals(partition.getName()) && partition.getTraits() == null) {// not a trait
+                treeModel = new PartitionTreeModel(options, partition.getName(), treeModel);
+                partition.setPartitionTreeModel(treeModel);
             }
+
+            // Clock models need to refer to the same tree as the data (many to one relationship).
+            // When unlinking trees, the clocks must also be unlinked. Perhaps a dialog is need
+            // to say this? The parameters of the clocks could be linked in the priors panel.
+            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            if (!clockModel.getName().equals(partition.getName())) {
+                clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
+                partition.setPartitionClockModel(clockModel);
+            }
+
+            clockModel.setPartitionTreeModel(treeModel);
         }
+
 
         options.linkTreePriors(frame.getCurrentPartitionTreePrior());
 
@@ -584,7 +597,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void linkTrees() { // keep previous PartitionTreePrior for reuse
+    public void linkTreeModels() { // keep previous PartitionTreePrior for reuse
         int[] selRows = dataTable.getSelectedRows();
 
         List<AbstractPartitionData> selectedPartitionData = new ArrayList<AbstractPartitionData>();
@@ -613,20 +626,26 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         int result = selectTreeDialog.showDialog(treeArray);
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionTreeModel model = selectTreeDialog.getTree();
+            PartitionTreeModel treeModel = selectTreeDialog.getTree();
             if (selectTreeDialog.getMakeCopy()) {
-                model.setName(selectTreeDialog.getName());
+                treeModel.setName(selectTreeDialog.getName());
             }
-            PartitionTreePrior prior = model.getPartitionTreePrior();
+            PartitionTreePrior prior = treeModel.getPartitionTreePrior();
             options.linkTreePriors(prior);
 
             for (AbstractPartitionData partition : selectedPartitionData) {
-                partition.setPartitionTreeModel(model);
+                partition.setPartitionTreeModel(treeModel);
+
+                // Clock models need to refer to the same tree as the data (many to one relationship).
+                // Make sure the clock model for this partition refers to the same tree as the partition.
+                PartitionClockModel clockModel = partition.getPartitionClockModel();
+                clockModel.setPartitionTreeModel(treeModel);
+
             }
 
             for (Taxa taxa : options.taxonSets) { // Issue 454: all the taxon sets are deleted when link/unlink tree
                 PartitionTreeModel prevModel = options.taxonSetsTreeModel.get(taxa);
-                if (prevModel != model) options.taxonSetsTreeModel.put(taxa, model);
+                if (prevModel != treeModel) options.taxonSetsTreeModel.put(taxa, treeModel);
             }
         }
 
@@ -637,9 +656,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public void unlinkAll() {
-        unlinkModels();
-        unlinkClocks();
-        unlinkTrees();
+        unlinkSubstitutionModels();
+        unlinkClockModels();
+        unlinkTreeModels();
     }
 
     class DataTableModel extends AbstractTableModel {
@@ -789,7 +808,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            unlinkModels();
+            unlinkSubstitutionModels();
         }
     }
 
@@ -801,7 +820,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            linkModels();
+            linkSubstitutionModels();
         }
     }
 
@@ -812,7 +831,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            unlinkClocks();
+            unlinkClockModels();
         }
     }
 
@@ -824,7 +843,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            linkClocks();
+            linkClockModels();
         }
     }
 
@@ -835,7 +854,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            unlinkTrees();
+            unlinkTreeModels();
         }
     }
 
@@ -847,7 +866,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            linkTrees();
+            linkTreeModels();
         }
     }
 

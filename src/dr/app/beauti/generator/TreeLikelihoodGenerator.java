@@ -70,8 +70,9 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+        PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-        String prefix = treeModel.getPrefix(); // use the treemodel prefix
+        String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
         String idString = prefix + "treeLikelihood";
 
         Attribute[] attributes = new Attribute[]{
@@ -81,8 +82,6 @@ public class TreeLikelihoodGenerator extends Generator {
 
         writer.writeComment("Likelihood for tree given sequence data");
         writer.writeOpenTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, attributes);
-
-        PartitionClockModel clockModel = null;
 
         for (PartitionData partition : partitions) {
             substModel = partition.getPartitionSubstitutionModel();
@@ -252,12 +251,21 @@ public class TreeLikelihoodGenerator extends Generator {
      */
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (List<PartitionData> partitions : options.multiPartitionLists)  {
-            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, partitions.get(0).getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
-            writer.writeText("");
+            // TreeDataLikelihoods are labelled by their tree and clock models
+            PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+            PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
+
+            String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
+            String idString = prefix + "treeLikelihood";
+
+            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, idString);
         }
 
         for (AbstractPartitionData partition : options.otherPartitions) {
             // generate tree likelihoods for the other data partitions
+
+            // TreeLikelihood are labelled by their partition
+
             writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
         }
     }

@@ -110,8 +110,6 @@ public class OperatorsGenerator extends Generator {
 
         for (Operator operator : operators) {
             if (operator.getWeight() > 0. && operator.isUsed()) {
-                setModelPrefix(operator.getPrefix());
-
                 writeOperator(operator, writer);
             }
         }
@@ -122,6 +120,8 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeOperator(Operator operator, XMLWriter writer) {
+
+        String prefix = operator.getPrefix();
 
         switch (operator.getOperatorType()) {
 
@@ -183,7 +183,7 @@ public class OperatorsGenerator extends Generator {
                 writeRateBitExchangeOperator(operator, writer);
                 break;
             case TREE_BIT_MOVE:
-                writeTreeBitMoveOperator(operator, writer);
+                writeTreeBitMoveOperator(operator, prefix, writer);
                 break;
             case UNIFORM:
                 writeUniformOperator(operator, writer);
@@ -192,20 +192,20 @@ public class OperatorsGenerator extends Generator {
                 writeIntegerUniformOperator(operator, writer);
                 break;
             case SUBTREE_LEAP:
-                writeSubtreeLeapOperator(operator, writer);
+                writeSubtreeLeapOperator(operator, prefix, writer);
                 break;
             case SUBTREE_SLIDE:
-                writeSubtreeSlideOperator(operator, writer);
+                writeSubtreeSlideOperator(operator, prefix, writer);
                 break;
             // write multivariate operator
             case NARROW_EXCHANGE:
-                writeNarrowExchangeOperator(operator, writer);
+                writeNarrowExchangeOperator(operator, prefix, writer);
                 break;
             case WIDE_EXCHANGE:
-                writeWideExchangeOperator(operator, writer);
+                writeWideExchangeOperator(operator, prefix, writer);
                 break;
             case WILSON_BALDING:
-                writeWilsonBaldingOperator(operator, writer);
+                writeWilsonBaldingOperator(operator, prefix, writer);
                 break;
             case SAMPLE_NONACTIVE:
                 writeSampleNonActiveOperator(operator, writer);
@@ -214,10 +214,10 @@ public class OperatorsGenerator extends Generator {
                 writeScaleWithIndicatorsOperator(operator, writer);
                 break;
             case GMRF_GIBBS_OPERATOR:
-                writeGMRFGibbsOperator(operator, writer);
+                writeGMRFGibbsOperator(operator, prefix, writer);
                 break;
             case SKY_GRID_GIBBS_OPERATOR:
-                writeSkyGridGibbsOperator(operator, writer);
+                writeSkyGridGibbsOperator(operator, prefix, writer);
                 break;
             case NODE_REHIGHT:
                 writeSpeciesTreeOperator(operator, writer);
@@ -449,10 +449,10 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(RateBitExchangeOperator.OPERATOR_NAME);
     }
 
-    private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
+    private void writeTreeBitMoveOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR);
     }
 
@@ -472,28 +472,24 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR);
     }
 
-    private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
+    private void writeNarrowExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.NARROW_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
-    private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
+    private void writeWideExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.WIDE_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
-    private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {
+    private void writeWilsonBaldingOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(WilsonBaldingParser.WILSON_BALDING,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
-        // not supported anymore. probably never worked. (todo) get it out of GUI too
-//        if (options.nodeHeightPrior == TreePriorType.CONSTANT) {
-//            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
-//        }
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(WilsonBaldingParser.WILSON_BALDING);
     }
 
@@ -516,7 +512,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
     }
 
-    private void writeSkyGridGibbsOperator(Operator operator, XMLWriter writer) {
+    private void writeSkyGridGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{
@@ -524,11 +520,11 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, treePriorPrefix + "skygrid");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR);
     }
 
-    private void writeGMRFGibbsOperator(Operator operator, XMLWriter writer) {
+    private void writeGMRFGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{
@@ -536,7 +532,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, treePriorPrefix + "skyride");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR);
     }
 
@@ -556,18 +552,18 @@ public class OperatorsGenerator extends Generator {
 
     // write multivariate operator
 
-    private void writeSubtreeLeapOperator(Operator operator, XMLWriter writer) {
+    private void writeSubtreeLeapOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(SubtreeLeapOperatorParser.SUBTREE_LEAP,
                 new Attribute[]{
                         new Attribute.Default<Double>("size", operator.getTuning()),
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
-    private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {
+    private void writeSubtreeSlideOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE,
                 new Attribute[]{
                         new Attribute.Default<Double>("size", operator.getTuning()),
@@ -575,7 +571,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
     }
 

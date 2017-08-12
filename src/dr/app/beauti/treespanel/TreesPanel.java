@@ -195,7 +195,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void fireTreePriorsChanged() {
-        options.updatePartitionAllLinks();
+//        options.updatePartitionAllLinks();
         frame.setDirty();
     }
 

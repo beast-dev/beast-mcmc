@@ -61,9 +61,6 @@ public abstract class Generator {
 
     protected final BeautiOptions options;
 
-    //    protected PartitionSubstitutionModel model;
-    protected String modelPrefix = ""; // model prefix, could be PSM, PCM, PTM, PTP
-
     protected Generator(BeautiOptions options) {
         this.options = options;
     }
@@ -81,14 +78,6 @@ public abstract class Generator {
         for (ComponentGenerator component : components) {
                 component.checkOptions();
         }
-    }
-
-    public String getModelPrefix() {
-        return modelPrefix;
-    }
-
-    public void setModelPrefix(String modelPrefix) {
-        this.modelPrefix = modelPrefix;
     }
 
     /**

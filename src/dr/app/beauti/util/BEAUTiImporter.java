@@ -726,48 +726,50 @@ public class BEAUTiImporter {
             }
         }
 
-        options.updatePartitionAllLinks();
-        //options.clockModelOptions.initClockModelGroup();
+//        options.updatePartitionAllLinks();
+//        options.clockModelOptions.initClockModelGroup();
     }
 
     private void setClockAndTree(AbstractPartitionData partition) {
+
+        PartitionTreeModel treeModel;
+
+        // use same tree model and same tree prior in beginning
+        if (options.getPartitionTreeModels().size() < 1) {
+            // PartitionTreeModel based on PartitionData
+            treeModel = new PartitionTreeModel(options, partition);
+            partition.setPartitionTreeModel(treeModel);
+
+            // PartitionTreePrior always based on PartitionTreeModel
+            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
+            treeModel.setPartitionTreePrior(ptp);
+        } else { //if (options.getPartitionTreeModels() != null) {
+//                        && options.getPartitionTreeModels().size() == 1) {
+            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
+                treeModel = new PartitionTreeModel(options, partition); // different tree model,
+                PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
+                treeModel.setPartitionTreePrior(ptp);
+            } else {
+                treeModel = options.getPartitionTreeModels().get(0); // same tree model,
+            }
+            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
+        }
+
         // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
         if (options.getPartitionClockModels(partition.getDataType()).size() < 1) {
             // PartitionClockModel based on PartitionData
-            PartitionClockModel pcm = new PartitionClockModel(options, partition);
+            PartitionClockModel pcm = new PartitionClockModel(options, partition, treeModel);
             partition.setPartitionClockModel(pcm);
         } else { //if (options.getPartitionClockModels() != null) {
 //                        && options.getPartitionClockModels().size() == 1) {
             PartitionClockModel pcm;
             if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                pcm = new PartitionClockModel(options, partition);
+                pcm = new PartitionClockModel(options, partition, treeModel);
             } else {
                 // make sure in the same data type
                 pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
             }
             partition.setPartitionClockModel(pcm);
-        }
-
-        // use same tree model and same tree prior in beginning
-        if (options.getPartitionTreeModels().size() < 1) {
-            // PartitionTreeModel based on PartitionData
-            PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
-            partition.setPartitionTreeModel(ptm);
-
-            // PartitionTreePrior always based on PartitionTreeModel
-            PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
-            ptm.setPartitionTreePrior(ptp);
-        } else { //if (options.getPartitionTreeModels() != null) {
-//                        && options.getPartitionTreeModels().size() == 1) {
-            PartitionTreeModel ptm;
-            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                ptm = new PartitionTreeModel(options, partition); // different tree model,
-                PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
-                ptm.setPartitionTreePrior(ptp);
-            } else {
-                ptm = options.getPartitionTreeModels().get(0); // same tree model,
-            }
-            partition.setPartitionTreeModel(ptm); // if same tree model, therefore same prior
         }
     }
 
@@ -786,7 +788,7 @@ public class BEAUTiImporter {
                 options.addTrait(trait);
             }
 
-            options.updatePartitionAllLinks();
+//            options.updatePartitionAllLinks();
         }
     }
 

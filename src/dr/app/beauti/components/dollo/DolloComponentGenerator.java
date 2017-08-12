@@ -291,7 +291,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
                         + BranchRateModel.BRANCH_RATES);
                 break;
             case UNCORRELATED:
-                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
+                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, clockModel.getPrefix()
                         + BranchRateModel.BRANCH_RATES);
                 break;
             case RANDOM_LOCAL_CLOCK:

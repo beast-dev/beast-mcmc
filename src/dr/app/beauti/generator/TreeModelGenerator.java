@@ -62,9 +62,9 @@ public class TreeModelGenerator extends Generator {
      */
     void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
 
-        setModelPrefix(model.getPrefix());
+        String prefix = model.getPrefix();
 
-        final String treeModelName = modelPrefix + TreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+        final String treeModelName = prefix + TreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
 
         writer.writeComment("Generate a tree model");
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
@@ -73,13 +73,13 @@ public class TreeModelGenerator extends Generator {
 
         switch (model.getStartingTreeType()) {
             case USER:
-                writer.writeIDref("tree", modelPrefix + STARTING_TREE);
+                writer.writeIDref("tree", prefix + STARTING_TREE);
                 break;
             case UPGMA:
-                writer.writeIDref(UPGMATreeParser.UPGMA_TREE, modelPrefix + STARTING_TREE);
+                writer.writeIDref(UPGMATreeParser.UPGMA_TREE, prefix + STARTING_TREE);
                 break;
             case RANDOM:
-                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, modelPrefix + STARTING_TREE);
+                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, prefix + STARTING_TREE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");

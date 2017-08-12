@@ -209,7 +209,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireModelsChanged() {
-        options.updatePartitionAllLinks();
+//        options.updatePartitionAllLinks();
         frame.setDirty();
     }
 

@@ -392,7 +392,9 @@ public abstract class ModelOptions implements Serializable {
         return operators;
     }
 
-    public String noDuplicatedPrefix(String a , String b) {
+    @Deprecated
+    public String noDuplicatedPrefix1(String a , String b) {
+        // @todo AR - this doesn't make sense.
         if (a.equals(b)) {
             return a;
         } else {

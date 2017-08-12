@@ -296,7 +296,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //            }
 
             traitsTableModel.fireTableDataChanged();
-            options.updatePartitionAllLinks();
+//            options.updatePartitionAllLinks();
             frame.setDirty();
         }
     }

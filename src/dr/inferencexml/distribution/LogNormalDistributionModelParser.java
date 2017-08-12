@@ -57,14 +57,18 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
             // means mu if meanInRealSpace is false and stdev means signma if stdevInRealSpace
             // is false
 
+            if (!xo.hasAttribute(MEAN) || !xo.hasAttribute(STDEV)) {
+                throw new XMLParseException("If meanInRealSpace attribute is given then the lognormal model must be parameterized with mean and stdev.");
+            }
+
             final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
             if (xo.hasAttribute(STDEV_IN_REAL_SPACE)) {
                 boolean stdevInRealSpace = xo.getAttribute(STDEV_IN_REAL_SPACE, false);
                 if (!meanInRealSpace && stdevInRealSpace) {
-                    throw new RuntimeException("Cannot parameterise Lognormal model with mu and stdev");
+                    throw new XMLParseException("Cannot parameterise Lognormal model with mu and stdev");
                 }
                 if (meanInRealSpace && !stdevInRealSpace) {
-                    throw new RuntimeException("Cannot parameterise Lognormal model with mean and sigma");
+                    throw new XMLParseException("Cannot parameterise Lognormal model with mean and sigma");
                 }
             }
 
@@ -134,10 +138,10 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
                     return new LogNormalDistributionModel(LogNormalDistributionModel.Parameterization.MU_PRECISION, muParam, precParam, offset);
 
                 } else {
-                    throw new RuntimeException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
+                    throw new XMLParseException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
                 }
             } else {
-                throw new RuntimeException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
+                throw new XMLParseException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
             }
 
         }

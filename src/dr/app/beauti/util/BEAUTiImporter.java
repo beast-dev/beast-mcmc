@@ -63,6 +63,8 @@ import java.util.List;
  */
 public class BEAUTiImporter {
 
+    private final String DEFAULT_NAME = "default";
+    
     private final BeautiOptions options;
     private final BeautiFrame frame;
 
@@ -714,7 +716,7 @@ public class BEAUTiImporter {
             } else {// only this works
                 if (options.getPartitionSubstitutionModels(partition.getDataType()).size() < 1) {// use same substitution model in beginning
                     // PartitionSubstitutionModel based on PartitionData
-                    PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, partition);
+                    PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, DEFAULT_NAME, partition);
                     partition.setPartitionSubstitutionModel(psm);
                 } else { //if (options.getPartitionSubstitutionModels() != null) {
 //                        && options.getPartitionSubstitutionModels().size() == 1) {
@@ -737,7 +739,7 @@ public class BEAUTiImporter {
         // use same tree model and same tree prior in beginning
         if (options.getPartitionTreeModels().size() < 1) {
             // PartitionTreeModel based on PartitionData
-            treeModel = new PartitionTreeModel(options, partition);
+            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
             partition.setPartitionTreeModel(treeModel);
 
             // PartitionTreePrior always based on PartitionTreeModel
@@ -746,7 +748,7 @@ public class BEAUTiImporter {
         } else { //if (options.getPartitionTreeModels() != null) {
 //                        && options.getPartitionTreeModels().size() == 1) {
             if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                treeModel = new PartitionTreeModel(options, partition); // different tree model,
+                treeModel = new PartitionTreeModel(options, partition.getName()); // different tree model,
                 PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
                 treeModel.setPartitionTreePrior(ptp);
             } else {
@@ -758,13 +760,13 @@ public class BEAUTiImporter {
         // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
         if (options.getPartitionClockModels(partition.getDataType()).size() < 1) {
             // PartitionClockModel based on PartitionData
-            PartitionClockModel pcm = new PartitionClockModel(options, partition, treeModel);
+            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
             partition.setPartitionClockModel(pcm);
         } else { //if (options.getPartitionClockModels() != null) {
 //                        && options.getPartitionClockModels().size() == 1) {
             PartitionClockModel pcm;
             if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                pcm = new PartitionClockModel(options, partition, treeModel);
+                pcm = new PartitionClockModel(options, partition.getName(), partition, treeModel);
             } else {
                 // make sure in the same data type
                 pcm = options.getPartitionClockModels(partition.getDataType()).get(0);

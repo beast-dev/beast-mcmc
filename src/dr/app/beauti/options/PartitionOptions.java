@@ -28,9 +28,6 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.PriorScaleType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
-import dr.math.MathUtils;
-
-import java.util.List;
 
 
 /**
@@ -40,7 +37,7 @@ import java.util.List;
  */
 public abstract class PartitionOptions extends ModelOptions {
 
-    protected String partitionName;
+    private String name;
     protected final BeautiOptions options;
 
 //    protected double[] avgRootAndRate = new double[]{1.0, 1.0};
@@ -51,9 +48,7 @@ public abstract class PartitionOptions extends ModelOptions {
 
     public PartitionOptions(BeautiOptions options, String name) {
         this.options = options;
-        this.partitionName = name;
-
-        initModelParametersAndOpererators();
+        this.name = name;
     }
 
     protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight) {
@@ -92,12 +87,12 @@ public abstract class PartitionOptions extends ModelOptions {
     }
 
     public String getName() {
-        return partitionName;
+        return name;
 
     }
 
     public void setName(String name) {
-        this.partitionName = name;
+        this.name = name;
     }
 
     public String toString() {
@@ -253,4 +248,5 @@ public abstract class PartitionOptions extends ModelOptions {
     public BeautiOptions getOptions() {
         return options;
     }
+
 }

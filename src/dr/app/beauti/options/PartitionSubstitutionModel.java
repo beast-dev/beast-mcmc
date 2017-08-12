@@ -89,10 +89,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return traitData;
     }
 
-    public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
-//        this(options, partition.getName(),(partition.getTrait() == null)
-//                ? partition.getDataType() : GeneralDataType.INSTANCE);
-        super(options, partition.getName());
+    public PartitionSubstitutionModel(BeautiOptions options, String name, AbstractPartitionData partition) {
+        super(options, name);
 
         if (partition.getTraits() != null && partition.getDataType().getType() == DataType.CONTINUOUS) {
             continuousTraitCount = partition.getTraits().size();
@@ -105,6 +103,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         } else {
             traitData = null;
         }
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -146,12 +146,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         phase = source.phase;
 
         microsatellite = source.microsatellite;
+
+        initModelParametersAndOpererators();
     }
 
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
         super(options, name);
         continuousTraitCount = 0;
         traitData = null;
+
+        initModelParametersAndOpererators();
     }
 
     // only init in PartitionSubstitutionModel

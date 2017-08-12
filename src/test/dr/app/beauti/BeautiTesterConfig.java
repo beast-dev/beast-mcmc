@@ -458,7 +458,7 @@ public class BeautiTesterConfig {
                         }
                     }
                     if (partition.getPartitionSubstitutionModel() == null) {
-                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(options, partition);
+                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(options, "default", partition);
                         partition.setPartitionSubstitutionModel(pm);
 //                        options.addPartitionSubstitutionModel(pm);
                     }

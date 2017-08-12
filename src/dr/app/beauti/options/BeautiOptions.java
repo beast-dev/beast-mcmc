@@ -1094,7 +1094,8 @@ public class BeautiOptions extends ModelOptions {
         selRow = dataPartitions.size() - 1;
 
         if (partition.getPartitionSubstitutionModel() == null) {
-            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition);
+            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition.getName(),
+                    partition);
             partition.setPartitionSubstitutionModel(substModel);
         }
 
@@ -1105,7 +1106,7 @@ public class BeautiOptions extends ModelOptions {
 
         if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
             // PartitionClockModel based on PartitionData
-            PartitionClockModel pcm = new PartitionClockModel(this, partition, partition.getPartitionTreeModel());
+            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
             partition.setPartitionClockModel(pcm);
         }
 

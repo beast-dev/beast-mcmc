@@ -50,10 +50,9 @@ public class PartitionClockModel extends PartitionOptions {
     private final AbstractPartitionData partition;
     private final int dataLength;
 
-    public PartitionClockModel(final BeautiOptions options, AbstractPartitionData partition, PartitionTreeModel treeModel) {
-        super(options);
+    public PartitionClockModel(final BeautiOptions options, String name, AbstractPartitionData partition, PartitionTreeModel treeModel) {
+        super(options, name);
 
-        this.partitionName = partition.getName();
         dataLength = partition.getSiteCount();
 
         this.partition = partition;
@@ -70,9 +69,7 @@ public class PartitionClockModel extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionClockModel(BeautiOptions options, String name, PartitionClockModel source) {
-        super(options);
-
-        this.partitionName = name;
+        super(options, name);
 
         this.clockType = source.clockType;
         clockDistributionType = source.clockDistributionType;

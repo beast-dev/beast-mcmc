@@ -538,6 +538,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selectedPartitionData.add(partition);
             }
         }
+
+        if (selectedPartitionData.size() > 1) {
+            if (!options.hasIdenticalTaxa(selectedPartitionData)) {
+                String errMsg = "To share a clock model, partitions need to have identical taxa.";
+                JOptionPane.showMessageDialog(this, errMsg, "Unsuppoted Configuration", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+
         Object[] modelArray = options.getPartitionClockModels(selectedPartitionData).toArray();
 
         if (selectClockDialog == null) {
@@ -613,7 +623,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 String errMsg = "To share a tree, partitions need to have identical taxa.";
                 if (selectedPartitionData.get(0).getDataType().getType() == DataType.MICRO_SAT)
                     errMsg += "\nThe data must be all diploid or all haploid when you want to link the tree.";
-                JOptionPane.showMessageDialog(this, errMsg, "Illegal Configuration", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, errMsg, "Unsuppoted Configuration", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }

@@ -517,7 +517,7 @@ elif [ -f "$JAVACMD" ] && [ -x "$JAVACMD" ] ; then
 			-Xdock:icon="${ResourcesFolder}/${CFBundleIconFile}" \
 			-Xdock:name="${CFBundleName}" \
 			${JVMOptions:+$JVMOptions }\
-			-Djava.library.path="${JAVAROOT}:/usr/local/lib" \
+            ${JAVAROOT+"-Djava.library.path=$JAVAROOT"}\
 			${JVMDefaultOptions:+$JVMDefaultOptions }\
 			${JVMMainClass}\
 			${JVMArguments:+ $JVMArguments}\

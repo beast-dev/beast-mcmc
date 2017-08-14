@@ -750,7 +750,8 @@ public class OperatorsGenerator extends Generator {
                 }
 
                 for (Parameter parameter : constrainedList) {
-                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName())});
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName()),
+                                    new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
                     writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
                     writer.writeCloseTag(TransformParsers.TRANSFORM);
                 }

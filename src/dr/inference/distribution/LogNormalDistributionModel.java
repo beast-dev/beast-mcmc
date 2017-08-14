@@ -51,7 +51,6 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         MEAN_STDEV
     }
 
-
     /**
      * Constructor.
      * This is the old constructor left for backwards compatibility
@@ -72,6 +71,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
             this.sigmaParameter = null;
             addVariable(this.stdevParameter);
             this.stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+            this.parameterization = Parameterization.MEAN_STDEV;
         } else {
             this.muParameter = meanParameter;
             this.meanParameter = null;
@@ -82,6 +83,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
             this.stdevParameter = null;
             addVariable(this.sigmaParameter);
             this.sigmaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+
+            this.parameterization = Parameterization.MU_SIGMA;
         }
 
         precisionParameter = null;
@@ -107,6 +110,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                 this.meanParameter = null;
                 this.stdevParameter = null;
                 this.precisionParameter = null;
+                this.parameterization = Parameterization.MU_SIGMA;
                 break;
             case MU_PRECISION:
                 this.muParameter = parameter1;
@@ -114,6 +118,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                 this.meanParameter = null;
                 this.stdevParameter = null;
                 this.sigmaParameter = null;
+                this.parameterization = Parameterization.MU_PRECISION;
                 break;
             case MEAN_STDEV:
                 this.meanParameter = parameter1;
@@ -121,6 +126,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                 this.muParameter = null;
                 this.sigmaParameter = null;
                 this.precisionParameter = null;
+                this.parameterization = Parameterization.MEAN_STDEV;
                 break;
             default:
                 throw new IllegalArgumentException("Unknow parameterization type");
@@ -173,6 +179,10 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
     public Parameter getPrecisionParameter() {
         return precisionParameter;
+    }
+
+    public Parameterization getParameterization() {
+        return parameterization;
     }
 
     public final double getMu() {
@@ -408,6 +418,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     private final Parameter sigmaParameter;
     private final Parameter precisionParameter;
     private final double offset;
+
+    private Parameterization parameterization;
 
     public static void main(String[] argv) {
         Parameter meanParameter = new Parameter.Default(1.0);

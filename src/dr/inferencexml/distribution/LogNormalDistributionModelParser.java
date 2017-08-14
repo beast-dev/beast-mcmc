@@ -159,13 +159,21 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
             AttributeRule.newBooleanRule(STDEV_IN_REAL_SPACE, true),
             AttributeRule.newDoubleRule(OFFSET, true),
-            new ElementRule(MEAN,
+            new XORRule(new ElementRule(MEAN,
                     new XMLSyntaxRule[]{
                             new XORRule(
                                     new ElementRule(Parameter.class),
                                     new ElementRule(Double.class)
                             )}
             ),
+                    new ElementRule(MU,
+                            new XMLSyntaxRule[]{
+                                    new XORRule(
+                                            new ElementRule(Parameter.class),
+                                            new ElementRule(Double.class)
+                                    )}
+                    ))
+            ,
             new XORRule(
                     new ElementRule(STDEV,
                             new XMLSyntaxRule[]{

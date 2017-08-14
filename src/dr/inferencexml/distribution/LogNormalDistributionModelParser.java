@@ -57,7 +57,7 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
             // means mu if meanInRealSpace is false and stdev means sigma if stdevInRealSpace
             // is false
 
-            if (!xo.hasAttribute(MEAN) || !xo.hasAttribute(STDEV)) {
+            if (!xo.hasChildNamed(MEAN) || !xo.hasChildNamed(STDEV)) {
                 throw new XMLParseException("If meanInRealSpace attribute is given then the lognormal model must be parameterized with mean and stdev.");
             }
 

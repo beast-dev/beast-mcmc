@@ -252,6 +252,7 @@ public class TransformParsers {
     public static final String TYPE = "type";
     public static final String START = "start";
     public static final String END = "end";
+    public static final String SUM = "sum";
     public static final String EVERY = "every";
     public static final String INVERSE = "inverseTransform";
     public static final String COMPOSE = "composedTransform";

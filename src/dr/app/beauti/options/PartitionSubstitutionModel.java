@@ -164,7 +164,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         double substWeights = 1.0;
 
         //Substitution model parameters
-        if (options.FREQUENCIES_DIRICLET_PRIOR) {
+        if (options.FREQUENCIES_DIRICHLET_PRIOR) {
             createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 1.0, true);

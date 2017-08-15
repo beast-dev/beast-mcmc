@@ -56,8 +56,7 @@ public class BeautiOptions extends ModelOptions {
 
     public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = false;
     public static final boolean NEW_GTR_PARAMETERIZATION = false;
-    public static final boolean FREQUENCIES_DIRICLET_PRIOR = false;
-
+    public static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
 
     private static final long serialVersionUID = -3676802825545741012L;
 

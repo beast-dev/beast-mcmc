@@ -727,6 +727,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                             transformationSizeCounter++;
                         }
                     } else {
+                        //log constrained sum transformation
                         transformations[index] = transformList.get(i);
                         transformationSizes[index] = transformCountList.get(i);
                         index++;

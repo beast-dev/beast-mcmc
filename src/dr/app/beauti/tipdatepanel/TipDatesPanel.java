@@ -189,7 +189,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         toolBar1.add(button);
 
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-        final JLabel unitsLabel = new JLabel("Dates specified as ");
+        final JLabel unitsLabel = new JLabel("Dates as:");
         toolBar1.add(unitsLabel);
         toolBar1.add(unitsCombo);
         toolBar1.add(directionCombo);

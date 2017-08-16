@@ -719,7 +719,7 @@ public class OperatorsGenerator extends Generator {
                 ArrayList<Parameter> constrainedList = new ArrayList<Parameter>();
 
                 for (Parameter parameter : options.selectParameters()) {
-                    if (parameter.isAdaptiveMultivariateCompatible) {
+                    if (parameter.isAdaptiveMultivariateCompatible && !parameter.isFixed()) {
                         System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
                         if (parameter.isNonNegative && !parameter.isMaintainedSum) {
                             logList.add(parameter);

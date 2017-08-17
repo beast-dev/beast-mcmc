@@ -56,12 +56,17 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
         Distribution likelihood = inLikelihood.getDistribution();
         this.dataList = inLikelihood.getDataList();
+
         if (likelihood instanceof NormalDistributionModel) {
             this.precisionParameter = (Parameter) ((NormalDistributionModel) likelihood).getPrecision();
             this.meanParameter = (Parameter) ((NormalDistributionModel) likelihood).getMean();
         } else if (likelihood instanceof LogNormalDistributionModel) {
+            if (((LogNormalDistributionModel) likelihood).getParameterization() == LogNormalDistributionModel.Parameterization.MU_PRECISION) {
+                this.meanParameter = ((LogNormalDistributionModel) likelihood).getMuParameter();
+            } else {
+                throw new RuntimeException("Must characterize likelihood in terms of mu and precision parameters");
+            }
             this.precisionParameter = ((LogNormalDistributionModel) likelihood).getPrecisionParameter();
-            this.meanParameter = ((LogNormalDistributionModel) likelihood).getMeanParameter();
             isLog = true;
         } else
             throw new RuntimeException("Likelihood must be Normal or log Normal");
@@ -88,7 +93,6 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
      * Called by operate(), does the actual operation.
      *
      * @return the hastings ratio
-     * @throws OperatorFailedException if operator fails and should be rejected
      */
     public double doOperation() {
 

@@ -90,7 +90,7 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 		minAxis=minTick;
 		maxAxis=maxTick;
 
-		handleAxisFlags();
+		// handleAxisFlags();
 
 		if (originBetweenCategories) {
 			minAxis-=0.5;

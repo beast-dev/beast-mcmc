@@ -37,14 +37,16 @@ public class ProductStatistic extends Statistic.Abstract {
 
     private int dimension = 0;
     private final boolean elementwise;
+    private final double[] constants;
 
-    public ProductStatistic(String name, boolean elementwise) {
+    public ProductStatistic(String name, boolean elementwise, double[] constants) {
         super(name);
         this.elementwise = elementwise;
+        this.constants = constants;
     }
 
     public void addStatistic(Statistic statistic) {
-        if (!elementwise) {
+        if (elementwise) {
             if (dimension == 0) {
                 dimension = statistic.getDimension();
             } else if (dimension != statistic.getDimension()) {
@@ -61,19 +63,26 @@ public class ProductStatistic extends Statistic.Abstract {
     }
 
     /**
-     * @return mean of contained statistics
+     * @return product of contained statistics
      */
     public double getStatisticValue(int dim) {
 
         double product = 1.0;
 
         for (Statistic statistic : statistics) {
-            if (elementwise) {
+            if (!elementwise) {
                 for (int j = 0; j < statistic.getDimension(); j++) {
                     product *= statistic.getStatisticValue(j);
                 }
             } else {
                 product *= statistic.getStatisticValue(dim);
+            }
+        }
+        if (constants != null && constants.length > 1) {
+            if (constants.length == 1) {
+                product *= constants[0];
+            } else {
+                product *= constants[dim];
             }
         }
 

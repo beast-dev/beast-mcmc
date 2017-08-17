@@ -43,17 +43,20 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.BufferIndexHelper;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.TreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -76,25 +79,28 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private double branchNormalization;
     private double storedBranchNormalization;
 
+    private boolean allowSingular = false;
 
     private TreeDataLikelihood callbackLikelihood = null;
 
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
                                             MultivariateDiffusionModel diffusionModel,
-                                            ContinuousTraitDataModel dataModel,
+                                            ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
-                                            BranchRateModel rateModel) {
-        this(tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, false);
+                                            BranchRateModel rateModel,
+                                            boolean allowSingular) {
+        this(tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, false, allowSingular);
     }
 
     public ContinuousDataLikelihoodDelegate(MultivariateTraitTree tree,
                                             MultivariateDiffusionModel diffusionModel,
-                                            ContinuousTraitDataModel dataModel,
+                                            ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel,
-                                            boolean forceCompletelyObserved) {
+                                            boolean forceCompletelyObserved,
+                                            boolean allowSingular) {
 
         super("ContinousDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel.treedatalikelihood");
@@ -105,7 +111,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         addModel(diffusionModel);
 
         this.dataModel = dataModel;
-        addModel(dataModel);
+        if (dataModel instanceof Model) {
+            addModel((Model) dataModel);
+        }
 
         if (rateModel != null) {
             addModel(rateModel);
@@ -119,6 +127,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         this.rateModel = rateModel;
         this.rootPrior = rootPrior;
         this.forceCompletelyObserved = forceCompletelyObserved;
+        this.allowSingular = allowSingular;
 
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
@@ -163,13 +172,24 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                base = new ContinuousDiffusionIntegrator.Multivariate(
-                        precisionType,
-                        numTraits,
-                        dimTrait,
-                        partialBufferCount,
-                        matrixBufferCount
-                );
+                if (allowSingular) {
+                    
+                    base = new SafeMultivariateIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                } else {
+                    base = new MultivariateIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                }
 
             } else {
                 throw new RuntimeException("Not yet implemented");
@@ -233,26 +253,36 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
+//    protected Tree getTree() {
+//        return (callbackLikelihood != null) ? callbackLikelihood.getTree() : null;
+//    }
+
+    protected TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
+
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
 
-    private double[] getTipObservations() {
-        final double[] data = new double[numTraits * dimTrait * tipCount];
+//    private double[] getTipObservations() {
+//        final double[] data = new double[numTraits * dimTrait * tipCount];
+//
+//        for (int tip = 0; tip < tipCount; ++tip) {
+//            double[] tipData = dataModel.getTipObservation(tip, precisionType);
+//            System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
+//        }
+//
+//        return data;
+//    }
 
-        for (int tip = 0; tip < tipCount; ++tip) {
-            double[] tipData = dataModel.getTipObservation(tip, precisionType);
-            System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
-        }
-
-        return data;
-    }
-
-    public ContinuousTraitDataModel getDataModel() { return dataModel; }
+    public ContinuousTraitPartialsProvider getDataModel() { return dataModel; }
 
     public RootProcessDelegate getRootProcessDelegate() {
         return rootProcessDelegate;
     }
+
+    public ConjugateRootTraitPrior getRootPrior() { return rootPrior; }
+
+    private static boolean EXTENDED_DEBUG_INFO = true;
 
     @Override
     public String getReport() {
@@ -263,114 +293,147 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         sb.append(cdi.getReport());
 
-//        final Tree tree = callbackLikelihood.getTree();
-//        sb.append(tree.toString());
-//        sb.append("\n\n");
-//
-//        final double normalization = rateTransformation.getNormalization();
-//        final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
-//
-//        double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
-//        sb.append("Tree structure:\n");
-//        sb.append(new Matrix(treeStructure));
-//        sb.append("\n\n");
-//
-//        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
-//        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
-//        Matrix traitVariance = new Matrix(traitPrecision).inverse();
-//
-//        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
-//
-//        Matrix treeV = new Matrix(treeVariance);
-//        Matrix treeP = treeV.inverse();
-//
-//        sb.append("Tree variance:\n");
-//        sb.append(treeV);
-//        sb.append("Tree precision:\n");
-//        sb.append(treeP);
-////        sb.append(matrixMin(treeVariance)).append("\t").append(matrixMax(treeVariance)).append("\t").append(matrixSum(treeVariance));
-//        sb.append("\n\n");
-//        sb.append("Trait variance:\n");
-//        sb.append(traitVariance);
-//        sb.append("\n\n");
-//        sb.append("Joint variance:\n");
-//        sb.append(new Matrix(jointVariance));
-//        sb.append("\n\n");
-//
-//        final int datumLength = tipCount * dimTrait;
-//
-//        sb.append("Tree dim : " + treeVariance.length + "\n");
-//        sb.append("dimTrait : " + dimTrait + "\n");
-//        sb.append("numTraits: " + numTraits + "\n");
-//        sb.append("Jvar dim : " + jointVariance.length + "\n");
-//        sb.append("datum dim: " + datumLength);
-//        sb.append("\n\n");
-//
+        final Tree tree = callbackLikelihood.getTree();
+        sb.append(tree.toString());
+        sb.append("\n\n");
+
+        final double normalization = rateTransformation.getNormalization();
+        final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
+
+        double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+        sb.append("Tree structure:\n");
+        sb.append(new Matrix(treeStructure));
+        sb.append("\n\n");
+
+        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
+        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+        Matrix traitVariance = new Matrix(traitPrecision).inverse();
+
+        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+
+        Matrix treeV = new Matrix(treeVariance);
+        Matrix treeP = treeV.inverse();
+
+        sb.append("Tree variance:\n");
+        sb.append(treeV);
+        sb.append("Tree precision:\n");
+        sb.append(treeP);
+//        sb.append(matrixMin(treeVariance)).append("\t").append(matrixMax(treeVariance)).append("\t").append(matrixSum(treeVariance));
+        sb.append("\n\n");
+        sb.append("Trait variance:\n");
+        sb.append(traitVariance);
+        sb.append("\n\n");
+        sb.append("Joint variance:\n");
+        sb.append(new Matrix(jointVariance));
+        sb.append("\n\n");
+
+        final int datumLength = tipCount * dimTrait;
+
+        sb.append("Tree dim : " + treeVariance.length + "\n");
+        sb.append("dimTrait : " + dimTrait + "\n");
+        sb.append("numTraits: " + numTraits + "\n");
+        sb.append("Jvar dim : " + jointVariance.length + "\n");
+        sb.append("datum dim: " + datumLength);
+        sb.append("\n\n");
+
+        double[] data = dataModel.getParameter().getParameterValues();
+
+//        HEREHERE
+
+//        List<Integer> notMissing = new ArrayList<Integer>();
+//        for (int taxon = 0; taxon < numTaxa; ++taxon) {
+//            double[] observed = observedIndicators[taxon];
+//            for (int trait = 0; trait < dimTrait; ++trait) {
+//                if (observed[trait] == 0.0) {
+//                    System.err.println("Missing taxon " + taxon + " trait " + trait);
+//                } else {
+//                    notMissing.add(taxon * dimTrait + trait);
+//                }
+//            }
+//        }
+
+        if (dataModel instanceof ContinuousTraitDataModel) {
+            //    private double[] getTipObservations() {
+            //        final double[] data = new double[numTraits * dimTrait * tipCount];
+            //
+            for (int tip = 0; tip < tipCount; ++tip) {
+                double[] tipData = ((ContinuousTraitDataModel) dataModel).getTipObservation(tip, precisionType);
+                System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
+            }
+            //
+            //        return data;
+            //    }
+        }
+
+
 //        double[] data = getTipObservations();
-//        sb.append("data: " + new dr.math.matrixAlgebra.Vector(data));
-//        sb.append("\n\n");
-//
-//        double logLikelihood = 0;
-//
-//        Matrix totalNop = new Matrix(dimTrait, dimTrait);
-//        Matrix totalOp = new Matrix(dimTrait, dimTrait);
-//
-//        for (int trait = 0; trait < numTraits; ++trait) {
-//            sb.append("Trait #" + trait + "\n");
-//
-//            double[] rawDatum = new double[datumLength];
-//            double[][] opDatum = new double[tipCount][dimTrait];
-//
-//
-//            List<Integer> missing = new ArrayList<Integer>();
-//            int index = 0;
-//            for (int tip = 0; tip < tipCount; ++tip) {
-//                for (int dim = 0; dim < dimTrait; ++dim) {
-//                    double d = data[tip * dimTrait * numTraits + trait * dimTrait + dim];
-//                    rawDatum[index] = d;
-//                    if (Double.isNaN(d)) {
-//                        missing.add(index);
-//                        d = 0.0;
-//                    }
-//                    opDatum[tip][dim] = d;
-//                    ++index;
-//                }
-//            }
-//
-//            double[][] varianceDatum = jointVariance;
-//            double[] datum = rawDatum;
-//
-//            int[] missingIndices = null;
-//            int[] notMissingIndices = null;
-//
-//            if (missing.size() > 0) {
-//                missingIndices = new int[missing.size()];
-//                notMissingIndices = new int[datumLength - missing.size()];
-//                int offsetMissing = 0;
-//                int offsetNotMissing = 0;
-//                for (int i = 0; i < datumLength; ++i) {
-//                    if (!missing.contains(i)) {
-//                        notMissingIndices[offsetNotMissing] = i;
-//                        ++offsetNotMissing;
-//                    } else {
-//                        missingIndices[offsetMissing] = i;
-//                        ++offsetMissing;
-//                    }
-//                }
-//
-//                datum = Matrix.gatherEntries(rawDatum, notMissingIndices);
-//                varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, notMissingIndices, notMissingIndices);
-//            }
-//
-//            sb.append("datum : " + new dr.math.matrixAlgebra.Vector(datum) + "\n");
-//            sb.append("variance:\n");
-//            sb.append(new Matrix(varianceDatum));
-//
-//            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[datum.length], new Matrix(varianceDatum).inverse().toComponents());
-//            double logDensity = mvn.logPdf(datum);
-//            sb.append("\n\n");
-//            sb.append("logDatumLikelihood: " + logDensity + "\n\n");
-//            logLikelihood += logDensity;
+        sb.append("data: " + new dr.math.matrixAlgebra.Vector(data));
+
+//        dataModel.get
+        sb.append("\n\n");
+
+        double logLikelihood = 0;
+
+        Matrix totalNop = new Matrix(dimTrait, dimTrait);
+        Matrix totalOp = new Matrix(dimTrait, dimTrait);
+
+        for (int trait = 0; trait < numTraits; ++trait) {
+            sb.append("Trait #" + trait + "\n");
+
+            double[] rawDatum = new double[datumLength];
+            double[][] opDatum = new double[tipCount][dimTrait];
+
+
+            List<Integer> missing = new ArrayList<Integer>();
+            int index = 0;
+            for (int tip = 0; tip < tipCount; ++tip) {
+                for (int dim = 0; dim < dimTrait; ++dim) {
+                    double d = data[tip * dimTrait * numTraits + trait * dimTrait + dim];
+                    rawDatum[index] = d;
+                    if (Double.isNaN(d)) {
+                        missing.add(index);
+                        d = 0.0;
+                    }
+                    opDatum[tip][dim] = d;
+                    ++index;
+                }
+            }
+
+            double[][] varianceDatum = jointVariance;
+            double[] datum = rawDatum;
+
+            int[] missingIndices = null;
+            int[] notMissingIndices = null;
+
+            if (missing.size() > 0) {
+                missingIndices = new int[missing.size()];
+                notMissingIndices = new int[datumLength - missing.size()];
+                int offsetMissing = 0;
+                int offsetNotMissing = 0;
+                for (int i = 0; i < datumLength; ++i) {
+                    if (!missing.contains(i)) {
+                        notMissingIndices[offsetNotMissing] = i;
+                        ++offsetNotMissing;
+                    } else {
+                        missingIndices[offsetMissing] = i;
+                        ++offsetMissing;
+                    }
+                }
+
+                datum = Matrix.gatherEntries(rawDatum, notMissingIndices);
+                varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, notMissingIndices, notMissingIndices);
+            }
+
+            sb.append("datum : " + new dr.math.matrixAlgebra.Vector(datum) + "\n");
+            sb.append("variance:\n");
+            sb.append(new Matrix(varianceDatum));
+
+            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[datum.length], new Matrix(varianceDatum).inverse().toComponents());
+            double logDensity = mvn.logPdf(datum);
+            sb.append("\n\n");
+            sb.append("logDatumLikelihood: " + logDensity + "\n\n");
+            logLikelihood += logDensity;
+        }
 //
 //            if (DEBUG_MISSING_DISTRIBUTION && missing.size() > 0) {
 //                sb.append("\nConditional distribution of missing values at");
@@ -523,9 +586,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             partialBufferHelper.flipOffset(tipIndex);
         }
 
-        final double[] tipPartial = forceCompletelyObserved ?
-                dataModel.getTipPartial(tipIndex, true) :
-                dataModel.getTipPartial(tipIndex);
+//        final double[] tipPartial = forceCompletelyObserved ?
+//                dataModel.getTipPartial(tipIndex, true) :
+//                dataModel.getTipPartial(tipIndex);
+        final double[] tipPartial = dataModel.getTipPartial(tipIndex, forceCompletelyObserved);
 
 //        if (precisionType == PrecisionType.SCALAR) {
 //            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial));
@@ -796,7 +860,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private final RootProcessDelegate rootProcessDelegate;
 
-    private final ContinuousTraitDataModel dataModel;
+    private final ContinuousTraitPartialsProvider dataModel;
 
     private final ContinuousDiffusionIntegrator cdi;
 
@@ -827,14 +891,44 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return diffusionModel.getPrecisionParameter();
     }
 
-    public ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+    public static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
                 likelihoodDelegate.diffusionModel,
                 likelihoodDelegate.dataModel,
                 likelihoodDelegate.rootPrior,
                 likelihoodDelegate.rateTransformation,
                 likelihoodDelegate.rateModel,
-                true);
+                true,
+                likelihoodDelegate.allowSingular);
+    }
+
+    public static ContinuousDataLikelihoodDelegate createWithMissingData(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+
+        if (!(likelihoodDelegate.dataModel instanceof ContinuousTraitDataModel)) {
+            throw new IllegalArgumentException("Not yet implemented");
+        }
+
+        List<Integer> originalMissingIndices = ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndices();
+
+        if (originalMissingIndices.size() == 0) {
+            throw new IllegalArgumentException("ContinuousDataLikelihoodDelegate has no missing traits");
+        }
+
+        ContinuousTraitPartialsProvider newDataModel = new ContinuousTraitDataModel(((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getName(),
+                likelihoodDelegate.dataModel.getParameter(),
+                ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndices(),
+                true,
+                likelihoodDelegate.getTraitDim(), PrecisionType.FULL);
+
+        ContinuousDataLikelihoodDelegate newDelegate = new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
+                likelihoodDelegate.diffusionModel,
+                newDataModel,
+                likelihoodDelegate.rootPrior,
+                likelihoodDelegate.rateTransformation,
+                likelihoodDelegate.rateModel,
+                false,
+                likelihoodDelegate.allowSingular);
+        return newDelegate;
     }
 
     private final static boolean DEBUG_OUTER_PRODUCTS = false;

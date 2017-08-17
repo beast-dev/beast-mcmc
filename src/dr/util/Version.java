@@ -45,4 +45,27 @@ public interface Version {
     String[] getCredits();
 
     String getHTMLCredits();
+
+    class Utils {
+        /**
+         * Is version1 more recent (higher) than version2?
+         * @param version1
+         * @param version2
+         * @return
+         */
+        public static boolean isMoreRecent(String version1, String version2) {
+            String[] v1 = version1.split("\\.");
+            String[] v2 = version2.split("\\.");
+
+            for (int i = 0; i < Math.min(v1.length, v2.length); i++) {
+                if (Integer.parseInt(v1[i]) < Integer.parseInt(v2[i])) {
+                    return false;
+                } else if (Integer.parseInt(v1[i]) > Integer.parseInt(v2[i])) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 }

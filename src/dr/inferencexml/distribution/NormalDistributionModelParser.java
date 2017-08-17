@@ -36,6 +36,7 @@ public class NormalDistributionModelParser extends AbstractXMLObjectParser {
 
     public static final String NORMAL_DISTRIBUTION_MODEL = "normalDistributionModel";
     public static final String MEAN = "mean";
+    public static final String MU = "mu";
     public static final String SCALE = "scale";
     public static final String STDEV = "stdev";
     public static final String PREC = "precision";

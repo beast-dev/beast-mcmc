@@ -42,7 +42,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
-public class ExternalLengthStatistic extends Statistic.Abstract implements TreeStatistic {
+public class ExternalLengthStatistic extends TreeStatistic {
 
     public ExternalLengthStatistic(String name, Tree tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
         super(name);

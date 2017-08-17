@@ -34,10 +34,9 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
-import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
-import org.apache.commons.math.stat.descriptive.moment.Mean;
+import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -46,7 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator.Multivariate.*;
+import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * ProcessSimulationDelegate - interface for a plugin delegate for data simulation on a tree.
@@ -142,7 +141,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected final int dimNode;
 
         protected final MultivariateDiffusionModel diffusionModel;
-        protected final ContinuousTraitDataModel dataModel;
+        protected final ContinuousTraitPartialsProvider dataModel;
         protected final ConjugateRootTraitPrior rootPrior;
         protected final RootProcessDelegate rootProcessDelegate;
 
@@ -155,9 +154,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 ConditionalOnPartiallyMissingTipsRealizedDelegate.ConditionalVarianceAndTranform> conditionalMap;
 
         AbstractContinuousTraitDelegate(String name,
-                                        MultivariateTraitTree tree,
+                                        Tree tree,
                                         MultivariateDiffusionModel diffusionModel,
-                                        ContinuousTraitDataModel dataModel,
+                                        ContinuousTraitPartialsProvider dataModel,
                                         ConjugateRootTraitPrior rootPrior,
                                         ContinuousRateTransformation rateTransformation,
                                         BranchRateModel rateModel,
@@ -256,9 +255,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                     return false;
                 }
 
-        public AbstractValuesViaFullConditionalDelegate(String name, MultivariateTraitTree tree,
+        public AbstractValuesViaFullConditionalDelegate(String name, Tree tree,
                                                            MultivariateDiffusionModel diffusionModel,
-                                                           ContinuousTraitDataModel dataModel,
+                                                           ContinuousTraitPartialsProvider dataModel,
                                                            ConjugateRootTraitPrior rootPrior,
                                                            ContinuousRateTransformation rateTransformation,
                                                            BranchRateModel rateModel,
@@ -359,9 +358,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     class TipRealizedValuesViaFullConditionalDelegate extends AbstractValuesViaFullConditionalDelegate {
 
-        public TipRealizedValuesViaFullConditionalDelegate(String name, MultivariateTraitTree tree,
+        public TipRealizedValuesViaFullConditionalDelegate(String name, Tree tree,
                                                            MultivariateDiffusionModel diffusionModel,
-                                                           ContinuousTraitDataModel dataModel,
+                                                           ContinuousTraitPartialsProvider dataModel,
                                                            ConjugateRootTraitPrior rootPrior,
                                                            ContinuousRateTransformation rateTransformation,
                                                            BranchRateModel rateModel,
@@ -395,7 +394,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
 //        final private PartiallyMissingInformation missingInformation;
 
-         public TipGradientViaFullConditionalDelegate(String name, MultivariateTraitTree tree,
+         public TipGradientViaFullConditionalDelegate(String name, Tree tree,
                                                             MultivariateDiffusionModel diffusionModel,
                                                             ContinuousTraitDataModel dataModel,
                                                             ConjugateRootTraitPrior rootPrior,
@@ -449,9 +448,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     class TipFullConditionalDistributionDelegate extends AbstractContinuousTraitDelegate {
 
-        public TipFullConditionalDistributionDelegate(String name, MultivariateTraitTree tree,
+        public TipFullConditionalDistributionDelegate(String name, Tree tree,
                                                MultivariateDiffusionModel diffusionModel,
-                                               ContinuousTraitDataModel dataModel,
+                                                      ContinuousTraitPartialsProvider dataModel,
                                                ConjugateRootTraitPrior rootPrior,
                                                ContinuousRateTransformation rateTransformation,
                                                BranchRateModel rateModel,
@@ -622,9 +621,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     abstract class AbstractRealizedContinuousTraitDelegate extends AbstractContinuousTraitDelegate {
 
         AbstractRealizedContinuousTraitDelegate(String name,
-                                                MultivariateTraitTree tree,
+                                                Tree tree,
                                                 MultivariateDiffusionModel diffusionModel,
-                                                ContinuousTraitDataModel dataModel,
+                                                ContinuousTraitPartialsProvider dataModel,
                                                 ConjugateRootTraitPrior rootPrior,
                                                 ContinuousRateTransformation rateTransformation,
                                                 BranchRateModel rateModel,
@@ -650,7 +649,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
                 public double[] getTrait(Tree t, NodeRef node) {
 
-                    assert t == tree;
+//                    assert t == tree; // Does not hold for transformed trees
                     return getTraitForNode(node);
                 }
             };
@@ -747,12 +746,14 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuousTraitDelegate {
 
+        static final private boolean DEBUG = false;
+
         final protected int dimPartial;
 
         public ConditionalOnTipsRealizedDelegate(String name,
-                                         MultivariateTraitTree tree,
+                                         Tree tree,
                                          MultivariateDiffusionModel diffusionModel,
-                                         ContinuousTraitDataModel dataModel,
+                                         ContinuousTraitPartialsProvider dataModel,
                                          ConjugateRootTraitPrior rootPrior,
                                          ContinuousRateTransformation rateTransformation,
                                          BranchRateModel rateModel,
@@ -776,6 +777,10 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
 
+            if (DEBUG) {
+                System.err.println("Simulate root node " + nodeIndex);
+            }
+
             int offsetPartial = 0;
             int offsetSample = dimNode * nodeIndex;
             for (int trait = 0; trait < numTraits; ++trait) {
@@ -789,23 +794,47 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected void simulateTraitForRoot(final int offsetSample, final int offsetPartial) {
 
-            final double nodePrecision = partialNodeBuffer[offsetPartial + dimTrait];
+            final double rootPrec = partialNodeBuffer[offsetPartial + dimTrait];
 
-            if (Double.isInfinite(nodePrecision)) {
+            if (DEBUG) {
+                System.err.println("\trootPrec: " + rootPrec);
+            }
+
+            if (Double.isInfinite(rootPrec)) {
+
                 System.arraycopy(partialNodeBuffer, offsetPartial, sample, offsetSample, dimTrait);
+
             } else {
 
-                final double sqrtScale = Math.sqrt(1.0 / nodePrecision);
+                final double priorPrec = partialPriorBuffer[offsetPartial + dimTrait];
+                final double totalPrec = priorPrec + rootPrec;
+
+                for (int i = 0; i < dimTrait; ++i) {
+                    tmpMean[i] = (rootPrec * partialNodeBuffer[offsetPartial + i]
+                            + priorPrec * partialPriorBuffer[offsetPartial + i])
+                            / totalPrec;
+                }
+
+                if (DEBUG) {
+                    System.err.println("\tpriorPrec: " + priorPrec);
+                    System.err.println("\trootMean: " + new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait));
+                    System.err.println("\tprioMean: " + new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait));
+                    System.err.println("\tweigMean: " + new WrappedVector.Raw(tmpMean, 0, dimTrait));
+                }
+
+
+                final double sqrtScale = Math.sqrt(1.0 / totalPrec);
 
                 MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                        partialNodeBuffer, offsetPartial, // input mean
+                        tmpMean, 0, // input mean
                         cholesky, sqrtScale, // input variance
                         sample, offsetSample, // output sample
                         tmpEpsilon);
-            }
 
-            throw new RuntimeException("This function is incorrect");
-            // TODO Need to integrate in prior on root in partialPriorBuffer
+                if (DEBUG) {
+                    System.err.println("\tsample: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+                }
+            }
         }
 
         @Override
@@ -819,6 +848,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             final double branchPrecision = 1.0 / (operation.getBranchLength() * branchNormalization);
 
+            if (DEBUG) {
+                System.err.println("Simulate for node " + nodeIndex);
+            }
              for (int trait = 0; trait < numTraits; ++trait) {
 
                 simulateTraitForNode(nodeIndex, trait, offsetSample, offsetParent, offsetPartial, branchPrecision);
@@ -844,7 +876,21 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
              final double nodePrecision = partialNodeBuffer[offsetPartial + dimTrait];
 
              if (Double.isInfinite(nodePrecision)) {
+
+                 if (DEBUG) {
+                     System.err.println("\tCopy from node partial");
+                 }
+
                  System.arraycopy(partialNodeBuffer, offsetPartial, sample, offsetSample, dimTrait);
+
+             } else if (Double.isInfinite(branchPrecision)) {
+
+                 if (DEBUG) {
+                     System.err.println("\tCopy from parent sample");
+                 }
+
+                 System.arraycopy(sample, offsetParent, sample, offsetSample, dimTrait);
+
              } else {
 
                  final double totalPrecision = nodePrecision + branchPrecision;
@@ -862,6 +908,10 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                          sample, offsetSample, // output sample
                          tmpEpsilon);
              }
+
+             if (DEBUG) {
+                 System.err.println("\tSample value: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+             }
         }
 
         protected final ContinuousDataLikelihoodDelegate likelihoodDelegate;
@@ -877,9 +927,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         final private PartiallyMissingInformation missingInformation;
 
-        public MultivariateConditionalOnTipsRealizedDelegate(String name, MultivariateTraitTree tree,
+        public MultivariateConditionalOnTipsRealizedDelegate(String name, Tree tree,
                                                              MultivariateDiffusionModel diffusionModel,
-                                                             ContinuousTraitDataModel dataModel,
+                                                             ContinuousTraitPartialsProvider dataModel,
                                                              ConjugateRootTraitPrior rootPrior,
                                                              ContinuousRateTransformation rateTransformation,
                                                              BranchRateModel rateModel,
@@ -1065,7 +1115,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                         final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
                         CommonOps.add(cP0, cP1, cP2);
 
-                        final ContinuousDiffusionIntegrator.Multivariate.InversionResult cc2 = safeInvert(cP2, cV2, false);
+                        final InversionResult cc2 = safeInvert(cP2, cV2, false);
                         double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
 
                         MultivariateNormalDistribution.nextMultivariateNormalCholesky(
@@ -1137,7 +1187,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
 
             CommonOps.add(P0, P1, P2);
-            final ContinuousDiffusionIntegrator.Multivariate.InversionResult c2 = safeInvert(P2, V2, false);
+            final InversionResult c2 = safeInvert(P2, V2, false);
             weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
             double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);
@@ -1165,7 +1215,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     class ConditionalOnPartiallyMissingTipsRealizedDelegate extends ConditionalOnTipsRealizedDelegate {
 
-        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, MultivariateTraitTree tree,
+        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, Tree tree,
                                                          MultivariateDiffusionModel diffusionModel,
                                                          ContinuousTraitDataModel dataModel,
                                                          ConjugateRootTraitPrior rootPrior,
@@ -1177,7 +1227,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                     new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate));
         }
 
-        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, MultivariateTraitTree tree,
+        public ConditionalOnPartiallyMissingTipsRealizedDelegate(String name, Tree tree,
                                                          MultivariateDiffusionModel diffusionModel,
                                                          ContinuousTraitDataModel dataModel,
                                                          ConjugateRootTraitPrior rootPrior,
@@ -1591,7 +1641,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     class UnconditionalOnTipsDelegate extends AbstractRealizedContinuousTraitDelegate {
 
         public UnconditionalOnTipsDelegate(String name,
-                                           MultivariateTraitTree tree,
+                                           Tree tree,
                                            MultivariateDiffusionModel diffusionModel,
                                            ContinuousTraitDataModel dataModel,
                                            ConjugateRootTraitPrior rootPrior,

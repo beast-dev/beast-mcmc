@@ -73,7 +73,6 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
      */
     double getValueSum();
 
-
     /**
      * Abstract base class for Statistics
      */

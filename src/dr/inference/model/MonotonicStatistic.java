@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * @author Marc Suchard
  */
 
-public class MonotonicStatistic extends BooleanStatistic {
+public class MonotonicStatistic extends Statistic.Abstract implements BooleanStatistic {
 
     public static final String MONOTONIC_STATISTIC = "monotonicStatistic";
     public static final String STRICTLY = "strictlyMonotic";
@@ -54,6 +54,13 @@ public class MonotonicStatistic extends BooleanStatistic {
 
     public void addStatistic(Statistic stat) {
         dataList.add(stat);
+    }
+
+    /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
     }
 
     public boolean getBoolean(int dim) {

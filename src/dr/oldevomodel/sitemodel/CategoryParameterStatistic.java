@@ -26,6 +26,7 @@
 package dr.oldevomodel.sitemodel;
 
 import dr.inference.model.BooleanStatistic;
+import dr.inference.model.Statistic;
 import dr.xml.*;
 
 
@@ -34,7 +35,7 @@ import dr.xml.*;
  *
  * @author Roald Forsberg
  */
-public class CategoryParameterStatistic extends BooleanStatistic {
+public class CategoryParameterStatistic extends Statistic.Abstract implements BooleanStatistic {
 
     private static String MINIMUM_NUMBER = "minimumNumber";
 
@@ -50,6 +51,13 @@ public class CategoryParameterStatistic extends BooleanStatistic {
 
     public int getDimension() {
         return 1;
+    }
+
+    /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
     }
 
     /**

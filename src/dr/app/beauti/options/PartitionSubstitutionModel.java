@@ -62,6 +62,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private final int continuousTraitCount;
 
+    private final TraitData traitData;
+
     private boolean activateBSSVS = false;
     public boolean useAmbiguitiesTreeLikelihood = false;
 
@@ -83,16 +85,26 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean isLatitudeLongitude = false;
     private double jitterWindow = 0.0;
 
-    public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
-//        this(options, partition.getName(),(partition.getTrait() == null)
-//                ? partition.getDataType() : GeneralDataType.INSTANCE);
-        super(options, partition.getName());
+    public TraitData getTraitData() {
+        return traitData;
+    }
+
+    public PartitionSubstitutionModel(BeautiOptions options, String name, AbstractPartitionData partition) {
+        super(options, name);
 
         if (partition.getTraits() != null && partition.getDataType().getType() == DataType.CONTINUOUS) {
             continuousTraitCount = partition.getTraits().size();
         } else {
             continuousTraitCount = 0;
         }
+
+        if (partition.getTraits() != null && partition.getDataType().getType() == DataType.GENERAL) {
+            traitData = partition.getTraits().get(0);
+        } else {
+            traitData = null;
+        }
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -113,6 +125,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         continuousTraitCount = source.continuousTraitCount;
 
+        traitData = source.traitData;
+
         activateBSSVS = source.activateBSSVS;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
@@ -132,11 +146,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         phase = source.phase;
 
         microsatellite = source.microsatellite;
+
+        initModelParametersAndOpererators();
     }
 
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
         super(options, name);
         continuousTraitCount = 0;
+        traitData = null;
+
+        initModelParametersAndOpererators();
     }
 
     // only init in PartitionSubstitutionModel
@@ -145,7 +164,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         double substWeights = 1.0;
 
         //Substitution model parameters
-        if (options.FREQUENCIES_DIRICLET_PRIOR) {
+        if (options.FREQUENCIES_DIRICHLET_PRIOR) {
             createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 1.0, true);
@@ -1040,7 +1059,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public boolean isActivateBSSVS() {
-        return activateBSSVS;
+        return discreteSubstType != DiscreteSubstModelType.GLM_SUBST && activateBSSVS;
     }
 
     public void setActivateBSSVS(boolean activateBSSVS) {

@@ -94,7 +94,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -192,7 +192,7 @@ public class BeastMain {
                     // turn off all messages for subsequent reads of the file (they will be the same as the
                     // first time).
                     messageHandler.setLevel(Level.OFF);
-                    parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
+                    parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
@@ -227,7 +227,8 @@ public class BeastMain {
                     dome.getMessage());
             throw new RuntimeException("Terminate");
         } catch (dr.xml.XMLParseException pxe) {
-            pxe.printStackTrace(System.err);
+            // Leave the printing of the stack trace until the end - too noisy otherwise
+            //pxe.printStackTrace(System.err);
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
                 infoLogger.severe("Error running file: " + fileName);
                 infoLogger.severe(
@@ -240,7 +241,7 @@ public class BeastMain {
 
             } else {
                 infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
-                        pxe.getMessage());
+                        pxe.getMessage() + "\n\nError thrown at: " + pxe.getStackTrace()[0] + "\n");
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
@@ -259,7 +260,7 @@ public class BeastMain {
                                 "values. This will result in Priors with zero probability.\n\n" +
                                 "The individual components of the posterior are as follows:\n" +
                                 rex.getMessage() + "\n" +
-                                "For more information go to <http://beast.bio.ed.ac.uk/>.");
+                                "For more information go to <http://beast.community>.");
             } else {
                 // This call never returns as another RuntimeException exception is raised by
                 // the error log handler???
@@ -803,7 +804,8 @@ public class BeastMain {
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
-            rte.printStackTrace(System.err);
+            // The stack trace here is not useful
+//            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
                 System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");

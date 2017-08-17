@@ -53,13 +53,13 @@ public class LineDistributionPlot extends Plot.AbstractPlot {
      * Paint actual plot
      */
     public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                          double xOffset, double yOffset) {
+                          double xOffset, double yOffset, int plotNumber) {
 
         if (gradients == null || intercepts == null) {
             return;
         }
 
-        super.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+        super.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber);
 
         if (!isCalibrated) {
             x1 = xAxis.getMinAxis();

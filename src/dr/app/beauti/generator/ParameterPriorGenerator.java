@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
@@ -39,7 +40,6 @@ import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -190,13 +190,23 @@ public class ParameterPriorGenerator extends Generator {
                 writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
                 break;
             case LOGNORMAL_PRIOR:
-                writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
-                                new Attribute.Default<Boolean>(PriorParsers.MEAN_IN_REAL_SPACE, parameter.isMeanInRealSpace())
-                        });
+                if (parameter.isInRealSpace()) {
+                    writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                    new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev),
+                                    new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
+                            });
+                } else {
+                    // if the log normal parameters are not set in real space then the parameter use the mu
+                    // and sigma parameters (the mean and stdev of the underlying normal).
+                    writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(PriorParsers.MU, "" + parameter.mean),
+                                    new Attribute.Default<String>(PriorParsers.SIGMA, "" + parameter.stdev),
+                                    new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
+                            });
+                }
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);
                 break;
@@ -252,17 +262,42 @@ public class ParameterPriorGenerator extends Generator {
                 // Find correct tree for this rate parameter
 
                 PartitionTreeModel treeModel = null;
-                for (PartitionClockModel pcm : options.getPartitionClockModels()) {
-                    if (pcm.getClockRateParameter() == parameter) {
-                        for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
-                            treeModel = pd.getPartitionTreeModel();
-                            break;
+
+                if (parameter.getTaxonSet() != null) {
+                    treeModel = options.taxonSetsTreeModel.get(parameter.getTaxonSet());
+                } else {
+                    for (PartitionClockModel pcm : options.getPartitionClockModels()) {
+                        if (pcm.getClockRateParameter() == parameter) {
+                            for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
+                                treeModel = pd.getPartitionTreeModel();
+                                break; // todo - This breaks after the first iteration. Why a loop?
+                            }
                         }
                     }
                 }
                 if (treeModel == null) {
                     throw new IllegalArgumentException("No tree model found for clock model");
                 }
+
+                PartitionClockModel pcm = (PartitionClockModel)parameter.getOptions();
+                if (pcm.getClockType() == ClockType.FIXED_LOCAL_CLOCK) {
+                    if (parameter.getTaxonSet() != null) {
+                        writer.writeIDref("taxa", parameter.getTaxonSet().getId());
+                    } else {
+                        writer.writeOpenTag("taxa");
+                        writer.writeIDref("taxa", "taxa");
+                        writer.writeOpenTag("exclude");
+                        for (Taxa taxonSet : options.taxonSets) {
+                            if (options.taxonSetsMono.get(taxonSet)) {
+                                writer.writeIDref("taxa", taxonSet.getId());
+                            }
+                        }
+                        writer.writeCloseTag("exclude");
+                        writer.writeCloseTag("taxa");
+
+                    }
+                }
+
                 writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
                 break;

@@ -70,8 +70,9 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+        PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-        String prefix = treeModel.getPrefix(); // use the treemodel prefix
+        String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
         String idString = prefix + "treeLikelihood";
 
         Attribute[] attributes = new Attribute[]{
@@ -84,7 +85,12 @@ public class TreeLikelihoodGenerator extends Generator {
 
         for (PartitionData partition : partitions) {
             substModel = partition.getPartitionSubstitutionModel();
-            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            PartitionClockModel cm = partition.getPartitionClockModel();
+            if (clockModel == null) {
+                clockModel = cm;
+            } else if (clockModel != cm) {
+                throw new RuntimeException("All the partitions in a TreeDataLikelihood should share the same clock model.");
+            }
 
             if (substModel.getCodonHeteroPattern() != null) {
 
@@ -96,8 +102,6 @@ public class TreeLikelihoodGenerator extends Generator {
 
                     writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
 
-                    ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
-
                     writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
                 }
 
@@ -107,13 +111,15 @@ public class TreeLikelihoodGenerator extends Generator {
                 writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
                 writer.writeIDref(SitePatternsParser.PATTERNS, prefix1 + SitePatternsParser.PATTERNS);
                 writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
-                ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
                 writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
             }
+
 
         }
 
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+
 
         writer.writeCloseTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD);
 
@@ -245,12 +251,21 @@ public class TreeLikelihoodGenerator extends Generator {
      */
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (List<PartitionData> partitions : options.multiPartitionLists)  {
-            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, partitions.get(0).getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
-            writer.writeText("");
+            // TreeDataLikelihoods are labelled by their tree and clock models
+            PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+            PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
+
+            String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
+            String idString = prefix + "treeLikelihood";
+
+            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, idString);
         }
 
         for (AbstractPartitionData partition : options.otherPartitions) {
             // generate tree likelihoods for the other data partitions
+
+            // TreeLikelihood are labelled by their partition
+
             writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
         }
     }

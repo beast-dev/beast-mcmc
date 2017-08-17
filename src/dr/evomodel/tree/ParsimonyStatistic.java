@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: ParsimonyStatistic.java,v 1.13 2005/07/11 14:06:25 rambaut Exp $
  */
-public class ParsimonyStatistic extends Statistic.Abstract implements TreeStatistic {
+public class ParsimonyStatistic extends TreeStatistic {
 
     public ParsimonyStatistic(String name, Tree tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
 

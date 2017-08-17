@@ -214,11 +214,11 @@ public abstract class ModelOptions implements Serializable {
                 .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
 
-    protected Parameter createStatistic(String name, String description) {
+    public Parameter createStatistic(String name, String description) {
         return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).build(parameters);
     }
 
-    protected Parameter createNonNegativeStatistic(String name, String description) {
+    public Parameter createNonNegativeStatistic(String name, String description) {
         return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).isNonNegative(true).build(parameters);
     }
     //+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
@@ -287,7 +287,7 @@ public abstract class ModelOptions implements Serializable {
     public Operator createBitFlipInSubstitutionModelOperator(String key, String name, String description, Parameter parameter,
                                                              PartitionOptions options, double tuning, double weight) {
 //        Parameter parameter = getParameter(parameterName);
-        return operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFIP_IN_SUBST, tuning, weight)
+        return operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFLIP_IN_SUBST, tuning, weight)
                 .partitionOptions(options).build());
     }
 
@@ -392,7 +392,9 @@ public abstract class ModelOptions implements Serializable {
         return operators;
     }
 
-    public String noDuplicatedPrefix(String a , String b) {
+    @Deprecated
+    public String noDuplicatedPrefix1(String a , String b) {
+        // @todo AR - this doesn't make sense.
         if (a.equals(b)) {
             return a;
         } else {

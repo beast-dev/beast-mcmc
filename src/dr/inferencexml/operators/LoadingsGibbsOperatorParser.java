@@ -70,7 +70,6 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         }
         DistributionLikelihood WorkingPrior = null;
         if(xo.getChild(WORKING_PRIOR) != null){
-            System.out.println("here");
             WorkingPrior = (DistributionLikelihood) xo.getChild(WORKING_PRIOR).getChild(DistributionLikelihood.class);
         }
         boolean multiThreaded = xo.getAttribute(MULTI_THREADED, false);

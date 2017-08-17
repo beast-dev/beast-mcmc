@@ -319,7 +319,7 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.10pre20170801"/>
+    <property name="version" value="1.10-VEME2017"/>
 
     <property name="version_number" value="1.10.0"/>
     <property name="copyright" value="Copyright 2002-2017"/>
@@ -581,7 +581,7 @@
                 <include name="**/quaqua.jar"/>
             </jarfileset>
             <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="libquaqua*.jnilib"/>
+                <include name="libquaqua*.*"/>
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->

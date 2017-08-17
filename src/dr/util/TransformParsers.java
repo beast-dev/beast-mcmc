@@ -212,6 +212,9 @@ public class TransformParsers {
                  // todo: check values are valid
                  transform.start--; // zero-indexed
              } else {
+                 if (xo.hasAttribute(SUM)) {
+                     transform.fixedSum = xo.getDoubleAttribute(SUM);
+                 }
                  transform.parameters = new ArrayList<Parameter>();
 
                  for (Parameter param : xo.getAllChildren(Parameter.class)) {
@@ -228,6 +231,7 @@ public class TransformParsers {
                      AttributeRule.newIntegerRule(START, true),
                      AttributeRule.newIntegerRule(END, true),
                      AttributeRule.newIntegerRule(EVERY, true),
+                     AttributeRule.newDoubleRule(SUM, true),
                      AttributeRule.newBooleanRule(INVERSE, true),
                      new ElementRule(Transform.ParsedTransform.class, 0, 1),
                      new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)

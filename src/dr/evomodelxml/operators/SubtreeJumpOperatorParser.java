@@ -39,6 +39,9 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SUBTREE_JUMP = "subtreeJump";
 
+    public static final String BIAS = "bias";
+    public static final String ARCTAN_TRANSFORM = "arctanTransform";
+
     public String getParserName() {
         return SUBTREE_JUMP;
     }
@@ -59,12 +62,21 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
 //        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-        final double bias = xo.getAttribute("bias", 0.0);
-        final boolean arctanTransform = xo.getAttribute("arctanTransform", true);
+        double bias = 0.0;
+        boolean arctanTransform = false;
 
-        if (Double.isInfinite(bias)) {
-            throw new XMLParseException("bias attribute must be not infinite. was " + bias +
-           " for tree " + treeModel.getId() );
+        if (xo.hasAttribute(ARCTAN_TRANSFORM)) {
+            bias = xo.getAttribute(BIAS, 0.0);
+            arctanTransform = xo.getBooleanAttribute(ARCTAN_TRANSFORM);
+
+            if (Double.isInfinite(bias)) {
+                throw new XMLParseException("bias attribute must be not infinite. was " + bias +
+                        " for tree " + treeModel.getId());
+            }
+        } else {
+            // a non-tunable, uniform operator
+            bias = 0.0;
+            mode = CoercionMode.COERCION_OFF;
         }
 
         SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, bias, arctanTransform, mode);

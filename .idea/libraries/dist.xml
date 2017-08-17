@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="dist">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/build/dist/beast.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dist/beauti.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dist/trace.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

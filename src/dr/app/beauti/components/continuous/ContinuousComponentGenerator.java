@@ -436,7 +436,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag("meanParameter");
 
         writer.writeOpenTag("priorSampleSize");
-        writer.writeTag("parameter", new Attribute.Default<String>("value", "0.001"), true);
+        writer.writeTag("parameter", new Attribute.Default<String>("value", "0.000001"), true);
         writer.writeCloseTag("priorSampleSize");
 
         writer.writeCloseTag("conjugateRootPrior");

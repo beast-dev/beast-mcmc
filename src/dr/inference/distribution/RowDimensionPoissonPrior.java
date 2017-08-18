@@ -7,8 +7,8 @@ import dr.math.distributions.PoissonDistribution;
  * Created by maxryandolinskytolkoff on 7/20/16.
  */
 public class RowDimensionPoissonPrior extends AbstractModelLikelihood implements MatrixSizePrior {
-    public RowDimensionPoissonPrior(double untruncatedMean, AdaptableSizeFastMatrixParameter parameter, DeterminentalPointProcessPrior DPP, boolean transpose){
-        super("");
+    public RowDimensionPoissonPrior(String id, double untruncatedMean, AdaptableSizeFastMatrixParameter parameter, DeterminentalPointProcessPrior DPP, boolean transpose){
+        super(id);
         this.poisson = new PoissonDistribution(untruncatedMean);
         this.parameter = parameter;
         if(parameter != null)

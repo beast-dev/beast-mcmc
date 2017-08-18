@@ -30,8 +30,9 @@ public class RowDimensionPoissonPriorParser extends AbstractXMLObjectParser{
         boolean transpose = false;
         if(xo.hasAttribute(TRANSPOSE))
             transpose = xo.getBooleanAttribute(TRANSPOSE);
+        String id = xo.getId();
 
-        return new RowDimensionPoissonPrior(untruncatedMean, parameter, DPP, transpose);
+        return new RowDimensionPoissonPrior(id, untruncatedMean, parameter, DPP, transpose);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

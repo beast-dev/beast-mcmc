@@ -319,19 +319,19 @@ public class HierarchicalPriorDialog {
             mainPanel.add(panel[i], gbc);
         }
 
-        optionsPanel[0].addComponent(new JLabel("Select HPM for parameters: "));
+        optionsPanel[0].addComponent(new JLabel("Selected parameters: "));
 
-        OptionsPanel list = new OptionsPanel();
-        list.setBackground(Color.WHITE);
-        list.setOpaque(true);
+        Object[] parameters = parameterList.toArray();
 
-        for (Parameter p : parameterList) {
-            JLabel label = new JLabel("\t" + p.getName());
-            label.setForeground(Color.DARK_GRAY);
-            list.addSpanningComponent(label);
-        }
+        JList list = new JList(parameters); //data has type Object[]
+        //list.setSelectionModel(null);
+        list.setLayoutOrientation(JList.VERTICAL);
+        list.setVisibleRowCount(-1);
+        list.setEnabled(false);
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setPreferredSize(new Dimension(250, 80));
 
-        optionsPanel[0].addSpanningComponent(list);
+        optionsPanel[0].addSpanningComponent(scrollPane);
 
         PriorType modelType;
         optionsPanel[1].addComponentWithLabel("Hierarchical Distribution: ", priorCombo);

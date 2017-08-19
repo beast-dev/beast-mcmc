@@ -1,0 +1,17 @@
+<component name="libraryTable">
+  <library name="lib2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/jgoodies-common.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/jgoodies-looks.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/ant.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/xstream.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/formsrt.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/jgoodies-forms.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/commons-logging.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/commons-beanutils.jar!/" />
+      <root url="jar://$PROJECT_DIR$/packaging_tools/windows/launch4j/lib/foxtrot.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

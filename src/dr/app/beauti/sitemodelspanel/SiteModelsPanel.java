@@ -389,7 +389,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            return true;
+            return false;
         }
 
         public void setValueAt(Object value, int row, int col) {

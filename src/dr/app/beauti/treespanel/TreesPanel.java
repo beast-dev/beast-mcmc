@@ -447,20 +447,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            boolean editable;
-
-            switch (col) {
-                case 0:// name
-                    editable = true;
-                    break;
-                default:
-                    editable = false;
-            }
-
-            return editable;
+            return false;
         }
-
-
+        
         public String getColumnName(int column) {
             return columnNames[column];
         }

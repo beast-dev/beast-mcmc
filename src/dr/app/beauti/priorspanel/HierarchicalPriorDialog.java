@@ -319,7 +319,18 @@ public class HierarchicalPriorDialog {
             mainPanel.add(panel[i], gbc);
         }
 
-        optionsPanel[0].addComponent(new JLabel("Selected parameters: "));
+        String modelName = "untitled";
+        nameField = new JTextField(modelName);
+        nameField.setColumns(10);
+        optionsPanel[0].addComponentWithLabel("Unique Name: ", nameField);
+
+        PriorType modelType;
+        optionsPanel[0].addComponentWithLabel("Hierarchical Distribution: ", priorCombo);
+        modelType = (PriorType) priorCombo.getSelectedItem();
+
+//        optionsPanel[0].addSeparator();
+
+        optionsPanel[1].addComponent(new JLabel("Selected parameters: "));
 
         Object[] parameters = parameterList.toArray();
 
@@ -329,20 +340,9 @@ public class HierarchicalPriorDialog {
         list.setVisibleRowCount(-1);
         list.setEnabled(false);
         JScrollPane scrollPane = new JScrollPane(list);
-        scrollPane.setPreferredSize(new Dimension(250, 80));
+        scrollPane.setPreferredSize(new Dimension(250, 120));
 
-        optionsPanel[0].addSpanningComponent(scrollPane);
-
-        PriorType modelType;
-        optionsPanel[1].addComponentWithLabel("Hierarchical Distribution: ", priorCombo);
-        modelType = (PriorType) priorCombo.getSelectedItem();
-
-        optionsPanel[1].addSeparator();
-
-        String modelName = "untitled";
-        nameField = new JTextField(modelName);
-        nameField.setColumns(10);
-        optionsPanel[1].addComponentWithLabel("Unique Name: ", nameField);
+        optionsPanel[1].addSpanningComponent(scrollPane);
 
         optionsPanel[2].addSeparator();
         optionsPanel[3].addSeparator();

@@ -523,7 +523,7 @@
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
 
-        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler"/>
+        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler" classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
 
         <!-- create a jar bundle for the mac -->
         <jarbundler dir="${Mac_package_dir}"

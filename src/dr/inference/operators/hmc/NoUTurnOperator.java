@@ -49,7 +49,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     private final int dim = gradientProvider.getDimension();
     double[] logus = readFile1("logu.txt");
-    int DEBUG = 0;
+    int DEBUG = 1;
 
     double[] dir1 = readFile1("dir1.txt");
 
@@ -65,7 +65,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double deltaMax = 1000.0;
 
         private int maxDepth = 10;
-        private int adaptLength = 100;
+        private int adaptLength = 10;
     }
 
     // TODO Magic numbers; pass as options
@@ -143,19 +143,21 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
                 h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.delta - (alpha / nAlpha));
                 logStepSize = mu - Math.sqrt(m) / options.gamma * h;
+                System.err.println("umm logstepsize is " + logStepSize);
                 averageLogStepSize = Math.pow(m, -options.kappa) * logStepSize +
                         (1 - Math.pow(m, -options.kappa)) * averageLogStepSize;
-
                 stepSize = Math.exp(logStepSize);
+                System.err.println("Now let's take a look at the dual averaging :D "
+                        + "\n h is " + h +
+                        "\n m is  " + m +
+                        "\n alpha is " + alpha
+                        + "\n nalpha is " + nAlpha
+                        + "\n stepsize is " + stepSize
+                        + "\n aveStepsize is " + Math.exp(averageLogStepSize) ) ;
 
-            } else {
-
-                stepSize = Math.exp(averageLogStepSize); // TODO No necessary
             }
 
 
-            stepSize = initialStepSize; //todo: fix dual averaging part (gave too small step size). Now just use the step size from findReasonableStepSize().
-            //System.err.println("m is " + m + "stepsize is " + stepSize);
 
         }
     }
@@ -171,16 +173,21 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     public double doOperation(Likelihood likelihood) {
 
         final double[] initialPosition = leapFrogEngine.getInitialPosition();
+        //System.err.println("(1)Initial position in doOperation is  \n position" + Arrays.toString(initialPosition));
+
         final double initialLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
+        final double[] initialPOSITION = Arrays.copyOf(initialPosition,dim);
 
         if (stepSizeInformation == null) { // First call
 //            System.err.println("logu length is " + length);
-            
-            //System.err.println("initial prob is " + initialLogLikelihood);
-//            final double initialStepSize = findReasonableStepSize(initialPosition);
-            final double initialStepSize = 1;// TODO Magic number
 
-            //System.err.println("initial stepsize is " + initialStepSize);
+            //System.err.println("initial prob is " + initialLogLikelihood);
+            final double initialStepSize = findReasonableStepSize(initialPosition);
+         //   System.err.println("(2)Initial position in doOperation is \n position" + Arrays.toString(initialPosition));
+
+           // final double initialStepSize = 8;// TODO Magic number
+            //System.err.println("STEPSIZE from findReasonable is " + initialStepSize);
+
 
             stepSizeInformation = new StepSize(initialStepSize);
 
@@ -199,8 +206,9 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
 
 //        double[] position = takeOneStep(getCount() + 1, initialPosition);
+       // System.err.println("Initial position in doOperation is \n position" + Arrays.toString(initialPosition));
 
-        double[] position = takeOneStepNew(getCount() + 1, initialPosition);
+        double[] position = takeOneStepNew(getCount() + 1, initialPOSITION);
 
        // leapFrogEngine.setParameter(position);
         final double[] tmp_momentum = drawInitialMomentum(drawDistribution, dim);
@@ -317,7 +325,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
 
         stepSizeInformation.update(m, root.alpha, root.nAlpha, options);
-        stepSizeInformation.stepSize = 1; // todo
+       // stepSizeInformation.stepSize = 1; // todo
 
         return endPosition;
     }
@@ -394,8 +402,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
 
         if (j == 0) {
+
+          //  System.err.println("Parameters into the basetree is \n position" + Arrays.toString(position));
             return buildBaseCase( m, position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
         } else {
+
             return buildRecursiveCase(m, position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
         }
     }
@@ -418,13 +429,19 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         if(DEBUG == 1) {
 
-            System.err.println("Parameters into the jump is \n position" + Arrays.toString(position) +
+            System.out.println("Parameters into the jump is \n position" + Arrays.toString(position) +
                     "\n momentum " + Arrays.toString(momentum) + "\n gradient" + Arrays.toString(gradientProvider.getGradientLogDensity())
 
                     + "\n stepsize is " + direction * stepSize / 2);
         }
 
+
+        // one frog jump!
+//        System.err.println("the momentum before firstUpdate is " + Arrays.toString(momentum));
+//        System.err.println("the gradient before firstUpdate is " + Arrays.toString(gradientProvider.getGradientLogDensity()));
+//        System.err.println("the stepsize before firstUpdate is " + direction * stepSize / 2);
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
+//        System.err.println("the momentum after firstUpdate is " + Arrays.toString(momentum));
         leapFrogEngine.updatePosition(position, momentum, direction * stepSize, 1.0);
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
 
@@ -473,14 +490,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             uniform = 0.3;
             if (child.numNodes > 0
                     && uniform <  ((double) child.numNodes / (double) (node.numNodes + child.numNodes))) {
-//                if (m == 3){
-//                    System.err.println("\n the before position is " + java.util.Arrays.toString(node.getPosition(0)));
-//                }
-                node.setPosition(0, child.getPosition(0));
 
-//                if (m == 3){
-//                    System.err.println("\n the after position is " + java.util.Arrays.toString(node.getPosition(0)));
-//                }
+                    node.setPosition(0, child.getPosition(0));
             }
 
             node.numNodes += child.numNodes;
@@ -574,20 +585,21 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     private double findReasonableStepSize(double[] position) { // TODO Still needs to be reviewed
 
         double stepSize = 1;
-        final double[] momentum = drawInitialMomentum(drawDistribution, dim);
+        double[] momentum = drawInitialMomentum(drawDistribution, dim);
+        momentum[0] = 0.3;
         int count = 1;
 
         double[] initialposi = Arrays.copyOf(position,dim);
 
         double probBefore = getJointProbability(gradientProvider, momentum);
-        System.err.println(probBefore);
+//        System.err.println(probBefore);
 
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
         leapFrogEngine.updatePosition(position, momentum, stepSize, 1.0);
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
 
         double probAfter = getJointProbability(gradientProvider, momentum);
-        System.err.println(probAfter);
+//        System.err.println(probAfter);
 
         double a = ((probAfter - probBefore) > Math.log(0.5) ? 1 : -1);
 
@@ -615,6 +627,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
 
         leapFrogEngine.updatePosition(initialposi, momentum, 0.0, 1.0); //todo: is it a way to return back to the initial position?
+
 
         System.err.println("final prob from findStepSize " + gradientProvider.getLikelihood().getLogLikelihood());
         return stepSize;

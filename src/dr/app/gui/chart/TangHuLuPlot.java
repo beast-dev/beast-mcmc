@@ -51,13 +51,17 @@ import java.util.Set;
  * normally sugar-coated hawthorns on a stick.
  *
  * @author Walter Xie
+ *
+ * TODO: This could be generalized to a bubble plot taking 3 dimensions
+ * TODO: of data (x, y coordinates and bubble size). Better to leave the data
+ * TODO: manipulation to the calling software.
  */
 public class TangHuLuPlot extends ScatterPlot {
 
-    private Paint circlePaint = new Color(124, 164, 221);
-    private Paint incrediblePaint = new Color(232, 114, 103);
-    private Paint tileShade = new Color(222, 229, 235);
-    private Paint incredTileShade = new Color(235, 225, 230);
+    public final static Color CIRCLE_COLOR = new Color(0x2f8aa3);
+    public final static  Color CIRCLE_OUTSIDE_COLOR = new Color(0xd6bd58);
+    public final static Color TILE_COLOR = adjustAlpha(CIRCLE_COLOR, 64);
+    public final static  Color TILE_OUTSIDE_COLOR = adjustAlpha(CIRCLE_OUTSIDE_COLOR, 64);
 
     // set min circle size to avoid the circle too small to see
     private final double MIN_CIRCLE_SIZE = 5;
@@ -117,8 +121,6 @@ public class TangHuLuPlot extends ScatterPlot {
      * multiplying with <code>xScale</code> or <code>yScale</code>.
      */
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
-        float x, y;
-
         // remove ?
         markBounds = new java.util.Vector<Rectangle2D>();
 
@@ -127,20 +129,21 @@ public class TangHuLuPlot extends ScatterPlot {
 
         int n = xData.getCount();
 
+        double cellWidth = Math.abs(xAxis.getMajorTickSpacing() * xScale);
+        double cellHeight = Math.abs(yAxis.getMajorTickSpacing() * yScale);
         double maxDiameter = MIN_CIRCLE_SIZE * 2;
+
         if (n > 1) {
-            double xGap = Math.abs(xAxis.getMajorTickSpacing() * xScale);
-            double yGap = Math.abs(yAxis.getMajorTickSpacing() * yScale);
             // take the smaller gap to fit in circles
-            double maxCS = Math.min(xGap, yGap);
-            if (maxCS > maxDiameter)
-                maxDiameter = maxCS;
+            if (Math.min(cellWidth, cellHeight) > maxDiameter) {
+                maxDiameter = Math.min(cellWidth, cellHeight);
+            }
         }
 
 //        if (xyFC != null) {
         for (int i = 0; i < n; i++) {
-            x = (float) transformX(((Number) xData.get(i)).doubleValue());
-            y = (float) transformY(((Number) yData.get(i)).doubleValue());
+            float x = (float) transformX(((Number) xData.get(i)).doubleValue());
+            float y = (float) transformY(((Number) yData.get(i)).doubleValue());
 
             XY xy = uniqueXYList.get(i);
             // probability is proportional to area not diameter
@@ -150,31 +153,25 @@ public class TangHuLuPlot extends ScatterPlot {
             Set incredibleSet = credibleSetAnalysis.getIncredibleSet();
 
             // background tiles
-            Paint currentPaint = tileShade;
-            if (incredibleSet.contains(xy))
-                currentPaint = incredTileShade;
-            setMarkStyle(SQUARE_MARK, maxDiameter, new BasicStroke(1), currentPaint, currentPaint);
-            drawMark(g2, x + (float) maxDiameter/2, y + (float) maxDiameter/2, null);
+            g2.setPaint(incredibleSet.contains(xy) ? TILE_OUTSIDE_COLOR : TILE_COLOR);
+            fillRect(g2, (float)(x - cellWidth / 2), (float)(y - cellHeight / 2), (float)(x + cellWidth / 2), (float)(y + cellHeight / 2));
 
             // circles
-            currentPaint = circlePaint;
-            if (incredibleSet.contains(xy))
-                currentPaint = incrediblePaint;
+            Paint currentPaint = (incredibleSet.contains(xy) ? CIRCLE_OUTSIDE_COLOR : CIRCLE_COLOR);
 
             if (selectedPoints.contains(i)) {
-                setHilightedMarkStyle(new BasicStroke(1), currentPaint, currentPaint);
+                setHilightedMarkStyle(new BasicStroke(0), currentPaint, currentPaint);
                 drawMarkHilighted(g2, x, y);
             } else {
-                setMarkStyle(CIRCLE_MARK, diameter, new BasicStroke(1),
-                        currentPaint, currentPaint);
-
-//                    if (colours != null && colours.size() == n)
-//                        drawMark(g2, x, y, colours.get(i));
-//                    else
+                setMarkStyle(CIRCLE_MARK, diameter, new BasicStroke(0), currentPaint, currentPaint);
                 drawMark(g2, x, y, null);
             }
         }
 //        }
+    }
+
+    public static Color adjustAlpha(Color color, int alpha) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
 }
 

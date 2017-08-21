@@ -53,7 +53,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
         this.barId = barId;
 
         if (!traceDistribution.getTraceType().isCategorical())
-            throw new IllegalArgumentException("Categorical value is required for frequency plot !");
+            throw new IllegalArgumentException("Categorical value is required for frequency plot.");
 
         List<Double> intData = traceDistribution.indexingData(data);
         // set data by index of unique categorical values

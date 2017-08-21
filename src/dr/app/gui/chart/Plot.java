@@ -478,15 +478,9 @@ public interface Plot {
         }
 
         /**
-         * Draw a rectangle transforming co-ordinates to each axis
+         * Draw a rectangle directly (no transformation)
          */
-        protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-
-            float tx1 = (float) transformX(x1);
-            float ty1 = (float) transformY(y1);
-            float tx2 = (float) transformX(x2);
-            float ty2 = (float) transformY(y2);
-
+        protected void drawRect(Graphics2D g2, float tx1, float ty1, float tx2, float ty2) {
             GeneralPath path = new GeneralPath();
             path.moveTo(tx1, ty1);
             path.lineTo(tx1, ty2);
@@ -498,14 +492,9 @@ public interface Plot {
         }
 
         /**
-         * Fill a rectangle transforming co-ordinates to each axis
+         * Fill a rectangle directly (no transformation)
          */
-        protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-
-            float tx1 = (float) transformX(x1);
-            float ty1 = (float) transformY(y1);
-            float tx2 = (float) transformX(x2);
-            float ty2 = (float) transformY(y2);
+        protected void fillRect(Graphics2D g2, float tx1, float ty1, float tx2, float ty2) {
 
             GeneralPath path = new GeneralPath();
             path.moveTo(tx1, ty1);
@@ -515,6 +504,30 @@ public interface Plot {
             path.closePath();
 //			Rectangle2D rect = new Rectangle2D.Double(x, y,	w, h);
             g2.fill(path);
+        }
+
+        /**
+         * Draw a rectangle transforming co-ordinates to each axis
+         */
+        protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+
+            float tx1 = (float) transformX(x1);
+            float ty1 = (float) transformY(y1);
+            float tx2 = (float) transformX(x2);
+            float ty2 = (float) transformY(y2);
+            drawRect(g2, tx1, ty1, tx2, ty2);
+        }
+
+        /**
+         * Fill a rectangle transforming co-ordinates to each axis
+         */
+        protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+
+            float tx1 = (float) transformX(x1);
+            float ty1 = (float) transformY(y1);
+            float tx2 = (float) transformX(x2);
+            float ty2 = (float) transformY(y2);
+            fillRect(g2, tx1, ty1, tx2, ty2);
         }
 
         /**

@@ -1,7 +1,7 @@
 <!--
-  ~ build_tracer.xml
+  ~ build.xml
   ~
-  ~ Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+  ~ Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
   ~
   ~ This file is part of BEAST.
   ~ See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
   ~ published by the Free Software Foundation; either version 2
   ~ of the License, or (at your option) any later version.
   ~
-  ~ BEAST is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU Lesser General Public License for more details.
+  ~  BEAST is distributed in the hope that it will be useful,
+  ~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~  GNU Lesser General Public License for more details.
   ~
   ~ You should have received a copy of the GNU Lesser General Public
   ~ License along with BEAST; if not, write to the
@@ -23,236 +23,82 @@
   ~ Boston, MA  02110-1301  USA
   -->
 
-<project name="Tracer_RELEASE" default="all" basedir=".">
+<project basedir="." default="build" name="Trace">
     <description>
-        Build file for BEAST release versions
-        $Id: build_release.xml,v 1.5 2006/09/09 18:16:17 rambaut Exp $
+        Build tracer.jar - a library file required by Tracer
     </description>
+
+    <property name="JDK_SOURCE_VERSION" value="1.6"/>
+    <property name="JDK_TARGET_VERSION" value="1.6"/>
+
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
     <property name="build" location="build"/>
     <property name="lib" location="lib"/>
-    <property name="dist" location="dist"/>
+    <property name="dist" location="${build}/dist"/>
 
-    <property environment="env"/>
+    <path id="classpath">
+        <fileset dir="${lib}" includes="**/*.jar"/>
+    </path>
 
+    <!-- start -->
     <target name="init">
-        <!-- Create the time stamp -->
-        <tstamp/>
-        <!-- Create the build directory structure used by compile -->
+        <echo message="${ant.project.name}: ${ant.file}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build}"/>
+    </target>
+
+    <!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
+    <target name="build" depends="clean,compile-all,dist-all"
+            description="Clean and Build all and distribute jar">
+    </target>
+
+    <!-- compile Java source code -->
+    <target name="compile-all" depends="init">
         <mkdir dir="${build}"/>
-        <mkdir dir="${dist}"/>
-    </target>
 
-    <target name="all"
-            depends="compile-all"
-            description="Build all run-time stuff">
-    </target>
-
-    <target name="compile-all"
-            depends="compile-basic">
-    </target>
-
-    <target name="compile-basic" depends="init">
-        <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.6" target="1.6" srcdir="${src}" destdir="${build}"
-               classpath="${lib}/colt.jar:${lib}/commons-math-2.2.jar:${lib}/jebl.jar:${lib}/jam.jar:${lib}/itext-1.4.5.jar:${lib}/jdom.jar:${lib}/mtj.jar:${lib}/JRI.jar:${lib}/mpj.jar">
-            <include name="dr/app/tracer/**"/>
-            <include name="dr/app/util/**"/>
+        <!-- Compile the java code from ${src} into ${build} /bin -->
+        <javac source="${JDK_SOURCE_VERSION}" target="${JDK_TARGET_VERSION}" srcdir="${src}" destdir="${build}"
+               classpathref="classpath"
+               fork="true"
+               memoryinitialsize="256m"
+               memorymaximumsize="1024m">
             <include name="dr/app/gui/**"/>
-            <include name="dr/app/java16compat/**/"/>
-            <include name="dr/evolution/alignment/**"/>
+            <include name="dr/app/util/**"/>
             <include name="dr/evolution/coalescent/**"/>
-            <include name="dr/evolution/colouring/**"/>
-            <include name="dr/evolution/datatype/**"/>
-            <include name="dr/evolution/distance/**"/>
-            <include name="dr/evolution/io/**"/>
-            <include name="dr/evolution/parsimony/**"/>
-            <include name="dr/evolution/sequence/**"/>
-            <include name="dr/evolution/tree/**"/>
             <include name="dr/evolution/util/**"/>
-            <include name="dr/inference/tracer/**"/>
-            <include name="dr/gui/chart/**"/>
+            <include name="dr/inference/trace/**"/>
             <include name="dr/math/**"/>
-            <include name="dr/matrix/**"/>
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
-            <include name="dr/xml/**"/>
         </javac>
+        <echo message="Successfully compiled."/>
     </target>
 
-    <target name="dist" depends="compile-all"
-            description="generate the distribution">
+    <!-- make the beast.jar and beauti.jar -->
+    <target name="dist-all" depends="compile-all" description="create trace jar">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}"/>
 
-        <!-- Put everything in ${build} into the beast.jar file -->
-        <jar jarfile="${dist}/tracer.jar">
+        <!-- Put everything in ${build} into the trace.jar file -->
+        <jar jarfile="${dist}/trace.jar">
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Main-Class" value="dr.app.tracer.application.TracerApp"/>
             </manifest>
             <fileset dir="${build}">
-                <include name="dr/app/tracer/**/*.class"/>
                 <include name="dr/app/gui/**/*.class"/>
-                <include name="dr/app/util/**/*.class"/>
-                <include name="dr/app/java16compat/**/*.class"/>
-                <include name="dr/evolution/alignment/**/*.class"/>
-                <include name="dr/evolution/coalescent/**/*.class"/>
-                <include name="dr/evolution/colouring/**/*.class"/>
-                <include name="dr/evolution/datatype/**/*.class"/>
-                <include name="dr/evolution/distance/**/*.class"/>
-                <include name="dr/evolution/io/**/*.class"/>
-                <include name="dr/evolution/parsimony/**/*.class"/>
-                <include name="dr/evolution/sequence/**/*.class"/>
-                <include name="dr/evolution/tree/**/*.class"/>
-                <include name="dr/evolution/util/**/*.class"/>
-                <include name="dr/gui/chart/**/*.class"/>
-                <include name="dr/inference/**/*.class"/>
+                <include name="dr/app/util/*.class"/>
+                <include name="dr/evolution/coalescent/*.class"/>
+                <include name="dr/evolution/util/*.class"/>
+                <include name="dr/inference/trace/*.class"/>
                 <include name="dr/math/**/*.class"/>
-                <include name="dr/matrix/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
-                <include name="dr/xml/**/*.class"/>
             </fileset>
-            <fileset dir="${src}">
-                <include name="dr/app/tracer/**/*.png"/>
-                <include name="dr/app/tracer/**/*.gif"/>
-                <include name="dr/app/tracer/**/*.tiff"/>
-                <include name="org/virion/jam/**/*.png"/>
-            </fileset>
-            <zipgroupfileset dir="${lib}" includes="jebl.jar"/>
-            <zipgroupfileset dir="${lib}" includes="jam.jar"/>
-            <zipgroupfileset dir="${lib}" includes="itext-1.4.5.jar"/>
-            <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>
         </jar>
-
     </target>
 
-    <property name="version" value="1.6.1pre" />
-    <property name="version_number" value="1.6.1" />
-    <property name="release_dir" value="release_tracer" />
-    <property name="name" value="Tracer" />
-
-    <property name="packaging_tools" value="packaging_tools" />
-    <property name="common_dir" value="${release_dir}/common" />
-
-    <property name="Mac_dir" value="${release_dir}/Mac" />
-    <property name="Linux_dir" value="${release_dir}/Linux" />
-    <property name="Windows_dir" value="${release_dir}/Windows" />
-
-    <property name="Mac_package_dir" value="${Mac_dir}/${name} v${version}" />
-    <property name="Linux_package_dir" value="${Linux_dir}/${name}_v${version}" />
-    <property name="Windows_package_dir" value="${Windows_dir}/${name} v${version}" />
-
-    <!-- Need to either install Launch4j under {BEAST workspace}/${release}
-                 or install it in the default directory and change the location of launch4j.dir -->
-    <target name="windows" depends="dist" description="release Windows version of Tracer">
-
-        <delete dir="${Windows_package_dir}" />
-        <!-- Create the release directory -->
-        <mkdir dir="${Windows_package_dir}" />
-
-        <property name="launch4j.dir" location="${Windows_dir}/launch4j" />
-        <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
-            classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
-
-        <copy file="${dist}/tracer.jar" todir="${Windows_package_dir}/lib"/>
-        <copy todir="${Windows_package_dir}/lib">
-            <fileset dir="${Windows_dir}/lib"/>
-        </copy>
-        <copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
-
-        <launch4j configFile="${Windows_dir}/tracer_launch4j.xml"
-                  jar="${dist}/tracer.jar"
-                  outfile="${Windows_package_dir}/${name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <zip destfile="${release_dir}/${name} v${version}.zip">
-            <zipfileset dir="${Windows_package_dir}" prefix="${name} v${version}"/>
-        </zip>
-
-        <echo message="Windows version release is finished." />
-    </target>
-
-    <target name="linux" description="release Linux/Unix version of Tracer">
-        <delete dir="${Linux_package_dir}" />
-        <!-- Create the release directory -->
-        <mkdir dir="${Linux_package_dir}" />
-
-        <copy todir="${Linux_package_dir}/bin">
-            <fileset dir="${Linux_dir}/scripts"/>
-        </copy>
-
-        <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
-
-        <copy file="${Linux_dir}/icons/Tracer.png" todir="${Linux_package_dir}/images"/>
-        <copy file="${dist}/tracer.jar" todir="${Linux_package_dir}/lib"/>
-        <copy todir="${Linux_package_dir}/lib">
-            <fileset dir="${Linux_dir}/lib"/>
-        </copy>
-        <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
-
-        <tar destfile="${release_dir}/${name}_v${version}.tgz" compression="gzip">
-            <tarfileset dir="${Linux_package_dir}" prefix="${name}_v${version}"/>
-        </tar>
-
-        <echo message="Linux/Unix version release is finished." />
-    </target>
-
-    <target name="mac" description="release Mac version of Tracer">
-        <delete dir="${Mac_package_dir}" />
-        <!-- Create the release directory -->
-        <mkdir dir="${Mac_package_dir}" />
-
-        <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
-
-        <taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler"/>
-
-        <!-- create a jar bundle for the mac -->
-        <jarbundler dir="${Mac_package_dir}"
-                        name="${name} v${version}"
-                        mainclass="dr.app.tracer.application.TracerApp"
-                        stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
-						useJavaXKey="true"
-                        icon="${Mac_dir}/icons/Tracer.icns"
-                        jvmversion="1.6+"
-                        vmoptions="-Xmx1024M"
-                        arguments=""
-                        version="${version}"
-                        copyright="${name} v${version}, Copyright 2003-2015, Andrew Rambaut, Marc Suchard &amp; Alexei J. Drummond"
-                        bundleid="tracer" >
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <jarfileset dir="${dist}">
-                <include name="**/tracer.jar"/>
-            </jarfileset>
-            <jarfileset dir="${Mac_dir}/lib">
-                <include name="**/quaqua.jar"/>
-            </jarfileset>
-            <jarfileset dir="${Mac_dir}/lib">
-                <include name="libquaqua*.jnilib"/>
-            </jarfileset>
-        </jarbundler>
-
-        <echo message="Building disk image." />
-
-        <!-- create disk image -->
-        <exec executable="/usr/bin/hdiutil">
-            <arg value="create"/>
-            <arg value="-ov"/>
-            <arg value="-srcfolder"/>
-            <arg value="${Mac_package_dir}"/>
-            <arg value="-volname"/>
-            <arg value="${name} v${version}"/>
-            <arg value="-imagekey"/>
-            <arg value="zlib-level=6"/>
-            <arg value="${release_dir}/${name} v${version}.dmg"/>
-        </exec>
-
-        <echo message="Mac version release is finished." />
-    </target>
 
 </project>

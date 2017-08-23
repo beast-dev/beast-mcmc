@@ -274,14 +274,9 @@ public abstract class ModelOptions implements Serializable {
     }
 
     public Operator createUpDownOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2,
-                                         OperatorType type, boolean isPara1Up, double tuning, double weight) {
-        if (isPara1Up) {
-            return operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
-                    .parameter2(parameter2).build());
-        } else {
-            return operators.put(key, new Operator.Builder(name, description, parameter2, type, tuning, weight)
-                    .parameter2(parameter1).build());
-        }
+                                         OperatorType type, double tuning, double weight) {
+        return operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
+                .parameter2(parameter2).build());
     }
 
     public Operator createBitFlipInSubstitutionModelOperator(String key, String name, String description, Parameter parameter,
@@ -290,12 +285,6 @@ public abstract class ModelOptions implements Serializable {
         return operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFLIP_IN_SUBST, tuning, weight)
                 .partitionOptions(options).build());
     }
-
-    public Operator createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
-        final Parameter parameter = new Parameter.Builder(paraName, description).build();
-        return operators.put(paraName, new Operator.Builder(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS,
-                tuning, weight).build());
-    }//TODO a switch like createUpDownOperator?
 
     public Operator createDuplicate(String name, String description, Parameter parameter, Operator source) {
         return new Operator.Builder(name, description, parameter, source.getOperatorType(), source.getTuning(), source.getWeight()).build(operators);

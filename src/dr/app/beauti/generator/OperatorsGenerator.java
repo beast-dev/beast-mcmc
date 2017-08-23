@@ -152,9 +152,6 @@ public class OperatorsGenerator extends Generator {
             case MICROSAT_UP_DOWN:
                 writeUpDownOperator(MicrosatelliteUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
                 break;
-            case UP_DOWN_ALL_RATES_HEIGHTS:
-                writeUpDownOperatorAllRatesTrees(operator, writer);
-                break;
             case SCALE_ALL:
                 writeScaleAllOperator(operator, writer);
                 break;
@@ -613,79 +610,6 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(UpDownOperatorParser.DOWN);
 
         writer.writeCloseTag(opTag);
-    }
-
-    private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
-                new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.getTuning()),
-                        getWeightAttribute(operator.getWeight())
-                }
-        );
-
-        writer.writeOpenTag(UpDownOperatorParser.UP);
-
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            if (model.isEstimatedRate()) {
-            switch (model.getClockType()) {
-                case STRICT_CLOCK:
-                case RANDOM_LOCAL_CLOCK:
-                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
-                    break;
-
-                case UNCORRELATED:
-                    switch (model.getClockDistributionType()) {
-                        case LOGNORMAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
-//                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
-//                            break;
-                        case EXPONENTIAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                            break;
-                    }
-                    break;
-
-                case AUTOCORRELATED:
-                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
-//	                break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown clock model");
-            }
-        }
-        if (options.useStarBEAST) {
-            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
-            } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-            }
-        }// nothing for EBSP
-
-        writer.writeCloseTag(UpDownOperatorParser.UP);
-
-        writer.writeOpenTag(UpDownOperatorParser.DOWN);
-
-        if (options.useStarBEAST) {
-            writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
-            writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-            writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
-        } else if (options.isEBSPSharingSamePrior()) {
-            writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".populationMean");
-            writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".popSize");
-        }
-
-        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
-        }
-
-        writer.writeCloseTag(UpDownOperatorParser.DOWN);
-
-        writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
     }
 
     private void writeAdaptiveMultivariateOperator(Operator operator, XMLWriter writer) {

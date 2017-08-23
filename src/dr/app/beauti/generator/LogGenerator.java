@@ -32,6 +32,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
@@ -133,15 +134,20 @@ public class LogGenerator extends Generator {
                     new Attribute[]{
                             // new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + TreeModelParser.ROOT_HEIGHT),
                             // Switching to use 'rootAge' in screen log (an absolute date if tip dates are used)
-                            new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "rootAge"),
+                            (model.hasTipCalibrations() ?
+                                    new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "age(root)") :
+                                    new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "rootHeight")
+                            ),
                             new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
                             new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
 
-            // writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
-            // Switching to use 'rootAge' in screen log (an absolute date if tip dates are used)
-            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + TreeModel.TREE_MODEL + ".rootAge");
+            if (model.hasTipCalibrations()) {
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + "age(root)");
+            } else {
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+            }
 
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
@@ -187,7 +193,8 @@ public class LogGenerator extends Generator {
                                TreePriorGenerator treePriorGenerator,
                                ClockModelGenerator clockModelGenerator,
                                SubstitutionModelGenerator substitutionModelGenerator,
-                               TreeLikelihoodGenerator treeLikelihoodGenerator) {
+                               TreeLikelihoodGenerator treeLikelihoodGenerator,
+                               TMRCAStatisticsGenerator tmrcaStatisticsGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {
@@ -246,20 +253,15 @@ public class LogGenerator extends Generator {
         // @todo check for redundancy with rootHeight - if no tip dates or given as heights (time before present)
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             if (model.hasTipCalibrations()) {
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + TreeModel.TREE_MODEL + ".rootAge");
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + "age(root)");
             }
         }
+        tmrcaStatisticsGenerator.writeTMRCAStatisticReferences(writer);
 
         if (options.useStarBEAST) {
             for (Taxa taxa : options.speciesSets) {
                 // make tmrca(tree.name) eay to read in log for Tracer
                 writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
-            }
-        } else {
-            for (Taxa taxa : options.taxonSets) {
-                // make tmrca(tree.name) eay to read in log for Tracer
-                PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
             }
         }
 

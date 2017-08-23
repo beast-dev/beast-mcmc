@@ -950,7 +950,7 @@ public class BeastGenerator extends Generator {
 
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, clockModelGenerator,
-                substitutionModelGenerator, treeLikelihoodGenerator);
+                substitutionModelGenerator, treeLikelihoodGenerator, tmrcaStatisticsGenerator);
 
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);

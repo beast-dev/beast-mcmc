@@ -131,17 +131,13 @@ public class TMRCAStatisticsGenerator extends Generator {
             writer.writeText("");
             for (Taxa taxa : taxonSets) {
                 PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
-                writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")"),
-                                new Attribute.Default<Boolean>(TMRCAStatisticParser.STEM, options.taxonSetsIncludeStem.get(taxa)),
-                        }
-                ); // make tmrca(tree.name) eay to read in log for Tracer
-                writer.writeOpenTag(TMRCAStatisticParser.MRCA);
-                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                writer.writeCloseTag(TMRCAStatisticParser.MRCA);
-                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
-                writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
+                String id = "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")";
+                writeTMRCAStatistic(writer, id, taxa, treeModel, false, options.taxonSetsIncludeStem.get(taxa));
+
+                if (treeModel.hasTipCalibrations()) {
+                    id = "age(" + treeModel.getPrefix() + taxa.getId() + ")";
+                    writeTMRCAStatistic(writer, id, taxa, treeModel, true, options.taxonSetsIncludeStem.get(taxa));
+                }
 
                 if (taxonSetsMono.get(taxa)) {
 //                    && treeModel.getPartitionTreePrior().getNodeHeightPrior() != TreePriorType.YULE
@@ -161,5 +157,35 @@ public class TMRCAStatisticsGenerator extends Generator {
         }
     }
 
+    private void writeTMRCAStatistic(XMLWriter writer, String id, Taxa taxa, PartitionTreeModel treeModel, boolean isAbsolute, boolean includeStem) {
+        writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, id),
+                        new Attribute.Default<Boolean>(TMRCAStatisticParser.ABSOLUTE, isAbsolute),
+                        new Attribute.Default<Boolean>(TMRCAStatisticParser.STEM, includeStem),
+                }
+        ); // make tmrca(tree.name) eay to read in log for Tracer
+        writer.writeOpenTag(TMRCAStatisticParser.MRCA);
+        writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+        writer.writeCloseTag(TMRCAStatisticParser.MRCA);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
+    }
+
+    public void writeTMRCAStatisticReferences(XMLWriter writer) {
+        for (Taxa taxa : options.taxonSets) {
+            // make tmrca(tree.name) eay to read in log for Tracer
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
+
+        }
+        for (Taxa taxa : options.taxonSets) {
+            // make tmrca(tree.name) eay to read in log for Tracer
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+            if (treeModel.hasTipCalibrations()) {
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "age(" + treeModel.getPrefix() + taxa.getId() + ")");
+            }
+        }
+    }
 
 }

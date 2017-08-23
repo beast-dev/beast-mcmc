@@ -32,6 +32,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
@@ -187,7 +188,8 @@ public class LogGenerator extends Generator {
                                TreePriorGenerator treePriorGenerator,
                                ClockModelGenerator clockModelGenerator,
                                SubstitutionModelGenerator substitutionModelGenerator,
-                               TreeLikelihoodGenerator treeLikelihoodGenerator) {
+                               TreeLikelihoodGenerator treeLikelihoodGenerator,
+                               TMRCAStatisticsGenerator tmrcaStatisticsGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {
@@ -256,11 +258,7 @@ public class LogGenerator extends Generator {
                 writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
             }
         } else {
-            for (Taxa taxa : options.taxonSets) {
-                // make tmrca(tree.name) eay to read in log for Tracer
-                PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
-            }
+            tmrcaStatisticsGenerator.writeTMRCAStatisticReferences(writer);
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {

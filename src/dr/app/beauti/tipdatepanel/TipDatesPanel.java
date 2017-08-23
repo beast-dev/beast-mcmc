@@ -294,8 +294,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         originDateText.setEnabled(false);
         originDateLabel.setEnabled(false);
 
-        usingTipDates.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
+        usingTipDates.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 boolean enabled = usingTipDates.isSelected();
                 clearDatesAction.setEnabled(enabled);
                 guessDatesAction.setEnabled(enabled);

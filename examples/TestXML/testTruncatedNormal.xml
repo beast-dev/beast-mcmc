@@ -3,16 +3,16 @@
 <beast>
 
 <!-- 	<parameter id="draw" value="2" lower="0.0"/> -->
-	<parameter id="draw" value="-2 2" upper="Infinity Infinity"/>
-
+	<parameter id="draw" value="2.0 2.1" />
+	
 	<multivariateNormalDistributionModel id="normal">
 		<meanParameter>
    			<parameter id="mu" value="0.5 0.5"/>
  		</meanParameter>
  		<precisionParameter>
  			<matrixParameter>
-				<parameter value="2.0 0.0"/>
-				<parameter value="0.0 2.0"/>
+				<parameter value="2.0 1.0"/>
+				<parameter value="1.0 2.0"/>
 			</matrixParameter>
 		</precisionParameter>
 	</multivariateNormalDistributionModel>
@@ -25,6 +25,12 @@
 			<parameter idref="draw"/>
  		</data>
 	</multivariateDistributionLikelihood>
+	
+    <signTransform>
+	     <parameter idref = "draw"/>
+	     <multivariateDistributionLikelihood idref="distribution"/>
+	</signTransform>
+	
    
 	<operators id="operators.rw">
 	
@@ -34,30 +40,22 @@
 
 	</operators>    
         
+	
 	<operators id="operators.hmc">
 
- 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" drawVariance="1.0">
+ 		<hamiltonianMonteCarloOperator mode="nuts"
+ 		weight="1" nSteps="10000" stepSize="0.1" drawVariance="1.0">
  			<gradient>
 				<distributionLikelihood idref="distribution"/>							
 			</gradient>
-			<!-- <parameter idref="draw"/> -->
-			<compoundTransform>
-				<parameter idref="draw"/>
-				<composedTransform>
-					<outer>
-						<transform type="log" start="1" end="1"/>
-					</outer>
-					<inner>
-						<transform type="negate" start="1" end="1"/>
-					</inner>				
-				</composedTransform>
-			</compoundTransform>
+			<parameter idref="draw"/>
+ 	</hamiltonianMonteCarloOperator>
+ 	
 
- 		</hamiltonianMonteCarloOperator>
 
 	</operators>
 
-	<mcmc id="mcmc.hmc" chainLength="1000000" autoOptimize="true">
+	<mcmc id="mcmc.hmc" chainLength="100" autoOptimize="true">
         <posterior>
             <likelihood id="likelihood.hmc">
 	            <distributionLikelihood idref="distribution"/>
@@ -68,7 +66,7 @@
             </likelihood>
         </posterior>
         <operators idref="operators.hmc"/>
-		<log logEvery="10000">
+		<log logEvery="1">
 			<column label="posterior" dp="4" width="12">
 				<likelihood idref="likelihood.hmc"/>                
 			</column>

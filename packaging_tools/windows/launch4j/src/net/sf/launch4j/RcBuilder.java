@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
+import net.sf.launch4j.config.CharsetID;
 import net.sf.launch4j.config.Config;
 import net.sf.launch4j.config.ConfigPersister;
 import net.sf.launch4j.config.Jre;
@@ -111,7 +112,12 @@ public class RcBuilder {
 	public static final int INSTANCE_ALREADY_EXISTS_MSG = 105;
 
 	private final StringBuffer _sb = new StringBuffer();
-
+	private final Log _log;
+	
+	public RcBuilder(Log log) {
+		_log = log;
+	}
+	
 	public String getContent() {
 		return _sb.toString();
 	}
@@ -175,14 +181,26 @@ public class RcBuilder {
 		return file;
 	}
 	
+	private void logResourceFile() {
+		_log.append("Resource file:");
+		_log.append(_sb.toString());
+	}
+
 	private void writeResourceFile(File file) throws IOException {
+		logResourceFile();
+		FileOutputStream os = null;
+		OutputStreamWriter osw = null;
 		BufferedWriter w = null;
 
 		try {
-			w = new BufferedWriter(new FileWriter(file));
+			os = new FileOutputStream(file);
+			osw = new OutputStreamWriter(os, "ISO-8859-1");
+			w = new BufferedWriter(osw);
 			w.write(_sb.toString());
 		} finally {
 			Util.close(w);
+			Util.close(osw);
+			Util.close(os);
 		}
 	}
 
@@ -190,6 +208,7 @@ public class RcBuilder {
 	 * Handle Japanese encoding - by toshimm.
 	 */
 	private void writeKanjiResourceFile(File file) throws IOException {
+		logResourceFile();
 		FileOutputStream output = null;
 		KanjiEscapeOutputStream kanji = null;
 		OutputStreamWriter writer = null;
@@ -225,7 +244,9 @@ public class RcBuilder {
 				"{\n" + 
 				" BLOCK \"StringFileInfo\"\n" +
 				" {\n" +
-				"  BLOCK \"040904E4\"\n" +	// English
+				"  BLOCK \"");
+		_sb.append(String.format("%04X%04X", v.getLanguage().getId(), CharsetID.MULTILINGUAL.getId()));
+		_sb.append("\"\n" +
 				"  {\n");
 
 		addVerBlockValue("CompanyName", v.getCompanyName());
@@ -233,10 +254,13 @@ public class RcBuilder {
 		addVerBlockValue("FileVersion", v.getTxtFileVersion());
 		addVerBlockValue("InternalName", v.getInternalName());
 		addVerBlockValue("LegalCopyright", v.getCopyright());
+		addVerBlockValue("LegalTrademarks", v.getTrademarks());
 		addVerBlockValue("OriginalFilename", v.getOriginalFilename());
 		addVerBlockValue("ProductName", v.getProductName());
 		addVerBlockValue("ProductVersion", v.getTxtProductVersion());
-		_sb.append("  }\n }\nBLOCK \"VarFileInfo\"\n{\nVALUE \"Translation\", 0x0409, 0x04E4\n}\n}");     
+		_sb.append("  }\n }\nBLOCK \"VarFileInfo\"\n{\nVALUE \"Translation\", ");
+		_sb.append(String.format("0x%04X, 0x%04X", v.getLanguage().getId(), CharsetID.MULTILINGUAL.getId()));
+		_sb.append("\n}\n}");
 	}
 
 	private void addJre(Jre jre) {

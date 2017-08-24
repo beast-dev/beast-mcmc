@@ -52,7 +52,7 @@ public class SignTransformParser extends AbstractXMLObjectParser {
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         Bounds<Double> bounds = parameter.getBounds();
 
-        List<Transform> transforms = new ArrayList<>();
+        List<Transform> transforms = new ArrayList<Transform>();
 
         for (int i = 0; i < parameter.getDimension(); i++) { // TODO much better checking is necessary (here we assumed bounds <0 or >0 )
             if (bounds.getLowerLimit(i) == 0.0) {

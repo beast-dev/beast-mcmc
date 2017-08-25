@@ -26,11 +26,6 @@
  		</data>
 	</multivariateDistributionLikelihood>
 	
-    <signTransform>
-	     <parameter idref = "draw"/>
-	     <multivariateDistributionLikelihood idref="distribution"/>
-	</signTransform>
-	
    
 	<operators id="operators.rw">
 	

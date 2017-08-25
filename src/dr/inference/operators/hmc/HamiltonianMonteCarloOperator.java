@@ -26,14 +26,14 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.Likelihood;
-import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
-import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
+
+import java.util.Arrays;
+
 
 /**
  * @author Max Tolkoff
@@ -46,7 +46,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     protected double stepSize;
     protected final int nSteps;
     protected final NormalDistribution drawDistribution;
-
     protected final LeapFrogEngine leapFrogEngine;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
@@ -97,9 +96,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public double doOperation() {
-        return leapFrog();
-    }
+    public double doOperation() { return leapFrog(); }
 
     private long count = 0;
 
@@ -224,7 +221,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     position[j] += functionalStepSize * momentum[j] / sigmaSquared;
                 }
 
-                setParameter(position); // Write back into BEAST model TODO DELETE COMMENT
+                setParameter(position);
             }
 
 

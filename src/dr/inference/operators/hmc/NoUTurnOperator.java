@@ -37,6 +37,9 @@ import dr.util.Transform;
 
 import java.util.Arrays;
 
+import java.util.Scanner; //todo delete these two imports.
+import java.io.FileNotFoundException;
+import java.io.*;
 /**
  * @author Marc A. Suchard
  * @author Zhenyu Zhang
@@ -45,14 +48,12 @@ import java.util.Arrays;
 public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator, GibbsOperator {
 
     private final int dim = gradientProvider.getDimension();
-    private  double tempStepsize = 0;
-
 
     private class Options { //TODO: these values might be adjusted for dual averaging.
         private double kappa = 0.75;
         private double t0 = 10.0;
         private double gamma = 0.05;
-        private double delta = 0.3;
+        private double delta = 0.2;
         private double deltaMax = 1000.0;
 
         private int findMax = 100;
@@ -60,7 +61,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private int adaptLength = 1000;
     }
 
-
+    // TODO Magic numbers; pass as options
     private final Options options = new Options();
 
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
@@ -88,18 +89,17 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
 
         public void update(long m, double alpha, double nAlpha, Options options) {
-            
+
             if (m <= options.adaptLength) {
+
                 h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.delta - (alpha / nAlpha));
                 logStepSize = mu - Math.sqrt(m) / options.gamma * h;
                 averageLogStepSize = Math.pow(m, -options.kappa) * logStepSize +
                         (1 - Math.pow(m, -options.kappa)) * averageLogStepSize;
                 stepSize = Math.exp(logStepSize);
-                tempStepsize = stepSize;
-
             }
 
-           //stepSize = 0.05; //todo: use to hand tune the stepsize.
+          // stepSize = 0.05; //todo: use to hand tune the stepsize.
             //stepSize = tempStepsize * (MathUtils.nextDouble()*0.2 + 0.9);//todo: randomize the stepsize each iteration.
             //System.err.println("m is " + m + " stepsize is " + stepSize);
         }
@@ -120,32 +120,36 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         final double initialLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
         final double[] initialPOSITION = Arrays.copyOf(initialPosition,dim);
 
-        if (stepSizeInformation == null) { // First call
-            final double initialStepSize = findReasonableStepSize(initialPosition,options.findMax);
+        if (stepSizeInformation == null) {
+            final double initialStepSize = findReasonableStepSize(initialPosition);
+
             stepSizeInformation = new StepSize(initialStepSize);
 
 
             final double testLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
             assert (testLogLikelihood == initialLogLikelihood);
+
         }
 
         double[] position = takeOneStepNew(getCount() + 1, initialPOSITION);
-        leapFrogEngine.setParameter(position);
-        //System.err.println("position is" + Arrays.toString(position) + "jacobian " + leapFrogEngine.getParameterLogJacobian());
 
+        leapFrogEngine.setParameter(position);
         return 0.0;
     }
 
 
     private double[] takeOneStepNew(long m, double[] initialPosition) {
 
+
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
         final double[] initialMomentum = drawInitialMomentum(drawDistribution, dim);
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
+
         double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
 
         TreeState root = new TreeState(initialPosition, initialMomentum, 1, true);
+
         int j = 0;
 
         while (root.flagContinue) {
@@ -162,6 +166,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 throw new RuntimeException("Reach maximum tree depth"); // TODO Handle more gracefully
             }
         }
+
         stepSizeInformation.update(m, root.alpha, root.nAlpha, options);
 
         return endPosition;
@@ -175,7 +180,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         int direction = (uniform1 < 0.5) ? -1 : 1;
 
         TreeState node = buildTreeNew(m,root.getPosition(direction), root.getMomentum(direction), direction,
-                            logSliceU, j, stepSizeInformation.stepSize, initialJointDensity);
+                logSliceU, j, stepSizeInformation.stepSize, initialJointDensity);
 
         root.setPosition(direction, node.getPosition(direction));
         root.setMomentum(direction, node.getMomentum(direction));
@@ -185,6 +190,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             double uniform2 = MathUtils.nextDouble();
 
             double p = (double) node.numNodes / (double)root.numNodes;
+
 
             if (uniform2 < p) {
 
@@ -225,6 +231,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         double[] position = Arrays.copyOf(inPosition, inPosition.length);
         double[] momentum = Arrays.copyOf(inMomentum, inMomentum.length);
 
+        leapFrogEngine.setParameter(position);
+
         // "one frog jump!"
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
         leapFrogEngine.updatePosition(position, momentum, direction * stepSize, 1.0);
@@ -241,12 +249,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         final int nAlpha = 1;
 
         leapFrogEngine.setParameter(inPosition);
+
         return new TreeState(position, momentum, numNodes, flagContinue, alpha, nAlpha);
     }
 
     private TreeState buildRecursiveCase(long m,double[] inPosition, double[] inMomentum, int direction,
                                          double logSliceU, int j, double stepSize, double initialJointDensity) {
-        
+
         TreeState node = buildTreeNew(m,inPosition, inMomentum, direction, logSliceU,
                 j - 1, // Recursion
                 stepSize, initialJointDensity);
@@ -254,7 +263,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         if (node.flagContinue) {
 
             TreeState child = buildTreeNew(m,node.getPosition(direction), node.getMomentum(direction), direction,
-                      logSliceU, j - 1, stepSizeInformation.stepSize, initialJointDensity);
+                    logSliceU, j - 1, stepSizeInformation.stepSize, initialJointDensity);
 
             node.setPosition(direction, child.getPosition(direction));
             node.setMomentum(direction, child.getMomentum(direction));
@@ -263,7 +272,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             if (child.numNodes > 0
                     && uniform <  ((double) child.numNodes / (double) (node.numNodes + child.numNodes))) {
 
-                    node.setPosition(0, child.getPosition(0));
+                node.setPosition(0, child.getPosition(0));
             }
 
             node.numNodes += child.numNodes;
@@ -276,8 +285,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return node;
     }
 
-
-    private double findReasonableStepSize(double[] position, int findmax) {
+    private double findReasonableStepSize(double[] position) {
 
         double stepSize = 1;
         double[] momentum = drawInitialMomentum(drawDistribution, dim);
@@ -313,13 +321,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             count++;
 
 
-            if (count > findmax) {
-                throw new RuntimeException("Cannot find a reasonable stepsize in " + findmax + " iterations");
+            if (count > options.findMax) {
+                throw new RuntimeException("Cannot find a reasonable stepsize in " + options.findMax + " iterations");
             }
         }
 
-        leapFrogEngine.setParameter(initialPosition);
 
+        leapFrogEngine.setParameter(initialPosition);
 
         return stepSize;
     }
@@ -337,8 +345,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         double[] positionDifference = subtractArray(positionPlus, positionMinus);
 
         boolean flag = flagContinue &&
-                        getDotProduct(positionDifference, momentumMinus) >= 0 &&
-                        getDotProduct(positionDifference, momentumPlus) >= 0;
+                getDotProduct(positionDifference, momentumMinus) >= 0 &&
+                getDotProduct(positionDifference, momentumPlus) >= 0;
         return flag;
     }
 
@@ -367,12 +375,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return result;
     }
 
-    private double getJointProbability(GradientWrtParameterProvider gradientProvider, double[] momentum) {
+    private  double getJointProbability(GradientWrtParameterProvider gradientProvider, double[] momentum) {
 
         assert (gradientProvider != null);
         assert (momentum != null);
-        return gradientProvider.getLikelihood().getLogLikelihood() - getScaledDotProduct(momentum, 1.0) - leapFrogEngine.getParameterLogJacobian();
 
+        return gradientProvider.getLikelihood().getLogLikelihood() - getScaledDotProduct(momentum, 1.0) - leapFrogEngine.getParameterLogJacobian();
     }
 
     private class TreeState {
@@ -422,8 +430,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.momentum[getIndex(direction)] = momentum;
         }
 
-        private int getIndex(int direction) {
-            return direction + 1;
+        private int getIndex(int direction) { // valid directions: -1, 0, +1
+            return direction + 1; // TODO Check bounds;
         }
 
         final private double[][] position;

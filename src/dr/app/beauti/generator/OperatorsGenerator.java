@@ -332,6 +332,7 @@ public class OperatorsGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.getTuning()),
                         new Attribute.Default<String>(ScaleOperatorParser.SCALE_ALL, "true"),
+                        new Attribute.Default<String>(ScaleOperatorParser.IGNORE_BOUNDS, "true"),
                         getWeightAttribute(operator.getWeight())
                 });
 

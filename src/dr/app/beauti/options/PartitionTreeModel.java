@@ -97,6 +97,9 @@ public class PartitionTreeModel extends PartitionOptions {
         createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
                 "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
 
+        // This scale operator is used instead of the up/down if the rate is fixed.
+        new Operator.Builder("treeModel.allInternalNodeHeights", "Scales all internal node heights in tree", getParameter("treeModel.allInternalNodeHeights"), OperatorType.SCALE_ALL, 0.75, rateWeights).build(operators);
+
         createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
                 OperatorType.SUBTREE_SLIDE, 1.0, treeWeights);
         createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree",
@@ -115,6 +118,8 @@ public class PartitionTreeModel extends PartitionOptions {
     public List<Parameter> selectParameters(List<Parameter> parameters) {
 //        setAvgRootAndRate();
 
+        // Don't add these to the parameter list (as they don't appear in the table), but call
+        // get parameter so their id prefix can be set.
         getParameter("tree");
         getParameter("treeModel.internalNodeHeights");
         getParameter("treeModel.allInternalNodeHeights");

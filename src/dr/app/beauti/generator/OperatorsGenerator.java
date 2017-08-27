@@ -593,20 +593,11 @@ public class OperatorsGenerator extends Generator {
         );
 
         writer.writeOpenTag(UpDownOperatorParser.UP);
-
-        if (!operator.getParameter1().isFixed() /* && operator.getClockModelGroup().getRateTypeOption() != FixRateType.FIXED_MEAN */) {
-            writeParameter1Ref(writer, operator);
-        } else {
-            writer.writeComment("Rate is fixed - scale node heights only");
-        }
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(UpDownOperatorParser.UP);
 
         writer.writeOpenTag(UpDownOperatorParser.DOWN);
-        if (operator.getTag() == null) {
-            writeParameter2Ref(writer, operator);
-        } else {
-            writer.writeIDref(operator.getTag(), operator.getIdref());
-        }
+        writeParameter2Ref(writer, operator);
         writer.writeCloseTag(UpDownOperatorParser.DOWN);
 
         writer.writeCloseTag(opTag);
@@ -677,7 +668,7 @@ public class OperatorsGenerator extends Generator {
 
                 for (Parameter parameter : constrainedList) {
                     writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName()),
-                                    new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
+                            new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
                     writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
                     writer.writeCloseTag(TransformParsers.TRANSFORM);
                 }

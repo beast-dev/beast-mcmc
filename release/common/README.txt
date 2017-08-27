@@ -1,4 +1,4 @@
-                    BEAST v1.8.4 2002-2016
+            	BEAST v1.10 VEME2017 2002-2017
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 17th June 2016
+Last updated: a.rambaut@ed.ac.uk - 24 Aug 2017
 
 Contents:
 1) INTRODUCTION
@@ -47,7 +47,7 @@ in BEAST and provide example input files for these (although, the actual
 data can also produce unexpected behavour). Secondly, we provide advice and
 tools for the diagnosis of problems and suggestions on how to fix them:
 
-<http://beast.bio.ed.ac.uk/>
+<http://beast.community/>
 
 BEAST is not a black-box into which you can put your data and expect an
 easily interpretable answer. It requires careful inspection of the output
@@ -68,7 +68,7 @@ If in doubt type "java -version" to see what version of java is installed
 
 Mac OS X will already have a suitable version of Java installed.
 
-Within the BEAST.v1.8.x package will be the following directories:
+Within the BEAST.v1.10.x package will be the following directories:
 Directory       Contents
 doc/            documentation of BEAST
 examples/       some example NEXUS and XML files
@@ -83,7 +83,7 @@ A program called "BEAUti" will import data in NEXUS format, allow you to
 select various models and options and generate an XML file ready for use in
 BEAST.
 
-To run BEAUti simply double-click the "BEAUti v1.8.x" application in the BEAST
+To run BEAUti simply double-click the "BEAUti v1.10.x" application in the BEAST
 folder. If this doesn't work then you may not have Java installed correctly.
 Try opening an MS-DOS window and typing:
 
@@ -94,7 +94,7 @@ See also the separate BEAUti README.txt document.
 __________________________________________________________________________
 4) RUNNING BEAST
 
-To run BEAST simply double-click the "BEAST v1.8.x" application in the BEAST
+To run BEAST simply double-click the "BEAST v1.10.x" application in the BEAST
 folder. You will be asked to select a BEAST XML input file.
 
 Alternatively open a Command window and type:
@@ -216,7 +216,7 @@ join the mailing list here:
 
 The website for beast is here:
 
-<http://beast.bio.ed.ac.uk/>
+<http://beast.community/>
 
 Source code distributed under the GNU Lesser General Public License:
 

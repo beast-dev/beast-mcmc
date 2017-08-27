@@ -188,12 +188,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-        final JLabel unitsLabel = new JLabel("Dates as:");
-        toolBar1.add(unitsLabel);
-        toolBar1.add(unitsCombo);
-        toolBar1.add(directionCombo);
-
         JToolBar toolBar3 = new JToolBar();
         toolBar3.setFloatable(false);
         toolBar3.setOpaque(false);
@@ -201,9 +195,17 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         toolBar3.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
+        final JLabel unitsLabel = new JLabel("Dates as:");
+        toolBar3.add(unitsLabel);
+        toolBar3.add(unitsCombo);
+        toolBar3.add(directionCombo);
+
+        toolBar3.add(new JToolBar.Separator(new Dimension(12, 12)));
+
         toolBar3.add(specifyOriginDate);
         toolBar3.add(originDateText);
         toolBar3.add(originDateLabel);
+        
         JPanel panel2 = new JPanel();
         panel2.setLayout(new BoxLayout(panel2, BoxLayout.PAGE_AXIS));
         panel2.setOpaque(false);

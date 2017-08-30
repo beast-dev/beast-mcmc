@@ -256,13 +256,19 @@ public class MCLogger implements Logger {
 
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
-                    String hpm = formatter.format(hoursPerMillionStates);
+                    String timePerMillion = formatter.format(hoursPerMillionStates);
                     String units = " hours/million states";
                     if (hoursPerMillionStates < 0.1) {
-                        hpm = formatter.format(hoursPerMillionStates * 1000);
-                        units = " hours/billion states";
+                        double minutesPerMillionStates = hoursPerMillionStates * 60;
+                        timePerMillion = formatter.format(minutesPerMillionStates);
+                        units = " minutes/million states";
+                        if (minutesPerMillionStates < 0.1) {
+                            double secondsPerMillionStates = minutesPerMillionStates * 60;
+                            timePerMillion = formatter.format(secondsPerMillionStates);
+                            units = " seconds/million states";
+                        }
                     }
-                    values[columnCount + 1] = hpm + units;
+                    values[columnCount + 1] = timePerMillion + units;
 
                 } else {
                     values[columnCount + 1] = "-";

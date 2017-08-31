@@ -210,7 +210,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
                                             new ElementRule(Taxa.class)
                                     )
                             }),
-                    }, 1, Integer.MAX_VALUE),
+                    }, 0, Integer.MAX_VALUE),
                     nodeTraitsRule,
             };
 }

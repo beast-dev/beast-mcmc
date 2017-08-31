@@ -63,6 +63,7 @@
 				<taxon idref="C"/>
 			</mrca>
 		</ancestor>
+
 		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1">
 			<parameter id="leafAndAncestorTraits"/>
 		</nodeTraits>
@@ -195,12 +196,29 @@
  		<scaleOperator scaleFactor="0.75" weight="1">
  			<parameter idref="pseudoBranchLengthAB"/>
  		</scaleOperator>
+
 		<uniformOperator weight="1">
 			<parameter idref="treeModel.internalNodeHeights"/>
 		</uniformOperator>
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="treeModel.rootHeight"/>
 		</scaleOperator>
+
+		<subtreeSlide size="65.0" gaussian="true" weight="15">
+			<treeModel idref="treeModel"/>
+		</subtreeSlide>
+
+		<narrowExchange weight="15">
+			<treeModel idref="treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="treeModel"/>
+		</wilsonBalding>
+
+
 	</operators>
 
 	<mcmc id="mcmc" chainLength="1000">

@@ -480,6 +480,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return totalPatternCount;
     }
 
+    @Override
+    public RateRescalingScheme getRateRescalingScheme() {
+        return RateRescalingScheme.NONE;
+    }
+
     private void updateSubstitutionModels(boolean... state) {
         for (int i = 0; i < updateSubstitutionModels.length; i++) {
             updateSubstitutionModels[i] = (state.length < 1 || state[0]);

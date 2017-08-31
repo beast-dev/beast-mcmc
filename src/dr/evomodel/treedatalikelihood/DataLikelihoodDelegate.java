@@ -51,6 +51,8 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
 
     int getTraitDim();
 
+    RateRescalingScheme getRateRescalingScheme();
+
     class LikelihoodException extends Exception { }
 
     class LikelihoodUnderflowException extends LikelihoodException { }

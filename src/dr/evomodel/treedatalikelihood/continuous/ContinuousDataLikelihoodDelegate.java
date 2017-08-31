@@ -583,6 +583,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return dimTrait;
     }
 
+    @Override
+    public RateRescalingScheme getRateRescalingScheme() {
+        return rateTransformation.getRateRescalingScheme();
+    }
+
     public final ContinuousDiffusionIntegrator getIntegrator() {
         return cdi;
     }

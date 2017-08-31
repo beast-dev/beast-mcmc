@@ -86,6 +86,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     likelihoodDelegate.getOptimalTraversalType()
         );
 
+        rateRescalingScheme = likelihoodDelegate.getRateRescalingScheme();
+
         hasInitialized = true;
     }
 
@@ -158,16 +160,25 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (model == treeModel) {
             if (object instanceof TreeChangedEvent) {
 
+                final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
+
                 if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
 
-                if (((TreeChangedEvent) object).isNodeChanged()) {
+                if (treeChangedEvent.isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
-                } else if (((TreeChangedEvent) object).isTreeChanged()) {
+                    if (rateRescalingScheme == RateRescalingScheme.NONE ||             // The usual behaviour
+                            (rateRescalingScheme == RateRescalingScheme.TREE_HEIGHT && // Or, tree-height scaling
+                                    !treeModel.isRoot(treeChangedEvent.getNode()))) {  // and not the root
+                        updateNodeAndChildren(((TreeChangedEvent) object).getNode());
+                    } else {
+                        // Tree-length scaling or a change of the root
+                        updateAllNodes();
+                    }
+                } else if (treeChangedEvent.isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
                     updateAllNodes();
@@ -417,6 +428,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private final Helper treeTraits = new Helper();
 
     private final LikelihoodTreeTraversal treeTraversalDelegate;
+
+    private final RateRescalingScheme rateRescalingScheme;
 
     private double logLikelihood;
     private double storedLogLikelihood;

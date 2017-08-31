@@ -399,6 +399,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return patternCount;
     }
 
+    @Override
+    public RateRescalingScheme getRateRescalingScheme() {
+        return RateRescalingScheme.NONE;
+    }
+
     public PatternList getPatternList() {
         return this.patternList;
     }

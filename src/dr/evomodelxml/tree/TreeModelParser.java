@@ -279,12 +279,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
             }
         }
-
-        // AR this is doubling up the number of bounds on each node.
-//        treeModel.setupHeightBounds();
-        //System.err.println("done constructing treeModel");
-
-        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
+        
+//        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("  taxon count = " + treeModel.getExternalNodeCount());
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
         return treeModel;
     }

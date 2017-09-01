@@ -231,6 +231,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
             core = new MassivelyParallelMDSImpl();
             flags = computeMode;
         } else {
+            System.err.println("Computer mode found: " + computeMode + " vs. " + r);
             core = new MultiDimensionalScalingCoreImpl();
         }
         return core;

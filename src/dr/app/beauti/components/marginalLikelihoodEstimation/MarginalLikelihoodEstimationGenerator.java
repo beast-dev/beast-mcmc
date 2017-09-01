@@ -1065,7 +1065,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
     private void writeRelativeRates(XMLWriter writer, PartitionSubstitutionModel model, int codonPartitionCount) {
         for (int i = 1; i <= codonPartitionCount; i++) {
-            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                     new Attribute[]{
                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                             new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "mu"),
@@ -1073,7 +1073,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             new Attribute.Default<String>("upperLimit", "" + (double)(codonPartitionCount))
                     });
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
-            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
         }
     }
 

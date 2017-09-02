@@ -278,27 +278,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 }
         );
 
-        clearDatesAction.setEnabled(false);
-        guessDatesAction.setEnabled(false);
-        importDatesAction.setEnabled(false);
-        setDatesAction.setEnabled(false);
-        setUncertaintyAction.setEnabled(false);
-        directionCombo.setEnabled(false);
-        unitsLabel.setEnabled(false);
-        unitsCombo.setEnabled(false);
-        scrollPane.setEnabled(false);
-        dataTable.setEnabled(false);
-        tipDateSamplingLabel.setEnabled(false);
-        tipDateSamplingCombo.setEnabled(false);
-        tipDateTaxonSetLabel.setEnabled(false);
-        tipDateTaxonSetCombo.setEnabled(false);
-        specifyOriginDate.setEnabled(false);
-        originDateText.setEnabled(false);
-        originDateLabel.setEnabled(false);
-
-        usingTipDates.addActionListener(new ActionListener() {
+        usingTipDates.addItemListener(new ItemListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void itemStateChanged(ItemEvent e) {
                 boolean enabled = usingTipDates.isSelected();
                 clearDatesAction.setEnabled(enabled);
                 guessDatesAction.setEnabled(enabled);
@@ -319,6 +301,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 if (options.taxonList != null) timeScaleChanged();
             }
         });
+
+        // because usingTipDates is listening to itemStateChanged, this will call the above action
+        // to set everything disabled initially.
+        usingTipDates.setSelected(false);
 
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {

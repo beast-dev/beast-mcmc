@@ -85,10 +85,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
         if (xo.hasChildNamed(NODE_TRAITS)) {
             for (XMLObject cxo : xo.getAllChildren(NODE_TRAITS)) {
-                System.err.println("HERE");
                 parseNodeTraits(cxo, tree, ancestors);
-                System.err.println("DONE");
-//                System.exit(-1);
             }
         }
 

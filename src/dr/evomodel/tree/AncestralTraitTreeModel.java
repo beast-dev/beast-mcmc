@@ -60,33 +60,56 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     private ShadowNode[] storedNodes;
 
     private ShadowNode root;
+    private int storedRootNumber;
     private ShadowNode storedRoot;
 
     public class ShadowNode implements NodeRef {
 
-        private int number;
-        private NodeRef originalNode;
-        private AncestralTaxonInTree ancestor;
+        private int number = -1;
+        private int originalNumber = -1;
+
+        private AncestralTaxonInTree ancestor = null;
 
         protected ShadowNode child0 = null;
         protected ShadowNode child1 = null;
         protected ShadowNode parent = null;
 
+        private boolean used = false; // TODO Deprecate
+
         public ShadowNode() { /* Do nothing */ }
 
         public ShadowNode(int number, NodeRef originalNode, AncestralTaxonInTree ancestor) {
             this.number = number;
-            this.originalNode = originalNode;
+            this.originalNumber = originalNode != null ?
+                    originalNode.getNumber() :
+                    -1;
             this.ancestor = ancestor;
+            this.used = true;
         }
 
-        public void adoptValues(ShadowNode donor) {
+        public void adoptValues(ShadowNode donor, ShadowNode[] copy) {
             this.number = donor.number;
-            this.originalNode = donor.originalNode;
+            this.originalNumber = donor.originalNumber;
             this.ancestor = donor.ancestor;
-            this.child0 = donor.child0;
-            this.child1 = donor.child1;
-            this.parent = donor.parent;
+            this.used = donor.used;
+
+            if (donor.child0 != null) {
+                this.child0 = copy[donor.child0.getNumber()];
+            } else {
+                this.child0 = null;
+            }
+
+            if (donor.child1 != null) {
+                this.child1 = copy[donor.child1.getNumber()];
+            } else {
+                this.child1 = null;
+            }
+
+            if (donor.parent != null) {
+                this.parent = copy[donor.parent.getNumber()];
+            } else {
+                this.parent = null;
+            }
         }
 
         @Override
@@ -97,7 +120,13 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             throw new RuntimeException("Node number is not modifiable");
         }
 
-        public NodeRef getOriginalNode() { return originalNode; }
+        public int getOriginalNumber() { return originalNumber; }
+
+        public NodeRef getOriginalNode() {
+            return originalNumber >= 0 ?
+                    treeModel.getNode(originalNumber) :
+                    null;
+        }
 
         public NodeRef getChild(int i) {
             if (i == 0) {
@@ -112,8 +141,33 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         public boolean isExternal() { return child0 == null && child1 == null; }
 
         public String toString() {
-            return "node " + number + " new";
+            int pa = parent != null ? parent.getNumber() : -1;
+            int c0 = child0 != null ? child0.getNumber() : -1;
+            int c1 = child1 != null ? child1.getNumber() : -1;
+
+            String str = "node " + number + " " + pa + " " + c0 + " " + c1 + " : " + originalNumber;
+            return str;
         }
+
+        public boolean isUsed() {
+            return used;
+        }
+
+        public void setUsed(boolean used) {
+            this.used = used;
+        }
+    }
+
+    public static String toString(ShadowNode[] nodes) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < nodes.length; ++i) {
+            if (nodes[i] != null) {
+                sb.append(nodes[i].toString() + "\n");
+            } else {
+                sb.append("null\n");
+            }
+        }
+        return sb.toString();
     }
 
     public AncestralTraitTreeModel(String id, MutableTreeModel tree, List<AncestralTaxonInTree> ancestors) {
@@ -136,6 +190,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             addRestrictedPartials(ancestor, index);
             ++index;
         }
+
+        nodes = new ShadowNode[externalCount + internalCount];
+        for (int i = 0; i < nodes.length; ++i) {
+            nodes[i] = new ShadowNode();
+        }
     }
 
     private void checkShadowTree() {
@@ -153,7 +212,9 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         setupClamps();
 
-        nodes = new ShadowNode[externalCount + internalCount];
+        for (int i = 0; i < nodes.length; ++i) { // TODO Only need to set extra nodes
+            nodes[i].setUsed(false);
+        }
 
         root = buildRecursivelyShadowTree(treeModel.getRoot(), null,
                  0);
@@ -183,63 +244,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 //            }
 //        }
 
-//        // Check that all nodes are non-null
-//        for (int i = 0; i < nodes.length; ++i) {
-//            if (nodes[i] == null) {
-//                System.err.println(treeModel.getExternalNodeCount());
-//                System.err.println(treeModel.getInternalNodeCount());
-//                throw new RuntimeException("Node " + i + " was uninitialized" +
-//                "\n" + externalCount + "\n" + internalCount);
-//            }
-//        }
-
         validShadowTree = true;
-
-//        if (DEBUG) {
-//
-//            if (!checkNegativeBranchLength(treeModel)) {
-//                System.out.println("Error in TM");
-//            }
-//
-//            if (!checkNegativeBranchLength(this)) {
-//                System.out.printf("Error in ATTM");
-//            }
-//
-//            String s1 = TreeUtils.newick(treeModel);
-//            String s2 = TreeUtils.newick(this);
-//
-//            System.out.println("tm : " + s1);
-//            System.out.println("     " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
-//            System.out.println("at : " + s2);
-//            System.out.println("     " + TreeUtils.uniqueNewick(this, getRoot()));
-//
-//
-//            if (s1.compareTo(s2) != 0.0) {
-//                System.out.println("unequal trees ???");
-//                System.out.println(s1);
-//                System.out.println(s2);
-//            } else {
-//                System.out.println("equal trees");
-//            }
-//        }
     }
 
-//    boolean checkNegativeBranchLength(Tree tree) {
-//        for (int i = 0; i < tree.getNodeCount(); ++i) {
-//            NodeRef node = tree.getNode(i);
-//            if (!tree.isRoot(node)) {
-//                double a = tree.getNodeHeight(node);
-//                double b = tree.getNodeHeight(tree.getParent(node));
-//                if (b < a) {
-//                    return false;
-//                }
-//            }
-//        }
-//
-//        return true;
-//    }
-    
-    private void storeNode(ShadowNode node, NodeRef originalNode) {
+    private void storeNode(ShadowNode node) {
         nodes[node.getNumber()] = node;
     }
 
@@ -251,7 +259,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         ShadowNode newNode = new ShadowNode(newNumber, originalNode, null);
         newNode.parent = parentNode;
-        storeNode(newNode, originalNode);
+        storeNode(newNode);
 
         ShadowNode returnNode = newNode;
 
@@ -266,23 +274,21 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             newTipNode.parent = newNode;
             newNode.child1 = newTipNode;
 
-            storeNode(newTipNode, null);
+            storeNode(newTipNode);
 
             ShadowNode newInternalNode = new ShadowNode(externalCount + treeInternalCount + extraInternal, null, null);
 
             newInternalNode.parent = newNode;
             newNode.child0 = newInternalNode;
 
-            storeNode(newInternalNode, null);
+            storeNode(newInternalNode);
 
             ++extraInternal;
 
             newNode = newInternalNode;
         }
 
-        if (treeModel.isExternal(originalNode)) {
-            // Do nothing
-        } else {
+        if (!treeModel.isExternal(originalNode)) {
             newNode.child0 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 0),
                     newNode, extraInternal);
             newNode.child1 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 1),
@@ -317,21 +323,17 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     public double getNodeHeight(NodeRef inode) {
-
         assert (inode != null);
+
         checkShadowTree();
 
-//        final int n = inode.getNumber();
-//
-//        return treeModel.getNodeHeight(getTreeModelNode(n));
-        
         ShadowNode node = (ShadowNode) inode;
-        NodeRef originalNode = node.getOriginalNode();
-        if (originalNode != null) {
-            return treeModel.getNodeHeight(originalNode);
+        int originalNumber = node.getOriginalNumber();
+        if (originalNumber >= 0) {
+            return treeModel.getNodeHeight(node.getOriginalNode());
         } else {
 
-            double height = treeModel.getNodeHeight(node.parent.originalNode);
+            double height = treeModel.getNodeHeight(node.parent.getOriginalNode());
             if (node.isExternal()) {
                 double diff = node.ancestor.getPseudoBranchLength();
                 return height - diff;
@@ -341,22 +343,19 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
-//    private NodeRef getTreeModelNode(int n) {
-//        return treeModel.getNode(n);
-//    }
-
     public double getBranchLength(NodeRef inode) {
+        assert (inode != null);
 
         checkShadowTree();
 
-        if (inode == null) {
+        ShadowNode node = (ShadowNode) inode;
+        if (!node.isUsed()) {
             return 0.0;
         }
 
-        ShadowNode node = (ShadowNode) inode;
-        NodeRef originalNode = ((ShadowNode) node).getOriginalNode();
-        if (originalNode != null) {
-            return treeModel.getBranchLength(originalNode);
+        int originalNumber = ((ShadowNode) node).getOriginalNumber();
+        if (originalNumber >= 0) {
+            return treeModel.getBranchLength(node.getOriginalNode());
         } else {
             if (node.isExternal()) {
                 return node.ancestor.getPseudoBranchLength();
@@ -373,19 +372,14 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         // Initialize once
         if (storedNodes == null) {
             storedNodes = new ShadowNode[length];
+            for (int i = 0; i < length; ++i) {
+                storedNodes[i] = new ShadowNode();
+            }
         }
 
         // Copy
         for (int i = 0; i < length; ++i) {
-
-            if (nodes[i] == null) {
-                storedNodes[i] = null;
-            } else {
-                if (storedNodes[i] == null) {
-                    storedNodes[i] = new ShadowNode();
-                }
-                storedNodes[i].adoptValues(nodes[i]);
-            }
+            storedNodes[i].adoptValues(nodes[i], storedNodes);
         }
     }
     
@@ -397,9 +391,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         if (validShadowTree) {
             storeNodeStructure();
+            storedRootNumber = root.getNumber();
         }
-
-        storedRoot = root;
     }
 
     /**
@@ -409,17 +402,15 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         assert (storedNodes != null);
 
-//        validShadowTree = savedValidShadowTree;
-//
-//        if (validShadowTree) { // TODO Add back
-//            ShadowNode[] tmp = storedNodes;
-//            storedNodes = nodes;
-//            nodes = tmp;
-//        }
-//
-//        root = storedRoot;
+        validShadowTree = savedValidShadowTree;
 
-        validShadowTree = false;
+        if (validShadowTree) {
+            ShadowNode[] tmp = nodes;
+            nodes = storedNodes;
+            storedNodes = tmp;
+
+            root = nodes[storedRootNumber];
+        }
     }
 
     private class RemappedTreeChangeEvent implements TreeChangedEvent {
@@ -506,10 +497,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         } else if (ancestors.contains(model)) {
 
-            AncestralTaxonInTree ancestor = (AncestralTaxonInTree) model;
-
-            assert (nodes[treeExternalCount + ancestor.getIndex()].ancestor == ancestor);
-
             fireModelChanged(new TreeChangedEvent.WholeTree());
 
         } else {
@@ -533,7 +520,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     public NodeRef getNode(int i) {
-        assert (nodes[i].originalNode.getNumber() == nodes[i].getNumber()); // TODO Remove
         checkShadowTree();
         return nodes[i];
     }
@@ -560,9 +546,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     public Taxon getNodeTaxon(NodeRef node) {
         checkShadowTree();
-        NodeRef originalNode = ((ShadowNode) node).getOriginalNode();
-        if (originalNode != null) {
-            return treeModel.getNodeTaxon(originalNode);
+
+        int originalNumber = ((ShadowNode) node).getOriginalNumber();
+        if (originalNumber >= 0) {
+            return treeModel.getNodeTaxon(treeModel.getNode(originalNumber));
         } else {
             return getTaxonByTreeIndex(node.getNumber());
         }
@@ -739,7 +726,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             Taxon taxon = getTaxonByTreeIndex(taxonIndex);
             result = taxon.getId();
         }
-//        System.err.println("gTI: " + result + " for " + taxonIndex);
         return result;
     }
 
@@ -762,7 +748,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     public List<Taxon> asList() {
         throw new RuntimeException("Not yet implemented");
-//        return treeModel.asList();
     }
 
     public Object getTaxonAttribute(int taxonIndex, String name) {
@@ -779,7 +764,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     public Iterator<Taxon> iterator() {
         throw new RuntimeException("Not yet implemented");
-//        return treeModel.iterator();
     }
 
     public Type getUnits() {

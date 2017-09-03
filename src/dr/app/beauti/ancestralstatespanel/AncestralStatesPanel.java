@@ -103,7 +103,7 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
         optionsPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         optionsPanelParent.setOpaque(false);
-        optionsBorder = new TitledBorder("Ancestral state options:");
+        optionsBorder = new TitledBorder(null, "Ancestral state options:", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.ABOVE_TOP);
         optionsPanelParent.setBorder(optionsBorder);
 
         setCurrentPartition(null);

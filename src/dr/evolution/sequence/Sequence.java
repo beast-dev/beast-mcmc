@@ -117,7 +117,7 @@ public class Sequence implements Identifiable, Attributable {
 
     /**
      */
-    public final void setState(int index, int state) {
+    public void setState(int index, int state) {
 
         sequenceString.setCharAt(index, dataType.getChar(state));
     }
@@ -127,6 +127,23 @@ public class Sequence implements Identifiable, Attributable {
      */
     public void getChars(int srcBegin, int srcEnd, char[] dst, int dstBegin) {
         sequenceString.getChars(srcBegin, srcEnd, dst, dstBegin);
+    }
+
+    /**
+     * search invalid character in the sequence by given data type, and return its index
+     */
+    public int getInvalidChar() {
+        final char[] validChars = dataType.getValidChars();
+        if (validChars != null) {
+            String validString = new String(validChars);
+
+            for (int i = 0; i < sequenceString.length(); i++) {
+                char c = sequenceString.charAt(i);
+
+                if (validString.indexOf(c) < 0) return i;
+            }
+        }
+        return -1;
     }
 
     /**

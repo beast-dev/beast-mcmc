@@ -41,16 +41,8 @@ import java.util.List;
 public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
     private final static boolean DEBUG = false;
 
-    public KDENumericalDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceD) {
-        super(data, minimumBinCount, traceD); // TODO Remove when all linked together
-
-//        kde = new GammaKDEDistribution(data);
-//
-//        System.err.println("Making KDE with " + minimumBinCount + " points");
-//
-//        Variate xData = getXCoordinates(minimumBinCount);
-//        Variate yData = getYCoordinates(xData);
-//        setData(xData, yData);
+    public KDENumericalDensityPlot(List<Double> data, int minimumBinCount) {
+        super(data, minimumBinCount); // TODO Remove when all linked together
     }
 
     private KernelDensityEstimatorDistribution getKDE(Double[] samples) {

@@ -56,8 +56,10 @@ public class PriorParsers {
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
-    public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
     public static final String STDEV = "stdev";
+    public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
+    public static final String MU = "mu";
+    public static final String SIGMA = "sigma";
     public static final String SHAPE = "shape";
     public static final String SHAPEB = "shapeB";
     public static final String SCALE = "scale";
@@ -506,19 +508,54 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute(MEAN);
-            final double stdev = xo.getDoubleAttribute(STDEV);
-            final double offset = xo.getAttribute(OFFSET, 0.0);
+            double mu;
+            double sigma;
+
             final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
 
-            if (meanInRealSpace) {
-                if (mean <= 0) {
-                    throw new IllegalArgumentException("meanInRealSpace works only for a positive mean");
-                }
-                mean = Math.log(mean) - 0.5 * stdev * stdev;
-            }
+            if (xo.hasAttribute(MEAN_IN_REAL_SPACE)) {
+                // if the meanInRealSpace attribute is given then respect the old
+                // parser choices (i.e., specify mean and stdev but change their
+                // meaning to mu and sigma).
 
-            final DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);
+                final double mean = xo.getDoubleAttribute(MEAN);
+                final double stdev = xo.getDoubleAttribute(STDEV);
+
+                if (meanInRealSpace) {
+                    mu = Math.log(mean / Math.sqrt(1 + (stdev * stdev) / (mean * mean)));
+                } else {
+                    mu = mean;
+                }
+
+                // in the previous version, the stdev (or 'Log(stdev)') parameter is sigma.
+                sigma = stdev;
+            } else {
+                // decide parameterization by whether mean, stdev or mu, sigma are given.
+                if (xo.hasAttribute(MEAN)) {
+                    final double mean = xo.getDoubleAttribute(MEAN);
+                    if (!xo.hasAttribute(STDEV)) {
+                        throw new XMLParseException("Lognormal should be specified either with mean and stdev or mu and sigma.");
+                    }
+                    final double stdev = xo.getDoubleAttribute(STDEV);
+                    if (mean <= 0) {
+                        throw new XMLParseException("If specified with a mean in real space, the value should be positive.");
+                    }
+                    mu = Math.log(mean / Math.sqrt(1 + (stdev * stdev) / (mean * mean)));
+                    sigma = Math.sqrt(Math.log(1 + (stdev * stdev) / (mean * mean)));
+                } else {
+                    if (meanInRealSpace) {
+                        throw new XMLParseException("Lognormal with 'meanInRealSpace' should be specified with mean and stdev.");
+                    }
+                    mu = xo.getDoubleAttribute(MU);
+                    if (!xo.hasAttribute(SIGMA)) {
+                        throw new XMLParseException("Lognormal should be specified either with mean and stdev or mu and sigma.");
+                    }
+                    sigma = xo.getDoubleAttribute(SIGMA);
+                }
+            }
+            final double offset = xo.getAttribute(OFFSET, 0.0);
+
+            final DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mu, sigma), offset);
 
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
@@ -536,8 +573,14 @@ public class PriorParsers {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(MEAN),
-                AttributeRule.newDoubleRule(STDEV),
+                new XORRule(
+                        AttributeRule.newDoubleRule(MEAN),
+                        AttributeRule.newDoubleRule(MU)
+                ),
+                new XORRule(
+                        AttributeRule.newDoubleRule(STDEV),
+                        AttributeRule.newDoubleRule(SIGMA)
+                ),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)

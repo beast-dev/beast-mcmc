@@ -62,7 +62,7 @@ public class XMLDocumentationHandler {
         writer.println("  <link rel=\"stylesheet\" href=\"../beast.css\">");
         writer.println("  <title>" + page + "</title>");
         writer.println("</head>");
-        writer.println("<h1>" + BeastParserDoc.TITTLE + "</h1>");
+        writer.println("<h1>" + BeastParserDoc.TITLE + "</h1>");
         
         Calendar date = Calendar.getInstance();
         SimpleDateFormat dateformatter = new SimpleDateFormat("'updated on' d MMMM yyyy zzz");
@@ -108,15 +108,35 @@ public class XMLDocumentationHandler {
      * @param writer     PrintWriter
      * @param parser     XMLObjectParser
      */
-    public void outputExampleXML(PrintWriter writer, XMLObjectParser parser) {
+    public void outputHTMLExampleXML(PrintWriter writer, XMLObjectParser parser) {
 
         writer.println("<pre>");
         if (parser.hasExample()) {
             outputHTMLSafeText(writer, parser.getExample());
         } else {
-            outputExampleXML(writer, parser, 0);
+            StringBuilder sb = new StringBuilder();
+            createExampleXML(sb, parser, 0);
+            outputHTMLSafeText(writer, sb.toString());
         }
         writer.println("</pre>");
+    }
+
+    /**
+     * Outputs an example of a particular element, using the syntax information.
+     * @param writer     PrintWriter
+     * @param parser     XMLObjectParser
+     */
+    public void outputMarkdownExampleXML(PrintWriter writer, XMLObjectParser parser) {
+
+        writer.println("```html");
+        if (parser.hasExample()) {
+            writer.print(parser.getExample());
+        } else {
+            StringBuilder sb = new StringBuilder();
+            createExampleXML(sb, parser, 0);
+            writer.print(sb.toString());
+        }
+        writer.println("```\n");
     }
 
     public void outputHTMLSafeText(PrintWriter writer, String text) {
@@ -141,12 +161,12 @@ public class XMLDocumentationHandler {
 
     /**
      * Outputs an example of a particular element, using the syntax information.
-     * @param writer   PrintWriter
+     * @param sb   StringBuilder
      * @param parser   XMLObjectParser
      * @param level    int
      */
-    public void outputExampleXML(PrintWriter writer, XMLObjectParser parser, int level) {
-        outputElementRules(writer, parser.getParserName(), parser.getSyntaxRules(), level);
+    public void createExampleXML(StringBuilder sb, XMLObjectParser parser, int level) {
+        createElementRules(sb, parser.getParserName(), parser.getSyntaxRules(), level);
     }
 
     public void stochasticCollectRules(XMLSyntaxRule[] allRules, ArrayList<XMLSyntaxRule> attributeList, ArrayList<ElementRule> elementList) {
@@ -182,125 +202,128 @@ public class XMLDocumentationHandler {
 
     /**
      * Outputs an example of a rule, using the syntax information.
-     * @param writer   PrintWriter
+     * @param sb   StringBuilder
      * @param rule     AttributeRule
      */
-    public void outputExampleXML(PrintWriter writer, AttributeRule rule) { //, int level) {
-        writer.print(" " + rule.getName() + "=\"");
+    public void createExampleXML(StringBuilder sb, AttributeRule rule) { //, int level) {
+        sb.append(" " + rule.getName() + "=\"");
         if (rule.hasExample()) {
-            writer.print(rule.getExample());
+            sb.append(rule.getExample());
         } else {
-            outputAttributeValue(writer, rule.getAttributeClass());
+            createAttributeValue(sb, rule.getAttributeClass());
         }
-        writer.print("\"");
+        sb.append("\"");
     }
 
     /**
      * Outputs an example of a rule, using the syntax information.
-     * @param writer  PrintWriter
+     * @param sb   StringBuilder
      * @param rule    ElementRule
      * @param level   int
      */
-    public void outputExampleXML(PrintWriter writer, ElementRule rule, int level) {
+    public void createExampleXML(StringBuilder sb, ElementRule rule, int level) {
 
         if (rule.getElementClass() == null) {
             if (rule.getName() == null) System.err.println(rule + " has a null name");
-            outputElementRules(writer, rule.getName(), rule.getRules(), level);
+            createElementRules(sb, rule.getName(), rule.getRules(), level);
         } else {
             if (rule.hasExample()) {
-                writer.println(spaces(level + 1) + rule.getExample());
+                sb.append(spaces(level + 1) + rule.getExample()).append("\n");
             } else {
-                outputExampleXML(writer, rule.getElementClass(), level + 1);
+                createExampleXML(sb, rule.getElementClass(), level);
             }
         }
     }
 
     /**
      *
-     * @param writer   PrintWriter
+     * @param sb   StringBuilder
      * @param name     String
      * @param rules    XMLSyntaxRule[]
      * @param level    int
      */
-    public void outputElementRules(PrintWriter writer, String name, XMLSyntaxRule[] rules, int level) {
+    public void createElementRules(StringBuilder sb, String name, XMLSyntaxRule[] rules, int level) {
 
         ArrayList<XMLSyntaxRule> attributeList = new ArrayList<XMLSyntaxRule>();
         ArrayList<ElementRule> elementList = new ArrayList<ElementRule>();
         stochasticCollectRules(rules, attributeList, elementList);
 
-        writer.print(spaces(level) + "&lt;" + name);
+        sb.append(spaces(level) + "<" + name);
         // write out the attributes
         for (XMLSyntaxRule rule : attributeList) {
-            outputExampleXML(writer, (AttributeRule) rule); //, level + 1);
+            createExampleXML(sb, (AttributeRule) rule); //, level + 1);
         }
         if (elementList.size() > 0) {
-            writer.println("&gt;");
+            sb.append(">").append("\n");
             // write out the elements
             for (ElementRule rule : elementList) {
-                outputExampleXML(writer, rule, level + 1);
+                createExampleXML(sb, rule, level + 1);
             }
-            writer.println(spaces(level) + "&lt;/" + name + "&gt;");
+            sb.append(spaces(level) + "</" + name + ">").append("\n");
         } else {
-            writer.println("/&gt;");
+            sb.append("/>").append("\n");
         }
     }
 
-    public void outputExampleXML(PrintWriter writer, Class c, int level) {
+    public void createExampleXML(StringBuilder sb, Class c, int level) {
 
         if (c == String.class) {
-            writer.println(spaces(level) + "foo");
+            sb.append(spaces(level) + "foo").append("\n");
         } else if (c == Double.class) {
-            writer.println(spaces(level) + "1.0");
+            sb.append(spaces(level) + "1.0").append("\n");
         } else if (c == Integer.class || c == Long.class) {
-            writer.println(spaces(level) + "1");
+            sb.append(spaces(level) + "1").append("\n");
         } else if (c == Boolean.class) {
-            writer.println(spaces(level) + "true");
+            sb.append(spaces(level) + "true").append("\n");
         } else if (c == Double[].class) {
-            writer.println(spaces(level) + "0.5 1.0");
+            sb.append(spaces(level) + "0.5 1.0").append("\n");
         } else if (c == String[].class) {
-            writer.println(spaces(level) + "foo bar");
+            sb.append(spaces(level) + "foo bar").append("\n");
         } else {
             if (c == null) {
                 throw new RuntimeException("Class is null");
             }
             XMLObjectParser randomParser = getRandomParser(c);
             if (randomParser == null) {
-                writer.println(spaces(level) + "ERROR!");
+                sb.append(spaces(level) + "ERROR!").append("\n");
             } else {
                 if (level > 1) {
-                    writer.println(spaces(level) + "&lt;" + randomParser.getParserName() +
-                            " idref=\"" + randomParser.getParserName() + (random.nextInt(10) + 1) + "\"/&gt;");
+                    sb.append(spaces(level) + "<" + randomParser.getParserName() +
+                            " idref=\"" + randomParser.getParserName() + (random.nextInt(10) + 1) + "\"" + ">");
+                    sb.append("\n");
                 } else {
-                    outputExampleXML(writer, randomParser, level);
+                    createExampleXML(sb, randomParser, level);
                 }
             }
         }
 
     }
 
-    public void outputAttributeValue(PrintWriter writer, Class c) {
+    public void createAttributeValue(StringBuilder sb, Class c) {
         if (c == String.class) {
-            writer.print("foo");
+            sb.append("foo");
         } else if (c == Double.class) {
-            writer.print("1.0");
+            sb.append("1.0");
         } else if (c == Integer.class || c == Long.class) {
-            writer.print("1");
+            sb.append("1");
         } else if (c == Boolean.class) {
-            writer.print("true");
+            sb.append("true");
         } else if (c == Double[].class) {
-            writer.print("0.5 1.0");
+            sb.append("0.5 1.0");
         } else if (c == Integer[].class) {
-            writer.print("1 2 4 8");
+            sb.append("1 2 4 8");
         } else if (c == String[].class) {
-            writer.print("foo bar");
+            sb.append("foo bar");
         } else {
             throw new RuntimeException("Class " + c + " not allowed as attribute value");
         }
     }
 
+    private static final int SPACES = 2;
+
     private String spaces(int level) {
         StringBuffer buffer = new StringBuffer("");
-        for (int i = 0; i < level; i++) {
+        for (int i = 0; i < level * SPACES; i++) {
             buffer.append(' ');
         }
         return buffer.toString();
@@ -324,7 +347,7 @@ public class XMLDocumentationHandler {
 //            final Class returnType = xmlParser.getReturnType();
             XMLObjectParser xmlParser = (XMLObjectParser) i.next();
             Class returnType = xmlParser.getReturnType();
-            if (c.isAssignableFrom(returnType)) {
+            if (returnType != null && c.isAssignableFrom(returnType)) {
                 matchingParsers.add(xmlParser);
             }
         }

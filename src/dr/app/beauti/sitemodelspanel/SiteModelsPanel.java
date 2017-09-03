@@ -127,6 +127,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
         toolBar.setOpaque(false);
+        toolBar.setBorder(BorderFactory.createEmptyBorder());
 
         toolBar.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         JButton button = new JButton(cloneModelsAction);
@@ -136,7 +137,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         modelPanelParent.setOpaque(false);
-        modelBorder = new TitledBorder("Substitution Model");
+        modelBorder = new TitledBorder(null, "Substitution Model", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.ABOVE_TOP);
         modelPanelParent.setBorder(modelBorder);
 
         setCurrentModel(null);
@@ -208,7 +209,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireModelsChanged() {
-        options.updatePartitionAllLinks();
+//        options.updatePartitionAllLinks();
         frame.setDirty();
     }
 
@@ -388,7 +389,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            return true;
+            return false;
         }
 
         public void setValueAt(Object value, int row, int col) {

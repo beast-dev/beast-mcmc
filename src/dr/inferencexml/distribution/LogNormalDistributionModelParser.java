@@ -37,6 +37,8 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
     public static final String LOGNORMAL_DISTRIBUTION_MODEL = "logNormalDistributionModel";
     public static final String MEAN = "mean";
     public static final String STDEV = "stdev";
+    public static final String MU = "mu";
+    public static final String SIGMA = "sigma";
     public static final String PRECISION = "precision";
     public static final String OFFSET = "offset";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
@@ -47,40 +49,38 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Parameter meanParam;
 
         final double offset = xo.getAttribute(OFFSET, 0.0);
 
-        final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
-        final boolean stdevInRealSpace = xo.getAttribute(STDEV_IN_REAL_SPACE, false);
-        if(!meanInRealSpace && stdevInRealSpace) {
-            throw new RuntimeException("Cannot parameterise Lognormal model with M and Stdev");
-        }
+        if (xo.hasAttribute(MEAN_IN_REAL_SPACE) || xo.hasAttribute(STDEV_IN_REAL_SPACE)) {
+            // If either of these set then use the old logic for parsing. This means that mean
+            // means mu if meanInRealSpace is false and stdev means sigma if stdevInRealSpace
+            // is false
 
+            if (!xo.hasChildNamed(MEAN) || !xo.hasChildNamed(STDEV)) {
+                throw new XMLParseException("If meanInRealSpace attribute is given then the lognormal model must be parameterized with mean and stdev.");
+            }
 
-        {
-            final XMLObject cxo = xo.getChild(MEAN);
+            final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
+            if (xo.hasAttribute(STDEV_IN_REAL_SPACE)) {
+                boolean stdevInRealSpace = xo.getAttribute(STDEV_IN_REAL_SPACE, false);
+                if (!meanInRealSpace && stdevInRealSpace) {
+                    throw new XMLParseException("Cannot parameterise Lognormal model with mu and stdev");
+                }
+                if (meanInRealSpace && !stdevInRealSpace) {
+                    throw new XMLParseException("Cannot parameterise Lognormal model with mean and sigma");
+                }
+            }
+
+            XMLObject cxo = xo.getChild(MEAN);
+            Parameter meanParam;
             if (cxo.getChild(0) instanceof Parameter) {
                 meanParam = (Parameter) cxo.getChild(Parameter.class);
             } else {
                 meanParam = new Parameter.Default(cxo.getDoubleChild(0));
             }
-        }
 
-        {
-            final XMLObject cxo = xo.getChild(PRECISION);
-            if (cxo != null) {
-                Parameter precParam;
-                if (cxo.getChild(0) instanceof Parameter) {
-                    precParam = (Parameter) cxo.getChild(Parameter.class);
-                } else {
-                    precParam = new Parameter.Default(cxo.getDoubleChild(0));
-                }
-                return new LogNormalDistributionModel(meanParam, precParam, offset, meanInRealSpace,stdevInRealSpace, false);
-            }
-        }
-        {
-            final XMLObject cxo = xo.getChild(STDEV);
+            cxo = xo.getChild(STDEV);
             Parameter stdevParam;
             if (cxo.getChild(0) instanceof Parameter) {
                 stdevParam = (Parameter) cxo.getChild(Parameter.class);
@@ -88,7 +88,62 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
                 stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
             }
 
-            return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace, stdevInRealSpace);
+            return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
+        } else {
+            // otherwise we decide the parameterization by which parameters are specified.
+
+            if (xo.hasChildNamed(MEAN) && xo.hasChildNamed(STDEV)) {
+                XMLObject cxo = xo.getChild(MEAN);
+                Parameter meanParam;
+                if (cxo.getChild(0) instanceof Parameter) {
+                    meanParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    meanParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
+
+                cxo = xo.getChild(STDEV);
+                Parameter stdevParam;
+                if (cxo.getChild(0) instanceof Parameter) {
+                    stdevParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
+                return new LogNormalDistributionModel(LogNormalDistributionModel.Parameterization.MEAN_STDEV, meanParam, stdevParam, offset);
+            } else if (xo.hasChildNamed(MU)) {
+                XMLObject cxo = xo.getChild(MU);
+                Parameter muParam;
+                if (cxo.getChild(0) instanceof Parameter) {
+                    muParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    muParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
+
+                if (xo.hasChildNamed(SIGMA)) {
+                    cxo = xo.getChild(SIGMA);
+                    Parameter sigmaParam;
+                    if (cxo.getChild(0) instanceof Parameter) {
+                        sigmaParam = (Parameter) cxo.getChild(Parameter.class);
+                    } else {
+                        sigmaParam = new Parameter.Default(cxo.getDoubleChild(0));
+                    }
+                    return new LogNormalDistributionModel(LogNormalDistributionModel.Parameterization.MU_SIGMA, muParam, sigmaParam, offset);
+                } else if (xo.hasChildNamed(PRECISION)) {
+                    cxo = xo.getChild(PRECISION);
+                    Parameter precParam;
+                    if (cxo.getChild(0) instanceof Parameter) {
+                        precParam = (Parameter) cxo.getChild(Parameter.class);
+                    } else {
+                        precParam = new Parameter.Default(cxo.getDoubleChild(0));
+                    }
+                    return new LogNormalDistributionModel(LogNormalDistributionModel.Parameterization.MU_PRECISION, muParam, precParam, offset);
+
+                } else {
+                    throw new XMLParseException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
+                }
+            } else {
+                throw new XMLParseException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
+            }
+
         }
     }
 
@@ -104,13 +159,21 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
             AttributeRule.newBooleanRule(STDEV_IN_REAL_SPACE, true),
             AttributeRule.newDoubleRule(OFFSET, true),
-            new ElementRule(MEAN,
+            new XORRule(new ElementRule(MEAN,
                     new XMLSyntaxRule[]{
                             new XORRule(
                                     new ElementRule(Parameter.class),
                                     new ElementRule(Double.class)
                             )}
             ),
+                    new ElementRule(MU,
+                            new XMLSyntaxRule[]{
+                                    new XORRule(
+                                            new ElementRule(Parameter.class),
+                                            new ElementRule(Double.class)
+                                    )}
+                    ))
+            ,
             new XORRule(
                     new ElementRule(STDEV,
                             new XMLSyntaxRule[]{

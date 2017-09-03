@@ -297,7 +297,7 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
     private void setPrecisionBounds(Parameter newParameter, Taxon taxon) {
         Date date = taxon.getDate();
         if (date != null) {
-            double precision = date.getPrecision();
+            double precision = date.getUncertainty();
             if (precision > 0.0) {
                 // taxon date not specified to exact value so add appropriate bounds
                 double upper = Taxon.getHeightFromDate(date);

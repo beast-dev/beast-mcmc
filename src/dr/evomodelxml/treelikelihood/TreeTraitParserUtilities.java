@@ -236,13 +236,15 @@ public class TreeTraitParserUtilities {
         public List<Integer> missingIndices;
         public String traitName;
         public Parameter sampleMissingParameter;
+        public boolean useMissingIndices;
 
         TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, String traitName,
-                                Parameter sampleMissingParameter) {
+                                Parameter sampleMissingParameter, boolean useMissingIndices) {
             this.traitParameter = traitParameter;
             this.missingIndices = missingIndices;
             this.traitName = traitName;
             this.sampleMissingParameter = sampleMissingParameter;
+            this.useMissingIndices = useMissingIndices;
         }
     }
 
@@ -398,10 +400,6 @@ public class TreeTraitParserUtilities {
             // Standardize
             if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
 
-                System.err.println(traitParameter.getClass().getCanonicalName());
-
-                System.err.println("Yes, standardize");
-
                 StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter);
                 String message = st.doStandardization(false);
 
@@ -470,12 +468,15 @@ public class TreeTraitParserUtilities {
             }
         }
 
+        boolean useMissingIndices = true;
         if (xo.getAttribute(SAMPLE_MISSING_TRAITS, false) || xo.hasChildNamed(MISSING)) {
-            missingIndices = new ArrayList<Integer>(); // return empty
+//            missingIndices = new ArrayList<Integer>(); // return empty
+            useMissingIndices = false;
 
         }
 
-        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName, sampleMissingParameter);
+        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName,
+                sampleMissingParameter, useMissingIndices);
     }
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {

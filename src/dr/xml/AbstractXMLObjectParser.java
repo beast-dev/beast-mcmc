@@ -135,9 +135,11 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         try {
             return parseXMLObject(xo);
         } catch (XMLParseException xpe) {
-            throw new XMLParseException("Error parsing '<" + getParserName() +
+            XMLParseException e = new XMLParseException("Error parsing '<" + getParserName() +
                     ">' element with id, '" + id + "':\n" +
                     xpe.getMessage());
+            e.setStackTrace(xpe.getStackTrace());
+            throw e;
         }
     }
 
@@ -244,7 +246,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             buffer.append("<div class=\"example\"><b>Example:</b>");
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
-            handler.outputExampleXML(pw, this);
+            handler.outputHTMLExampleXML(pw, this);
             pw.flush();
             pw.close();
             buffer.append(sw.toString());
@@ -293,7 +295,52 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         buffer.append("\nExample:\n");
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
-        handler.outputExampleXML(pw, this);
+        handler.outputHTMLExampleXML(pw, this);
+        pw.flush();
+        pw.close();
+        buffer.append(sw.toString());
+        buffer.append("\n");
+        return buffer.toString();
+    }
+
+    /**
+     * @return a description of this parser as a string.
+     */
+    public final String toMarkdown(XMLDocumentationHandler handler) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("## <code>&lt;").append(getParserName()).append("&gt;</code> element\n\n");
+        buffer.append(getParserDescription()).append("\n\n");
+
+        if (hasSyntaxRules()) {
+            XMLSyntaxRule[] rules = getSyntaxRules();
+            List<XMLSyntaxRule> attributes = new ArrayList<XMLSyntaxRule>();
+            List<XMLSyntaxRule> contents = new ArrayList<XMLSyntaxRule>();
+            for (XMLSyntaxRule rule : rules) {
+                if (rule instanceof AttributeRule) {
+                    attributes.add(rule);
+                } else {
+                    contents.add(rule);
+                }
+            }
+
+            if (attributes.size() > 0) {
+                buffer.append("The element takes following attributes:\n\n");
+                for (XMLSyntaxRule rule : attributes) {
+                    buffer.append(rule.markdownRuleString(handler, ""));
+                }
+            }
+
+            if (contents.size() > 0) {
+                buffer.append("The element has the following contents:\n\n");
+                for (XMLSyntaxRule rule : contents) {
+                    buffer.append(rule.markdownRuleString(handler, ""));
+                }
+            }
+        }
+        buffer.append("Example:\n\n");
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        handler.outputMarkdownExampleXML(pw, this);
         pw.flush();
         pw.close();
         buffer.append(sw.toString());

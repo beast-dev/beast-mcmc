@@ -189,7 +189,7 @@ public class SamplesPanel extends JPanel implements Exportable {
 
             Date newDate = createDate(d, units, backwards, 0.0);
 
-            newDate.setPrecision(date.getPrecision());
+            newDate.setUncertainty(date.getUncertainty());
 
             taxonList.getTaxon(i).setDate(newDate);
         }
@@ -382,7 +382,7 @@ public class SamplesPanel extends JPanel implements Exportable {
                     }
                 case 2:
                     if (date != null) {
-                        return date.getPrecision();
+                        return date.getUncertainty();
                     } else {
                         return "-";
                     }
@@ -411,7 +411,7 @@ public class SamplesPanel extends JPanel implements Exportable {
                 if (date != null) {
                     double d = (Double) aValue;
                     if (d >= 0.0) {
-                        date.setPrecision(d);
+                        date.setUncertainty(d);
                     }
                 }
             }

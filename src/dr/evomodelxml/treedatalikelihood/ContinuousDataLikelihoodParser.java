@@ -97,6 +97,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         List<Integer> missingIndices = null;
         Parameter sampleMissingParameter = null;
         ContinuousTraitPartialsProvider dataModel = null;
+        boolean useMissingIndices = true;
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
@@ -107,11 +108,12 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             missingIndices = returnValue.missingIndices;
             sampleMissingParameter = returnValue.sampleMissingParameter;
             traitName = returnValue.traitName;
+            useMissingIndices = returnValue.useMissingIndices;
 
             PrecisionType precisionType = PrecisionType.SCALAR;
 
             if (xo.getAttribute(FORCE_FULL_PRECISION, false) ||
-                    (missingIndices.size() > 0 && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
+                    (useMissingIndices && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
                 precisionType = PrecisionType.FULL;
             }
 
@@ -119,7 +121,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
             dataModel = new ContinuousTraitDataModel(traitName,
                     traitParameter,
-                    missingIndices,
+                    missingIndices, useMissingIndices,
                     dim, precisionType);
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
@@ -156,7 +158,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
 
-            if (missingIndices != null && missingIndices.size() == 0) {
+//            if (missingIndices != null && missingIndices.size() == 0) {
+            if (!useMissingIndices) {
 
                 ProcessSimulationDelegate simulationDelegate = new ProcessSimulationDelegate.ConditionalOnTipsRealizedDelegate(traitName, treeModel,
                         diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);

@@ -53,4 +53,6 @@ public interface ContinuousTraitPartialsProvider {
     List<Integer> getMissingIndices();
 
     CompoundParameter getParameter();
+
+    String getModelName();
 }

@@ -168,7 +168,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                     Taxon taxon = treeModel.getTaxon(index);
 
-                    setPrecisionBounds(newParameter, taxon);
+                    setUncertaintyBounds(newParameter, taxon);
 
                 } else if (cxo.getName().equals(LEAF_HEIGHTS)) {
                     // get a set of leaf height parameters out as a compound parameter...
@@ -188,7 +188,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                         leafHeights.addParameter(newParameter);
 
-                        setPrecisionBounds(newParameter, taxon);
+                        setUncertaintyBounds(newParameter, taxon);
                     }
 
                     ParameterParser.replaceParameter(cxo, leafHeights);
@@ -296,18 +296,18 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         ParameterParser.replaceParameter(cxo, newParameter);
     }
 
-    private void setPrecisionBounds(Parameter newParameter, Taxon taxon) {
+    private void setUncertaintyBounds(Parameter newParameter, Taxon taxon) {
         Date date = taxon.getDate();
         if (date != null) {
-            double precision = date.getPrecision();
-            if (precision > 0.0) {
+            double uncertainty = date.getUncertainty();
+            if (uncertainty > 0.0) {
                 // taxon date not specified to exact value so add appropriate bounds
                 double upper = Taxon.getHeightFromDate(date);
                 double lower = Taxon.getHeightFromDate(date);
                 if (date.isBackwards()) {
-                    upper += precision;
+                    upper += uncertainty;
                 } else {
-                    lower -= precision;
+                    lower -= uncertainty;
                 }
 
                 // set the bounds for the given precision

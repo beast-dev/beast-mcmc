@@ -319,30 +319,30 @@ public class HierarchicalPriorDialog {
             mainPanel.add(panel[i], gbc);
         }
 
-        optionsPanel[0].addComponent(new JLabel("Select HPM for parameters: "));
-
-        OptionsPanel list = new OptionsPanel();
-        list.setBackground(Color.WHITE);
-        list.setOpaque(true);
-
-        for (Parameter p : parameterList) {
-            JLabel label = new JLabel("\t" + p.getName());
-            label.setForeground(Color.DARK_GRAY);
-            list.addSpanningComponent(label);
-        }
-
-        optionsPanel[0].addSpanningComponent(list);
-
-        PriorType modelType;
-        optionsPanel[1].addComponentWithLabel("Hierarchical Distribution: ", priorCombo);
-        modelType = (PriorType) priorCombo.getSelectedItem();
-
-        optionsPanel[1].addSeparator();
-
         String modelName = "untitled";
         nameField = new JTextField(modelName);
         nameField.setColumns(10);
-        optionsPanel[1].addComponentWithLabel("Unique Name: ", nameField);
+        optionsPanel[0].addComponentWithLabel("Unique Name: ", nameField);
+
+        PriorType modelType;
+        optionsPanel[0].addComponentWithLabel("Hierarchical Distribution: ", priorCombo);
+        modelType = (PriorType) priorCombo.getSelectedItem();
+
+//        optionsPanel[0].addSeparator();
+
+        optionsPanel[1].addComponent(new JLabel("Selected parameters: "));
+
+        Object[] parameters = parameterList.toArray();
+
+        JList list = new JList(parameters); //data has type Object[]
+        //list.setSelectionModel(null);
+        list.setLayoutOrientation(JList.VERTICAL);
+        list.setVisibleRowCount(-1);
+        list.setEnabled(false);
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setPreferredSize(new Dimension(250, 120));
+
+        optionsPanel[1].addSpanningComponent(scrollPane);
 
         optionsPanel[2].addSeparator();
         optionsPanel[3].addSeparator();

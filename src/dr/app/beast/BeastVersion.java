@@ -52,14 +52,14 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.9.0pre20170207";
+    private static final String VERSION = "1.10.0";
 
     private static final String DATE_STRING = "2002-2017";
 
     private static final boolean IS_PRERELEASE = true;
 
     // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "20fe946";
+    private static final String REVISION = "VEME2017";
 
     public String getVersion() {
         return VERSION;
@@ -92,7 +92,7 @@ public class BeastVersion implements Version, Citable {
                 "",
                 "Downloads, Help & Resources:",
 
-                "\thttp://beast.bio.ed.ac.uk",
+                "\thttp://beast.community",
                 "",
                 "Source code distributed under the GNU Lesser General Public License:",
                 "\thttp://github.com/beast-dev/beast-mcmc",
@@ -117,7 +117,7 @@ public class BeastVersion implements Version, Citable {
                         "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
                         "<p>David Geffen School of Medicine, University of California, Los Angeles<br>" +
                         "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
-                        "<p><a href=\"http://beast.bio.ed.ac.uk\">http://beast.bio.ed.ac.uk</a></p>" +
+                        "<p><a href=\"http://beast.community\">http://beast.community</a></p>" +
                         "<p>Source code distributed under the GNU LGPL:<br>" +
                         "<a href=\"http://github.com/beast-dev/beast-mcmc\">http://github.com/beast-dev/beast-mcmc</a></p>" +
                         "<p>BEAST developers:<br>" +

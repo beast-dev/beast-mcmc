@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.tree;
 
+import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.CTMCScalePrior;
 import dr.evomodel.tree.TreeModel;
@@ -49,14 +50,18 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        TaxonList taxa = (TaxonList) xo.getChild(TaxonList.class);
+
         Parameter ctmcScale = (Parameter) xo.getElementFirstChild(SCALEPARAMETER);
         boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
         boolean trial = xo.getAttribute(TRIAL, false);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
         Logger.getLogger("dr.evolution").info("Creating CTMC Scale Reference Prior model.");
-
-        return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel, reciprocal, substitutionModel, trial);
+        if (taxa != null) {
+            Logger.getLogger("dr.evolution").info("Acting on subtree of size " + taxa.getTaxonCount());
+        }
+        return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel, taxa, reciprocal, substitutionModel, trial);
     }
 
     //************************************************************************
@@ -77,6 +82,8 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
+            new ElementRule(TaxonList.class, true),
+            new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             AttributeRule.newBooleanRule(RECIPROCAL, true),
             new ElementRule(SubstitutionModel.class, true),

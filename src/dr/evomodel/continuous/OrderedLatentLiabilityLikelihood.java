@@ -65,10 +65,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         addVariable(tipTraitParameter);
         addVariable(thresholdParameter);
 
-        for (int i = 0; i < tipTraitParameter.getParameterCount(); i++) {
-            tipTraitParameter.getParameter(i).addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, tipTraitParameter.getParameter(0).getDimension()));
-        }
-
         setTipDataValuesForAllNodes();
 
         StringBuilder sb = new StringBuilder();
@@ -90,7 +86,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         if (tipData == null) {
             tipData = new int[treeModel.getExternalNodeCount()][patternList.getPatternCount()];
         }
-
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
             String id = treeModel.getTaxonId(i);
@@ -101,20 +96,53 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                 System.err.println("\t For node: " + i + " with ID " + id + " you get taxon " + index + " with ID " + patternList.getTaxonId(index));
             }
         }
+
+        if (DEBUG) {
+            Bounds<Double> bounds = tipTraitParameter.getBounds();
+            for (int i = 0; i < tipTraitParameter.getDimension(); ++i) {
+                double value = tipTraitParameter.getParameterValue(i);
+                if (value <= bounds.getLowerLimit(i) || value >= bounds.getUpperLimit(i)) {
+                    System.err.println("tipTrait error: " + i);
+                    System.exit(-1);
+                }
+            }
+
+            System.err.println("Setup bounds correctly");
+        }
     }
 
     private void setTipDataValuesForNode(NodeRef node, int index) {
         // Set tip data values
-        int Nindex = node.getNumber();
+        final int Nindex = node.getNumber();
+        final int dim = tipTraitParameter.getParameter(0).getDimension();
+
+        // TODO - This class appears to work for only binary data; how does it handle ordered-multistate data?
+
+        // boolean isBinary = patternList.getDataType() == TwoStates.INSTANCE;
+
+        double[] upperBounds = new double[dim];
+        double[] lowerBounds = new double[dim];
 
         for (int datum = 0; datum < patternList.getPatternCount(); ++datum) {
             tipData[Nindex][datum] = (int) patternList.getPattern(datum)[index];
 
-            if (DEBUG) {
-                Parameter oneTipTraitParameter = tipTraitParameter.getParameter(Nindex);
-                System.err.println("Data = " + tipData[Nindex][datum] + " : " + oneTipTraitParameter.getParameterValue(datum));
+            switch(tipData[Nindex][datum]) {
+                case 0:
+                    upperBounds[datum] = 0;
+                    lowerBounds[datum] = Double.NEGATIVE_INFINITY;
+                    break;
+                case 1:
+                    upperBounds[datum] = Double.POSITIVE_INFINITY;
+                    lowerBounds[datum] = 0;
+                    break;
+                default:
+                    upperBounds[datum] = Double.POSITIVE_INFINITY;
+                    lowerBounds[datum] = Double.NEGATIVE_INFINITY;
+                    break;
             }
         }
+
+        tipTraitParameter.getParameter(Nindex).addBounds(new Parameter.DefaultBounds(upperBounds,lowerBounds));
     }
 
     @Override
@@ -348,6 +376,12 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            int numTaxa = treeModel.getTaxonCount();
+
+            CompoundParameter tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
+
             int numData;
             int dimTrait;
             if (xo.hasAttribute(N_DATA) && xo.hasAttribute(N_TRAITS)) {
@@ -358,18 +392,24 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             } else {
                 AbstractMultivariateTraitLikelihood traitLikelihood = (AbstractMultivariateTraitLikelihood)
                         xo.getChild(AbstractMultivariateTraitLikelihood.class);
-                numData = traitLikelihood.getNumData();
-                dimTrait = traitLikelihood.getDimTrait();
+                if (traitLikelihood != null) {
+                    numData = traitLikelihood.getNumData();
+                    dimTrait = traitLikelihood.getDimTrait();
+                } else {
+                    numData = 1;
+                    if (tipTraitParameter.getParameterCount() != numTaxa) {
+                        throw new XMLParseException("Tip trait parameter is wrong dimension");
+                    }
+                    dimTrait = tipTraitParameter.getDimension() / numTaxa;
+                }
             }
+
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            CompoundParameter tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
+
             CompoundParameter thresholdParameter = (CompoundParameter) xo.getElementFirstChild(THRESHOLD_PARAMETER);
             Parameter numClasses = (Parameter) xo.getElementFirstChild(NUM_CLASSES);
             boolean isUnorderd = xo.getAttribute(IS_UNORDERED, false);
-
-            int numTaxa = treeModel.getTaxonCount();
-
+            
             if (tipTraitParameter.getDimension() != numTaxa * numData * dimTrait) {
                 throw new XMLParseException("Tip trait parameter is wrong dimension in latent liability model");
             }
@@ -399,9 +439,10 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         }
 
         private final XMLSyntaxRule[] rules = {
-                new OrRule(
-                        new ElementRule(AbstractMultivariateTraitLikelihood.class, "The model for the latent random variables"),
-                        new AndRule(AttributeRule.newIntegerRule(N_DATA), AttributeRule.newIntegerRule(N_TRAITS))
+                new XORRule(
+                        new ElementRule(AbstractMultivariateTraitLikelihood.class, true),
+                        new AndRule(AttributeRule.newIntegerRule(N_DATA),
+                                AttributeRule.newIntegerRule(N_TRAITS))
                 ),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree"),
                 new ElementRule(THRESHOLD_PARAMETER, CompoundParameter.class, "The parameter with nonzero thershold values"),

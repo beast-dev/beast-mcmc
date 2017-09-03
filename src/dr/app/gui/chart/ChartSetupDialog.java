@@ -49,6 +49,8 @@ public class ChartSetupDialog {
 
     private final boolean canLogXAxis;
     private final boolean canLogYAxis;
+    private final boolean canManualXAxis;
+    private final boolean canManualYAxis;
     private final int defaultMinXAxisFlag;
     private final int defaultMaxXAxisFlag;
     private final int defaultMinYAxisFlag;
@@ -57,12 +59,16 @@ public class ChartSetupDialog {
     private OptionsPanel optionPanel;
 
     public ChartSetupDialog(final JFrame frame, boolean canLogXAxis, boolean canLogYAxis,
+                            boolean canManualXAxis, boolean canManualYAxis,
                             int defaultMinXAxisFlag, int defaultMaxXAxisFlag,
                             int defaultMinYAxisFlag, int defaultMaxYAxisFlag) {
         this.frame = frame;
 
         this.canLogXAxis = canLogXAxis;
         this.canLogYAxis = canLogYAxis;
+
+        this.canManualXAxis = canManualXAxis;
+        this.canManualYAxis = canManualYAxis;
 
         this.defaultMinXAxisFlag = defaultMinXAxisFlag;
         this.defaultMaxXAxisFlag = defaultMaxXAxisFlag;
@@ -85,49 +91,58 @@ public class ChartSetupDialog {
 
         optionPanel = new OptionsPanel(12, 12);
 
-        optionPanel.addSpanningComponent(new JLabel("X Axis"));
-        if (canLogXAxis) {
-            optionPanel.addComponent(logXAxis);
-        }
-        optionPanel.addComponent(manualXAxis);
-        final JLabel minXLabel = new JLabel("Minimum Value:");
-        optionPanel.addComponents(minXLabel, minXValue);
-        final JLabel maxXLabel = new JLabel("Maximum Value:");
-        optionPanel.addComponents(maxXLabel, maxXValue);
-        manualXAxis.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
-                final boolean xaSelected = manualXAxis.isSelected();
-                minXLabel.setEnabled(xaSelected);
-                minXValue.setEnabled(xaSelected);
-                maxXLabel.setEnabled(xaSelected);
-                maxXValue.setEnabled(xaSelected);
+        if (canManualXAxis) {
+            optionPanel.addSpanningComponent(new JLabel("X Axis"));
+            if (canLogXAxis) {
+                optionPanel.addComponent(logXAxis);
             }
-        });
-        manualXAxis.setSelected(true);
-        manualXAxis.setSelected(false);
-
+            optionPanel.addComponent(manualXAxis);
+            final JLabel minXLabel = new JLabel("Minimum Value:");
+            optionPanel.addComponents(minXLabel, minXValue);
+            final JLabel maxXLabel = new JLabel("Maximum Value:");
+            optionPanel.addComponents(maxXLabel, maxXValue);
+            manualXAxis.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent changeEvent) {
+                    final boolean xaSelected = manualXAxis.isSelected();
+                    minXLabel.setEnabled(xaSelected);
+                    minXValue.setEnabled(xaSelected);
+                    maxXLabel.setEnabled(xaSelected);
+                    maxXValue.setEnabled(xaSelected);
+                }
+            });
+            manualXAxis.setSelected(false);
+            minXLabel.setEnabled(false);
+            minXValue.setEnabled(false);
+            maxXLabel.setEnabled(false);
+            maxXValue.setEnabled(false);
+        }
         optionPanel.addSeparator();
 
-        optionPanel.addSpanningComponent(new JLabel("Y Axis"));
-        if (canLogYAxis) {
-            optionPanel.addComponent(logYAxis);
-        }
-        optionPanel.addComponent(manualYAxis);
-        final JLabel minYLabel = new JLabel("Minimum Value:");
-        optionPanel.addComponents(minYLabel, minYValue);
-        final JLabel maxYLabel = new JLabel("Maximum Value:");
-        optionPanel.addComponents(maxYLabel, maxYValue);
-        manualYAxis.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
-                final boolean yaSelected = manualYAxis.isSelected();
-                minYLabel.setEnabled(yaSelected);
-                minYValue.setEnabled(yaSelected);
-                maxYLabel.setEnabled(yaSelected);
-                maxYValue.setEnabled(yaSelected);
+        if (canManualYAxis) {
+            optionPanel.addSpanningComponent(new JLabel("Y Axis"));
+            if (canLogYAxis) {
+                optionPanel.addComponent(logYAxis);
             }
-        });
-        manualYAxis.setSelected(true);
-        manualYAxis.setSelected(false);
+            optionPanel.addComponent(manualYAxis);
+            final JLabel minYLabel = new JLabel("Minimum Value:");
+            optionPanel.addComponents(minYLabel, minYValue);
+            final JLabel maxYLabel = new JLabel("Maximum Value:");
+            optionPanel.addComponents(maxYLabel, maxYValue);
+            manualYAxis.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent changeEvent) {
+                    final boolean yaSelected = manualYAxis.isSelected();
+                    minYLabel.setEnabled(yaSelected);
+                    minYValue.setEnabled(yaSelected);
+                    maxYLabel.setEnabled(yaSelected);
+                    maxYValue.setEnabled(yaSelected);
+                }
+            });
+            manualYAxis.setSelected(false);
+            minYLabel.setEnabled(false);
+            minYValue.setEnabled(false);
+            maxYLabel.setEnabled(false);
+            maxYValue.setEnabled(false);
+        }
     }
 
     public int showDialog(JChart chart) {
@@ -151,12 +166,12 @@ public class ChartSetupDialog {
             logYAxis.setSelected(yAxis instanceof LogAxis);
         }
 
-        if (!manualXAxis.isSelected()) {
+        if (canManualXAxis && !manualXAxis.isSelected()) {
             minXValue.setValue(xAxis.getMinAxis());
             maxXValue.setValue(xAxis.getMaxAxis());
         }
 
-        if (!manualYAxis.isSelected()) {
+        if (canManualYAxis && !manualYAxis.isSelected()) {
             minYValue.setValue(yAxis.getMinAxis());
             maxYValue.setValue(yAxis.getMaxAxis());
         }
@@ -190,11 +205,13 @@ public class ChartSetupDialog {
             chart.setXAxis(xAxis);
         }
 
-        if (manualXAxis.isSelected()) {
-            xAxis.setManualRange(minXValue.getValue(), maxXValue.getValue());
-            xAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
-        } else {
-            xAxis.setAxisFlags(defaultMinXAxisFlag, defaultMaxXAxisFlag);
+        if (canManualXAxis) {
+            if (manualXAxis.isSelected()) {
+                xAxis.setManualRange(minXValue.getValue(), maxXValue.getValue());
+                xAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
+            } else {
+                xAxis.setAxisFlags(defaultMinXAxisFlag, defaultMaxXAxisFlag);
+            }
         }
 
         if (canLogYAxis) {
@@ -206,13 +223,14 @@ public class ChartSetupDialog {
             chart.setYAxis(yAxis);
         }
 
-        if (manualYAxis.isSelected()) {
-            yAxis.setManualRange(minYValue.getValue(), maxYValue.getValue());
-            yAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
-        } else {
-            yAxis.setAxisFlags(defaultMinYAxisFlag, defaultMaxYAxisFlag);
+        if (canManualYAxis) {
+            if (manualYAxis.isSelected()) {
+                yAxis.setManualRange(minYValue.getValue(), maxYValue.getValue());
+                yAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
+            } else {
+                yAxis.setAxisFlags(defaultMinYAxisFlag, defaultMaxYAxisFlag);
+            }
         }
-
     }
 
 }

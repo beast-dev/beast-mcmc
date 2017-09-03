@@ -67,7 +67,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.createParameter(prefix + "coefIndicators", "a vector of bits indicating non-zero coefficients for GLM", 1.0);
 
                 // Operators
-                
+
                 modelOptions.createScaleOperator(prefix + "frequencies", 0.75, 1.0);
                 modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
                 modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
@@ -115,15 +115,15 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 }
 
                 params.add(nonZeroRates);
+            }
+
+            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                params.add(modelOptions.getParameter(prefix + "coefficients"));
+                // Don't show this parameter as the prior is a custom MVN
+                // params.add(modelOptions.getParameter(prefix + "coefIndicators"));
             } else {
-                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
-                    params.add(modelOptions.getParameter(prefix + "coefficients"));
-                    // Don't show this parameter as the prior is a custom MVN
-                    // params.add(modelOptions.getParameter(prefix + "coefIndicators"));
-                } else {
-                    params.add(modelOptions.getParameter(prefix + "frequencies"));
-                    params.add(modelOptions.getParameter(prefix + "rates"));
-                }
+                params.add(modelOptions.getParameter(prefix + "frequencies"));
+                params.add(modelOptions.getParameter(prefix + "rates"));
             }
         }
 

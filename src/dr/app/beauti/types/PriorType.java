@@ -54,7 +54,7 @@ public enum PriorType {
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
     LINKED_PARAMETER("Linked Parameter", false, false, false),
-    POISSON_PRIOR("Poisson", true, false, false);
+    POISSON_PRIOR("Poisson", false, false, false);
 
     PriorType(final String name, final boolean isInitializable, final boolean isTruncatable, final boolean isPlottable) {
         this.name = name;
@@ -191,7 +191,7 @@ public enum PriorType {
                 break;
             case LOGNORMAL_PRIOR:
                 buffer.append("LogNormal [");
-                if (parameter.isMeanInRealSpace()) buffer.append("R");
+                if (parameter.isInRealSpace()) buffer.append("R");
                 buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
                 buffer.append(", ");
                 buffer.append(NumberUtil.formatDecimal(parameter.stdev, 10, 6));

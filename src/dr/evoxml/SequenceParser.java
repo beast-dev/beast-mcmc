@@ -27,6 +27,7 @@ package dr.evoxml;
 
 import dr.evolution.datatype.*;
 import dr.evolution.sequence.Sequence;
+import dr.evolution.sequence.UncertainSequence;
 import dr.evolution.util.Taxon;
 import dr.xml.*;
 
@@ -35,6 +36,7 @@ import java.util.StringTokenizer;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Marc A. Suchard
  *
  * @version $Id: SequenceParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
@@ -48,8 +50,6 @@ public class SequenceParser extends AbstractXMLObjectParser {
      * @return a sequence object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-        Sequence sequence = new Sequence();
 
         Taxon taxon = (Taxon)xo.getChild(Taxon.class);
 
@@ -87,6 +87,13 @@ public class SequenceParser extends AbstractXMLObjectParser {
 
         if (sequenceString.length() == 0) {
             throw new XMLParseException("Sequence data missing from sequence element!");
+        }
+
+        Sequence sequence;
+        if (UncertainSequence.containsWeights(sequenceString)) {
+            sequence = new UncertainSequence();
+        } else {
+            sequence = new Sequence();
         }
 
         if (dataType != null) {

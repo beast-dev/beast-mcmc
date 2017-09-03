@@ -146,7 +146,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
 }
 
-    public double reflectValue(double value, double lower, double upper) {
+    public static double reflectValue(double value, double lower, double upper) {
 
         double newValue = value;
 

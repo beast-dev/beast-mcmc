@@ -52,12 +52,22 @@ public class ApplyOperatorParser extends AbstractXMLObjectParser {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
             NormalDistribution normal = new NormalDistribution(0, 1);
 
+            Bounds bounds = parameter.getBounds();
+
             for (int i = 0; i < parameter.getDimension(); ++i) {
+
                 double value = parameter.getParameterValue(i);
                 value += scale * (Double) normal.nextRandom();
+
+                if (bounds != null) {
+                    final double lower = (Double) bounds.getLowerLimit(i);
+                    final double upper = (Double) bounds.getUpperLimit(i);
+
+                    value = RandomWalkOperator.reflectValue(value, lower, upper);
+                }
+
                 parameter.setParameterValue(i, value);
             }
-
             return null;
         }
 

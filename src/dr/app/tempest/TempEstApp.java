@@ -49,7 +49,7 @@ public class TempEstApp extends MultiDocApplication {
         }
 
         public String getDateString() {
-            return "2003-2016";
+            return "2003-2017";
         }
 
         public String getBuildString() {
@@ -69,7 +69,7 @@ public class TempEstApp extends MultiDocApplication {
                     "<a href=\"http://dx.doi.org/10.1093/ve/vew007\">Rambaut, Lam, de Carvalho & Pybus (2016) Exploring the temporal structure of<br>" +
                     "heterochronous sequences using TempEst. <i>Virus Evolution</i> <b>2</b>: vew007</a></p>" +
                     "<p>Part of the BEAST package:<br>" +
-                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>";
+                    "<a href=\"http://beast.community\">http://beast.community</a></p>";
         }
 
     };

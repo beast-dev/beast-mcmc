@@ -128,7 +128,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         treeModelPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
         treeModelPanelParent.setOpaque(false);
-        treeModelBorder = new javax.swing.border.TitledBorder("Tree Model");
+        treeModelBorder = new TitledBorder(null, "Tree Model", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.ABOVE_TOP);
         treeModelPanelParent.setBorder(treeModelBorder);
 
         JScrollPane scrollPane2 = new JScrollPane(treeModelPanelParent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -138,7 +138,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         treePriorPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
         treePriorPanelParent.setOpaque(false);
-        treePriorBorder = new TitledBorder("Tree Prior");
+        treePriorBorder = new TitledBorder(null, "Tree Prior", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.ABOVE_TOP);
         treePriorPanelParent.setBorder(treePriorBorder);
 
         JPanel panel3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -195,7 +195,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void fireTreePriorsChanged() {
-        options.updatePartitionAllLinks();
+//        options.updatePartitionAllLinks();
         frame.setDirty();
     }
 
@@ -447,20 +447,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            boolean editable;
-
-            switch (col) {
-                case 0:// name
-                    editable = true;
-                    break;
-                default:
-                    editable = false;
-            }
-
-            return editable;
+            return false;
         }
-
-
+        
         public String getColumnName(int column) {
             return columnNames[column];
         }

@@ -49,6 +49,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -321,12 +322,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
-            if (patternList instanceof UncertainSiteList) {
+            if (patternList instanceof UncertainSiteList) { // TODO Remove
                 useAmbiguities = true;
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+
+            if (patternList.areUncertain() && !useAmbiguities) {
+                logger.info("  WARNING: Uncertain site patterns will be ignored.");
+            }
 
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
@@ -462,19 +467,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                    int nodeIndex) {
         double[] partials = new double[patternCount * stateCount * categoryCount];
 
-        boolean[] stateSet;
-
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
-
+            
             if (patternList instanceof UncertainSiteList) {
                 ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
                 v += stateCount;
                 // TODO Add this functionality to SimpleSiteList to avoid if statement here
-            } else {
+            } else if (patternList.areUncertain()) {
 
+                double[] prob = patternList.getUncertainPatternState(sequenceIndex, i);
+                System.arraycopy(prob, 0, partials, v, stateCount);
+                v += stateCount;
+
+            } else {
                 int state = patternList.getPatternState(sequenceIndex, i);
-                stateSet = dataType.getStateSet(state);
+                boolean[] stateSet = dataType.getStateSet(state);
 
                 for (int j = 0; j < stateCount; j++) {
                     if (stateSet[j]) {
@@ -542,18 +550,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         beagle.setTipStates(nodeIndex, states);
     }
-
-
-    //    public void setStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:setStates");
-//        beagle.setTipStates(tipIndex, states);
-//        makeDirty();
-//    }
-//
-//    public void getStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:getStates");
-//        beagle.getTipStates(tipIndex, states);
-//    }
 
     /**
      * Calculate the log likelihood of the current state.

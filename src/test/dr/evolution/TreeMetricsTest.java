@@ -5,8 +5,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.*;
 import dr.evolution.tree.treemetrics.BranchScoreMetric;
 import dr.evolution.tree.treemetrics.SteelPennyPathDifferenceMetric;
-//import jebl.evolution.treemetrics.CladeHeightMetric;
-import jebl.evolution.treemetrics.RobinsonsFouldMetric;
+import dr.evolution.tree.treemetrics.RobinsonFouldsMetric;
 import junit.framework.TestCase;
 
 import java.io.*;
@@ -37,7 +36,7 @@ public class TreeMetricsTest extends TestCase {
 //            assertEquals(billera, 0.2236068);
             
             /* Robinson & Foulds, 1981*/
-            double RF = (new RobinsonsFouldMetric().getMetric(TreeUtils.asJeblTree(treeOne), TreeUtils.asJeblTree(treeTwo))*2.0);
+            double RF = (new RobinsonFouldsMetric().getMetric(treeOne, treeTwo)*2.0);
             System.out.println("Robinson-Foulds = " + RF);
             assertEquals(RF, 2.0, 0.0000001);
             

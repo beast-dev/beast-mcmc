@@ -393,7 +393,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     class TipGradientViaFullConditionalDelegate extends TipFullConditionalDistributionDelegate {
 
 //        final private PartiallyMissingInformation missingInformation;
-
+        
          public TipGradientViaFullConditionalDelegate(String name, MutableTreeModel tree,
                                                             MultivariateDiffusionModel diffusionModel,
                                                             ContinuousTraitDataModel dataModel,

@@ -119,7 +119,7 @@ public interface Plot {
      * Paint actual plot
      */
     void paintPlot(Graphics2D g2, double xScale, double yScale,
-                   double xOffset, double yOffset);
+                   double xOffset, double yOffset, int plotNumber);
 
     /**
      * Set name
@@ -213,6 +213,7 @@ public interface Plot {
         protected double xScale, yScale, xOffset, yOffset;
 
         private String name;
+        protected int plotNumber;
 
         private Set<Integer> selectedPoints = new HashSet<Integer>();
 
@@ -477,15 +478,9 @@ public interface Plot {
         }
 
         /**
-         * Draw a rectangle transforming co-ordinates to each axis
+         * Draw a rectangle directly (no transformation)
          */
-        protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-
-            float tx1 = (float) transformX(x1);
-            float ty1 = (float) transformY(y1);
-            float tx2 = (float) transformX(x2);
-            float ty2 = (float) transformY(y2);
-
+        protected void drawRect(Graphics2D g2, float tx1, float ty1, float tx2, float ty2) {
             GeneralPath path = new GeneralPath();
             path.moveTo(tx1, ty1);
             path.lineTo(tx1, ty2);
@@ -497,14 +492,9 @@ public interface Plot {
         }
 
         /**
-         * Fill a rectangle transforming co-ordinates to each axis
+         * Fill a rectangle directly (no transformation)
          */
-        protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-
-            float tx1 = (float) transformX(x1);
-            float ty1 = (float) transformY(y1);
-            float tx2 = (float) transformX(x2);
-            float ty2 = (float) transformY(y2);
+        protected void fillRect(Graphics2D g2, float tx1, float ty1, float tx2, float ty2) {
 
             GeneralPath path = new GeneralPath();
             path.moveTo(tx1, ty1);
@@ -517,10 +507,34 @@ public interface Plot {
         }
 
         /**
+         * Draw a rectangle transforming co-ordinates to each axis
+         */
+        protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+
+            float tx1 = (float) transformX(x1);
+            float ty1 = (float) transformY(y1);
+            float tx2 = (float) transformX(x2);
+            float ty2 = (float) transformY(y2);
+            drawRect(g2, tx1, ty1, tx2, ty2);
+        }
+
+        /**
+         * Fill a rectangle transforming co-ordinates to each axis
+         */
+        protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+
+            float tx1 = (float) transformX(x1);
+            float ty1 = (float) transformY(y1);
+            float tx2 = (float) transformX(x2);
+            float ty2 = (float) transformY(y2);
+            fillRect(g2, tx1, ty1, tx2, ty2);
+        }
+
+        /**
          * Paint actual plot
          */
         public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                              double xOffset, double yOffset) {
+                              double xOffset, double yOffset, int plotNumber) {
             if (xAxis == null || yAxis == null)
                 return;
 
@@ -529,11 +543,11 @@ public interface Plot {
             this.xOffset = xOffset;
             this.yOffset = yOffset;
 
-            // variable is assigned to itself
-            //this.bounds = bounds;
+            this.plotNumber = plotNumber;
 
-            if (xData != null && yData != null && xData.getCount() > 0)
+            if (xData != null && yData != null && xData.getCount() > 0) {
                 paintData(g2, xData, yData);
+            }
         }
 
         /**

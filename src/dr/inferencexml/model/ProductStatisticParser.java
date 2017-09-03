@@ -36,6 +36,7 @@ public class ProductStatisticParser extends AbstractXMLObjectParser {
     public static String PRODUCT_STATISTIC = "productStatistic";
     public static String PRODUCT = "product";
     public static String ELEMENT_WISE = "elementwise";
+    public static String CONSTANT = "constant";
 
     public String[] getParserNames() {
         return new String[]{getParserName(), PRODUCT};
@@ -57,13 +58,28 @@ public class ProductStatisticParser extends AbstractXMLObjectParser {
             name = xo.getAttribute(XMLParser.ID, xo.getId());
         }
 
-        ProductStatistic productStatistic = new ProductStatistic(name, elementwise);
+        double[] constants = null;
+        if (xo.hasAttribute(CONSTANT)) {
+            constants = xo.getDoubleArrayAttribute(CONSTANT);
+        }
+
+        if (constants != null && constants.length != 1 && elementwise) {
+            throw new XMLParseException("The constant given to " + getParserName() + " should be a single value if element-wise is being used.");
+        }
+
+        ProductStatistic productStatistic = new ProductStatistic(name, elementwise, constants);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);
             if (child instanceof Statistic) {
                 try {
-                    productStatistic.addStatistic((Statistic) child);
+                    Statistic statistic = (Statistic)child;
+
+                    if (constants != null && constants.length != 1 && constants.length != statistic.getDimension()) {
+                        throw new XMLParseException("The constants given to " + getParserName() + " is not of the same dimension as the statistics");
+                    }
+
+                    productStatistic.addStatistic(statistic);
                 } catch (IllegalArgumentException iae) {
                     throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
                 }
@@ -94,6 +110,7 @@ public class ProductStatisticParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(ELEMENT_WISE, true),
             AttributeRule.newStringRule(Statistic.NAME, true),
+            AttributeRule.newDoubleArrayRule(CONSTANT, true, "A constant to be multiplied with the parameters. If element-wise then this can be a vector of constants."),
             new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
     };
 }

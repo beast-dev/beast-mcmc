@@ -66,8 +66,6 @@ public class GuessDatesDialog {
 
     private JFrame frame;
 
-    private File loadFile;
-
     private final OptionsPanel optionPanel;
 
     private final JRadioButton orderRadio = new JRadioButton("Defined just by its order", true);
@@ -96,7 +94,7 @@ public class GuessDatesDialog {
     private final RealNumberField offset2Text = new RealNumberField();
 
     private final JTextField dateFormatText = new JTextField(16);
-    private String description = "Guess Dates for Taxa";
+    private String description = "Extract dates from taxon labels";
 
     private final int defaultDelimitRadioOption;
     private final int defaultOrderCombo;

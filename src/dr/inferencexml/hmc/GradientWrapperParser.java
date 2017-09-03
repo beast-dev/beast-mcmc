@@ -33,7 +33,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * Created by msuchard on 4/27/17.
+ * @author Marc A. Suchard
  */
 
 public class GradientWrapperParser extends AbstractXMLObjectParser {

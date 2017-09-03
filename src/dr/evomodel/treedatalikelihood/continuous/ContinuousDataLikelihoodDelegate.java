@@ -308,6 +308,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return rootProcessDelegate;
     }
 
+    public ConjugateRootTraitPrior getRootPrior() { return rootPrior; }
+
     private static boolean EXTENDED_DEBUG_INFO = true;
 
     @Override
@@ -923,7 +925,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return diffusionModel.getPrecisionParameter();
     }
 
-    public ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+    public static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
                 likelihoodDelegate.diffusionModel,
                 likelihoodDelegate.dataModel,
@@ -931,7 +933,38 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 likelihoodDelegate.rateTransformation,
                 likelihoodDelegate.rateModel,
                 likelihoodDelegate.restrictedPartialsList,
-                true);
+                true,
+                likelihoodDelegate.allowSingular);
+    }
+
+    public static ContinuousDataLikelihoodDelegate createWithMissingData(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+
+        if (!(likelihoodDelegate.dataModel instanceof ContinuousTraitDataModel)) {
+            throw new IllegalArgumentException("Not yet implemented");
+        }
+
+        List<Integer> originalMissingIndices = ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndices();
+
+        if (originalMissingIndices.size() == 0) {
+            throw new IllegalArgumentException("ContinuousDataLikelihoodDelegate has no missing traits");
+        }
+
+        ContinuousTraitPartialsProvider newDataModel = new ContinuousTraitDataModel(((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getName(),
+                likelihoodDelegate.dataModel.getParameter(),
+                ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndices(),
+                true,
+                likelihoodDelegate.getTraitDim(), PrecisionType.FULL);
+
+        ContinuousDataLikelihoodDelegate newDelegate = new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
+                likelihoodDelegate.diffusionModel,
+                newDataModel,
+                likelihoodDelegate.rootPrior,
+                likelihoodDelegate.rateTransformation,
+                likelihoodDelegate.rateModel,
+                likelihoodDelegate.restrictedPartialsList,
+                false,
+                likelihoodDelegate.allowSingular);
+        return newDelegate;
     }
 
     private final static boolean DEBUG_OUTER_PRODUCTS = false;

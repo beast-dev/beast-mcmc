@@ -38,7 +38,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * Created by msuchard on 6/4/16.
+ * @author Marc A. Suchard
  */
 public class RestrictedPartialsParser extends AbstractXMLObjectParser {
 

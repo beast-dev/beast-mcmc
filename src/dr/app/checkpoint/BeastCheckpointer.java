@@ -28,10 +28,6 @@ package dr.app.checkpoint;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.state.StateSaverChainListener;
-import dr.inference.state.Factory;
-import dr.inference.state.StateLoader;
-import dr.inference.state.StateSaver;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
@@ -40,6 +36,10 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.state.Factory;
+import dr.inference.state.StateLoader;
+import dr.inference.state.StateSaver;
+import dr.inference.state.StateSaverChainListener;
 import dr.math.MathUtils;
 
 import java.io.*;
@@ -53,7 +53,7 @@ import java.util.*;
  */
 public class BeastCheckpointer implements StateLoader, StateSaver {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     // A debugging flag to do a check that the state gives the same likelihood after loading
     private static final boolean CHECK_LOAD_STATE = true;
@@ -265,11 +265,18 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                                 throw new RuntimeException("Operation currently only supported for nodes with 2 children.");
                             }
 
+                            //only print the TreeParameterModel that matches the TreeModel currently being written
                             for (TreeParameterModel tpm : traitModels) {
-                                out.print("\t");
-                                out.print(tpm.getNodeValue((TreeModel)model, ((TreeModel) model).getNode(i)));
+                                if (model == tpm.getTreeModel()) {
+                                    out.print("\t");
+                                    out.print(tpm.getNodeValue((TreeModel) model, ((TreeModel) model).getNode(i)));
+                                }
                             }
                             out.println();
+                        } else {
+                            if (DEBUG) {
+                                System.out.println(((TreeModel) model).getNode(i) + " has no parent.");
+                            }
                         }
                     }
 
@@ -411,24 +418,48 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             // load the tree models last as we get the node heights from the tree (not the parameters which
             // which may not be associated with the right node
             Set<String> expectedTreeModelNames = new HashSet<String>();
+
+            //store list of TreeModels for debugging purposes
+            ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+
             for (Model model : Model.CONNECTED_MODEL_SET) {
 
                 if (model instanceof TreeModel) {
                     if (DEBUG) {
                         System.out.println("model " + model.getModelName());
                     }
+                    treeModelList.add((TreeModel)model);
                     expectedTreeModelNames.add(model.getModelName());
                     if (DEBUG) {
+                        System.out.println("\nexpectedTreeModelNames:");
                         for (String s : expectedTreeModelNames) {
                             System.out.println(s);
                         }
+                        System.out.println();
                     }
                 }
 
+                //first add all TreeParameterModels to a list
                 if (model instanceof TreeParameterModel) {
                     traitModels.add((TreeParameterModel)model);
                 }
 
+            }
+
+            //explicitly link TreeModel (using its unique ID) to a list of TreeParameterModels
+            //this information is currently not yet used
+            HashMap<String, ArrayList<TreeParameterModel>> linkedModels = new HashMap<String, ArrayList<TreeParameterModel>>();
+            for (String name : expectedTreeModelNames) {
+                ArrayList<TreeParameterModel> tpmList = new ArrayList<TreeParameterModel>();
+                for (TreeParameterModel tpm : traitModels) {
+                    if (tpm.getTreeModel().getId().equals(name)) {
+                        tpmList.add(tpm);
+                        if (DEBUG) {
+                            System.out.println("TreeModel: " + name + " has been assigned TreeParameterModel: " + tpm.toString());
+                        }
+                    }
+                }
+                linkedModels.put(name, tpmList);
             }
 
             line = in.readLine();
@@ -437,7 +468,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             while (fields[0].equals("tree")) {
 
                 if (DEBUG) {
-                    System.out.println("tree: " + fields[1]);
+                    System.out.println("\ntree: " + fields[1]);
                 }
 
                 for (Model model : Model.CONNECTED_MODEL_SET) {
@@ -461,9 +492,13 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         fields = line.split("\t");
 
                         int edgeCount = Integer.parseInt(fields[0]);
+                        if (DEBUG) {
+                            System.out.println("edge count = " + edgeCount);
+                        }
 
                         //create data matrix of doubles to store information from list of TreeParameterModels
-                        double[][] traitValues = new double[traitModels.size()][edgeCount];
+                        //size of matrix depends on the number of TreeParameterModels assigned to a TreeModel
+                        double[][] traitValues = new double[linkedModels.get(model.getId()).size()][edgeCount];
 
                         //create array to store whether a node is left or right child of its parent
                         //can be important for certain tree transition kernels
@@ -476,13 +511,16 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         for (int i = 0; i < edgeCount; i++){
                             parents[i] = -1;
                         }
-                        for (int i = 0; i < edgeCount; i++) {
+                        for (int i = 0; i < edgeCount-1; i++) {
                             line = in.readLine();
                             if (line != null) {
+                                if (DEBUG) {
+                                    System.out.println("DEBUG: " + line);
+                                }
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
                                 childOrder[i] = Integer.parseInt(fields[2]);
-                                for (int j = 0; j < traitModels.size(); j++) {
+                                for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
                                     traitValues[j][i] = Double.parseDouble(fields[3+j]);
                                 }
                             }
@@ -501,12 +539,14 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         expectedTreeModelNames.remove(model.getModelName());
 
                     }
+
                 }
 
                 line = in.readLine();
                 if (line != null) {
                     fields = line.split("\t");
                 }
+
             }
 
             if (expectedTreeModelNames.size() > 0) {
@@ -514,7 +554,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 for (String notFoundName : expectedTreeModelNames) {
                     sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
                 }
-                throw new RuntimeException(sb.toString());
+                throw new RuntimeException("\n" + sb.toString());
             }
 
             if (DEBUG) {
@@ -523,6 +563,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                     if (parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
                         System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
                     }
+                }
+                System.out.println("\nPrinting trees:");
+                for (TreeModel tm : treeModelList) {
+                    System.out.println(tm.getId() + ": ");
+                    System.out.println(tm.getNewick());
                 }
             }
 
@@ -533,10 +578,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             in.close();
             fileIn.close();
 
-            // This shouldn't be necessary and if it is then it might be hiding a bug...
-//            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
-//                likelihood.makeDirty();
-//            }
+            //This shouldn't be necessary and if it is then it might be hiding a bug...
+            /*for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+                likelihood.makeDirty();
+            }*/
+
         } catch (IOException ioe) {
             throw new RuntimeException("Unable to read file: " + ioe.getMessage());
         }

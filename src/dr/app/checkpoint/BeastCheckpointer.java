@@ -146,7 +146,9 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
 
                 if (digits < 15) {
                     throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
-                            ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")");
+                            ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                            "\nYour XML may require the construction of a randomly generated starting tree. " +
+                            "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
                 }
 
             } else {
@@ -531,7 +533,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                             System.out.println("adopting tree structure");
                         }
 
-                        //adopt the loaded tree structure; this does not yet copy the traits on the branches
+                        //adopt the loaded tree structure; this does not copy the traits on the branches
                         ((TreeModel) model).beginTreeEdit();
                         ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder);
                         ((TreeModel) model).endTreeEdit();

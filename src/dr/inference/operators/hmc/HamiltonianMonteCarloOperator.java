@@ -182,7 +182,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                             final double functionalStepSize,
                             final double sigmaSquared);
 
-        void setParameter(double[] position); // TODO Remove from interface
+        void setParameter(double[] position);
 
         class Default implements LeapFrogEngine {
 

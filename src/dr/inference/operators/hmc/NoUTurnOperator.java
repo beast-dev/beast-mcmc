@@ -198,15 +198,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                                 double logSliceU, int j, double stepSize, double initialJointDensity) {
 
         if (j == 0) {
-            return buildBaseCase(position, momentum, direction, logSliceU, stepSize, initialJointDensity);
+            return buildBaseCase(position, momentum, logSliceU, stepSize, initialJointDensity);
         } else {
             return buildRecursiveCase(position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
         }
     }
 
-    private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, int direction,
+    private TreeState buildBaseCase(double[] inPosition, double[] inMomentum,
                                     double logSliceU, double stepSize, double initialJointDensity) {
-
 
         // Make deep copy of position and momentum
         double[] position = Arrays.copyOf(inPosition, inPosition.length);
@@ -215,9 +214,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         leapFrogEngine.setParameter(position);
 
         // "one frog jump!"
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, direction * stepSize, 1.0);
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction * stepSize / 2);
+        doLeap(position, momentum, stepSize);
 
         double logJointProbAfter = getJointProbability(gradientProvider, momentum);
 
@@ -266,6 +263,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return node;
     }
 
+    private void doLeap(final double[] position,
+                        final double[] momentum,
+                        final double stepSize) {
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+        leapFrogEngine.updatePosition(position, momentum, stepSize, 1.0);
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+    }
+
     private double findReasonableStepSize(double[] position) {
 
         double stepSize = 1;
@@ -276,9 +281,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double probBefore = getJointProbability(gradientProvider, momentum);
 
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, stepSize, 1.0);
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+        doLeap(position, momentum, stepSize);
 
         double probAfter = getJointProbability(gradientProvider, momentum);
 
@@ -291,9 +294,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             probBefore = probAfter;
 
             //"one frog jump!"
-            leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
-            leapFrogEngine.updatePosition(position, momentum, stepSize, 1.0); //zy: after "updateposition"
-            leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+            doLeap(position, momentum, stepSize);
 
             probAfter = getJointProbability(gradientProvider, momentum);
             probRatio = Math.exp(probAfter - probBefore);

@@ -53,7 +53,7 @@ import java.util.*;
  */
 public class BeastCheckpointer implements StateLoader, StateSaver {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     // A debugging flag to do a check that the state gives the same likelihood after loading
     private static final boolean CHECK_LOAD_STATE = true;
@@ -144,6 +144,9 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 }
                 //System.err.println("digits = " + digits);
 
+                //the translation table is constructed upon loading the initial tree for the analysis
+                //if that tree is user-defined or a UPGMA starting tree, the starting seed won't matter
+                //if that tree is constructed at random, we currently don't provide a way to retrieve the original translation table
                 if (digits < 15) {
                     throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
                             ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +

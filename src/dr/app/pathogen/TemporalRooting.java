@@ -89,9 +89,9 @@ public class TemporalRooting {
             double d = 0.0;
             if (date != null) {
                 d = date.getAbsoluteTimeValue();
-                if (date.getPrecision() > 0.0) {
-                    d += date.getPrecision() / 2;
-                    precisions.put(taxon.getId(), date.getPrecision());
+                if (date.getUncertainty() > 0.0) {
+                    d += date.getUncertainty() / 2;
+                    precisions.put(taxon.getId(), date.getUncertainty());
                 }
             }
             if (d > dateMax) {

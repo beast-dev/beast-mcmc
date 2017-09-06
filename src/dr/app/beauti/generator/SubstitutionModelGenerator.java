@@ -342,10 +342,18 @@ public class SubstitutionModelGenerator extends Generator {
     private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix, int num) {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType().getType() == DataType.NUCLEOTIDES && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
-                for (AbstractPartitionData partition : options.getDataPartitions(model)) { //?
-                    if (num >= 0)
-                        writeCodonPatternsRef(prefix + partition.getPrefix(), num, model.getCodonPartitionCount(), writer);
-                }
+                writeCodonPatternsRef(prefix, num, model.getCodonPartitionCount(), writer);
+
+                // get the data partition for this substitution model.
+               AbstractPartitionData partition = options.getDataPartitions(model).get(0);
+
+               // for empirical frequencies use the entire alignment
+               if (partition instanceof PartitionData) {
+                   Alignment alignment = ((PartitionData)partition).getAlignment();
+                   writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
+               } else {
+                   throw new IllegalArgumentException("Partition is missing a data partition");
+               }
             } else {
                 for (AbstractPartitionData partition : options.getDataPartitions(model)) { //?
                     writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getTaxonList().getId());

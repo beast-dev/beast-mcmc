@@ -55,6 +55,8 @@ struct
 	int foundJava;
 	BOOL bundledJreAsFallback;
 	BOOL corruptedJreFound;
+	char originalJavaMinVer[STR];
+	char originalJavaMaxVer[STR];
 	char javaMinVer[STR];
 	char javaMaxVer[STR];
 	char foundJavaVer[STR];
@@ -64,6 +66,7 @@ struct
 
 struct
 {
+	char mainClass[_MAX_PATH];
 	char cmd[_MAX_PATH];
 	char args[MAX_ARGS];
 } launcher;
@@ -204,6 +207,7 @@ BOOL loadString(const int resID, char* buffer)
 	HRSRC hResource;
 	HGLOBAL hResourceLoaded;
 	LPBYTE lpBuffer;
+	debugAll("Resource %d:\t", resID);
 
 	hResource = FindResourceEx(hModule, RT_RCDATA, MAKEINTRESOURCE(resID),
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT));
@@ -221,10 +225,7 @@ BOOL loadString(const int resID, char* buffer)
 					buffer[x] = (char) lpBuffer[x];
 				} while (buffer[x++] != 0);
 				
-				if (debugAll)
-				{
-					debug("Resource %d:\t%s\n", resID, buffer);
-				}
+				debugAll("%s\n", buffer);
 				return TRUE;
 			}
 		}    
@@ -234,6 +235,8 @@ BOOL loadString(const int resID, char* buffer)
 		SetLastError(0);
 		buffer[0] = 0;
 	}
+	
+	debugAll("<NULL>\n");
 	return FALSE;
 }
 
@@ -309,6 +312,29 @@ BOOL regQueryValue(const char* regPath, unsigned char* buffer,
 	return result;
 }
 
+void formatJavaVersion(char* version, const char* originalVersion)
+{
+    char* updatePart = strchr(originalVersion, '_');
+
+    if (updatePart != NULL)
+    {
+        // skip underscore
+        updatePart++;
+
+        if (strlen(updatePart) < 3)
+        {
+            const int majorVersionLength = updatePart - originalVersion;
+            strncpy(version, originalVersion, majorVersionLength);
+            *(version + majorVersionLength) = 0;
+            strcat(version, "0");
+            strcat(version, updatePart);
+            return;
+        }
+    }
+    
+    strcpy(version, originalVersion);
+}
+
 void regSearch(const char* keyName, const int searchType)
 {
 	HKEY hKey;
@@ -329,12 +355,13 @@ void regSearch(const char* keyName, const int searchType)
 	unsigned long versionSize = _MAX_PATH;
 	FILETIME time;
 	char fullKeyName[_MAX_PATH] = {0};
+	char originalVersion[_MAX_PATH] = {0};
 	char version[_MAX_PATH] = {0};
 
 	while (RegEnumKeyEx(
 				hKey,			// handle to key to enumerate
 				x++,			// index of subkey to enumerate
-				version,		// address of buffer for subkey name
+				originalVersion,// address of buffer for subkey name
 				&versionSize,	// address for size of subkey buffer
 				NULL,			// reserved
 				NULL,			// address of buffer for class string
@@ -342,8 +369,9 @@ void regSearch(const char* keyName, const int searchType)
 				&time) == ERROR_SUCCESS)
 	{
 		strcpy(fullKeyName, keyName);
-		appendPath(fullKeyName, version);
+		appendPath(fullKeyName, originalVersion);
 		debug("Check:\t\t%s\n", fullKeyName);
+        formatJavaVersion(version, originalVersion);
 
 		if (strcmp(version, search.javaMinVer) >= 0
 				&& (!*search.javaMaxVer || strcmp(version, search.javaMaxVer) <= 0)
@@ -483,6 +511,10 @@ void regSearchWow(const char* keyName, const int searchType)
 		case USE_32_BIT_RUNTIME:
 			regSearch(keyName, searchType);
 			break;
+			
+		default:
+            debug("Runtime bits:\tFailed to load.\n");
+            break;
 	}
 }
 
@@ -510,10 +542,25 @@ void regSearchJreSdk(const char* jreKeyName, const char* sdkKeyName,
 
 BOOL findJavaHome(char* path, const int jdkPreference)
 {
+    debugAll("findJavaHome()\n");
 	regSearchJreSdk("SOFTWARE\\JavaSoft\\Java Runtime Environment",
 					"SOFTWARE\\JavaSoft\\Java Development Kit",
 					jdkPreference);
 
+    // Java 9 support
+	regSearchJreSdk("SOFTWARE\\JavaSoft\\JRE",
+					"SOFTWARE\\JavaSoft\\JDK",
+					jdkPreference);
+
+    // IBM Java 1.8
+	if (search.foundJava == NO_JAVA_FOUND)
+	{
+		regSearchJreSdk("SOFTWARE\\IBM\\Java Runtime Environment",
+						"SOFTWARE\\IBM\\Java Development Kit",
+						jdkPreference);
+	}
+	
+	// IBM Java 1.7 and earlier
 	if (search.foundJava == NO_JAVA_FOUND)
 	{
 		regSearchJreSdk("SOFTWARE\\IBM\\Java2 Runtime Environment",
@@ -620,6 +667,10 @@ BOOL expandVars(char *dst, const char *src, const char *exePath, const int pathL
 			else if (strstr(varName, HKEY_STR) == varName)
 			{
 				regQueryValue(varName, dst + strlen(dst), BIG_STR);
+            }
+			else if (strcmp(varName, "") == 0)
+			{
+                strcat(dst, "%");
             }
 			else if (GetEnvironmentVariable(varName, varValue, MAX_VAR_SIZE) > 0)
 			{
@@ -740,6 +791,7 @@ BOOL createMutex()
 
 	if (*mutexName)
 	{
+        debug("Create mutex:\t%s\n", mutexName);
 		SECURITY_ATTRIBUTES security;
 		security.nLength = sizeof(SECURITY_ATTRIBUTES);
 		security.bInheritHandle = TRUE;
@@ -774,6 +826,7 @@ void setWorkingDirectory(const char *exePath, const int pathLen)
 
 BOOL bundledJreSearch(const char *exePath, const int pathLen)
 {
+    debugAll("bundledJreSearch()\n");
 	char tmpPath[_MAX_PATH] = {0};
 
 	if (loadString(JRE_PATH, tmpPath))
@@ -809,6 +862,7 @@ BOOL bundledJreSearch(const char *exePath, const int pathLen)
 
 BOOL installedJreSearch()
 {
+    debugAll("installedJreSearch()\n");
 	return *search.javaMinVer && findJavaHome(launcher.cmd, loadInt(JDK_PREFERENCE));
 }
 
@@ -818,12 +872,12 @@ void createJreSearchError()
 	{
 		loadString(JRE_VERSION_ERR, error.msg);
 		strcat(error.msg, " ");
-		strcat(error.msg, search.javaMinVer);
+		strcat(error.msg, search.originalJavaMinVer);
 	
 		if (*search.javaMaxVer)
 		{
 			strcat(error.msg, " - ");
-			strcat(error.msg, search.javaMaxVer);
+			strcat(error.msg, search.originalJavaMaxVer);
 		}
 	
 		if (search.runtimeBits == USE_64_BIT_RUNTIME
@@ -855,11 +909,16 @@ void createJreSearchError()
 
 BOOL jreSearch(const char *exePath, const int pathLen)
 {
+    debugAll("jreSearch()\n");
 	BOOL result = TRUE;
 
 	search.bundledJreAsFallback = loadBool(BUNDLED_JRE_AS_FALLBACK);
-	loadString(JAVA_MIN_VER, search.javaMinVer);
-	loadString(JAVA_MAX_VER, search.javaMaxVer);
+	loadString(JAVA_MIN_VER, search.originalJavaMinVer);
+	formatJavaVersion(search.javaMinVer, search.originalJavaMinVer);
+	debug("Java min ver:\t%s\n", search.javaMinVer);
+	loadString(JAVA_MAX_VER, search.originalJavaMaxVer);
+    formatJavaVersion(search.javaMaxVer, search.originalJavaMaxVer);
+    debug("Java max ver:\t%s\n", search.javaMaxVer);
 
 	if (search.bundledJreAsFallback)
 	{
@@ -941,14 +1000,15 @@ void setMainClassAndClassPath(const char *exePath, const int pathLen)
 {
 	char classPath[MAX_ARGS] = {0};
 	char expandedClassPath[MAX_ARGS] = {0};
-	char mainClass[STR] = {0};
 	char jar[_MAX_PATH] = {0};
 	char fullFileName[_MAX_PATH] = {0};
 	const BOOL wrapper = loadBool(WRAPPER);
 	loadString(JAR, jar);
 
-	if (loadString(MAIN_CLASS, mainClass))
+	if (loadString(MAIN_CLASS, launcher.mainClass))
 	{
+        debug("Main class:\t%s\n", launcher.mainClass);
+
 		if (!loadString(CLASSPATH, classPath))
 		{
 			debug("Info:\t\tClasspath not defined.\n");
@@ -1004,7 +1064,7 @@ void setMainClassAndClassPath(const char *exePath, const int pathLen)
 
 		*(launcher.args + strlen(launcher.args) - 1) = 0;
 		strcat(launcher.args, "\" ");
-		strcat(launcher.args, mainClass);
+		strcat(launcher.args, launcher.mainClass);
 	}
 	else if (wrapper)
 	{
@@ -1165,3 +1225,19 @@ BOOL execute(const BOOL wait, DWORD *dwExitCode)
 	*dwExitCode = -1;
 	return FALSE;
 }
+
+const char* getJavaHome()
+{
+	return search.foundJavaHome;
+}
+
+const char* getMainClass()
+{
+	return launcher.mainClass;	
+}
+
+const char* getLauncherArgs()
+{
+    return launcher.args;    
+}
+

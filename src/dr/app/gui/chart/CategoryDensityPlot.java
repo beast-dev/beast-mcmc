@@ -33,6 +33,8 @@ import java.awt.*;
 import java.util.List;
 
 public class CategoryDensityPlot extends FrequencyPlot {
+    private final static double BAR_WIDTH = 0.8;
+
     private int barCount = 0;
     private int barId;
 
@@ -53,7 +55,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
         this.barId = barId;
 
         if (!traceDistribution.getTraceType().isCategorical())
-            throw new IllegalArgumentException("Categorical value is required for frequency plot !");
+            throw new IllegalArgumentException("Categorical value is required for frequency plot.");
 
         List<Double> intData = traceDistribution.indexingData(data);
         // set data by index of unique categorical values
@@ -90,22 +92,28 @@ public class CategoryDensityPlot extends FrequencyPlot {
      * Paint data series
      */
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
-        double x1, y1, x2, y2, x;
-
         int n = xData.getCount();
 
         for (int i = 0; i < n; i += 2) {
-            x1 = (Double) xData.get(i);
-            x2 = (Double) xData.get(i + 1);
-            x = x2 - x1;
+            double cellWidth = Math.abs(xAxis.getMajorTickSpacing() * xScale) * BAR_WIDTH;
 
-            if (barCount > 1) {
-                x1 = x1 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
-                x2 = x2 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
-            }
+            float x = (float) transformX(((Number) xData.get(i)).doubleValue());
+            float x1 = x - (float)cellWidth / 2;
+            float x2 = x + (float)cellWidth / 2;
 
-            y1 = (Double) yData.get(i);
-            y2 = (Double) yData.get(i + 1);
+            float y1 = (float) transformY(((Number) yData.get(i)).doubleValue());
+            float y2 = (float) transformY(((Number) yData.get(i + 1)).doubleValue());
+
+
+//            x = x2 - x1;
+
+//            if (barCount > 1) {
+//                x1 = x1 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
+//                x2 = x2 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
+//            }
+
+//            y1 = (Double) yData.get(i);
+//            y2 = (Double) yData.get(i + 1);
 
 
             if (y1 != y2) {

@@ -237,6 +237,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
         } else if (options.performMLEGSS) {
 
+            // TODO: does this need a prefix? I.e., will there ever be more than one of these?
+            String modelPrefix = "";
+
             //First define necessary components for the tree working prior
             if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
                 //more general product of exponentials needs to be constructed
@@ -269,6 +272,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 }*/
                 //TODO: extend for more than 1 coalescent model?
                 TreePriorType nodeHeightPrior = beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior();
+
 
                 switch (nodeHeightPrior) {
                     case CONSTANT:

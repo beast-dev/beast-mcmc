@@ -358,8 +358,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeComment("GLM: statistic that returns the product of the coefficients and the respective indicators for the predictors");
 
             writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[] {
-                    new Attribute.Default<String>(XMLParser.ID, prefix + "coefficientsTimesIndicators"),
-                    new Attribute.Default<String>(ProductStatisticParser.ELEMENT_WISE, "false")
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "coefficientsTimesIndicators")
             });
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.IDREF, prefix + "coefficients")
@@ -371,8 +370,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeComment("GLM: the number of predictors included in the model (non-zero indicators)");
             writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + "includedPredictors"),
-                    new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "includedPredictors")});
             writer.writeIDref(ParameterParser.PARAMETER, prefix + "coefIndicators");
             writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 

@@ -221,7 +221,7 @@ public class BeastParserDoc {
         }
         System.out.println("Output directory : " + outputDirectory);
         // BeastParserDoc(BeastParser parser, String directory, boolean wikiFormat)
-        new BeastParserDoc(new BeastParser(new String[] {}, null, false, false, false), outputDirectory, Format.MARKDOWN);
+        new BeastParserDoc(new BeastParser(new String[] {}, null, false, false, false, version), outputDirectory, Format.MARKDOWN);
 
         System.exit(0);
     }

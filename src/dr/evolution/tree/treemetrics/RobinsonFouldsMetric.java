@@ -45,5 +45,5 @@ public class RobinsonFouldsMetric implements TreeMetric {
 	}
 
 	// todo - add in Citable:
-	// Robinson, D. R.; Foulds, L. R. (1981). "Comparison of phylogenetic trees". Mathematical Biosciences. 53: 131–147. doi:10.1016/0025-5564(81)90043-2.
+	// Robinson, D. R.; Foulds, L. R. (1981). "Comparison of phylogenetic trees". Mathematical Biosciences. 53: 131-147. doi:10.1016/0025-5564(81)90043-2.
 }

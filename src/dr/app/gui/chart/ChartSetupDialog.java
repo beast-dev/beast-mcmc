@@ -111,6 +111,10 @@ public class ChartSetupDialog {
                 }
             });
             manualXAxis.setSelected(false);
+            minXLabel.setEnabled(false);
+            minXValue.setEnabled(false);
+            maxXLabel.setEnabled(false);
+            maxXValue.setEnabled(false);
         }
         optionPanel.addSeparator();
 
@@ -134,6 +138,10 @@ public class ChartSetupDialog {
                 }
             });
             manualYAxis.setSelected(false);
+            minYLabel.setEnabled(false);
+            minYValue.setEnabled(false);
+            maxYLabel.setEnabled(false);
+            maxYValue.setEnabled(false);
         }
     }
 

@@ -551,7 +551,7 @@ public class BeautiFrame extends DocumentFrame {
         if (!options.hasIdenticalTaxa()) {
             setAllOptions(); // need this to refresh panels otherwise it will throw exception
             dataPanel.selectAll();
-            dataPanel.unlinkTrees();
+            dataPanel.unlinkTreeModels();
         }
 
         setAllOptions();

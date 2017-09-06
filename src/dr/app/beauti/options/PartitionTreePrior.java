@@ -59,6 +59,8 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -81,6 +83,8 @@ public class PartitionTreePrior extends PartitionOptions {
         this.populationSizeModel = source.populationSizeModel;
         this.calibCorrectionType = source.calibCorrectionType;
         this.fixedTree = source.fixedTree;
+
+        initModelParametersAndOpererators();
     }
 
     @Override

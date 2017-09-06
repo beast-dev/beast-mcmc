@@ -63,8 +63,8 @@ public class ProductStatisticParser extends AbstractXMLObjectParser {
             constants = xo.getDoubleArrayAttribute(CONSTANT);
         }
 
-        if (constants != null && constants.length != 1 && !elementwise) {
-            throw new XMLParseException("The constant given to " + getParserName() + " should be a single value unless element-wise is being used.");
+        if (constants != null && constants.length != 1 && elementwise) {
+            throw new XMLParseException("The constant given to " + getParserName() + " should be a single value if element-wise is being used.");
         }
 
         ProductStatistic productStatistic = new ProductStatistic(name, elementwise, constants);

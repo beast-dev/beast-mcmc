@@ -11,4 +11,4 @@ sudo: false
 #    packages:
 #    - ant-junit
 
-script: ant
+script: ant dist

@@ -65,10 +65,10 @@ public class Parameter implements Serializable {
     public final boolean isHierarchical;
     public final boolean isCMTCRate;
     public final boolean isNonNegative;
-    public final boolean isMaintainedSum;
     public final boolean isZeroOne;
     public final boolean isCached;
     public final boolean isAdaptiveMultivariateCompatible;
+    public boolean isMaintainedSum;
     public boolean isCalibratedYule = false;
 //    public final double lower;
 //    public final double upper;
@@ -455,7 +455,7 @@ public class Parameter implements Serializable {
 
     public String getDescription() {
         if (taxaId != null && options != null) {
-            return description + " on tree " + options.getName();
+            return description + " " + taxaId + " on tree " + options.getName();
         }
         return description;
     }

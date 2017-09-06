@@ -55,8 +55,10 @@ public class PartitionTreeModel extends PartitionOptions {
     private boolean hasNodeCalibrations = false;
 
 
-    public PartitionTreeModel(BeautiOptions options, AbstractPartitionData partition) {
-        super(options, partition.getName());
+    public PartitionTreeModel(BeautiOptions options, String name) {
+        super(options, name);
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -76,6 +78,8 @@ public class PartitionTreeModel extends PartitionOptions {
         isNewick = source.isNewick;
 //        initialRootHeight = source.initialRootHeight;
         ploidyType = source.ploidyType;
+
+        initModelParametersAndOpererators();
     }
 
     public void initModelParametersAndOpererators() {

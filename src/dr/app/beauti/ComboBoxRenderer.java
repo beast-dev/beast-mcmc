@@ -40,12 +40,14 @@ public class ComboBoxRenderer extends JComboBox implements TableCellRenderer {
         super();
         setOpaque(true);
         isListAll = false;
+        putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     }
 
     public <T> ComboBoxRenderer(T[] allValues) {
         super(allValues);
         setOpaque(true);
         isListAll = true;
+        putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value,
@@ -69,9 +71,6 @@ public class ComboBoxRenderer extends JComboBox implements TableCellRenderer {
             }
         }
         return this;
-    }
-
-    public void revalidate() {
     }
 
 }

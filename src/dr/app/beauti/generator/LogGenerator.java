@@ -32,6 +32,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
@@ -133,18 +134,20 @@ public class LogGenerator extends Generator {
                     new Attribute[]{
                             // new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + TreeModelParser.ROOT_HEIGHT),
                             // Switching to use 'rootAge' in screen log (an absolute date if tip dates are used)
-                            (options.getPartitionTreeModels().size() > 1 ?
-                                    new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + ".rootAge"):
-                                    new Attribute.Default<String>(ColumnsParser.LABEL, "rootAge")
+                            (model.hasTipCalibrations() ?
+                                    new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "age(root)") :
+                                    new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "rootHeight")
                             ),
                             new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
                             new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
 
-            // writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
-            // Switching to use 'rootAge' in screen log (an absolute date if tip dates are used)
-            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + TreeModel.TREE_MODEL + ".rootAge");
+            if (model.hasTipCalibrations()) {
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + "age(root)");
+            } else {
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+            }
 
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
@@ -190,7 +193,8 @@ public class LogGenerator extends Generator {
                                TreePriorGenerator treePriorGenerator,
                                ClockModelGenerator clockModelGenerator,
                                SubstitutionModelGenerator substitutionModelGenerator,
-                               TreeLikelihoodGenerator treeLikelihoodGenerator) {
+                               TreeLikelihoodGenerator treeLikelihoodGenerator,
+                               TMRCAStatisticsGenerator tmrcaStatisticsGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {
@@ -249,20 +253,15 @@ public class LogGenerator extends Generator {
         // @todo check for redundancy with rootHeight - if no tip dates or given as heights (time before present)
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             if (model.hasTipCalibrations()) {
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + TreeModel.TREE_MODEL + ".rootAge");
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + "age(root)");
             }
         }
+        tmrcaStatisticsGenerator.writeTMRCAStatisticReferences(writer);
 
         if (options.useStarBEAST) {
             for (Taxa taxa : options.speciesSets) {
                 // make tmrca(tree.name) eay to read in log for Tracer
                 writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
-            }
-        } else {
-            for (Taxa taxa : options.taxonSets) {
-                // make tmrca(tree.name) eay to read in log for Tracer
-                PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
             }
         }
 
@@ -524,33 +523,28 @@ public class LogGenerator extends Generator {
 
                 PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
                 String tag = "";
-                String id = "";
+                String id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
 
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
                         tag = StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES;
-                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
 
                     case UNCORRELATED:
                         tag = model.isContinuousQuantile() ?
                                 ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
                                 DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
-                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
                         tag = RandomLocalClockModelParser.LOCAL_BRANCH_RATES;
-                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
 
                     case FIXED_LOCAL_CLOCK:
                         tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
-                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
                     case AUTOCORRELATED:
                         tag = ACLikelihoodParser.AC_LIKELIHOOD;
-                        id =  options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES;
                         break;
 
                     default:
@@ -569,38 +563,40 @@ public class LogGenerator extends Generator {
     private void writeTreeTraits(XMLWriter writer, PartitionTreeModel tree) {
         for (PartitionClockModel model : options.getPartitionClockModels(options.getDataPartitions(tree))) {
 
+            String prefix = model.getPrefix();
+
             switch (model.getClockType()) {
                 case STRICT_CLOCK:
                     writeTreeTrait(writer, StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
-                            model.getPrefix() + BranchRateModel.BRANCH_RATES,
-                            BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
+                            prefix + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
                 case UNCORRELATED:
                     writeTreeTrait(writer, model.isContinuousQuantile() ?
                                     ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
                                     DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-                            options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES,
-                            BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
+                            prefix + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
                 case RANDOM_LOCAL_CLOCK:
                     writeTreeTrait(writer, RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
-                            model.getPrefix() + BranchRateModel.BRANCH_RATES,
-                            BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
+                            prefix + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
                 case FIXED_LOCAL_CLOCK:
                     writeTreeTrait(writer, LocalClockModelParser.LOCAL_CLOCK_MODEL,
-                            options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES,
-                            BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
+                            prefix + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
                 case AUTOCORRELATED:
                     writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
-                            options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            prefix + BranchRateModel.BRANCH_RATES);
                     writeTreeTrait(writer, ACLikelihoodParser.AC_LIKELIHOOD,
-                            options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES,
+                            prefix + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
                     break;
 

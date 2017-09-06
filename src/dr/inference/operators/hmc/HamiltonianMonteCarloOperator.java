@@ -32,9 +32,6 @@ import dr.inference.operators.CoercionMode;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
-import java.util.Arrays;
-
-
 /**
  * @author Max Tolkoff
  * @author Marc A. Suchard
@@ -42,11 +39,11 @@ import java.util.Arrays;
 
 public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
-    protected final GradientWrtParameterProvider gradientProvider;
+    private final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
     protected final int nSteps;
-    protected final NormalDistribution drawDistribution;
-    protected final LeapFrogEngine leapFrogEngine;
+    private final NormalDistribution drawDistribution;
+    private final LeapFrogEngine leapFrogEngine;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
@@ -75,19 +72,17 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return "Vanilla HMC operator";
     }
 
-    public static double getScaledDotProduct(final double[] momentum,
+    private static double getScaledDotProduct(final double[] momentum,
                                               final double sigmaSquared) {
-        final int dim = momentum.length;
-
         double total = 0.0;
-        for (int i = 0; i < dim; i++) {
-            total += momentum[i] * momentum[i];
+        for (double m : momentum) {
+            total += m * m;
         }
 
         return total / (2 * sigmaSquared);
     }
 
-    public static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
+    private static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
         double[] momentum = new double[dim];
         for (int i = 0; i < dim; i++) {
             momentum[i] = (Double) distribution.nextRandom();
@@ -102,7 +97,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private static final boolean DEBUG = false;
 
-    protected double leapFrog() {
+    private double leapFrog() {
 
         if (DEBUG) {
             if (count % 5 == 0) {
@@ -241,7 +236,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             final private Transform transform;
             double[] unTransformedPosition;
 
-            protected WithTransform(Parameter parameter, Transform transform) {
+            private WithTransform(Parameter parameter, Transform transform) {
                 super(parameter);
                 this.transform = transform;
             }

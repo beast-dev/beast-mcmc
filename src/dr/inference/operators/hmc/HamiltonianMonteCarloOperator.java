@@ -39,11 +39,11 @@ import dr.util.Transform;
 
 public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
-    protected final GradientWrtParameterProvider gradientProvider;
+    final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
     protected final int nSteps;
-    protected final NormalDistribution drawDistribution;
-    protected final LeapFrogEngine leapFrogEngine;
+    final NormalDistribution drawDistribution;
+    final LeapFrogEngine leapFrogEngine;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
@@ -72,8 +72,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return "Vanilla HMC operator";
     }
 
-    protected static double getScaledDotProduct(final double[] momentum,
-                                              final double sigmaSquared) {
+    static double getScaledDotProduct(final double[] momentum,
+                                      final double sigmaSquared) {
         double total = 0.0;
         for (double m : momentum) {
             total += m * m;
@@ -82,7 +82,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return total / (2 * sigmaSquared);
     }
 
-    protected static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
+    static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
         double[] momentum = new double[dim];
         for (int i = 0; i < dim; i++) {
             momentum[i] = (Double) distribution.nextRandom();

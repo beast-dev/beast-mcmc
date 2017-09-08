@@ -110,14 +110,18 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     @Override
     public double doOperation(Likelihood likelihood) {
 
+        final double[] initialPosition = leapFrogEngine.getInitialPosition();
+        final double initialLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
+
         if (stepSizeInformation == null) {
-            final double initialStepSize = findReasonableStepSize(leapFrogEngine.getInitialPosition());
+            final double initialStepSize = findReasonableStepSize(initialPosition);
 
             stepSizeInformation = new StepSize(initialStepSize);
 
+            final double testLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
+            assert (testLogLikelihood == initialLogLikelihood);
         }
 
-        final double[] initialPosition = leapFrogEngine.getInitialPosition();
         double[] position = takeOneStep(getCount() + 1, initialPosition);
 
         leapFrogEngine.setParameter(position);
@@ -194,13 +198,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                                 double logSliceU, int j, double stepSize, double initialJointDensity) {
 
         if (j == 0) {
-            return buildBaseCase(position, momentum, direction,logSliceU, stepSize, initialJointDensity);
+            return buildBaseCase(position, momentum, direction, logSliceU, stepSize, initialJointDensity);
         } else {
             return buildRecursiveCase(position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
         }
     }
 
-    private TreeState buildBaseCase(double[] inPosition, double[] inMomentum,int direction,
+    private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
 
         // Make deep copy of position and momentum
@@ -210,7 +214,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         leapFrogEngine.setParameter(position);
 
         // "one frog jump!"
-        doLeap(position, momentum, stepSize,direction);
+        doLeap(position, momentum, direction * stepSize);
 
         double logJointProbAfter = getJointProbability(gradientProvider, momentum);
 
@@ -261,11 +265,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     private void doLeap(final double[] position,
                         final double[] momentum,
-                        final double stepSize,
-                        final int direction) {
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction*stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, direction*stepSize, 1.0);
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), direction*stepSize / 2);
+                        final double stepSize) {
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+        leapFrogEngine.updatePosition(position, momentum, stepSize, 1.0);
+        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
     }
 
     private double findReasonableStepSize(double[] position) {
@@ -278,7 +281,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double probBefore = getJointProbability(gradientProvider, momentum);
 
-        doLeap(position, momentum, stepSize,1);
+        doLeap(position, momentum, stepSize);
 
         double probAfter = getJointProbability(gradientProvider, momentum);
 
@@ -291,7 +294,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             probBefore = probAfter;
 
             //"one frog jump!"
-            doLeap(position, momentum, stepSize,1);
+            doLeap(position, momentum, stepSize);
 
             probAfter = getJointProbability(gradientProvider, momentum);
             probRatio = Math.exp(probAfter - probBefore);

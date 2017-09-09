@@ -120,6 +120,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             final double testLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
             assert (testLogLikelihood == initialLogLikelihood);
+            assert (initialPosition == leapFrogEngine.getInitialPosition());//not passed :(
         }
 
         double[] position = takeOneStep(getCount() + 1, initialPosition);

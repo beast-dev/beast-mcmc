@@ -631,7 +631,7 @@ public class BEAUTiImporter {
     private void addTaxonSets(TaxonList taxonList, List<NexusApplicationImporter.TaxSet> taxSets) throws ImportException {
         if (taxSets != null) {
             for (NexusApplicationImporter.TaxSet taxSet : taxSets) {
-                Taxa taxa = new Taxa();
+                Taxa taxa = new Taxa(taxSet.getName());
                 for (NexusApplicationImporter.CharSetBlock block : taxSet.getBlocks()) {
                     for (int i = block.getFromSite(); i <= block.getToSite(); i++) {
                         taxa.addTaxon(taxonList.getTaxon(i - 1));

@@ -256,7 +256,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             if (!first) { writer.writeBlankLine(); } else {  first = false;  }
 
-            if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
+            if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS &&
+                    model.getContinuousSubstModelType() != ContinuousSubstModelType.DRIFT) {
                 writeRelaxedBranchRateModel(writer, partitionData, treeModelId);
             }
 
@@ -333,6 +334,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                             }, true);
                     break;
                 case LOGNORMAL_RRW:
+                case DRIFT:
                 case HOMOGENOUS:
                     throw new IllegalArgumentException("Shouldn't be here");
                 default:

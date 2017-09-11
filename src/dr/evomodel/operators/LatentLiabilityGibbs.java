@@ -35,14 +35,11 @@
 
 package dr.evomodel.operators;
 
-
-import com.sun.org.apache.xpath.internal.functions.FuncFalse;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixMatrixProduct;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;

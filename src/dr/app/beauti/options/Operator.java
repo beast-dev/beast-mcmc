@@ -44,8 +44,8 @@ public class Operator implements Serializable {
     private String baseName;
     private final String description;
     private final OperatorType operatorType;
-    private final Parameter parameter1;
-    private final Parameter parameter2;
+    private Parameter parameter1;
+    private Parameter parameter2;
     private final PartitionOptions options;
     private final String tag;
 
@@ -211,8 +211,16 @@ public class Operator implements Serializable {
         return parameter1;
     }
 
+    public void setParameter1(Parameter parameter1) {
+        this.parameter1 = parameter1;
+    }
+
     public Parameter getParameter2() {
         return parameter2;
+    }
+
+    public void setParameter2(Parameter parameter2) {
+        this.parameter2 = parameter2;
     }
 
     public void setPrefix(String prefix) {

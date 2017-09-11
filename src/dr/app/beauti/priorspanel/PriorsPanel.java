@@ -85,29 +85,32 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTableModel = new PriorTableModel(this);
         priorTable = new JTable(priorTableModel);
 
-        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
+        priorTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         priorTable.getTableHeader().setReorderingAllowed(false);
 //        priorTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         priorTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(0).setMinWidth(200);
+        priorTable.getColumnModel().getColumn(0).setMinWidth(100);
+        priorTable.getColumnModel().getColumn(0).setPreferredWidth(300);
 
         priorTable.getColumnModel().getColumn(1).setCellRenderer(
                 new ButtonRenderer(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
         priorTable.getColumnModel().getColumn(1).setCellEditor(
                 new ButtonEditor(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
-        priorTable.getColumnModel().getColumn(1).setMinWidth(260);
+        priorTable.getColumnModel().getColumn(1).setPreferredWidth(100);
+        priorTable.getColumnModel().getColumn(1).setMinWidth(200);
 
         priorTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(2).setMinWidth(30);
+        priorTable.getColumnModel().getColumn(2).setPreferredWidth(40);
+        priorTable.getColumnModel().getColumn(2).setMinWidth(80);
 
 
         priorTable.getColumnModel().getColumn(3).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(3).setMinWidth(410);
+        priorTable.getColumnModel().getColumn(3).setPreferredWidth(1000);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
 

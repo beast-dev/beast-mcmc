@@ -29,7 +29,6 @@ import dr.app.treespace.CladeSystem.Clade;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.RootedTree;
 import jebl.math.Random;
-import sun.awt.geom.Curve;
 
 import javax.swing.*;
 import java.awt.*;

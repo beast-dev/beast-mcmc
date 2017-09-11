@@ -262,6 +262,12 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID && Double.isNaN(prior.getSkyGridInterval())) {
+                    throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", BeautiFrame.TREES);
+                }
+            }
+
             //+++++++++++++++ Starting tree ++++++++++++++++
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 if (model.getStartingTreeType() == StartingTreeType.USER) {
@@ -613,25 +619,7 @@ public class BeastGenerator extends Generator {
                 }
             }
 
-            for (List<PartitionData> partitions : options.multiPartitionLists)  {
-                treeLikelihoodGenerator.writeTreeDataLikelihood(partitions, writer);
-                writer.writeText("");
-            }
-
-            for (AbstractPartitionData partition : options.otherPartitions) {
-                // generate tree likelihoods for the other data partitions
-                if (partition.getTaxonList() != null) {
-                    if (partition instanceof PartitionData) {
-                        treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
-                        writer.writeText("");
-                    } else if (partition instanceof PartitionPattern) { // microsat
-                        treeLikelihoodGenerator.writeTreeLikelihood((PartitionPattern) partition, writer);
-                        writer.writeText("");
-                    } else {
-                        throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
-                    }
-                }
-            }
+            treeLikelihoodGenerator.writeAllTreeLikelihoods(writer);
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
         } catch (Exception e) {
@@ -968,7 +956,7 @@ public class BeastGenerator extends Generator {
 
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, clockModelGenerator,
-                substitutionModelGenerator, treeLikelihoodGenerator);
+                substitutionModelGenerator, treeLikelihoodGenerator, tmrcaStatisticsGenerator);
 
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);

@@ -64,11 +64,6 @@
             description="Clean and Build all run-time stuff with unit test">
     </target>
 
-    <!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
-    <target name="build" depends="clean,compile-all,dist-all"
-            description="Clean and Build all and distribute jar">
-    </target>
-
     <!-- compile Java source code -->
     <target name="compile-all" depends="init">
         <mkdir dir="${build}"/>
@@ -115,7 +110,7 @@
     </target>
 
     <!-- make the beast.jar and beauti.jar -->
-    <target name="dist-all" depends="compile-all" description="create BEAST + BEAUTI jar">
+    <target name="dist" depends="compile-all" description="create BEAST + BEAUTI jar">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}"/>
 
@@ -268,7 +263,7 @@
     </target>
 
     <!-- run beast.jar -->
-    <target name="dist_test_jar" depends="dist-all">
+    <target name="dist_test_jar" depends="dist">
         <jar jarfile="${dist}/beastTest.jar">
             <fileset dir="${build}">
                 <include name="test/dr/**/*.class"/>
@@ -345,7 +340,7 @@
 
     <!-- Need to either install Launch4j under {BEAST workspace}/${release}
                   or install it in the default directory and change the location of launch4j.dir -->
-    <target name="windows" depends="build"
+    <target name="windows" depends="dist"
             description="release Windows version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
 
         <delete dir="${Windows_package_dir}"/>
@@ -439,7 +434,7 @@
         <echo message="Windows version release is finished."/>
     </target>
 
-    <target name="linux" depends="build"
+    <target name="linux" depends="dist"
             description="release Linux/Unix version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
         <delete dir="${Linux_package_dir}"/>
         <!-- Create the release directory -->
@@ -491,7 +486,7 @@
     <!-- this will only work on Andrew's computer -->
     <property name="AppleSigner" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
 
-    <target name="mac" depends="build"
+    <target name="mac" depends="dist"
             description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
         <delete dir="${Mac_package_dir}"/>
         <!-- Create the release directory -->
@@ -523,7 +518,7 @@
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
 
-        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler"/>
+        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler" classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
 
         <!-- create a jar bundle for the mac -->
         <jarbundler dir="${Mac_package_dir}"
@@ -561,7 +556,7 @@
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub_quaqua"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="1.6+"
@@ -704,5 +699,6 @@
         <echo message="Mac version release is finished."/>
     </target>
 
+    <target name="build" depends="mac, windows, linux" description="build all the executables" />
 
 </project>

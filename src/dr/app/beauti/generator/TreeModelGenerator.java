@@ -184,14 +184,16 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 //        }
 
-        writer.writeComment("Statistic for time of most recent common ancestor of tree");
-        writer.writeTag(TMRCAStatisticParser.TMRCA_STATISTIC,
-                new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, treeModelName + ".rootAge"),
-                        new Attribute.Default<String>(TMRCAStatisticParser.ABSOLUTE, "true")
-                },  false);
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
-        writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
+        if (model.hasTipCalibrations()) {
+            writer.writeComment("Statistic for time of most recent common ancestor of tree");
+            writer.writeTag(TMRCAStatisticParser.TMRCA_STATISTIC,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + "age(root)"),
+                            new Attribute.Default<String>(TMRCAStatisticParser.ABSOLUTE, "true")
+                    }, false);
+            writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+            writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
+        }
 
         if (model.getDataType().getType() == DataType.MICRO_SAT) {
             for (AbstractPartitionData partitionData : options.getDataPartitions(model)) {

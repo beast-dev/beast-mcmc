@@ -123,7 +123,7 @@ public class NumberFormatter implements Serializable {
 
         double absValue = Math.abs(value);
 
-        if ((absValue > upperCutoff) || (absValue < (1.0 / upperCutoff) && absValue != 0.0)) {
+        if (sf > 0 && (absValue > upperCutoff) || (absValue < (1.0 / upperCutoff) && absValue != 0.0)) {
             buffer.append(scientificFormat.format(value));
         } else {
             int numFractionDigits = 0;

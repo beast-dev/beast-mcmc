@@ -120,16 +120,16 @@ public class ClockModelGenerator extends Generator {
                         writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
                                 new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
 
-                        writeParameter("mean", prefix + ClockType.UCLD_MEAN, clockModel, writer);
-                        writeParameter("stdev", prefix + ClockType.UCLD_STDEV, clockModel, writer);
+                        writeParameter("mean", ClockType.UCLD_MEAN, clockModel, writer);
+                        writeParameter("stdev", ClockType.UCLD_STDEV, clockModel, writer);
 
                         writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
                         break;
                     case GAMMA:
                         writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
 
-                        writeParameter("mean", prefix + ClockType.UCGD_MEAN, clockModel, writer);
-                        writeParameter("shape", prefix + ClockType.UCGD_SHAPE, clockModel, writer);
+                        writeParameter("mean", ClockType.UCGD_MEAN, clockModel, writer);
+                        writeParameter("shape", ClockType.UCGD_SHAPE, clockModel, writer);
 
                         writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
                         break;
@@ -139,7 +139,7 @@ public class ClockModelGenerator extends Generator {
                     case EXPONENTIAL:
                         writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
-                        writeParameter("mean", prefix + ClockType.UCED_MEAN, clockModel, writer);
+                        writeParameter("mean", ClockType.UCED_MEAN, clockModel, writer);
 
                         writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
                         break;

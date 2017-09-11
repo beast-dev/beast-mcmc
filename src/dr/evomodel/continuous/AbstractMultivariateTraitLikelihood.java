@@ -25,7 +25,6 @@
 
 package dr.evomodel.continuous;
 
-import com.sun.org.apache.regexp.internal.RE;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;

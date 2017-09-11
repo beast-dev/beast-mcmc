@@ -33,7 +33,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     int sum;
     int storedSum;
 
-    public DeterminentalPointProcessPrior(String name, double theta, MatrixParameterInterface data, Parameter normalizingConstants, boolean noZeros, boolean pathSampling) {
+    public DeterminentalPointProcessPrior(String name, double theta, MatrixParameterInterface data, boolean noZeros, boolean pathSampling) {
         super(name);
         this.normalizingConstants = normalizingConstants;
         this.theta = theta;
@@ -44,7 +44,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         size = data.getColumnDimension();
         for (int i = 0; i < data.getRowDimension(); i++) {
             for (int j = 0; j < data.getColumnDimension(); j++) {
-                if(i % (j+1) != 0) {
+                if(i % (j+1) == 0) {
                     data.setParameterValueQuietly(i, j, 0);
                 }
             }
@@ -68,11 +68,12 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
         storedSize = size;
-        if(notZero != null && notZero.length != storedNotZero.length){
-            storedNotZero = new boolean[notZero.length];
-        }
-        if(notZero != null)
-            System.arraycopy(notZero, 0, storedNotZero, 0, storedNotZero.length);
+//        System.out.println(notZero);
+//        if(notZero != null && notZero.length != storedNotZero.length){
+//            storedNotZero = new boolean[notZero.length];
+//        }
+//        if(notZero != null)
+//            System.arraycopy(notZero, 0, storedNotZero, 0, storedNotZero.length);
 //        System.out.println("first");
 //        for (int i = 0; i < relationshipList.length; i++) {
 //            for (int j = 0; j < relationshipList.length ; j++) {
@@ -111,9 +112,9 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         Vector<Integer> changedListTemp = changedList;
         changedList = storedChangedList;
         storedChangedList = changedListTemp;
-        boolean[] temp = notZero;
-        notZero = storedNotZero;
-        storedNotZero = temp;
+//        boolean[] temp = notZero;
+//        notZero = storedNotZero;
+//        storedNotZero = temp;
         sum = storedSum;
     }
 
@@ -127,9 +128,9 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         likelihoodKnown = false;
         if(index == -1)
             reset();
-        else {
-            changedList.add(index);
-        }
+//        else {
+//            changedList.add(index);
+//        }
     }
 
     @Override
@@ -143,7 +144,10 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
             if(!likelihoodKnown) {
                 logLikelihood = computeLogLikelihood();
                 if(normalizingConstants != null) {
-                    logLikelihood += normalizingConstants.getParameterValue(sum - 1);
+                    if(sum != 0)
+                        logLikelihood += normalizingConstants.getParameterValue(sum - 1);
+                    else
+                        logLikelihood += normalizingConstants.getParameterValue(0);
                 }
                 likelihoodKnown = true;
             }
@@ -227,22 +231,24 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     public void reset(){
         if(notZero != null){
             findZeros();
-            if(relationshipList.length != sum){
+            if(relationshipList.length != sum && sum != 0){
                 relationshipList = new double[sum][sum];
             }
+            else if(sum == 0)
+                relationshipList = new double[1][1];
         }
-        if(relationshipList.length != data.getColumnDimension()){
+        else if(relationshipList.length != data.getColumnDimension() || relationshipList == null){
             relationshipList = new double[data.getColumnDimension()][data.getColumnDimension()];
         }
         int offset1 = 0;
         for (int i = 0; i < relationshipList.length; i++) {
             int offset2 = 0;
-            if(notZero != null && notZero[i] == true){
+            if((notZero != null && notZero[i] == true) || notZero == null){
             for (int j = 0; j < i; j++) {
-                if(notZero !=null && notZero[j] == true){
+                if((notZero !=null && notZero[j] == true) || notZero == null){
                     int count = 0;
                     for (int k = 0; k < data.getRowDimension(); k++) {
-                        count += Math.abs(data.getParameterValue(k, i + offset1) - data.getParameterValue(k, j + offset2));
+                        count += Math.abs(data.getParameterValue(k, i) - data.getParameterValue(k, j));
                     }
                     relationshipList[i + offset1][j + offset2] = Math.exp(- count / (theta * theta));
                     relationshipList[j + offset2][i + offset1] = relationshipList[i + offset1][j + offset2];

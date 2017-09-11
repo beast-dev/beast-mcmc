@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/packaging_tools/windows/launch4j/demo/ConsoleApp/ConsoleApp.iml" filepath="$PROJECT_DIR$/packaging_tools/windows/launch4j/demo/ConsoleApp/ConsoleApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/packaging_tools/windows/launch4j/demo/SimpleApp/SimpleApp.iml" filepath="$PROJECT_DIR$/packaging_tools/windows/launch4j/demo/SimpleApp/SimpleApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/beast-mcmc.iml" filepath="$PROJECT_DIR$/beast-mcmc.iml" />
-      <module fileurl="file://$PROJECT_DIR$/packaging_tools/windows/launch4j/launch4j.iml" filepath="$PROJECT_DIR$/packaging_tools/windows/launch4j/launch4j.iml" />
     </modules>
   </component>
 </project>

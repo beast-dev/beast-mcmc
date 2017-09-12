@@ -39,8 +39,8 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SUBTREE_JUMP = "subtreeJump";
 
-    public static final String BIAS = "bias";
-    public static final String ARCTAN_TRANSFORM = "arctanTransform";
+    public static final String SIZE = "size";
+    public static final String TARGET_ACCEPTANCE = "targetAcceptance";
 
     public String getParserName() {
         return SUBTREE_JUMP;
@@ -48,39 +48,30 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.DEFAULT;
-        if (xo.hasAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-            if (xo.getBooleanAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-                mode = CoercionMode.COERCION_ON;
-            } else {
-                mode = CoercionMode.COERCION_OFF;
-            }
-        }
+        CoercionMode mode = CoercionMode.parseMode(xo);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-//        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
+        // +Inf (i.e., missing size attribute) means a uniform operator
+        final double size = xo.getAttribute(SIZE, Double.POSITIVE_INFINITY);
+        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-        double bias = 0.0;
-        boolean arctanTransform = false;
+        if (size <= 0.0) {
+            throw new XMLParseException("The SubTreeLeap size attribute must be positive and non-zero.");
+        }
 
-        if (xo.hasAttribute(ARCTAN_TRANSFORM)) {
-            bias = xo.getAttribute(BIAS, 0.0);
-            arctanTransform = xo.getBooleanAttribute(ARCTAN_TRANSFORM);
-
-            if (Double.isInfinite(bias)) {
-                throw new XMLParseException("bias attribute must be not infinite. was " + bias +
-                        " for tree " + treeModel.getId());
-            }
-        } else {
-            // a non-tunable, uniform operator
-            bias = 0.0;
+        if (Double.isInfinite(size)) {
+            // uniform so no auto optimize
             mode = CoercionMode.COERCION_OFF;
         }
 
-        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, bias, arctanTransform, mode);
-//        operator.setTargetAcceptanceProbability(targetAcceptance);
+        if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
+            throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
+        }
+
+        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, false, mode);
+        operator.setTargetAcceptanceProbability(targetAcceptance);
 
         return operator;
     }
@@ -99,8 +90,8 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newDoubleRule("bias", true),
-            AttributeRule.newBooleanRule("arctanTransform", true),
+            AttributeRule.newDoubleRule(SIZE, true),
+            AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };

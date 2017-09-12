@@ -61,6 +61,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         this.thresholdParameter = thresholdParameter;
         this.numClasses = numClasses;
         this.isUnordered = isUnordered;
+        this.NAcode = setNAcode();
 
         addVariable(tipTraitParameter);
         addVariable(thresholdParameter);
@@ -232,6 +233,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         return tipData[tip];
     }
 
+ 
+
     public boolean validTraitForTip(int tip) {
         boolean valid = true;
         Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
@@ -289,6 +292,19 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                 int dim = (int) numClasses.getParameterValue(index);
 
 
+
+                if(datum==NAcode){
+                    valid = true;
+
+                    if(dim==1) {
+                        LLpointer++;
+                    }else{
+                    LLpointer+= dim-1;
+                    }
+
+                }else{
+
+
                 if (dim == 1.0) {
                     valid = true;
                     LLpointer++;
@@ -321,7 +337,9 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
                     LLpointer += dim - 1;
                 }
-            }
+
+
+            } }
         }
 
         return valid;
@@ -338,6 +356,20 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
 
         return isMax;
+    }
+
+
+    private int setNAcode(){
+        int dim = numClasses.getDimension();
+        int max=0;
+        for (int i=0; i<dim; i++){
+         int num = (int) numClasses.getParameterValue(i);
+         if (num>max){
+             max=num;
+         }
+
+        }
+        return max;
     }
 
 
@@ -447,7 +479,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree"),
                 new ElementRule(THRESHOLD_PARAMETER, CompoundParameter.class, "The parameter with nonzero thershold values"),
                 new ElementRule(NUM_CLASSES, Parameter.class, "Number of multinomial classes in each dimention"),
-                new ElementRule(PatternList.class, "The binary tip data"),
+                new ElementRule(PatternList.class, "The binary/multinomial tip data"),
                 new ElementRule(TreeModel.class, "The tree model"),
                 AttributeRule.newBooleanRule(IS_UNORDERED, true),
         };
@@ -480,6 +512,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
     private CompoundParameter thresholdParameter;
     public Parameter numClasses;
     private Parameter containsMissing;
+    private int NAcode;
 
     private boolean isUnordered = false;
     private int[][] tipData;

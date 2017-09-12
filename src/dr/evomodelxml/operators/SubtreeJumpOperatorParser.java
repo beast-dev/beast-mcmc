@@ -26,7 +26,6 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.SubtreeJumpOperator;
-import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
@@ -53,7 +52,12 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        // +Inf (i.e., missing size attribute) means a uniform operator
+        final double size = xo.getAttribute("size", 1.0);
+        final double prob = xo.getAttribute("accP", 0.234);
+
+        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, prob, mode);
+
+      // +Inf (i.e., missing size attribute) means a uniform operator
         final double size = xo.getAttribute(SIZE, Double.POSITIVE_INFINITY);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 

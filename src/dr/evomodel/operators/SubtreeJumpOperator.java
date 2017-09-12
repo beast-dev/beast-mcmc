@@ -33,7 +33,7 @@ import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
 import dr.inference.operators.*;
 import dr.math.distributions.NormalDistribution;
 import dr.math.MathUtils;
-
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -197,46 +197,58 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         return weights[originalIndex];
     }
 
-
     private int getNormalizedProbabilities(Tree tree, NodeRef node0, double height, NodeRef originalNode,
                                            List<NodeRef> intersectingEdges, double size, double[] weights) {
         double[] heights = new double[intersectingEdges.size()];
-
+        double[] lpdfs =  new double[intersectingEdges.size()];
         int originalIndex = -1;
-        double sum = 0.0;
         int i = 0;
         for (NodeRef node1 : intersectingEdges) {
             assert (node1 != node0);
 
             NodeRef mrcaNode = TreeUtils.getCommonAncestor(tree, node0, node1);
             heights[i] = tree.getNodeHeight(mrcaNode) - height;
-            weights[i] = NormalDistribution.pdf(heights[i], 0, size);
+            lpdfs[i] = NormalDistribution.logPdf(heights[i], 0, size);
 
             if (node1 == originalNode) {
                 originalIndex = i;
             }
-
-            sum += weights[i];
             i++;
         }
-        if (sum == 0.0 || Double.isNaN(sum)) {
-            // if sum is zero then the pdf function has underflowed. In this case the closest
-            // target edges will have probability 1, the rest 0.
-            double minHeight = Double.POSITIVE_INFINITY;
-            for (double h : heights) {
-                minHeight = Math.min(h, minHeight);
-            }
-            for (int j = 0; j < heights.length; j++) {
-                weights[j] = (heights[j] > minHeight ? 0.0 : 1.0);
-                sum += weights[j];
-            }
-
-        }
+       double[] normWeights =  normLog(weights, 1E-20);
+        
         for (int j = 0; j < weights.length; j++) {
-            weights[j] /= sum;
+            weights[j] = normWeights[j];
         }
 
         return originalIndex;
+    }
+
+    public static double [] normLog(double[] x, double epsilon){ 
+    	/* x is a vector of log values
+    	 * @return its normalised version y (sum(y) = 1) */
+    	double[] sortedX = x;
+    	java.util.Arrays.sort(sortedX);  
+    	double maxVal = Double.NEGATIVE_INFINITY;
+    	for (double a : sortedX) {
+    		maxVal = Math.min(a, maxVal);
+    	}
+
+    	double[] alpha =  new double[x.length];
+
+    	double sum = 0.0;
+    	double factor = Math.log(epsilon)-Math.log(x.length);
+    	for (int k = 0; k < alpha.length; k++) {
+    		alpha[k] = ( (sortedX[k]-maxVal) >= factor ? Math.exp(sortedX[k]-maxVal) : 0);
+    		sum += alpha[k];
+    	}
+    	double[] y =  new double[alpha.length];
+
+    	for (int j = 0; j < y.length; j++) {
+    		y[j] /= sum;
+    		y[j] = y[j] + 1;
+    	}
+    	return y;
     }
 
     public double getSize() {

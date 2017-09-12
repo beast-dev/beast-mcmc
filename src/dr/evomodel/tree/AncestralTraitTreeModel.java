@@ -159,21 +159,21 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             return used;
         }
 
-        private void setUsed(boolean used) {
-            this.used = used;
+        private void setUnused() {
+            this.used = false;
         }
     }
 
     public static String toString(ShadowNode[] nodes, int root) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < nodes.length; ++i) {
-            if (nodes[i] != null) {
-                sb.append(nodes[i].toString()).append("\n");
+        for (ShadowNode node : nodes) {
+            if (node != null) {
+                sb.append(node.toString()).append("\n");
             } else {
                 sb.append("null\n");
             }
         }
-        sb.append("root = " + root);
+        sb.append("root = ").append(root);
         return sb.toString();
     }
 
@@ -219,8 +219,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         setupClamps();
 
-        for (int i = 0; i < nodes.length; ++i) { // TODO Only need to set extra nodes
-            nodes[i].setUsed(false);
+        for (ShadowNode node : nodes) { // TODO Only need to set extra nodes
+            node.setUnused();
         }
 
         extraInternal = 0;
@@ -319,11 +319,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     public boolean isVariable() {
-        if (treeModel instanceof AbstractModel) {
-            return ((AbstractModel) treeModel).isVariable();
-        } else {
-            return false;
-        }
+        return treeModel instanceof AbstractModel && ((AbstractModel) treeModel).isVariable();
     }
 
     public double getNodeHeight(NodeRef inode) {
@@ -438,6 +434,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         @Override public boolean isTreeChanged() { return event.isTreeChanged(); }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (DEBUG) {
@@ -815,10 +812,13 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private void setupClamps() {
         nodeToClampMap.clear();
-        recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet());
+        recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet(), clampList, nodeToClampMap);
     }
 
-    private void recursiveSetupClamp(Tree tree, NodeRef node, BitSet tips) {
+    private static void recursiveSetupClamp(Tree tree, NodeRef node,
+                                            BitSet tips,
+                                            Map<BitSet, AncestralTaxonInTree> clampList,
+                                            Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
 
         if (tree.isExternal(node)) {
             tips.set(node.getNumber());
@@ -827,7 +827,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 NodeRef child = tree.getChild(node, i);
 
                 BitSet childTips = new BitSet();
-                recursiveSetupClamp(tree, child, childTips);
+                recursiveSetupClamp(tree, child, childTips, clampList, nodeToClampMap);
                 tips.or(childTips);
             }
 
@@ -853,5 +853,4 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private boolean validShadowTree = false;
     private boolean savedValidShadowTree;
-
 }

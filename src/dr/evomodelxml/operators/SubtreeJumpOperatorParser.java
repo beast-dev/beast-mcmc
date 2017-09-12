@@ -38,20 +38,16 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SUBTREE_JUMP = "subtreeJump";
 
+    public static final String SIZE = "size";
+    public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+
     public String getParserName() {
         return SUBTREE_JUMP;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.DEFAULT;
-        if (xo.hasAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-            if (xo.getBooleanAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-                mode = CoercionMode.COERCION_ON;
-            } else {
-                mode = CoercionMode.COERCION_OFF;
-            }
-        }
+        CoercionMode mode = CoercionMode.parseMode(xo);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
@@ -59,9 +55,27 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
         final double size = xo.getAttribute("size", 1.0);
         final double prob = xo.getAttribute("accP", 0.234);
 
-
         SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, prob, mode);
-//        operator.setTargetAcceptanceProbability(targetAcceptance);
+
+      // +Inf (i.e., missing size attribute) means a uniform operator
+        final double size = xo.getAttribute(SIZE, Double.POSITIVE_INFINITY);
+        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
+
+        if (size <= 0.0) {
+            throw new XMLParseException("The SubTreeLeap size attribute must be positive and non-zero.");
+        }
+
+        if (Double.isInfinite(size)) {
+            // uniform so no auto optimize
+            mode = CoercionMode.COERCION_OFF;
+        }
+
+        if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
+            throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
+        }
+
+        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, false, mode);
+        operator.setTargetAcceptanceProbability(targetAcceptance);
 
         return operator;
     }
@@ -80,8 +94,8 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newDoubleRule("size", true),
-            AttributeRule.newDoubleRule("accP", true),
+            AttributeRule.newDoubleRule(SIZE, true),
+            AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };

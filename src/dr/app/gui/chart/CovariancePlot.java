@@ -25,12 +25,12 @@
 
 package dr.app.gui.chart;
 
+import dr.stats.DiscreteStatistics;
 import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
-import java.util.Random;
 
 /**
  * Description:	A covariance ellipse plot.
@@ -86,8 +86,22 @@ public class CovariancePlot extends Plot.AbstractPlot {
         //System.out.println("CovariancePlot: paintData");
         //System.out.println("PlotNumber = " + plotNumber);
         //System.out.println("TotalPlotCount = " + this.plotCount);
+        int xCount = xData.getCount();
+        int yCount = yData.getCount();
+        double[] xDataArray = new double[xCount];
+        double[] yDataArray = new double[yCount];
+        for (int i = 0; i < xCount; i++) {
+            xDataArray[i] = (Double)xData.get(i);
+            yDataArray[i] = (Double)yData.get(i);
+        }
 
-        double correlation = (new Random()).nextDouble()*2-1.0;
+        double covariance = DiscreteStatistics.covariance(xDataArray, yDataArray);
+        double stdevX = DiscreteStatistics.stdev(xDataArray);
+        double stdevY = DiscreteStatistics.stdev(yDataArray);
+
+        double correlation = covariance / (stdevX * stdevY);
+
+        System.out.println("plotNumber: " + plotNumber + " ; correlation = " + correlation);
 
         Color fillColor;
         if (correlation >= 0.0 && correlation < 0.30) {

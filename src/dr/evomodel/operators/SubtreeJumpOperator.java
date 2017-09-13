@@ -46,10 +46,11 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
 
     private double size = 1.0;
     private double accP = 0.234;
-
+    private boolean uniform = false;
+    
     private final TreeModel tree;
     private final CoercionMode mode;
-    private final boolean uniform;
+    
 
     /**
      * Constructor
@@ -58,14 +59,14 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
      * @param size: the variance of a half normal used to compute distance weights (as a rule, larger size, bolder moves)
      * @param mode
      */
-    public SubtreeJumpOperator(TreeModel tree, double weight, double size, double accP, CoercionMode mode) {
+    public SubtreeJumpOperator(TreeModel tree, double weight, double size, double accP, boolean uniform, CoercionMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.accP = accP;
+        this.uniform = uniform;
         this.mode = mode;
 
-        uniform = Double.isInfinite(size);
     }
     /**
      * Do a subtree jump move.

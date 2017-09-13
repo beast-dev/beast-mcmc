@@ -39,8 +39,8 @@ import java.awt.geom.Ellipse2D;
  */
 public class CovariancePlot extends Plot.AbstractPlot {
 
-    private final int POSITIVE_CORRELATION_DEGREE = 35;
-    private final int NEGATIVE_CORRELATION_DEGREE = 235;
+    private final int NEGATIVE_CORRELATION_DEGREE = 35;
+    private final int POSITIVE_CORRELATION_DEGREE = 235;
 
     //colors from ColorBrewer2.org
     private final Color STRONG_POSITIVE_CORRELATION = new Color(227,74,51);
@@ -51,19 +51,25 @@ public class CovariancePlot extends Plot.AbstractPlot {
     private final Color MODERATE_NEGATIVE_CORRELATION = new Color(158,202,225);
     private final Color WEAK_NEGATIVE_CORRELATION = new Color(222,235,247);
 
+    private final double WEAK_ELLIPSE_HEIGHT = 1.0;
+    private final double MODERATE_ELLIPSE_HEIGHT = 0.7;
+    private final double STRONG_ELLIPSE_HEIGHT = 0.4;
+    private final double VERY_STRONG_ELLIPSE_HEIGHT = 0.1;
+    private final double IDENTITY_ELLIPSE_HEIGHT = 0.01;
+
     private int plotCount;
 
     public CovariancePlot(java.util.List<Double> data, int minimumBinCount) {
         super(data, data);
-        System.out.println("CovariancePlot: " + data.size());
+        //System.out.println("CovariancePlot: " + data.size());
         setName("null");
         this.plotCount = 1;
     }
 
     public CovariancePlot(java.util.List<Double> xData, java.util.List<Double> yData) {
         super(xData, yData);
-        System.out.println("xData: " + xData.size());
-        System.out.println("yData: " + yData.size());
+        //System.out.println("xData: " + xData.size());
+        //System.out.println("yData: " + yData.size());
         setName("null");
         this.plotCount = 1;
     }
@@ -86,6 +92,7 @@ public class CovariancePlot extends Plot.AbstractPlot {
         //System.out.println("CovariancePlot: paintData");
         //System.out.println("PlotNumber = " + plotNumber);
         //System.out.println("TotalPlotCount = " + this.plotCount);
+
         int xCount = xData.getCount();
         int yCount = yData.getCount();
         double[] xDataArray = new double[xCount];
@@ -96,23 +103,19 @@ public class CovariancePlot extends Plot.AbstractPlot {
         }
 
         double covariance = DiscreteStatistics.covariance(xDataArray, yDataArray);
-        double stdevX = DiscreteStatistics.stdev(xDataArray);
-        double stdevY = DiscreteStatistics.stdev(yDataArray);
 
-        double correlation = covariance / (stdevX * stdevY);
-
-        System.out.println("plotNumber: " + plotNumber + " ; correlation = " + correlation);
+        //System.out.println("plotNumber: " + plotNumber + " ; covariance = " + covariance);
 
         Color fillColor;
-        if (correlation >= 0.0 && correlation < 0.30) {
+        if (covariance >= 0.0 && covariance < 0.30) {
             fillColor = WEAK_POSITIVE_CORRELATION;
-        } else if (correlation >= 0.30 && correlation < 0.70) {
+        } else if (covariance >= 0.30 && covariance < 0.70) {
             fillColor = MODERATE_POSITIVE_CORRELATION;
-        } else if (correlation >= 0.70 && correlation <= 1.0) {
+        } else if (covariance >= 0.70 && covariance <= 1.0) {
             fillColor = STRONG_POSITIVE_CORRELATION;
-        } else if (correlation < 0.0 && correlation >= -0.30) {
+        } else if (covariance < 0.0 && covariance >= -0.30) {
             fillColor = WEAK_NEGATIVE_CORRELATION;
-        } else if (correlation < -0.30 && correlation >= -0.70) {
+        } else if (covariance < -0.30 && covariance >= -0.70) {
             fillColor = MODERATE_NEGATIVE_CORRELATION;
         } else {
             fillColor = STRONG_NEGATIVE_CORRELATION;
@@ -133,14 +136,32 @@ public class CovariancePlot extends Plot.AbstractPlot {
         g2.drawString("plot" + plotNumber, (float)transformX(x1), (float)transformY(y1));
 
         double rotationDegree = NEGATIVE_CORRELATION_DEGREE;
-        if (correlation > 0) {
+        if (covariance > 0) {
             rotationDegree = POSITIVE_CORRELATION_DEGREE;
         }
 
-        //TODO alter ellipse height according to correlation
-        double ellipseWidth = Math.abs(transformX(x2)-transformX(x1));
-        double ellipseHeight = 0.5*Math.abs(transformY(y2) - transformY(y1));
+        double selectedHeight;
+        double absCovariance = Math.abs(covariance);
+        if (absCovariance > 0.99) {
+            selectedHeight = IDENTITY_ELLIPSE_HEIGHT;
+            g2.setColor(Color.BLACK);
+        } else if (absCovariance > 0.9) {
+            selectedHeight = VERY_STRONG_ELLIPSE_HEIGHT;
+        } else if (absCovariance > 0.6) {
+            selectedHeight = STRONG_ELLIPSE_HEIGHT;
+        } else if (absCovariance > 0.3) {
+            selectedHeight = MODERATE_ELLIPSE_HEIGHT;
+        } else {
+            selectedHeight = WEAK_ELLIPSE_HEIGHT;
+        }
 
+        //System.out.println("selectedHeight = " + selectedHeight);
+
+        double ellipseWidth = Math.abs(transformX(x2)-transformX(x1));
+        //double ellipseHeight = 0.5 * Math.abs(transformY(y2) - transformY(y1));
+        double ellipseHeight = selectedHeight * Math.abs(transformY(y2) - transformY(y1));
+
+        //TODO move ellipse first so its center corresponds to the center of the rectangle, then rotate around that center
         AffineTransform oldTransform = g2.getTransform();
 
         Shape ellipse = new Ellipse2D.Double(transformX(x1), transformY(y2), ellipseWidth, ellipseHeight);
@@ -156,6 +177,7 @@ public class CovariancePlot extends Plot.AbstractPlot {
 
         //draw rotation center in black
         g2.setColor(Color.BLACK);
+        g2.draw(rotatedEllipse);
         g2.fill(new Ellipse2D.Double(transformX((x1+x2)/2.0), transformY((y1+y2)/2.0), 5, 5));
 
         //draw potential new rotation center

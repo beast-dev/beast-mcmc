@@ -231,7 +231,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     	java.util.Arrays.sort(sortedX);  
     	double maxVal = Double.NEGATIVE_INFINITY;
     	for (double a : sortedX) {
-    		maxVal = Math.min(a, maxVal);
+    		maxVal = Math.max(a, maxVal);
     	}
 
     	double[] alpha =  new double[x.length];
@@ -245,8 +245,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     	double[] y =  new double[alpha.length];
 
     	for (int j = 0; j < y.length; j++) {
-    		y[j] /= sum;
-    		y[j] = y[j] + 1;
+    		y[j] /= sum;    		
     	}
     	return y;
     }

@@ -40,7 +40,9 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SIZE = "size";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+    public static final String UNIFORM = "uniform";
 
+    
     public String getParserName() {
         return SUBTREE_JUMP;
     }
@@ -52,9 +54,10 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-      // +Inf (i.e., missing size attribute) means a uniform operator
-        final double size = xo.getAttribute(SIZE, Double.POSITIVE_INFINITY);
+        // size attribute is mandatory
+        final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
+        final boolean uniform = xo.getAttribute(UNIFORM, false);
 
         if (size <= 0.0) {
             throw new XMLParseException("The SubTreeLeap size attribute must be positive and non-zero.");
@@ -69,7 +72,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
 
-        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, targetAcceptance, mode);
+        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, targetAcceptance, uniform, mode);
         operator.setTargetAcceptanceProbability(targetAcceptance);
 
         return operator;

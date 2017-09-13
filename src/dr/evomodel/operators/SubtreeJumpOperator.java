@@ -33,7 +33,6 @@ import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
 import dr.inference.operators.*;
 import dr.math.distributions.NormalDistribution;
 import dr.math.MathUtils;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -245,7 +244,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     	double[] y =  new double[alpha.length];
 
     	for (int j = 0; j < y.length; j++) {
-    		y[j] /= sum;    		
+    		y[j] = alpha[j]/sum;
     	}
     	return y;
     }

@@ -52,7 +52,7 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        // size attribute is manditory
+        // size attribute is mandatory
         final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 

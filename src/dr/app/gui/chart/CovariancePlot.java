@@ -55,12 +55,6 @@ public class CovariancePlot extends Plot.AbstractPlot {
     private final Color MODERATE_NEGATIVE_CORRELATION = new Color(158,202,225);
     private final Color WEAK_NEGATIVE_CORRELATION = new Color(222,235,247);
 
-    private final double WEAK_ELLIPSE_HEIGHT = 1.0;
-    private final double MODERATE_ELLIPSE_HEIGHT = 0.7;
-    private final double STRONG_ELLIPSE_HEIGHT = 0.4;
-    private final double VERY_STRONG_ELLIPSE_HEIGHT = 0.1;
-    private final double IDENTITY_ELLIPSE_HEIGHT = 0.01;
-
     private int plotCount;
 
     public CovariancePlot(java.util.List<Double> data, int minimumBinCount) {
@@ -148,18 +142,7 @@ public class CovariancePlot extends Plot.AbstractPlot {
 
         double selectedHeight;
         double absCovariance = Math.abs(covariance);
-        if (absCovariance > 0.99) {
-            selectedHeight = IDENTITY_ELLIPSE_HEIGHT;
-            g2.setColor(Color.BLACK);
-        } else if (absCovariance > 0.9) {
-            selectedHeight = VERY_STRONG_ELLIPSE_HEIGHT;
-        } else if (absCovariance > 0.6) {
-            selectedHeight = STRONG_ELLIPSE_HEIGHT;
-        } else if (absCovariance > 0.3) {
-            selectedHeight = MODERATE_ELLIPSE_HEIGHT;
-        } else {
-            selectedHeight = WEAK_ELLIPSE_HEIGHT;
-        }
+        selectedHeight = 1.0 - absCovariance;
 
         //System.out.println("selectedHeight = " + selectedHeight);
 

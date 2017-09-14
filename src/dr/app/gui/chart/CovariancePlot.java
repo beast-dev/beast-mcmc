@@ -27,17 +27,21 @@ package dr.app.gui.chart;
 
 import dr.stats.DiscreteStatistics;
 import dr.stats.Variate;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
+import java.util.*;
 
 /**
  * Description:	A covariance ellipse plot.
  *
  * @author Guy Baele
  */
-public class CovariancePlot extends Plot.AbstractPlot {
+public class CovariancePlot extends Plot.AbstractPlot implements Citable {
 
     private static final boolean PRINT_VISUAL_AIDES = false;
 
@@ -46,14 +50,18 @@ public class CovariancePlot extends Plot.AbstractPlot {
     private final double NEGATIVE_CORRELATION_DEGREE = 0.785398163;
     private final double POSITIVE_CORRELATION_DEGREE = 2.35619449;
 
-    //colors from ColorBrewer2.org
-    private final Color STRONG_POSITIVE_CORRELATION = new Color(227,74,51);
-    private final Color MODERATE_POSITIVE_CORRELATION = new Color(253,187,132);
-    private final Color WEAK_POSITIVE_CORRELATION = new Color(254,232,200);
-
-    private final Color STRONG_NEGATIVE_CORRELATION = new Color(49,130,189);
-    private final Color MODERATE_NEGATIVE_CORRELATION = new Color(158,202,225);
-    private final Color WEAK_NEGATIVE_CORRELATION = new Color(222,235,247);
+    //colors from plotcorr R package
+    private final Color[] colors = {new Color(165,15,21),
+            new Color(222, 45, 38),
+            new Color(251, 106, 74),
+            new Color(252, 174, 145),
+            new Color(254, 229, 217),
+            Color.WHITE,
+            new Color(239, 243, 255),
+            new Color(189, 215, 231),
+            new Color(107, 174, 214),
+            new Color(49, 130, 189),
+            new Color(8, 81, 156)};
 
     private int plotCount;
 
@@ -104,20 +112,7 @@ public class CovariancePlot extends Plot.AbstractPlot {
 
         //System.out.println("plotNumber: " + plotNumber + " ; covariance = " + covariance);
 
-        Color fillColor;
-        if (covariance >= 0.0 && covariance < 0.30) {
-            fillColor = WEAK_POSITIVE_CORRELATION;
-        } else if (covariance >= 0.30 && covariance < 0.70) {
-            fillColor = MODERATE_POSITIVE_CORRELATION;
-        } else if (covariance >= 0.70 && covariance <= 1.0) {
-            fillColor = STRONG_POSITIVE_CORRELATION;
-        } else if (covariance < 0.0 && covariance >= -0.30) {
-            fillColor = WEAK_NEGATIVE_CORRELATION;
-        } else if (covariance < -0.30 && covariance >= -0.70) {
-            fillColor = MODERATE_NEGATIVE_CORRELATION;
-        } else {
-            fillColor = STRONG_NEGATIVE_CORRELATION;
-        }
+        Color fillColor = colors[(int)(5*covariance+6)];
         g2.setColor(fillColor);
 
         //g2.setPaint(linePaint);
@@ -188,5 +183,33 @@ public class CovariancePlot extends Plot.AbstractPlot {
         g2.setTransform(oldTransform);
 
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.MISC;
+    }
+
+    @Override
+    public String getDescription() {
+        return "method for displaying correlation matrices";
+    }
+
+    @Override
+    public java.util.List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("DJ", "Murdoch"),
+                    new Author("ED", "Chpw")
+            },
+            "A graphical display of large correlation matrices",
+            1986,
+            "Am. Stat.",
+            50,
+            178, 180,
+            Citation.Status.PUBLISHED
+    );
 
 }

@@ -43,8 +43,8 @@ public class CovariancePlot extends Plot.AbstractPlot {
 
     private final double ELLIPSE_HALF_WIDTH = 0.325;
 
-    private final int NEGATIVE_CORRELATION_DEGREE = 35;
-    private final int POSITIVE_CORRELATION_DEGREE = 235;
+    private final double NEGATIVE_CORRELATION_DEGREE = 0.785398163;
+    private final double POSITIVE_CORRELATION_DEGREE = 2.35619449;
 
     //colors from ColorBrewer2.org
     private final Color STRONG_POSITIVE_CORRELATION = new Color(227,74,51);

@@ -68,6 +68,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         AbstractDelegate(String name, Tree tree) {
             this.name = name;
             this.tree = tree;
+            this.baseTree = getBaseTree(tree);
             constructTraits(treeTraitHelper);
         }
 
@@ -99,6 +100,21 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
+        private static Tree getBaseTree(Tree derived) {
+            while (derived instanceof TransformableTree) {
+                derived = ((TransformableTree) derived).getOriginalTree();
+            }
+            return derived;
+        }
+
+        protected static NodeRef getBaseNode(Tree derived, NodeRef node) {
+            while (derived instanceof TransformableTree) {
+                derived = ((TransformableTree) derived).getOriginalTree();
+                node = ((TransformableTree) derived).getOriginalNode(node);
+            }
+            return node;
+        }
+
         protected double getNormalization() {
             return 1.0;
         }
@@ -126,6 +142,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected ProcessSimulation simulationProcess = null;
 
         protected final Tree tree;
+        protected final Tree baseTree;
         protected final String name;
     }
 
@@ -652,11 +669,10 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 public double[] getTrait(Tree t, NodeRef node) {
 
                     if (t != tree) {  // TODO Write a wrapper class around t if TransformableTree
-                        if (tree instanceof TransformableTree &&
-                                t == ((TransformableTree) tree).getOriginalTree()) {
-                            node = ((TransformableTree) tree).getTransformedNode(node);
+                        if (t == baseTree) {
+                            node = getBaseNode(t, node);
                         } else {
-                            throw new RuntimeException("Tree '" + tree.getId() + "' and likelihood '" + tree.getId() + "' mismatch");
+                            throw new RuntimeException("Tree '" + t.getId() + "' and likelihood '" + tree.getId() + "' mismatch");
                         }
                     }
                     

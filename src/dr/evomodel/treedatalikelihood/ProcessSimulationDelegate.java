@@ -28,6 +28,8 @@ package dr.evomodel.treedatalikelihood;
 import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.tree.AncestralTraitTreeModel;
+import dr.evomodel.tree.TransformedTreeModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -635,7 +637,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
-        void constructTraits(Helper treeTraitHelper) {
+        void constructTraits(final Helper treeTraitHelper) {
 
             TreeTrait.DA baseTrait = new TreeTrait.DA() {
 
@@ -649,7 +651,15 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
                 public double[] getTrait(Tree t, NodeRef node) {
 
-//                    assert t == tree; // Does not hold for transformed trees
+                    if (t != tree) {  // TODO Write a wrapper class around t if TransformableTree
+                        if (tree instanceof TransformableTree &&
+                                t == ((TransformableTree) tree).getOriginalTree()) {
+                            node = ((TransformableTree) tree).getTransformedNode(node);
+                        } else {
+                            throw new RuntimeException("Tree '" + tree.getId() + "' and likelihood '" + tree.getId() + "' mismatch");
+                        }
+                    }
+                    
                     return getTraitForNode(node);
                 }
             };

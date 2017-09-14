@@ -44,7 +44,7 @@ import java.util.*;
  *
  * @author Marc A. Suchard
  */
-public class AncestralTraitTreeModel extends AbstractModel implements MutableTreeModel, Citable {
+public class AncestralTraitTreeModel extends AbstractModel implements MutableTreeModel, TransformableTree, Citable {
 
     private static final boolean DEBUG = false;
 
@@ -63,6 +63,16 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private ShadowNode root;
     private int storedRootNumber;
+
+    @Override
+    public NodeRef getOriginalNode(NodeRef transformedNode) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public NodeRef getTransformedNode(NodeRef originalNode) {
+        return new BasicNode(mapOriginalToShadowNumber(originalNode.getNumber()));
+    }
 
     public class ShadowNode implements NodeRef {
 
@@ -202,6 +212,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         for (int i = 0; i < nodes.length; ++i) {
             nodes[i] = new ShadowNode();
         }
+    }
+
+    public Tree getOriginalTree() {
+        return treeModel;
     }
 
     private void checkShadowTree() {

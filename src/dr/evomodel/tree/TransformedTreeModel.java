@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  *
  * @author Marc Suchard
  */
-public class TransformedTreeModel extends AbstractModel implements MutableTreeModel, Citable {
+public class TransformedTreeModel extends AbstractModel implements MutableTreeModel, TransformableTree, Citable {
 
     public TransformedTreeModel(String id, MutableTreeModel tree, TreeTransform treeTransform) {
         super(id);
@@ -329,5 +329,20 @@ public class TransformedTreeModel extends AbstractModel implements MutableTreeMo
     @Override
     public List<Citation> getCitations() {
         return Collections.singletonList(CommonCitations.VRANCKEN_2015_SIMULTANEOUSLY);
+    }
+
+    @Override
+    public NodeRef getOriginalNode(NodeRef transformedNode) {
+        return transformedNode;
+    }
+
+    @Override
+    public NodeRef getTransformedNode(NodeRef originalNode) {
+        return originalNode;
+    }
+
+    @Override
+    public Tree getOriginalTree() {
+        return treeModel;
     }
 }

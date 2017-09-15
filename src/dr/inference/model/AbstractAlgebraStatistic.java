@@ -85,15 +85,24 @@ public abstract class AbstractAlgebraStatistic extends Statistic.Abstract {
         // Check we have set the dimension
         getDimension();
 
-        double value = 1.0;
+        double value = Double.NaN;
 
         for (Statistic statistic : statistics) {
-            if (!elementwise) {
-                for (int j = 0; j < statistic.getDimension(); j++) {
+            if (elementwise) {
+                // do the operation across all the elements
+
+                if (Double.isNaN(value)) {
+                    value = statistic.getStatisticValue(0);
+                }
+                for (int j = 1; j < statistic.getDimension(); j++) {
                     value = doOperation(value, statistic.getStatisticValue(j));
                 }
             } else {
-                value = doOperation(value, statistic.getStatisticValue(dim));
+                if (Double.isNaN(value)) {
+                    value = statistic.getStatisticValue(dim);
+                } else {
+                    value = doOperation(value, statistic.getStatisticValue(dim));
+                }
             }
         }
         if (constants != null && constants.length > 1) {

@@ -112,7 +112,7 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
 
         //System.out.println("plotNumber: " + plotNumber + " ; covariance = " + covariance);
 
-        Color fillColor = colors[(int)(5*covariance+6)];
+        Color fillColor = colors[(int)(5-5*covariance)];
         g2.setColor(fillColor);
 
         //g2.setPaint(linePaint);

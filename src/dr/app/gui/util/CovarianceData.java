@@ -44,7 +44,7 @@ public class CovarianceData {
         if (data.containsKey(traceName)) {
             List temp = data.get(traceName);
             temp.addAll(values);
-            data.replace(traceName, temp);
+            data.put(traceName, temp);
         } else {
             data.put(traceName, values);
         }

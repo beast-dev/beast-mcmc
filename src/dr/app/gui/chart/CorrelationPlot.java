@@ -1,5 +1,5 @@
 /*
- * CovariancePlot.java
+ * CorrelationPlot.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -37,11 +37,11 @@ import java.awt.geom.Ellipse2D;
 import java.util.*;
 
 /**
- * Description:	A covariance ellipse plot.
+ * Description:	A correlation ellipse plot.
  *
  * @author Guy Baele
  */
-public class CovariancePlot extends Plot.AbstractPlot implements Citable {
+public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
 
     private static final boolean PRINT_VISUAL_AIDES = false;
 
@@ -68,14 +68,14 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
 
     private int plotCount;
 
-    public CovariancePlot(java.util.List<Double> data, int minimumBinCount) {
+    public CorrelationPlot(java.util.List<Double> data, int minimumBinCount) {
         super(data, data);
-        //System.out.println("CovariancePlot: " + data.size());
+        //System.out.println("CorrelationPlot: " + data.size());
         setName("null");
         this.plotCount = 1;
     }
 
-    public CovariancePlot(java.util.List<Double> xData, java.util.List<Double> yData) {
+    public CorrelationPlot(java.util.List<Double> xData, java.util.List<Double> yData) {
         super(xData, yData);
         //System.out.println("xData: " + xData.size());
         //System.out.println("yData: " + yData.size());
@@ -83,13 +83,13 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
         this.plotCount = 1;
     }
 
-    public CovariancePlot(String name, java.util.List<Double> xData, java.util.List<Double> yData) {
+    public CorrelationPlot(String name, java.util.List<Double> xData, java.util.List<Double> yData) {
         super(xData, yData);
         setName(name);
         this.plotCount = 1;
     }
 
-    public CovariancePlot(String name, java.util.List<Double> xData, java.util.List<Double> yData, boolean asPoints, boolean samples) {
+    public CorrelationPlot(String name, java.util.List<Double> xData, java.util.List<Double> yData, boolean asPoints, boolean samples) {
         super(xData, yData);
         setName(name);
         this.asPoints = asPoints;
@@ -106,7 +106,7 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
      */
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
-        //System.out.println("CovariancePlot: paintData");
+        //System.out.println("CorrelationPlot: paintData");
         //System.out.println("PlotNumber = " + plotNumber);
         //System.out.println("TotalPlotCount = " + this.plotCount);
 
@@ -171,8 +171,8 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
                 double newY = yDataArray[i] - minY/2.0;
 
                 //1 unit wide, so divide by maximum data value on both axes
-                newX = x1 + 0.5 + newX/maxX;
-                newY = y1 + 0.5 + newY/maxY;
+                newX = x1 + 0.5 + newX/(maxX-minX);
+                newY = y1 + 0.5 + newY/(maxY-minY);
 
                 //System.out.println("(" + xDataArray[i] + "," + yDataArray[i] + ")  >>>  (" + newX + "," + newY + ")");
                 g2.fill(new Ellipse2D.Double(transformX(newX), transformY(newY), 4, 4));
@@ -180,11 +180,11 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
 
         } else {
 
-            double covariance = DiscreteStatistics.covariance(xDataArray, yDataArray);
+            double correlation = DiscreteStatistics.covariance(xDataArray, yDataArray);
 
             //System.out.println("plotNumber: " + plotNumber + " ; covariance = " + covariance);
 
-            Color fillColor = colors[(int) (5 - 5 * covariance)];
+            Color fillColor = colors[(int) (5 + 5 * correlation)];
             g2.setColor(fillColor);
 
             //g2.setPaint(linePaint);
@@ -203,12 +203,12 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
             }
 
             double rotationDegree = NEGATIVE_CORRELATION_DEGREE;
-            if (covariance > 0) {
+            if (correlation > 0) {
                 rotationDegree = POSITIVE_CORRELATION_DEGREE;
             }
 
             double selectedHeight;
-            double absCovariance = Math.abs(covariance);
+            double absCovariance = Math.abs(correlation);
             selectedHeight = 1.0 - absCovariance;
 
             //System.out.println("selectedHeight = " + selectedHeight);

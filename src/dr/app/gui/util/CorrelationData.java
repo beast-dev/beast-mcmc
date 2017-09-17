@@ -1,5 +1,5 @@
 /*
- * CovarianceData.java
+ * CorrelationData.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -32,11 +32,11 @@ import java.util.Set;
 /**
  * @author Guy Baele
  */
-public class CovarianceData {
+public class CorrelationData {
 
     private HashMap<String, List<Double>> data;
 
-    public CovarianceData() {
+    public CorrelationData() {
         data = new HashMap<String, List<Double>>();
     }
 

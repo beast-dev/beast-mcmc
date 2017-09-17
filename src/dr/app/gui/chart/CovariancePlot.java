@@ -112,6 +112,7 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
 
         int xCount = xData.getCount();
         int yCount = yData.getCount();
+
         double[] xDataArray = new double[xCount];
         double minX = 0.0;
         double maxX = 0.0;
@@ -124,8 +125,10 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
             minY = (Double) yData.get(0);
             maxY = (Double) yData.get(0);
         }
+
         for (int i = 0; i < xCount; i++) {
             if (this.samples) {
+                //System.out.println("Only using a subset of available samples");
 
             } else {
                 xDataArray[i] = (Double) xData.get(i);
@@ -134,30 +137,45 @@ public class CovariancePlot extends Plot.AbstractPlot implements Citable {
             if (xDataArray[i] < minX) {
                 minX = xDataArray[i];
             }
-            if (maxX > xDataArray[i]) {
+            if (xDataArray[i] > maxX) {
                 maxX = xDataArray[i];
             }
             if (yDataArray[i] < minY) {
                 minY = yDataArray[i];
             }
-            if (maxY > yDataArray[i]) {
+            if (yDataArray[i] > maxY) {
                 maxY = yDataArray[i];
             }
         }
 
         if (this.asPoints) {
 
+            g2.setColor(Color.BLACK);
+
+            /*System.out.println("Draw as points");
+            System.out.println("minX = " + minX);
+            System.out.println("maxX = " + maxX);
+            System.out.println("minY = " + minY);
+            System.out.println("maxY = " + maxY);*/
+
             double x1 = (plotNumber / (int) Math.sqrt(plotCount));
             double y1 = (plotNumber % (int) Math.sqrt(plotCount));
-            double x2 = (plotNumber / (int) Math.sqrt(plotCount));
-            double y2 = (plotNumber % (int) Math.sqrt(plotCount));
+            //double x2 = (plotNumber / (int) Math.sqrt(plotCount));
+            //double y2 = (plotNumber % (int) Math.sqrt(plotCount));
+
+            //System.out.println("Plot: " + plotNumber + " ( x1 = " + x1 + ", y1 = " + y1 + ")");
 
             for (int i = 0; i < xDataArray.length; i++) {
-                //1 unit wide, so divide by entire range on both axes
-                double newX = x1 + xDataArray[i]/(maxX-minX);
-                double newY = x2 + yDataArray[i]/(maxY-minY);
-                //System.out.println("(" + newX + "," + newY + ")");
-                g2.fill(new Ellipse2D.Double(transformX(newX), transformY(newY), 1, 1));
+                //first perform a a translation
+                double newX = xDataArray[i] - minX/2.0;
+                double newY = yDataArray[i] - minY/2.0;
+
+                //1 unit wide, so divide by maximum data value on both axes
+                newX = x1 + 0.5 + newX/maxX;
+                newY = y1 + 0.5 + newY/maxY;
+
+                //System.out.println("(" + xDataArray[i] + "," + yDataArray[i] + ")  >>>  (" + newX + "," + newY + ")");
+                g2.fill(new Ellipse2D.Double(transformX(newX), transformY(newY), 4, 4));
             }
 
         } else {

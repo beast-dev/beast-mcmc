@@ -182,7 +182,7 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
 
             double correlation = DiscreteStatistics.covariance(xDataArray, yDataArray);
 
-            //System.out.println("plotNumber: " + plotNumber + " ; covariance = " + covariance);
+            //System.out.println("plotNumber: " + plotNumber + " ; correlation = " + correlation);
 
             Color fillColor = colors[(int) (5 + 5 * correlation)];
             g2.setColor(fillColor);
@@ -208,8 +208,8 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
             }
 
             double selectedHeight;
-            double absCovariance = Math.abs(correlation);
-            selectedHeight = 1.0 - absCovariance;
+            double absCorrelation = Math.abs(correlation);
+            selectedHeight = 1.0 - absCorrelation;
 
             //System.out.println("selectedHeight = " + selectedHeight);
 

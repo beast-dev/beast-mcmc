@@ -167,12 +167,12 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
 
             for (int i = 0; i < xDataArray.length; i++) {
                 //first perform a a translation
-                double newX = xDataArray[i] - minX/2.0;
-                double newY = yDataArray[i] - minY/2.0;
+                double newX = xDataArray[i] - (maxX+minX)/2.0;
+                double newY = yDataArray[i] - (maxY+minY)/2.0;
 
                 //1 unit wide, so divide by maximum data value on both axes
-                newX = x1 + 0.5 + newX/(maxX-minX);
-                newY = y1 + 0.5 + newY/(maxY-minY);
+                newX = x1 + 1.0 + newX/(maxX-minX);
+                newY = y1 + 1.0 + newY/(maxY-minY);
 
                 //System.out.println("(" + xDataArray[i] + "," + yDataArray[i] + ")  >>>  (" + newX + "," + newY + ")");
                 g2.fill(new Ellipse2D.Double(transformX(newX), transformY(newY), 4, 4));

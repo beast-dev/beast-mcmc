@@ -74,8 +74,17 @@ public class JChart extends JPanel {
 
     private double xScale, yScale, xOffset, yOffset;
 
+    private double aspectRatio;
+    private boolean useAspectRatio = false;
+
     public JChart(Axis xAxis, Axis yAxis) {
         this(null, xAxis, yAxis);
+    }
+
+    public JChart(Axis xAxis, Axis yAxis, double aspectRatio) {
+        this(null, xAxis, yAxis);
+        this.aspectRatio = aspectRatio;
+        this.useAspectRatio = true;
     }
 
     public JChart(Plot plot, Axis xAxis, Axis yAxis) {
@@ -85,8 +94,12 @@ public class JChart extends JPanel {
         this.xAxis = xAxis;
         this.yAxis = yAxis;
 
-        if (plot != null)
+        if (plot != null) {
             addPlot(plot);
+        }
+
+        this.aspectRatio = 1.0;
+        this.useAspectRatio = false;
 
         addMouseListener(new MListener());
         addMouseMotionListener(new MMListener());
@@ -328,8 +341,18 @@ public class JChart extends JPanel {
             double w = size.width - (majorTickSize * 1.25) - maxYTickLabelWidth - (maxXTickLabelWidth / 2);
             double h = size.height - yTickLabelOffset - (majorTickSize * 1.25) - tickLabelHeight;
 
+            if (useAspectRatio) {
+                double newH = w / aspectRatio;
+                if (newH > h) {
+                    w = h * aspectRatio;
+                } else {
+                    h = newH;
+                }
+            }
+
             plotBounds = new Rectangle2D.Double((majorTickSize * 1.25) + maxYTickLabelWidth, yTickLabelOffset, w, h);
 
+            //TODO alter x offset so that plots is drawn in the middle?
             xOffset = plotBounds.getX();
             yOffset = plotBounds.getMaxY();
             xScale = w / (xAxis.transform(xAxis.getMaxAxis()) - xAxis.transform(xAxis.getMinAxis()));

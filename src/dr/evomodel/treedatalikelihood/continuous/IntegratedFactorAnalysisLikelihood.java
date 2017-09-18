@@ -480,7 +480,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(TreeModel.class);
+            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =

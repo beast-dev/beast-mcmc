@@ -60,7 +60,8 @@ public class ConjugateRootTraitPrior {
                 .getChild(Parameter.class);
 
         if (meanParameter.getDimension() != dim) {
-            throw new XMLParseException("Root prior mean dimension does not match trait diffusion dimension");
+            throw new XMLParseException("Root prior mean dimension ("  + meanParameter.getDimension() +
+                    ") does not match trait diffusion dimension (" + dim + ")");
         }
 
         Parameter sampleSizeParameter = (Parameter) cxo.getChild(PRIOR_SAMPLE_SIZE).getChild(Parameter.class);

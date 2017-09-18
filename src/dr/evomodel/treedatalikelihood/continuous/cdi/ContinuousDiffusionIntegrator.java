@@ -25,16 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
@@ -68,8 +60,13 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     InstanceDetails getDetails();
 
-    void updateDiffusionMatrices(int precisionIndex, final int[] probabilityIndices, final double[] edgeLengths,
-                                 int updateCount);
+    void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                         final double[] edgeLengths, final double[] driftRates,
+                                         int updateCount);
+
+//    void updateOrnsteinUhlenbeckMatrices(int precisionIndex, final int[] probabilityIndices,
+//                                         final double[] edgeLengths,
+//                                         int updateCount);
 
     void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
                                     boolean incrementOuterProducts);
@@ -336,11 +333,12 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public void updateDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                            final double[] edgeLengths, int updateCount) {
+        public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                    final double[] edgeLengths, final double[] driftRates,
+                                                    int updateCount) {
 
             if (DEBUG) {
-                System.err.println("Matrices:");
+                System.err.println("Matrices (basic):");
             }
 
             for (int up = 0; up < updateCount; ++up) {
@@ -349,7 +347,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     System.err.println("\t" + probabilityIndices[up] + " <- " + edgeLengths[up]);
                 }
 
-                // TODO Currently only writtern for SCALAR model
+                // TODO Currently only written for SCALAR model
                 variances[dimMatrix * probabilityIndices[up]] = edgeLengths[up];
             }
 
@@ -364,7 +362,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         // Internal storage
         protected double[] partials;
+
         protected double[] variances;
+        protected double[] precisions;
+
         protected double[] remainders;
         protected double[] diffusions;
         protected double[] determinants;
@@ -583,7 +584,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         private void allocateStorage() {
             partials = new double[dimPartial * bufferCount];
-            variances = new double[dimMatrix * bufferCount];
+            variances = new double[dimTrait * dimTrait * bufferCount];
             remainders = new double[numTraits * bufferCount];
 
             diffusions = new double[dimTrait * dimTrait * diffusionCount];

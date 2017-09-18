@@ -330,77 +330,77 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
 
     private void computePartialsAndRemainders() {
         
-        final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
-        final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
-
-        int partialsOffset = 0;
-        for (int taxon = 0; taxon < numTaxa; ++taxon) {
-
-            // Work with mean in-place
-            final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
-
-            computePrecisionForTaxon(precision, taxon, numFactors);
-            InversionResult ci = fillInMeanForTaxon(mean, precision, taxon);
-
-            if (DEBUG) {
-                System.err.println("taxon " + taxon);
-                System.err.println("\tprecision: " + precision);
-            }
-
-            double constant;
-            double nuggetDensity = 0;
-
-            if (observedDimensions[taxon] == 0) {
-
-                makeCompletedUnobserved(precision, 0);
-                makeCompletedUnobserved(variance, Double.POSITIVE_INFINITY);
-                constant = 0.0;
-
-            } else {
-
-
-                if (DEBUG) {
-                    System.err.println("\tmean: " + mean);
-                    //System.err.println("\n");
-                }
-
-                final double factorDeterminant = ci.getDeterminant();
-                double traitDeterminant = getTraitDeterminant(taxon);
-
-                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
-
-                final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
-                final double traitInnerProduct = computeTraitInnerProduct(taxon);
-                final double innerProductChange = traitInnerProduct - factorInnerProduct;
-
-                int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension();
-
-                if (DEBUG) {
-                    System.err.println("fIP: " + factorInnerProduct);
-                    System.err.println("tIP: " + traitInnerProduct);
-                    System.err.println("fDet: " + factorDeterminant);
-                    System.err.println("tDet: " + traitDeterminant);
-                    System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
-                            "\n\n");
-                }
-
-                constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
-                        nuggetDensity;
-
-            }
-            
-            // store in precision, variance and normalization constant
-            unwrap(precision, partials, partialsOffset + numFactors); // TODO PrecisionType should do this offset math
-
-            if (STORE_VARIANCE) { // TODO Remove
-                safeInvert(precision, variance, true);
-                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
-            }
-
-            normalizationConstants[taxon] = constant;
-
-            partialsOffset += dimPartial;
-        }
+//        final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
+//        final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
+//
+//        int partialsOffset = 0;
+//        for (int taxon = 0; taxon < numTaxa; ++taxon) {
+//
+//            // Work with mean in-place
+//            final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
+//
+//            computePrecisionForTaxon(precision, taxon, numFactors);
+//            InversionResult ci = fillInMeanForTaxon(mean, precision, taxon);
+//
+//            if (DEBUG) {
+//                System.err.println("taxon " + taxon);
+//                System.err.println("\tprecision: " + precision);
+//            }
+//
+//            double constant;
+//            double nuggetDensity = 0;
+//
+//            if (observedDimensions[taxon] == 0) {
+//
+//                makeCompletedUnobserved(precision, 0);
+//                makeCompletedUnobserved(variance, Double.POSITIVE_INFINITY);
+//                constant = 0.0;
+//
+//            } else {
+//
+//
+//                if (DEBUG) {
+//                    System.err.println("\tmean: " + mean);
+//                    //System.err.println("\n");
+//                }
+//
+//                final double factorDeterminant = ci.getDeterminant();
+//                double traitDeterminant = getTraitDeterminant(taxon);
+//
+//                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
+//
+//                final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
+//                final double traitInnerProduct = computeTraitInnerProduct(taxon);
+//                final double innerProductChange = traitInnerProduct - factorInnerProduct;
+//
+//                int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension();
+//
+//                if (DEBUG) {
+//                    System.err.println("fIP: " + factorInnerProduct);
+//                    System.err.println("tIP: " + traitInnerProduct);
+//                    System.err.println("fDet: " + factorDeterminant);
+//                    System.err.println("tDet: " + traitDeterminant);
+//                    System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
+//                            "\n\n");
+//                }
+//
+//                constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
+//                        nuggetDensity;
+//
+//            }
+//
+//            // store in precision, variance and normalization constant
+//            unwrap(precision, partials, partialsOffset + numFactors); // TODO PrecisionType should do this offset math
+//
+//            if (STORE_VARIANCE) { // TODO Remove
+//                safeInvert(precision, variance, true);
+//                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
+//            }
+//
+//            normalizationConstants[taxon] = constant;
+//
+//            partialsOffset += dimPartial;
+//        }
     }
 
     private static final boolean STORE_VARIANCE = false;
@@ -487,13 +487,13 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
             CompoundParameter traitParameter = returnValue.traitParameter;
             List<Integer> missingIndices = returnValue.missingIndices;
 
-            MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getElementFirstChild(LOADINGS);
+//            MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getElementFirstChild(LOADINGS);
             Parameter traitPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
 
-            double nugget = xo.getAttribute(NUGGET, 0.0);
+//            double nugget = xo.getAttribute(NUGGET, 0.0);
 
             return new RepeatedMeasuresTraitLikelihood(xo.getId(), traitParameter, missingIndices,
-                    loadings, (MatrixParameterInterface) traitPrecision, nugget);
+                    null, (MatrixParameterInterface) traitPrecision, 0.0);
         }
 
         @Override
@@ -513,19 +513,19 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
 
         @Override
         public String getParserName() {
-            return INTEGRATED_FACTOR_Model;
+            return REPEATED_MEASURES_MODEL;
         }
     };
 
-    public static final String INTEGRATED_FACTOR_Model = "integratedFactorModel";
-    public static final String LOADINGS = "loadings";
+    public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
+//    public static final String LOADINGS = "loadings";
     public static final String PRECISION = "precision";
-    public static final String NUGGET = "nugget";
+//    public static final String NUGGET = "nugget";
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(LOADINGS, new XMLSyntaxRule[] {
-                    new ElementRule(MatrixParameterInterface.class),
-            }),
+//            new ElementRule(LOADINGS, new XMLSyntaxRule[] {
+//                    new ElementRule(MatrixParameterInterface.class),
+//            }),
             new ElementRule(PRECISION, new XMLSyntaxRule[] {
                     new ElementRule(Parameter.class),
             }),
@@ -538,7 +538,7 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
             new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
-            AttributeRule.newDoubleRule(NUGGET, true),
+//            AttributeRule.newDoubleRule(NUGGET, true),
 
     };
 
@@ -548,13 +548,13 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
 
     private ContinuousDataLikelihoodDelegate delegate = null;
 
-    private static Matrix buildDiagonalMatrix(double[] diagonals) {
-        Matrix mat = new Matrix(diagonals.length, diagonals.length);
-        for (int i = 0; i < diagonals.length; ++i) {
-            mat.set(i, i, diagonals[i]);
-        }
-        return mat;
-    }
+//    private static Matrix buildDiagonalMatrix(double[] diagonals) {
+//        Matrix mat = new Matrix(diagonals.length, diagonals.length);
+//        for (int i = 0; i < diagonals.length; ++i) {
+//            mat.set(i, i, diagonals[i]);
+//        }
+//        return mat;
+//    }
 
     @Override
     public String getReport() {
@@ -565,114 +565,114 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
 
         if (delegate != null) {
 
-            final Tree tree = delegate.getCallbackLikelihood().getTree();
-            sb.append(tree.toString());
-            sb.append("\n\n");
-
-            final double normalization = delegate.getRateTransformation().getNormalization();
-            final double priorSampleSize = delegate.getRootProcessDelegate().getPseudoObservations();
-
-            double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
-            sb.append("Tree structure:\n");
-            sb.append(new Matrix(treeStructure));
-            sb.append("\n\n");
-
-            double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
-
-            Matrix treeV = new Matrix(treeVariance);
-            Matrix treeP = treeV.inverse();
-
-            sb.append("Tree variance:\n");
-            sb.append(treeV);
-            sb.append("Tree precision:\n");
-            sb.append(treeP);
-            sb.append("\n\n");
-            
-            Matrix Lt = new Matrix(loadings.getParameterAsMatrix());
-            sb.append("Loadings:\n");
-            sb.append(Lt);
-            sb.append("\n\n");
-            Matrix loadingsVariance = null;
-            try {
-                loadingsVariance = Lt.product(Lt.transpose());
-            } catch (IllegalDimension illegalDimension) {
-                illegalDimension.printStackTrace();
-            }
-            sb.append("Loadings variance:\n");
-            sb.append(loadingsVariance);
-            sb.append("\n\n");
-
-            Matrix gamma = buildDiagonalMatrix(traitPrecision.getParameterValues());
-            sb.append("Trait precision:\n");
-            sb.append(gamma);
-            sb.append("\n\n");
-            Matrix gammaVariance = gamma.inverse();
-
-            double[] tmp = new double[tree.getExternalNodeCount()];
-            Arrays.fill(tmp, 1.0);
-            Matrix identity = buildDiagonalMatrix(tmp);
-            Matrix loadingsFactorsVariance = new Matrix(KroneckerOperation.product(treeVariance, loadingsVariance.toComponents()));
-            Matrix errorVariance = new Matrix(KroneckerOperation.product(identity.toComponents(), gammaVariance.toComponents()));
-
-            sb.append("Loadings-factors variance:\n");
-            sb.append(loadingsFactorsVariance);
-            sb.append("\n\n");
-
-            sb.append("Error variance\n");
-            sb.append(errorVariance);
-            sb.append("\n\n");
-
-            Matrix totalVariance = null;
-            try {
-                totalVariance = loadingsFactorsVariance.add(errorVariance);
-            } catch (IllegalDimension illegalDimension) {
-                illegalDimension.printStackTrace();
-            }
-
-            double[] allData = getParameter().getParameterValues();
-
-            List<Integer> notMissing = new ArrayList<Integer>();
-            for (int taxon = 0; taxon < numTaxa; ++taxon) {
-                double[] observed = observedIndicators[taxon];
-                for (int trait = 0; trait < dimTrait; ++trait) {
-                    if (observed[trait] == 0.0) {
-                        System.err.println("Missing taxon " + taxon + " trait " + trait);
-                    } else {
-                        notMissing.add(taxon * dimTrait + trait);
-                    }
-                }
-            }
-
-            int[] notMissingIndices = new int[notMissing.size()];
-            double[] data = new double[notMissing.size()];
-            for (int i = 0; i < notMissing.size(); ++i) {
-                notMissingIndices[i] = notMissing.get(i);
-                data[i] = allData[notMissing.get(i)];
-            }
-
-            totalVariance = new Matrix(Matrix.gatherRowsAndColumns(totalVariance.toComponents(), notMissingIndices, notMissingIndices));
-            Matrix totalPrecision = totalVariance.inverse();
-            
-            sb.append("Total variance:\n");
-            sb.append(totalVariance);
-            sb.append("\n\n");
-            sb.append("Total precision:\n");
-            sb.append(totalPrecision);
-            sb.append("\n\n");
-
-            sb.append("Data:\n");
-            sb.append(new Vector(data));
-            sb.append("\n\n");
-
-            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[data.length],
-                    totalPrecision.toComponents());
-
-            double logDensity = mvn.logPdf(data);
-            sb.append("logMultiVariateNormalDensity = " + logDensity + "\n\n");
-
-            double logInc = delegate.getCallbackLikelihood().getLogLikelihood();
-            sb.append("traitDataLikelihood = " + logInc + "\n");
-            logComponents += logInc;
+//            final Tree tree = delegate.getCallbackLikelihood().getTree();
+//            sb.append(tree.toString());
+//            sb.append("\n\n");
+//
+//            final double normalization = delegate.getRateTransformation().getNormalization();
+//            final double priorSampleSize = delegate.getRootProcessDelegate().getPseudoObservations();
+//
+//            double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+//            sb.append("Tree structure:\n");
+//            sb.append(new Matrix(treeStructure));
+//            sb.append("\n\n");
+//
+//            double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
+//
+//            Matrix treeV = new Matrix(treeVariance);
+//            Matrix treeP = treeV.inverse();
+//
+//            sb.append("Tree variance:\n");
+//            sb.append(treeV);
+//            sb.append("Tree precision:\n");
+//            sb.append(treeP);
+//            sb.append("\n\n");
+//
+//            Matrix Lt = new Matrix(loadings.getParameterAsMatrix());
+//            sb.append("Loadings:\n");
+//            sb.append(Lt);
+//            sb.append("\n\n");
+//            Matrix loadingsVariance = null;
+//            try {
+//                loadingsVariance = Lt.product(Lt.transpose());
+//            } catch (IllegalDimension illegalDimension) {
+//                illegalDimension.printStackTrace();
+//            }
+//            sb.append("Loadings variance:\n");
+//            sb.append(loadingsVariance);
+//            sb.append("\n\n");
+//
+//            Matrix gamma = buildDiagonalMatrix(traitPrecision.getParameterValues());
+//            sb.append("Trait precision:\n");
+//            sb.append(gamma);
+//            sb.append("\n\n");
+//            Matrix gammaVariance = gamma.inverse();
+//
+//            double[] tmp = new double[tree.getExternalNodeCount()];
+//            Arrays.fill(tmp, 1.0);
+//            Matrix identity = buildDiagonalMatrix(tmp);
+//            Matrix loadingsFactorsVariance = new Matrix(KroneckerOperation.product(treeVariance, loadingsVariance.toComponents()));
+//            Matrix errorVariance = new Matrix(KroneckerOperation.product(identity.toComponents(), gammaVariance.toComponents()));
+//
+//            sb.append("Loadings-factors variance:\n");
+//            sb.append(loadingsFactorsVariance);
+//            sb.append("\n\n");
+//
+//            sb.append("Error variance\n");
+//            sb.append(errorVariance);
+//            sb.append("\n\n");
+//
+//            Matrix totalVariance = null;
+//            try {
+//                totalVariance = loadingsFactorsVariance.add(errorVariance);
+//            } catch (IllegalDimension illegalDimension) {
+//                illegalDimension.printStackTrace();
+//            }
+//
+//            double[] allData = getParameter().getParameterValues();
+//
+//            List<Integer> notMissing = new ArrayList<Integer>();
+//            for (int taxon = 0; taxon < numTaxa; ++taxon) {
+//                double[] observed = observedIndicators[taxon];
+//                for (int trait = 0; trait < dimTrait; ++trait) {
+//                    if (observed[trait] == 0.0) {
+//                        System.err.println("Missing taxon " + taxon + " trait " + trait);
+//                    } else {
+//                        notMissing.add(taxon * dimTrait + trait);
+//                    }
+//                }
+//            }
+//
+//            int[] notMissingIndices = new int[notMissing.size()];
+//            double[] data = new double[notMissing.size()];
+//            for (int i = 0; i < notMissing.size(); ++i) {
+//                notMissingIndices[i] = notMissing.get(i);
+//                data[i] = allData[notMissing.get(i)];
+//            }
+//
+//            totalVariance = new Matrix(Matrix.gatherRowsAndColumns(totalVariance.toComponents(), notMissingIndices, notMissingIndices));
+//            Matrix totalPrecision = totalVariance.inverse();
+//
+//            sb.append("Total variance:\n");
+//            sb.append(totalVariance);
+//            sb.append("\n\n");
+//            sb.append("Total precision:\n");
+//            sb.append(totalPrecision);
+//            sb.append("\n\n");
+//
+//            sb.append("Data:\n");
+//            sb.append(new Vector(data));
+//            sb.append("\n\n");
+//
+//            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[data.length],
+//                    totalPrecision.toComponents());
+//
+//            double logDensity = mvn.logPdf(data);
+//            sb.append("logMultiVariateNormalDensity = " + logDensity + "\n\n");
+//
+//            double logInc = delegate.getCallbackLikelihood().getLogLikelihood();
+//            sb.append("traitDataLikelihood = " + logInc + "\n");
+//            logComponents += logInc;
         }
 
         sb.append("logLikelihood = " + getLogLikelihood()+ "\n");

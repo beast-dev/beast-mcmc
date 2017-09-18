@@ -45,10 +45,7 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.RestrictedPartials;
 import dr.evomodel.continuous.RestrictedPartialsModel;
 import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -84,19 +81,21 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private TreeDataLikelihood callbackLikelihood = null;
 
     public ContinuousDataLikelihoodDelegate(Tree tree,
-                                            MultivariateDiffusionModel diffusionModel,
+//                                            MultivariateDiffusionModel diffusionModel,
+                                            DiffusionProcessDelegate diffusionProcessDelegate,
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
                                             BranchRateModel rateModel,
                                             List<RestrictedPartials> restrictedPartialsList,
                                             boolean allowSingular) {
-        this(tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel,
+        this(tree, diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
                 restrictedPartialsList, false, allowSingular);
     }
 
     public ContinuousDataLikelihoodDelegate(Tree tree,
-                                            MultivariateDiffusionModel diffusionModel,
+//                                            MultivariateDiffusionModel diffusionModel,
+                                            DiffusionProcessDelegate diffusionProcessDelegate,
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
@@ -110,8 +109,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         logger.info("Using ContinuousDataLikelihood Delegate");
 
-        this.diffusionModel = diffusionModel;
-        addModel(diffusionModel);
+//        this.diffusionModel = diffusionModel;
+//        addModel(diffusionModel);
+        this.diffusionProcessDelegate = diffusionProcessDelegate;
+        addModel(diffusionProcessDelegate);
 
         this.dataModel = dataModel;
         if (dataModel instanceof Model) {
@@ -139,8 +140,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         branchUpdateIndices = new int[nodeCount];
         branchLengths = new double[nodeCount];
-
-        diffusionProcessDelegate = new HomogenousDiffusionModelDelegate(tree, diffusionModel);
 
         // one or two partials buffer for each tip and two for each internal node (for store restore)
         partialBufferHelper = new BufferIndexHelper(nodeCount,
@@ -188,6 +187,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             ContinuousDiffusionIntegrator base = null;
 
+            // TODO Convert switches to enum
+            boolean TRY_DRIFT = true;
+
             if (precisionType == PrecisionType.SCALAR || USE_OLD) {
 
                 base = new ContinuousDiffusionIntegrator.Basic(
@@ -200,9 +202,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                if (allowSingular) {
-                    
-                    base = new SafeMultivariateIntegrator(
+                if (TRY_DRIFT) {
+                    base = new SafeMultivariateWithDriftIntegrator(
                             precisionType,
                             numTraits,
                             dimTrait,
@@ -210,13 +211,23 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                             matrixBufferCount
                     );
                 } else {
-                    base = new MultivariateIntegrator(
-                            precisionType,
-                            numTraits,
-                            dimTrait,
-                            partialBufferCount,
-                            matrixBufferCount
-                    );
+                    if (allowSingular) {
+                        base = new SafeMultivariateIntegrator(
+                                precisionType,
+                                numTraits,
+                                dimTrait,
+                                partialBufferCount,
+                                matrixBufferCount
+                        );
+                    } else {
+                        base = new MultivariateIntegrator(
+                                precisionType,
+                                numTraits,
+                                dimTrait,
+                                partialBufferCount,
+                                matrixBufferCount
+                        );
+                    }
                 }
 
             } else {
@@ -604,7 +615,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     public MultivariateDiffusionModel getDiffusionModel() {
-        return diffusionModel;
+        return diffusionProcessDelegate.getDiffusionModel(0);
     }
 
     private void setAllTipData(boolean flip) {
@@ -795,10 +806,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == diffusionModel) {
-            updateDiffusionModel = true;
-            // Tell TreeDataLikelihood to update all nodes
-            fireModelChanged();
+//        if (model == diffusionModel) {
+        if (model == diffusionProcessDelegate) {
+            if (object == diffusionProcessDelegate.getDiffusionModel(0)) {
+                updateDiffusionModel = true;
+                // Tell TreeDataLikelihood to update all nodes
+                fireModelChanged();
+            } else {
+                throw new RuntimeException("Unknown object component");
+            }
         } else if (model == dataModel) {
             if (object == dataModel) {
                 if (index == -1) { // all taxa updated
@@ -828,7 +844,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public void storeState() {
         partialBufferHelper.storeState();
-        diffusionProcessDelegate.storeState();
+//        diffusionProcessDelegate.storeState(); // Now delegate is an AbstractModel
 
         // turn on double buffering flipping (may have been turned off to enable a rescale)
         flip = true;
@@ -844,7 +860,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
-        diffusionProcessDelegate.restoreState();
+//        diffusionProcessDelegate.restoreState();
 
         branchNormalization = storedBranchNormalization;
     }
@@ -890,7 +906,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private final DiffusionProcessDelegate diffusionProcessDelegate;
 
-    private final MultivariateDiffusionModel diffusionModel;
+//    private final MultivariateDiffusionModel diffusionModel;
 
     private final RootProcessDelegate rootProcessDelegate;
 
@@ -922,12 +938,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     @Override
     public MatrixParameterInterface getPrecisionParamter() {
-        return diffusionModel.getPrecisionParameter();
+        return getDiffusionModel().getPrecisionParameter();
     }
 
     public static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
-                likelihoodDelegate.diffusionModel,
+//                likelihoodDelegate.getDiffusionModel(),
+                likelihoodDelegate.diffusionProcessDelegate,
                 likelihoodDelegate.dataModel,
                 likelihoodDelegate.rootPrior,
                 likelihoodDelegate.rateTransformation,
@@ -956,7 +973,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 likelihoodDelegate.getTraitDim(), PrecisionType.FULL);
 
         ContinuousDataLikelihoodDelegate newDelegate = new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
-                likelihoodDelegate.diffusionModel,
+//                likelihoodDelegate.getDiffusionModel(),
+                likelihoodDelegate.diffusionProcessDelegate,
                 newDataModel,
                 likelihoodDelegate.rootPrior,
                 likelihoodDelegate.rateTransformation,

@@ -144,8 +144,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 //        RestrictedPartialsModel restrictedPartialsModel = (restrictedPartialsList.size() > 0) ?
 //                new RestrictedPartialsModel("TODO", restrictedPartialsList) : null;
 
+        DiffusionProcessDelegate diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
+
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionModel, dataModel, rootPrior, rateTransformation, rateModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
                 restrictedPartialsList, allowSingular);
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {

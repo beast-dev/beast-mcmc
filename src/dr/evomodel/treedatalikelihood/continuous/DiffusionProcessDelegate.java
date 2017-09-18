@@ -37,7 +37,7 @@ import dr.inference.model.Model;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public interface DiffusionProcessDelegate {
+public interface DiffusionProcessDelegate extends Model {
 
     int getDiffusionModelCount();
 

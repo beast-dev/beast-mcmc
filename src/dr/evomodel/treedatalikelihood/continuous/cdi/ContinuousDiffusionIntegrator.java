@@ -584,7 +584,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         private void allocateStorage() {
             partials = new double[dimPartial * bufferCount];
-            variances = new double[dimTrait * dimTrait * bufferCount];
+            variances = new double[dimMatrix * bufferCount]; // TODO Should be dimTrait * dimTrait
             remainders = new double[numTraits * bufferCount];
 
             diffusions = new double[dimTrait * dimTrait * diffusionCount];

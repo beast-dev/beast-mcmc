@@ -188,7 +188,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             ContinuousDiffusionIntegrator base = null;
 
             // TODO Convert switches to enum
-            boolean TRY_DRIFT = true;
+            boolean TRY_DRIFT = false;
 
             if (precisionType == PrecisionType.SCALAR || USE_OLD) {
 

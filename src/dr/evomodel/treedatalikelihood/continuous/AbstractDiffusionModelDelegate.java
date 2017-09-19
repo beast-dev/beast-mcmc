@@ -42,15 +42,15 @@ import java.io.Serializable;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class AbstractDiffusionModelDelegate extends AbstractModel implements DiffusionProcessDelegate, Serializable {
+public abstract class AbstractDiffusionModelDelegate extends AbstractModel implements DiffusionProcessDelegate, Serializable {
 
 //    private static final boolean DEBUG = false;
 
     final Tree tree;
     private final MultivariateDiffusionModel diffusionModel;
 
-    final BufferIndexHelper eigenBufferHelper;
-    final BufferIndexHelper matrixBufferHelper;
+    private final BufferIndexHelper eigenBufferHelper;
+    private final BufferIndexHelper matrixBufferHelper;
 
     AbstractDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel,
                                           int partitionNumber) {
@@ -123,9 +123,12 @@ public class AbstractDiffusionModelDelegate extends AbstractModel implements Dif
         cdi.updateBrownianDiffusionMatrices(
                 eigenBufferHelper.getOffsetIndex(0),
                 probabilityIndices,
-                edgeLengths, null,
+                edgeLengths,
+                getDriftRates(branchIndices, updateCount),
                 updateCount);
     }
+
+    protected abstract double[] getDriftRates(int[] branchIndices, int updateCount);
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -143,14 +146,12 @@ public class AbstractDiffusionModelDelegate extends AbstractModel implements Dif
 
     @Override
     public void storeState() {
-//        System.err.println("ADMD.sS");
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
     }
 
     @Override
     public void restoreState() {
-//        System.err.println("ADMD.rS");
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
     }

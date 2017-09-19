@@ -29,18 +29,17 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 import java.util.List;
 
 /**
- * A simple diffusion model delegate with the same diffusion model over the whole tree
+ * A simple diffusion model delegate with branch-specific drift and constant diffusion
  * @author Marc A. Suchard
  * @version $Id$
  */
 public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
-    private static final boolean DEBUG = true;
+//    private static final boolean DEBUG = true;
 
     private final int dim;
     private final List<BranchRateModel> branchRateModels;
@@ -68,17 +67,7 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
     }
 
     @Override
-    public void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
-                                        int updateCount, boolean flip) {
-
-        final int[] probabilityIndices = new int[updateCount];
-
-        for (int i = 0; i < updateCount; i++) {
-            if (flip) {
-                matrixBufferHelper.flipOffset(branchIndices[i]);
-            }
-            probabilityIndices[i] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
-        }
+    protected double[] getDriftRates(int[] branchIndices, int updateCount) {
 
         final double[] drift = new double[updateCount * dim];  // TODO Reuse?
 
@@ -95,11 +84,6 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
                 }
             }
         }
-
-        cdi.updateBrownianDiffusionMatrices(
-                eigenBufferHelper.getOffsetIndex(0),
-                probabilityIndices,
-                edgeLengths, drift,
-                updateCount);
+        return drift;
     }
 }

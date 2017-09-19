@@ -27,7 +27,6 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 /**
  * A simple diffusion model delegate with the same diffusion model over the whole tree
@@ -37,34 +36,12 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrat
  */
 public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
-//    private static final boolean DEBUG = false;
-
     public HomogeneousDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel) {
-        this(tree, diffusionModel, 0);
-    }
-
-    private HomogeneousDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel,
-                                              int partitionNumber) {
-        super(tree, diffusionModel, partitionNumber);
+        super(tree, diffusionModel, 0);
     }
 
     @Override
-    public void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
-                                        int updateCount, boolean flip) {
-
-        int[] probabilityIndices = new int[updateCount];
-
-        for (int i = 0; i < updateCount; i++) {
-            if (flip) {
-                matrixBufferHelper.flipOffset(branchIndices[i]);
-            }
-            probabilityIndices[i] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
-        }
-
-        cdi.updateBrownianDiffusionMatrices(
-                eigenBufferHelper.getOffsetIndex(0),
-                probabilityIndices,
-                edgeLengths, null,
-                updateCount);
+    protected double[] getDriftRates(int[] branchIndices, int updateCount) {
+        return null;
     }
 }

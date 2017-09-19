@@ -29,11 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
-import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.continuous.RestrictedPartials;
-import dr.evomodel.continuous.RestrictedPartialsModel;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.continuous.*;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -43,9 +39,7 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import org.w3c.dom.Attr;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -60,11 +54,13 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SCALE_BY_TIME = AbstractMultivariateTraitLikelihood.SCALE_BY_TIME;
     public static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
     public static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
+    public static final String DRIFT_MODELS = AbstractMultivariateTraitLikelihood.DRIFT_MODELS;
 
     public static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     public static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
     public static final String ALLOW_SINGULAR = "allowSingular";
     public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
+    public static final String FORCE_DRIFT = "forceDrift";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -95,7 +91,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
         List<Integer> missingIndices = null;
-        Parameter sampleMissingParameter = null;
+//        Parameter sampleMissingParameter = null;
         ContinuousTraitPartialsProvider dataModel = null;
         boolean useMissingIndices = true;
 
@@ -106,7 +102,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                     utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
             missingIndices = returnValue.missingIndices;
-            sampleMissingParameter = returnValue.sampleMissingParameter;
+//            sampleMissingParameter = returnValue.sampleMissingParameter;
             traitName = returnValue.traitName;
             useMissingIndices = returnValue.useMissingIndices;
 
@@ -138,17 +134,17 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
         }
 
-        List<RestrictedPartials> restrictedPartialsList =
-                AbstractMultivariateTraitLikelihood.parseRestrictedPartials(xo, true);
+        List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
 
-//        RestrictedPartialsModel restrictedPartialsModel = (restrictedPartialsList.size() > 0) ?
-//                new RestrictedPartialsModel("TODO", restrictedPartialsList) : null;
-
-        DiffusionProcessDelegate diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
+        DiffusionProcessDelegate diffusionProcessDelegate;
+        if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
+            diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
+        } else {
+            diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
+        }
 
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
-                restrictedPartialsList, allowSingular);
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
             ((IntegratedFactorAnalysisLikelihood)dataModel).setLikelihoodDelegate(delegate);
@@ -228,7 +224,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                     }),
                     new ElementRule(ContinuousTraitPartialsProvider.class)
             ),
-            new ElementRule(RestrictedPartials.class, 0, Integer.MAX_VALUE),
+            new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
+                    new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
+            }, true),
             AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),

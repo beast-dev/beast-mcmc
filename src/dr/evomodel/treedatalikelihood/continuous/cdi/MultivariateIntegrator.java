@@ -19,7 +19,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
 public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic {
 
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
 
     public MultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
                                   int diffusionCount) {

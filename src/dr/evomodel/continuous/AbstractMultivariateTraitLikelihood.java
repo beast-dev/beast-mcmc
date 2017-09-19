@@ -30,6 +30,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -761,20 +762,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-            List<BranchRateModel> driftModels = null;
-            if (xo.hasChildNamed(DRIFT_MODELS)) {
-                driftModels = new ArrayList<BranchRateModel>();
-                XMLObject cxo = xo.getChild(DRIFT_MODELS);
-                final int number = cxo.getChildCount();
-                if (number != diffusionModel.getPrecisionmatrix().length) {
-                    throw new XMLParseException("Wrong number of drift models (" + number + ") for a trait of" +
-                            " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
-                    );
-                }
-                for (int i = 0; i < number; ++i) {
-                    driftModels.add((BranchRateModel) cxo.getChild(i));
-                }
-            }
+            List<BranchRateModel> driftModels = parseDriftModels(xo, diffusionModel);
 
             List<BranchRateModel> optimalValues = null;
             BranchRateModel strengthOfSelection = null;
@@ -1046,6 +1034,33 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             return AbstractMultivariateTraitLikelihood.class;
         }
     };
+
+
+    public static List<BranchRateModel> parseDriftModels(XMLObject xo,
+                                                         MultivariateDiffusionModel diffusionModel)
+            throws XMLParseException {
+
+        List<BranchRateModel> driftModels = null;
+
+        if (xo.hasChildNamed(DRIFT_MODELS)) {
+            driftModels = new ArrayList<BranchRateModel>();
+            XMLObject cxo = xo.getChild(DRIFT_MODELS);
+
+            final int number = cxo.getChildCount();
+
+            if (number != diffusionModel.getPrecisionmatrix().length) {
+                throw new XMLParseException("Wrong number of drift models (" + number + ") for a trait of" +
+                        " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
+                );
+            }
+
+            for (int i = 0; i < number; ++i) {
+                driftModels.add((BranchRateModel) cxo.getChild(i));
+            }
+
+        }
+        return driftModels;
+    }
 
     public static List<RestrictedPartials> parseRestrictedPartials(XMLObject xo, boolean integrate)
             throws XMLParseException {

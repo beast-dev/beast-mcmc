@@ -70,7 +70,9 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 
     private void allocateStorage() {
         inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
-        displacements = new double[dimTrait * diffusionCount];
+
+        displacements = new double[dimTrait * bufferCount];
+        precisions = new double[dimTrait * dimTrait * bufferCount];
 
         vector0 = new double[dimTrait];
         vector1 = new double[dimTrait];
@@ -88,6 +90,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
     public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
         super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
 
+        assert (diffusions != null);
         assert (inverseDiffusions != null);
 
         final int offset = dimTrait * dimTrait * precisionIndex;
@@ -107,6 +110,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
                                                 final double[] edgeLengths, final double[] driftRates,
                                                 int updateCount) {
 
+        assert (diffusions != null);
         assert (probabilityIndices.length >= updateCount);
         assert (edgeLengths.length >= updateCount);
 
@@ -114,7 +118,8 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
             System.err.println("Matrices (safe with drift):");
         }
 
-        final int unscaledOffset = dimTrait * dimTrait * precisionIndex;
+        final int matrixSize = dimTrait * dimTrait;
+        final int unscaledOffset = matrixSize * precisionIndex;
 
         if (TIMING) {
             startTime("diffusion");
@@ -127,10 +132,10 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
             }
 
             final double edgeLength = edgeLengths[up];
-            final int scaledOffset = dimTrait * dimTrait * probabilityIndices[up];
+            final int scaledOffset = matrixSize * probabilityIndices[up];
 
-            scale(diffusions, unscaledOffset, 1.0 / edgeLength, precisions, scaledOffset, dimMatrix);
-            scale(inverseDiffusions, unscaledOffset, edgeLength, variances, scaledOffset, dimMatrix); // TODO Only if necessary
+            scale(diffusions, unscaledOffset, 1.0 / edgeLength, precisions, scaledOffset, matrixSize);
+            scale(inverseDiffusions, unscaledOffset, edgeLength, variances, scaledOffset, matrixSize); // TODO Only if necessary
         }
 
         if (TIMING) {
@@ -316,8 +321,8 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = dimTrait * dimTrait * iMatrix;
+        final int jmo = dimTrait * dimTrait * jMatrix;
 
         // Read variance increments along descendent branches of k
 

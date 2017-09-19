@@ -46,6 +46,7 @@ public class AbstractDiffusionModelDelegate extends AbstractModel implements Dif
 
 //    private static final boolean DEBUG = false;
 
+    final Tree tree;
     private final MultivariateDiffusionModel diffusionModel;
 
     final BufferIndexHelper eigenBufferHelper;
@@ -56,6 +57,7 @@ public class AbstractDiffusionModelDelegate extends AbstractModel implements Dif
 
         super("AbstractDiffusionModelDelegate");
 
+        this.tree = tree;
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
 

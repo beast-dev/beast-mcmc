@@ -131,6 +131,9 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     protected abstract double[] getDriftRates(int[] branchIndices, int updateCount);
 
     @Override
+    public boolean hasDrift() { return false; }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionModel) {
             fireModelChanged(model);

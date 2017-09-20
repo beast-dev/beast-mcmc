@@ -67,6 +67,9 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
     }
 
     @Override
+    public boolean hasDrift() { return true; }
+
+    @Override
     protected double[] getDriftRates(int[] branchIndices, int updateCount) {
 
         final double[] drift = new double[updateCount * dim];  // TODO Reuse?
@@ -85,5 +88,24 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
             }
         }
         return drift;
+    }
+
+    public double[] getAccumulativeDrift(final NodeRef node) {
+        final double[] drift = new double[dim];
+        recursivelyAccumulateDrift(node, drift);
+        return drift;
+    }
+
+    private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift) {
+        if (!tree.isRoot(node)) {
+
+            final double length = tree.getBranchLength(node);
+
+            for (int model = 0; model < dim; ++model) {
+                drift[model] += branchRateModels.get(model).getBranchRate(tree, node) * length;
+            }
+
+            recursivelyAccumulateDrift(tree.getParent(node), drift);
+        }
     }
 }

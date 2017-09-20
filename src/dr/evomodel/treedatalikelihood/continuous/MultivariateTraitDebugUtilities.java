@@ -211,4 +211,19 @@ public class MultivariateTraitDebugUtilities {
 //
 //        return sb.toString();
 //    }
+
+    public static double[][] getTreeDrift(Tree tree, DiffusionProcessDelegate diffusion) {
+
+        final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
+        final double[][] drift = new double[tree.getExternalNodeCount()][dim];
+
+        if (diffusion instanceof DriftDiffusionModelDelegate) {
+            for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
+                drift[tip] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(
+                        tree.getExternalNode(tip));
+            }
+        }
+
+        return drift;
+    }
 }

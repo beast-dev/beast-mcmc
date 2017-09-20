@@ -90,9 +90,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dim);
 
         String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
-        List<Integer> missingIndices = null;
+        List<Integer> missingIndices;
 //        Parameter sampleMissingParameter = null;
-        ContinuousTraitPartialsProvider dataModel = null;
+        ContinuousTraitPartialsProvider dataModel;
         boolean useMissingIndices = true;
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {

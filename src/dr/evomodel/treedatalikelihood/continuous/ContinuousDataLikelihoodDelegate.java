@@ -349,6 +349,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append(new Matrix(jointVariance));
         sb.append("\n\n");
 
+        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, diffusionProcessDelegate);
+        if (diffusionProcessDelegate.hasDrift()) {
+            sb.append("Tree drift:\n");
+            sb.append(new Matrix(treeDrift));
+            sb.append("\n\n");
+        }
+        double[] drift = KroneckerOperation.vectorize(treeDrift);
+
         final int datumLength = tipCount * dimTrait;
 
         sb.append("Tree dim : ").append(treeVariance.length).append("\n");
@@ -424,6 +432,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double[][] varianceDatum = jointVariance;
             double[] datum = rawDatum;
 
+            double[] driftDatum = drift;
+
 //            int[] missingIndices;
             int[] notMissingIndices;
 
@@ -444,13 +454,20 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
                 datum = Matrix.gatherEntries(rawDatum, notMissingIndices);
                 varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, notMissingIndices, notMissingIndices);
+
+                driftDatum = Matrix.gatherEntries(drift, notMissingIndices);
             }
 
             sb.append("datum : ").append(new dr.math.matrixAlgebra.Vector(datum)).append("\n");
+
+            if (diffusionProcessDelegate.hasDrift()) {
+                sb.append("drift : ").append(new dr.math.matrixAlgebra.Vector(driftDatum)).append("\n");
+            }
+
             sb.append("variance:\n");
             sb.append(new Matrix(varianceDatum));
 
-            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[datum.length], new Matrix(varianceDatum).inverse().toComponents());
+            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(driftDatum, new Matrix(varianceDatum).inverse().toComponents());
             double logDensity = mvn.logPdf(datum);
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");

@@ -54,6 +54,8 @@ public interface DiffusionProcessDelegate extends Model {
     void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
                                  int updateCount, boolean flipBuffers);
 
+    boolean hasDrift();
+
     void storeState();
 
     void restoreState();

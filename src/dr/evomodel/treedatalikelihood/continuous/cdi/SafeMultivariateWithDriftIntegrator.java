@@ -2,7 +2,6 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
-import mpi.Comm;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -67,6 +66,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 
     private double[] vector0;
     private double[] vector1;
+    private double[] vector2;
 
     private void allocateStorage() {
         inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
@@ -76,6 +76,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 
         vector0 = new double[dimTrait];
         vector1 = new double[dimTrait];
+        vector2 = new double[dimTrait];
 
         matrix0 = new DenseMatrix64F(dimTrait, dimTrait);
         matrix1 = new DenseMatrix64F(dimTrait, dimTrait);
@@ -327,8 +328,8 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         // Read variance increments along descendent branches of k
 
         // TODO Fix
-        final double vi = variances[imo];
-        final double vj = variances[jmo];
+//        final double vi = variances[imo];
+//        final double vj = variances[jmo];
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
         final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
@@ -343,7 +344,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 
         if (DEBUG) {
             System.err.println("variance diffusion: " + Vd); // TODO Fix
-            System.err.println("\tvi: " + vi + " vj: " + vj);
+//            System.err.println("\tvi: " + vi + " vj: " + vj);
             System.err.println("precisionOffset = " + precisionOffset);
             System.err.println("\tVdi: " + Vdi);
             System.err.println("\tVdj: " + Vdj);
@@ -365,8 +366,8 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
             // Increase variance along the branches i -> k and j -> k
 
             // A. Get current precision of i and j
-            final double lpi = partials[ibo + dimTrait + 2 * dimTrait * dimTrait];
-            final double lpj = partials[jbo + dimTrait + 2 * dimTrait * dimTrait];
+//            final double lpi = partials[ibo + dimTrait + 2 * dimTrait * dimTrait];
+//            final double lpj = partials[jbo + dimTrait + 2 * dimTrait * dimTrait];
 
             final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
             final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
@@ -377,10 +378,10 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
             }
 
             // B. Integrate along branch using two matrix inversions
-            final double lpip = Double.isInfinite(lpi) ?
-                    1.0 / vi : lpi / (1.0 + lpi * vi);
-            final double lpjp = Double.isInfinite(lpj) ?
-                    1.0 / vj : lpj / (1.0 + lpj * vj);
+//            final double lpip = Double.isInfinite(lpi) ?
+//                    1.0 / vi : lpi / (1.0 + lpi * vi);
+//            final double lpjp = Double.isInfinite(lpj) ?
+//                    1.0 / vj : lpj / (1.0 + lpj * vj);
 
             InversionResult ci;
             InversionResult cj;
@@ -434,68 +435,22 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
                 cj = safeDeterminant(Pjp, false);
             }
 
-//            if (useVariance) {
-//
-//                final DenseMatrix64F Vip = matrix0;
-//                final DenseMatrix64F Vjp = matrix1;
-//
-//                final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-//                final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-//
-//                CommonOps.add(Vi, vi, Vd, Vip);
-//                CommonOps.add(Vj, vj, Vd, Vjp);
-//
-//                ci = safeInvert(Vip, Pip, true);
-//                cj = safeInvert(Vjp, Pjp, true);
-//            } else {
-//
-//                final DenseMatrix64F PiPlusPd = matrix0;
-//                final DenseMatrix64F PjPlusPd = matrix1;
-//
-//                CommonOps.add(Pi, 1.0 / vi, Pd, PiPlusPd);
-//                CommonOps.add(Pj, 1.0 / vj, Pd, PjPlusPd);
-//
-//                final DenseMatrix64F PiPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
-//                final DenseMatrix64F PjPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
-//
-//                safeInvert(PiPlusPd, PiPlusPdInv, false);
-//                safeInvert(PjPlusPd, PjPlusPdInv, false);
-//
-//                CommonOps.mult(PiPlusPdInv, Pi, Pip);
-//                CommonOps.mult(PjPlusPdInv, Pj, Pjp);
-//
-//                CommonOps.mult(Pi, Pip, PiPlusPdInv);
-//                CommonOps.mult(Pj, Pjp, PjPlusPdInv);
-//
-//                CommonOps.add(Pi, -1, PiPlusPdInv, Pip);
-//                CommonOps.add(Pj, -1, PjPlusPdInv, Pjp);
-//
-//                ci = safeDeterminant(Pip, false);
-//                cj = safeDeterminant(Pjp, false);
-//            }
-
             if (TIMING) {
                 endTime("peel2");
-                startTime("peel2a");
-            }
-
-            
-            if (TIMING) {
-                endTime("peel2a");
                 startTime("peel3");
             }
 
             // Compute partial mean and precision at node k
 
             // A. Partial precision and variance (for later use) using one matrix inversion
-            final double lpk = lpip + lpjp;
+//            final double lpk = lpip + lpjp;
 
 //                final DenseMatrix64F Pk = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pk = matrix4;
             CommonOps.add(Pip, Pjp, Pk);
 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Vk = matrix5;
+//            final DenseMatrix64F Vk = matrix5;
 
 //            if (useVariance) {
 ////            InversionResult ck =
@@ -514,13 +469,24 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
                 startTime("peel4");
             }
 
+            final double[] displacementi = vector1;
+            final double[] displacementj = vector2;
+
+            final int ido = dimTrait * iMatrix;
+            final int jdo = dimTrait * jMatrix;
+
+            for (int g = 0; g < dimTrait; ++g) {
+                displacementi[g] = partials[ibo + g] - displacements[ido + g];
+                displacementj[g] = partials[jbo + g] - displacements[jdo + g];
+            }
+
 //                final double[] tmp = new double[dimTrait];
             final double[] tmp = vector0;
             for (int g = 0; g < dimTrait; ++g) {
                 double sum = 0.0;
                 for (int h = 0; h < dimTrait; ++h) {
-                    sum += Pip.unsafe_get(g, h) * partials[ibo + h];
-                    sum += Pjp.unsafe_get(g, h) * partials[jbo + h];
+                    sum += Pip.unsafe_get(g, h) * displacementi[h];
+                    sum += Pjp.unsafe_get(g, h) * displacementj[h];
                 }
                 tmp[g] = sum;
             }
@@ -545,15 +511,13 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 //            System.err.println(ck.getDeterminant());
 //            System.exit(-1);
 
-            // TODO Use safeSolve just above
-
             if (TIMING) {
                 endTime("peel4");
                 startTime("peel5");
             }
 
             // C. Store precision
-            partials[kbo + dimTrait + 2 * dimTrait * dimTrait] = lpk;
+//            partials[kbo + dimTrait + 2 * dimTrait * dimTrait] = lpk;
 
             unwrap(Pk, partials, kbo + dimTrait);
 
@@ -574,10 +538,20 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
                 for (int e = 0; e < dimTrait; ++e) {
                     System.err.print(" " + partials[ibo + e]);
                 }
+                System.err.print("\t\tdisp i:");
+                for (int e = 0; e < dimTrait; ++e) {
+                    System.err.print(" " + displacements[ido + e]);
+                }
+                System.err.println("");
                 System.err.print("\t\tmean j:");
                 for (int e = 0; e < dimTrait; ++e) {
                     System.err.print(" " + partials[jbo + e]);
                 }
+                System.err.print("\t\tdisp j:");
+                for (int e = 0; e < dimTrait; ++e) {
+                    System.err.print(" " + displacements[jdo + e]);
+                }
+                System.err.println("");
                 System.err.print("\t\tmean k:");
                 for (int e = 0; e < dimTrait; ++e) {
                     System.err.print(" " + partials[kbo + e]);
@@ -614,13 +588,17 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 
                 // vector-matrix-vector TODO in parallel
                 for (int g = 0; g < dimTrait; ++g) {
-                    final double ig = partials[ibo + g];
-                    final double jg = partials[jbo + g];
+//                    final double ig = partials[ibo + g];
+//                    final double jg = partials[jbo + g];
+                    final double ig = displacementi[g];
+                    final double jg = displacementj[g];
                     final double kg = partials[kbo + g];
 
                     for (int h = 0; h < dimTrait; ++h) {
-                        final double ih = partials[ibo + h];
-                        final double jh = partials[jbo + h];
+//                        final double ih = partials[ibo + h];
+//                        final double jh = partials[jbo + h];
+                        final double ih = displacementi[h];
+                        final double jh = displacementj[h];
                         final double kh = partials[kbo + h];
 
                         SSi += ig * Pip.unsafe_get(g, h) * ih;

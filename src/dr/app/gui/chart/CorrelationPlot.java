@@ -113,12 +113,11 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
         int xCount = xData.getCount();
         int yCount = yData.getCount();
 
-        double[] xDataArray = new double[xCount];
         double minX = 0.0;
         double maxX = 0.0;
         double minY = 0.0;
         double maxY = 0.0;
-        double[] yDataArray = new double[yCount];
+
         if (xCount > 0) {
             minX = (Double) xData.get(0);
             maxX = (Double) xData.get(0);
@@ -126,25 +125,70 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
             maxY = (Double) yData.get(0);
         }
 
-        for (int i = 0; i < xCount; i++) {
-            if (this.samples) {
-                //System.out.println("Only using a subset of available samples");
+        double[] xDataArray;
+        double[] yDataArray;
 
-            } else {
+        if (this.samples) {
+
+            //Only using a subset of available samples
+            int minCount = Math.min(xCount, yCount);
+            int sampleSize = minCount;
+            /*if (sampleSize < 20) {
+                sampleSize = 20;
+            }*/
+            if (sampleSize > 200) {
+                sampleSize = 200;
+            }
+
+            xDataArray = new double[sampleSize];
+            yDataArray = new double[sampleSize];
+
+            int k = 0;
+            for (int i = 0; i < sampleSize; i++) {
+
+                xDataArray[i] = (Double) xData.get(k);
+                yDataArray[i] = (Double) yData.get(k);
+                k += minCount / sampleSize;
+
+                if (xDataArray[i] < minX) {
+                    minX = xDataArray[i];
+                }
+                if (xDataArray[i] > maxX) {
+                    maxX = xDataArray[i];
+                }
+                if (yDataArray[i] < minY) {
+                    minY = yDataArray[i];
+                }
+                if (yDataArray[i] > maxY) {
+                    maxY = yDataArray[i];
+                }
+            }
+
+            xCount = sampleSize;
+            yCount = sampleSize;
+
+        } else {
+            xDataArray = new double[xCount];
+            yDataArray = new double[yCount];
+
+            for (int i = 0; i < xCount; i++) {
+
                 xDataArray[i] = (Double) xData.get(i);
                 yDataArray[i] = (Double) yData.get(i);
-            }
-            if (xDataArray[i] < minX) {
-                minX = xDataArray[i];
-            }
-            if (xDataArray[i] > maxX) {
-                maxX = xDataArray[i];
-            }
-            if (yDataArray[i] < minY) {
-                minY = yDataArray[i];
-            }
-            if (yDataArray[i] > maxY) {
-                maxY = yDataArray[i];
+
+                if (xDataArray[i] < minX) {
+                    minX = xDataArray[i];
+                }
+                if (xDataArray[i] > maxX) {
+                    maxX = xDataArray[i];
+                }
+                if (yDataArray[i] < minY) {
+                    minY = yDataArray[i];
+                }
+                if (yDataArray[i] > maxY) {
+                    maxY = yDataArray[i];
+                }
+
             }
         }
 
@@ -152,16 +196,8 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
 
             g2.setColor(Color.BLACK);
 
-            /*System.out.println("Draw as points");
-            System.out.println("minX = " + minX);
-            System.out.println("maxX = " + maxX);
-            System.out.println("minY = " + minY);
-            System.out.println("maxY = " + maxY);*/
-
             double x1 = (plotNumber / (int) Math.sqrt(plotCount));
             double y1 = (plotNumber % (int) Math.sqrt(plotCount));
-            //double x2 = (plotNumber / (int) Math.sqrt(plotCount));
-            //double y2 = (plotNumber % (int) Math.sqrt(plotCount));
 
             //System.out.println("Plot: " + plotNumber + " ( x1 = " + x1 + ", y1 = " + y1 + ")");
 

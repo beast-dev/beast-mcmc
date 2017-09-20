@@ -30,9 +30,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +74,7 @@ public class JChart extends JPanel {
 
     private double aspectRatio;
     private boolean useAspectRatio = false;
+    private boolean rotateHorizontal = false;
 
     public JChart(Axis xAxis, Axis yAxis) {
         this(null, xAxis, yAxis);
@@ -85,6 +84,7 @@ public class JChart extends JPanel {
         this(null, xAxis, yAxis);
         this.aspectRatio = aspectRatio;
         this.useAspectRatio = true;
+        this.rotateHorizontal = true;
     }
 
     public JChart(Plot plot, Axis xAxis, Axis yAxis) {
@@ -100,6 +100,7 @@ public class JChart extends JPanel {
 
         this.aspectRatio = 1.0;
         this.useAspectRatio = false;
+        this.rotateHorizontal = false;
 
         addMouseListener(new MListener());
         addMouseMotionListener(new MMListener());
@@ -341,6 +342,8 @@ public class JChart extends JPanel {
             double w = size.width - (majorTickSize * 1.25) - maxYTickLabelWidth - (maxXTickLabelWidth / 2);
             double h = size.height - yTickLabelOffset - (majorTickSize * 1.25) - tickLabelHeight;
 
+            //store current transformation in case of a translate transform
+            AffineTransform orig = g2.getTransform();
             if (useAspectRatio) {
                 double newH = w / aspectRatio;
                 if (newH > h) {
@@ -348,11 +351,13 @@ public class JChart extends JPanel {
                 } else {
                     h = newH;
                 }
+                if (size.width > size.height) {
+                    g2.translate((size.width - size.height)/2.0, 0.0);
+                }
             }
 
             plotBounds = new Rectangle2D.Double((majorTickSize * 1.25) + maxYTickLabelWidth, yTickLabelOffset, w, h);
 
-            //TODO alter x offset so that plots is drawn in the middle?
             xOffset = plotBounds.getX();
             yOffset = plotBounds.getMaxY();
             xScale = w / (xAxis.transform(xAxis.getMaxAxis()) - xAxis.transform(xAxis.getMinAxis()));
@@ -404,6 +409,10 @@ public class JChart extends JPanel {
 
             paintAxis(g2, xAxis, true);
             paintAxis(g2, yAxis, false);
+
+            //restore transformation in any case
+            g2.setTransform(orig);
+
         } catch (ChartRuntimeException cre) {
             // ignore (just won't paint chart)
         }
@@ -571,7 +580,7 @@ public class JChart extends JPanel {
         n2 = axis.getMinorTickCount(-1);
         if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
 
-            paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
+            paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis, rotateHorizontal);
 
             for (j = 1; j < n2; j++) {
                 paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
@@ -585,12 +594,12 @@ public class JChart extends JPanel {
 
         for (i = 0; i < n1; i++) {
 
-            paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
+            paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis, rotateHorizontal);
             n2 = axis.getMinorTickCount(i);
 
             if (i == (n1-1) && axis.getLabelLast()) { // Draw last minor tick as a major one
 
-                paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
+                paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis, rotateHorizontal);
 
                 for (j = 1; j < n2; j++) {
                     paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
@@ -612,7 +621,7 @@ public class JChart extends JPanel {
         return yAxis.format(value);
     }
 
-    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
+    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis, boolean rotateHorizontal)
     {
         g2.setPaint(axisPaint);
         g2.setStroke(axisStroke);
@@ -625,7 +634,16 @@ public class JChart extends JPanel {
 
             g2.setPaint(labelPaint);
             double width = g2.getFontMetrics().stringWidth(label);
-            g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+            /*if (rotateHorizontal) {
+                AffineTransform orig = g2.getTransform();
+                g2.rotate(Math.toRadians(90), (float) (pos - width / 2), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset - width / 2));
+                g2.setTransform(orig);
+            } else {
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+            }*/
+            g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+
         } else {
             String label = getYAxisLabel(value);
             double pos = transformY(value);

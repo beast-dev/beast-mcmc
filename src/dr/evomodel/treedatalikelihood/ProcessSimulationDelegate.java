@@ -1048,7 +1048,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         boolean extremeValue(final WrappedVector x) {
             boolean valid = true;
             for (int i = 0; i < x.getDim() && valid; ++i) {
-                if (Math.abs(x.get(i)) > 1E2) {
+                if (Double.isNaN(x.get(i)) || Math.abs(x.get(i)) > 1E2) {
                     valid = false;
                 }
             }
@@ -1201,40 +1201,52 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                              final int offsetPartial,
                                              final double branchPrecision) {
 
-            final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
-            final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
+            if (!Double.isInfinite(branchPrecision)) {
 
-            final WrappedVector M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
-            final DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
-            CommonOps.scale(branchPrecision, Pd, P1);
+                final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
+                final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
 
-            final WrappedVector M2 = new WrappedVector.Raw(tmpMean, 0, dimTrait);
-            final DenseMatrix64F P2 = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
+                final WrappedVector M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+                final DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.scale(branchPrecision, Pd, P1);
 
-            CommonOps.add(P0, P1, P2);
-            final InversionResult c2 = safeInvert(P2, V2, false);
-            weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
+                final WrappedVector M2 = new WrappedVector.Raw(tmpMean, 0, dimTrait);
+                final DenseMatrix64F P2 = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
 
-            double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);
+                CommonOps.add(P0, P1, P2);
+                final InversionResult c2 = safeInvert(P2, V2, false);
+                weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
-            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    M2.getBuffer(), 0, // input mean
-                    C2, 1.0, // input variance
-                    sample, offsetSample, // output sample
-                    tmpEpsilon);
+                double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);
 
-            if (DEBUG) {
-                System.err.println("sTFIN");
-                System.err.println("M0: " + M0);
-                System.err.println("P0: " + P0);
-                System.err.println("M1: " + M1);
-                System.err.println("P1: " + P1);
-                System.err.println("M2: " + M2);
-                System.err.println("V2: " + V2);
-                System.err.println("C2: " + new Matrix(C2));
-                System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
-                System.err.println("");
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        M2.getBuffer(), 0, // input mean
+                        C2, 1.0, // input variance
+                        sample, offsetSample, // output sample
+                        tmpEpsilon);
+
+                if (DEBUG) {
+                    System.err.println("sTFIN");
+                    System.err.println("M0: " + M0);
+                    System.err.println("P0: " + P0);
+                    System.err.println("M1: " + M1);
+                    System.err.println("P1: " + P1);
+                    System.err.println("M2: " + M2);
+                    System.err.println("V2: " + V2);
+                    System.err.println("C2: " + new Matrix(C2));
+                    System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+                    System.err.println("");
+                }
+
+            } else {
+
+                System.arraycopy(sample, offsetParent, sample, offsetSample, dimTrait);
+
+                if (DEBUG) {
+                    System.err.println("sTFIN infinite branch precision");
+                    System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+                }
             }
         }
     }

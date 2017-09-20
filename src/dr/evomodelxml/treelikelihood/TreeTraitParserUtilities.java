@@ -475,6 +475,10 @@ public class TreeTraitParserUtilities {
 
         }
 
+        if (missingIndices == null || missingIndices.size() == 0) {
+            useMissingIndices = false;
+        }
+
         return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName,
                 sampleMissingParameter, useMissingIndices);
     }

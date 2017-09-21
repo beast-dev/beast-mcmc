@@ -74,7 +74,6 @@ public class JChart extends JPanel {
 
     private double aspectRatio;
     private boolean useAspectRatio = false;
-    private boolean rotateHorizontal = false;
 
     public JChart(Axis xAxis, Axis yAxis) {
         this(null, xAxis, yAxis);
@@ -84,7 +83,6 @@ public class JChart extends JPanel {
         this(null, xAxis, yAxis);
         this.aspectRatio = aspectRatio;
         this.useAspectRatio = true;
-        this.rotateHorizontal = true;
     }
 
     public JChart(Plot plot, Axis xAxis, Axis yAxis) {
@@ -100,7 +98,6 @@ public class JChart extends JPanel {
 
         this.aspectRatio = 1.0;
         this.useAspectRatio = false;
-        this.rotateHorizontal = false;
 
         addMouseListener(new MListener());
         addMouseMotionListener(new MMListener());
@@ -580,7 +577,7 @@ public class JChart extends JPanel {
         n2 = axis.getMinorTickCount(-1);
         if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
 
-            paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis, rotateHorizontal);
+            paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
 
             for (j = 1; j < n2; j++) {
                 paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
@@ -594,12 +591,12 @@ public class JChart extends JPanel {
 
         for (i = 0; i < n1; i++) {
 
-            paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis, rotateHorizontal);
+            paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
             n2 = axis.getMinorTickCount(i);
 
             if (i == (n1-1) && axis.getLabelLast()) { // Draw last minor tick as a major one
 
-                paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis, rotateHorizontal);
+                paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
 
                 for (j = 1; j < n2; j++) {
                     paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
@@ -621,7 +618,7 @@ public class JChart extends JPanel {
         return yAxis.format(value);
     }
 
-    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis, boolean rotateHorizontal)
+    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
     {
         g2.setPaint(axisPaint);
         g2.setStroke(axisStroke);

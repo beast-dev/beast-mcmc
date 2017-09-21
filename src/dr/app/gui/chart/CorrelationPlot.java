@@ -52,6 +52,7 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
 
     private boolean samples = false;
     private boolean asPoints = false;
+    private boolean translucent = false;
 
     //colors from plotcorr R package
     private final Color[] colors = {new Color(165,15,21),
@@ -59,12 +60,24 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
             new Color(251, 106, 74),
             new Color(252, 174, 145),
             new Color(254, 229, 217),
-            Color.WHITE,
+            new Color( 255, 255, 255),
             new Color(239, 243, 255),
             new Color(189, 215, 231),
             new Color(107, 174, 214),
             new Color(49, 130, 189),
             new Color(8, 81, 156)};
+
+    private final Color[] translucentColors = {new Color(165,15,21, 32),
+            new Color(222, 45, 38, 32),
+            new Color(251, 106, 74, 32),
+            new Color(252, 174, 145, 32),
+            new Color(254, 229, 217, 32),
+            new Color( 255, 255, 255, 32),
+            new Color(239, 243, 255, 32),
+            new Color(189, 215, 231, 32),
+            new Color(107, 174, 214, 32),
+            new Color(49, 130, 189, 32),
+            new Color(8, 81, 156, 32)};
 
     private int plotCount;
 
@@ -89,11 +102,12 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
         this.plotCount = 1;
     }
 
-    public CorrelationPlot(String name, java.util.List<Double> xData, java.util.List<Double> yData, boolean asPoints, boolean samples) {
+    public CorrelationPlot(String name, java.util.List<Double> xData, java.util.List<Double> yData, boolean asPoints, boolean samples, boolean translucent) {
         super(xData, yData);
         setName(name);
         this.asPoints = asPoints;
         this.samples = samples;
+        this.translucent = translucent;
         this.plotCount = 1;
     }
 
@@ -220,7 +234,7 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
 
             //System.out.println("plotNumber: " + plotNumber + " ; correlation = " + correlation);
 
-            Color fillColor = colors[(int) (5 + 5 * correlation)];
+            Color fillColor = translucent ?  translucentColors[(int) (5 + 5 * correlation)] : colors[(int) (5 + 5 * correlation)];
             g2.setColor(fillColor);
 
             //g2.setPaint(linePaint);

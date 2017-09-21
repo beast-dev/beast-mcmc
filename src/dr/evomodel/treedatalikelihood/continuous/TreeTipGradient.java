@@ -27,12 +27,11 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 
 /**
@@ -75,7 +74,7 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
         assert(treeDataLikelihood != null);
 
         String name =
-                ProcessSimulationDelegate.TipGradientViaFullConditionalDelegate.getTraitName(traitName);
+                TipGradientViaFullConditionalDelegate.getTraitName(traitName);
 
         System.err.println("name: " + name);
         System.exit(-1);

@@ -17,7 +17,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionIntegrator.Basic {
 
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
 
     public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
                                                int diffusionCount) {
@@ -211,6 +211,10 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         final double vi = variances[imo];
         final double vj = variances[jmo];
 
+        if (true) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
         if (DEBUG) {
@@ -332,7 +336,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 //        final double vj = variances[jmo];
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
-        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
+//        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
 
         final DenseMatrix64F Vdi = wrap(variances, imo, dimTrait, dimTrait);
         final DenseMatrix64F Vdj = wrap(variances, jmo, dimTrait, dimTrait);
@@ -343,7 +347,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         // TODO End fix
 
         if (DEBUG) {
-            System.err.println("variance diffusion: " + Vd); // TODO Fix
+            System.err.println("variance diffusion: " + Vd);
 //            System.err.println("\tvi: " + vi + " vj: " + vj);
             System.err.println("precisionOffset = " + precisionOffset);
             System.err.println("\tVdi: " + Vdi);

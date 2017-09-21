@@ -90,7 +90,7 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
         return drift;
     }
 
-    public double[] getAccumulativeDrift(final NodeRef node) {
+    double[] getAccumulativeDrift(final NodeRef node) {
         final double[] drift = new double[dim];
         recursivelyAccumulateDrift(node, drift);
         return drift;

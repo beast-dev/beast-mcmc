@@ -30,10 +30,9 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
-
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -72,7 +71,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         validSimulation = false;
     }
 
-    protected final void cacheSimulatedTraits(final NodeRef node) {
+    public final void cacheSimulatedTraits(final NodeRef node) {
 
         treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
 

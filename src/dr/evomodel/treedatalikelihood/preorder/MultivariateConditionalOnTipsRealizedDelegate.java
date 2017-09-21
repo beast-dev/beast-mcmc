@@ -1,13 +1,11 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -110,19 +108,19 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         }
     }
 
-    boolean extremeValue(final DenseMatrix64F x) {
-        return extremeValue(new WrappedVector.Raw(x.getData(), 0, x.getNumElements()));
-    }
-
-    boolean extremeValue(final WrappedVector x) {
-        boolean valid = true;
-        for (int i = 0; i < x.getDim() && valid; ++i) {
-            if (Double.isNaN(x.get(i)) || Math.abs(x.get(i)) > 1E2) {
-                valid = false;
-            }
-        }
-        return !valid;
-    }
+//    boolean extremeValue(final DenseMatrix64F x) {
+//        return extremeValue(new WrappedVector.Raw(x.getData(), 0, x.getNumElements()));
+//    }
+//
+//    boolean extremeValue(final WrappedVector x) {
+//        boolean valid = true;
+//        for (int i = 0; i < x.getDim() && valid; ++i) {
+//            if (Double.isNaN(x.get(i)) || Math.abs(x.get(i)) > 1E2) {
+//                valid = false;
+//            }
+//        }
+//        return !valid;
+//    }
 
     @Override
     protected void simulateTraitForNode(final int nodeIndex,
@@ -210,7 +208,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
                     CommonOps.add(cP0, cP1, cP2);
 
-                    final InversionResult cc2 = safeInvert(cP2, cV2, false);
+                    safeInvert(cP2, cV2, false);
                     double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
 
                     MultivariateNormalDistribution.nextMultivariateNormalCholesky(
@@ -284,7 +282,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
 
             CommonOps.add(P0, P1, P2);
-            final InversionResult c2 = safeInvert(P2, V2, false);
+            safeInvert(P2, V2, false);
             weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
             double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);

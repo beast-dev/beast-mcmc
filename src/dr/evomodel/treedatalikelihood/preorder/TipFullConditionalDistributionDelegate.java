@@ -30,10 +30,10 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
                                                   ContinuousTraitPartialsProvider dataModel,
                                                   ConjugateRootTraitPrior rootPrior,
                                                   ContinuousRateTransformation rateTransformation,
-                                                  BranchRateModel rateModel,
+//                                                  BranchRateModel rateModel,
                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 //            buffer = new MeanAndVariance[tree.getExternalNodeCount()];
         this.likelihoodDelegate = likelihoodDelegate;
         this.cdi = likelihoodDelegate.getIntegrator();

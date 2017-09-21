@@ -1,7 +1,6 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.MutableTreeModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -19,10 +18,10 @@ public class ConditionalOnPartiallyMissingTipsRealizedDelegate extends Condition
                                                              ContinuousTraitDataModel dataModel,
                                                              ConjugateRootTraitPrior rootPrior,
                                                              ContinuousRateTransformation rateTransformation,
-                                                             BranchRateModel rateModel,
+//                                                             BranchRateModel rateModel,
                                                              ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 
-        this(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate,
+        this(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate,
                 new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate));
     }
 
@@ -31,11 +30,11 @@ public class ConditionalOnPartiallyMissingTipsRealizedDelegate extends Condition
                                                              ContinuousTraitDataModel dataModel,
                                                              ConjugateRootTraitPrior rootPrior,
                                                              ContinuousRateTransformation rateTransformation,
-                                                             BranchRateModel rateModel,
+//                                                             BranchRateModel rateModel,
                                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                                              PartiallyMissingInformation missingInformation) {
 
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         this.missingInformation = missingInformation;
 
         assert (dataModel.getPrecisionType() == PrecisionType.FULL);

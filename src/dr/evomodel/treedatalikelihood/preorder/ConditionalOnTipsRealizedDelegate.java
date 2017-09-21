@@ -1,7 +1,6 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -25,9 +24,9 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                              ContinuousTraitPartialsProvider dataModel,
                                              ConjugateRootTraitPrior rootPrior,
                                              ContinuousRateTransformation rateTransformation,
-                                             BranchRateModel rateModel,
+//                                             BranchRateModel rateModel,
                                              ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
         this.likelihoodDelegate = likelihoodDelegate;
         this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
@@ -183,8 +182,8 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         }
     }
 
-    protected final ContinuousDataLikelihoodDelegate likelihoodDelegate;
-    protected final double[] partialNodeBuffer;
-    protected final double[] partialPriorBuffer;
-    protected final double[] tmpMean;
+    final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+    final double[] partialNodeBuffer;
+    final double[] partialPriorBuffer;
+    final double[] tmpMean;
 }

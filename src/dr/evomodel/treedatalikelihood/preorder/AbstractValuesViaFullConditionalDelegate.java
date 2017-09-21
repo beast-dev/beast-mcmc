@@ -26,9 +26,9 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                                                     ContinuousTraitPartialsProvider dataModel,
                                                     ConjugateRootTraitPrior rootPrior,
                                                     ContinuousRateTransformation rateTransformation,
-                                                    BranchRateModel rateModel,
+//                                                    BranchRateModel rateModel,
                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
     }
 

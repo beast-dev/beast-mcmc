@@ -3,7 +3,6 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -23,9 +22,9 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
-                                            BranchRateModel rateModel,
+//                                            BranchRateModel rateModel,
                                             ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
         sample = new double[dimNode * tree.getNodeCount()];
         tmpEpsilon = new double[dimTrait];
@@ -97,14 +96,13 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
         };
 
         treeTraitHelper.addTrait(tipPrecision);
-
     }
 
     public static String getTipTraitName(String name) {
         return "tip." + name;
     }
 
-    public static String getTipPrecisionName(String name) {
+    private static String getTipPrecisionName(String name) {
         return "precision." + name;
     }
 
@@ -149,9 +147,8 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
 
             return trait;
         }
-
     }
 
-    protected final double[] sample;
-    protected final double[] tmpEpsilon;
+    final double[] sample;
+    final double[] tmpEpsilon;
 }

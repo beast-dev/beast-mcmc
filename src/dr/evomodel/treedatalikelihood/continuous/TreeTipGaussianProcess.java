@@ -63,7 +63,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
     private final boolean[] doSample;
     private final boolean[] doNotSample;
 
-    private final TreeTrait<double[]> tipSampleTrait;
+    private final TreeTrait tipSampleTrait;
 
     private final boolean truncateToMissingOnly;
 
@@ -87,7 +87,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
             ProcessSimulationDelegate simulationDelegate =
                     new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeDataLikelihood.getTree(),
                             likelihoodDelegate.getDiffusionModel(), likelihoodDelegate.getDataModel(), likelihoodDelegate.getRootPrior(),
-                            likelihoodDelegate.getRateTransformation(), treeDataLikelihood.getBranchRateModel(), likelihoodDelegate);
+                            likelihoodDelegate.getRateTransformation(), likelihoodDelegate);
 
             TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
                     treeDataLikelihood, simulationDelegate);
@@ -132,8 +132,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
     private double[] drawAllTraits() {
         //treeDataLikelihood.fireModelChanged();
         doPostOrderTraversal();
-        double[] sample = tipSampleTrait.getTrait(treeDataLikelihood.getTree(), null);
-        return sample;
+        return (double []) tipSampleTrait.getTrait(treeDataLikelihood.getTree(), null);
     }
 
     private double[] drawSelectedTraits() {
@@ -167,11 +166,11 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
         }
     }
 
-    private double[] crop(double[] in, int length) {
-        double[] out = new double[length];
-        System.arraycopy(in, 0, out, 0, length);
-        return out;
-    }
+//    private double[] crop(double[] in, int length) {
+//        double[] out = new double[length];
+//        System.arraycopy(in, 0, out, 0, length);
+//        return out;
+//    }
 
     private double[] maskDraw(double[] in, boolean[] mask) {
         double[] out = new double[missingLength];
@@ -232,7 +231,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
 
         private int index;
 
-        public TipSampleColumn(String label, int index) {
+        TipSampleColumn(String label, int index) {
             super(label);
             this.index = index;
         }

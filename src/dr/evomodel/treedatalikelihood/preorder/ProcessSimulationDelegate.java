@@ -101,7 +101,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return derived;
         }
 
-        protected static NodeRef getBaseNode(Tree derived, NodeRef node) {
+        static NodeRef getBaseNode(Tree derived, NodeRef node) {
             while (derived instanceof TransformableTree) {
                 derived = ((TransformableTree) derived).getOriginalTree();
                 node = ((TransformableTree) derived).getOriginalNode(node);
@@ -131,13 +131,13 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected abstract void simulateNode(final NodeOperation operation);
 
-        protected final TreeTraitProvider.Helper treeTraitHelper = new Helper();
+        final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 
-        protected ProcessSimulation simulationProcess = null;
+        ProcessSimulation simulationProcess = null;
 
-        protected final Tree tree;
-        protected final Tree baseTree;
-        protected final String name;
+        final Tree tree;
+        final Tree baseTree;
+        final String name;
     }
 
 //    abstract class AbstractDiscreteTraitDelegate extends AbstractDelegate {
@@ -149,30 +149,30 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     abstract class AbstractContinuousTraitDelegate extends AbstractDelegate {
 
-        protected final int dimTrait;
-        protected final int numTraits;
-        protected final int dimNode;
+        final int dimTrait;
+        final int numTraits;
+        final int dimNode;
 
-        protected final MultivariateDiffusionModel diffusionModel;
-        protected final ContinuousTraitPartialsProvider dataModel;
-        protected final ConjugateRootTraitPrior rootPrior;
-        protected final RootProcessDelegate rootProcessDelegate;
+        final MultivariateDiffusionModel diffusionModel;
+        final ContinuousTraitPartialsProvider dataModel;
+        final ConjugateRootTraitPrior rootPrior;
+        final RootProcessDelegate rootProcessDelegate;
 
-        protected double[] diffusionVariance;
-        protected DenseMatrix64F Vd;
-        protected DenseMatrix64F Pd;
+        double[] diffusionVariance;
+        DenseMatrix64F Vd;
+        DenseMatrix64F Pd;
 
-        protected double[][] cholesky;
-        protected Map<PartiallyMissingInformation.HashedIntArray,
+        double[][] cholesky;
+        Map<PartiallyMissingInformation.HashedIntArray,
                 ConditionalVarianceAndTranform> conditionalMap;
 
-        protected AbstractContinuousTraitDelegate(String name,
+        AbstractContinuousTraitDelegate(String name,
                                         Tree tree,
                                         MultivariateDiffusionModel diffusionModel,
                                         ContinuousTraitPartialsProvider dataModel,
                                         ConjugateRootTraitPrior rootPrior,
                                         ContinuousRateTransformation rateTransformation,
-                                        BranchRateModel rateModel,
+//                                        BranchRateModel rateModel,
                                         ContinuousDataLikelihoodDelegate likelihoodDelegate) {
             super(name, tree);
 
@@ -223,12 +223,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                 Pd = new DenseMatrix64F(diffusionPrecision);
             }
             if (cholesky == null) {
-//                System.err.println("PDS.sS cholesky");
-                cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait); // TODO Cache
+                cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
             }
         }
 
-        public void clearCache() {
+        void clearCache() {
             diffusionVariance = null;
             Vd = null;
             Pd = null;
@@ -236,7 +235,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             conditionalMap = null;
         }
 
-        protected static double[][] getCholeskyOfVariance(Matrix variance) {
+        static double[][] getCholeskyOfVariance(Matrix variance) {
             final double[][] cholesky;
             try {
                 cholesky = new CholeskyDecomposition(variance).getL();
@@ -246,13 +245,13 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return cholesky;
         }
 
-        public static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
+        static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
             return CholeskyDecomposition.execute(variance, 0, dim);
         }
 
-        private static Matrix getVarianceFromPrecision(double[][] precision) {
-            return new SymmetricMatrix(precision).inverse();
-        }
+//        private static Matrix getVarianceFromPrecision(double[][] precision) {
+//            return new SymmetricMatrix(precision).inverse();
+//        }
 
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
             return new SymmetricMatrix(precision).inverse().toVectorizedComponents();

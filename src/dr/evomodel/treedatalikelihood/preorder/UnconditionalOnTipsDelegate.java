@@ -20,9 +20,9 @@ public class UnconditionalOnTipsDelegate extends AbstractRealizedContinuousTrait
                                        ContinuousTraitDataModel dataModel,
                                        ConjugateRootTraitPrior rootPrior,
                                        ContinuousRateTransformation rateTransformation,
-                                       BranchRateModel rateModel,
+//                                       BranchRateModel rateModel,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
         this.rootPrior = rootPrior;
     }

@@ -20,9 +20,9 @@ public class TipRealizedValuesViaFullConditionalDelegate extends AbstractValuesV
                                                        ContinuousTraitPartialsProvider dataModel,
                                                        ConjugateRootTraitPrior rootPrior,
                                                        ContinuousRateTransformation rateTransformation,
-                                                       BranchRateModel rateModel,
+//                                                       BranchRateModel rateModel,
                                                        ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
     }
 
     public static String getTraitName(String name) {

@@ -74,14 +74,15 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<String> data, TraceDistribution traceDistribution) {
+    public FrequencyPlot(List<Integer> data, TraceDistribution traceDistribution) {
         this(traceDistribution);
-        if (!traceDistribution.getTraceType().isCategorical())
+        if (!traceDistribution.getTraceType().isCategorical()) {
             throw new IllegalArgumentException("Categorical value is required for frequency plot !");
+        }
 
-        List<Double> intData = traceDistribution.indexingData(data);
+//        List<Double> intData = traceDistribution.indexingData(data);
         // set data by index of unique categorical values
-        setData(intData, -1);
+        setIntegerData(data, -1);
     }
 
     /**
@@ -95,6 +96,14 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
+    public void setIntegerData(List<Integer> data, int minimumBinCount) {
+        Variate.I d = new Variate.I(data);
+        setIntegerData(d, minimumBinCount);
+    }
+
+    /**
+     * Set paints
+     */
     public void setPaints(Paint barPaint, Paint quantilePaint) {
         this.barPaint = barPaint;
         this.quantilePaint = quantilePaint;
@@ -104,6 +113,33 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      * Set data
      */
     public void setData(Variate.D data, int minimumBinCount) {
+
+        setRawData(data);
+        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
+
+        Variate.D xData = new Variate.D();
+        Variate.D yData = new Variate.D();
+
+        double x = frequency.getLowerBound();
+
+        for (int i = 0; i < frequency.getBinCount(); i++) {
+
+            xData.add(x);
+            yData.add(0.0);
+
+            x += frequency.getBinSize();
+
+            xData.add(x);
+            yData.add((double) frequency.getFrequency(i));
+
+        }
+        setData(xData, yData);
+    }
+
+    /**
+     * Set data
+     */
+    public void setIntegerData(Variate.I data, int minimumBinCount) {
 
         setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);

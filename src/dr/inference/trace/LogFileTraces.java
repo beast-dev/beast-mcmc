@@ -163,8 +163,8 @@ public class LogFileTraces extends AbstractTraceList {
      * @param toIndex     high endpoint (exclusive) of the subList.
      * @return
      */
-    public List getValues(int index, int fromIndex, int toIndex) {
-        List values = null;
+    public List<Number> getValues(int index, int fromIndex, int toIndex) {
+        List<Number> values = null;
         try {
             Trace trace = getTrace(index);
             values = trace.getValues(fromIndex, toIndex, super.filtered);
@@ -174,11 +174,11 @@ public class LogFileTraces extends AbstractTraceList {
         return values;
     }
 
-    public List getValues(int index) {
+    public List<Number> getValues(int index) {
         return this.getValues(index, getBurninStateCount(), getTrace(index).getValueCount());
     }
 
-    public List getBurninValues(int index) {
+    public List<Number> getBurninValues(int index) {
         return this.getValues(index, 0, getBurninStateCount());
     }
 

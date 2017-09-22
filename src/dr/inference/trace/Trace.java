@@ -34,14 +34,14 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
-public class Trace<T> { // TODO get rid of generic to make things easy
+public class Trace<T> {
 
 //    public static final int INITIAL_SIZE = 1000;
 //    public static final int INCREMENT_SIZE = 1000;
 
     // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
     protected TraceType traceType = TraceType.REAL;
-    protected List<T> values = new ArrayList<T>(); // TODO change to String only, and parse to double, int or string in getValues according to trace type
+    protected List<T> values = new ArrayList<T>();
     //    protected int valueCount = 0;
     protected String name;
 
@@ -80,7 +80,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         return values.size();
     }
 
-    public int getUniqueVauleCount() {
+    public int getUniqueValueCount() {
         Set<T> uniqueValues = new HashSet<T>(values);
         return uniqueValues.size();
     }

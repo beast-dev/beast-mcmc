@@ -358,7 +358,7 @@ public class LogFileTraces extends AbstractTraceList {
         for (int id = 0; id < getTraceCount(); id++) {
             Trace trace = getTrace(id);
             if (trace.getTraceType().isInteger()) {
-                int uniqueValue = trace.getUniqueVauleCount();
+                int uniqueValue = trace.getUniqueValueCount();
                 if (uniqueValue > MAX_UNIQUE_VALUE) {
                     System.out.println("Too many unique values (>" + MAX_UNIQUE_VALUE +
                             ") found in trace " + trace.getName() + " at " + id);
@@ -494,7 +494,7 @@ public class LogFileTraces extends AbstractTraceList {
             Trace newTrace = createTrace(trace.getName(), newType);
 
             if (newType.isDiscrete()) {
-                int uniqueValue = trace.getUniqueVauleCount();
+                int uniqueValue = trace.getUniqueValueCount();
                 if (uniqueValue > MAX_UNIQUE_VALUE)
                     throw new TraceException("Type change is failed, because too many unique values (>" +
                             MAX_UNIQUE_VALUE + ") are found !");

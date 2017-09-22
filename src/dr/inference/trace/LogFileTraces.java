@@ -253,7 +253,7 @@ public class LogFileTraces extends AbstractTraceList {
         // lines starting with [ are ignored, assuming comments in MrBayes file
         // lines starting with # are ignored, assuming comments in Migrate or BEAST file
         while (token.startsWith("[") || token.startsWith("#")) {
-            readTraceType(token, tokens); // using # to define type
+            // readTraceType(token, tokens); // using # to define type
             tokens = reader.tokenizeLine();
 
             // read over empty lines
@@ -270,7 +270,7 @@ public class LogFileTraces extends AbstractTraceList {
 
         for (int i = 0; i < labels.length; i++) {
             labels[i] = tokens.nextToken();
-            addTraceAndType(labels[i]);
+            addTrace(labels[i]);
         }
 
         int traceCount = getTraceCount();
@@ -315,16 +315,7 @@ public class LogFileTraces extends AbstractTraceList {
                 if (tokens.hasMoreTokens()) {
                     String value = tokens.nextToken();
 
-                    if (state == 0) assignTraceTypeAccordingValue(i, value);
-
-                    try {
-//                        values[i] = Double.parseDouble(tokens.nextToken());
-                        addParsedValue(i, value);
-                    } catch (NumberFormatException nfe) {
-                        throw new TraceException("State " + state + ": Expected correct data type " +
-                                "(Double, Integer or String) in column " + (i + 1) +
-                                " (Line " + reader.getLineNumber() + ")");
-                    }
+                    addParsedValue(i, value);
 
                 } else {
                     throw new TraceException("State " + state + ": missing values at line " + reader.getLineNumber());
@@ -385,74 +376,49 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     /**
-     * add a value for the n'th trace
-     *
-     * @param nTrace trace index
-     * @param value  next value
-     */
-    private void addParsedValue(int nTrace, String value) {
-        String name = getTraceName(nTrace);
-//        System.out.println(thisTrace.getTraceType() + "   " + value);
-        if (tracesType.get(name).isNumber()) {
-            Double v = Double.parseDouble(value);
-            getTrace(nTrace).add(v);
-
-        } else  {
-            getTrace(nTrace).add(value);
-        }
-    }
-
-
-    /**
      * Auto assign INTEGER or CATEGORICAL type to traces
      * according their values in the first line.
      * Default type is REAL.
      *
-     * @param nTrace
+     * @param traceIndex
      * @param value
      */
-    private void assignTraceTypeAccordingValue(int nTrace, String value) throws TraceException {
-        String name = getTraceName(nTrace);
-        TraceType type = TraceType.REAL;
-        if (NumberUtils.isNumber(value)) { // Double or Integer
-            if (! NumberUtils.hasDecimalPoint(value)) { // Integer
-                type = TraceType.INTEGER;
-                // change tracesType map for
-                tracesType.put(name, type);
-                System.out.println("Auto detect " + type + " type for trace " + name + " at " + nTrace);
-                changeTraceType(nTrace, type);
-            }
+    private void addParsedValue(int traceIndex, String value) throws TraceException {
+        Trace trace = getTrace(traceIndex);
 
-        } else { // String
-            type = TraceType.CATEGORICAL;
-            tracesType.put(name, type);
-            System.out.println("Auto detect " + type + " type for trace " + name + " at " + nTrace);
-            changeTraceType(nTrace, type);
-        }
-    }
+        TraceType type = trace.getTraceType();
 
-    /**
-     * @deprecated should be replaced by
-     * {@link #assignTraceTypeAccordingValue(int, String) assignTraceTypeAccordingValue} method
-     *
-     * @param firstToken
-     * @param tokens
-     */
-    private void readTraceType(String firstToken, StringTokenizer tokens) {
-        if (tokens.hasMoreTokens()) {
-            String token; //= tokens.nextToken();
-            if (firstToken.toLowerCase().contains(TraceType.INTEGER.toString())) {
-                while (tokens.hasMoreTokens()) {
-                    token = tokens.nextToken();
-                    tracesType.put(token, TraceType.INTEGER);
+        if (type != TraceType.CATEGORICAL) {
+            // once categorical, always categorical
+
+            if (NumberUtils.isNumber(value)) {
+                if (type != TraceType.REAL) {
+                    // once real, always real (unless categorical)
+
+                    if (NumberUtils.hasDecimalPoint(value)) { // Real
+                        // if a single number has a decimal point then switch to real
+                        type = TraceType.REAL;
+                        System.out.println("Auto detect " + type + " type for trace " + name + " at " + traceIndex);
+                        changeTraceType(traceIndex, type);
+                    }
                 }
-            } else if (firstToken.toLowerCase().contains(TraceType.CATEGORICAL.toString())) {
-                while (tokens.hasMoreTokens()) {
-                    token = tokens.nextToken();
-                    tracesType.put(token, TraceType.CATEGORICAL);
-                }
+            } else { // String
+                type = TraceType.CATEGORICAL;
+                System.out.println("Auto detect " + type + " type for trace " + name + " at " + traceIndex);
+                changeTraceType(traceIndex, type);
             }
         }
+
+        if (type == TraceType.REAL) {
+            trace.add(Double.parseDouble(value));
+        } else if (type == TraceType.INTEGER) {
+            trace.add(Double.parseDouble(value));
+        } else if (type == TraceType.CATEGORICAL) {
+            trace.add(value);
+        } else {
+            throw new IllegalArgumentException("Unsupported TraceType");
+        }
+
     }
 
     //************************************************************************
@@ -466,21 +432,19 @@ public class LogFileTraces extends AbstractTraceList {
      *
      * @param name trace name
      */
-    private void addTraceAndType(String name) {
-        if (tracesType.get(name) == null) {
-            traces.add(createTrace(name, TraceType.REAL));
-            tracesType.put(name, TraceType.REAL);
-        } else {
-            traces.add(createTrace(name, tracesType.get(name)));
-        }
+    private void addTrace(String name) {
+        // Start by assuming integer. This will be switched if added data
+        // contradicts.
+        traces.add(new Trace(name, TraceType.INTEGER));
     }
 
-    private Trace createTrace(String name, TraceType traceType) {
-        if (traceType.isNumber()) {
-            return new Trace(name, traceType);
-        } else {
-            return new Trace(name, TraceType.CATEGORICAL);
-        }
+    /**
+     * Add a trace for a statistic of the given name
+     *
+     * @param name trace name
+     */
+    private void addTrace(String name, TraceType traceType) {
+        traces.add(new Trace(name, traceType));
     }
 
     public void changeTraceType(int id, TraceType newType) throws TraceException {
@@ -489,7 +453,7 @@ public class LogFileTraces extends AbstractTraceList {
         Trace trace = getTrace(id);
         TraceType oldType = trace.getTraceType();
         if (oldType != newType) {
-            Trace newTrace = createTrace(trace.getName(), newType);
+            Trace newTrace = new Trace(trace.getName(), newType);
 
             if (newType.isDiscrete()) {
                 int uniqueValue = trace.getUniqueValueCount();
@@ -565,13 +529,6 @@ public class LogFileTraces extends AbstractTraceList {
     protected final String name;
 
     private final List<Trace> traces = new ArrayList<Trace>();
-
-    /**
-     * store INTEGER or STRING predefined at the top of log file, only used during loading files
-     * @deprecated should be replaced by
-     * {@link #assignTraceTypeAccordingValue(int, String) assignTraceTypeAccordingValue} method
-     */
-    private TreeMap<String, TraceType> tracesType = new TreeMap<String, TraceType>();
 
     private long burnIn = -1;
     private long firstState = -1;

@@ -477,14 +477,12 @@ public class LogFileTraces extends AbstractTraceList {
 
     private Trace createTrace(String name, TraceType traceType) {
         if (traceType.isNumber()) {
-            return new Trace<Double>(name, traceType);
+            return new Trace(name, traceType);
         } else {
-            return new Trace<String>(name, TraceType.CATEGORICAL);
+            return new Trace(name, TraceType.CATEGORICAL);
         }
     }
 
-    // TODO get rid of generic to make things easy
-    // TODO change to String only, and parse to double, int or string in getValues according to trace type
     public void changeTraceType(int id, TraceType newType) throws TraceException {
         if (id >= getTraceCount() || id < 0)
             throw new TraceException("Invalid trace id : " + id + ", which should 0 < and >= " + getTraceCount());
@@ -504,18 +502,11 @@ public class LogFileTraces extends AbstractTraceList {
                 try {
                     if (newType.isNumber()) { // oldType.isCategorical()
                         for (int i = 0; i < trace.getValueCount(); i++) {
-                            newTrace.add(Double.parseDouble(trace.getValue(i).toString())); // String => Double
+                            newTrace.add(trace.getValue(i));
                         }
                     } else if (oldType.isContinuous()) { // newType.isCategorical()
                         for (int i = 0; i < trace.getValueCount(); i++) {
-                            newTrace.add(trace.getValue(i).toString()); // Double => String
-                        }
-                    } else if (oldType.isIntegerOrBinary()) { // newType.isCategorical()
-                        // treat Integer separately to rm .0 because Trace<Double>
-                        for (int i = 0; i < trace.getValueCount(); i++) {
-                            String value = trace.getValue(i).toString();
-                            String valueNoDecimal = String.valueOf(value).split("\\.")[0];
-                            newTrace.add(valueNoDecimal); // Integer => String
+                            newTrace.add(trace.getValue(i));
                         }
                     }
                 } catch (Exception e) {
@@ -531,7 +522,11 @@ public class LogFileTraces extends AbstractTraceList {
             } else {
                 trace.setTraceType(newType); // change between numeric
             }
-            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
+
+            // copy the categorical values across in case it is switched back
+            newTrace.categoricalValues = trace.categoricalValues;
+
+//            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
         }
     }
 
@@ -570,13 +565,6 @@ public class LogFileTraces extends AbstractTraceList {
     protected final String name;
 
     private final List<Trace> traces = new ArrayList<Trace>();
-
-    public void addTrace(String newTName, int i) {
-        TraceCustomized tc = new TraceCustomized(newTName);
-        tc.addValues(traces.get(i)); // only Double
-        traces.add(tc);
-        tracesType.put(newTName, TraceType.REAL);
-    }
 
     /**
      * store INTEGER or STRING predefined at the top of log file, only used during loading files

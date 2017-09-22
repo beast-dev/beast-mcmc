@@ -34,16 +34,20 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
-public class Trace<T> {
+public class Trace {
+    public static final int MAX_UNIQUE_VALUES = 100; // the maximum allowed number of unique values
 
 //    public static final int INITIAL_SIZE = 1000;
 //    public static final int INCREMENT_SIZE = 1000;
 
     // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
     protected TraceType traceType = TraceType.REAL;
-    protected List<T> values = new ArrayList<T>();
+    protected List<Number> values = new ArrayList<Number>();
     //    protected int valueCount = 0;
     protected String name;
+
+    List<String> categoricalValues = new ArrayList<String>();
+    Set<Object> uniqueValues = new HashSet<Object>();
 
 //    private Object[] range;
 
@@ -65,15 +69,61 @@ public class Trace<T> {
     /**
      * @param value the valued to be added
      */
-    public void add(T value) {
+    public void add(Number value) {
+        if (uniqueValues.size() < MAX_UNIQUE_VALUES) {
+            uniqueValues.add(value);
+        }
+
         values.add(value);
     }
 
     /**
      * @param valuesArray the values to be added
      */
-    public void add(T[] valuesArray) {
-        Collections.addAll(this.values, valuesArray);
+    public void add(Number[] valuesArray) {
+        for (Number value : valuesArray) {
+            add(value);
+        }
+    }
+
+    /**
+     * @param valuesArray the values to be added
+     */
+    public void add(Double[] valuesArray) {
+        for (Number value : valuesArray) {
+            add(value);
+        }
+    }
+
+    /**
+     * @param valuesArray the values to be added
+     */
+    public void add(Integer[] valuesArray) {
+        for (Number value : valuesArray) {
+            add(value);
+        }
+    }
+
+    /**
+     * Add a categorical value
+     * @param value the valued to be added
+     */
+    public void add(String value) {
+        int index = categoricalValues.indexOf(value);
+        if (index < 0) {
+            categoricalValues.add(value);
+            index = categoricalValues.size() - 1;
+        }
+        add(index);
+    }
+
+    /**
+     * @param valuesArray the values to be added
+     */
+    public void add(String[] valuesArray) {
+        for (String value : valuesArray) {
+            add(value);
+        }
     }
 
     public int getValueCount() {
@@ -81,12 +131,29 @@ public class Trace<T> {
     }
 
     public int getUniqueValueCount() {
-        Set<T> uniqueValues = new HashSet<T>(values);
         return uniqueValues.size();
     }
 
-    public T getValue(int index) {
+    public Number getValue(int index) {
         return values.get(index);
+    }
+
+    public double getDoubleValue(int index) {
+        return values.get(index).doubleValue();
+    }
+
+    public int getIntegerValue(int index) {
+        return values.get(index).intValue();
+    }
+
+    public String getCategoricalValue(int index) {
+        return categoricalValues.get(values.get(index).intValue());
+    }
+
+    public Set<String> getCategoricalValues() {
+        // will be ordered alphabetically - is this right? only other option would
+        // be to keep the existing order, i.e., the order they first appeared in the trace.
+        return new TreeSet<String>(categoricalValues);
     }
 
     public double[] getRange() { // Double => bounds; Integer and String => unique values
@@ -97,11 +164,12 @@ public class Trace<T> {
 
             Double min = Double.MAX_VALUE;
             Double max = Double.MIN_VALUE;
-            for (Object t : values) {
-                if ((Double) t < min) {
-                    min = (Double) t;
-                } else if ((Double) t > max) {
-                    max = (Double) t;
+            for (Number t : values) {
+                double value = t.doubleValue();
+                if ( value < min) {
+                    min = value;
+                } else if (value > max) {
+                    max = value;
                 }
             }
             return new double[] {min, max};
@@ -110,27 +178,25 @@ public class Trace<T> {
         }
     }
 
-    public Set<String> getCategoricalValues() {
-        return new TreeSet<String>((List<String>) values);
-    }
     /**
      * @param fromIndex low endpoint (inclusive) of the subList.
      * @param toIndex   high endpoint (exclusive) of the subList.
      * @return The list of values (which are selected values if filter applied)
      */
-    public List<T> getValues(int fromIndex, int toIndex) {
+    public List<Number> getValues(int fromIndex, int toIndex) {
         return getValues(fromIndex, toIndex, null);
     }
 
-    public List<T> getValues(int fromIndex, int toIndex, boolean[] filtered) {
-        if (toIndex > getValueCount() || fromIndex > toIndex)
+    public List<Number> getValues(int fromIndex, int toIndex, boolean[] filtered) {
+        if (toIndex > getValueCount() || fromIndex > toIndex) {
             throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
                     + "; List size = " + getValueCount() + "; in Trace " + name);
+        }
 
         if (filtered == null || filtered.length < 1) {
             return values.subList(fromIndex, toIndex);
         } else {
-            List<T> valuesList = new ArrayList<T>();
+            List<Number> valuesList = new ArrayList<Number>();
             for (int i = fromIndex; i < toIndex; i++) {
                 if (!filtered[i])
                     valuesList.add(values.get(i));
@@ -166,7 +232,7 @@ public class Trace<T> {
     }
 
     //******************** TraceCorrelation ****************************
-    protected TraceCorrelation<T> traceStatistics;
+    protected TraceCorrelation traceStatistics;
 
     public TraceCorrelation getTraceStatistics() {
         return traceStatistics;

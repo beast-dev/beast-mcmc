@@ -46,7 +46,8 @@ public class Trace {
     //    protected int valueCount = 0;
     protected String name;
 
-    List<String> categoricalValues = new ArrayList<String>();
+    List<String> categoricalValueList = new ArrayList<String>();
+    Map<Integer, String> categoricalValueMap = new TreeMap<Integer, String>();
     Set<Integer> uniqueValues = new HashSet<Integer>();
 
 //    private Object[] range;
@@ -104,10 +105,11 @@ public class Trace {
      * @param value the valued to be added
      */
     public void add(String value) {
-        int index = categoricalValues.indexOf(value);
+        int index = categoricalValueList.indexOf(value);
         if (index < 0) {
-            categoricalValues.add(value);
-            index = categoricalValues.size() - 1;
+            categoricalValueList.add(value);
+            index = categoricalValueList.size() - 1;
+            categoricalValueMap.put(index, value);
         }
         add(index);
     }
@@ -138,13 +140,21 @@ public class Trace {
     }
 
     public String getCategoricalValue(int index) {
-        return categoricalValues.get(values.get(index).intValue());
+        return categoricalValueMap.get(values.get(index).intValue());
     }
 
-    public List<String> getCategoricalValues() {
-        // will be ordered alphabetically - is this right? only other option would
-        // be to keep the existing order, i.e., the order they first appeared in the trace.
-        return new ArrayList<String>(categoricalValues);
+//    public List<String> getCategoricalValues() {
+//Map<Integer, String> map = new TreeMap<Integer, String>();
+//        for (int i = 0; i < categoricalValues.size(); i++) {
+//        map.put(i, categoricalValues.get(i));
+//    }
+//
+//        return map;
+//        return new ArrayList<String>(categoricalValues);
+//    }
+//
+    public Map<Integer, String> getCategoricalValueMap() {
+        return categoricalValueMap;
     }
 
     public double[] getRange() { // Double => bounds; Integer and String => unique values

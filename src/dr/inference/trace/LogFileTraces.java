@@ -488,7 +488,8 @@ public class LogFileTraces extends AbstractTraceList {
             }
 
             // copy the categorical values across in case it is switched back
-            newTrace.categoricalValues = trace.categoricalValues;
+            newTrace.categoricalValueList = trace.categoricalValueList;
+            newTrace.categoricalValueMap = trace.categoricalValueMap;
 
 //            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
         }

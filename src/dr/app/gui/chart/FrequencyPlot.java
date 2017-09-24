@@ -74,7 +74,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<Integer> data, TraceDistribution traceDistribution) {
+    public FrequencyPlot(List<Double> data, TraceDistribution traceDistribution) {
         this(traceDistribution);
         if (!traceDistribution.getTraceType().isCategorical()) {
             throw new IllegalArgumentException("Categorical value is required for frequency plot !");
@@ -82,7 +82,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 
 //        List<Double> intData = traceDistribution.indexingData(data);
         // set data by index of unique categorical values
-        setIntegerData(data, -1);
+        setIntegerData(data, 1);
     }
 
     /**
@@ -96,9 +96,12 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setIntegerData(List<Integer> data, int minimumBinCount) {
-        Variate.I d = new Variate.I(data);
-        setIntegerData(d, minimumBinCount);
+    public void setIntegerData(List<Double> data, int minimumBinCount) {
+        Variate.I v = new Variate.I();
+        for (Double d : data) {
+            v.add(d.intValue());
+        }
+        setIntegerData(v, minimumBinCount);
     }
 
     /**

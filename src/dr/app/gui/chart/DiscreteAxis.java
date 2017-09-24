@@ -25,18 +25,31 @@
 
 package dr.app.gui.chart;
 
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DiscreteAxis extends Axis.AbstractAxis {
 
-	private boolean originBetweenCategories;
-	private boolean showEveryCategory;
+	private final boolean originBetweenCategories;
+	private final boolean showEveryCategory;
+	private final Map<Integer, String> categoryLabelMap = new HashMap<Integer, String>();
 
 	public DiscreteAxis(boolean originBetweenCategories, boolean showEveryCategory) {
 		super(AT_MAJOR_TICK, AT_MAJOR_TICK, true);
 
 		this.originBetweenCategories = originBetweenCategories;
 		this.showEveryCategory = showEveryCategory;
+	}
+
+	public DiscreteAxis(Map<Integer, String> categoryLabelMap, boolean originBetweenCategories, boolean showEveryCategory) {
+		super(AT_MAJOR_TICK, AT_MAJOR_TICK, true);
+
+		this.originBetweenCategories = originBetweenCategories;
+		this.showEveryCategory = showEveryCategory;
+
+		this.categoryLabelMap.putAll(categoryLabelMap);
 	}
 
 	/**
@@ -51,6 +64,17 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 	*/
 	public double untransform(double value) {
 		return value;	// a linear transform !
+	}
+
+	@Override
+	public String format(double value) {
+		if (categoryLabelMap.size() > 0) {
+			if (categoryLabelMap.get((int)value) == null) {
+				return "Missing";
+			}
+			return categoryLabelMap.get((int)value);
+		}
+		return super.format(value);
 	}
 
 	public void calibrate() {

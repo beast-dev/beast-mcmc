@@ -32,34 +32,20 @@ import dr.util.FrequencyDistribution;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class CategoryDensityPlot extends FrequencyPlot {
     private final static double BAR_WIDTH = 0.8;
 
-    private int barCount = 0;
     private int barId;
-    List<String> categoryLabels = new ArrayList<String>();
 
-    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
-                               int barCount, int barId) {
+    public CategoryDensityPlot(List<Double> data, TraceDistribution traceDistribution, int barId) {
         super(traceDistribution);
-        this.barCount = barCount;
-        this.barId = barId;
-
-        setData(new Variate.D(data));
-    }
-
-    public CategoryDensityPlot(List<Double> data, List<String> categoryLabels, TraceDistribution traceDistribution,
-                               int barCount, int barId) {
-        super(traceDistribution);
-        this.barCount = barCount;
         this.barId = barId;
 
         if (!traceDistribution.getTraceType().isCategorical())
             throw new IllegalArgumentException("Categorical value is required for frequency plot.");
-
-        // data assumed to be indices into this list of labels
-        this.categoryLabels.addAll(categoryLabels);
 
         setData(new Variate.D(data));
     }
@@ -137,10 +123,6 @@ public class CategoryDensityPlot extends FrequencyPlot {
                 }
             }
         }
-    }
-
-    protected CategoryDensityPlot(TraceDistribution traceDistribution) {
-        super(traceDistribution);
     }
 }
 

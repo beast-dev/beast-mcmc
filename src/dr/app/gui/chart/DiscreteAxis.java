@@ -69,10 +69,11 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 	@Override
 	public String format(double value) {
 		if (categoryLabelMap.size() > 0) {
-			if (categoryLabelMap.get((int)value) == null) {
+			String label = categoryLabelMap.get((int)value);
+			if (label == null) {
 				return "Missing";
 			}
-			return categoryLabelMap.get((int)value);
+			return label;
 		}
 		return super.format(value);
 	}

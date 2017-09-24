@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.TreeMap;
 
 /**
  * A class that stores a set of traces from a single chain
@@ -398,13 +397,13 @@ public class LogFileTraces extends AbstractTraceList {
                     if (NumberUtils.hasDecimalPoint(value)) { // Real
                         // if a single number has a decimal point then switch to real
                         type = TraceType.REAL;
-                        System.out.println("Auto detect " + type + " type for trace " + name + " at " + traceIndex);
+//                        System.out.println("Auto detect " + type + " type for trace " + name + " at " + traceIndex);
                         changeTraceType(traceIndex, type);
                     }
                 }
             } else { // String
                 type = TraceType.CATEGORICAL;
-                System.out.println("Auto detect " + type + " type for trace " + name + " at " + traceIndex);
+//                System.out.println("Auto detect " + type + " type for trace " + name + " at " + traceIndex);
                 changeTraceType(traceIndex, type);
             }
         }
@@ -488,8 +487,11 @@ public class LogFileTraces extends AbstractTraceList {
             }
 
             // copy the categorical values across in case it is switched back
-            newTrace.categoricalValueList = trace.categoricalValueList;
-            newTrace.categoricalValueMap = trace.categoricalValueMap;
+            newTrace.categoryValueList = trace.categoryValueList;
+            newTrace.categoryLabelMap = trace.categoryLabelMap;
+            newTrace.categoryOrderMap = trace.categoryOrderMap;
+            newTrace.uniqueValues = trace.uniqueValues;
+
 
 //            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
         }

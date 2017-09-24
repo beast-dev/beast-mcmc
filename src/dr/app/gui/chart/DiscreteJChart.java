@@ -27,12 +27,15 @@ package dr.app.gui.chart;
 
 import java.awt.*;
 import java.awt.geom.Line2D;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  *
  */
 public class DiscreteJChart extends JChart {
+
+    private final Map<Integer, Integer> categoryOrderMap = new HashMap<Integer, Integer>();
 
     public DiscreteJChart(Axis xAxis, Axis yAxis) {
         super(xAxis, yAxis);
@@ -46,7 +49,7 @@ public class DiscreteJChart extends JChart {
         }
     }
 
-    public void setXAxis(Map<Integer, String> categoryLabelMap) {
+    public void setXAxis(Map<Integer, String> categoryLabelMap, Map<Integer, Integer> categoryOrderMap) {
             super.setXAxis(new DiscreteAxis(categoryLabelMap, true, true));
     }
 
@@ -58,7 +61,7 @@ public class DiscreteJChart extends JChart {
         }
     }
 
-    public void setYAxis(Map<Integer, String> categoryLabelMap) {
+    public void setYAxis(Map<Integer, String> categoryLabelMap, Map<Integer, Integer> categoryOrderMap) {
         super.setYAxis(new DiscreteAxis(categoryLabelMap, true, true));
     }
 

@@ -37,20 +37,14 @@ import java.util.*;
 public class Trace {
     public static final int MAX_UNIQUE_VALUES = 100; // the maximum allowed number of unique values
 
-//    public static final int INITIAL_SIZE = 1000;
-//    public static final int INCREMENT_SIZE = 1000;
-
-    // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
     protected TraceType traceType = TraceType.REAL;
     protected List<Double> values = new ArrayList<Double>();
-    //    protected int valueCount = 0;
     protected String name;
 
-    List<String> categoricalValueList = new ArrayList<String>();
-    Map<Integer, String> categoricalValueMap = new TreeMap<Integer, String>();
+    List<String> categoryValueList = new ArrayList<String>();
+    Map<Integer, String> categoryLabelMap = new TreeMap<Integer, String>();
+    Map<Integer, Integer> categoryOrderMap = new TreeMap<Integer, Integer>();
     Set<Integer> uniqueValues = new HashSet<Integer>();
-
-//    private Object[] range;
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
         this.name = name;
@@ -60,12 +54,6 @@ public class Trace {
         this.name = name;
         setTraceType(traceType);
     }
-
-//    public Trace(String name, T[] valuesArray) {
-//        this(name);
-////        List<T> newVL = Arrays.asList(valuesArray);
-//        Collections.addAll(this.values, valuesArray);
-//    }
 
     /**
      * @param value the valued to be added
@@ -105,11 +93,12 @@ public class Trace {
      * @param value the valued to be added
      */
     public void add(String value) {
-        int index = categoricalValueList.indexOf(value);
+        int index = categoryValueList.indexOf(value);
         if (index < 0) {
-            categoricalValueList.add(value);
-            index = categoricalValueList.size() - 1;
-            categoricalValueMap.put(index, value);
+            categoryValueList.add(value);
+            index = categoryValueList.size() - 1;
+            categoryLabelMap.put(index, value);
+            categoryOrderMap.put(index, index);
         }
         add(index);
     }
@@ -121,6 +110,15 @@ public class Trace {
         for (String value : valuesArray) {
             add(value);
         }
+    }
+
+    public Map<Integer, Integer> getCategoryOrderMap() {
+        return categoryOrderMap;
+    }
+
+    public void setCategoryOrderMap(Map<Integer, Integer> categoryOrderMap) {
+        this.categoryOrderMap.clear();
+        this.categoryOrderMap.putAll(categoryOrderMap);
     }
 
     public int getValueCount() {
@@ -135,26 +133,16 @@ public class Trace {
         return values.get(index);
     }
 
-    public int getIntegerValue(int index) {
-        return values.get(index).intValue();
+    public int getCategory(int index) {
+        return categoryOrderMap.get(values.get(index).intValue());
     }
 
-    public String getCategoricalValue(int index) {
-        return categoricalValueMap.get(values.get(index).intValue());
+    public String getCategoryLabel(int index) {
+        return categoryLabelMap.get(getCategory(index));
     }
 
-//    public List<String> getCategoricalValues() {
-//Map<Integer, String> map = new TreeMap<Integer, String>();
-//        for (int i = 0; i < categoricalValues.size(); i++) {
-//        map.put(i, categoricalValues.get(i));
-//    }
-//
-//        return map;
-//        return new ArrayList<String>(categoricalValues);
-//    }
-//
-    public Map<Integer, String> getCategoricalValueMap() {
-        return categoricalValueMap;
+    public Map<Integer, String> getCategoryLabelMap() {
+        return categoryLabelMap;
     }
 
     public double[] getRange() { // Double => bounds; Integer and String => unique values
@@ -215,14 +203,7 @@ public class Trace {
     public void setName(String name) {
         this.name = name;
     }
-
-//    public Class getTraceType() {
-//        if (values.get(0) == null) {
-//            return null;
-//        }
-//        return values.get(0).getClass();
-//    }
-
+    
     public TraceType getTraceType() {
         return traceType;
     }

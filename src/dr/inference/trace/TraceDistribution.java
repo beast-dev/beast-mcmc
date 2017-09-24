@@ -311,11 +311,11 @@ public class TraceDistribution<T> {
     }
 
     public boolean credibleSetContains(int valueORIndex) {
-        return contains(credibleSetAnalysis.getCredibleSet(), valueORIndex);
+        return credibleSetAnalysis.getCredibleSet().contains((double)valueORIndex);
     }
 
     public boolean incredibleSetContains(int valueORIndex) {
-        return contains(credibleSetAnalysis.getIncredibleSet(), valueORIndex);
+        return credibleSetAnalysis.getIncredibleSet().contains((double)valueORIndex);
     }
 
     public String printCredibleSet() {
@@ -360,23 +360,25 @@ public class TraceDistribution<T> {
         return valuesList;
     }
 
-    private boolean contains(Set<T> aSet, int valueORIndex) {
-        if (traceType.isNumber()) {
-            // T is either Double or Integer
-            return aSet.contains((double) valueORIndex);
-        } else { // String
-            String valueString = null;
-            int i = -1;
-            for (T v : frequencyCounter.uniqueValues()) {
-                i++;
-                if (i == valueORIndex) {
-                    valueString = v.toString();
-                    break;
-                }
-            }
-            if (valueString == null) return false;
-            return aSet.contains(valueString);
-        }
-    }
+//    private boolean contains(Set<T> aSet, int valueORIndex) {
+//        if (traceType.isNumber()) {
+//            // T is either Double or Integer
+//            return aSet.contains((double) valueORIndex);
+//        } else { // String
+//            String valueString = null;
+//            int i = -1;
+//            for (T v : frequencyCounter.uniqueValues()) {
+//                i++;
+//                if (i == valueORIndex) {
+//                    valueString = v.toString();
+//                    break;
+//                }
+//            }
+//            if (valueString == null) {
+//                return false;
+//            }
+//            return aSet.contains(valueString);
+//        }
+//    }
 
 }

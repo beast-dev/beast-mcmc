@@ -104,15 +104,15 @@ public class ArrayTraceList extends AbstractTraceList {
         return false;
     }
 
-    public List<Number> getValues(int index, int fromIndex, int toIndex) {
+    public List<Double> getValues(int index, int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("not available");
     }
 
-    public List<Number> getValues(int index) {
+    public List<Double> getValues(int index) {
         throw new UnsupportedOperationException("not available");
     }
 
-    public List<Number> getBurninValues(int index) {
+    public List<Double> getBurninValues(int index) {
         throw new UnsupportedOperationException("not available");
     }
 

@@ -249,9 +249,9 @@ public interface Variate<T> {
          */
         public Integer getMin() {
             Integer minValue = java.lang.Integer.MAX_VALUE;
-            for (Integer value : values) {
-                if (value < minValue)
-                    minValue = value;
+            for (Number value : values) {
+                if (value.intValue() < minValue)
+                    minValue = value.intValue();
             }
             return minValue;
         }
@@ -261,9 +261,9 @@ public interface Variate<T> {
          */
         public Integer getMax() {
             Integer maxValue = java.lang.Integer.MIN_VALUE;
-            for (Integer value : values) {
-                if (value > maxValue)
-                    maxValue = value;
+            for (Number value : values) {
+                if (value.intValue() > maxValue)
+                    maxValue = value.intValue();
             }
             return maxValue;
         }

@@ -30,6 +30,7 @@ import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryDensityPlot extends FrequencyPlot {
@@ -37,6 +38,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
 
     private int barCount = 0;
     private int barId;
+    List<String> categoryLabels = new ArrayList<String>();
 
     public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution,
                                int barCount, int barId) {
@@ -47,8 +49,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
         setData(new Variate.D(data));
     }
 
-    // for string
-    public CategoryDensityPlot(List<String> data, TraceDistribution traceDistribution,
+    public CategoryDensityPlot(List<Double> data, List<String> categoryLabels, TraceDistribution traceDistribution,
                                int barCount, int barId) {
         super(traceDistribution);
         this.barCount = barCount;
@@ -57,9 +58,10 @@ public class CategoryDensityPlot extends FrequencyPlot {
         if (!traceDistribution.getTraceType().isCategorical())
             throw new IllegalArgumentException("Categorical value is required for frequency plot.");
 
-        List<Double> intData = traceDistribution.indexingData(data);
-        // set data by index of unique categorical values
-        setData(new Variate.D(intData));
+        // data assumed to be indices into this list of labels
+        this.categoryLabels.addAll(categoryLabels);
+
+        setData(new Variate.D(data));
     }
 
     /**
@@ -137,6 +139,9 @@ public class CategoryDensityPlot extends FrequencyPlot {
         }
     }
 
+    protected CategoryDensityPlot(TraceDistribution traceDistribution) {
+        super(traceDistribution);
+    }
 }
 
 

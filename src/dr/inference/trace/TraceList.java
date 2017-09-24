@@ -93,21 +93,21 @@ public interface TraceList {
      * @param toIndex     high endpoint (exclusive) of the subList.
      * @return The list of values (which are selected values if filter applied)
      */
-    List<Number> getValues(int index, int fromIndex, int toIndex);
+    List<Double> getValues(int index, int fromIndex, int toIndex);
 
     /**
      * get the values of trace with the given index (without burnin)
      * @param index       the index of trace
      * @return The list of values (which are selected values if filter applied)
      */
-    List<Number> getValues(int index);
+    List<Double> getValues(int index);
 
     /**
      * get the values of the burnin of the trace
      * @param index       the index of trace
      * @return The list of values (which are selected values if filter applied)
      */
-    List<Number> getBurninValues(int index);
+    List<Double> getBurninValues(int index);
 
     /**
      * @param traceIndex the index of the trace

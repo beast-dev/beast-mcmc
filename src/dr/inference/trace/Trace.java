@@ -42,12 +42,12 @@ public class Trace {
 
     // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
     protected TraceType traceType = TraceType.REAL;
-    protected List<Number> values = new ArrayList<Number>();
+    protected List<Double> values = new ArrayList<Double>();
     //    protected int valueCount = 0;
     protected String name;
 
     List<String> categoricalValues = new ArrayList<String>();
-    Set<Object> uniqueValues = new HashSet<Object>();
+    Set<Integer> uniqueValues = new HashSet<Integer>();
 
 //    private Object[] range;
 
@@ -69,9 +69,10 @@ public class Trace {
     /**
      * @param value the valued to be added
      */
-    public void add(Number value) {
+    public void add(Double value) {
         if (uniqueValues.size() < MAX_UNIQUE_VALUES) {
-            uniqueValues.add(value);
+            // unique values are treated as integers
+            uniqueValues.add(value.intValue());
         }
 
         values.add(value);
@@ -80,28 +81,22 @@ public class Trace {
     /**
      * @param valuesArray the values to be added
      */
-    public void add(Number[] valuesArray) {
-        for (Number value : valuesArray) {
-            add(value);
-        }
-    }
-
-    /**
-     * @param valuesArray the values to be added
-     */
     public void add(Double[] valuesArray) {
-        for (Number value : valuesArray) {
+        for (Double value : valuesArray) {
             add(value);
         }
     }
 
     /**
-     * @param valuesArray the values to be added
+     * @param value the valued to be added
      */
-    public void add(Integer[] valuesArray) {
-        for (Number value : valuesArray) {
-            add(value);
+    public void add(Integer value) {
+        if (uniqueValues.size() < MAX_UNIQUE_VALUES) {
+            // unique values are treated as integers
+            uniqueValues.add(value);
         }
+
+        values.add(value.doubleValue());
     }
 
     /**
@@ -134,12 +129,8 @@ public class Trace {
         return uniqueValues.size();
     }
 
-    public Number getValue(int index) {
+    public double getValue(int index) {
         return values.get(index);
-    }
-
-    public double getDoubleValue(int index) {
-        return values.get(index).doubleValue();
     }
 
     public int getIntegerValue(int index) {
@@ -150,10 +141,10 @@ public class Trace {
         return categoricalValues.get(values.get(index).intValue());
     }
 
-    public Set<String> getCategoricalValues() {
+    public List<String> getCategoricalValues() {
         // will be ordered alphabetically - is this right? only other option would
         // be to keep the existing order, i.e., the order they first appeared in the trace.
-        return new TreeSet<String>(categoricalValues);
+        return new ArrayList<String>(categoricalValues);
     }
 
     public double[] getRange() { // Double => bounds; Integer and String => unique values
@@ -164,8 +155,7 @@ public class Trace {
 
             Double min = Double.MAX_VALUE;
             Double max = Double.MIN_VALUE;
-            for (Number t : values) {
-                double value = t.doubleValue();
+            for (Double value : values) {
                 if ( value < min) {
                     min = value;
                 } else if (value > max) {
@@ -183,11 +173,11 @@ public class Trace {
      * @param toIndex   high endpoint (exclusive) of the subList.
      * @return The list of values (which are selected values if filter applied)
      */
-    public List<Number> getValues(int fromIndex, int toIndex) {
+    public List<Double> getValues(int fromIndex, int toIndex) {
         return getValues(fromIndex, toIndex, null);
     }
 
-    public List<Number> getValues(int fromIndex, int toIndex, boolean[] filtered) {
+    public List<Double> getValues(int fromIndex, int toIndex, boolean[] filtered) {
         if (toIndex > getValueCount() || fromIndex > toIndex) {
             throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
                     + "; List size = " + getValueCount() + "; in Trace " + name);
@@ -196,7 +186,7 @@ public class Trace {
         if (filtered == null || filtered.length < 1) {
             return values.subList(fromIndex, toIndex);
         } else {
-            List<Number> valuesList = new ArrayList<Number>();
+            List<Double> valuesList = new ArrayList<Double>();
             for (int i = fromIndex; i < toIndex; i++) {
                 if (!filtered[i])
                     valuesList.add(values.get(i));

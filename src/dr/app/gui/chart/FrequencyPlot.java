@@ -175,8 +175,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      * Get the FrequencyDistribution object
      */
     protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
-        double min = (Double) data.getMin();
-        double max = (Double) data.getMax();
+        double min = ((Number) data.getMin()).doubleValue();
+        double max = ((Number) data.getMax()).doubleValue();
 
         if (min == max) {
             if (min == 0) {
@@ -224,7 +224,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {
-            frequency.addValue((Double) raw.get(i));
+            frequency.addValue(((Number) raw.get(i)).doubleValue());
         }
 
         return frequency;

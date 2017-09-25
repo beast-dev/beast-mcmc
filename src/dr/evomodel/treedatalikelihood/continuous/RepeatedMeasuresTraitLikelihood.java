@@ -111,15 +111,16 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
-        if (fullyObserved) {
-            throw new IllegalArgumentException("Wishart statistics are not implemented for the integrated factor model");
-        }
-
-        checkStatistics();
-
-        double[] partial = new double[dimPartial];
-        System.arraycopy(partials, taxonIndex * dimPartial, partial, 0, dimPartial);
-        return partial;
+//        if (fullyObserved) {
+//            throw new IllegalArgumentException("Wishart statistics are not implemented for the integrated factor model");
+//        }
+//
+//        checkStatistics();
+//
+//        double[] partial = new double[dimPartial];
+//        System.arraycopy(partials, taxonIndex * dimPartial, partial, 0, dimPartial);
+//        return partial;
+        return null;
     }
 
     @Override
@@ -158,18 +159,18 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == loadings || variable == traitPrecision) {
-            statisticsKnown = false;
-            likelihoodKnown = false;
-            fireModelChanged(this);
-//            fireModelChanged(this, getTaxonIndex(index));
-        } else if (variable == traitParameter) {
-            statisticsKnown = false;
-            likelihoodKnown = false;
-            fireModelChanged(this);
-        } else {
-            throw new RuntimeException("Unhandled parameter change type");
-        }
+//        if (variable == loadings || variable == traitPrecision) {
+//            statisticsKnown = false;
+//            likelihoodKnown = false;
+//            fireModelChanged(this);
+////            fireModelChanged(this, getTaxonIndex(index));
+//        } else if (variable == traitParameter) {
+//            statisticsKnown = false;
+//            likelihoodKnown = false;
+//            fireModelChanged(this);
+//        } else {
+//            throw new RuntimeException("Unhandled parameter change type");
+//        }
     }
 
     @Override
@@ -229,104 +230,104 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
 
     private final double nuggetPrecision;
 
-    private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
-                                           final int numFactors) {
+//    private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
+//                                           final int numFactors) {
+//
+//        final double[] observed = observedIndicators[taxon];
+//
+//        // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
+//        for (int row = 0; row < numFactors; ++row) {
+//            for (int col = 0; col < numFactors; ++col) {
+//                double sum = 0;
+//                for (int k = 0; k < dimTrait; ++k) {
+//                    double prec = (observed[k] == 1.0) ? traitPrecision.getParameterValue(k) : nuggetPrecision;
+//                    sum += loadings.getParameterValue(k, row) *
+//                            prec *
+//                            loadings.getParameterValue(k, col);
+//                }
+//                precision.unsafe_set(row, col, sum);
+//            }
+//        }
+//    }
 
-        final double[] observed = observedIndicators[taxon];
+//    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision, final int taxon) {
+//
+//        final double[] observed = observedIndicators[taxon];
+//        final Parameter Y = traitParameter.getParameter(taxon);
+//
+//        // Solve for a value \mu_i s.t. P_i \mu_i = (L D_i Y_i)
+//
+//        final double[] tmp = new double[numFactors];
+//        final double[] tmp2 = new double[numFactors];
+//
+//        for (int row = 0; row < numFactors; ++row) {
+//            double sum = 0;
+//            for (int k = 0; k < dimTrait; ++k) {
+//                sum += loadings.getParameterValue(k, row) *
+//                        observed[k] * traitPrecision.getParameterValue(k) *
+//                        Y.getParameterValue(k);
+//            }
+//            tmp[row] = sum;
+//        }
+//
+//        DenseMatrix64F B = DenseMatrix64F.wrap(numFactors, 1, tmp);
+//        DenseMatrix64F X = DenseMatrix64F.wrap(numFactors, 1, tmp2);
+//
+//        InversionResult ci = safeSolve(precision, B, X, true);
+//
+//        for (int row = 0; row < numFactors; ++row) {
+//            output.set(row, X.unsafe_get(row, 0));
+//        }
+//
+//        return ci;
+//    }
 
-        // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
-        for (int row = 0; row < numFactors; ++row) {
-            for (int col = 0; col < numFactors; ++col) {
-                double sum = 0;
-                for (int k = 0; k < dimTrait; ++k) {
-                    double prec = (observed[k] == 1.0) ? traitPrecision.getParameterValue(k) : nuggetPrecision;
-                    sum += loadings.getParameterValue(k, row) *
-                            prec *
-                            loadings.getParameterValue(k, col);
-                }
-                precision.unsafe_set(row, col, sum);
-            }
-        }
-    }
+//    private double computeTraitInnerProduct(final int taxon) {
+//        final double[] observed = observedIndicators[taxon];
+//        final Parameter Y = traitParameter.getParameter(taxon);
+//
+//        // Compute Y_i^t D_i^t \Gamma D_i Y_i // TODO Generalize for non-diagonal \Gamma
+//        double sum = 0;
+//        for (int k = 0; k < dimTrait; ++k) {
+//            sum += Y.getParameterValue(k) * Y.getParameterValue(k) *
+//                    observed[k] * traitPrecision.getParameterValue(k);
+//        }
+//        return sum;
+//    }
 
-    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision, final int taxon) {
+//    private double computeFactorInnerProduct(final WrappedVector mean, final DenseMatrix64F precision) {
+//        // Compute \mu_i^t P_i \mu^t
+//        double sum = 0;
+//        for (int row = 0; row < numFactors; ++row) {
+//            for (int col = 0; col < numFactors; ++col) {
+//                sum += mean.get(row) * precision.unsafe_get(row, col) * mean.get(col);
+//            }
+//        }
+//        return sum;
+//    }
 
-        final double[] observed = observedIndicators[taxon];
-        final Parameter Y = traitParameter.getParameter(taxon);
+//    private double getTraitDeterminant(final int taxon) {
+//
+//        final double[] observed = observedIndicators[taxon];
+//
+//        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
+//        double det = 1.0;
+//        for (int k = 0; k < dimTrait; ++k) {
+//            if (observed[k] == 1.0) {
+//                det *= traitPrecision.getParameterValue(k);
+//            }
+//        }
+//        return det;
+//    }
 
-        // Solve for a value \mu_i s.t. P_i \mu_i = (L D_i Y_i)
-
-        final double[] tmp = new double[numFactors];
-        final double[] tmp2 = new double[numFactors];
-
-        for (int row = 0; row < numFactors; ++row) {
-            double sum = 0;
-            for (int k = 0; k < dimTrait; ++k) {
-                sum += loadings.getParameterValue(k, row) *
-                        observed[k] * traitPrecision.getParameterValue(k) *
-                        Y.getParameterValue(k);
-            }
-            tmp[row] = sum;
-        }
-
-        DenseMatrix64F B = DenseMatrix64F.wrap(numFactors, 1, tmp);
-        DenseMatrix64F X = DenseMatrix64F.wrap(numFactors, 1, tmp2);
-
-        InversionResult ci = safeSolve(precision, B, X, true);
-
-        for (int row = 0; row < numFactors; ++row) {
-            output.set(row, X.unsafe_get(row, 0));
-        }
-
-        return ci;
-    }
-
-    private double computeTraitInnerProduct(final int taxon) {
-        final double[] observed = observedIndicators[taxon];
-        final Parameter Y = traitParameter.getParameter(taxon);
-
-        // Compute Y_i^t D_i^t \Gamma D_i Y_i // TODO Generalize for non-diagonal \Gamma
-        double sum = 0;
-        for (int k = 0; k < dimTrait; ++k) {
-            sum += Y.getParameterValue(k) * Y.getParameterValue(k) *
-                    observed[k] * traitPrecision.getParameterValue(k);
-        }
-        return sum;
-    }
-
-    private double computeFactorInnerProduct(final WrappedVector mean, final DenseMatrix64F precision) {
-        // Compute \mu_i^t P_i \mu^t
-        double sum = 0;
-        for (int row = 0; row < numFactors; ++row) {
-            for (int col = 0; col < numFactors; ++col) {
-                sum += mean.get(row) * precision.unsafe_get(row, col) * mean.get(col);
-            }
-        }
-        return sum;
-    }
-
-    private double getTraitDeterminant(final int taxon) {
-
-        final double[] observed = observedIndicators[taxon];
-
-        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
-        double det = 1.0;
-        for (int k = 0; k < dimTrait; ++k) {
-            if (observed[k] == 1.0) {
-                det *= traitPrecision.getParameterValue(k);
-            }
-        }
-        return det;
-    }
-
-    private void makeCompletedUnobserved(final DenseMatrix64F matrix, double diagonal) {
-        for (int row = 0; row < numFactors; ++row) {
-            for (int col = 0; col < numFactors; ++col) {
-                double x = (row == col) ? diagonal : 0.0;
-                matrix.unsafe_set(row, col, x);
-            }
-        }
-    }
+//    private void makeCompletedUnobserved(final DenseMatrix64F matrix, double diagonal) {
+//        for (int row = 0; row < numFactors; ++row) {
+//            for (int col = 0; col < numFactors; ++col) {
+//                double x = (row == col) ? diagonal : 0.0;
+//                matrix.unsafe_set(row, col, x);
+//            }
+//        }
+//    }
 
     private void computePartialsAndRemainders() {
         
@@ -416,17 +417,17 @@ public class RepeatedMeasuresTraitLikelihood extends AbstractModelLikelihood
     private static double[][] setupObservedIndicators(List<Integer> missingIndices, int nTaxa, int dimTrait) {
         double[][] observed = new double[nTaxa][dimTrait];
 
-        for (double[] v : observed) {
-            Arrays.fill(v, 1.0);
-        }
-
-        if (missingIndices != null) {
-            for (Integer idx : missingIndices) {
-                int taxon = idx / dimTrait;
-                int trait = idx % dimTrait;
-                observed[taxon][trait] = 0.0;
-            }
-        }
+//        for (double[] v : observed) {
+//            Arrays.fill(v, 1.0);
+//        }
+//
+//        if (missingIndices != null) {
+//            for (Integer idx : missingIndices) {
+//                int taxon = idx / dimTrait;
+//                int trait = idx % dimTrait;
+//                observed[taxon][trait] = 0.0;
+//            }
+//        }
 
         return observed;
     }

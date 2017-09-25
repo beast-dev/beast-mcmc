@@ -52,20 +52,20 @@ import java.util.List;
  */
 public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String CONJUGATE_ROOT_PRIOR = AbstractMultivariateTraitLikelihood.CONJUGATE_ROOT_PRIOR;
-    public static final String USE_TREE_LENGTH = AbstractMultivariateTraitLikelihood.USE_TREE_LENGTH;
-    public static final String SCALE_BY_TIME = AbstractMultivariateTraitLikelihood.SCALE_BY_TIME;
-    public static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
-    public static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
-    public static final String DRIFT_MODELS = AbstractMultivariateTraitLikelihood.DRIFT_MODELS;
+    private static final String CONJUGATE_ROOT_PRIOR = AbstractMultivariateTraitLikelihood.CONJUGATE_ROOT_PRIOR;
+    private static final String USE_TREE_LENGTH = AbstractMultivariateTraitLikelihood.USE_TREE_LENGTH;
+    private static final String SCALE_BY_TIME = AbstractMultivariateTraitLikelihood.SCALE_BY_TIME;
+    private static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
+//    private static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
+    private static final String DRIFT_MODELS = AbstractMultivariateTraitLikelihood.DRIFT_MODELS;
 
-    public static final String RECONSTRUCT_TRAITS = "reconstructTraits";
-    public static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
-    public static final String ALLOW_SINGULAR = "allowSingular";
-    public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
-    public static final String FORCE_DRIFT = "forceDrift";
+    private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
+    private static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
+    private static final String ALLOW_SINGULAR = "allowSingular";
+    private static final String FORCE_FULL_PRECISION = "forceFullPrecision";
+    private static final String FORCE_DRIFT = "forceDrift";
 
-    public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
+    private static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
     public String getParserName() {
         return CONTINUOUS_DATA_LIKELIHOOD;
@@ -191,11 +191,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
 //                String partialTraitName = getPartiallyMissingTraitName(traitName);
 //
-//                ProcessSimulationDelegate parialSimulationDelegate = new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate(partialTraitName,
+//                ProcessSimulationDelegate partialSimulationDelegate = new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate(partialTraitName,
 //                        treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
 //
 //                TreeTraitProvider partialTraitProvider = new ProcessSimulation(partialTraitName,
-//                        treeDataLikelihood, parialSimulationDelegate);
+//                        treeDataLikelihood, partialSimulationDelegate);
 //
 //                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
             }

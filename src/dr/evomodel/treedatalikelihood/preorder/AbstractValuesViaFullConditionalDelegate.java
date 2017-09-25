@@ -2,7 +2,6 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -81,8 +80,8 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                     final int[] missing = intArray.getArray();
                     final int[] observed = intArray.getComplement();
 
-                    ConditionalVarianceAndTranform2 transform =
-                            new ConditionalVarianceAndTranform2(
+                    ConditionalVarianceAndTransform2 transform =
+                            new ConditionalVarianceAndTransform2(
                                     preVar, missing, observed
                             );
 

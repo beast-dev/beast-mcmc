@@ -9,7 +9,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.gatherRowsAndColumns;
 /**
  * @author Marc A. Suchard
  */
-public class ConditionalVarianceAndTranform2 {
+public class ConditionalVarianceAndTransform2 {
 
     /**
      * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
@@ -38,8 +38,8 @@ public class ConditionalVarianceAndTranform2 {
     private double[][] cholesky = null;
     private DenseMatrix64F SbarInv = null;
 
-    public ConditionalVarianceAndTranform2(final DenseMatrix64F variance,
-                                           final int[] missingIndices, final int[] notMissingIndices) {
+    public ConditionalVarianceAndTransform2(final DenseMatrix64F variance,
+                                            final int[] missingIndices, final int[] notMissingIndices) {
 
         assert (missingIndices.length + notMissingIndices.length == variance.getNumRows());
         assert (missingIndices.length + notMissingIndices.length == variance.getNumCols());

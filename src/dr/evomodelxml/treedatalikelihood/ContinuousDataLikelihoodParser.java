@@ -52,11 +52,10 @@ import java.util.List;
  */
 public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
-    private static final String CONJUGATE_ROOT_PRIOR = AbstractMultivariateTraitLikelihood.CONJUGATE_ROOT_PRIOR;
+    public static final String CONJUGATE_ROOT_PRIOR = AbstractMultivariateTraitLikelihood.CONJUGATE_ROOT_PRIOR;
     private static final String USE_TREE_LENGTH = AbstractMultivariateTraitLikelihood.USE_TREE_LENGTH;
     private static final String SCALE_BY_TIME = AbstractMultivariateTraitLikelihood.SCALE_BY_TIME;
     private static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
-//    private static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
     private static final String DRIFT_MODELS = AbstractMultivariateTraitLikelihood.DRIFT_MODELS;
 
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";

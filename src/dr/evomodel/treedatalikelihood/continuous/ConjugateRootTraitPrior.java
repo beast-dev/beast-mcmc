@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.ElementRule;
@@ -33,17 +34,19 @@ import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
 import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.CONJUGATE_ROOT_PRIOR;
-import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.PRIOR_SAMPLE_SIZE;
 
 /**
  * @author Marc A. Suchard
  */
 public class ConjugateRootTraitPrior {
 
+
+    private static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
+
     private final double[] mean;
     private final double pseudoObservations;
 
-    ConjugateRootTraitPrior(double[] mean, double pseudoObservations) {
+    private ConjugateRootTraitPrior(double[] mean, double pseudoObservations) {
         this.mean = mean;
         this.pseudoObservations = pseudoObservations;
     }

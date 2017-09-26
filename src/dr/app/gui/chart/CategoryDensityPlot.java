@@ -37,40 +37,48 @@ import java.util.TreeMap;
 
 public class CategoryDensityPlot extends FrequencyPlot {
     private final static double BAR_WIDTH = 0.8;
-
     private int barId;
 
     public CategoryDensityPlot(List<Double> data, TraceDistribution traceDistribution, int barId) {
         super(traceDistribution);
         this.barId = barId;
 
-        if (!traceDistribution.getTraceType().isCategorical())
-            throw new IllegalArgumentException("Categorical value is required for frequency plot.");
+        if (!traceDistribution.getTraceType().isDiscrete())
+            throw new IllegalArgumentException("Discrete trace is required for frequency plot.");
 
-        setData(new Variate.D(data));
+        setData(new Variate.D(data), traceDistribution.getCategoryOrderMap());
     }
 
     /**
      * Set data, all integers
      */
-    public void setData(Variate.D data) {
+    public void setData(Variate.D data, Map<Integer, Integer> categoryOrderMap) {
         setRawData(data);
-        FrequencyDistribution frequency = getFrequencyDistribution(data, -1);
+        FrequencyDistribution frequency = getDiscreteFrequencyDistribution(data, categoryOrderMap);
 
         Variate.D xData = new Variate.D();
         Variate.D yData = new Variate.D();
 
+        Map<Integer, Integer> orderMap = traceDistribution.getCategoryOrderMap();
         double x = frequency.getLowerBound();
 
         for (int i = 0; i < frequency.getBinCount(); i++) {
+            int index = i;
 
-            xData.add(x);
+            if (orderMap != null && orderMap.size() > 0) {
+                if (i >= orderMap.size()) {
+                    System.out.println("oops");
+                }
+                index = orderMap.get(i);
+            }
+            
+            xData.add((double)x);
             yData.add(0.0);
 
             x += frequency.getBinSize();
 
-            xData.add(x);
-            yData.add(frequency.getProbability(i));
+            xData.add((double)x);
+            yData.add(frequency.getProbability(index));
 
         }
         setData(xData, yData);

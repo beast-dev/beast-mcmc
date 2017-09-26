@@ -43,11 +43,19 @@ import java.util.*;
 public class TraceDistribution<T> {
     private TraceType traceType;
 
+    private Map<Integer, Integer> categoryOrderMap;
+
     public TraceDistribution(List<T> values, TraceType traceType) {
         this.traceType = traceType;
+        categoryOrderMap = null;
         initStatistics(values, 0.95);
     }
 
+    public TraceDistribution(List<T> values, Map<Integer, Integer> categoryOrderMap) {
+        this.traceType = TraceType.CATEGORICAL;
+        this.categoryOrderMap = categoryOrderMap;
+        initStatistics(values, 0.95);
+    }
 //    @Deprecated
 //    public TraceDistribution(List<T> values, TraceType traceType, double ESS) {
 //        this(values, traceType);
@@ -56,6 +64,14 @@ public class TraceDistribution<T> {
 
     public TraceType getTraceType() {
         return traceType;
+    }
+
+    public Map<Integer, Integer> getCategoryOrderMap() {
+        return categoryOrderMap;
+    }
+
+    public void setCategoryOrderMap(Map<Integer, Integer> categoryOrderMap) {
+        this.categoryOrderMap =  categoryOrderMap;
     }
 
     public void setTraceType(TraceType traceType) {
@@ -249,8 +265,9 @@ public class TraceDistribution<T> {
 
     // init FrequencyCounter used for Integer and String
     private void analyseDistributionDiscrete(List<T> values, double proportion) {
-        if (size == 0)
+        if (size == 0) {
             size = values.size();
+        }
         frequencyCounter = new FrequencyCounter<T>(values, false);
         mode = frequencyCounter.getModeStats();
         credibleSetAnalysis = frequencyCounter.getCredibleSetAnalysis(proportion);
@@ -272,9 +289,9 @@ public class TraceDistribution<T> {
 //     */
 //    public Map<Integer, String> getIndexMap() {
 //        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-//        if (frequencyCounter != null && categoryDataMap.size() == 0) {
+//        if (frequencies != null && categoryDataMap.size() == 0) {
 //            int i = -1;
-//            for (Object key : frequencyCounter.uniqueValues()) {
+//            for (Object key : frequencies.uniqueValues()) {
 //                i++;
 //                String value = key.toString();
 //                categoryDataMap.put(i, value);
@@ -369,7 +386,7 @@ public class TraceDistribution<T> {
 //        } else { // String
 //            String valueString = null;
 //            int i = -1;
-//            for (T v : frequencyCounter.uniqueValues()) {
+//            for (T v : frequencies.uniqueValues()) {
 //                i++;
 //                if (i == valueORIndex) {
 //                    valueString = v.toString();

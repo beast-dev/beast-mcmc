@@ -32,6 +32,7 @@ import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
 public class FrequencyPlot extends Plot.AbstractPlot {
 
@@ -191,8 +192,9 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         }
 
         Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
-        if (minimumBinCount <= 0)
+        if (minimumBinCount <= 0) {
             axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+        }
         axis.setRange(min, max);
 
         int majorTickCount = axis.getMajorTickCount();
@@ -224,6 +226,33 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 
         for (int i = 0; i < raw.getCount(); i++) {
             frequency.addValue(((Number) raw.get(i)).doubleValue());
+        }
+
+        return frequency;
+    }
+
+    /**
+     * Get the FrequencyDistribution object
+     */
+    protected FrequencyDistribution getDiscreteFrequencyDistribution(Variate data, Map<Integer, Integer> categoryOrderMap) {
+        int min = ((Number) data.getMin()).intValue();
+        int max = ((Number) data.getMax()).intValue();
+
+        if (min == max) {
+            min -= -1.0;
+            max += 1.0;
+        }
+
+        double binSize = 1;
+        int binCount = max - min + 1;
+
+        double start = min;
+
+        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
+
+        for (int i = 0; i < raw.getCount(); i++) {
+            int index = categoryOrderMap.get(((Number)raw.get(i)).intValue());
+            frequency.addValue(index);
         }
 
         return frequency;

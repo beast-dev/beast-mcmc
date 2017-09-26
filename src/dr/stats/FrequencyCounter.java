@@ -36,7 +36,7 @@ import java.util.*;
 public class FrequencyCounter<T> {
 
     private int MAX_COUNTER_SIZE = 100;
-    protected Map<T, Integer> frequencyCounter;
+    protected Map<T, Integer> frequencies;
     protected boolean sortedByCounts = false;
 
     protected int total;
@@ -45,24 +45,24 @@ public class FrequencyCounter<T> {
 
     public FrequencyCounter(List<T> values, boolean sortedByCounts) {
         // http://stackoverflow.com/questions/12998568/hashmap-vs-linkedhashmap-performance-in-iteration-over-values
-        frequencyCounter = new LinkedHashMap<T, Integer>();
+        frequencies = new LinkedHashMap<T, Integer>();
 
         for (T value : values) {
-            if (frequencyCounter.containsKey(value)) {
-                int i = frequencyCounter.get(value) + 1;
-                frequencyCounter.put(value, i);
+            if (frequencies.containsKey(value)) {
+                int i = frequencies.get(value) + 1;
+                frequencies.put(value, i);
             } else {
-                frequencyCounter.put(value, 1);
+                frequencies.put(value, 1);
             }
         }
 
         // limit the counter size, avoid expensive computation
-//        if (frequencyCounter.size() > MAX_COUNTER_SIZE)
+//        if (frequencies.size() > MAX_COUNTER_SIZE)
 //            throw new IllegalArgumentException("Fail to create frequency counter: " +
 //                    "number of unique values must <=" + MAX_COUNTER_SIZE + " !");
 
 
-        if (sortedByCounts && frequencyCounter.size() > 0)
+        if (sortedByCounts && frequencies.size() > 0)
             sortCounterByCounts();
 
         // store {total min max} counts
@@ -72,19 +72,19 @@ public class FrequencyCounter<T> {
         max = minMax[1];
     }
 
-    public Map<T, Integer> getFrequencyCounter() {
-        return frequencyCounter;
+    public Map<T, Integer> getFrequencies() {
+        return frequencies;
     }
 
     public int getCounterSize() {
-        return frequencyCounter.size();
+        return frequencies.size();
     }
 
     /**
      * sort counter by counts to calculate correct credibility set
      */
     public void sortCounterByCounts() {
-        frequencyCounter = Utils.sortByValue(frequencyCounter);
+        frequencies = Utils.sortByValue(frequencies);
         sortedByCounts = true;
     }
 
@@ -101,9 +101,9 @@ public class FrequencyCounter<T> {
      */
     public Set<T> uniqueValues(boolean sort) {
         if (sort)
-            return new TreeSet<T>(frequencyCounter.keySet());
+            return new TreeSet<T>(frequencies.keySet());
         else
-            return frequencyCounter.keySet();
+            return frequencies.keySet();
     }
 
     /**
@@ -143,7 +143,7 @@ public class FrequencyCounter<T> {
      * @return
      */
     public int getCount(T key) {
-        return frequencyCounter.get(key);
+        return frequencies.get(key);
     }
 
     /**
@@ -153,7 +153,7 @@ public class FrequencyCounter<T> {
      */
     public int calculateTotalCount() {
         int tot = 0;
-        for (Map.Entry<T, Integer> entry : frequencyCounter.entrySet()) {
+        for (Map.Entry<T, Integer> entry : frequencies.entrySet()) {
             Integer count = entry.getValue();
             tot += count;
         }
@@ -188,7 +188,7 @@ public class FrequencyCounter<T> {
     public int[] calculateMinMaxCount() {
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
-        for (Map.Entry<T, Integer> entry : frequencyCounter.entrySet()) {
+        for (Map.Entry<T, Integer> entry : frequencies.entrySet()) {
             Integer count = entry.getValue();
             if (min > count)
                 min = count;

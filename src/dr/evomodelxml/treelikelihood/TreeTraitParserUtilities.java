@@ -449,7 +449,7 @@ public class TreeTraitParserUtilities {
             }
 
             // Give warnings if trait exist for internal and root nodes when integrating them out
-            if (integrateOutInternalStates) {
+            if (false) {
                 int numTraits = traitParameter.getParameterCount();
                 if (numTraits != treeModel.getExternalNodeCount()) {
                     throw new XMLParseException(
@@ -462,7 +462,7 @@ public class TreeTraitParserUtilities {
                     if (parameterName.startsWith("node") || parameterName.startsWith("root")) {
                         throw new XMLParseException(
                                 "Internal/root node trait parameters are not allowed when " +
-                                        "using the integrated observed data multivariateTraitLikelihoood");
+                                        "using the integrated observed data likelihood");
                     }
                 }
             }

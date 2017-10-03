@@ -25,9 +25,9 @@
 
 package dr.evomodel.treelikelihood.utilities;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 
@@ -44,50 +44,82 @@ import java.util.List;
 public class TreeTraitLogger implements Loggable {
 
     public TreeTraitLogger(Tree tree,
-                           TreeTraitProvider[] traitProviders) {
-        this.tree = tree;
-        for (TreeTraitProvider provider : traitProviders) {
-            addTraits(provider.getTreeTraits());
-        }
-    }
-
-    public TreeTraitLogger(Tree tree,
                            TreeTrait[] traits) {
         this.tree = tree;
         addTraits(traits);
     }
 
-    public void addTraits(TreeTrait[] traits) {
-        if (loggableTreeTraits == null) {
-            loggableTreeTraits = new ArrayList<TreeTrait>();
+    private void addTraits(TreeTrait[] traits) {
+        if (treeTraits == null) {
+            treeTraits = new ArrayList<TreeTrait>();
         }
+
         for (TreeTrait trait : traits) {
-            if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
-                loggableTreeTraits.add(trait);
-            }
+            treeTraits.add(trait);
         }
     }
 
     public LogColumn[] getColumns() {
 
-        if (loggableTreeTraits.size() == 0) {
-            return null;
-        }
+        List<LogColumn> columns = new ArrayList<LogColumn>();
 
-        LogColumn[] columns = new LogColumn[loggableTreeTraits.size()];
+        for (final TreeTrait trait : treeTraits) {
 
-        for (int i = 0; i < loggableTreeTraits.size(); i++) {
-            final TreeTrait trait = loggableTreeTraits.get(i);
-            columns[i] = new LogColumn.Abstract(trait.getTraitName()) {
-                @Override
-                protected String getFormattedValue() {
-                    return trait.getTraitString(tree, null);
+            if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
+                LogColumn column = new LogColumn.Abstract(trait.getTraitName()) {
+                    @Override
+                    protected String getFormattedValue() {
+                        return trait.getTraitString(tree, null);
+                    }
+                };
+
+                columns.add(column);
+
+            } else {
+
+                for (int i = 0; i < tree.getNodeCount(); ++i) {
+                    final NodeRef node = tree.getNode(i);
+
+                    if (!tree.isRoot(node) || trait.getIntent() == TreeTrait.Intent.NODE) {
+
+                        if (trait instanceof TreeTrait.DA) {
+
+                            final int dim = ((double [])trait.getTrait(tree, node)).length;
+
+                            for (int j = 0; j < dim; ++j) {
+
+                                final int idx = j;
+                                LogColumn column = new LogColumn.Abstract(trait.getTraitName() + "." + (i + 1) +
+                                "." + (j + 1)) {
+                                    @Override
+                                    protected String getFormattedValue() {
+                                        double[] x = (double[]) trait.getTrait(tree, node);
+                                        return Double.toString(x[idx]);
+                                    }
+                                };
+
+                                columns.add(column);
+                            }
+
+                        } else {
+
+                            LogColumn column = new LogColumn.Abstract(trait.getTraitName() + "." + (i + 1)) {
+                                @Override
+                                protected String getFormattedValue() {
+                                    return trait.getTraitString(tree, node);
+                                }
+                            };
+
+                            columns.add(column);
+                        }
+                    }
                 }
-            };
+            }
         }
-        return columns;
+
+        return columns.toArray(new LogColumn[columns.size()]);
     }
 
     private Tree tree;
-    private List<TreeTrait> loggableTreeTraits;
+    private List<TreeTrait> treeTraits;
 }

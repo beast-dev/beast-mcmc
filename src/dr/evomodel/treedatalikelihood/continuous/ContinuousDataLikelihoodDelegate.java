@@ -104,7 +104,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                             boolean forceCompletelyObserved,
                                             boolean allowSingular) {
 
-        super("ContinousDataLikelihoodDelegate");
+        super("ContinuousDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel.treedatalikelihood");
 
         logger.info("Using ContinuousDataLikelihood Delegate");
@@ -291,17 +291,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return precisionType;
     }
 
-//    private double[] getTipObservations() {
-//        final double[] data = new double[numTraits * dimTrait * tipCount];
-//
-//        for (int tip = 0; tip < tipCount; ++tip) {
-//            double[] tipData = dataModel.getTipObservation(tip, precisionType);
-//            System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
-//        }
-//
-//        return data;
-//    }
-
     public ContinuousTraitPartialsProvider getDataModel() { return dataModel; }
 
     public RootProcessDelegate getRootProcessDelegate() {
@@ -368,13 +357,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append("Tree dim : ").append(treeVariance.length).append("\n");
         sb.append("dimTrait : ").append(dimTrait).append("\n");
         sb.append("numTraits: ").append(numTraits).append("\n");
-        sb.append("Jvar dim : ").append(jointVariance.length).append("\n");
+        sb.append("jVar dim : ").append(jointVariance.length).append("\n");
         sb.append("datum dim: ").append(datumLength);
         sb.append("\n\n");
 
         double[] data = dataModel.getParameter().getParameterValues();
-
-//        HEREHERE
 
 //        List<Integer> notMissing = new ArrayList<Integer>();
 //        for (int taxon = 0; taxon < numTaxa; ++taxon) {
@@ -485,13 +472,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             sb.append("Full conditional distributions:\n");
 
 
-            int[] cmissing = new int[dimTrait];
+            int[] cMissing = new int[dimTrait];
             int[] cNotMissing = new int[tipCount * dimTrait - dimTrait];
 
             for (int tip = 0; tip < tipCount; ++tip) {
 
-                for (int ctrait = 0; ctrait < dimTrait; ++ctrait) {
-                    cmissing[ctrait] = tip * dimTrait + ctrait;
+                for (int cTrait = 0; cTrait < dimTrait; ++cTrait) {
+                    cMissing[cTrait] = tip * dimTrait + cTrait;
                 }
 
                 for (int m = 0; m < tip * dimTrait; ++m) {
@@ -502,14 +489,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     cNotMissing[m - dimTrait] = m;
                 }
 
-                ConditionalVarianceAndTransform cvariance = new ConditionalVarianceAndTransform(
-                        new Matrix(jointVariance), cmissing, cNotMissing);
+                ConditionalVarianceAndTransform cVariance = new ConditionalVarianceAndTransform(
+                        new Matrix(jointVariance), cMissing, cNotMissing);
 
-//                double[] cmean = new double[notMissing.length];
+                double[] cMean = cVariance.getConditionalMean(rawDatum, 0, drift, 0);
 
-                double[] cmean = cvariance.getConditionalMean(rawDatum, 0, drift, 0);
-
-                sb.append("cmean #").append(tip).append(" ").append(new dr.math.matrixAlgebra.Vector(cmean))
+                sb.append("cMean #").append(tip).append(" ").append(new dr.math.matrixAlgebra.Vector(cMean))
                     .append("\n");
             }
 
@@ -519,35 +504,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         return sb.toString();
     }
-
-//    private int[] makeComplement(int max, int start, int end) {
-//        int
-//    }
-//
-    private int[] makeComplement(List<Integer> x, int max) {
-        int[] complement = null;
-
-        if (x.size() > 0) {
-            complement = new int[max - x.size()];
-            int offset = 0;
-            for (int i = 0; i < max; ++i) {
-                if (!x.contains(i)) {
-                    complement[offset] = i;
-                    ++offset;
-                }
-            }
-        }
-
-        return complement;
-    }
-
-//    private static boolean allZero(double[] x) {
-//        boolean result = x[0] == 0.0;
-//        for (int i = 1; i < x.length && result; ++i) {
-//            result = x[i] == 0.0;
-//        }
-//        return result;
-//    }
 
     @Override
     public final int getTraitCount() {
@@ -897,11 +853,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     @Override
-    public MatrixParameterInterface getPrecisionParamter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return getDiffusionModel().getPrecisionParameter();
     }
 
-    public void addFullConditionalGradientTrait(String traitName) {
+    void addFullConditionalGradientTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new TipGradientViaFullConditionalDelegate(traitName,
                 (MutableTreeModel) getCallbackLikelihood().getTree(),
@@ -913,8 +869,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
-    
-    public void addFullConditionalDensityTrait(String traitName) {
+
+    void addFullConditionalDensityTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new TipFullConditionalDistributionDelegate(traitName,
                 getCallbackLikelihood().getTree(),

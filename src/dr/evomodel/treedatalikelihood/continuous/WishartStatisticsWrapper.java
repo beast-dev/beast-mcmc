@@ -183,7 +183,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     }
 
     @Override
-    public MatrixParameterInterface getPrecisionParamter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return likelihoodDelegate.getDiffusionModel().getPrecisionParameter();
     }
 

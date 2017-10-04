@@ -171,7 +171,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.conjugateWishartProvider = wishartStatisticsProvider;
         this.meanParam = null;
         this.precisionParam = (extraPrecisionParam != null ? extraPrecisionParam :
-                conjugateWishartProvider.getPrecisionParamter());
+                conjugateWishartProvider.getPrecisionParameter());
         isSampledTraitLikelihood = false;
         this.treeModel = null;
         this.traitName = null;
@@ -490,7 +490,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             }
 
             if (ws != null) {
-                precMatrix = ws.getPrecisionParamter();
+                precMatrix = ws.getPrecisionParameter();
                 prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
             }
 

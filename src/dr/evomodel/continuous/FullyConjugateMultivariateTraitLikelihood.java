@@ -236,7 +236,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
     @Override
-    public MatrixParameterInterface getPrecisionParamter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return diffusionModel.getPrecisionParameter();
     }
 

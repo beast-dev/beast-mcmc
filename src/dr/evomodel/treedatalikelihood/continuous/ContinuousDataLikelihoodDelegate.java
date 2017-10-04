@@ -549,34 +549,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             partialBufferHelper.flipOffset(tipIndex);
         }
 
-//        final double[] tipPartial = forceCompletelyObserved ?
-//                dataModel.getTipPartial(tipIndex, true) :
-//                dataModel.getTipPartial(tipIndex);
         final double[] tipPartial = dataModel.getTipPartial(tipIndex, forceCompletelyObserved);
-
-//        if (precisionType == PrecisionType.SCALAR) {
-//            System.err.println(new dr.math.matrixAlgebra.Vector(tipPartial));
-//        }
-//
-//        final double[] tipPartial =
-//                forceCompletelyObserved ?
-//                dataModel.getTipPartial(tipIndex, true) :
-//                        dataModel.getTipPartial(tipIndex);
-//
-//
-//
-//        if (forceCompletelyObserved) {
-//            tipPartial[dimTrait] = Double.POSITIVE_INFINITY;
-////            System.err.println("FORCED");
-////            System.exit(-1);
-//        }
-//
-//        if (cdi instanceof ContinuousDiffusionIntegrator.Basic) {
-//            System.err.println(tipPartial[dimTrait]);
-//        }
-//
-////        System.err.println(cdi.getClass().getCanonicalName());
-
         setTipDataDirectly(tipIndex, tipPartial);
     }
 
@@ -587,7 +560,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
         int index = node.getNumber();
-        System.err.println("check data for: " + index);
         String name1 = dataModel.getParameter().getParameter(index).getParameterName();
         Taxon taxon = tree.getNodeTaxon(node);
         return name1.contains(taxon.getId());
@@ -762,7 +734,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public void storeState() {
         partialBufferHelper.storeState();
-//        diffusionProcessDelegate.storeState(); // Now delegate is an AbstractModel
 
         // turn on double buffering flipping (may have been turned off to enable a rescale)
         flip = true;
@@ -775,10 +746,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
      */
     @Override
     public void restoreState() {
-//        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
-
         partialBufferHelper.restoreState();
-//        diffusionProcessDelegate.restoreState();
 
         branchNormalization = storedBranchNormalization;
     }

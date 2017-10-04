@@ -89,61 +89,35 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 fireModelChanged(this, getTaxonIndex(index));
             } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED){
                 fireModelChanged(this);
+                allDataChange = true;
             } else {
                 throw new RuntimeException("Unhandled parameter change type");
             }
         }
     }
 
+    private boolean allDataChange = false;
+
     private int getTaxonIndex(int parameterIndex) {
         return parameterIndex / (dimTrait * numTraits);
     }
 
     @Override
-    protected void storeState() { }
+    protected void storeState() {
+        allDataChange = false;
+    }
 
     @Override
-    protected void restoreState() { }
+    protected void restoreState() {
+        // TODO Remove; should not be necessary
+        if (allDataChange) {
+            fireModelChanged(this);
+            allDataChange = false;
+        }
+    }
 
     @Override
     protected void acceptState() { }
-
-//    public double[] getTipMean(int index) {
-//        return parameter.getParameter(index).getParameterValues();
-//    }
-//
-//    public double[] getTipPrecision(int index) {
-//        if (numTraits == 1) {
-//            return NON_MISSING;
-//        } else {
-//            double[] missing = new double[numTraits];
-//            Arrays.fill(missing, Double.POSITIVE_INFINITY);
-//            return missing;
-//        }
-//    }
-
-//    public boolean getAnyPartiallyMissing(int taxonIndex) {
-//        boolean missing = false;
-//
-//        return missing;
-//    }
-//
-//    private void buildMissing
-//
-//    public boolean[] getPartiallyMissing(int taxonIndex) {
-//
-//        boolean[] missing = new boolean[numTraits * dimTrait];
-//        if (missingIndices != null) {
-//            for (int i = 0; i < numTraits; ++i) {
-//                for (int j = 0; j < dimTrait; ++j) {
-//                    final int index = i * dimTrait + j;
-//                    final int missingIndex = index + dimTrait * numTraits * taxonIndex;
-//                    missing[index] = missingIndices.contains(missingIndex);
-//                }
-//            }
-//        }
-//        return missing;
-//    }
 
     private double[] getScalarTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];
@@ -186,10 +160,6 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         }
     }
 
-//    public double[] getTipPartial(int taxonIndex) {
-//        return getTipPartial(taxonIndex, false);
-//    }
-
     private double[] getTipPartial(int taxonIndex, final PrecisionType precisionType) {
 
         if (OLD) {
@@ -221,7 +191,6 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         return partial;
     }
 
-
     public double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
         final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
 
@@ -234,14 +203,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
         return data;
     }
-    /*
-
-    private static double[] NON_MISSING = new double[] { Double.POSITIVE_INFINITY };
-
-    private Map<Integer, boolean[]> missingCache;
-    private boolean[] hasAnyMissing;
-    */
-
+    
     /*
      * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
      *
@@ -255,21 +217,3 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
      *
      */
 }
-
-/*
-
-MISSING BOTH (3 3)
-
-0	-684.6618158932947	-
-1000	-27.037002713592642	-
-2000	-25.97799960742541	-
-3000	-27.422132418922466	-
-4000	-31.810329425440127	-
-5000	-26.349607062243777	-
-6000	-26.01693963595732	-
-7000	-25.72792498059862	-
-8000	-25.799485212854908	-
-9000	-29.052355626685443	-
-10000	-25.717248570765143	-
-
- */

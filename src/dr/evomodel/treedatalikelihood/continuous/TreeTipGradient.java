@@ -33,11 +33,12 @@ import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDele
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
  */
-public class TreeTipGradient implements GradientWrtParameterProvider {
+public class TreeTipGradient implements GradientWrtParameterProvider, Reportable {
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
@@ -135,5 +136,10 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
         }
 
         return gradient;
+    }
+
+    @Override
+    public String getReport() {
+        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
     }
 }

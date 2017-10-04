@@ -29,12 +29,13 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
-public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider {
+public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider, Reportable {
 
     private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;
     private final Parameter traitParameter;
@@ -105,5 +106,10 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
         }
 
         return derivative;
+    }
+
+    @Override
+    public String getReport() {
+        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
     }
 }

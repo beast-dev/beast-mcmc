@@ -290,12 +290,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //       copy(i, draws);
 
     }
-
-    @Override
-    public int getStepCount() {
-        return 1;
-    }
-
+    
     @Override
     public String getPerformanceSuggestion() {
         return null;

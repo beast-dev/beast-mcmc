@@ -35,7 +35,7 @@ public interface GibbsOperator extends MCMCOperator, PathDependentOperator {
    /**
 	* @return the number of steps the operator performs in one go.
 	*/
-	int getStepCount();
+//	long getStepCount();
 
     /**
      * Set the path parameter for sampling from power-posterior

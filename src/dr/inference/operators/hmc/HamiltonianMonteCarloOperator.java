@@ -26,11 +26,9 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
-import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
@@ -41,12 +39,11 @@ import dr.util.Transform;
 
 public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
-    private final GradientWrtParameterProvider gradientProvider;
-    private double stepSize;
-    private final int nSteps;
-    private final NormalDistribution drawDistribution;
-
-    private final LeapFrogEngine leafFropEngine;
+    final GradientWrtParameterProvider gradientProvider;
+    protected double stepSize;
+    protected final int nSteps;
+    final NormalDistribution drawDistribution;
+    final LeapFrogEngine leapFrogEngine;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
@@ -59,10 +56,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.stepSize = stepSize;
         this.nSteps = nSteps;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
-
-        this.leafFropEngine = (transform != null ?
+        this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform) :
                 new LeapFrogEngine.Default(parameter));
+
     }
 
     @Override
@@ -75,19 +72,17 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return "Vanilla HMC operator";
     }
 
-    private static double getScaledDotProduct(final double[] momentum,
-                                              final double sigmaSquared) {
-        final int dim = momentum.length;
-
+    static double getScaledDotProduct(final double[] momentum,
+                                      final double sigmaSquared) {
         double total = 0.0;
-        for (int i = 0; i < dim; i++) {
-            total += momentum[i] * momentum[i];
+        for (double m : momentum) {
+            total += m * m;
         }
 
         return total / (2 * sigmaSquared);
     }
 
-    private static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
+    static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
         double[] momentum = new double[dim];
         for (int i = 0; i < dim; i++) {
             momentum[i] = (Double) distribution.nextRandom();
@@ -96,15 +91,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public double doOperation() {
-        return leafFrog();
-    }
+    public double doOperation() { return leapFrog(); }
 
     private long count = 0;
 
     private static final boolean DEBUG = false;
 
-    protected double leafFrog() {
+    private double leapFrog() {
 
         if (DEBUG) {
             if (count % 5 == 0) {
@@ -114,19 +107,18 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         }
 
         final int dim = gradientProvider.getDimension();
+
         final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
 
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);
-        final double[] position = leafFropEngine.getInitialPosition();
+        final double[] position = leapFrogEngine.getInitialPosition();
 
         final double prop = getScaledDotProduct(momentum, sigmaSquared) +
-                leafFropEngine.getParameterLogJacobian();
+                leapFrogEngine.getParameterLogJacobian();
 
-        leafFropEngine.updateMomentum(position, momentum,
+        leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-//        int randomSize = 2;
-//        int nSteps = Math.max(this.nSteps + MathUtils.nextInt(2 * randomSize) - randomSize, 1);
 
         if (DEBUG) {
             System.err.println("nSteps = " + nSteps);
@@ -134,21 +126,21 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         for (int i = 0; i < nSteps; i++) { // Leap-frog
 
-            leafFropEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
+            leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
 
             if (i < (nSteps - 1)) {
-                leafFropEngine.updateMomentum(position, momentum,
+                leapFrogEngine.updateMomentum(position, momentum,
                         gradientProvider.getGradientLogDensity(), stepSize);
             }
-        } // end of loop over steps
+        }
 
-        leafFropEngine.updateMomentum(position, momentum,
+        leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
         final double res = getScaledDotProduct(momentum, sigmaSquared) +
-                leafFropEngine.getParameterLogJacobian();
+                leapFrogEngine.getParameterLogJacobian();
 
-        return prop - res;
+        return prop - res; //hasting ratio
     }
 
     @Override
@@ -184,6 +176,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                             final double[] momentum,
                             final double functionalStepSize,
                             final double sigmaSquared);
+
+        void setParameter(double[] position);
 
         class Default implements LeapFrogEngine {
 
@@ -222,10 +216,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     position[j] += functionalStepSize * momentum[j] / sigmaSquared;
                 }
 
-                setParameter(position); // Write back into BEAST model
+                setParameter(position);
             }
 
-            protected void setParameter(double[] position) {
+
+            public void setParameter(double[] position) {
 
                 final int dim = position.length;
                 for (int j = 0; j < dim; ++j) {
@@ -241,14 +236,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             final private Transform transform;
             double[] unTransformedPosition;
 
-            protected WithTransform(Parameter parameter, Transform transform) {
+            private WithTransform(Parameter parameter, Transform transform) {
                 super(parameter);
                 this.transform = transform;
             }
 
             @Override
             public double getParameterLogJacobian() {
-                return transform.getLogJacobian(unTransformedPosition, 0, unTransformedPosition.length);
+                return transform.getLogJacobian(unTransformedPosition,0, unTransformedPosition.length);
             }
 
             @Override
@@ -268,7 +263,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             }
 
             @Override
-            protected void setParameter(double[] position) {
+            public void setParameter(double[] position) {
                 unTransformedPosition = transform.inverse(position, 0, position.length);
                 super.setParameter(unTransformedPosition);
             }

@@ -33,12 +33,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         this.workingTree = null;
         missingIndicator = lfm.getMissingIndicator();
     }
-
-    @Override
-    public int getStepCount() {
-        return 0;
-    }
-
+    
     @Override
     public String getPerformanceSuggestion() {
         return null;

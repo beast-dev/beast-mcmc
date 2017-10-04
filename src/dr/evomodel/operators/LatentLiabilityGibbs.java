@@ -110,7 +110,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
         this.traitModel = traitModel;
         this.tipTraitParameter = tipTraitParameter;
 
-        
+
         this.rootPriorMean = traitModel.getPriorMean();
         this.rootPriorSampleSize = traitModel.getPriorSampleSize();
 
@@ -123,7 +123,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
             hasMask=true;
           //  printInformation(mask);
         }
-        
+
 
         postMeans = new double[treeModel.getNodeCount()][dim];
         preMeans = new double[treeModel.getNodeCount()][dim];
@@ -512,7 +512,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     public double sampleNode2(NodeRef node) {
 
         final int thisNumber = node.getNumber();
-   
+
 
 
 //        double[] mean = new double[dim];
@@ -643,7 +643,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
 
 
             traitModel.getTraitParameter().getParameter(thisNumber).fireParameterChangedEvent();
-            
+
 
             return logq;
 

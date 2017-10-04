@@ -1,0 +1,290 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+	<!-- ntax=8                                                                 -->
+	<taxa id="taxa">
+		<taxon id="SK001_ZA_0.894_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">-9.	-1	9.	-0.112049504	4.28780173	1.791759469</attr>
+		</taxon>
+		<taxon id="SK100_ZA_0.885_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">-9.	-1	-9.	-0.122167634	4.28780173	5.758901774</attr>
+		</taxon>
+		<taxon id="SK101_ZA_0.867_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">-1	-9.	9.	-0.142716302	4.644438589	6.161207322</attr>
+		</taxon>
+		<taxon id="SK102_ZA_0.752_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">-1	9.	1	-0.285018955	4.350248018	5.533389489</attr>
+		</taxon>
+		<taxon id="SK103_ZA_0.835_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">9.	-9.	9.	-0.180323554	5.012837225	7.553810852</attr>
+		</taxon>
+		<taxon id="SK104_ZA_0.837_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">-1	-9.	9.	-0.177931208	5.764922985	5.308267697</attr>
+		</taxon>
+		<taxon id="SK105_ZA_0.722_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">-1	9.	-1	-0.32573014	2.093421685	5.308267697</attr>
+		</taxon>
+		<taxon id="SK106_ZA_0.872_2003">
+			<date value="2003.5" direction="forwards" units="years"/>
+			<attr name="latent">-1	9.	1	-0.136965855	5.257678575	5.916202063</attr>
+		</taxon>
+	</taxa>
+
+	<!-- The sequence alignment (each sequence refers to a taxon above).         -->
+	<!-- ntax=535 nchar=1                                                         -->
+	<alignment id="alignment" dataType="binary">
+	<sequence>
+			<taxon idref="SK001_ZA_0.894_2003"/>
+			001???
+		</sequence>
+		<sequence>
+			<taxon idref="SK100_ZA_0.885_2003"/>
+			000???
+		</sequence>
+		<sequence>
+			<taxon idref="SK101_ZA_0.867_2003"/>
+			001???
+		</sequence>
+		<sequence>
+			<taxon idref="SK102_ZA_0.752_2003"/>
+			011???
+		</sequence>
+		<sequence>
+			<taxon idref="SK103_ZA_0.835_2003"/>
+			101???
+		</sequence>
+		<sequence>
+			<taxon idref="SK104_ZA_0.837_2003"/>
+			001???
+		</sequence>
+		<sequence>
+			<taxon idref="SK105_ZA_0.722_2003"/>
+			010???
+		</sequence>
+		<sequence>
+			<taxon idref="SK106_ZA_0.872_2003"/>
+			?11???
+		</sequence>
+	</alignment>
+
+	<patterns id="patterns" from="1" unique="false" strip="false">
+		<alignment idref="alignment"/>
+	</patterns>
+
+	<newick id="startingTree">		((SK101_ZA_0.867_2003:0.4,((SK001_ZA_0.894_2003:0.6,SK106_ZA_0.872_2003:0.3):0.8,((SK103_ZA_0.835_2003:0.03,SK102_ZA_0.752_2003:0.03):0.5,(SK105_ZA_0.722_2003:0.2,SK104_ZA_0.837_2003:0.5):0.5):0.2):0.7):0.5,SK100_ZA_0.885_2003:0.1)
+	</newick>
+
+	<!-- Generate a tree model                                                   -->
+	<treeModel id="treeModel">
+		<coalescentTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+
+		<nodeTraits rootNode="false" internalNodes="false" leafNodes="true" traitDimension="6" name="latent">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+
+	</treeModel>
+
+			<matrixParameter id="precision">
+				<parameter id="precision.col1"  value="1.00 0.10 0.10 0.10 0.10 0.10"/>
+				<parameter id="precision.col2"  value="0.10 1.00 0.10 0.10 0.10 0.10"/>
+				<parameter id="precision.col3"  value="0.10 0.10 1.00 0.10 0.10 0.10"/>
+				<parameter id="precision.col4"  value="0.10 0.10 0.10 1.00 0.10 0.10"/>
+				<parameter id="precision.col5"  value="0.10 0.10 0.10 0.10 1.00 0.10"/>
+				<parameter id="precision.col6"  value="0.10 0.10 0.10 0.10 0.10 1.00"/>
+			</matrixParameter>
+
+			<diagonalContrainedMatrixView id="constrained.precision">
+				<matrixParameter idref="precision"/>
+				<mask>
+					<parameter value="1 1 1 0 0 0"/>
+				</mask>
+			</diagonalContrainedMatrixView>
+
+
+	<multivariateDiffusionModel id="diffusionModel">
+		<precisionMatrix>
+			<diagonalContrainedMatrixView idref="constrained.precision"/>
+		</precisionMatrix>
+	</multivariateDiffusionModel>
+
+	<multivariateWishartPrior id="precisionPrior" df="6">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="1.0 0.0 0.0 0.0 0.0 0.0"/>
+				<parameter value="0.0 1.0 0.0 0.0 0.0 0.0"/>
+				<parameter value="0.0 0.0 1.0 0.0 0.0 0.0"/>
+				<parameter value="0.0 0.0 0.0 1.0 0.0 0.0"/>
+				<parameter value="0.0 0.0 0.0 0.0 1.0 0.0"/>
+				<parameter value="0.0 0.0 0.0 0.0 0.0 1.0"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<parameter idref="precision"/>
+		</data>
+	</multivariateWishartPrior>
+
+	<multivariateTraitLikelihood id="traitLikelihood" traitName="latent"
+	useTreeLength="true" scaleByTime="true" reportAsMultivariate="true"
+	cacheBranches="true" reciprocalRates="true" integrateInternalTraits="true"
+	sampleMissingTraits="true">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+		<conjugateRootPrior>
+			<meanParameter>
+				<parameter value="0.0 0.0 0.0 0.0 0.0 0.0"/>
+			</meanParameter>
+			<priorSampleSize>
+				<parameter value="0.001"/>
+			</priorSampleSize>
+		</conjugateRootPrior>
+		<missingIndicator latentFrom="1" latentTo="3"> <!-- marks discrete traits 1 to 25 and missing (?) continuous traits -->
+			<parameter id="mask"/>
+		</missingIndicator>
+	</multivariateTraitLikelihood>
+
+	<maskedParameter id= "latentParameters">
+		<mask>
+			<parameter idref="mask"/>
+		</mask>
+		<parameter idref="leafTraits"/>
+	</maskedParameter>
+
+	<compoundParameter id="threshold">
+		<parameter value="1"/>
+	</compoundParameter>
+
+    <orderedLatentLiabilityLikelihood id="liabilityLikelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <multivariateTraitLikelihood idref="traitLikelihood"/>
+        <tipTrait>
+            <parameter idref="leafTraits"/>
+        </tipTrait>
+        <threshold>
+        	<parameter idref="threshold"/>
+        </threshold>
+        <numClasses>
+        	<parameter value = "2 2 2 1 1 1"/>
+        </numClasses>
+    </orderedLatentLiabilityLikelihood>
+	
+
+	<report>
+		<maskedParameter idref="latentParameters"/>
+	</report>    
+
+	<maskedParameter id="traceLatent" from="1" to="6">
+		<parameter idref="leafTraits"/>
+	</maskedParameter>
+
+    <operators id="operators" optimizationSchedule="log">
+
+  		<hamiltonianMonteCarloOperator mode="1" weight="10" nSteps="5" stepSize=".0015" drawVariance="1" autoOptimize="false">
+ 			<maskedGradient>
+				<traitGradientOnTree>
+					<multivariateTraitLikelihood idref="traitLikelihood"/>
+				</traitGradientOnTree>
+				<mask>
+					<parameter idref="mask"/>
+				</mask>
+			</maskedGradient>
+			<maskedParameter idref="latentParameters"/>
+			<orderedLatentLiabilityTransform>
+				<orderedLatentLiabilityLikelihood idref="liabilityLikelihood"/>
+				<mask>
+					<parameter idref="mask"/>
+				</mask>
+			</orderedLatentLiabilityTransform>
+ 		</hamiltonianMonteCarloOperator>
+
+
+		<precisionGibbsOperator weight="1">
+            <multivariateTraitLikelihood idref="traitLikelihood"/>
+            <multivariateWishartPrior idref="precisionPrior"/>
+            <matrixParameter idref="precision"/>
+		</precisionGibbsOperator>
+
+
+    </operators>
+
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="true" autoOptimizeDelay="500">
+		<posterior id="posterior">
+			<prior id="prior">
+				<multivariateWishartPrior idref="precisionPrior"/>
+			</prior>
+			<likelihood id="likelihood">
+	            <multivariateTraitLikelihood idref="traitLikelihood"/>
+				<latentLiabilityLikelihood idref="liabilityLikelihood"/>
+			</likelihood>
+		</posterior>
+
+		<operators idref="operators"/>
+
+		<log id="screenLog" logEvery="1000">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+			<column label="latentTraits" dp="4" width="12">
+				<maskedParameter idref="traceLatent"/>
+			</column>
+		</log>
+
+		<log id="fileLog1" logEvery="1000" fileName="Goulder_LL_hmc_fix_step0015_tmp_test.log">
+			<posterior idref="posterior"/>
+			<prior idref="prior"/>
+			<likelihood idref="likelihood"/>
+			<diagonalContrainedMatrixView idref="constrained.precision"/>
+			<matrixParameter idref="precision"/>
+			<parameter idref="leafTraits"/>
+		</log>
+
+		<log id="fileLog2" logEvery="10000" fileName="Goulder_LL_precision_hmc.log">
+			<matrixParameter idref="precision"/>
+		</log>
+
+		<log id="fileLog3" logEvery="10000" fileName="Goulder_LL_constrained_hmc.log">
+			<diagonalContrainedMatrixView idref="constrained.precision"/>
+		</log>
+
+<!-- 
+		<logTree id="treeFileLog" logEvery="100" nexusFormat="true" fileName="Goulder_LL.trees" sortTranslationTable="true">
+			<treeModel idref="treeModel"/>
+			<posterior idref="posterior"/>
+			<multivariateDiffusionModel idref="diffusionModel"/>   <!~~ reports info about diffusion model ~~>
+            <multivariateTraitLikelihood idref="traitLikelihood"/>
+		</logTree>
+ -->
+	</mcmc>
+	<report>
+		<property name="timer">
+			<mcmc idref="mcmc"/>
+		</property>
+	</report>
+</beast>
+

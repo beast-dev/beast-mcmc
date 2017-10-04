@@ -33,15 +33,19 @@
  		</data>
 	</multivariateDistributionLikelihood>
 
-	<operators id="operators.rw">
+	<operators id="operators.hmcVanilla">
 
-        <randomWalkOperator windowSize="0.75" weight="1">
-            <parameter idref="draw"/>
-        </randomWalkOperator>
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="distribution"/>
+			</gradient>
+			<parameter idref="draw"/>
+ 		</hamiltonianMonteCarloOperator>
 
 	</operators>
 
-	<operators id="operators.hmc">
+	<operators id="operators.hmcNUTS">
 
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.1" mode="nuts"
  			drawVariance="1.0">
@@ -53,9 +57,9 @@
 
 	</operators>
 
-	<mcmc id="mcmc.hmc" chainLength="100000" autoOptimize="true">
+	<mcmc id="mcmc.hmcNUTS" chainLength="1000000" autoOptimize="false">
         <posterior>
-            <likelihood id="likelihood.hmc">
+            <likelihood id="likelihood.hmcNUTS">
 	            <distributionLikelihood idref="distribution"/>
             	<dummyLikelihood>
 					<distributionLikelihood idref="distribution"/>
@@ -63,62 +67,64 @@
 	            </dummyLikelihood>
             </likelihood>
         </posterior>
-        <operators idref="operators.hmc"/>
-		<log logEvery="100">
-			<column label="posterior" dp="4" width="12">
-				<likelihood idref="likelihood.hmc"/>
-			</column>
-			<column label="Draw" sf="6" width="12">
-				<parameter idref="draw"/>
-			</column>
-		</log>
-		<log logEvery="1000" fileName="testMvnHmc.log">
-			<likelihood idref="likelihood.hmc"/>
-			<parameter idref="draw"/>
-		</log>
-	</mcmc>
-
-	<report>
-		<property name="timer">
-			<object idref="mcmc.hmc"/>
-		</property>
-	</report>
-<!--
-
-	<mcmc id="mcmc.rw" chainLength="100000" autoOptimize="true">
-        <posterior>
-            <likelihood id="likelihood.rw">
-	            <distributionLikelihood idref="distribution"/>
-            	<dummyLikelihood>
-					<distributionLikelihood idref="distribution"/>
-					<parameter idref="draw"/>
-	            </dummyLikelihood>
-            </likelihood>
-        </posterior>
-        <operators idref="operators.rw"/>
+        <operators idref="operators.hmcNUTS"/>
 		<log logEvery="10000">
 			<column label="posterior" dp="4" width="12">
-				<likelihood idref="likelihood.rw"/>
+				<likelihood idref="likelihood.hmcNUTS"/>
 			</column>
 			<column label="Draw" sf="6" width="12">
 				<parameter idref="draw"/>
 			</column>
 		</log>
-		<log logEvery="1000" fileName="testMvnRw.log">
-			<likelihood idref="likelihood.rw"/>
+		<log logEvery="1000" fileName="testMvnhmcNUTS.log">
+			<likelihood idref="likelihood.hmcNUTS"/>
+			<parameter idref="draw"/>
+		</log>
+	</mcmc>
+	
+	
+	<mcmc id="mcmc.hmcVanilla" chainLength="1000000" autoOptimize="false">
+        <posterior>
+            <likelihood id="likelihood.hmcVanilla">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmcVanilla"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmcVanilla"/>
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testMvnhmcVanilla.log">
+			<likelihood idref="likelihood.hmcVanilla"/>
 			<parameter idref="draw"/>
 		</log>
 	</mcmc>
 
 	<report>
 		<property name="timer">
-			<object idref="mcmc.rw"/>
+			<object idref="mcmc.hmcNUTS"/>
 		</property>
 	</report>
 
-	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>
-	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>
- -->
+
+	<traceAnalysis fileName="testMvnhmcNUTS.log" stdError="true"/>
+	
+	<report>
+		<property name="timer">
+			<object idref="mcmc.hmcVanilla"/>
+		</property>
+	</report>
+	
+	<traceAnalysis fileName="testMvnhmcVanilla.log" stdError="true"/>
+
 
 </beast>
 
@@ -142,7 +148,7 @@ draw10	0.4165	2.7161	0.4324	-5.3543	5.2557	97.3528	-1.3614	2.0971	*
 
 burnIn   <= 99900,   maxState  = 999000
 statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.hmc	-18.8889	2.0015	-18.6259	-22.4549	-15.3214	901	-19.3385	-16.823
+likelihood.hmcNUTS	-18.8889	2.0015	-18.6259	-22.4549	-15.3214	901	-19.3385	-16.823
 draw1	9.9667	3.776	9.8747	3.2447	18.061	847.021	6.7726	11.8249
 draw2	9.0118	2.5021	8.9683	4.4792	14.1774	775.5542	7.3235	10.5367
 draw3	8.0438	3.1117	8.128	1.8647	14.223	817.3962	6.2511	10.2605

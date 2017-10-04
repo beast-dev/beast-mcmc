@@ -1,0 +1,276 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+<!-- 	<parameter id="draw" value="2" lower="0.0"/> -->
+  <parameter id="draw" value="2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1 2.1" lower="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+	
+	<multivariateNormalDistributionModel id="normal">
+		<meanParameter>
+  <parameter id="mu" value="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+ 		</meanParameter>
+ 		<precisionParameter>
+<matrixParameter>
+  <parameter value="15.4298419556397 -5.2259442489529 -3.91839207086732 -1.23155516489028 -1.16805430329089 -3.65947440884909 -2.56698057253234 -1.17922709592817 -5.17653284130574 -4.86635681464383 1.13110236742955 -2.88130238799314 8.65190710090222 -1.08218057529715 0.913307098576678"/>
+  <parameter value="-5.2259442489529 21.8287676445599 3.07143534407255 -1.34940908104932 6.58262558458204 -4.14998683159507 5.92499258166385 -1.90797358867747 2.91550027925849 11.9980721634425 -0.775649202754588 -3.83049916277403 -1.81824708732427 4.10878730022072 3.43772276674157"/>
+  <parameter value="-3.91839207086732 3.07143534407255 15.8086508133513 1.88679978078745 4.29379893020448 -1.59974152335408 -1.51935342031319 0.951726727487122 1.62273518452949 4.08954607090399 -3.35105125938155 -0.810933739495521 0.0544288934481592 1.04705852029907 0.241800456297216"/>
+  <parameter value="-1.23155516489028 -1.34940908104932 1.88679978078745 17.9418526164911 3.16805867001711 -3.32378741127377 -0.467013973308745 -5.30774957299085 -4.87231942956648 5.20759959612808 6.2831089243141 -0.256865384520473 -1.89349805139683 -3.06915679178879 -0.942951611154148"/>
+  <parameter value="-1.16805430329089 6.58262558458204 4.29379893020448 3.16805867001711 17.7209616609486 -1.49539482831271 6.52400852621477 -6.14358981695452 -3.25640231065938 9.540533919854 -5.93587799217517 0.000558495408278681 -1.87166944532898 -1.01048643205679 -11.5076168748992"/>
+  <parameter value="-3.65947440884909 -4.14998683159507 -1.59974152335408 -3.32378741127377 -1.49539482831271 13.5493061077462 -5.79977275356585 1.10466686358832 -2.21863779243356 1.34354878462556 -3.74245349447337 0.673919203969946 -0.393130024016459 0.232640959921041 2.52714356608644"/>
+  <parameter value="-2.56698057253234 5.92499258166385 -1.51935342031319 -0.467013973308745 6.52400852621477 -5.79977275356585 15.5940627223755 -6.25421201350211 4.57174155997572 2.98719894383658 -3.88436398358269 -5.77013325134207 -3.84615262496281 -0.195007987921222 -13.8235363807108"/>
+  <parameter value="-1.17922709592817 -1.90797358867747 0.951726727487122 -5.30774957299085 -6.14358981695452 1.10466686358832 -6.25421201350211 15.004559894733 4.54768633476192 1.19408279100316 6.01864558653537 4.86013218890654 0.00520556444900494 3.03387446701136 7.34603665321376"/>
+  <parameter value="-5.17653284130574 2.91550027925849 1.62273518452949 -4.87231942956648 -3.25640231065938 -2.21863779243356 4.57174155997572 4.54768633476192 12.4678173851339 5.44936818483677 0.0265752856359476 -0.315603296874172 -5.16547285957351 2.65825560414657 2.17669328959701"/>
+  <parameter value="-4.86635681464383 11.9980721634425 4.08954607090399 5.20759959612808 9.540533919854 1.34354878462556 2.98719894383658 1.19408279100316 5.44936818483677 26.3323780500401 2.5713642236802 -3.040205159516 2.3716874162079 3.46101535211049 -0.305552813477759"/>
+  <parameter value="1.13110236742955 -0.775649202754588 -3.35105125938155 6.2831089243141 -5.93587799217517 -3.74245349447337 -3.88436398358269 6.01864558653537 0.0265752856359476 2.5713642236802 15.6235098478925 2.05614539016177 5.22106931660232 0.225340231552511 4.33494658471146"/>
+  <parameter value="-2.88130238799314 -3.83049916277403 -0.810933739495521 -0.256865384520473 0.000558495408278681 0.673919203969946 -5.77013325134207 4.86013218890654 -0.315603296874172 -3.040205159516 2.05614539016177 11.7886174170054 -1.93551673627717 -3.01400259686066 4.31513993839991"/>
+  <parameter value="8.65190710090222 -1.81824708732427 0.0544288934481592 -1.89349805139683 -1.87166944532898 -0.393130024016459 -3.84615262496281 0.00520556444900494 -5.16547285957351 2.3716874162079 5.22106931660232 -1.93551673627717 19.7758298787699 -0.631112286791604 -0.547124151033147"/>
+  <parameter value="-1.08218057529715 4.10878730022072 1.04705852029907 -3.06915679178879 -1.01048643205679 0.232640959921041 -0.195007987921222 3.03387446701136 2.65825560414657 3.46101535211049 0.225340231552511 -3.01400259686066 -0.631112286791604 4.6725029066032 3.00094904868071"/>
+  <parameter value="0.913307098576678 3.43772276674157 0.241800456297216 -0.942951611154148 -11.5076168748992 2.52714356608644 -13.8235363807108 7.34603665321376 2.17669328959701 -0.305552813477759 4.33494658471146 4.31513993839991 -0.547124151033147 3.00094904868071 29.2784044355449"/>
+</matrixParameter>
+		</precisionParameter>
+	</multivariateNormalDistributionModel>
+
+	<multivariateDistributionLikelihood id="distribution">
+		<distribution>
+			<multivariateNormalDistributionModel idref="normal"/>
+		</distribution>
+		<data>
+			<parameter idref="draw"/>
+ 		</data>
+	</multivariateDistributionLikelihood>
+	
+
+   
+	<operators id="operators.rw">
+	
+        <randomWalkOperator windowSize="0.75" weight="1">
+            <parameter idref="draw"/>
+        </randomWalkOperator>
+        
+	</operators>    
+        
+	
+	<operators id="operators.hmcVanilla">
+
+ 		<hamiltonianMonteCarloOperator mode="vanilla"
+ 		weight="1" nSteps="100" stepSize="0.1" drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="distribution"/>							
+			</gradient>
+			<parameter idref="draw"/>
+		    <signTransform>
+		    	<parameter idref = "draw"/>
+		    </signTransform>	
+ 	</hamiltonianMonteCarloOperator>
+	</operators>
+	
+	<operators id="operators.hmcNUTS">
+
+ 	<hamiltonianMonteCarloOperator mode="nuts"
+ 		weight="1" nSteps="100" stepSize="0.1" drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="distribution"/>							
+			</gradient>
+			<parameter idref="draw"/>
+		    <signTransform>
+		    	<parameter idref = "draw"/>
+		    </signTransform>	
+ 	</hamiltonianMonteCarloOperator>
+	</operators>
+
+
+	<mcmc id="mcmc.hmcVanilla" chainLength="100000" autoOptimize="false">
+        <posterior>
+            <likelihood id="likelihood.hmcVanilla">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>                
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmcVanilla"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmcVanilla"/>                
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>			
+		</log>
+		<log logEvery="100" fileName="testMvnHmc_15d_vanilla.log">
+			<likelihood idref="likelihood.hmcVanilla"/>           
+			<parameter idref="draw"/>        
+		</log>
+	</mcmc>
+
+	
+
+	
+	
+	<mcmc id="mcmc.hmcNUTS" chainLength="1000000" autoOptimize="false">
+        <posterior>
+            <likelihood id="likelihood.hmcNUTS">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>                
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmcNUTS"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmcNUTS"/>                
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>			
+		</log>
+		<log logEvery="100" fileName="testMvnHmc_15d_NUTS.log">
+			<likelihood idref="likelihood.hmcNUTS"/>           
+			<parameter idref="draw"/>        
+		</log>
+	</mcmc>
+
+
+
+
+	
+	<mcmc id="mcmc.rw" chainLength="1000000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.rw">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>                
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.rw"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.rw"/>                
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>			
+		</log>
+		<log logEvery="100" fileName="testMvnRw_15d.log">
+			<likelihood idref="likelihood.rw"/>           
+			<parameter idref="draw"/>        
+		</log>
+	</mcmc>
+
+	
+
+    <report>
+		<property name="timer">
+			<object idref="mcmc.hmcVanilla"/>
+		</property>
+	</report>
+	
+	<report>
+		<property name="timer">
+			<object idref="mcmc.hmcNUTS"/>
+		</property>
+	</report>
+
+	 
+	<report>
+		<property name="timer">
+			<object idref="mcmc.rw"/>
+		</property>
+	</report>	
+		
+ 
+	<traceAnalysis fileName="testMvnRw_15d.log" stdError="true"/>
+	
+	<traceAnalysis fileName="testMvnHmc_15d_NUTS.log" stdError="true"/>
+
+	<traceAnalysis fileName="testMvnHmc_15d_vanilla.log" stdError="true"/>
+	
+</beast>
+
+<!-- 
+burnIn   <= 100000,   maxState  = 1000000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.rw	-8.7964	2.7421	-8.4155	-14.1959	-3.9211	3672.2196	-9.7893	-6.2988	
+draw1	0.6176	0.3176	0.5992	0.0288	1.1995	3388.5353	0.3788	0.8099	
+draw2	0.1617	0.1332	0.1278	1.47E-5	0.422	2807.9552	6.0166E-4	0.1282	
+draw3	0.2803	0.2001	0.2466	6.3031E-5	0.6589	3757.0404	0.0158	0.261	
+draw4	0.366	0.2303	0.3408	3.1895E-4	0.7894	3436.552	0.1372	0.4587	
+draw5	0.1859	0.1517	0.1504	7.5518E-5	0.4899	2965.5958	2.2022E-4	0.1504	
+draw6	0.722	0.3444	0.7024	0.0673	1.366	3071.2621	0.4675	0.9406	
+draw7	0.7916	0.3916	0.7672	9.5459E-3	1.4778	2515.8355	0.467	1.0084	
+draw8	0.2081	0.1684	0.1692	2.5104E-5	0.5369	4030.1061	2.3467E-4	0.1692	
+draw9	0.272	0.2122	0.2242	5.5668E-5	0.6869	3697.2086	5.5668E-5	0.2242	
+draw10	0.0763	0.0699	0.0566	1.7427E-4	0.2234	1804.5472	3.9803E-4	0.0566	
+draw11	0.2144	0.1734	0.1742	1.2326E-5	0.559	3831.9328	1.2326E-5	0.1742	
+draw12	0.5925	0.344	0.5576	3.7038E-3	1.2101	3190.1357	0.2583	0.7296	
+draw13	0.2106	0.1587	0.1763	1.4061E-4	0.5168	4000.8167	3.2205E-3	0.1785	
+draw14	0.4542	0.3629	0.3705	1.3966E-4	1.1585	5265.3735	1.3966E-4	0.3705	
+draw15	0.2205	0.1643	0.1856	3.6123E-6	0.5423	3119.5722	2.1165E-3	0.187	
+
+
+burnIn   <= 100000,   maxState  = 1000000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmcNUTS	-8.8442	2.7194	-8.5376	-14.37	-4.0732	7822.9551	-9.6577	-6.1854	
+draw1	0.6213	0.3209	0.5991	0.0176	1.1947	7277.9667	0.3067	0.752	
+draw2	0.1636	0.1358	0.1301	1.2957E-5	0.435	7697.2371	4.0119E-5	0.1301	
+draw3	0.2824	0.2023	0.2445	3.7613E-4	0.6712	6773.644	5.8916E-5	0.2445	
+draw4	0.3603	0.2242	0.333	2.3153E-5	0.7646	7660.82	0.1329	0.4416	
+draw5	0.1876	0.1532	0.1508	4.0948E-5	0.4903	8573.248	6.1209E-4	0.1512	
+draw6	0.7218	0.3484	0.7071	0.038	1.3516	7618.7365	0.4459	0.9327	
+draw7	0.7925	0.4009	0.7703	0.0188	1.507	7193.068	0.4648	1.0214	
+draw8	0.2073	0.1708	0.164	3.1575E-5	0.5465	7862.6645	1.8232E-4	0.1641	
+draw9	0.2711	0.2147	0.223	2.6259E-5	0.6902	8657.088	4.2981E-4	0.2232	
+draw10	0.0786	0.0739	0.0571	5.131E-6	0.226	8141.5963	5.131E-6	0.0571	
+draw11	0.2207	0.1778	0.1778	1.9721E-5	0.57	8185.5283	6.205E-5	0.1778	
+draw12	0.5932	0.3411	0.5608	3.0181E-3	1.2068	7852.1393	0.2659	0.7369	
+draw13	0.2053	0.1586	0.1719	2.7603E-5	0.5121	8489.0941	2.7603E-5	0.1719	
+draw14	0.4465	0.3576	0.365	4.8059E-5	1.155	6985.7446	8.7599E-4	0.3654	
+draw15	0.2175	0.1646	0.183	7.53E-6	0.5358	7830.6394	7.53E-6	0.183	
+
+
+burnIn   <= 10000,   maxState  = 100000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmcVanilla	-8.7789	2.7445	-8.2727	-14.3737	-3.9385	901	-9.3674	-6.222	
+draw1	0.6181	0.3345	0.5764	5.8527E-3	1.1836	712.0056	0.2918	0.7438	
+draw2	0.1614	0.1353	0.1273	2.5359E-4	0.4287	901	2.5359E-4	0.1273	
+draw3	0.288	0.2035	0.2491	3.1325E-4	0.6796	901	0.0182	0.2608	
+draw4	0.3679	0.2349	0.3372	5.8603E-3	0.8075	901	0.1263	0.4427	
+draw5	0.1778	0.1454	0.1438	1.1995E-4	0.4508	901	1.1995E-4	0.1438	
+draw6	0.7295	0.3611	0.7144	0.0509	1.4139	824.3777	0.5082	1.0009	
+draw7	0.8005	0.3931	0.7779	0.0365	1.4968	810.8269	0.5217	1.0496	
+draw8	0.202	0.17	0.1598	2.3384E-4	0.5231	831.7565	2.3384E-4	0.1598	
+draw9	0.2793	0.2136	0.2369	2.4152E-4	0.6782	901	4.6983E-3	0.2391	
+draw10	0.0768	0.0723	0.0563	6.1326E-5	0.2212	888.8814	7.0851E-4	0.0568	
+draw11	0.2116	0.1678	0.1713	3.3428E-5	0.5309	901	3.3428E-5	0.1713	
+draw12	0.6019	0.3435	0.5739	8.8111E-3	1.2196	901	0.288	0.7499	
+draw13	0.215	0.1586	0.1831	1.2948E-3	0.5138	821.457	7.2638E-3	0.1887	
+draw14	0.4529	0.3811	0.3521	9.8076E-5	1.1783	901	9.8076E-5	0.3521	
+draw15	0.2225	0.1645	0.1895	3.9371E-5	0.5133	787.8843	3.9371E-5	0.1895
+ -->
+
+
+
+<!-- 
+require(tmvtnorm)
+S <- diag(15)
+set.seed(11)
+(R <- rWishart(1, 15, S))
+m <- R[,,1]
+sigma <- solve(m)
+
+mu <- rep(0,15)
+a <- rep(0,15)
+X <- rtmvnorm(n=50000000, mean=mu,
+              sigma=sigma, lower=a, 
+              algorithm="rejection")
+
+colMeans(X)
+
+ [1] 0.6191001 0.1609761 0.2831052 0.3600815 0.1877215 0.7207720 0.7963649 0.2080932
+ [9] 0.2701825 0.0784179 0.2205686 0.5913184 0.2071740 0.4500280 0.2215407
+ -->

@@ -29,7 +29,6 @@ import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.Reportable;
 
@@ -46,7 +45,7 @@ import java.util.logging.Logger;
 
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
 
-    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
@@ -68,8 +67,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.setCallback(this);
 
         this.treeModel = treeModel;
-        isTreeRandom = (treeModel instanceof AbstractModel) ?
-                ((AbstractModel) treeModel).isVariable() : false;
+        isTreeRandom = (treeModel instanceof AbstractModel) && ((AbstractModel) treeModel).isVariable();
         if (isTreeRandom) {
             addModel(((AbstractModel)treeModel));
         }
@@ -118,8 +116,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             totalGetLogLikelihoodCount++;
 
         if (!likelihoodKnown) {
-            if (COUNT_TOTAL_OPERATIONS)
+            if (COUNT_TOTAL_OPERATIONS) {
                 totalCalculateLikelihoodCount++;
+            }
 
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
@@ -182,9 +181,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
                     updateAllNodes();
-                } else {
-                    // Other event types are ignored (probably trait changes).
                 }
+//                else {
+//                    // Other event types are ignored (probably trait changes).
+//                }
             }
         } else if (model == likelihoodDelegate) {
 
@@ -244,7 +244,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      *
      * @return the log likelihood.
      */
-    private final double calculateLogLikelihood() {
+    private double calculateLogLikelihood() {
 
         double logL = Double.NEGATIVE_INFINITY;
         boolean done = false;
@@ -310,16 +310,16 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodKnown = false;
     }
 
-    /**
-     * Set update flag for a node and all its descendents
-     */
-    protected void updateNodeAndDescendents(NodeRef node) {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalRateUpdateSingleCount++;
-
-        treeTraversalDelegate.updateNodeAndDescendents(node);
-        likelihoodKnown = false;
-    }
+//    /**
+//     * Set update flag for a node and all its descendents
+//     */
+//    protected void updateNodeAndDescendents(NodeRef node) {
+//        if (COUNT_TOTAL_OPERATIONS)
+//            totalRateUpdateSingleCount++;
+//
+//        treeTraversalDelegate.updateNodeAndDescendents(node);
+//        likelihoodKnown = false;
+//    }
 
     /**
      * Set update flag for all nodes
@@ -347,17 +347,17 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 System.err.println(delegateString);
             }
 
-            sb.append(getClass().getName() + "(" + getLogLikelihood() + ")");
+            sb.append(getClass().getName()).append("(").append(getLogLikelihood()).append(")");
 
             if (COUNT_TOTAL_OPERATIONS)
-                sb.append("\n  total operations = " + totalOperationCount +
-                          "\n  matrix updates = " + totalMatrixUpdateCount +
-                          "\n  model changes = " + totalModelChangedCount +
-                          "\n  make dirties = " + totalMakeDirtyCount +
-                          "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
-                          "\n  get likelihoods = " + totalGetLogLikelihoodCount +
-                          "\n  all rate updates = " + totalRateUpdateAllCount +
-                          "\n  partial rate updates = " + totalRateUpdateSingleCount);
+                sb.append("\n  total operations = ").append(totalOperationCount).append(
+                          "\n  matrix updates = ").append(totalMatrixUpdateCount).append(
+                          "\n  model changes = ").append(totalModelChangedCount).append(
+                          "\n  make dirties = ").append(totalMakeDirtyCount).append(
+                          "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
+                          "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
+                          "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
+                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount);
 
             return sb.toString();
         } else {

@@ -110,13 +110,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     @Override
-    protected void restoreState() {
-        // TODO Remove; should not be necessary
-        if (allDataChange) {
-            fireModelChanged(this);
-            allDataChange = false;
-        }
-    }
+    protected void restoreState() { }
 
     @Override
     protected void acceptState() { }

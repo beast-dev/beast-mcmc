@@ -88,7 +88,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
 
   private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
           AttributeRule.newStringRule(TRAIT_NAME),
-          AttributeRule.newStringRule(NODES),
+          AttributeRule.newStringRule(NODES, true),
           new ElementRule(Tree.class),
           new ElementRule(TreeTraitProvider.class),
     };

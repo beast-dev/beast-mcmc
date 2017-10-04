@@ -6,6 +6,7 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
 
@@ -28,6 +29,8 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                              ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
+        assert (likelihoodDelegate.getIntegrator() instanceof ContinuousDiffusionIntegrator.Basic);
+
         this.likelihoodDelegate = likelihoodDelegate;
         this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
         partialNodeBuffer = new double[numTraits * dimPartial];
@@ -40,8 +43,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     protected void simulateRoot(final int nodeIndex) {
 
         likelihoodDelegate.getIntegrator().getPostOrderPartial(
-                likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(),
-                partialPriorBuffer);
+                rootProcessDelegate.getPriorBufferIndex(), partialPriorBuffer); // No double-buffering
 
         likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
 
@@ -84,12 +86,11 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             }
 
             if (DEBUG) {
-                System.err.println("\tpriorPrec: " + priorPrec);
                 System.err.println("\trootMean: " + new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait));
+                System.err.println("\tprioPrec: " + priorPrec);
                 System.err.println("\tprioMean: " + new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait));
                 System.err.println("\tweigMean: " + new WrappedVector.Raw(tmpMean, 0, dimTrait));
             }
-
 
             final double sqrtScale = Math.sqrt(1.0 / totalPrec);
 

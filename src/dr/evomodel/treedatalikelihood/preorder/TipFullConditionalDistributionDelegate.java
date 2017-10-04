@@ -3,7 +3,6 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.SimulationTreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
@@ -12,13 +11,8 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.math.matrixAlgebra.WrappedVector;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 import java.util.List;
-
-import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
-import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
 /**
  * @author Marc A. Suchard
@@ -38,8 +32,12 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
         this.likelihoodDelegate = likelihoodDelegate;
         this.cdi = likelihoodDelegate.getIntegrator();
 
+        assert (cdi instanceof ContinuousDiffusionIntegrator.Basic);
+
         this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
         partialNodeBuffer = new double[numTraits * dimPartial];
+        partialPriorBuffer = new double[numTraits * dimPartial];
+        partialRootBuffer = new double[numTraits * dimPartial];
 
     }
 
@@ -50,17 +48,23 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
     protected final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     protected final ContinuousDiffusionIntegrator cdi;
     protected final int dimPartial;
-    protected final double[] partialNodeBuffer;
+    final double[] partialNodeBuffer;
+    private final double[] partialPriorBuffer;
+    private final double[] partialRootBuffer;
 
-    public static String getTraitName(String name) {
+    public static String getName(String name) {
         return "fcd." + name;
     }
 
-    protected String delegateGetTraitName() {
+    public String getTraitName(String name) {
+        return getName(name);
+    }
+
+    private String delegateGetTraitName() {
         return getTraitName(name);
     }
 
-    protected Class delegateGetTraitClass() {
+    private Class delegateGetTraitClass() {
         return double[].class;
     }
 
@@ -87,7 +91,7 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
             }
 
             public String getTraitString(Tree tree, NodeRef node) {
-                return getTrait(tree, node).toString();
+                return formatted(getTrait(tree, node));
             }
 
             public boolean getLoggable() {
@@ -98,8 +102,27 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
         treeTraitHelper.addTrait(baseTrait);
     }
 
+    private static String formatted(double[] values) {
+
+        if (values.length == 1) {
+            return Double.toString(values[0]);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+
+        for (int i = 0; i < values.length; ++i) {
+            sb.append(Double.toString(values[i]));
+            if (i < (values.length - 1)) {
+                sb.append(",");
+            }
+        }
+
+        sb.append("}");
+        return sb.toString();
+    }
+
     protected double[] getTraitForNode(NodeRef node) {
-//        private double[] getTraitForNode(NodeRef node) {
 
         assert simulationProcess != null;
         assert node != null;
@@ -110,43 +133,23 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
         cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(node.getNumber()), partial);
 
         return partial;
-//            return new MeanAndVariance(partial);
     }
 
     @Override
-    protected void simulateRoot(int rootNumber) {
+    protected void simulateRoot(final int rootIndex) {
+
+        // TODO Revert to copy from prior -> root.preorder
 
         if (DEBUG) {
-            System.err.println("computeRoot");
+            System.err.println("Simulate root node " + rootIndex);
         }
 
-        final DenseMatrix64F diffusion = new DenseMatrix64F(likelihoodDelegate.getDiffusionModel().getPrecisionmatrix());
-
-        // Copy post-order root prior to pre-order
-
-        final double[] priorBuffer = partialNodeBuffer;
-        final double[] rootBuffer = new double[priorBuffer.length];
-
-        cdi.getPostOrderPartial(rootProcessDelegate.getPriorBufferIndex(), partialNodeBuffer); // No double-buffering
-
-        int offset = 0;
-        for (int trait = 0; trait < numTraits; ++trait) {
-            // Copy mean
-            System.arraycopy(priorBuffer, offset, rootBuffer, offset, dimTrait);
-
-            final DenseMatrix64F Pp = wrap(priorBuffer, offset + dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Pr = new DenseMatrix64F(dimTrait, dimTrait);
-            CommonOps.mult(Pp, diffusion, Pr);
-
-            unwrap(Pr, rootBuffer, offset + dimTrait);
-
-            offset += dimPartial;
-        }
-
-        cdi.setPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(rootNumber), rootBuffer);
+        // Copy from prior to root pre-order buffer
+        cdi.getPostOrderPartial(rootProcessDelegate.getPriorBufferIndex(), partialRootBuffer); // No double-buffering
+        cdi.setPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(rootIndex), partialRootBuffer); // With double-buffering
 
         if (DEBUG) {
-            System.err.println("Root: " + new WrappedVector.Raw(rootBuffer, 0, rootBuffer.length));
+            System.err.println("Root: " + new WrappedVector.Raw(partialRootBuffer, 0, partialRootBuffer.length));
             System.err.println("");
         }
     }
@@ -166,12 +169,19 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
                 likelihoodDelegate.getActiveNodeIndex(operation.getRightChild()),
                 likelihoodDelegate.getActiveMatrixIndex(operation.getRightChild())
         );
+
+        if (DEBUG) {
+            cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(operation.getLeftChild()), partialRootBuffer);
+            System.err.println("Node: "
+                    + operation.getLeftChild() + " "
+                    + new WrappedVector.Raw(partialRootBuffer, 0, partialRootBuffer.length));
+            System.err.println("");
+        }
     }
 
     @Override
     public final void simulate(final SimulationTreeTraversal treeTraversal,
                                final int rootNodeNumber) {
-
 
         final List<NodeOperation> nodeOperations = treeTraversal.getNodeOperations();
         setupStatistics();
@@ -186,11 +196,6 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
             System.err.println("END OF PRE-ORDER");
         }
     }
-
-//        final private MeanAndVariance[] buffer;
-//
-//        private NodeRef nodeForLastCall = null;
-//        private MeanAndVariance cachedMeanAndVariance;
 
     private static final boolean DEBUG = false;
 

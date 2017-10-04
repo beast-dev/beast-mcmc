@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
@@ -53,51 +54,48 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
 
     private final Parameter maskParameter;
 
-//    private final PartiallyMissingInformation missingInformation;
-
-//    private final boolean missingOnlyGradient;
-
     public TreeTipGradient(String traitName,
                            TreeDataLikelihood treeDataLikelihood,
                            ContinuousDataLikelihoodDelegate likelihoodDelegate,
-//                           Parameter traitParameter,
                            Parameter maskParameter) {
+
+        assert(treeDataLikelihood != null);
+
         this.traitName = traitName;
         this.treeDataLikelihood = treeDataLikelihood;
         this.likelihoodDelegate = likelihoodDelegate;
         this.tree = treeDataLikelihood.getTree();
-//        this.traitParameter = traitParameter;
         this.maskParameter = maskParameter;
 
-//        this.missingOnlyGradient = missingOnly;
-
-        assert(treeDataLikelihood != null);
-
         String name =
-                TipGradientViaFullConditionalDelegate.getTraitName(traitName);
+                TipGradientViaFullConditionalDelegate.getName(traitName);
 
-        System.err.println("name: " + name);
-        System.exit(-1);
+        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
+
+        if (test == null) {
+            likelihoodDelegate.addFullConditionalGradientTrait(traitName);
+        }
+
+        // TODO Move into different constructor / parser
+        String fcdName = TipFullConditionalDistributionDelegate.getName(traitName);
+        if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
+            likelihoodDelegate.addFullConditionalDensityTrait(traitName);
+        }
 
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
+
+        assert (treeTraitProvider != null);
+
         nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
         nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
         dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
 
-//        missingInformation = new PartiallyMissingInformation(treeDataLikelihood.getTree(),
-//                likelihoodDelegate.getDataModel(), likelihoodDelegate);
-
         PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
         dimPartial = precisionType.getMatrixLength(dimTrait);
-
-        if (precisionType != PrecisionType.SCALAR) {
-            throw new RuntimeException("Not yet implemented for full precision");
-        }
-
+        
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
-
 
         this.traitParameter = likelihoodDelegate.getDataModel().getParameter();
 

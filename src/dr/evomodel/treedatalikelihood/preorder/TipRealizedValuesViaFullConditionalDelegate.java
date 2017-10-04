@@ -25,8 +25,12 @@ public class TipRealizedValuesViaFullConditionalDelegate extends AbstractValuesV
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
     }
 
-    public static String getTraitName(String name) {
+    public static String getName(String name) {
         return "tipSample." + name;
+    }
+
+    public String getTraitName(String name) {
+        return getName(name);
     }
 
     @Override

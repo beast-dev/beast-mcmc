@@ -2,6 +2,8 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
@@ -16,30 +18,31 @@ import dr.inference.model.MatrixParameterInterface;
  */
 public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDistributionDelegate {
 
-//        final private PartiallyMissingInformation missingInformation;
-
     public TipGradientViaFullConditionalDelegate(String name, MutableTreeModel tree,
                                                  MultivariateDiffusionModel diffusionModel,
                                                  ContinuousTraitDataModel dataModel,
                                                  ConjugateRootTraitPrior rootPrior,
                                                  ContinuousRateTransformation rateTransformation,
-//                                                 BranchRateModel rateModel,
                                                  ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+        
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
-//             missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
+    }
+
+    public static String getName(String name) {
+        return "grad." + name;
+    }
+
+    public String getTraitName(String name) {
+        return getName(name);
+    }
+
+    @Override
+    protected double[] getTraitForNode(NodeRef node) {
 
         if (likelihoodDelegate.getPrecisionType() != PrecisionType.SCALAR) {
             throw new RuntimeException("Tip gradients are not implemented for '" +
                     likelihoodDelegate.getPrecisionType().toString() + "' likelihoods");
         }
-    }
-
-    public static String getTraitName(String name) {
-        return "grad." + name;
-    }
-
-    @Override
-    protected double[] getTraitForNode(NodeRef node) {
 
         final double[] fullConditionalPartial = super.getTraitForNode(node);
 

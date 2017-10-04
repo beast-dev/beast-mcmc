@@ -31,9 +31,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.TreeTipGradient;
-import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inferencexml.model.MaskedParameterParser;
 import dr.xml.*;
@@ -93,6 +91,8 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
 
             return new TreeTipGradient(traitName,
                     treeDataLikelihood, continuousData, mask);
+
+
 
         } else {
             throw new XMLParseException("Must provide a tree likelihood");

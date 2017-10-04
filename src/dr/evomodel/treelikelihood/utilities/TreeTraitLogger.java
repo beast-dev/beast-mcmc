@@ -30,6 +30,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.xml.Report;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +43,17 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class TreeTraitLogger implements Loggable {
+public class TreeTraitLogger implements Loggable, Reportable {
+
+    public TreeTraitLogger(Tree tree, TreeTrait[] traits) {
+        this(tree, traits, NodeRestriction.ALL);
+    }
 
     public TreeTraitLogger(Tree tree,
-                           TreeTrait[] traits) {
+                           TreeTrait[] traits,
+                           NodeRestriction nodeRestriction) {
         this.tree = tree;
+        this.nodeRestriction = nodeRestriction;
         addTraits(traits);
     }
 
@@ -77,7 +85,7 @@ public class TreeTraitLogger implements Loggable {
 
             } else {
 
-                for (int i = 0; i < tree.getNodeCount(); ++i) {
+                for (int i = nodeRestriction.begin(tree); i < nodeRestriction.end(tree); ++i) {
                     final NodeRef node = tree.getNode(i);
 
                     if (!tree.isRoot(node) || trait.getIntent() == TreeTrait.Intent.NODE) {
@@ -120,6 +128,48 @@ public class TreeTraitLogger implements Loggable {
         return columns.toArray(new LogColumn[columns.size()]);
     }
 
-    private Tree tree;
+    private final Tree tree;
     private List<TreeTrait> treeTraits;
+    private final NodeRestriction nodeRestriction;
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+
+        for (LogColumn column : getColumns()) {
+            sb.append(column.getFormatted());
+            sb.append("\t");
+        }
+
+        return sb.toString();
+    }
+
+    public enum NodeRestriction {
+        ALL {
+            int begin(Tree tree) { return 0; }
+            int end(Tree tree) { return tree.getNodeCount(); }
+        },
+        EXTERNAL {
+            int begin(Tree tree) { return 0; }
+            int end(Tree tree) { return tree.getExternalNodeCount(); }
+        },
+        INTERNAL {
+            int begin(Tree tree) { return tree.getExternalNodeCount(); }
+            int end(Tree tree) { return tree.getNodeCount(); }
+        };
+
+        abstract int begin(Tree tree);
+        abstract int end(Tree tree);
+
+        public static NodeRestriction parse(String text) {
+             String lower = text.toLowerCase();
+             if (lower.compareTo("external") == 0) {
+                 return EXTERNAL;
+             } else if (lower.compareTo("internal") == 0) {
+                return INTERNAL;
+            } else {
+                 return ALL;
+            }
+        }
+    }
 }

@@ -36,14 +36,20 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @version $Id$
  */
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTranform;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
+import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -407,6 +413,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //        Matrix totalNop = new Matrix(dimTrait, dimTrait);
 //        Matrix totalOp = new Matrix(dimTrait, dimTrait);
 
+//        double[][] graphStructure = MultivariateTraitDebugUtilities.getGraphVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+//        sb.append("graph structure:\n");
+//        sb.append(new Matrix(graphStructure));
+//        sb.append("\n\n");
+//
+//        System.err.println(sb.toString());
+//        System.exit(-1);
+
         for (int trait = 0; trait < numTraits; ++trait) {
             sb.append("Trait #").append(trait).append("\n");
 
@@ -434,21 +448,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             double[] driftDatum = drift;
 
-//            int[] missingIndices;
-            int[] notMissingIndices;
 
+            int[] notMissingIndices;
             if (missing.size() > 0) {
-//                missingIndices = new int[missing.size()];
                 notMissingIndices = new int[datumLength - missing.size()];
-//                int offsetMissing = 0;
                 int offsetNotMissing = 0;
                 for (int i = 0; i < datumLength; ++i) {
                     if (!missing.contains(i)) {
                         notMissingIndices[offsetNotMissing] = i;
                         ++offsetNotMissing;
-//                    } else {
-//                        missingIndices[offsetMissing] = i;
-//                        ++offsetMissing;
                     }
                 }
 
@@ -471,111 +479,66 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double logDensity = mvn.logPdf(datum);
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");
-//            logLikelihood += logDensity;
-        }
-//
-//            if (DEBUG_MISSING_DISTRIBUTION && missing.size() > 0) {
-//                sb.append("\nConditional distribution of missing values at");
-//                for (int m : missing) {
-//                    sb.append(" " + m);
-//                }
-//                sb.append("\n");
-////                for (int n : notMissingIndices) {
-////                    sb.append(" " + n);
-////                }
-////                sb.append("\n");
-//
-//
-//                ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform transform =
-//                        new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate.ConditionalVarianceAndTranform(
-//                        new Matrix(jointVariance), missingIndices, notMissingIndices
-//                );
-//
-//                double[] mean = transform.getConditionalMean(rawDatum, 0, new double[rawDatum.length], 0);
-//                Matrix variance = transform.getVariance();
-//
-//                sb.append("obs: " + new WrappedVector.Raw(rawDatum, 0, rawDatum.length));
-//                sb.append("cMean: " + new dr.math.matrixAlgebra.Vector(mean) + "\n");
-//                sb.append("cVar :\n" + variance + "\n");
-////                System.err.println(sb.toString());
-////                System.exit(-1);
-//            }
-//
-//            if (DEBUG_OUTER_PRODUCTS) {
-//
-//                Matrix y = new Matrix(opDatum);
-//
-////            System.err.println("y = \n" + y);
-//                sb.append("Y:\n" + y);
-//                sb.append("Tree V:\n" + treeV);
-//
-//                Matrix op = null;
-//
-//                try {
-//                    op = y.transpose().product(treeP).product(y);
-//                    totalOp.accumulate(op);
-//                } catch (IllegalDimension illegalDimension) {
-//                    illegalDimension.printStackTrace();
-//                }
-//
-//                sb.append("Outer-products:\n");
-//                sb.append(op);
-//                sb.append("\n\n");
-//
-//                sb.append("check for missing taxa ...");
-//
-//                missing.clear();
-//                for (int tip = 0; tip < tipCount; ++tip) {
-//                    if (allZero(opDatum[tip])) {
-//                        missing.add(tip);
-//                    }
-//                }
-//
-//                index = 0;
-//                int[] notMissing = new int[opDatum.length - missing.size()];
-//                double[][] nopDatum = new double[opDatum.length - missing.size()][];
-//                for (int tip = 0; tip < tipCount; ++tip) {
-//                    if (!missing.contains(tip)) {
-//                        nopDatum[index] = opDatum[tip];
-//                        notMissing[index] = tip;
-//                        ++index;
-//                    }
-//                }
-//
-//                Matrix nonMissingTreeVariance = treeV.extractRowsAndColumns(notMissing, notMissing);
-//                Matrix notMissingTreePrecision = nonMissingTreeVariance.inverse();
-//                Matrix notMissingY = new Matrix(nopDatum);
-//
-//                sb.append("NP Y:\n" + notMissingY);
-//                sb.append("NP Tree V:\n" + nonMissingTreeVariance);
-//                sb.append("NP Tree P:\n" + notMissingTreePrecision);
-//
-//                Matrix nop = null;
-//                try {
-//                    nop = notMissingY.transpose().product(notMissingTreePrecision).product(notMissingY);
-//                    totalNop.accumulate(nop);
-//                } catch (IllegalDimension illegalDimension) {
-//                    illegalDimension.printStackTrace();
-//                }
-//
-//                sb.append("NP Outer-products:\n");
-//                sb.append(nop);
-//            }
-//
-//            sb.append("\n\n");
-//
-//
-//        }
-//
-//        sb.append("TOTAL DEBUG logLikelihood = " + logLikelihood + "\n");
-//
-//        if (DEBUG_OUTER_PRODUCTS) {
-//            sb.append("TOTAL (+ zeros) outer-products = \n" + totalOp + "\n\n");
-//            sb.append("TOTAL (- zeros) outer-products = \n" + totalNop + "\n\n");
 //        }
 
+            // Compute full conditional distributions
+            sb.append("Full conditional distributions:\n");
+
+
+            int[] cmissing = new int[dimTrait];
+            int[] cNotMissing = new int[tipCount * dimTrait - dimTrait];
+
+            for (int tip = 0; tip < tipCount; ++tip) {
+
+                for (int ctrait = 0; ctrait < dimTrait; ++ctrait) {
+                    cmissing[ctrait] = tip * dimTrait + ctrait;
+                }
+
+                for (int m = 0; m < tip * dimTrait; ++m) {
+                    cNotMissing[m] = m;
+                }
+
+                for (int m = (tip + 1) * dimTrait; m < tipCount * dimTrait; ++m) {
+                    cNotMissing[m - dimTrait] = m;
+                }
+
+                ConditionalVarianceAndTranform cvariance = new ConditionalVarianceAndTranform(
+                        new Matrix(jointVariance), cmissing, cNotMissing);
+
+//                double[] cmean = new double[notMissing.length];
+
+                double[] cmean = cvariance.getConditionalMean(rawDatum, 0, drift, 0);
+
+                sb.append("cmean #").append(tip).append(" ").append(new dr.math.matrixAlgebra.Vector(cmean))
+                    .append("\n");
+            }
+
+//            System.err.println(sb.toString());
+//            System.exit(-1);
+        }
 
         return sb.toString();
+    }
+
+//    private int[] makeComplement(int max, int start, int end) {
+//        int
+//    }
+//
+    private int[] makeComplement(List<Integer> x, int max) {
+        int[] complement = null;
+
+        if (x.size() > 0) {
+            complement = new int[max - x.size()];
+            int offset = 0;
+            for (int i = 0; i < max; ++i) {
+                if (!x.contains(i)) {
+                    complement[offset] = i;
+                    ++offset;
+                }
+            }
+        }
+
+        return complement;
     }
 
 //    private static boolean allZero(double[] x) {
@@ -800,6 +763,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public void makeDirty() {
         updateDiffusionModel = true;
+        fireModelChanged(); // Signal simulation processes
     }
 
     @Override
@@ -935,6 +899,32 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public MatrixParameterInterface getPrecisionParamter() {
         return getDiffusionModel().getPrecisionParameter();
+    }
+
+    public void addFullConditionalGradientTrait(String traitName) {
+
+        ProcessSimulationDelegate gradientDelegate = new TipGradientViaFullConditionalDelegate(traitName,
+                (MutableTreeModel) getCallbackLikelihood().getTree(),
+                getDiffusionModel(),
+                (ContinuousTraitDataModel) getDataModel(), getRootPrior(),
+                getRateTransformation(), this);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(traitName, getCallbackLikelihood(), gradientDelegate);
+
+        getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
+    }
+    
+    public void addFullConditionalDensityTrait(String traitName) {
+
+        ProcessSimulationDelegate gradientDelegate = new TipFullConditionalDistributionDelegate(traitName,
+                getCallbackLikelihood().getTree(),
+                getDiffusionModel(),
+                getDataModel(), getRootPrior(),
+                getRateTransformation(), this);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(traitName, getCallbackLikelihood(), gradientDelegate);
+
+        getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
     static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {

@@ -31,6 +31,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.xml.*;
+import org.w3c.dom.Attr;
 
 /**
  * @author Marc A. Suchard
@@ -40,13 +41,16 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "traitLogger";
     public static final String TRAIT_NAME = "traitName";
+    public static final String NODES = "nodes";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree treeModel = (Tree) xo.getChild(Tree.class);
         TreeTrait trait = parseTreeTrait(xo, false);
+        TreeTraitLogger.NodeRestriction nodes = TreeTraitLogger.NodeRestriction.parse(
+                xo.getAttribute(NODES, "all"));
 
-        return new TreeTraitLogger(treeModel, new TreeTrait[] { trait } );
+        return new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, nodes);
     }
 
     static TreeTrait parseTreeTrait(XMLObject xo, boolean wholeTreeOnly) throws XMLParseException {
@@ -86,6 +90,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
 
   private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
           AttributeRule.newStringRule(TRAIT_NAME),
+          AttributeRule.newStringRule(NODES),
           new ElementRule(Tree.class),
           new ElementRule(TreeTraitProvider.class),
     };

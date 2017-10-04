@@ -56,6 +56,30 @@ public class MultivariateTraitDebugUtilities {
         return TreeUtils.getCommonAncestorNode(tree, leafNames);
     }
 
+    public static double[][] getGraphVariance(final Tree tree, final double normalization, final double priorSampleSize) {
+
+        final int nodeCount = tree.getNodeCount();
+        final double[][] variance = new double[nodeCount][nodeCount];
+
+        for (int i = 0; i < nodeCount; i++) {
+
+            // Fill in diagonal
+            double marginalTime = getLengthToRoot(tree, tree.getNode(i)) * normalization;
+            variance[i][i] = marginalTime;
+
+            // Fill in upper right triangle,
+            for (int j = i + 1; j < nodeCount; j++) {
+                NodeRef mrca = findMRCA(tree, i, j);
+                variance[i][j] = getLengthToRoot(tree, mrca);
+            }
+        }
+
+        makeSymmetric(variance);
+        addPrior(variance, priorSampleSize);
+
+        return variance;
+    }
+
     public static double[][] getTreeVariance(final Tree tree, final double normalization, final double priorSampleSize) {
 
         final int tipCount = tree.getExternalNodeCount();
@@ -77,41 +101,35 @@ public class MultivariateTraitDebugUtilities {
             }
         }
 
-//        if (DO_CLAMP && nodeToClampMap != null) {
-//            List<RestrictedPartials> partialsList = new ArrayList<RestrictedPartials>();
-//            for (Map.Entry<NodeRef, RestrictedPartials> keySet : nodeToClampMap.entrySet()) {
-//                partialsList.add(keySet.getValue());
+        // Make symmetric
+//        for (int i = 0; i < length; i++) {
+//            for (int j = i + 1; j < length; j++) {
+//                variance[j][i] = variance[i][j];
 //            }
-//
-//            for (int i = 0; i < partialsList.size(); ++i) {
-//                RestrictedPartials partials = partialsList.get(i);
-//                NodeRef node = partials.getNode();
-//
-//                variance[tipCount + i][tipCount + i] = getRescaledLengthToRoot(node) +
-//                        1.0 / partials.getPriorSampleSize();
-//
-//                for (int j = 0; j < tipCount; ++j) {
-//                    NodeRef friend = treeModel.getExternalNode(j);
-//                    NodeRef mrca = Tree.Utils.getCommonAncestor(treeModel, node, friend);
-//                    variance[j][tipCount + i] = getRescaledLengthToRoot(mrca);
-//
-//                }
-//
-//                for (int j = 0; j < i; ++j) {
-//                    NodeRef friend = partialsList.get(j).getNode();
-//                    NodeRef mrca = Tree.Utils.getCommonAncestor(treeModel, node, friend);
-//                    variance[tipCount + j][tipCount + i] = getRescaledLengthToRoot(mrca);
+//        }
+        makeSymmetric(variance);
+
+//        if (!Double.isInfinite(priorSampleSize)) {
+//            for (int i = 0; i < variance.length; ++i) {
+//                for (int j = 0; j < variance[i].length; ++j) {
+//                    variance[i][j] += 1.0 / priorSampleSize;
 //                }
 //            }
 //        }
+        addPrior(variance, priorSampleSize);
 
-        // Make symmetric
-        for (int i = 0; i < length; i++) {
-            for (int j = i + 1; j < length; j++) {
+        return variance;
+    }
+
+    private static void makeSymmetric(final double[][] variance) {
+        for (int i = 0; i < variance.length; i++) {
+            for (int j = i + 1; j < variance[i].length; j++) {
                 variance[j][i] = variance[i][j];
             }
         }
+    }
 
+    private static void addPrior(final double[][] variance, double priorSampleSize) {
         if (!Double.isInfinite(priorSampleSize)) {
             for (int i = 0; i < variance.length; ++i) {
                 for (int j = 0; j < variance[i].length; ++j) {
@@ -119,8 +137,6 @@ public class MultivariateTraitDebugUtilities {
                 }
             }
         }
-
-        return variance;
     }
 
 //    public String getDebugInformation(final FullyConjugateMultivariateTraitLikelihood traitLikelihood) {

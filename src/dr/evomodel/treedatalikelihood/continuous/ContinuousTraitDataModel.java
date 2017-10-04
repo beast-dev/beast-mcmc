@@ -75,7 +75,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     public List<Integer> getMissingIndices() { return missingIndices; }
 
-    public List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
+    List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -88,8 +88,10 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
             if (type == Parameter.ChangeType.VALUE_CHANGED) {
                 fireModelChanged(this, getTaxonIndex(index));
             } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED){
-                fireModelChanged(this);
-                allDataChange = true;
+                if (!allDataChange) {
+                    fireModelChanged(this);
+                    allDataChange = true;
+                }
             } else {
                 throw new RuntimeException("Unhandled parameter change type");
             }
@@ -191,7 +193,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         return partial;
     }
 
-    public double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
+    double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
         final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
 
         final double[] partial = getTipPartial(taxonIndex, precisionType);

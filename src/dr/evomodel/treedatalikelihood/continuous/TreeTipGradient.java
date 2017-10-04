@@ -28,7 +28,6 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -40,17 +39,14 @@ import dr.inference.model.Parameter;
  */
 public class TreeTipGradient implements GradientWrtParameterProvider {
 
-    private final String traitName;
-    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait<double[]> treeTraitProvider;
+    private final TreeTrait treeTraitProvider;
     private final Tree tree;
     private final Parameter traitParameter;
 
     private final int nTaxa;
     private final int nTraits;
     private final int dimTrait;
-    private final int dimPartial;
 
     private final Parameter maskParameter;
 
@@ -61,9 +57,7 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
 
         assert(treeDataLikelihood != null);
 
-        this.traitName = traitName;
         this.treeDataLikelihood = treeDataLikelihood;
-        this.likelihoodDelegate = likelihoodDelegate;
         this.tree = treeDataLikelihood.getTree();
         this.maskParameter = maskParameter;
 
@@ -90,8 +84,8 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
         nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
         dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
 
-        PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
-        dimPartial = precisionType.getMatrixLength(dimTrait);
+//        PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
+//        int dimPartial = precisionType.getMatrixLength(dimTrait);
         
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
@@ -127,7 +121,7 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
 
         int offsetOutput = 0;
         for (int taxon = 0; taxon < nTaxa; ++taxon) {
-            double[] taxonGradient = treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
+            double[] taxonGradient = (double[]) treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
             System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
             offsetOutput += taxonGradient.length;
         }

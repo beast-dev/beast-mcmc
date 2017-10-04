@@ -46,7 +46,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTranform;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
@@ -502,7 +502,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     cNotMissing[m - dimTrait] = m;
                 }
 
-                ConditionalVarianceAndTranform cvariance = new ConditionalVarianceAndTranform(
+                ConditionalVarianceAndTransform cvariance = new ConditionalVarianceAndTransform(
                         new Matrix(jointVariance), cmissing, cNotMissing);
 
 //                double[] cmean = new double[notMissing.length];

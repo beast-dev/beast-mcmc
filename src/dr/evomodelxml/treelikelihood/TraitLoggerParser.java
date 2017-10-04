@@ -28,10 +28,8 @@ package dr.evomodelxml.treelikelihood;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.xml.*;
-import org.w3c.dom.Attr;
 
 /**
  * @author Marc A. Suchard
@@ -41,7 +39,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "traitLogger";
     public static final String TRAIT_NAME = "traitName";
-    public static final String NODES = "nodes";
+    private static final String NODES = "nodes";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 

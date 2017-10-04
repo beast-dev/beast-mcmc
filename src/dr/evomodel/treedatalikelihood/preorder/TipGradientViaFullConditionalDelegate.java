@@ -2,9 +2,6 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;

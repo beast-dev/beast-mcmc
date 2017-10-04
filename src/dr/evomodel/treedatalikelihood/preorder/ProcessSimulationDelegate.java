@@ -26,7 +26,6 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.*;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
@@ -164,7 +163,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         double[][] cholesky;
         Map<PartiallyMissingInformation.HashedIntArray,
-                ConditionalVarianceAndTranform> conditionalMap;
+                ConditionalVarianceAndTransform> conditionalMap;
 
         AbstractContinuousTraitDelegate(String name,
                                         Tree tree,

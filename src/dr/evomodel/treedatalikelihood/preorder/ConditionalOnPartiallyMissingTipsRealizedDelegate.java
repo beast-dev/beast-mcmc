@@ -86,27 +86,27 @@ public class ConditionalOnPartiallyMissingTipsRealizedDelegate extends Condition
 
                     assert (numMissing + numNotMissing == dimTrait);
 
-                    ConditionalVarianceAndTranform transform;
+                    ConditionalVarianceAndTransform transform;
                     try {
                         transform = conditionalMap.get(missingIndices);
                     } catch (NullPointerException nep) {
 //                            System.err.println("Make CVT");
                         transform =
-//                                    new ConditionalVarianceAndTranform(diffusionVariance,
+//                                    new ConditionalVarianceAndTransform(diffusionVariance,
 //                                    missingIndices.getArray(),
 //                                    missingIndices.getComplement());
                                 null;
 
                         if (conditionalMap == null) {
                             conditionalMap = new HashMap<PartiallyMissingInformation.HashedIntArray,
-                                    ConditionalVarianceAndTranform>();
+                                    ConditionalVarianceAndTransform>();
                         }
                         conditionalMap.put(missingIndices, transform);
                     }
                     // TODO Must clear cache
 
-//                        ConditionalVarianceAndTranform transform =
-//                                new ConditionalVarianceAndTranform(diffusionVariance,
+//                        ConditionalVarianceAndTransform transform =
+//                                new ConditionalVarianceAndTransform(diffusionVariance,
 //                                        missingIndices.getArray(),
 //                                        missingIndices.getComplement());
 
@@ -122,7 +122,7 @@ public class ConditionalOnPartiallyMissingTipsRealizedDelegate extends Condition
                             conditionalMean, 0, // input mean
                             conditionalCholesky, sqrtScale, // input variance
                             tmpMean, 0, // output sample
-                            transform.getTemporageStorage());
+                            transform.getTemporaryStorage());
 
                     for (int i = 0; i < numMissing; ++i) {
                         sample[offsetSample + missingIndices.get(i)] = tmpMean[i];

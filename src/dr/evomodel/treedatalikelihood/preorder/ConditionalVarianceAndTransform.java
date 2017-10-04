@@ -6,7 +6,7 @@ import dr.math.matrixAlgebra.Matrix;
 /**
  * @author Marc A. Suchard
  */
-public class ConditionalVarianceAndTranform {
+public class ConditionalVarianceAndTransform {
 
     /**
      * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
@@ -22,7 +22,7 @@ public class ConditionalVarianceAndTranform {
 
     final private double[][] cholesky;
     final private Matrix affineTransform;
-    private Matrix Sbar;
+    private Matrix sBar;
     private final int[] missingIndices;
     private final int[] notMissingIndices;
     private final double[] tempStorage;
@@ -32,7 +32,7 @@ public class ConditionalVarianceAndTranform {
 
     private static final boolean DEBUG = false;
 
-    public ConditionalVarianceAndTranform(final Matrix variance, final int[] missingIndices, final int[] notMissingIndices) {
+    public ConditionalVarianceAndTransform(final Matrix variance, final int[] missingIndices, final int[] notMissingIndices) {
 
         assert (missingIndices.length + notMissingIndices.length == variance.rows());
         assert (missingIndices.length + notMissingIndices.length == variance.columns());
@@ -45,7 +45,7 @@ public class ConditionalVarianceAndTranform {
         }
 
         Matrix S12S22Inv = null;
-        Sbar = null;
+        sBar = null;
 
         try {
 
@@ -74,10 +74,10 @@ public class ConditionalVarianceAndTranform {
                 System.err.println("S12S22InvS21:\n" + S12S22InvS21);
             }
 
-            Sbar = variance.extractRowsAndColumns(missingIndices, missingIndices);
-            Sbar.decumulate(S12S22InvS21);
+            sBar = variance.extractRowsAndColumns(missingIndices, missingIndices);
+            sBar.decumulate(S12S22InvS21);
             if (DEBUG) {
-                System.err.println("Sbar:\n" + Sbar);
+                System.err.println("sBar:\n" + sBar);
             }
 
         } catch (IllegalDimension illegalDimension) {
@@ -85,7 +85,7 @@ public class ConditionalVarianceAndTranform {
         }
 
         this.affineTransform = S12S22Inv;
-        this.cholesky = ProcessSimulationDelegate.AbstractContinuousTraitDelegate.getCholeskyOfVariance(Sbar);
+        this.cholesky = ProcessSimulationDelegate.AbstractContinuousTraitDelegate.getCholeskyOfVariance(sBar);
         this.tempStorage = new double[missingIndices.length];
 
         this.numMissing = missingIndices.length;
@@ -100,8 +100,8 @@ public class ConditionalVarianceAndTranform {
 
         double[] shift = new double[numNotMissing];
         for (int i = 0; i < numNotMissing; ++i) {
-            final int noti = notMissingIndices[i];
-            shift[i] = y[offsetY + noti] - mu[offsetMu + noti];
+            final int notI = notMissingIndices[i];
+            shift[i] = y[offsetY + notI] - mu[offsetMu + notI];
         }
 
         for (int i = 0; i < numMissing; ++i) {
@@ -128,14 +128,14 @@ public class ConditionalVarianceAndTranform {
     }
 
     Matrix getVariance() {
-        return Sbar;
+        return sBar;
     }
 
 //    Matrix getAffineTransform() {
 //        return affineTransform;
 //    }
 
-    double[] getTemporageStorage() {
+    double[] getTemporaryStorage() {
         return tempStorage;
     }
 }

@@ -36,7 +36,7 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
 
         this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
         partialNodeBuffer = new double[numTraits * dimPartial];
-        partialPriorBuffer = new double[numTraits * dimPartial];
+//        partialPriorBuffer = new double[numTraits * dimPartial];
         partialRootBuffer = new double[numTraits * dimPartial];
 
     }
@@ -49,7 +49,7 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
     protected final ContinuousDiffusionIntegrator cdi;
     protected final int dimPartial;
     final double[] partialNodeBuffer;
-    private final double[] partialPriorBuffer;
+//    private final double[] partialPriorBuffer;
     private final double[] partialRootBuffer;
 
     public static String getName(String name) {
@@ -138,7 +138,7 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
     @Override
     protected void simulateRoot(final int rootIndex) {
 
-        // TODO Revert to copy from prior -> root.preorder
+        // TODO Revert to copy from prior -> root.pre-order
 
         if (DEBUG) {
             System.err.println("Simulate root node " + rootIndex);

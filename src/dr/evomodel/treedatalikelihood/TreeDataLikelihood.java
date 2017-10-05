@@ -344,7 +344,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             String delegateString = likelihoodDelegate.getReport();
             if (delegateString != null) {
                 sb.append(delegateString);
-                System.err.println(delegateString);
             }
 
             sb.append(getClass().getName()).append("(").append(getLogLikelihood()).append(")");

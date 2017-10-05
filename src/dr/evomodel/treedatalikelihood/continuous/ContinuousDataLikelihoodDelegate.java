@@ -363,57 +363,39 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         double[] data = dataModel.getParameter().getParameterValues();
 
-//        List<Integer> notMissing = new ArrayList<Integer>();
-//        for (int taxon = 0; taxon < numTaxa; ++taxon) {
-//            double[] observed = observedIndicators[taxon];
-//            for (int trait = 0; trait < dimTrait; ++trait) {
-//                if (observed[trait] == 0.0) {
-//                    System.err.println("Missing taxon " + taxon + " trait " + trait);
-//                } else {
-//                    notMissing.add(taxon * dimTrait + trait);
-//                }
-//            }
-//        }
-
         if (dataModel instanceof ContinuousTraitDataModel) {
-            //    private double[] getTipObservations() {
-            //        final double[] data = new double[numTraits * dimTrait * tipCount];
-            //
             for (int tip = 0; tip < tipCount; ++tip) {
                 double[] tipData = ((ContinuousTraitDataModel) dataModel).getTipObservation(tip, precisionType);
                 System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
             }
-            //
-            //        return data;
-            //    }
         }
 
-
-//        double[] data = getTipObservations();
         sb.append("data: ").append(new dr.math.matrixAlgebra.Vector(data));
-
-//        dataModel.get
         sb.append("\n\n");
 
-//        double logLikelihood = 0;
-//
-//        Matrix totalNop = new Matrix(dimTrait, dimTrait);
-//        Matrix totalOp = new Matrix(dimTrait, dimTrait);
+        double[][] graphStructure = MultivariateTraitDebugUtilities.getGraphVariance(tree, 1.0,
+                priorSampleSize);
+        double[][] jointGraphVariance = KroneckerOperation.product(graphStructure, traitVariance.toComponents());
 
-//        double[][] graphStructure = MultivariateTraitDebugUtilities.getGraphVariance(tree, 1.0, Double.POSITIVE_INFINITY);
-//        sb.append("graph structure:\n");
-//        sb.append(new Matrix(graphStructure));
-//        sb.append("\n\n");
-//
-//        System.err.println(sb.toString());
-//        System.exit(-1);
+        sb.append("graph structure:\n");
+        sb.append(new Matrix(graphStructure));
+        sb.append("\n\n");
+
+        double[] priorMean = rootPrior.getMean();
+        sb.append("prior mean: ").append(new dr.math.matrixAlgebra.Vector(priorMean));
+        sb.append("\n\n");
+
+        for (int index = 0; index < drift.length / dimTrait; ++index) {
+//        int rootIndex = 2 * tipCount - 2;
+            for (int dim = 0; dim < dimTrait; ++dim) {
+                drift[index * dimTrait + dim] += priorMean[dim];
+            }
+        }
 
         for (int trait = 0; trait < numTraits; ++trait) {
             sb.append("Trait #").append(trait).append("\n");
 
             double[] rawDatum = new double[datumLength];
-//            double[][] opDatum = new double[tipCount][dimTrait];
-
 
             List<Integer> missing = new ArrayList<Integer>();
             int index = 0;
@@ -423,9 +405,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     rawDatum[index] = d;
                     if (Double.isNaN(d)) {
                         missing.add(index);
-//                        d = 0.0;
                     }
-//                    opDatum[tip][dim] = d;
                     ++index;
                 }
             }
@@ -434,8 +414,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double[] datum = rawDatum;
 
             double[] driftDatum = drift;
-
-
+            
             int[] notMissingIndices;
             if (missing.size() > 0) {
                 notMissingIndices = new int[datumLength - missing.size()];
@@ -455,9 +434,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             sb.append("datum : ").append(new dr.math.matrixAlgebra.Vector(datum)).append("\n");
 
-            if (diffusionProcessDelegate.hasDrift()) {
-                sb.append("drift : ").append(new dr.math.matrixAlgebra.Vector(driftDatum)).append("\n");
-            }
+            sb.append("drift : ").append(new dr.math.matrixAlgebra.Vector(driftDatum)).append("\n");
 
             sb.append("variance:\n");
             sb.append(new Matrix(varianceDatum));
@@ -466,7 +443,59 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double logDensity = mvn.logPdf(datum);
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");
-//        }
+
+            // Compute joint for internal nodes
+            int[] cNotMissingJoint = new int[dimTrait * tipCount];
+            int[] cMissingJoint = new int[dimTrait * (tipCount - 1)];
+
+            // External nodes
+            for (int tipTrait = 0; tipTrait < dimTrait * tipCount; ++tipTrait) {
+                cNotMissingJoint[tipTrait] = tipTrait;
+            }
+
+//            // Prior on root
+//            for (int tipTrait = 0; tipTrait < dimTrait; ++tipTrait) {
+//                cNotMissingJoint[dimTrait * tipCount + tipTrait] = dimTrait * (2 * tipCount - 1) + tipTrait;
+//            }
+
+            // Internal nodes
+            for (int tipTrait = dimTrait * tipCount; tipTrait < dimTrait * (2 * tipCount - 1); ++tipTrait) {
+                cMissingJoint[tipTrait - dimTrait * tipCount] = tipTrait;
+            }
+            
+            double[] rawDatumJoint = new double[dimTrait * (2 * tipCount - 1)];
+            System.arraycopy(rawDatum, 0, rawDatumJoint, 0, rawDatum.length);
+//            System.arraycopy(rootPrior.getMean(), 0,
+//                    rawDatumJoint, dimTrait * (2 * tipCount - 1), dimTrait);
+
+//            double[] driftJoint = new double[dimTrait * (2 * tipCount - 1)]; // TODO Fix
+            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, diffusionProcessDelegate);
+            double[] driftJoint = KroneckerOperation.vectorize(driftJointMatrix);
+            
+            for (int idx = 0; idx < driftJoint.length / dimTrait; ++idx) {
+                for (int dim = 0; dim < dimTrait; ++dim) {
+                    driftJoint[idx * dimTrait + dim] += priorMean[dim];
+                }
+            }
+
+//
+//            System.err.println(new dr.math.matrixAlgebra.Vector(cNotMissingJoint));
+//            System.err.println(new dr.math.matrixAlgebra.Vector(cMissingJoint));
+//            System.err.println(new dr.math.matrixAlgebra.Vector(rawDatumJoint));
+//            System.err.println(new dr.math.matrixAlgebra.Vector(driftJoint));
+//            System.err.println(new Matrix(graphStructure));
+//            System.err.println(new Matrix(jointGraphVariance));
+            
+//            System.exit(-1);
+
+            ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
+                    new Matrix(jointGraphVariance), cMissingJoint, cNotMissingJoint);
+
+            double[] cMeanJoint = cVarianceJoint.getConditionalMean(rawDatumJoint, 0, driftJoint, 0);
+
+            sb.append("cDriftJoint: ").append(new dr.math.matrixAlgebra.Vector(driftJoint)).append("\n\n");
+
+            sb.append("cMeanInternalJoint: ").append(new dr.math.matrixAlgebra.Vector(cMeanJoint)).append("\n\n");
 
             // Compute full conditional distributions
             sb.append("Full conditional distributions:\n");
@@ -497,9 +526,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 sb.append("cMean #").append(tip).append(" ").append(new dr.math.matrixAlgebra.Vector(cMean))
                     .append("\n");
             }
-
-//            System.err.println(sb.toString());
-//            System.exit(-1);
         }
 
         return sb.toString();

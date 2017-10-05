@@ -93,12 +93,11 @@ public class TreeTraitLogger implements Loggable, Reportable {
                         if (trait instanceof TreeTrait.DA) {
 
                             final int dim = ((double [])trait.getTrait(tree, node)).length;
-
                             for (int j = 0; j < dim; ++j) {
 
                                 final int idx = j;
-                                LogColumn column = new LogColumn.Abstract(trait.getTraitName() + "." + (i + 1) +
-                                "." + (j + 1)) {
+                                LogColumn column = new LogColumn.Abstract(trait.getTraitName()
+                                        + "." + (i + 1) + "." + (j + 1)) {
                                     @Override
                                     protected String getFormattedValue() {
                                         double[] x = (double[]) trait.getTrait(tree, node);
@@ -111,7 +110,8 @@ public class TreeTraitLogger implements Loggable, Reportable {
 
                         } else {
 
-                            LogColumn column = new LogColumn.Abstract(trait.getTraitName() + "." + (i + 1)) {
+                            LogColumn column = new LogColumn.Abstract(trait.getTraitName()
+                                    + "." + (i + 1)) {
                                 @Override
                                 protected String getFormattedValue() {
                                     return trait.getTraitString(tree, node);

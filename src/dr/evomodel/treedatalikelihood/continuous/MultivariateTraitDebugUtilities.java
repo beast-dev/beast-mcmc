@@ -56,9 +56,51 @@ public class MultivariateTraitDebugUtilities {
         return TreeUtils.getCommonAncestorNode(tree, leafNames);
     }
 
+    public static void insertPrecision(Tree tree, NodeRef parent, NodeRef child, double[][] matrix, double normalization) {
+        matrix[parent.getNumber()][child.getNumber()] =
+                           matrix[child.getNumber()][parent.getNumber()] =-1.0 / (tree.getBranchLength(child) * normalization);
+        recurseGraph(tree, child, matrix, normalization);
+
+    }
+
+    public static void recurseGraph(Tree tree, NodeRef node, double[][] matrix, double normalization) {
+        if (!tree.isExternal(node)) {
+            insertPrecision(tree, node, tree.getChild(node, 0), matrix, normalization);
+            insertPrecision(tree, node, tree.getChild(node, 1), matrix, normalization);
+        }
+    }
+
+    public static double[][] getGraphPrecision(final Tree tree, final double normalization) {
+
+        final int nodeCount = tree.getNodeCount();
+        final double[][] precision = new double[nodeCount][nodeCount];
+
+        recurseGraph(tree, tree.getRoot(), precision, normalization);
+
+//        for (int i = 0; i < nodeCount; i++) {
+//
+//            // Fill in diagonal
+//            double marginalTime = getLengthToRoot(tree, tree.getNode(i)) * normalization;
+//            variance[i][i] = marginalTime;
+//
+//            // Fill in upper right triangle,
+//            for (int j = i + 1; j < nodeCount; j++) {
+//
+//                NodeRef mrca = TreeUtils.getCommonAncestor(tree, tree.getNode(i), tree.getNode(j));
+//                variance[i][j] = getLengthToRoot(tree, mrca);
+//            }
+//        }
+
+//        makeSymmetric(variance);
+//        addPrior(variance, priorSampleSize);
+
+        return precision;
+    }
+
     public static double[][] getGraphVariance(final Tree tree, final double normalization, final double priorSampleSize) {
 
         final int nodeCount = tree.getNodeCount();
+//        final double[][] variance = new double[nodeCount + 1][nodeCount + 1];
         final double[][] variance = new double[nodeCount][nodeCount];
 
         for (int i = 0; i < nodeCount; i++) {
@@ -69,13 +111,19 @@ public class MultivariateTraitDebugUtilities {
 
             // Fill in upper right triangle,
             for (int j = i + 1; j < nodeCount; j++) {
-                NodeRef mrca = findMRCA(tree, i, j);
-                variance[i][j] = getLengthToRoot(tree, mrca);
+                NodeRef mrca = TreeUtils.getCommonAncestor(tree, tree.getNode(i), tree.getNode(j));
+                variance[i][j] = getLengthToRoot(tree, mrca) * normalization;
             }
         }
 
         makeSymmetric(variance);
+
         addPrior(variance, priorSampleSize);
+//        variance[nodeCount][nodeCount] = 0.0; // Does not matter, since prior mean is "observed"
+//        
+//        for (int i = 0; i < nodeCount + 1; ++i) {
+//            variance[i][i] += 10.0;
+//        }
 
         return variance;
     }
@@ -97,7 +145,7 @@ public class MultivariateTraitDebugUtilities {
 
             for (int j = i + 1; j < tipCount; j++) {
                 NodeRef mrca = findMRCA(tree, i, j);
-                variance[i][j] = getLengthToRoot(tree, mrca);
+                variance[i][j] = getLengthToRoot(tree, mrca) * normalization;
             }
         }
 
@@ -237,6 +285,21 @@ public class MultivariateTraitDebugUtilities {
             for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
                 drift[tip] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(
                         tree.getExternalNode(tip));
+            }
+        }
+
+        return drift;
+    }
+
+    public static double[][] getGraphDrift(Tree tree, DiffusionProcessDelegate diffusion) {
+
+        final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
+        final double[][] drift = new double[tree.getNodeCount()][dim];
+
+        if (diffusion instanceof DriftDiffusionModelDelegate) {
+            for (int node = 0; node < tree.getNodeCount(); ++node) {
+                drift[node] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(
+                        tree.getNode(node));
             }
         }
 

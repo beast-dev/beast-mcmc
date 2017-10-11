@@ -33,7 +33,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     int sum;
     int storedSum;
 
-    public DeterminentalPointProcessPrior(String name, double theta, MatrixParameterInterface data, boolean noZeros, boolean pathSampling) {
+    public DeterminentalPointProcessPrior(String name, double theta, MatrixParameterInterface data, Parameter normalizingConstants, boolean noZeros, boolean pathSampling, boolean resetData) {
         super(name);
         this.normalizingConstants = normalizingConstants;
         this.theta = theta;
@@ -42,10 +42,12 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         relationshipList = new double[data.getColumnDimension()][data.getColumnDimension()];
         storedRelationshipList = new double[data.getColumnDimension()][data.getColumnDimension()];
         size = data.getColumnDimension();
-        for (int i = 0; i < data.getRowDimension(); i++) {
-            for (int j = 0; j < data.getColumnDimension(); j++) {
-                if(i % (j+1) == 0) {
-                    data.setParameterValueQuietly(i, j, 0);
+        if(resetData){
+            for (int i = 0; i < data.getRowDimension(); i++) {
+                for (int j = 0; j < data.getColumnDimension(); j++) {
+                    if(i % (j+1) == 0) {
+                        data.setParameterValueQuietly(i, j, 0);
+                    }
                 }
             }
         }

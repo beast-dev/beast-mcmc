@@ -26,10 +26,12 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.LatentFactorModelInterface;
@@ -173,6 +175,32 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     public MatrixParameterInterface getScaledData(){
         return traitParameterMatrix;
+    }
+
+    /*
+
+    1. initialize:
+        gets correct TreeTrait (by name)
+        make MatrixParameters to serve up (TODO do not serve MPT)
+
+     */
+
+    private void junk() {
+        TreeDataLikelihood likelihood = delegate.getCallbackLikelihood(); // Once
+        MatrixParameter mp = null;   // Once
+
+        for (TreeTrait t : likelihood.getTreeTraits()) {
+            System.err.println(t.getTraitName());
+        }
+
+        TreeTrait factorDraw = likelihood.getTreeTrait("Correct name");     // Once
+        Tree tree = likelihood.getTree(); // Once
+
+        NodeRef tip = null;
+        double[] temp = (double[]) factorDraw.getTrait(tree, tip); // Many
+        for (int i = 0; i < temp.length; ++i) {
+            mp.setParameterValueQuietly(0, i, temp[i]);
+        }
     }
 
     public MatrixParameter getFactors(){

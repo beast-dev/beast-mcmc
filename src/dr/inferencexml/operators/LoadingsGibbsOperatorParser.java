@@ -26,6 +26,7 @@
 package dr.inferencexml.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
@@ -55,7 +56,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String weightTemp = (String) xo.getAttribute(WEIGHT);
         double weight = Double.parseDouble(weightTemp);
-        LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
+        LatentFactorModelInterface LFM = (LatentFactorModelInterface) xo.getChild(LatentFactorModelInterface.class);
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
         DistributionLikelihood cutoffPrior = null;
@@ -92,7 +93,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(LatentFactorModel.class),
+            new ElementRule(LatentFactorModelInterface.class),
 
             new XORRule(
             new ElementRule(DistributionLikelihood.class),

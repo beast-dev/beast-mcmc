@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.*;
 import dr.math.MathUtils;
@@ -13,7 +14,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  */
 public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator{
     Likelihood prior;
-    LatentFactorModel LFM;
+    LatentFactorModelInterface LFM;
     double[][] precisionArray;
     double[] meanMidArray;
     double[] meanArray;
@@ -27,7 +28,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
     DistributionLikelihood cutoffPrior;
 
-    public LoadingsGibbsTruncatedOperator(LatentFactorModel LFM, Likelihood prior, double weight, boolean randomScan, MatrixParameterInterface loadings, DistributionLikelihood cutoffPrior) {
+    public LoadingsGibbsTruncatedOperator(LatentFactorModelInterface LFM, Likelihood prior, double weight, boolean randomScan, MatrixParameterInterface loadings, DistributionLikelihood cutoffPrior) {
         setWeight(weight);
 
         this.loadings=loadings;
@@ -137,7 +138,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
                 count++;
             }
-            if (count < 10) {
+            if (!Double.isNaN(draw)) {
                 loadings.setParameterValue(row, column, draw);
             }
         }

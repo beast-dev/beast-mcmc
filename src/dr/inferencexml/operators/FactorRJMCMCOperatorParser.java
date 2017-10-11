@@ -73,9 +73,12 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
         }
 
         //operators
-        BitFlipOperator sparsityOperator = null;
+        SimpleMCMCOperator sparsityOperator = null;
         if (xo.getChild(BitFlipOperator.class) != null)
             sparsityOperator = (BitFlipOperator) xo.getChild(BitFlipOperator.class);
+        if(xo.getChild(LoadingsSparsityOperator.class) != null){
+            sparsityOperator = (LoadingsSparsityOperator) xo.getChild(LoadingsSparsityOperator.class);
+        }
         SimpleMCMCOperator loadingsOperator = (SimpleMCMCOperator) xo.getChild(LOADINGS_OPERATOR).getChild(SimpleMCMCOperator.class);
         SimpleMCMCOperator factorOperator = null;
         if(xo.getChild(FACTOR_OPERATOR) != null)
@@ -105,7 +108,7 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
                     new ElementRule(SimpleMCMCOperator.class)}),
             new ElementRule(FACTOR_OPERATOR, new XMLSyntaxRule[]{
                     new ElementRule(SimpleMCMCOperator.class)}, true),
-            new ElementRule(BitFlipOperator.class, true),
+            new OrRule(new ElementRule(BitFlipOperator.class, true), new ElementRule(LoadingsSparsityOperator.class, true)),
             new ElementRule(AbstractModelLikelihood.class),
             new ElementRule(LatentFactorModelPrecisionGibbsOperator.class, true),
             new ElementRule(SPARSITY_PRIOR, new XMLSyntaxRule[]{

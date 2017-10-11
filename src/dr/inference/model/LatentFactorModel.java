@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.inference.distribution.LatentFactorModelInterface;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -38,7 +39,7 @@ import java.util.*;
  * @author Marc Suchard
  */
 
-public class LatentFactorModel extends AbstractModelLikelihood implements Citable {
+public class LatentFactorModel extends AbstractModelLikelihood implements Citable, LatentFactorModelInterface {
 //    private Matrix data;
 //    private Matrix factors;
 //    private Matrix loadings;

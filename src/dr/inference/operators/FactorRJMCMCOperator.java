@@ -25,7 +25,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     private double[] separator;
     SimpleMCMCOperator loadingsOperator;
     SimpleMCMCOperator factorOperator;
-    BitFlipOperator sparsityOperator;
+    SimpleMCMCOperator sparsityOperator;
     SimpleMCMCOperator NOp;
     AdaptableSizeFastMatrixParameter storedFactors;
     AdaptableSizeFastMatrixParameter storedLoadings;
@@ -46,7 +46,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                                 AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm,
                                 DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior,
                                 SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator,
-                                BitFlipOperator sparsityOperator, SimpleMCMCOperator NOp, MatrixSizePrior rowPrior,
+                                SimpleMCMCOperator sparsityOperator, SimpleMCMCOperator NOp, MatrixSizePrior rowPrior,
                                 LatentFactorModelPrecisionGibbsOperator precisionGibbsOperator) {
         setWeight(weight);
         this.factors = factors;

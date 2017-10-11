@@ -27,11 +27,15 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
+import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -54,7 +58,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
  */
 
 public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
-        implements ContinuousTraitPartialsProvider, Reportable {
+        implements ContinuousTraitPartialsProvider, Reportable, LatentFactorModelInterface{
 
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
@@ -65,6 +69,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         super(name);
 
         this.traitParameter = traitParameter;
+        this.traitParameterMatrix = MatrixParameter.recast("Data", traitParameter);
         this.loadings = loadings;
         this.traitPrecision = traitPrecision; // TODO Generalize for non-diagonal precision
 //        this.missingIndices = missingIndices;
@@ -82,6 +87,17 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         this.observedIndicators = setupObservedIndicators(missingIndices, numTaxa, dimTrait);
         this.observedDimensions = setupObservedDimensions(observedIndicators);
+
+        missing = new Parameter.Default(traitParameter.getDimension(), 0);
+
+        for (int i = 0; i < missing.getDimension(); i++) {
+            if (missingIndices.contains(i)) {
+                missing.setParameterValue(i, 1);
+            } else {
+                missing.setParameterValue(i, 0);
+            }
+        }
+
 
         this.missingFactorIndices = new ArrayList<Integer>();
         for (int i = 0; i < numTaxa * dimTrait; ++i) {
@@ -139,6 +155,40 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return this;
     }
 
+    public Parameter getMissingIndicator(){
+        return missing;
+    }
+
+    public MatrixParameterInterface getLoadings(){
+        return loadings;
+    }
+
+    public int getFactorDimension(){
+        return loadings.getColumnDimension();
+    }
+
+    public MatrixParameterInterface getColumnPrecision(){
+        return new DiagonalMatrix(traitPrecision);
+    }
+
+    public MatrixParameterInterface getScaledData(){
+        return traitParameterMatrix;
+    }
+
+    public MatrixParameter getFactors(){
+        TreeTrait[] facDraw = delegate.getCallbackLikelihood().getTreeTraits();
+        MatrixParameter factors = new MatrixParameter("factors");
+        for (int i = 0; i < numTaxa; i++) {
+            double[] factorsToAdd = new double[((double[]) facDraw[2].getTrait(delegate.getCallbackLikelihood().getTree(), delegate.getCallbackLikelihood().getTree().getNode(0))).length];
+            for (int j = 0; j < factorsToAdd.length; j++) {
+                factorsToAdd[j] = ((double[]) facDraw[2].getTrait(delegate.getCallbackLikelihood().getTree(), delegate.getCallbackLikelihood().getTree().getNode(i)))[j];
+            }
+            Parameter tip = new Parameter.Default(factorsToAdd);
+            factors.addParameter(tip);
+        }
+        return factors;
+    }
+
     @Override
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
@@ -181,7 +231,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         storedStatisticsKnown = statisticsKnown;
 
         System.arraycopy(partials, 0, storedPartials, 0, partials.length);
-        System.arraycopy(normalizationConstants, 0, storeedNormalizationConstants, 0, normalizationConstants.length);
+        System.arraycopy(normalizationConstants, 0, storedNormalizationConstants, 0, normalizationConstants.length);
     }
 
     @Override
@@ -195,8 +245,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         storedPartials = tmp1;
 
         double[] tmp2 = normalizationConstants;
-        normalizationConstants = storeedNormalizationConstants;
-        storeedNormalizationConstants = tmp2;
+        normalizationConstants = storedNormalizationConstants;
+        storedNormalizationConstants = tmp2;
     }
 
     @Override
@@ -223,7 +273,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         if (normalizationConstants == null) {
             normalizationConstants = new double[numTaxa];
-            storeedNormalizationConstants = new double[numTaxa];
+            storedNormalizationConstants = new double[numTaxa];
         }
 
         computePartialsAndRemainders();
@@ -459,19 +509,22 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private double[] storedPartials;
 
     private double[] normalizationConstants;
-    private double[] storeedNormalizationConstants;
+    private double[] storedNormalizationConstants;
 
     private final int numTaxa;
     private final int dimTrait;
     private final int dimPartial;
     private final int numFactors;
     private final CompoundParameter traitParameter;
+    private final MatrixParameterInterface traitParameterMatrix;
     private final MatrixParameterInterface loadings;
     private final Parameter traitPrecision;
     private final List<Integer> missingFactorIndices;
 
     private final double[][] observedIndicators;
     private final int[] observedDimensions;
+
+    private final Parameter missing;
 
     public static double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 

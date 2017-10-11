@@ -121,11 +121,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         this.numTraits = dataModel.getTraitCount();
         this.dimTrait = dataModel.getTraitDimension();
-        this.precisionType = forceCompletelyObserved ? PrecisionType.SCALAR : dataModel.getPrecisionType();
+
+        this.precisionType = diffusionProcessDelegate.hasDrift() ? // TODO Handle drift in Basic/SCALAR integrator
+                PrecisionType.FULL :
+                forceCompletelyObserved ?
+                        PrecisionType.SCALAR :
+                        dataModel.getPrecisionType();
+        
         this.rateTransformation = rateTransformation;
         this.tree = tree;
         this.rateModel = rateModel;
         this.rootPrior = rootPrior;
+
         this.forceCompletelyObserved = forceCompletelyObserved;
         this.allowSingular = allowSingular;
 
@@ -508,6 +515,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         this.callbackLikelihood = treeDataLikelihood;
     }
 
+    @Override
+    public void vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations, int offset) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    public DiffusionProcessDelegate getDiffusionProcessDelegate() { return diffusionProcessDelegate; }
+
     public MultivariateDiffusionModel getDiffusionModel() {
         return diffusionProcessDelegate.getDiffusionModel(0);
     }
@@ -655,6 +669,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public void getPostOrderPartial(final int nodeNumber, double[] vector) {
         cdi.getPostOrderPartial(getActiveNodeIndex(nodeNumber), vector);
+    }
+
+    public void getPostOrderPartial(final int nodeNumber, double[] vector, double[] matrix, double[] displacement) {
+        cdi.getPostOrderPartial(getActiveNodeIndex(nodeNumber), vector, matrix, displacement);
     }
 
     public void getPreOrderPartial(final int nodeNumber, double[] vector) {

@@ -28,6 +28,7 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
 
         sample = new double[dimNode * tree.getNodeCount()];
         tmpEpsilon = new double[dimTrait];
+        tmpDrift = new double[dimTrait];
     }
 
     @Override
@@ -151,4 +152,5 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
 
     final double[] sample;
     final double[] tmpEpsilon;
+    final double[] tmpDrift;
 }

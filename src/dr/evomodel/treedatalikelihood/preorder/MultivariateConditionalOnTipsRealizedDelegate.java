@@ -16,7 +16,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  */
 public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOnTipsRealizedDelegate {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     final private PartiallyMissingInformation missingInformation;
 
@@ -100,11 +100,6 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 //                System.err.println("V: " + totalVar);
 //                System.err.println("Ch:\n" + new Matrix(cholesky));
             System.err.println("sample: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
-
-//                System.exit(-1);
-//                if (extremeValue(mean) || extremeValue(newSample)) {
-//                    System.exit(-1);
-//                }
         }
     }
 
@@ -160,6 +155,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                 final double sqrtScale = Math.sqrt(1.0 / branchPrecision);
 
                 // TODO Drift?
+                assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
 
                 MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                         sample, offsetParent, // input mean
@@ -206,6 +202,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
 
                     // TODO Drift?
+                    assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
 
                     MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                             cM2, // input mean
@@ -251,6 +248,14 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         }
     }
 
+
+    private WrappedVector getMeanWithDrift(double[] mean, int offsetMean, double[] drift, int offsetDrift, int dim) {
+        for (int i = 0;i < dim; ++i) {
+            tmpDrift[i] = mean[offsetMean + i] + drift[offsetDrift + i];
+        }
+        return new WrappedVector.Raw(tmpDrift, 0, dimTrait);
+    }
+
     private void simulateTraitForInternalNode(final int offsetSample,
                                               final int offsetParent,
                                               final int offsetPartial,
@@ -261,9 +266,27 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
             final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
 
-            final WrappedVector M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
-            final DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
-            CommonOps.scale(branchPrecision, Pd, P1);
+            final WrappedVector M1;
+            final DenseMatrix64F P1;
+
+            if (hasNoDrift) {
+                M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+                P1 = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.scale(branchPrecision, Pd, P1); // TODO New parameterization?
+            } else {
+                M1 = getMeanWithDrift(sample, offsetParent, displacementBuffer, 0, dimTrait);
+                P1 = DenseMatrix64F.wrap(dimTrait, dimTrait, precisionBuffer);
+            }
+
+            if (true) {
+                DenseMatrix64F tP1 = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.scale(branchPrecision, Pd, P1);
+
+                System.err.println(tP1);
+                System.err.println(P1);
+                System.exit(-1);
+            }
+
 
             final WrappedVector M2 = new WrappedVector.Raw(tmpMean, 0, dimTrait);
             final DenseMatrix64F P2 = new DenseMatrix64F(dimTrait, dimTrait);
@@ -276,6 +299,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);
 
             // TODO Drift?
+            assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
 
             MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                     M2.getBuffer(), 0, // input mean

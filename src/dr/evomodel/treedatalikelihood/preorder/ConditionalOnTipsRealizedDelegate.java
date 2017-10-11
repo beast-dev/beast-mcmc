@@ -6,7 +6,7 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
 
@@ -15,9 +15,10 @@ import dr.math.matrixAlgebra.WrappedVector;
  */
 public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuousTraitDelegate {
 
-    static final private boolean DEBUG = false;
+    static final private boolean DEBUG = true;
 
     final protected int dimPartial;
+    final boolean hasNoDrift;
 
     public ConditionalOnTipsRealizedDelegate(String name,
                                              Tree tree,
@@ -29,14 +30,22 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                              ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
-        assert (likelihoodDelegate.getIntegrator() instanceof ContinuousDiffusionIntegrator.Basic);
-
         this.likelihoodDelegate = likelihoodDelegate;
         this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
         partialNodeBuffer = new double[numTraits * dimPartial];
         partialPriorBuffer = new double[numTraits * dimPartial];
 
         tmpMean = new double[dimTrait];
+
+        this.hasNoDrift = ! likelihoodDelegate.getDiffusionProcessDelegate().hasDrift();
+
+        if (hasNoDrift) {
+            this.precisionBuffer = null;
+            this.displacementBuffer = null;
+        } else {
+            this.precisionBuffer = new double[dimTrait * dimTrait];
+            this.displacementBuffer = new double[dimTrait];
+        }
     }
 
     @Override
@@ -63,6 +72,8 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     }
 
     protected void simulateTraitForRoot(final int offsetSample, final int offsetPartial) {
+
+        assert (likelihoodDelegate.getPrecisionType() == PrecisionType.SCALAR);
 
         final double rootPrec = partialNodeBuffer[offsetPartial + dimTrait];
 
@@ -109,7 +120,15 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     @Override
     protected void simulateNode(final BranchNodeOperation operation, final double branchNormalization) {
         final int nodeIndex = operation.getNodeNumber();
-        likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
+
+        if (hasNoDrift) {
+            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
+        } else {
+            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialPriorBuffer,
+                    precisionBuffer, displacementBuffer);
+        }
+
+        System.err.println("\t\t\tNODE_INDEX = " + nodeIndex);
 
         int offsetPartial = 0;
         int offsetSample = dimNode * nodeIndex;
@@ -186,5 +205,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     final double[] partialNodeBuffer;
     final double[] partialPriorBuffer;
+    final double[] precisionBuffer;
+    final double[] displacementBuffer;
     final double[] tmpMean;
 }

@@ -54,6 +54,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     void simulate(SimulationTreeTraversal treeTraversal,
                   int rootNodeNumber);
 
+    void simulate(int[] operations, int operationCount, int rootNodeNumer);
+
     void setCallback(ProcessSimulation simulationProcess);
 
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
@@ -75,6 +77,27 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         @Override
         public final void setCallback(ProcessSimulation simulationProcess) {
             this.simulationProcess = simulationProcess;
+        }
+
+        @Override
+        public void simulate(final int[] operations, final int operationCount,
+                             final int rootNodeNumber) {
+            final double normalization = getNormalization();
+
+            setupStatistics();
+
+            simulateRoot(rootNodeNumber);
+
+            int k = 0;
+            for (int i = 0; i < operationCount; ++i) {
+                simulateNode(
+                        operations[k    ],
+                        operations[k + 1],
+                        operations[k + 2],
+                        operations[k + 3],
+                        operations[k + 4]
+                );
+            }
         }
 
         @Override
@@ -129,6 +152,14 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected abstract void simulateNode(final BranchNodeOperation operation, final double branchNormalization);
 
         protected abstract void simulateNode(final NodeOperation operation);
+
+        protected void simulateNode(final int parentNumber,
+                                             final int nodeNumber,
+                                             final int nodeMatrix,
+                                             final int siblingNumber,
+                                             final int siblingMatrix) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 

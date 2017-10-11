@@ -17,7 +17,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionIntegrator.Basic {
 
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true ;
 
     public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
                                                int diffusionCount) {
@@ -34,6 +34,24 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         }
 
         System.err.println("Trying SafeMultivariateWithDriftIntegrator");
+    }
+
+    @Override
+    public void getPostOrderPartial(int bufferIndex, final double[] partial,
+                                    final double[] precision, final double[] displacement) {
+        assert(precision != null);
+        assert(precision.length >= dimTrait * dimTrait);
+
+        assert(displacement != null);
+        assert(displacement.length >= dimTrait);
+
+        getPostOrderPartial(bufferIndex, partial);
+
+        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
+                precision, 0, dimTrait * dimTrait);
+
+        System.arraycopy(displacements, bufferIndex * dimTrait,
+                displacement, 0, dimTrait);
     }
 
     @Override

@@ -60,4 +60,10 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
     class LikelihoodRescalingException extends LikelihoodException { }
 
     void setCallback(TreeDataLikelihood treeDataLikelihood);
+
+    void vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations, int offset);
+
+//    int getActiveNodeIndex(final int index);
+//
+//    int getActiveMatrixIndex(final int index);
 }

@@ -164,8 +164,12 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 //            if (missingIndices != null && missingIndices.size() == 0) {
             if (!useMissingIndices) {
 
-                ProcessSimulationDelegate simulationDelegate = new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
-                        diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
+                ProcessSimulationDelegate simulationDelegate =
+                        delegate.getPrecisionType()== PrecisionType.SCALAR ?
+                                new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                        diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
+                                new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                        diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
                         treeDataLikelihood, simulationDelegate);

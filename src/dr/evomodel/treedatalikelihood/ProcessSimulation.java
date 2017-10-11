@@ -30,9 +30,12 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -48,6 +51,8 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
     private final TreeDataLikelihood treeDataLikelihood;
     private final DataLikelihoodDelegate likelihoodDelegate;
     private final ProcessSimulationDelegate simulationDelegate;
+
+    private final int[] operations;
 
     private boolean validSimulation;
 
@@ -67,6 +72,8 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
+
+        this.operations = new int[tree.getNodeCount() * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
 
         validSimulation = false;
     }
@@ -92,9 +99,33 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
         final NodeRef root = tree.getRoot();
 
-        simulationDelegate.simulate(treeTraversalDelegate, root.getNumber());
+        boolean NEW = false;
+
+        if (NEW) {
+            int count = convertOperationsToList(treeTraversalDelegate.getNodeOperations(), operations);
+            simulationDelegate.simulate(operations, count, root.getNumber());
+        } else {
+            simulationDelegate.simulate(treeTraversalDelegate, root.getNumber());
+        }
 
         treeTraversalDelegate.setAllNodesUpdated();
+    }
+
+    private int convertOperationsToList(final List<ProcessOnTreeDelegate.NodeOperation> nodeOperations,
+                                         int[] operations) {
+
+        int k = 0;
+        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
+            operations[k    ] = likelihoodDelegate.getActiveNodeIndex(op.getNodeNumber());
+            operations[k + 1] = likelihoodDelegate.getActiveNodeIndex(op.getLeftChild());    // source node 1
+            operations[k + 2] = likelihoodDelegate.getActiveMatrixIndex(op.getLeftChild());  // source matrix 1
+            operations[k + 3] = likelihoodDelegate.getActiveNodeIndex(op.getRightChild());   // source node 2
+            operations[k + 4] = likelihoodDelegate.getActiveMatrixIndex(op.getRightChild()); // source matrix 2
+
+            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+        }
+
+        return nodeOperations.size();
     }
 
     @Override

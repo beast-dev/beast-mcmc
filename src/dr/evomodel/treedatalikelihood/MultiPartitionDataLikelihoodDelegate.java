@@ -1186,6 +1186,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
+    public int getActiveNodeIndex(int index) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getActiveMatrixIndex(int index) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     protected void acceptState() {
     }
 

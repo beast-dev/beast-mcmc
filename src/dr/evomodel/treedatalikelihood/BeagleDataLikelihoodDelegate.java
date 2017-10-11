@@ -889,6 +889,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     @Override
+    public void vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations, int offset) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     protected void acceptState() {
     }
 

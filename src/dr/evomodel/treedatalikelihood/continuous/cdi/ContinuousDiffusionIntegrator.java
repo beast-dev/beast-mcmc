@@ -48,6 +48,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getPostOrderPartial(int bufferIndex, final double[] partial);
 
+    void getPostOrderPartial(int bufferIndex, final double[] partial,
+                             final double[] precision, final double[] displacement);
+
     void setPreOrderPartial(int bufferIndex, final double[] partial);
 
     void getPreOrderPartial(int bufferIndex, final double[] partial);
@@ -157,6 +160,12 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert(partial.length >= dimPartial);
 
             System.arraycopy(partials, dimPartial * bufferIndex, partial, 0, dimPartial);
+        }
+
+        @Override
+        public void getPostOrderPartial(int bufferIndex, final double[] partial,
+                                        final double[] precision, final double[] displacement) {
+            throw new RuntimeException("Not implemented");
         }
 
         @Override

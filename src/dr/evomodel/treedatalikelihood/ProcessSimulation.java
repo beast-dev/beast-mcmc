@@ -115,15 +115,15 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
                                          int[] operations) {
 
         int k = 0;
-        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
-            operations[k    ] = likelihoodDelegate.getActiveNodeIndex(op.getNodeNumber());
-            operations[k + 1] = likelihoodDelegate.getActiveNodeIndex(op.getLeftChild());    // source node 1
-            operations[k + 2] = likelihoodDelegate.getActiveMatrixIndex(op.getLeftChild());  // source matrix 1
-            operations[k + 3] = likelihoodDelegate.getActiveNodeIndex(op.getRightChild());   // source node 2
-            operations[k + 4] = likelihoodDelegate.getActiveMatrixIndex(op.getRightChild()); // source matrix 2
-
-            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
-        }
+//        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
+//            operations[k    ] = likelihoodDelegate.getActiveNodeIndex(op.getNodeNumber());
+//            operations[k + 1] = likelihoodDelegate.getActiveNodeIndex(op.getLeftChild());    // source node 1
+//            operations[k + 2] = likelihoodDelegate.getActiveMatrixIndex(op.getLeftChild());  // source matrix 1
+//            operations[k + 3] = likelihoodDelegate.getActiveNodeIndex(op.getRightChild());   // source node 2
+//            operations[k + 4] = likelihoodDelegate.getActiveMatrixIndex(op.getRightChild()); // source matrix 2
+//
+//            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+//        }
 
         return nodeOperations.size();
     }

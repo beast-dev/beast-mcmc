@@ -121,8 +121,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         final int jmo = dimMatrix * jMatrix;
 
         // Read variance increments along descendent branches of k
-        final double vi = variances[imo];
-        final double vj = variances[jmo];
+        final double vi = branchLengths[imo];
+        final double vj = branchLengths[jmo];
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
@@ -239,8 +239,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         final int jmo = dimMatrix * jMatrix;
 
         // Read variance increments along descendent branches of k
-        final double vi = variances[imo];
-        final double vj = variances[jmo];
+        final double vi = branchLengths[imo];
+        final double vj = branchLengths[jmo];
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 

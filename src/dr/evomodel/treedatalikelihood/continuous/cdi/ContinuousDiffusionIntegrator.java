@@ -51,6 +51,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void getPostOrderPartial(int bufferIndex, final double[] partial,
                              final double[] precision, final double[] displacement);
 
+    double getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement);
+
     void setPreOrderPartial(int bufferIndex, final double[] partial);
 
     void getPreOrderPartial(int bufferIndex, final double[] partial);
@@ -77,6 +79,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
                                     boolean incrementOuterProducts);
+
+    int getPartialBufferCount();
+
+//    int getMatrixBufferCount();
 
     boolean requireDataAugmentationForOuterProducts();
 
@@ -137,6 +143,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
+        public int getPartialBufferCount() { return  bufferCount; }
+
+        @Override
         public boolean requireDataAugmentationForOuterProducts() {
             return false;
         }
@@ -166,6 +175,11 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         public void getPostOrderPartial(int bufferIndex, final double[] partial,
                                         final double[] precision, final double[] displacement) {
             throw new RuntimeException("Not implemented");
+        }
+
+        @Override
+        public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
+            return 1.0 / branchLengths[bufferIndex * dimMatrix];
         }
 
         @Override
@@ -351,7 +365,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 }
 
                 // TODO Currently only written for SCALAR model
-                variances[dimMatrix * probabilityIndices[up]] = edgeLengths[up];
+                branchLengths[dimMatrix * probabilityIndices[up]] = edgeLengths[up];  // TODO Remove dimMatrix
             }
 
             precisionOffset = dimTrait * dimTrait * precisionIndex;
@@ -366,6 +380,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         // Internal storage
         protected double[] partials;
 
+        protected double[] branchLengths;
         protected double[] variances;
         protected double[] precisions;
 
@@ -400,8 +415,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             final int jmo = dimMatrix * jMatrix;
 
             // Read variance increments along descendent branches of k
-            final double vi = variances[imo];
-            final double vj = variances[jmo];
+            final double vi = branchLengths[imo];
+            final double vj = branchLengths[jmo];
 //
 //            final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 //
@@ -527,12 +542,12 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             final int jmo = dimMatrix * jMatrix;
 
             // Read variance increments along descendent branches of k
-            final double vi = variances[imo];
-            final double vj = variances[jmo];
+            final double vi = branchLengths[imo];
+            final double vj = branchLengths[jmo];
 
             if (DEBUG) {
                 System.err.println("i:");
-                System.err.println("\tvar : " + variances[imo]);
+                System.err.println("\tvar : " + branchLengths[imo]);
             }
 
             // For each trait // TODO in parallel
@@ -704,7 +719,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         private void allocateStorage() {
             partials = new double[dimPartial * bufferCount];
-            variances = new double[dimMatrix * bufferCount]; // TODO Should be dimTrait * dimTrait
+            branchLengths = new double[dimMatrix * bufferCount]; // TODO Should be just bufferCount
+//            variances = new double[dimMatrix * bufferCount]; // TODO Should be dimTrait * dimTrait
             remainders = new double[numTraits * bufferCount];
 
             diffusions = new double[dimTrait * dimTrait * diffusionCount];

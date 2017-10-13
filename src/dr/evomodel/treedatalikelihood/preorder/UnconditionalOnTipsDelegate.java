@@ -19,7 +19,6 @@ public class UnconditionalOnTipsDelegate extends AbstractRealizedContinuousTrait
                                        ContinuousTraitDataModel dataModel,
                                        ConjugateRootTraitPrior rootPrior,
                                        ContinuousRateTransformation rateTransformation,
-//                                       BranchRateModel rateModel,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
@@ -45,7 +44,6 @@ public class UnconditionalOnTipsDelegate extends AbstractRealizedContinuousTrait
         }
     }
 
-    @Override
     protected void simulateNode(final BranchNodeOperation operation,
                                 final double branchNormalization) {
         final int nodeIndex = operation.getNodeNumber();
@@ -74,8 +72,12 @@ public class UnconditionalOnTipsDelegate extends AbstractRealizedContinuousTrait
     }
 
     @Override
-    protected void simulateNode(NodeOperation operation) {
-
+    protected void simulateNode(final int parentNumber,
+                                         final int nodeNumber,
+                                         final int nodeMatrix,
+                                         final int siblingNumber,
+                                         final int siblingMatrix) {
+        throw new RuntimeException("Not yet implemented -- see above");
     }
 
     private final ConjugateRootTraitPrior rootPrior;

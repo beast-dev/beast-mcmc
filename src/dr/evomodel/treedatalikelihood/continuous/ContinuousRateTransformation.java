@@ -45,15 +45,12 @@ public interface ContinuousRateTransformation {
 
     class Default extends AbstractModel implements ContinuousRateTransformation {
         private final Tree tree;
-        private final boolean scaleByTime;
-        private final boolean useTreeLength;
+
         private final RateRescalingScheme scheme;
 
         public Default(Tree tree, boolean scaleByTime, boolean useTreeLength) {
-            super("ContinuousRateTransforamtion");
+            super("ContinuousRateTransformation");
             this.tree = tree;
-            this.scaleByTime = scaleByTime;
-            this.useTreeLength = useTreeLength;
 
             scheme = scaleByTime ?
                     (useTreeLength ?
@@ -70,7 +67,7 @@ public interface ContinuousRateTransformation {
         }
 
         @Override
-        public double getNormalization() {
+        public double getNormalization() { // TODO Cache
 
             double norm = 1.0;
             switch (scheme) {
@@ -126,4 +123,3 @@ public interface ContinuousRateTransformation {
         }
     }
 }
- // TODO I suspect this class should be a Model and store/restore treeLength

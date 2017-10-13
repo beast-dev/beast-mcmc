@@ -122,8 +122,8 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
         final int jmo = dimMatrix * jMatrix;
 
         // Read variance increments along descendent branches of k
-        final double vi = variances[imo];
-        final double vj = variances[jmo];
+        final double vi = branchLengths[imo];
+        final double vj = branchLengths[jmo];
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
@@ -240,8 +240,8 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
         final int jmo = dimMatrix * jMatrix;
 
         // Read variance increments along descendent branches of k
-        final double vi = variances[imo];
-        final double vj = variances[jmo];
+        final double vi = branchLengths[imo];
+        final double vj = branchLengths[jmo];
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
         final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);

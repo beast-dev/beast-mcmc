@@ -6,6 +6,7 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -15,7 +16,7 @@ import dr.math.matrixAlgebra.WrappedVector;
  */
 public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuousTraitDelegate {
 
-    static final private boolean DEBUG = true;
+    static final private boolean DEBUG = false;
 
     final protected int dimPartial;
     final boolean hasNoDrift;
@@ -31,6 +32,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
         this.likelihoodDelegate = likelihoodDelegate;
+        this.cdi = likelihoodDelegate.getIntegrator();
         this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
         partialNodeBuffer = new double[numTraits * dimPartial];
         partialPriorBuffer = new double[numTraits * dimPartial];
@@ -51,17 +53,21 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     @Override
     protected void simulateRoot(final int nodeIndex) {
 
-        likelihoodDelegate.getIntegrator().getPostOrderPartial(
-                rootProcessDelegate.getPriorBufferIndex(), partialPriorBuffer); // No double-buffering
+        final int bufferedRoot = likelihoodDelegate.getActiveNodeIndex(nodeIndex);
 
-        likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
+        cdi.getPostOrderPartial(
+                rootProcessDelegate.getPriorBufferIndex(), partialPriorBuffer); // No double-buffering
+        
+//        cdi.getPostOrderPartial(nodeIndex, partialNodeBuffer);
+      cdi.getPostOrderPartial(bufferedRoot, partialNodeBuffer);
+
 
         if (DEBUG) {
-            System.err.println("Simulate root node " + nodeIndex);
+            System.err.println("Simulate root node " + nodeIndex + " -> " + bufferedRoot);
         }
 
         int offsetPartial = 0;
-        int offsetSample = dimNode * nodeIndex;
+        int offsetSample = dimNode * nodeIndex; // bufferedRoot;
         for (int trait = 0; trait < numTraits; ++trait) {
 
             simulateTraitForRoot(offsetSample, offsetPartial);
@@ -117,41 +123,81 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         }
     }
 
+//    @Override
+//    protected void simulateNode(final BranchNodeOperation operation, final double branchNormalization) {
+//        final int nodeIndex = operation.getNodeNumber();
+//
+//        if (hasNoDrift) {
+//            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
+//        } else {
+////            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialPriorBuffer,
+////                    precisionBuffer, displacementBuffer);
+//        }
+//
+//        if (DEBUG) {
+//        System.err.println("\t\t\tNODE_INDEX = " + nodeIndex);
+//        }
+//
+//        int offsetPartial = 0;
+//        int offsetSample = dimNode * nodeIndex;
+//        int offsetParent = dimNode * operation.getParentNumber();
+//
+//        final double branchPrecision = 1.0 / (operation.getBranchLength() * branchNormalization);
+//
+//        if (DEBUG) {
+//            System.err.println("Simulate for node " + nodeIndex);
+//        }
+//        for (int trait = 0; trait < numTraits; ++trait) {
+//
+//            simulateTraitForNode(nodeIndex, trait, offsetSample, offsetParent, offsetPartial, 0, branchPrecision);
+//
+//            offsetSample += dimTrait;
+//            offsetParent += dimTrait;
+//            offsetPartial += dimPartial;
+//
+//            throw new RuntimeException("Fix me");
+//        }
+//
+//        throw new RuntimeException("Do not use");
+//    }
+
     @Override
-    protected void simulateNode(final BranchNodeOperation operation, final double branchNormalization) {
-        final int nodeIndex = operation.getNodeNumber();
+    protected void simulateNode(final int parentNumber,
+                                final int nodeNumber,
+                                final int nodePartial,
+                                final int nodeMatrix,
+                                final int external) {
 
-        if (hasNoDrift) {
-            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
-        } else {
-            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialPriorBuffer,
-                    precisionBuffer, displacementBuffer);
-        }
+        cdi.getPostOrderPartial(nodePartial, partialNodeBuffer);
+        final double branchPrecision = cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
 
-        System.err.println("\t\t\tNODE_INDEX = " + nodeIndex);
-
-        int offsetPartial = 0;
-        int offsetSample = dimNode * nodeIndex;
-        int offsetParent = dimNode * operation.getParentNumber();
-
-        final double branchPrecision = 1.0 / (operation.getBranchLength() * branchNormalization);
+//        if (hasNoDrift) {
+//
+//        } else {
+//            cdi.getBranchMatrices(nodeNumber, precisionBuffer, displacementBuffer);
+//        }
 
         if (DEBUG) {
-            System.err.println("Simulate for node " + nodeIndex);
+            System.err.println("\t\t\tNODE_INDEX = " + nodeNumber);
+        }
+
+        int offsetPartial = 0;
+        int offsetSample = dimNode * nodeNumber;
+        int offsetParent = dimNode * parentNumber;
+
+//        final double branchPrecision = 1.0; // TODO / (operation.getBranchLength() * branchNormalization);
+
+        if (DEBUG) {
+            System.err.println("Simulate for node " + nodeNumber);
         }
         for (int trait = 0; trait < numTraits; ++trait) {
 
-            simulateTraitForNode(nodeIndex, trait, offsetSample, offsetParent, offsetPartial, branchPrecision);
-
+            simulateTraitForNode(nodeNumber, trait, offsetSample, offsetParent, offsetPartial, external, branchPrecision);
+            
             offsetSample += dimTrait;
             offsetParent += dimTrait;
             offsetPartial += dimPartial;
         }
-    }
-
-    @Override
-    protected void simulateNode(NodeOperation operation) {
-
     }
 
     protected void simulateTraitForNode(final int nodeIndex,
@@ -159,6 +205,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                         final int offsetSample,
                                         final int offsetParent,
                                         final int offsetPartial,
+                                        final int external,
                                         final double branchPrecision) {
 
         final double nodePrecision = partialNodeBuffer[offsetPartial + dimTrait];
@@ -203,6 +250,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     }
 
     final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+    final private ContinuousDiffusionIntegrator cdi;
     final double[] partialNodeBuffer;
     final double[] partialPriorBuffer;
     final double[] precisionBuffer;

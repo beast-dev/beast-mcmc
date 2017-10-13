@@ -4,12 +4,15 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -22,7 +25,6 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
-//                                            BranchRateModel rateModel,
                                             ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
@@ -148,6 +150,23 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
 
             return trait;
         }
+    }
+
+    public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations, final int[] operations) {
+
+        int k = 0;
+        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
+
+            operations[k    ] = op.getNodeNumber(); // Parent sample
+            operations[k + 1] = op.getLeftChild();  // Node sample
+            operations[k + 2] = likelihoodDelegate.getActiveNodeIndex(op.getLeftChild());   // Node post-order partial
+            operations[k + 3] = likelihoodDelegate.getActiveMatrixIndex(op.getLeftChild()); // Node branch info
+            operations[k + 4] = op.getLeftChild() < tree.getExternalNodeCount() ? 1 : 0;    // Is node external?
+
+            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+        }
+
+        return nodeOperations.size();
     }
 
     final double[] sample;

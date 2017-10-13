@@ -89,8 +89,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
                             likelihoodDelegate.getDiffusionModel(), likelihoodDelegate.getDataModel(), likelihoodDelegate.getRootPrior(),
                             likelihoodDelegate.getRateTransformation(), likelihoodDelegate);
 
-            TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
-                    treeDataLikelihood, simulationDelegate);
+            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
 
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
 

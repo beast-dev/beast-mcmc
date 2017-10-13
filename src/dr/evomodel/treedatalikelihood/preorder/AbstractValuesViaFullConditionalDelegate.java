@@ -57,7 +57,7 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                     conditionalNodeBuffer = new double[dimPartial * numTraits];
 
                     simulationProcess.cacheSimulatedTraits(node);
-                    likelihoodDelegate.getPreOrderPartial(node.getNumber(), conditionalNodeBuffer);
+                    cdi.getPreOrderPartial(nodeBuffer, conditionalNodeBuffer);
                 }
 
                 System.err.println("Missing tip = " + node.getNumber() + " (" + nodeBuffer + "), trait = " + trait);

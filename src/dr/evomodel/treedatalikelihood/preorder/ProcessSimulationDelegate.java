@@ -29,9 +29,9 @@ import dr.evolution.tree.*;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
-import dr.evomodel.treedatalikelihood.SimulationTreeTraversal;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
@@ -51,12 +51,13 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  */
 public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTraitProvider, ModelListener {
 
-    void simulate(SimulationTreeTraversal treeTraversal,
-                  int rootNodeNumber);
+//    void simulate(SimulationTreeTraversal treeTraversal, int rootNodeNumber);
 
-    void simulate(int[] operations, int operationCount, int rootNodeNumer);
+    void simulate(int[] operations, int operationCount, int rootNodeNumber);
 
     void setCallback(ProcessSimulation simulationProcess);
+
+    int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations);
 
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
 
@@ -82,7 +83,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         @Override
         public void simulate(final int[] operations, final int operationCount,
                              final int rootNodeNumber) {
-            final double normalization = getNormalization();
 
             setupStatistics();
 
@@ -97,24 +97,26 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                         operations[k + 3],
                         operations[k + 4]
                 );
+
+                k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
             }
         }
 
-        @Override
-        public void simulate(final SimulationTreeTraversal treeTraversal,
-                                   final int rootNodeNumber) {
-
-            final List<BranchNodeOperation> branchNodeOperations = treeTraversal.getBranchNodeOperations();
-            final double normalization = getNormalization();
-
-            setupStatistics();
-
-            simulateRoot(rootNodeNumber);
-
-            for (BranchNodeOperation operation : branchNodeOperations) {
-                simulateNode(operation, normalization);
-            }
-        }
+//        @Override
+//        public void simulate(final SimulationTreeTraversal treeTraversal,
+//                                   final int rootNodeNumber) {
+//
+//            final List<BranchNodeOperation> branchNodeOperations = treeTraversal.getBranchNodeOperations();
+//            final double normalization = getNormalization();
+//
+//            setupStatistics();
+//
+//            simulateRoot(rootNodeNumber);
+//
+//            for (BranchNodeOperation operation : branchNodeOperations) {
+//                simulateNode(operation, normalization);
+//            }
+//        }
 
         private static Tree getBaseTree(Tree derived) {
             while (derived instanceof TransformableTree) {
@@ -149,17 +151,15 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected abstract void simulateRoot(final int rootNumber);
 
-        protected abstract void simulateNode(final BranchNodeOperation operation, final double branchNormalization);
+//        protected abstract void simulateNode(final BranchNodeOperation operation, final double branchNormalization);
 
-        protected abstract void simulateNode(final NodeOperation operation);
+//        protected abstract void simulateNode(final NodeOperation operation);
 
-        protected void simulateNode(final int parentNumber,
-                                             final int nodeNumber,
-                                             final int nodeMatrix,
-                                             final int siblingNumber,
-                                             final int siblingMatrix) {
-            throw new RuntimeException("Not yet implemented");
-        }
+        protected abstract void simulateNode(final int v0,
+                                             final int v1,
+                                             final int v2,
+                                             final int v3,
+                                             final int v4);
 
         final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 
@@ -169,13 +169,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         final Tree baseTree;
         final String name;
     }
-
-//    abstract class AbstractDiscreteTraitDelegate extends AbstractDelegate {
-//
-//        AbstractDiscreteTraitDelegate(String name, Tree tree) {
-//            super(name, tree);
-//        }
-//    }
 
     abstract class AbstractContinuousTraitDelegate extends AbstractDelegate {
 
@@ -187,6 +180,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         final ContinuousTraitPartialsProvider dataModel;
         final ConjugateRootTraitPrior rootPrior;
         final RootProcessDelegate rootProcessDelegate;
+        final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
         double[] diffusionVariance;
         DenseMatrix64F Vd;
@@ -214,6 +208,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             this.rateTransformation = rateTransformation;
             this.rootPrior = rootPrior;
             this.rootProcessDelegate = likelihoodDelegate.getRootProcessDelegate();
+            this.likelihoodDelegate = likelihoodDelegate;
 
             diffusionModel.addModelListener(this);
         }

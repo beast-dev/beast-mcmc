@@ -57,11 +57,11 @@
 			</strictClockBranchRates>
 			<strictClockBranchRates>
 				<rate>
-					<parameter id="rate.2" value="1.0"/>
+					<parameter id="rate.2" value="2.0"/>
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
-        <conjugateRootPrior>
+     	<conjugateRootPrior>
             <meanParameter>
                 <parameter value="-3.0 -1.0"/>
             </meanParameter>
@@ -105,19 +105,24 @@
 		</log>
 
 		<log logEvery="1" fileName="testDrift.log">
-			<traitLogger traitName="X" nodes="internal">
+			<traitLogger traitName="X" nodes="all">
 				<traitDataLikelihood idref="driftLikelihood"/>
 <!-- 				<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/> -->
 				<treeModel idref="treeModel"/>
 			</traitLogger>
 		</log>
+
+		<logTree logEvery="1" nexusFormat="true" fileName="testDrift.trees">
+			<traitDataLikelihood idref="driftLikelihood"/>
+			<treeModel idref="treeModel"/>
+		</logTree>
 	</mcmc>
 
 	<traceAnalysis fileName="testDrift.log" stdError="true">
-		<expectation name="X.4.1" value="3.27"/>
-		<expectation name="X.4.2" value="4.58"/>
-		<expectation name="X.5.1" value="-2.19"/>
-		<expectation name="X.5.2" value="-0.30"/>
+		<expectation name="X.4.1" value="2.87"/>
+		<expectation name="X.4.2" value="3.76"/>
+		<expectation name="X.5.1" value="-2.40"/>
+		<expectation name="X.5.2" value="-0.72"/>
 	</traceAnalysis>
 
 

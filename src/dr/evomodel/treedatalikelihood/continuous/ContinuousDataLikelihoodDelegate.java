@@ -516,9 +516,39 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     @Override
-    public void vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations, int offset) {
-        throw new RuntimeException("Not yet implemented");
+    public int vectorizeNodeOperations(final List<ProcessOnTreeDelegate.NodeOperation> nodeOperations,
+                                       final int[] operations) {
+
+        int k = 0;
+        for (NodeOperation op : nodeOperations) {
+
+            operations[k    ] = getActiveNodeIndex(op.getNodeNumber());
+            operations[k + 1] = getActiveNodeIndex(op.getLeftChild());    // source node 1
+            operations[k + 2] = getActiveMatrixIndex(op.getLeftChild());  // source matrix 1
+            operations[k + 3] = getActiveNodeIndex(op.getRightChild());   // source node 2
+            operations[k + 4] = getActiveMatrixIndex(op.getRightChild()); // source matrix 2
+
+            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+        }
+
+        return nodeOperations.size();
     }
+
+//    public static String getStringOfVectorizedOperations(final int[] operations, final int count) {
+//        StringBuilder sb = new StringBuilder();
+//        int k = 0;
+//        for (int i = 0; i < count; ++i) {
+//            sb.append(operations[k    ]).append(" ");
+//            sb.append(operations[k + 1]).append(" ");
+//            sb.append(operations[k + 2]).append(" ");
+//            sb.append(operations[k + 3]).append(" ");
+//            sb.append(operations[k + 4]).append("\n");
+//
+//            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+//        }
+//
+//        return sb.toString();
+//    }
 
     public DiffusionProcessDelegate getDiffusionProcessDelegate() { return diffusionProcessDelegate; }
 
@@ -568,7 +598,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
                                       int rootNodeNumber) throws LikelihoodException {
 
-        branchNormalization = rateTransformation.getNormalization();  // TODO Cache branchNormalization
+        branchNormalization = rateTransformation.getNormalization();
 
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
@@ -608,19 +638,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             }
         }
 
-        int operationCount = nodeOperations.size();
-        int k = 0;
-        for (NodeOperation op : nodeOperations) {
-//            int nodeNum = op.getNodeNumber();
-
-            operations[k    ] = getActiveNodeIndex(op.getNodeNumber());
-            operations[k + 1] = getActiveNodeIndex(op.getLeftChild());    // source node 1
-            operations[k + 2] = getActiveMatrixIndex(op.getLeftChild());  // source matrix 1
-            operations[k + 3] = getActiveNodeIndex(op.getRightChild());   // source node 2
-            operations[k + 4] = getActiveMatrixIndex(op.getRightChild()); // source matrix 2
-
-            k += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
-        }
+        int operationCount = vectorizeNodeOperations(nodeOperations, operations);
 
         int[] degreesOfFreedom = null;
         double[] outerProducts = null;
@@ -671,13 +689,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         cdi.getPostOrderPartial(getActiveNodeIndex(nodeNumber), vector);
     }
 
-    public void getPostOrderPartial(final int nodeNumber, double[] vector, double[] matrix, double[] displacement) {
-        cdi.getPostOrderPartial(getActiveNodeIndex(nodeNumber), vector, matrix, displacement);
-    }
-
-    public void getPreOrderPartial(final int nodeNumber, double[] vector) {
-        cdi.getPreOrderPartial(getActiveNodeIndex(nodeNumber), vector);
-    }
+//    public void getPostOrderPartial(final int nodeNumber, double[] vector, double[] matrix, double[] displacement) {
+//        cdi.getPostOrderPartial(getActiveNodeIndex(nodeNumber), vector, matrix, displacement);
+//    }
+//
+//    public void getPreOrderPartial(final int nodeNumber, double[] vector) {
+//        cdi.getPreOrderPartial(getActiveNodeIndex(nodeNumber), vector);
+//    }
 
     @Override
     public void makeDirty() {
@@ -816,7 +834,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 (ContinuousTraitDataModel) getDataModel(), getRootPrior(),
                 getRateTransformation(), this);
 
-        TreeTraitProvider traitProvider = new ProcessSimulation(traitName, getCallbackLikelihood(), gradientDelegate);
+        TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
 
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
@@ -829,7 +847,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 getDataModel(), getRootPrior(),
                 getRateTransformation(), this);
 
-        TreeTraitProvider traitProvider = new ProcessSimulation(traitName, getCallbackLikelihood(), gradientDelegate);
+        TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
 
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }

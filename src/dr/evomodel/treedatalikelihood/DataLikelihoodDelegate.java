@@ -61,7 +61,7 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
 
     void setCallback(TreeDataLikelihood treeDataLikelihood);
 
-    void vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations, int offset);
+    int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations);
 
 //    int getActiveNodeIndex(final int index);
 //

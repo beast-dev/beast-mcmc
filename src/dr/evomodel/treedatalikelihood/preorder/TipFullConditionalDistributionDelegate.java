@@ -4,7 +4,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.SimulationTreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
@@ -39,6 +38,11 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
 //        partialPriorBuffer = new double[numTraits * dimPartial];
         partialRootBuffer = new double[numTraits * dimPartial];
 
+    }
+
+    public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations,
+                                       final int[] operations) {
+        return likelihoodDelegate.vectorizeNodeOperations(nodeOperations, operations);
     }
 
     protected boolean isLoggable() {
@@ -138,8 +142,6 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
     @Override
     protected void simulateRoot(final int rootIndex) {
 
-        // TODO Revert to copy from prior -> root.pre-order
-
         if (DEBUG) {
             System.err.println("Simulate root node " + rootIndex);
         }
@@ -154,48 +156,70 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
         }
     }
 
-    @Override
-    protected void simulateNode(BranchNodeOperation operation, double branchNormalization) {
-        throw new RuntimeException("Not implemented");
-    }
+//    @Override
+//    protected void simulateNode(BranchNodeOperation operation, double branchNormalization) {
+//        throw new RuntimeException("Not implemented");
+//    }
+
+//    @Override
+//    protected void simulateNode(NodeOperation operation) {
+//
+//        cdi.updatePreOrderPartial(
+//                likelihoodDelegate.getActiveNodeIndex(operation.getNodeNumber()),
+//                likelihoodDelegate.getActiveNodeIndex(operation.getLeftChild()),
+//                likelihoodDelegate.getActiveMatrixIndex(operation.getLeftChild()),
+//                likelihoodDelegate.getActiveNodeIndex(operation.getRightChild()),
+//                likelihoodDelegate.getActiveMatrixIndex(operation.getRightChild())
+//        );
+//
+//        if (DEBUG) {
+//            cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(operation.getLeftChild()), partialRootBuffer);
+//            System.err.println("Node: "
+//                    + operation.getLeftChild() + " "
+//                    + new WrappedVector.Raw(partialRootBuffer, 0, partialRootBuffer.length));
+//            System.err.println("");
+//        }
+//    }
 
     @Override
-    protected void simulateNode(NodeOperation operation) {
+    protected void simulateNode(final int parentNumber,
+                                final int nodeNumber,
+                                final int nodeMatrix,
+                                final int siblingNumber,
+                                final int siblingMatrix) {
 
         cdi.updatePreOrderPartial(
-                likelihoodDelegate.getActiveNodeIndex(operation.getNodeNumber()),
-                likelihoodDelegate.getActiveNodeIndex(operation.getLeftChild()),
-                likelihoodDelegate.getActiveMatrixIndex(operation.getLeftChild()),
-                likelihoodDelegate.getActiveNodeIndex(operation.getRightChild()),
-                likelihoodDelegate.getActiveMatrixIndex(operation.getRightChild())
-        );
+                parentNumber,
+                nodeNumber,
+                nodeMatrix,
+                siblingNumber,
+                siblingMatrix);
 
         if (DEBUG) {
-            cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(operation.getLeftChild()), partialRootBuffer);
-            System.err.println("Node: "
-                    + operation.getLeftChild() + " "
+            cdi.getPreOrderPartial(nodeNumber, partialRootBuffer);
+            System.err.println("Node: " + nodeNumber + " "
                     + new WrappedVector.Raw(partialRootBuffer, 0, partialRootBuffer.length));
             System.err.println("");
         }
     }
 
-    @Override
-    public final void simulate(final SimulationTreeTraversal treeTraversal,
-                               final int rootNodeNumber) {
-
-        final List<NodeOperation> nodeOperations = treeTraversal.getNodeOperations();
-        setupStatistics();
-
-        simulateRoot(rootNodeNumber);
-
-        for (NodeOperation operation : nodeOperations) {
-            simulateNode(operation);
-        }
-
-        if (DEBUG) {
-            System.err.println("END OF PRE-ORDER");
-        }
-    }
+//    @Override
+//    public final void simulate(final SimulationTreeTraversal treeTraversal,
+//                               final int rootNodeNumber) {
+//
+//        final List<NodeOperation> nodeOperations = treeTraversal.getNodeOperations();
+//        setupStatistics();
+//
+//        simulateRoot(rootNodeNumber);
+//
+//        for (NodeOperation operation : nodeOperations) {
+//            simulateNode(operation);
+//        }
+//
+//        if (DEBUG) {
+//            System.err.println("END OF PRE-ORDER");
+//        }
+//    }
 
     private static final boolean DEBUG = false;
 

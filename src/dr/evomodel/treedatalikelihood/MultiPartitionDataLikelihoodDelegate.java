@@ -1186,7 +1186,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
-    public void vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations, int offset) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
         throw new RuntimeException("Not yet implemented");
     }
 

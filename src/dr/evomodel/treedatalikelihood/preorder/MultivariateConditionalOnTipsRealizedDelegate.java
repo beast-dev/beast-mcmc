@@ -16,7 +16,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  */
 public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOnTipsRealizedDelegate {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     final private PartiallyMissingInformation missingInformation;
 
@@ -123,17 +123,20 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                         final int offsetSample,
                                         final int offsetParent,
                                         final int offsetPartial,
+                                        final int isExternal,
                                         final double branchPrecision) {
 
-        if (nodeIndex < tree.getExternalNodeCount()) {
+
+
+        if (isExternal == 1) {
+//        if (nodeIndex < tree.getExternalNodeCount()) {
             simulateTraitForExternalNode(nodeIndex, traitIndex, offsetSample, offsetParent, offsetPartial, branchPrecision);
         } else {
             simulateTraitForInternalNode(offsetSample, offsetParent, offsetPartial, branchPrecision);
         }
-
     }
 
-    private void simulateTraitForExternalNode(final int nodeIndex,
+    private void  simulateTraitForExternalNode(final int nodeIndex,
                                               final int traitIndex,
                                               final int offsetSample,
                                               final int offsetParent,
@@ -270,6 +273,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             final DenseMatrix64F P1;
 
             if (hasNoDrift) {
+//            if (true) {
                 M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
                 P1 = new DenseMatrix64F(dimTrait, dimTrait);
                 CommonOps.scale(branchPrecision, Pd, P1); // TODO New parameterization?
@@ -278,13 +282,24 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                 P1 = DenseMatrix64F.wrap(dimTrait, dimTrait, precisionBuffer);
             }
 
-            if (true) {
-                DenseMatrix64F tP1 = new DenseMatrix64F(dimTrait, dimTrait);
-                CommonOps.scale(branchPrecision, Pd, P1);
+            boolean DEBUG_PRECISION = true;
 
-                System.err.println(tP1);
-                System.err.println(P1);
-                System.exit(-1);
+            if (DEBUG_PRECISION) {
+                DenseMatrix64F tP1 = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.scale(branchPrecision, Pd, tP1);
+
+//                System.err.println(tP1);
+//                System.err.println(P1);
+//                System.err.println("");
+
+                for (int i = 0; i < dimTrait; ++i) {
+                    for (int j = 0; j < dimTrait; ++j) {
+                        if (Math.abs(tP1.get(i,j) - P1.get(i,j)) != 0.0) {
+                            System.err.println("Unequal");
+                            System.exit(-1);
+                        }
+                    }
+                }
             }
 
 
@@ -297,9 +312,8 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
             double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);
-
-            // TODO Drift?
-            assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
+            
+//            assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
 
             MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                     M2.getBuffer(), 0, // input mean
@@ -318,6 +332,10 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                 System.err.println("C2: " + new Matrix(C2));
                 System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
                 System.err.println("");
+
+                if (!check(M2))  {
+                    System.exit(-1);
+                }
             }
 
         } else {
@@ -329,5 +347,14 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                 System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
             }
         }
+    }
+
+    private boolean check(WrappedVector m2) {
+        for (int i = 0; i < m2.getDim(); ++i) {
+            if (Double.isNaN(m2.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -17,7 +17,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionIntegrator.Basic {
 
-    private static boolean DEBUG = true ;
+    private static boolean DEBUG = false;
 
     public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
                                                int diffusionCount) {
@@ -36,22 +36,40 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         System.err.println("Trying SafeMultivariateWithDriftIntegrator");
     }
 
+//    @Override
+//    public void getPostOrderPartial(int bufferIndex, final double[] partial,
+//                                    final double[] precision, final double[] displacement) {
+//        assert(precision != null);
+//        assert(precision.length >= dimTrait * dimTrait);
+//
+//        assert(displacement != null);
+//        assert(displacement.length >= dimTrait);
+//
+//        getPostOrderPartial(bufferIndex, partial);
+//
+//        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
+//                precision, 0, dimTrait * dimTrait);
+//
+//        System.arraycopy(displacements, bufferIndex * dimTrait,
+//                displacement, 0, dimTrait);
+//    }
+
     @Override
-    public void getPostOrderPartial(int bufferIndex, final double[] partial,
-                                    final double[] precision, final double[] displacement) {
-        assert(precision != null);
-        assert(precision.length >= dimTrait * dimTrait);
+    public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
 
-        assert(displacement != null);
-        assert(displacement.length >= dimTrait);
+        assert (precision != null);
+        assert (precision.length >= dimTrait * dimTrait);
 
-        getPostOrderPartial(bufferIndex, partial);
+        assert (displacement != null);
+        assert (displacement.length >- dimTrait);
 
         System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
                 precision, 0, dimTrait * dimTrait);
 
         System.arraycopy(displacements, bufferIndex * dimTrait,
                 displacement, 0, dimTrait);
+
+        return super.getBranchMatrices(bufferIndex, precision, displacement);
     }
 
     @Override
@@ -91,6 +109,7 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
 
         displacements = new double[dimTrait * bufferCount];
         precisions = new double[dimTrait * dimTrait * bufferCount];
+        variances = new double[dimTrait * dimTrait * bufferCount];
 
         vector0 = new double[dimTrait];
         vector1 = new double[dimTrait];
@@ -151,6 +170,8 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
             }
 
             final double edgeLength = edgeLengths[up];
+            branchLengths[dimMatrix * probabilityIndices[up]] = edgeLength;  // TODO Remove dimMatrix
+
             final int scaledOffset = matrixSize * probabilityIndices[up];
 
             scale(diffusions, unscaledOffset, 1.0 / edgeLength, precisions, scaledOffset, matrixSize);
@@ -226,8 +247,8 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         final int jmo = dimMatrix * jMatrix;
 
         // Read variance increments along descendent branches of k
-        final double vi = variances[imo];
-        final double vj = variances[jmo];
+        final double vi = branchLengths[imo];
+        final double vj = branchLengths[jmo];
 
         if (true) {
             throw new RuntimeException("Not yet implemented");

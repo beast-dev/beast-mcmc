@@ -23,7 +23,7 @@ public class ConditionalVarianceAndTransform2 {
      * \bar{\Sigma} = \Sigma_{11} - \Sigma_{12}\Sigma_{22}^1\Sigma{21}
      */
 
-    final private DenseMatrix64F Sbar;
+    final private DenseMatrix64F sBar;
     final private DenseMatrix64F affineTransform;
 
     private final int[] missingIndices;
@@ -36,9 +36,9 @@ public class ConditionalVarianceAndTransform2 {
     private static final boolean DEBUG = false;
 
     private double[][] cholesky = null;
-    private DenseMatrix64F SbarInv = null;
+    private DenseMatrix64F sBarInv = null;
 
-    public ConditionalVarianceAndTransform2(final DenseMatrix64F variance,
+    ConditionalVarianceAndTransform2(final DenseMatrix64F variance,
                                             final int[] missingIndices, final int[] notMissingIndices) {
 
         assert (missingIndices.length + notMissingIndices.length == variance.getNumRows());
@@ -86,18 +86,17 @@ public class ConditionalVarianceAndTransform2 {
             System.err.println("S12S22InvS21:\n" + S12S22InvS21);
         }
 
-        Sbar = new DenseMatrix64F(missingIndices.length, missingIndices.length);
-        gatherRowsAndColumns(variance, Sbar, missingIndices, missingIndices);
-        CommonOps.subtract(Sbar, S12S22InvS21, Sbar);
+        sBar = new DenseMatrix64F(missingIndices.length, missingIndices.length);
+        gatherRowsAndColumns(variance, sBar, missingIndices, missingIndices);
+        CommonOps.subtract(sBar, S12S22InvS21, sBar);
 
 
         if (DEBUG) {
-            System.err.println("Sbar:\n" + Sbar);
+            System.err.println("sBar:\n" + sBar);
         }
 
 
         this.affineTransform = S12S22Inv;
-//                this.cholesky = getCholeskyOfVariance(Sbar.data, missingIndices.length);
         this.tempStorage = new double[missingIndices.length];
 
         this.numMissing = missingIndices.length;
@@ -112,8 +111,8 @@ public class ConditionalVarianceAndTransform2 {
 
         double[] shift = new double[numNotMissing];
         for (int i = 0; i < numNotMissing; ++i) {
-            final int noti = notMissingIndices[i];
-            shift[i] = y[offsetY + noti] - mu[offsetMu + noti];
+            final int notI = notMissingIndices[i];
+            shift[i] = y[offsetY + notI] - mu[offsetMu + notI];
         }
 
         for (int i = 0; i < numMissing; ++i) {
@@ -137,7 +136,7 @@ public class ConditionalVarianceAndTransform2 {
 
     final double[][] getConditionalCholesky() {
         if (cholesky == null) {
-            this.cholesky = ProcessSimulationDelegate.AbstractContinuousTraitDelegate.getCholeskyOfVariance(Sbar.data, missingIndices.length);
+            this.cholesky = ProcessSimulationDelegate.AbstractContinuousTraitDelegate.getCholeskyOfVariance(sBar.data, missingIndices.length);
         }
         return cholesky;
     }
@@ -147,18 +146,18 @@ public class ConditionalVarianceAndTransform2 {
 //    }
 
     final DenseMatrix64F getConditionalVariance() {
-        return Sbar;
+        return sBar;
     }
 
     final DenseMatrix64F getConditionalPrecision() {
-        if (SbarInv == null) {
-            SbarInv = new DenseMatrix64F(numMissing, numMissing);
-            CommonOps.invert(Sbar, SbarInv);
+        if (sBarInv == null) {
+            sBarInv = new DenseMatrix64F(numMissing, numMissing);
+            CommonOps.invert(sBar, sBarInv);
         }
-        return SbarInv;
+        return sBarInv;
     }
 
-    final double[] getTemporageStorage() {
+    final double[] getTemporaryStorage() {
         return tempStorage;
     }
 }

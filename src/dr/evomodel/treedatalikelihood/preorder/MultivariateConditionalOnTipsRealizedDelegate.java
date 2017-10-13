@@ -273,35 +273,29 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             final DenseMatrix64F P1;
 
             if (hasNoDrift) {
-//            if (true) {
                 M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
                 P1 = new DenseMatrix64F(dimTrait, dimTrait);
-                CommonOps.scale(branchPrecision, Pd, P1); // TODO New parameterization?
+                CommonOps.scale(branchPrecision, Pd, P1);
             } else {
                 M1 = getMeanWithDrift(sample, offsetParent, displacementBuffer, 0, dimTrait);
                 P1 = DenseMatrix64F.wrap(dimTrait, dimTrait, precisionBuffer);
             }
 
-            boolean DEBUG_PRECISION = true;
-
-            if (DEBUG_PRECISION) {
-                DenseMatrix64F tP1 = new DenseMatrix64F(dimTrait, dimTrait);
-                CommonOps.scale(branchPrecision, Pd, tP1);
-
-//                System.err.println(tP1);
-//                System.err.println(P1);
-//                System.err.println("");
-
-                for (int i = 0; i < dimTrait; ++i) {
-                    for (int j = 0; j < dimTrait; ++j) {
-                        if (Math.abs(tP1.get(i,j) - P1.get(i,j)) != 0.0) {
-                            System.err.println("Unequal");
-                            System.exit(-1);
-                        }
-                    }
-                }
-            }
-
+//            boolean DEBUG_PRECISION = false;
+//
+//            if (DEBUG_PRECISION) {
+//                DenseMatrix64F tP1 = new DenseMatrix64F(dimTrait, dimTrait);
+//                CommonOps.scale(branchPrecision, Pd, tP1);
+//
+//                for (int i = 0; i < dimTrait; ++i) {
+//                    for (int j = 0; j < dimTrait; ++j) {
+//                        if (Math.abs(tP1.get(i,j) - P1.get(i,j)) != 0.0) {
+//                            System.err.println("Unequal");
+//                            System.exit(-1);
+//                        }
+//                    }
+//                }
+//            }
 
             final WrappedVector M2 = new WrappedVector.Raw(tmpMean, 0, dimTrait);
             final DenseMatrix64F P2 = new DenseMatrix64F(dimTrait, dimTrait);

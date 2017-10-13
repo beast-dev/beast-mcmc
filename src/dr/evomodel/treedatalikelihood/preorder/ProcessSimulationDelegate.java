@@ -51,8 +51,6 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  */
 public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTraitProvider, ModelListener {
 
-//    void simulate(SimulationTreeTraversal treeTraversal, int rootNodeNumber);
-
     void simulate(int[] operations, int operationCount, int rootNodeNumber);
 
     void setCallback(ProcessSimulation simulationProcess);
@@ -102,22 +100,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             }
         }
 
-//        @Override
-//        public void simulate(final SimulationTreeTraversal treeTraversal,
-//                                   final int rootNodeNumber) {
-//
-//            final List<BranchNodeOperation> branchNodeOperations = treeTraversal.getBranchNodeOperations();
-//            final double normalization = getNormalization();
-//
-//            setupStatistics();
-//
-//            simulateRoot(rootNodeNumber);
-//
-//            for (BranchNodeOperation operation : branchNodeOperations) {
-//                simulateNode(operation, normalization);
-//            }
-//        }
-
         private static Tree getBaseTree(Tree derived) {
             while (derived instanceof TransformableTree) {
                 derived = ((TransformableTree) derived).getOriginalTree();
@@ -150,10 +132,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         protected abstract void setupStatistics();
 
         protected abstract void simulateRoot(final int rootNumber);
-
-//        protected abstract void simulateNode(final BranchNodeOperation operation, final double branchNormalization);
-
-//        protected abstract void simulateNode(final NodeOperation operation);
 
         protected abstract void simulateNode(final int v0,
                                              final int v1,
@@ -196,7 +174,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                         ContinuousTraitPartialsProvider dataModel,
                                         ConjugateRootTraitPrior rootPrior,
                                         ContinuousRateTransformation rateTransformation,
-//                                        BranchRateModel rateModel,
                                         ContinuousDataLikelihoodDelegate likelihoodDelegate) {
             super(name, tree);
 
@@ -241,7 +218,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         @Override
         protected void setupStatistics() {
             if (diffusionVariance == null) {
-//                System.err.println("PDS.sS diffusionVariance");
                 double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
                 diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
                 Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
@@ -274,28 +250,9 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return CholeskyDecomposition.execute(variance, 0, dim);
         }
 
-//        private static Matrix getVarianceFromPrecision(double[][] precision) {
-//            return new SymmetricMatrix(precision).inverse();
-//        }
-
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
             return new SymmetricMatrix(precision).inverse().toVectorizedComponents();
         }
 
     }
-
-//    class MeanAndVariance {
-//        double[] mean;
-//        Matrix variance;
-//
-//        public MeanAndVariance(double[] mean) {
-//            this.mean = mean;
-//        }
-//
-//        public double[] getMean() { return mean; }
-//
-//        public Matrix getVariance() { return variance; }
-//    }
-
-
 }

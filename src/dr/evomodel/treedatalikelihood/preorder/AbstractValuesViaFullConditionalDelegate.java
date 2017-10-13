@@ -71,9 +71,7 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                 System.err.println("pre : " + preMean);
                 System.err.println("V: " + preVar);
 
-                if (missingInformation.isCompletelyMissing(node.getNumber(), trait)) {
-
-                } else {
+                if (!missingInformation.isCompletelyMissing(node.getNumber(), trait)) {
 
                     final PartiallyMissingInformation.HashedIntArray intArray =
                             missingInformation.getMissingIndices(node.getNumber(), trait);
@@ -92,7 +90,7 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                     computeValueWithMissing(cM, // input mean
                             transform.getConditionalCholesky(), // input variance,
                             new WrappedVector.Indexed(sample, sampleOffset, missing, missing.length), // output sample
-                            transform.getTemporageStorage());
+                            transform.getTemporaryStorage());
 
                     System.err.println("cM: " + cM);
                     System.err.println("CV: " + transform.getConditionalVariance());

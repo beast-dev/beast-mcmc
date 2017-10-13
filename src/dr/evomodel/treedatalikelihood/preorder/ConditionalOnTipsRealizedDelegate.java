@@ -27,7 +27,6 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                              ContinuousTraitPartialsProvider dataModel,
                                              ConjugateRootTraitPrior rootPrior,
                                              ContinuousRateTransformation rateTransformation,
-//                                             BranchRateModel rateModel,
                                              ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
@@ -53,21 +52,15 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     @Override
     protected void simulateRoot(final int nodeIndex) {
 
-        final int bufferedRoot = likelihoodDelegate.getActiveNodeIndex(nodeIndex);
-
-        cdi.getPostOrderPartial(
-                rootProcessDelegate.getPriorBufferIndex(), partialPriorBuffer); // No double-buffering
-        
-//        cdi.getPostOrderPartial(nodeIndex, partialNodeBuffer);
-      cdi.getPostOrderPartial(bufferedRoot, partialNodeBuffer);
-
+        cdi.getPostOrderPartial(rootProcessDelegate.getPriorBufferIndex(), partialPriorBuffer);
+        cdi.getPostOrderPartial(likelihoodDelegate.getActiveNodeIndex(nodeIndex), partialNodeBuffer);
 
         if (DEBUG) {
-            System.err.println("Simulate root node " + nodeIndex + " -> " + bufferedRoot);
+            System.err.println("Simulate root node " + nodeIndex);
         }
 
         int offsetPartial = 0;
-        int offsetSample = dimNode * nodeIndex; // bufferedRoot;
+        int offsetSample = dimNode * nodeIndex;
         for (int trait = 0; trait < numTraits; ++trait) {
 
             simulateTraitForRoot(offsetSample, offsetPartial);
@@ -103,10 +96,10 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             }
 
             if (DEBUG) {
-                System.err.println("\trootMean: " + new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait));
-                System.err.println("\tprioPrec: " + priorPrec);
-                System.err.println("\tprioMean: " + new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait));
-                System.err.println("\tweigMean: " + new WrappedVector.Raw(tmpMean, 0, dimTrait));
+                System.err.println("\troot   mean: " + new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait));
+                System.err.println("\tprior  prec: " + priorPrec);
+                System.err.println("\tprior  mean: " + new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait));
+                System.err.println("\tweight mean: " + new WrappedVector.Raw(tmpMean, 0, dimTrait));
             }
 
             final double sqrtScale = Math.sqrt(1.0 / totalPrec);
@@ -123,44 +116,6 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         }
     }
 
-//    @Override
-//    protected void simulateNode(final BranchNodeOperation operation, final double branchNormalization) {
-//        final int nodeIndex = operation.getNodeNumber();
-//
-//        if (hasNoDrift) {
-//            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialNodeBuffer);
-//        } else {
-////            likelihoodDelegate.getPostOrderPartial(nodeIndex, partialPriorBuffer,
-////                    precisionBuffer, displacementBuffer);
-//        }
-//
-//        if (DEBUG) {
-//        System.err.println("\t\t\tNODE_INDEX = " + nodeIndex);
-//        }
-//
-//        int offsetPartial = 0;
-//        int offsetSample = dimNode * nodeIndex;
-//        int offsetParent = dimNode * operation.getParentNumber();
-//
-//        final double branchPrecision = 1.0 / (operation.getBranchLength() * branchNormalization);
-//
-//        if (DEBUG) {
-//            System.err.println("Simulate for node " + nodeIndex);
-//        }
-//        for (int trait = 0; trait < numTraits; ++trait) {
-//
-//            simulateTraitForNode(nodeIndex, trait, offsetSample, offsetParent, offsetPartial, 0, branchPrecision);
-//
-//            offsetSample += dimTrait;
-//            offsetParent += dimTrait;
-//            offsetPartial += dimPartial;
-//
-//            throw new RuntimeException("Fix me");
-//        }
-//
-//        throw new RuntimeException("Do not use");
-//    }
-
     @Override
     protected void simulateNode(final int parentNumber,
                                 final int nodeNumber,
@@ -171,21 +126,9 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         cdi.getPostOrderPartial(nodePartial, partialNodeBuffer);
         final double branchPrecision = cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
 
-//        if (hasNoDrift) {
-//
-//        } else {
-//            cdi.getBranchMatrices(nodeNumber, precisionBuffer, displacementBuffer);
-//        }
-
-        if (DEBUG) {
-            System.err.println("\t\t\tNODE_INDEX = " + nodeNumber);
-        }
-
         int offsetPartial = 0;
         int offsetSample = dimNode * nodeNumber;
         int offsetParent = dimNode * parentNumber;
-
-//        final double branchPrecision = 1.0; // TODO / (operation.getBranchLength() * branchNormalization);
 
         if (DEBUG) {
             System.err.println("Simulate for node " + nodeNumber);

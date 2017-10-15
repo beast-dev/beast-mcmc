@@ -48,10 +48,12 @@ public class TMRCAStatistic extends TreeStatistic {
         super(name);
         this.tree = tree;
         if (absoluteTime && Taxon.getMostRecentDate() != null) {
+            isBackwards = Taxon.getMostRecentDate().isBackwards();
             mostRecentTipTime = Taxon.getMostRecentDate().getAbsoluteTimeValue();
         } else {
             // give node heights or taxa don't have dates
             mostRecentTipTime = Double.NaN;
+            isBackwards = false;
         }
         if (taxa != null) {
             this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxa);
@@ -91,9 +93,11 @@ public class TMRCAStatistic extends TreeStatistic {
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
 
         if (!Double.isNaN(mostRecentTipTime)) {
-            double age = mostRecentTipTime - tree.getNodeHeight(node);
-            // if age is negative then dates were going backwards in time so return positive value
-            return (age < 0 ? -age : age);
+            if (isBackwards) {
+                return mostRecentTipTime + tree.getNodeHeight(node);
+            } else {
+                return mostRecentTipTime - tree.getNodeHeight(node);
+            }
         } else {
             return tree.getNodeHeight(node);
         }
@@ -102,6 +106,7 @@ public class TMRCAStatistic extends TreeStatistic {
     private Tree tree = null;
     private Set<String> leafSet = null;
     private final double mostRecentTipTime;
+    private final boolean isBackwards;
     private final boolean forParent;
 
 }

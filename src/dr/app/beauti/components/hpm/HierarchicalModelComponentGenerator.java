@@ -197,7 +197,7 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
             case LOGNORMAL_HPM_PRIOR:
                 return new Attribute[] {
                         new Attribute.Default<String>(XMLParser.ID, getModelName(hpm)),
-                        new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, false),
+                        //new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, false),
                 };
             default:
         }
@@ -247,7 +247,7 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
         writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
         writer.writeOpenTag(getModelTagName(hpm), getModelAttributes(hpm));
         
-        writeParameter(NormalDistributionModelParser.MEAN,
+        writeParameter(NormalDistributionModelParser.MU,
                 hpm.getConditionalParameterList().get(0).getName(), 1, hpm.getConditionalParameterList().get(0).getInitial(),
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, writer);
         writeParameter(NormalDistributionModelParser.PREC,

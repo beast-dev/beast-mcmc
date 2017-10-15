@@ -50,7 +50,7 @@ public class PartitionTreePrior extends PartitionOptions {
     private TreePriorParameterizationType skylineModel = TreePriorParameterizationType.CONSTANT_SKYLINE;
     private TreePriorParameterizationType skyrideSmoothing = TreePriorParameterizationType.TIME_AWARE_SKYRIDE;
     private int skyGridCount = 50;
-    private double skyGridInterval = -1.0;
+    private double skyGridInterval = Double.NaN;
     private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
@@ -59,6 +59,8 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -81,6 +83,8 @@ public class PartitionTreePrior extends PartitionOptions {
         this.populationSizeModel = source.populationSizeModel;
         this.calibCorrectionType = source.calibCorrectionType;
         this.fixedTree = source.fixedTree;
+
+        initModelParametersAndOpererators();
     }
 
     @Override

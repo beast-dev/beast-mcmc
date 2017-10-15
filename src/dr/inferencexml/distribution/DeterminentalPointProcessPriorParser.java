@@ -15,6 +15,7 @@ public class DeterminentalPointProcessPriorParser extends AbstractXMLObjectParse
     public static final String NORMALIZING_CONSTANTS = "normalizingConstants";
     public static final String PATH_SAMPLING = "pathSampling";
     public static final String NO_ZEROS = "noZeros";
+    public static final String RESET_DATA = "resetData";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -28,9 +29,9 @@ public class DeterminentalPointProcessPriorParser extends AbstractXMLObjectParse
         }
         boolean noZeros = xo.getAttribute(NO_ZEROS, false);
         boolean pathSampling = xo.getAttribute(PATH_SAMPLING, false);
+        boolean resetData = xo.getAttribute(RESET_DATA, true);
 
-
-        return new DeterminentalPointProcessPrior(name, theta, data, normalizingConstants, noZeros, pathSampling);
+        return new DeterminentalPointProcessPrior(name, theta, data, normalizingConstants, noZeros, pathSampling, resetData);
     }
 
     @Override
@@ -44,6 +45,7 @@ public class DeterminentalPointProcessPriorParser extends AbstractXMLObjectParse
             AttributeRule.newDoubleRule(THETA),
             AttributeRule.newBooleanRule(NO_ZEROS, true),
             AttributeRule.newBooleanRule(PATH_SAMPLING, true),
+            AttributeRule.newBooleanRule(RESET_DATA, true),
             new ElementRule(NORMALIZING_CONSTANTS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),

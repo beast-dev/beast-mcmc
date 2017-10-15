@@ -155,7 +155,7 @@ public class Jre implements IValidatable {
 		Validator.checkOptStrings(options,
 				Validator.MAX_ARGS,
 				Validator.MAX_ARGS,
-				"[^%]*|([^%]*([^%]*%[^%]+%[^%]*)+[^%]*)*",
+				"[^%]*|([^%]*([^%]*%[^%]*%[^%]*)+[^%]*)*",
 				"jre.options",
 				Messages.getString("Jre.jvm.options"),
 				Messages.getString("Jre.jvm.options.variable"));

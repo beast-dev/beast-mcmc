@@ -138,8 +138,9 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
                     // assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
                 }
                 // stop
-                else
+                else {
                     maxLag = lag;
+                }
             }
         }
 
@@ -147,16 +148,18 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         stdErrorOfMean = Math.sqrt(varStat / samples);
 
         // auto correlation time
-        if (gammaStat[0]==0)
+        if (gammaStat[0] == 0) {
             ACT = 0;
-        else
+        } else {
             ACT = stepSize * varStat / gammaStat[0];
+        }
 
         // effective sample size
-        if (ACT==0)
-            ESS=1;
-        else
+        if (ACT == 0) {
+            ESS = 1;
+        } else {
             ESS = (stepSize * samples) / ACT;
+        }
 
         // standard deviation of autocorrelation time
         stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * stepSize);

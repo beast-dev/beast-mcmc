@@ -1,10 +1,12 @@
 package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
+import dr.math.distributions.TruncatedNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 /**
@@ -12,7 +14,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  */
 public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator{
     Likelihood prior;
-    LatentFactorModel LFM;
+    LatentFactorModelInterface LFM;
     double[][] precisionArray;
     double[] meanMidArray;
     double[] meanArray;
@@ -26,7 +28,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
     DistributionLikelihood cutoffPrior;
 
-    public LoadingsGibbsTruncatedOperator(LatentFactorModel LFM, Likelihood prior, double weight, boolean randomScan, MatrixParameterInterface loadings, DistributionLikelihood cutoffPrior) {
+    public LoadingsGibbsTruncatedOperator(LatentFactorModelInterface LFM, Likelihood prior, double weight, boolean randomScan, MatrixParameterInterface loadings, DistributionLikelihood cutoffPrior) {
         setWeight(weight);
 
         this.loadings=loadings;
@@ -110,9 +112,10 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         }
     }
 
-    private void getTruncatedDraw(int row, int column, NormalDistribution truncated){
+    private double getTruncatedDraw(int row, int column, NormalDistribution truncated, boolean actuallyDraw){
         double lowCutoff;
         double highCutoff;
+        double hastings;
         MatrixParameterInterface cutoff = (MatrixParameterInterface) ((MomentDistributionModel) prior).getCutoff();
         lowCutoff = - Math.sqrt(cutoff.getParameterValue(row, column));
         highCutoff = - lowCutoff;
@@ -121,25 +124,36 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         double split = low / (low + (1-high));
         double draw = 0;
         int count = 0;
-        while((draw < highCutoff && draw > lowCutoff || Double.isNaN(draw)) && count < 10000) {
-            double rand = MathUtils.nextDouble();
-            if (rand < split) {
-                draw = MathUtils.nextDouble() * low;
-                draw = truncated.quantile(draw);
-            } else {
-                draw = MathUtils.nextDouble() * (1 - high) + high;
-                draw = truncated.quantile(draw);
+        if(actuallyDraw) {
+            while ((draw < highCutoff && draw > lowCutoff || Double.isNaN(draw)) && count < 10) {
+                double rand = MathUtils.nextDouble();
+                if (rand < split) {
+                    draw = MathUtils.nextDouble() * low;
+                    draw = truncated.quantile(draw);
+                } else {
+                    draw = MathUtils.nextDouble() * (1 - high) + high;
+                    draw = truncated.quantile(draw);
+                }
+
+
+                count++;
             }
+            if (!Double.isNaN(draw)) {
+                loadings.setParameterValue(row, column, draw);
+            }
+        }
+        else
+            draw = loadings.getParameterValue(row, column);
+        if(Double.isNaN(draw) || Double.isNaN(Math.log(1- (high - low))))
+            hastings = Double.NEGATIVE_INFINITY;
+        else
+            hastings = truncated.logPdf(draw) - Math.log(1 - (high - low));
 
 
-            count++;
-        }
-        if(count < 10000){
-            loadings.setParameterValue(row, column, draw);
-        }
+        return hastings;
     }
 
-    private void drawI(int i, int column) {
+    public double drawI(int i, int column, boolean actuallyDraw) {
         double[] draws = null;
         precisionArray = new double[loadings.getColumnDimension()][loadings.getColumnDimension()];
         double[][] variance;
@@ -168,19 +182,22 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         else
             conditioned = new NormalDistribution(0, Math.sqrt(1 / priorPrecision)); //TODO generify
 
+        double hastings = 0;
+
         if(prior instanceof MomentDistributionModel){
             if(MathUtils.nextDouble() < .5) {
-                getTruncatedDraw(i, column, conditioned);
+                hastings = getTruncatedDraw(i, column, conditioned, actuallyDraw);
 //                getCutoffDraw(i, column, conditioned);
             }
             else{
 //                getCutoffDraw(i, column, conditioned);
-                getTruncatedDraw(i, column, conditioned);
+                hastings = getTruncatedDraw(i, column, conditioned, actuallyDraw);
             }
         }
         else{
             loadings.setParameterValue(i, column, conditioned.quantile(MathUtils.nextDouble()));
         }
+        return hastings;
     }
 
     private NormalDistribution getConditionalDistribution(double[] meanArray, double[][] variance, int column, int row) {
@@ -312,7 +329,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         int size = LFM.getLoadings().getRowDimension();
         int column = MathUtils.nextInt(LFM.getLoadings().getColumnDimension());
             for (int i = 0; i < size; i++) {
-                drawI(i, column);
+                drawI(i, column, true);
             }
             ((Parameter) loadings).fireParameterChangedEvent();
         return 0;

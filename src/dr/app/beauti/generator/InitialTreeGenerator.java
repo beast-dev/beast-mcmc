@@ -65,7 +65,7 @@ public class InitialTreeGenerator extends Generator {
      */
     public void writeStartingTree(PartitionTreeModel model, XMLWriter writer) {
 
-        setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1)
+        String prefix = model.getPrefix();
 
         switch (model.getStartingTreeType()) {
             case USER:
@@ -76,11 +76,11 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeComment("Construct a starting tree that is compatible with specified clade heights");
                 Attribute[] attributes = (rootHeight.priorType != PriorType.NONE_TREE_PRIOR ?
                         new Attribute[] {
-                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+                                new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE),
                                 new Attribute.Default<String>(RescaledTreeParser.HEIGHT, "" + rootHeight.getInitial())
                         } :
                         new Attribute[] {
-                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
+                                new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE)
                         });
                 writer.writeOpenTag(RescaledTreeParser.RESCALED_TREE, attributes);
                 writeSourceTree(model, writer);
@@ -106,7 +106,7 @@ public class InitialTreeGenerator extends Generator {
 
             case RANDOM:
                 // generate a coalescent tree
-                String simulatorId = modelPrefix + STARTING_TREE;
+                String simulatorId = prefix + STARTING_TREE;
 
                 String taxaId = TaxaParser.TAXA;
                 AbstractPartitionData partition = options.getDataPartitions(model).get(0);

@@ -135,6 +135,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
+        toolBar1.setBorder(BorderFactory.createEmptyBorder());
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         toolBar1.add(autoOptimizeCheck);
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));

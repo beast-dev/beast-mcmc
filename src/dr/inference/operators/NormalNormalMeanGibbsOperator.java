@@ -58,7 +58,11 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
         if (likelihood instanceof NormalDistributionModel)
             this.meanParameter = (Parameter) ((NormalDistributionModel) likelihood).getMean();
         else if (likelihood instanceof LogNormalDistributionModel) {
-            this.meanParameter = ((LogNormalDistributionModel) likelihood).getMeanParameter();
+            if (((LogNormalDistributionModel) likelihood).getParameterization() == LogNormalDistributionModel.Parameterization.MEAN_STDEV) {
+                this.meanParameter = ((LogNormalDistributionModel) likelihood).getMeanParameter();
+            } else {
+                this.meanParameter = ((LogNormalDistributionModel) likelihood).getMuParameter();
+            }
             isLog = true;
         } else
             throw new RuntimeException("Likelihood must be Normal or log Normal");

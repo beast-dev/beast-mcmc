@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.sitemodelspanel;
+package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
@@ -45,6 +45,7 @@ import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.logging.Logger;
@@ -510,11 +511,11 @@ public class PartitionModelPanel extends OptionsPanel {
      */
     public void setOptions() {
 
-        if (SiteModelsPanel.DEBUG) {
-            String modelName = (model == null) ? "null" : model.getName();
-            Logger.getLogger("dr.app.beauti").info(
-                    "ModelsPanel.setModelOptions(" + modelName + ")");
-        }
+//        if (SiteModelsPanel.DEBUG) {
+//            String modelName = (model == null) ? "null" : model.getName();
+//            Logger.getLogger("dr.app.beauti").info(
+//                    "ModelsPanel.setModelOptions(" + modelName + ")");
+//        }
 
         if (model == null) {
             return;
@@ -672,8 +673,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 JPanel panel2 = new JPanel();
                 panel2.setOpaque(false);
                 panel2.setLayout(new BoxLayout(panel2, BoxLayout.PAGE_AXIS));
-                panel2.setBorder(BorderFactory
-                        .createTitledBorder("Link/Unlink parameters:"));
+                panel2.setBorder(new TitledBorder(null, "Link/Unlink parameters:", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.ABOVE_TOP));
                 panel2.add(substUnlinkCheck);
                 panel2.add(heteroUnlinkCheck);
                 panel2.add(freqsUnlinkCheck);

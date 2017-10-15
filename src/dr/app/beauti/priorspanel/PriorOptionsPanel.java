@@ -558,16 +558,16 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 public void itemStateChanged(ItemEvent ev) {
 
                     if (parametersInRealSpaceCheck.isSelected()) {
-                        replaceFieldName(0, "Mean");
-                        if (getValue(0) <= 0) {
-                            getField(0).setValue(0.01);
+                        replaceFieldName(1, "Mean");
+                        if (getValue(1) <= 0) {
+                            getField(1).setValue(0.01);
                         }
-                        getField(0).setRange(0.0, Double.POSITIVE_INFINITY);
-                        replaceFieldName(1, "Stdev");
+                        getField(1).setRange(0.0, Double.POSITIVE_INFINITY);
+                        replaceFieldName(2, "Stdev");
                     } else {
-                        replaceFieldName(0, "mu");
-                        getField(0).setRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-                        replaceFieldName(0, "sigma");
+                        replaceFieldName(1, "mu");
+                        getField(1).setRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                        replaceFieldName(2, "sigma");
                     }
 
                     for (Listener listener : listeners) {
@@ -578,12 +578,12 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
 
         public Distribution getDistribution() {
-            double mu = getValue(0);
-            double sigma = getValue(1);
+            double mu = getValue(1);
+            double sigma = getValue(2);
             if (parametersInRealSpaceCheck.isSelected()) {
-                double mean = getValue(0);
-                double stdev = getValue(1);
-                 if (getValue(0) <= 0) {
+                double mean = getValue(1);
+                double stdev = getValue(2);
+                if (mean <= 0) {
                     throw new IllegalArgumentException("'Mean in real space' works only for a positive mean");
                 }
                 mu = Math.log(mean/Math.sqrt(1 + (stdev * stdev) / (mean * mean)));
@@ -591,24 +591,24 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             }
             return new OffsetPositiveDistribution(
                     new LogNormalDistribution(mu, sigma),
-                    getValue(2));
+                    getValue(3));
         }
 
         public void setArguments(Parameter parameter) {
-            getField(0).setValue(parameter.mean);
-            getField(1).setValue(parameter.stdev);
-            getField(2).setValue(parameter.offset);
+            getField(1).setValue(parameter.mean);
+            getField(2).setValue(parameter.stdev);
+            getField(3).setValue(parameter.offset);
             parametersInRealSpaceCheck.setSelected(parameter.isInRealSpace());
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
-            getField(2).setLabel(parameter.getName() + " " + getArguName(2).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
+            getField(2).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
+            getField(3).setLabel(parameter.getName() + " " + getArguName(2).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {
-            parameter.mean = getValue(0);
-            parameter.stdev = getValue(1);
-            parameter.offset = getValue(2);
+            parameter.mean = getValue(1);
+            parameter.stdev = getValue(2);
+            parameter.offset = getValue(3);
             parameter.setMeanInRealSpace(parametersInRealSpaceCheck.isSelected());
         }
 

@@ -71,6 +71,16 @@ public interface Transform {
      */
     double[] inverse(double[] values, int from, int to);
 
+    /**
+     * overloaded transformation that takes and returns an array of doubles
+     * @param values evaluation points
+     * @param from start transformation at this index
+     * @param to end transformation at this index
+     * @param sum fixed sum of values that needs to be enforced
+     * @return the transformed values
+     */
+    double[] inverse(double[] values, int from, int to, double sum);
+
     double updateGradientLogDensity(double gradient, double value);
 
     double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to);
@@ -118,6 +128,10 @@ public interface Transform {
                 result[i] = inverse(values[i]);
             }
             return result;
+        }
+
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Fixed sum cannot be enforced for a univariate transformation.");
         }
 
         public abstract double gradientInverse(double value);
@@ -203,8 +217,18 @@ public interface Transform {
 
     class LogConstrainedSumTransform extends MultivariableTransform {
 
+        //private double fixedSum;
+
         public LogConstrainedSumTransform() {
         }
+
+        /*public LogConstrainedSumTransform(double fixedSum) {
+            this.fixedSum = fixedSum;
+        }
+
+        public double getConstrainedSum() {
+            return this.fixedSum;
+        }*/
 
         public double[] transform(double[] values, int from, int to) {
             double[] transformedValues = new double[to - from + 1];
@@ -227,7 +251,30 @@ public interface Transform {
                 newSum += transformedValues[counter];
                 counter++;
             }
-            for (int i = 0; i < sum; i++) {
+            /*for (int i = 0; i < sum; i++) {
+                transformedValues[i] = (transformedValues[i] / newSum) * sum;
+            }*/
+            for (int i = 0; i < transformedValues.length; i++) {
+                transformedValues[i] = (transformedValues[i] / newSum) * sum;
+            }
+            return transformedValues;
+        }
+
+        //inverse transformation assumes a given sum provided as an argument
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            //double sum = (double)(to - from + 1);
+            double[] transformedValues = new double[to - from + 1];
+            int counter = 0;
+            double newSum = 0.0;
+            for (int i = from; i <= to; i++) {
+                transformedValues[counter] = Math.exp(values[i]);
+                newSum += transformedValues[counter];
+                counter++;
+            }
+            /*for (int i = 0; i < sum; i++) {
+                transformedValues[i] = (transformedValues[i] / newSum) * sum;
+            }*/
+            for (int i = 0; i < transformedValues.length; i++) {
                 transformedValues[i] = (transformedValues[i] / newSum) * sum;
             }
             return transformedValues;
@@ -358,7 +405,7 @@ public interface Transform {
         }
     }
 
-    class NegateTranform extends UnivariableTransform {
+    class NegateTransform extends UnivariableTransform {
 
         public double transform(double value) {
             return -value;
@@ -546,7 +593,6 @@ public interface Transform {
         private final UnivariableTransform inner;
     }
 
-    
 
     class Array extends MultivariableTransformWithParameter {
 
@@ -584,6 +630,11 @@ public interface Transform {
                   result[i] = array.get(i).inverse(values[i]);
               }
               return result;
+          }
+
+          @Override
+          public double[] inverse(double[] values, int from, int to, double sum) {
+              throw new RuntimeException("Not yet implemented.");
           }
 
           @Override
@@ -697,6 +748,11 @@ public interface Transform {
         }
 
         @Override
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
         public double[] gradientInverse(double[] values, int from, int to) {
 
             final double[] result = values.clone();
@@ -771,6 +827,7 @@ public interface Transform {
         public int start; // zero-indexed
         public int end; // zero-indexed, i.e, i = start; i < end; ++i
         public int every = 1;
+        public double fixedSum = 0.0;
         public List<Parameter> parameters = null;
 
         public ParsedTransform() {
@@ -789,6 +846,7 @@ public interface Transform {
             clone.start = start;
             clone.end = end;
             clone.every = every;
+            clone.fixedSum = fixedSum;
             clone.parameters = parameters;
             return clone;
         }
@@ -814,8 +872,8 @@ public interface Transform {
 
     NoTransform NONE = new NoTransform();
     LogTransform LOG = new LogTransform();
-    NegateTranform NEGATE = new NegateTranform();
-    Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTranform());
+    NegateTransform NEGATE = new NegateTransform();
+    Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTransform());
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
@@ -823,8 +881,8 @@ public interface Transform {
     enum Type {
         NONE("none", new NoTransform()),
         LOG("log", new LogTransform()),
-        NEGATE("negate", new NegateTranform()),
-        LOG_NEGATE("log-negate", new Compose(new LogTransform(), new NegateTranform())),
+        NEGATE("negate", new NegateTransform()),
+        LOG_NEGATE("log-negate", new Compose(new LogTransform(), new NegateTransform())),
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
         LOGIT("logit", new LogitTransform()),
         FISHER_Z("fisherZ",new FisherZTransform()),

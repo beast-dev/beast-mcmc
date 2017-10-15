@@ -127,15 +127,13 @@ public class ScaleOperator extends AbstractCoercableOperator {
             // Must first set all parameters first and check for boundaries later for the operator to work
             // correctly with dependent parameters such as tree node heights.
             for (int i = 0; i < dim; i++) {
-                final double offset = bounds.getLowerLimit(i);
-
-                // scale offset by the lower bound
-                variable.setValue(i, ((variable.getValue(i) - offset) * scale) + offset);
+                // For scale all we scale by the same factor (i.e., not relative to their individual
+                // origins).
+                variable.setValue(i, variable.getValue(i) * scale);
             }
 
             for (int i = 0; i < dim; i++) {
                 if (variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
-                    // if bounded then perhaps this could be reflected.
                     throw new RuntimeException("proposed value greater than upper bound");
                 }
             }

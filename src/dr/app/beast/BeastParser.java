@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import dr.util.Citation;
 import dr.util.Pair;
+import dr.util.Version;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -53,8 +54,8 @@ public class BeastParser extends XMLParser {
     public static final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
     public String parsers;
 
-    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML) {
-        super(parserWarnings, strictXML);
+    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML, Version version) {
+        super(verbose, parserWarnings, strictXML, version);
 
         addCitable(BeastVersion.INSTANCE);
 

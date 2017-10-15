@@ -51,44 +51,40 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         MEAN_STDEV
     }
 
-    //if mean is not in real space then exponentiate to get value in the lognormal space
-    boolean isMeanInRealSpace;
-    boolean isStdevInRealSpace;
-
     /**
      * Constructor.
      * This is the old constructor left for backwards compatibility
      */
-    public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace, boolean stdevInRealSpace) {
+    public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean parametersInRealSpace) {
 
         super(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
 
-        isMeanInRealSpace = meanInRealSpace;
-        isStdevInRealSpace = stdevInRealSpace;
-
         this.offset = offset;
 
-        if (isMeanInRealSpace) {
+        if (parametersInRealSpace) {
             this.meanParameter = meanParameter;
             this.muParameter = null;
             addVariable(this.meanParameter);
             this.meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+            this.stdevParameter = stdevParameter;
+            this.sigmaParameter = null;
+            addVariable(this.stdevParameter);
+            this.stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+            this.parameterization = Parameterization.MEAN_STDEV;
         } else {
             this.muParameter = meanParameter;
             this.meanParameter = null;
             addVariable(this.muParameter);
             this.muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        }
-        if (stdevInRealSpace) {
-            this.stdevParameter = stdevParameter;
-            this.sigmaParameter = null;
-            addVariable(this.stdevParameter);
-            this.stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        } else {
+
             this.sigmaParameter = stdevParameter;
             this.stdevParameter = null;
             addVariable(this.sigmaParameter);
             this.sigmaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+
+            this.parameterization = Parameterization.MU_SIGMA;
         }
 
         precisionParameter = null;
@@ -114,6 +110,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                 this.meanParameter = null;
                 this.stdevParameter = null;
                 this.precisionParameter = null;
+                this.parameterization = Parameterization.MU_SIGMA;
                 break;
             case MU_PRECISION:
                 this.muParameter = parameter1;
@@ -121,6 +118,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                 this.meanParameter = null;
                 this.stdevParameter = null;
                 this.sigmaParameter = null;
+                this.parameterization = Parameterization.MU_PRECISION;
                 break;
             case MEAN_STDEV:
                 this.meanParameter = parameter1;
@@ -128,6 +126,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                 this.muParameter = null;
                 this.sigmaParameter = null;
                 this.precisionParameter = null;
+                this.parameterization = Parameterization.MEAN_STDEV;
                 break;
             default:
                 throw new IllegalArgumentException("Unknow parameterization type");
@@ -139,31 +138,26 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         if (this.muParameter != null) {
             addVariable(this.muParameter);
             this.muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-            isMeanInRealSpace = false;
         }
 
         if (meanParameter != null) {
             addVariable(this.meanParameter);
             this.meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isMeanInRealSpace = true;
         }
 
         if (sigmaParameter != null) {
             addVariable(this.sigmaParameter);
             this.sigmaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isStdevInRealSpace = false;
         }
 
         if (stdevParameter != null) {
             addVariable(this.stdevParameter);
             this.stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isStdevInRealSpace = true;
         }
 
         if (precisionParameter != null) {
             addVariable(this.precisionParameter);
             this.precisionParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            isStdevInRealSpace = false;
         }
     }
 
@@ -185,6 +179,10 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
     public Parameter getPrecisionParameter() {
         return precisionParameter;
+    }
+
+    public Parameterization getParameterization() {
+        return parameterization;
     }
 
     public final double getMu() {
@@ -421,6 +419,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     private final Parameter precisionParameter;
     private final double offset;
 
+    private Parameterization parameterization;
+
     public static void main(String[] argv) {
         Parameter meanParameter = new Parameter.Default(1.0);
         Parameter stdevParameter = new Parameter.Default(5.0);
@@ -436,10 +436,21 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
         LogNormalDistributionModel ln2 = new LogNormalDistributionModel(Parameterization.MU_SIGMA, muParameter, sigmaParameter, 0);
         System.out.println("Lognormal mu = -1.629048, sigma = 1.80502");
-        System.out.println("  mean = " + ln1.getMean() + " (correct = 1.0)");
-        System.out.println("  sigma = " + ln1.getStdev() + " (correct = 5.0)");
-        System.out.println("  quantile(2.5) = " + ln1.quantile(0.025) + " (correct = 0.005702663)");
-        System.out.println("  quantile(97.5) = " + ln1.quantile(0.975) + " (correct = 6.744487892)");
+        System.out.println("  mean = " + ln2.getMean() + " (correct = 1.0)");
+        System.out.println("  sigma = " + ln2.getStdev() + " (correct = 5.0)");
+        System.out.println("  quantile(2.5) = " + ln2.quantile(0.025) + " (correct = 0.005702663)");
+        System.out.println("  quantile(97.5) = " + ln2.quantile(0.975) + " (correct = 6.744487892)");
+
+        meanParameter = new Parameter.Default(0.001);
+        stdevParameter = new Parameter.Default(0.0005);
+        LogNormalDistributionModel ln3 = new LogNormalDistributionModel(Parameterization.MEAN_STDEV, meanParameter, stdevParameter, 0);
+        System.out.println("Lognormal mean = 0.001, stdev = 0.0005");
+        System.out.println("  mu = " + ln3.getMu());
+        System.out.println("  sigma = " + ln3.getSigma());
+        for (int i = 1; i <= 12; i++) {
+            double y = ((double)i) / 13.0;
+            System.out.println(i + "\t" + y + "\t" + ln3.quantile(y));
+        }
 
 
     }

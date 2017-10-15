@@ -39,6 +39,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     public static final String FAST_MATRIX_PARAMETER = "fastMatrixParameter";
     public static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
     public static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
+    public static final String STARTING_VALUE = "startingValue";
 
     public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue) {
         super(id);
@@ -277,10 +278,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final String name = xo.hasId() ? xo.getId() : null;
+            final double startingValue = xo.hasAttribute(STARTING_VALUE) ? xo.getDoubleAttribute(STARTING_VALUE) : 1;
             final int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
             final int colDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
 
-            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, 1);
+            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, startingValue);
 
             return matrixParameter;
         }
@@ -301,6 +303,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
                 AttributeRule.newIntegerRule(ROW_DIMENSION, false),
                 AttributeRule.newIntegerRule(COLUMN_DIMENSION, false),
+                AttributeRule.newDoubleRule(STARTING_VALUE, true),
         };
 
         public Class getReturnType() {

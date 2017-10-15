@@ -76,14 +76,14 @@ public class TempestDefaultFileMenuFactory implements MenuFactory {
         // are simply missing. In contrast, on Mac, the menu is for the application so items should
         // be enabled/disabled as frames come to the front.
         if (frame instanceof TempestFrame) {
-//            Action action = frame.getImportAction();
-//            if (action != null) {
-//                item = new JMenuItem(action);
-//                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-//                menu.add(item);
-//
-//                menu.addSeparator();
-//            }
+            Action action = frame.getImportAction();
+            if (action != null) {
+                item = new JMenuItem(action);
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+                menu.add(item);
+
+                menu.addSeparator();
+            }
 
             item = new JMenuItem(((TempestFrame)frame).getExportTreeAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));

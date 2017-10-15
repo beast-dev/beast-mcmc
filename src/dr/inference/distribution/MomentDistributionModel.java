@@ -34,8 +34,8 @@ import dr.math.distributions.RandomGenerator;
 //@author Max Tolkoff
 public class MomentDistributionModel extends AbstractModelLikelihood implements ParametricMultivariateDistributionModel, RandomGenerator {
 
-    public MomentDistributionModel(Parameter mean, Parameter precision, Parameter cutoff, Parameter data) {
-        super(MomentDistributionModelParser.MOMENT_DISTRIBUTION_MODEL);
+    public MomentDistributionModel(String id, Parameter mean, Parameter precision, Parameter cutoff, Parameter data) {
+        super(id);
 
         this.mean=mean;
         this.precision=precision;

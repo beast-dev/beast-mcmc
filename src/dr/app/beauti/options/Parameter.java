@@ -27,6 +27,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
+import dr.evolution.util.Taxa;
 import dr.math.distributions.Distribution;
 
 import java.io.Serializable;
@@ -64,10 +65,10 @@ public class Parameter implements Serializable {
     public final boolean isHierarchical;
     public final boolean isCMTCRate;
     public final boolean isNonNegative;
-    public final boolean isMaintainedSum;
     public final boolean isZeroOne;
     public final boolean isCached;
     public final boolean isAdaptiveMultivariateCompatible;
+    public boolean isMaintainedSum;
     public boolean isCalibratedYule = false;
 //    public final double lower;
 //    public final double upper;
@@ -78,7 +79,10 @@ public class Parameter implements Serializable {
 
     public final boolean isPriorFixed;
     public PriorType priorType;
+
     private Parameter parent;
+
+    private Taxa taxonSet = null;
 
     public double getInitial() {
         return initial;
@@ -128,6 +132,8 @@ public class Parameter implements Serializable {
         private boolean isCached = false;
 
         private PartitionOptions options = null;
+
+        private Taxa taxonSet = null;
 
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private boolean isPriorFixed = false;
@@ -236,6 +242,10 @@ public class Parameter implements Serializable {
             return this;
         }
 
+        public Builder taxonSet(Taxa taxonSet) {
+            this.taxonSet = taxonSet;
+            return this;
+        }
         public Builder prior(PriorType priorType) {
             this.priorType = priorType;
             return this;
@@ -384,6 +394,8 @@ public class Parameter implements Serializable {
         isPriorFixed = builder.isPriorFixed;
         isAdaptiveMultivariateCompatible = builder.isAdaptiveMultivariateCompatible;
 
+        taxonSet = builder.taxonSet;
+        
 //        upper = builder.upper;
 //        lower = builder.lower;
         isTruncated = builder.isTruncated;
@@ -443,7 +455,7 @@ public class Parameter implements Serializable {
 
     public String getDescription() {
         if (taxaId != null && options != null) {
-            return description + " on tree " + options.getName();
+            return description + " " + taxaId + " on tree " + options.getName();
         }
         return description;
     }
@@ -473,6 +485,15 @@ public class Parameter implements Serializable {
     public void setOptions(PartitionOptions options) { // need to set, which keeps consistent to taxonSetsTreeModel
         this.options = options;
     }
+
+    public Taxa getTaxonSet() {
+        return taxonSet;
+    }
+
+    public void setTaxonSet(Taxa taxonSet) {
+        this.taxonSet = taxonSet;
+    }
+
 
     public void setPriorEdited(boolean priorEdited) {
         this.priorEdited = priorEdited;

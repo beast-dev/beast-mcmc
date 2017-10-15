@@ -54,7 +54,7 @@ public enum PriorType {
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
     LINKED_PARAMETER("Linked Parameter", false, false, false),
-    POISSON_PRIOR("Poisson", true, false, false);
+    POISSON_PRIOR("Poisson", false, false, false);
 
     PriorType(final String name, final boolean isInitializable, final boolean isTruncatable, final boolean isPlottable) {
         this.name = name;

@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
@@ -261,17 +262,42 @@ public class ParameterPriorGenerator extends Generator {
                 // Find correct tree for this rate parameter
 
                 PartitionTreeModel treeModel = null;
-                for (PartitionClockModel pcm : options.getPartitionClockModels()) {
-                    if (pcm.getClockRateParameter() == parameter) {
-                        for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
-                            treeModel = pd.getPartitionTreeModel();
-                            break;
+
+                if (parameter.getTaxonSet() != null) {
+                    treeModel = options.taxonSetsTreeModel.get(parameter.getTaxonSet());
+                } else {
+                    for (PartitionClockModel pcm : options.getPartitionClockModels()) {
+                        if (pcm.getClockRateParameter() == parameter) {
+                            for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
+                                treeModel = pd.getPartitionTreeModel();
+                                break; // todo - This breaks after the first iteration. Why a loop?
+                            }
                         }
                     }
                 }
                 if (treeModel == null) {
                     throw new IllegalArgumentException("No tree model found for clock model");
                 }
+
+                PartitionClockModel pcm = (PartitionClockModel)parameter.getOptions();
+                if (pcm.getClockType() == ClockType.FIXED_LOCAL_CLOCK) {
+                    if (parameter.getTaxonSet() != null) {
+                        writer.writeIDref("taxa", parameter.getTaxonSet().getId());
+                    } else {
+                        writer.writeOpenTag("taxa");
+                        writer.writeIDref("taxa", "taxa");
+                        writer.writeOpenTag("exclude");
+                        for (Taxa taxonSet : options.taxonSets) {
+                            if (options.taxonSetsMono.get(taxonSet)) {
+                                writer.writeIDref("taxa", taxonSet.getId());
+                            }
+                        }
+                        writer.writeCloseTag("exclude");
+                        writer.writeCloseTag("taxa");
+
+                    }
+                }
+
                 writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
                 break;

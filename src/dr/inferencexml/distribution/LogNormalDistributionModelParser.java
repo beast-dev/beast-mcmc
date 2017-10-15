@@ -54,13 +54,22 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
 
         if (xo.hasAttribute(MEAN_IN_REAL_SPACE) || xo.hasAttribute(STDEV_IN_REAL_SPACE)) {
             // If either of these set then use the old logic for parsing. This means that mean
-            // means mu if meanInRealSpace is false and stdev means signma if stdevInRealSpace
+            // means mu if meanInRealSpace is false and stdev means sigma if stdevInRealSpace
             // is false
 
+            if (!xo.hasChildNamed(MEAN) || !xo.hasChildNamed(STDEV)) {
+                throw new XMLParseException("If meanInRealSpace attribute is given then the lognormal model must be parameterized with mean and stdev.");
+            }
+
             final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
-            final boolean stdevInRealSpace = xo.getAttribute(STDEV_IN_REAL_SPACE, false);
-            if(!meanInRealSpace && stdevInRealSpace) {
-                throw new RuntimeException("Cannot parameterise Lognormal model with mu and stdev");
+            if (xo.hasAttribute(STDEV_IN_REAL_SPACE)) {
+                boolean stdevInRealSpace = xo.getAttribute(STDEV_IN_REAL_SPACE, false);
+                if (!meanInRealSpace && stdevInRealSpace) {
+                    throw new XMLParseException("Cannot parameterise Lognormal model with mu and stdev");
+                }
+                if (meanInRealSpace && !stdevInRealSpace) {
+                    throw new XMLParseException("Cannot parameterise Lognormal model with mean and sigma");
+                }
             }
 
             XMLObject cxo = xo.getChild(MEAN);
@@ -79,7 +88,7 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
                 stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
             }
 
-            return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace, stdevInRealSpace);
+            return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
         } else {
             // otherwise we decide the parameterization by which parameters are specified.
 
@@ -129,10 +138,10 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
                     return new LogNormalDistributionModel(LogNormalDistributionModel.Parameterization.MU_PRECISION, muParam, precParam, offset);
 
                 } else {
-                    throw new RuntimeException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
+                    throw new XMLParseException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
                 }
             } else {
-                throw new RuntimeException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
+                throw new XMLParseException("Lognormal model must be parameterized as [mean, stdev], [mu, sigma], or [mu, precision]");
             }
 
         }
@@ -150,13 +159,21 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
             AttributeRule.newBooleanRule(STDEV_IN_REAL_SPACE, true),
             AttributeRule.newDoubleRule(OFFSET, true),
-            new ElementRule(MEAN,
+            new XORRule(new ElementRule(MEAN,
                     new XMLSyntaxRule[]{
                             new XORRule(
                                     new ElementRule(Parameter.class),
                                     new ElementRule(Double.class)
                             )}
             ),
+                    new ElementRule(MU,
+                            new XMLSyntaxRule[]{
+                                    new XORRule(
+                                            new ElementRule(Parameter.class),
+                                            new ElementRule(Double.class)
+                                    )}
+                    ))
+            ,
             new XORRule(
                     new ElementRule(STDEV,
                             new XMLSyntaxRule[]{

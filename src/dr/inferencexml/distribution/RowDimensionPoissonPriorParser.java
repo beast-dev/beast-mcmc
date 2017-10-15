@@ -4,6 +4,7 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
 import dr.inference.distribution.RowDimensionPoissonPrior;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
 
 /**
@@ -16,10 +17,11 @@ public class RowDimensionPoissonPriorParser extends AbstractXMLObjectParser{
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        AdaptableSizeFastMatrixParameter parameter;
+        MatrixParameterInterface parameter;
         DeterminentalPointProcessPrior DPP;
-        if(xo.getChild(AdaptableSizeFastMatrixParameter.class) != null)
-           parameter= (AdaptableSizeFastMatrixParameter) xo.getChild(AdaptableSizeFastMatrixParameter.class);
+        String id = xo.getId();
+        if(xo.getChild(MatrixParameterInterface.class) != null)
+           parameter= (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         else
             parameter= null;
         if(xo.getChild(DeterminentalPointProcessPrior.class) != null)
@@ -31,7 +33,7 @@ public class RowDimensionPoissonPriorParser extends AbstractXMLObjectParser{
         if(xo.hasAttribute(TRANSPOSE))
             transpose = xo.getBooleanAttribute(TRANSPOSE);
 
-        return new RowDimensionPoissonPrior(untruncatedMean, parameter, DPP, transpose);
+        return new RowDimensionPoissonPrior(id, untruncatedMean, parameter, DPP, transpose);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -42,7 +44,7 @@ public class RowDimensionPoissonPriorParser extends AbstractXMLObjectParser{
             AttributeRule.newDoubleRule(UNTRUNCATED_MEAN, true),
             AttributeRule.newBooleanRule(TRANSPOSE, true),
             new OrRule(
-            new ElementRule(AdaptableSizeFastMatrixParameter.class),
+            new ElementRule(MatrixParameterInterface.class),
                     new ElementRule(DeterminentalPointProcessPrior.class)
             )
     };

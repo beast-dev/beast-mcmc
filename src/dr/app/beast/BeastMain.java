@@ -94,7 +94,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -192,7 +192,7 @@ public class BeastMain {
                     // turn off all messages for subsequent reads of the file (they will be the same as the
                     // first time).
                     messageHandler.setLevel(Level.OFF);
-                    parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
+                    parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
@@ -362,7 +362,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
-                        new Arguments.LongOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
                         new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),

@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.inference.model.Model;
 
 import java.util.List;
 
@@ -60,9 +61,24 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
         dim = diffusionModel.getPrecisionParameter().getColumnDimension();
 
         if (branchRateModels != null) {
+
+            for (BranchRateModel rateModel : branchRateModels) {
+                addModel(rateModel);
+            }
+
             if (branchRateModels.size() != dim) {
                 throw new IllegalArgumentException("Invalid dimensions");
             }
+        }
+    }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        if (branchRateModels.contains(model)) {
+            fireModelChanged(model);
+        } else {
+            super.handleModelChangedEvent(model, object, index);
         }
     }
 

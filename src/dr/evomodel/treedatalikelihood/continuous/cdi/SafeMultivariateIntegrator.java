@@ -99,10 +99,10 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
         }
     }
 
-    @Override
-    public boolean requireDataAugmentationForOuterProducts() {
-        return true;
-    }
+//    @Override
+//    public boolean requireDataAugmentationForOuterProducts() {
+//        return true;
+//    }
 
     @Override
     public void updatePreOrderPartial(

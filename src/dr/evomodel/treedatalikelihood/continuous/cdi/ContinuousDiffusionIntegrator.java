@@ -26,10 +26,7 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
@@ -47,9 +44,6 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void setPostOrderPartial(int bufferIndex, final double[] partial);
 
     void getPostOrderPartial(int bufferIndex, final double[] partial);
-
-    void getPostOrderPartial(int bufferIndex, final double[] partial,
-                             final double[] precision, final double[] displacement);
 
     double getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement);
 
@@ -80,11 +74,11 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
                                     boolean incrementOuterProducts);
 
-    int getPartialBufferCount();
+//    int getPartialBufferCount();
 
 //    int getMatrixBufferCount();
 
-    boolean requireDataAugmentationForOuterProducts();
+//    boolean requireDataAugmentationForOuterProducts();
 
     // TODO Only send a list of operations
     void updatePreOrderPartial(int kp, int ip, int im, int jp, int jm);
@@ -142,13 +136,13 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             allocateStorage();
         }
 
-        @Override
-        public int getPartialBufferCount() { return  bufferCount; }
-
-        @Override
-        public boolean requireDataAugmentationForOuterProducts() {
-            return false;
-        }
+//        @Override
+//        public int getPartialBufferCount() { return  bufferCount; }
+//
+//        @Override
+//        public boolean requireDataAugmentationForOuterProducts() {
+//            return false;
+//        }
 
         @Override
         public void finalize() throws Throwable {
@@ -170,13 +164,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
             System.arraycopy(partials, dimPartial * bufferIndex, partial, 0, dimPartial);
         }
-
-        @Override
-        public void getPostOrderPartial(int bufferIndex, final double[] partial,
-                                        final double[] precision, final double[] displacement) {
-            throw new RuntimeException("Not implemented");
-        }
-
+        
         @Override
         public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
             return 1.0 / branchLengths[bufferIndex * dimMatrix];
@@ -308,12 +296,17 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
             if (DEBUG) {
                 System.err.println("End");
-//                System.exit(-1);
             }
         }
 
         @Override
         public void updatePreOrderPartials(final int[] operations, int operationCount) {
+
+            if (DEBUG) {
+                System.err.println("Pre-order operations:");
+            }
+
+
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -321,7 +314,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         public void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts) {
 
             if (DEBUG) {
-                System.err.println("Operations:");
+                System.err.println("Post-order operations:");
             }
 
             int offset = 0;

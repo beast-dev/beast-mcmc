@@ -706,13 +706,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionProcessDelegate) {
-            if (object == diffusionProcessDelegate.getDiffusionModel(0)) {
-                updateDiffusionModel = true;
-                // Tell TreeDataLikelihood to update all nodes
-                fireModelChanged();
-            } else {
-                throw new RuntimeException("Unknown object component");
-            }
+            updateDiffusionModel = true;
+            // Tell TreeDataLikelihood to update all nodes
+            fireModelChanged();
         } else if (model == dataModel) {
             if (object == dataModel) {
                 if (index == -1) { // all taxa updated

@@ -125,6 +125,34 @@
 		<expectation name="X.5.2" value="-0.72"/>
 	</traceAnalysis>
 
+	<operators id="sampleDriftOperators">
+		<randomWalkOperator windowSize="0.1" weight="1">
+			<parameter idref="rate.1"/>
+		</randomWalkOperator>
+		<randomWalkOperator windowSize="0.1" weight="1">
+			<parameter idref="rate.2"/>
+		</randomWalkOperator>
+	</operators>
 
+	<mcmc id="sampleDriftMcmc" chainLength="1000">
+		<posterior id="sampleDriftPosterior">
+			<traitDataLikelihood idref="driftLikelihood"/>
+			<normalPrior mean="0.0" stdev="1">
+				<parameter idref="rate.1"/>
+			</normalPrior>
+			<normalPrior mean="2.0" stdev="1">
+				<parameter idref="rate.2"/>
+			</normalPrior>
+		</posterior>
+		<operators idref="sampleDriftOperators"/>
+		<log logEvery="100">
+			<posterior idref="sampleDriftPosterior"/>
+		</log>
+
+		<log logEvery="1" fileName="testDriftSample.log">
+			<parameter idref="rate.1"/>
+			<parameter idref="rate.2"/>
+		</log>
+	</mcmc>
 </beast>
 

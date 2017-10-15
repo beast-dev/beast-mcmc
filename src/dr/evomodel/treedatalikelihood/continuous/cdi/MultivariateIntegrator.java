@@ -98,10 +98,10 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         }
     }
 
-    @Override
-    public boolean requireDataAugmentationForOuterProducts() {
-        return true;
-    }
+//    @Override
+//    public boolean requireDataAugmentationForOuterProducts() {
+//        return true;
+//    }
 
     @Override
     public void updatePreOrderPartial(
@@ -443,16 +443,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
                 int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
                         - ck.getEffectiveDimension();
-
-//                    System.err.println(ci.getDeterminant());
-//                    System.err.println(CommonOps.det(Vip));
-//
-//                    System.err.println(cj.getDeterminant());
-//                    System.err.println(CommonOps.det(Vjp));
-//
-//                    System.err.println(1.0 / ck.getDeterminant());
-//                    System.err.println(CommonOps.det(Vk));
-
+                
                 remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
 //                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
                         (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
@@ -468,7 +459,6 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
                     System.err.println("\t\t\tdetj = " + Math.log(ci.getDeterminant()));
                     System.err.println("\t\t\tdetk = " + Math.log(ci.getDeterminant()));
                     System.err.println("\t\tremainder: " + remainder);
-//                        System.exit(-1);
                 }
 
                 if (TIMING) {
@@ -546,23 +536,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
         long run = total + (System.nanoTime() - start);
         times.put(key, run);
-
-//            System.err.println("run = " + run);
-//            System.exit(-1);
     }
-
-//        private void incrementTiming(long start, long end, String key) {
-//            Long total = times.get(key);
-//
-//            System.err.println(start + " " + end + " " + key);
-//            System.exit(-1);
-//            if (total == null) {
-//                total = new Long(0);
-//                times.put(key, total);
-//            }
-//            total += (end - start);
-////            times.put(key, total);
-//        }
 
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
@@ -634,9 +608,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
                     for (int h = 0; h < dimTrait; ++h) {
                         final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
 
-                        outerProducts[opo] += gDifference * hDifference
-//                                    * Ptotal.unsafe_get(g, h) / diffusions[opd];
-                                * rootScalar;
+                        outerProducts[opo] += gDifference * hDifference * rootScalar;
                         ++opo;
                         ++opd;
                     }
@@ -651,13 +623,12 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
                     System.err.print(" " + partials[rootOffset + g]);
                 }
                 System.err.println("");
-                System.err.println("Proot: " + Proot);
-                System.err.println("Vroot: " + Vroot);
-                System.err.println("Pprior: " + Pprior);
-                System.err.println("Vprior: " + Vprior);
-                System.err.println("Ptotal: " + Ptotal);
-                System.err.println("Vtotal: " + Vtotal);
-//                    System.err.println("prec: " + partials[rootOffset + dimTrait]);
+                System.err.println("P  root: " + Proot);
+                System.err.println("V  root: " + Vroot);
+                System.err.println("P prior: " + Pprior);
+                System.err.println("V prior: " + Vprior);
+                System.err.println("P total: " + Ptotal);
+                System.err.println("V total: " + Vtotal);
                 System.err.println("\t" + logLike + " " + (logLike + remainder));
                 if (incrementOuterProducts) {
                     System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
@@ -670,7 +641,6 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
         if (DEBUG) {
             System.err.println("End");
-//                System.exit(-1);
         }
     }
 

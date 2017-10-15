@@ -36,24 +36,6 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         System.err.println("Trying SafeMultivariateWithDriftIntegrator");
     }
 
-//    @Override
-//    public void getPostOrderPartial(int bufferIndex, final double[] partial,
-//                                    final double[] precision, final double[] displacement) {
-//        assert(precision != null);
-//        assert(precision.length >= dimTrait * dimTrait);
-//
-//        assert(displacement != null);
-//        assert(displacement.length >= dimTrait);
-//
-//        getPostOrderPartial(bufferIndex, partial);
-//
-//        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
-//                precision, 0, dimTrait * dimTrait);
-//
-//        System.arraycopy(displacements, bufferIndex * dimTrait,
-//                displacement, 0, dimTrait);
-//    }
-
     @Override
     public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
 
@@ -222,10 +204,10 @@ public class SafeMultivariateWithDriftIntegrator extends ContinuousDiffusionInte
         }
     }
 
-    @Override
-    public boolean requireDataAugmentationForOuterProducts() {
-        return true;
-    }
+//    @Override
+//    public boolean requireDataAugmentationForOuterProducts() {
+//        return true;
+//    }
 
     @Override
     public void updatePreOrderPartial(

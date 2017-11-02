@@ -399,6 +399,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     System.err.println("tDet: " + traitLogDeterminant);
                     System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
                             "\n\n");
+
+                    if (Double.isInfinite(getTraitDeterminant(taxon))) {
+                        System.err.println("\tOffending parameter: " +
+                                new dr.math.matrixAlgebra.Vector(traitPrecision.getParameterValues()));
+                    }
                 }
 
                 constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -

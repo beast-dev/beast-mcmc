@@ -306,6 +306,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return sum;
     }
 
+    @Deprecated
     private double getTraitDeterminant(final int taxon) {
 
         final double[] observed = observedIndicators[taxon];
@@ -318,6 +319,20 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
         }
         return det;
+    }
+
+    private double getTraitLogDeterminant(final int taxon) {
+
+        final double[] observed = observedIndicators[taxon];
+
+        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
+        double logDet = 0.0;
+        for (int k = 0; k < dimTrait; ++k) {
+            if (observed[k] == 1.0) {
+                logDet += Math.log(traitPrecision.getParameterValue(k));
+            }
+        }
+        return logDet;
     }
 
     private void makeCompletedUnobserved(final DenseMatrix64F matrix, double diagonal) {
@@ -365,10 +380,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     //System.err.println("\n");
                 }
 
-                final double factorDeterminant = ci.getDeterminant();
-                double traitDeterminant = getTraitDeterminant(taxon);
+                final double factorLogDeterminant = Math.log(ci.getDeterminant());
+                double traitLogDeterminant = getTraitLogDeterminant(taxon);
 
-                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
+//                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
+                final double logDetChange = traitLogDeterminant - factorLogDeterminant;
 
                 final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
                 final double traitInnerProduct = computeTraitInnerProduct(taxon);
@@ -379,8 +395,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 if (DEBUG) {
                     System.err.println("fIP: " + factorInnerProduct);
                     System.err.println("tIP: " + traitInnerProduct);
-                    System.err.println("fDet: " + factorDeterminant);
-                    System.err.println("tDet: " + traitDeterminant);
+                    System.err.println("fDet: " + factorLogDeterminant);
+                    System.err.println("tDet: " + traitLogDeterminant);
                     System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
                             "\n\n");
                 }

@@ -432,8 +432,20 @@ public class PartitionClockModel extends PartitionOptions {
                     ops.add(getOperator(ClockType.UCGD_SHAPE));
                     ops.add(getOperator(ClockType.UCED_MEAN));
 
-                    ops.add(getOperator("uniformBranchRateQuantiles"));
+                    /*switch (clockDistributionType) {
 
+                    }
+                    if (!rateOperator.isParameterFixed()) {
+                        ops.add(getOperator("upDownUCLDMeanHeights"));
+                        ops.add(getOperator("upDownUCGDMeanHeights"));
+                        ops.add(getOperator("upDownUCEDMeanHeights"));
+                    }*/
+
+                    ops.add(getOperator("upDownUCLDMeanHeights"));
+                    ops.add(getOperator("upDownUCGDMeanHeights"));
+                    ops.add(getOperator("upDownUCEDMeanHeights"));
+
+                    ops.add(getOperator("uniformBranchRateQuantiles"));
                     ops.add(getOperator("uniformBranchRateDistributionIndex"));
                 } else {
                     Operator rateOperator = getOperator("clock.rate");
@@ -492,17 +504,11 @@ public class PartitionClockModel extends PartitionOptions {
                     }
 
                     if (!rateOperator.isParameterFixed()) {
-                        if (performModelAveraging) {
-                            ops.add(getOperator("upDownUCLDMeanHeights"));
-                            ops.add(getOperator("upDownUCGDMeanHeights"));
-                            ops.add(getOperator("upDownUCEDMeanHeights"));
-                        } else {
-                            Operator upDownOperator = getUpDownOperator();
-                            // need to set the node heights parameter again in case the treeModel has changed and
-                            upDownOperator.setParameter1(
-                                    getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"));
-                            ops.add(upDownOperator);
-                        }
+                        Operator upDownOperator = getUpDownOperator();
+                        // need to set the node heights parameter again in case the treeModel has changed and
+                        upDownOperator.setParameter1(
+                                getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"));
+                        ops.add(upDownOperator);
                     } else {
                         ops.add(getPartitionTreeModel().getOperator("treeModel.allInternalNodeHeights"));
                     }

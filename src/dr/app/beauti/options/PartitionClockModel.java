@@ -145,10 +145,17 @@ public class PartitionClockModel extends PartitionOptions {
 
         // Uncorrelated clock
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
+
+        //createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
+        createZeroOneParameterUniformPrior("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
 
         // Model averaging
-        createParameter("branchRates.distributionIndex", "distribution integer index");
+        //createParameter("branchRates.distributionIndex", "distribution integer index");
+
+        new Parameter.Builder("branchRates.distributionIndex", "distribution integer index").
+                prior(PriorType.DISCRETE_UNIFORM_PRIOR).isNonNegative(true)
+                .initial(0.0).uniformLower(0.0).uniformUpper(2.0).offset(0.0).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
 
         createScaleOperator("clock.rate", demoTuning, rateWeights);
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
@@ -249,6 +256,10 @@ public class PartitionClockModel extends PartitionOptions {
                 params.add(getClockRateParameter(ClockType.UNCORRELATED, ClockDistributionType.GAMMA));
                 params.add(getParameter(ClockType.UCGD_SHAPE));
                 params.add(getClockRateParameter(ClockType.UNCORRELATED, ClockDistributionType.EXPONENTIAL));
+
+                params.add(getParameter("branchRates.quantiles"));
+                params.add(getParameter("branchRates.distributionIndex"));
+
             } else {
                 switch (clockType) {
                     case STRICT_CLOCK:

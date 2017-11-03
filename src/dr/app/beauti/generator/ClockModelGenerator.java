@@ -142,6 +142,12 @@ public class ClockModelGenerator extends Generator {
                     writer.writeCloseTag(MixtureModelBranchRatesParser.RATE_CATEGORY_QUANTILES);
                     writer.writeCloseTag(tag);
 
+                    writeMeanRateStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCovarianceStatistic(writer, tag, prefix, treePrefix);
+
                 } else {
                     tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
 
@@ -440,9 +446,13 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                tag = model.isContinuousQuantile() ?
-                        ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
-                        DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                if (model.performModelAveraging()) {
+                    tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
+                } else {
+                    tag = model.isContinuousQuantile() ?
+                            ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                            DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                }
                 id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                 break;
 
@@ -565,21 +575,37 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                switch (model.getClockDistributionType()) {
-                    case LOGNORMAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
-                        break;
-                    case GAMMA:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
-                        break;
-                    case CAUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
+
+                if (model.performModelAveraging()) {
+
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
+
+                    writer.writeIDref(ParameterParser.PARAMETER, "branchRates.distributionIndex");
+                    writer.writeIDref(ParameterParser.PARAMETER, "branchRates.quantiles");
+
+                } else {
+
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
+                            break;
+                        case GAMMA:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
+                            break;
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
 //                        break;
-                    case EXPONENTIAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
-                        break;
+                        case EXPONENTIAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
+                            break;
+                    }
+
                 }
 
             case AUTOCORRELATED:

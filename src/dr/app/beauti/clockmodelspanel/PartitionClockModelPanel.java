@@ -55,6 +55,8 @@ public class PartitionClockModelPanel extends OptionsPanel {
     });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
 
+    private JCheckBox modelAveragingCheck = new JCheckBox("Use Bayesian Model Averaging.");
+
     protected final PartitionClockModel model;
 
     public PartitionClockModelPanel(final PartitionClockModel partitionModel) {
@@ -97,6 +99,26 @@ public class PartitionClockModelPanel extends OptionsPanel {
                     }
                 });
 
+        PanelUtils.setupComponent(modelAveragingCheck);
+        modelAveragingCheck.setToolTipText("<html>" +
+                "Select this option to perform Bayesian Model Averaging (BMA) of the<br>" +
+                "available relaxed clock models as described by Li & Drummond (2012) MBE 29:751-61.<html>");
+        modelAveragingCheck.setSelected(model.performModelAveraging());
+        modelAveragingCheck.addItemListener(
+                new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        model.setPerformModelAveraging(modelAveragingCheck.isSelected());
+                        //set the clockTypeCombo to Uncorrelated Relaxed Clock to facilitate XML generation
+                        if (model.performModelAveraging()) {
+                            clockTypeCombo.setSelectedItem(ClockType.UNCORRELATED);
+                            continuousQuantileCheck.setSelected(true);
+                            model.setContinuousQuantile(true);
+                        }
+                    }
+                }
+        );
+
         setupPanel();
         setOpaque(false);
     }
@@ -134,6 +156,11 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 throw new IllegalArgumentException("Unknown clock model type");
 
         }
+
+        addComponent(new JLabel(
+                "<html>Select the option below to perform Bayesian Model Averaging (BMA) of the<br>" +
+                        "available relaxed clock models as described by Li & Drummond (2012) MBE 29:751-61.<html>"));
+        addComponent(modelAveragingCheck);
 
     }
 

@@ -44,6 +44,7 @@ public class PartitionClockModel extends PartitionOptions {
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean continuousQuantile = false;
+    private boolean performModelAveraging = false;
 
     private PartitionTreeModel treeModel = null;
 
@@ -146,6 +147,9 @@ public class PartitionClockModel extends PartitionOptions {
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
         createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
 
+        // Model averaging
+        createParameter("branchRates.distributionIndex", "distribution integer index");
+
         createScaleOperator("clock.rate", demoTuning, rateWeights);
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
@@ -176,8 +180,11 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
-                "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights);
+        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs a uniform draw of branch rate quantiles",
+                "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);
+
+        createOperator("uniformBranchRateDistributionIndex", "branchRates.distributionIndex", "Performs a uniform draw of the distribution index",
+                "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);
 
         createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree",
@@ -236,67 +243,75 @@ public class PartitionClockModel extends PartitionOptions {
         double rate = 1.0;
 
         if (options.hasData()) {
-            switch (clockType) {
-                case STRICT_CLOCK:
+            if (performModelAveraging) {
+                params.add(getClockRateParameter(ClockType.UNCORRELATED, ClockDistributionType.LOGNORMAL));
+                params.add(getParameter(ClockType.UCLD_STDEV));
+                params.add(getClockRateParameter(ClockType.UNCORRELATED, ClockDistributionType.GAMMA));
+                params.add(getParameter(ClockType.UCGD_SHAPE));
+                params.add(getClockRateParameter(ClockType.UNCORRELATED, ClockDistributionType.EXPONENTIAL));
+            } else {
+                switch (clockType) {
+                    case STRICT_CLOCK:
 //                    rateParam = getParameter("clock.rate");
-                    break;
+                        break;
 
-                case RANDOM_LOCAL_CLOCK:
+                    case RANDOM_LOCAL_CLOCK:
 //                    rateParam = getParameter("clock.rate");
-                    getParameter(ClockType.LOCAL_CLOCK + ".changes");
-                    params.add(getParameter("rateChanges"));
-                    params.add(getParameter(ClockType.LOCAL_CLOCK + ".relativeRates"));
-                    break;
+                        getParameter(ClockType.LOCAL_CLOCK + ".changes");
+                        params.add(getParameter("rateChanges"));
+                        params.add(getParameter(ClockType.LOCAL_CLOCK + ".relativeRates"));
+                        break;
 
-                case FIXED_LOCAL_CLOCK:
-                    for (Taxa taxonSet : options.taxonSets) {
-                        if (options.taxonSetsMono.get(taxonSet)) {
-                            String parameterName = taxonSet.getId() + ".rate";
-                            if (!hasParameter(parameterName)) {
-                                new Parameter.Builder(parameterName, "substitution rate")
-                                        .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR)
-                                        .initial(rate)
-                                        .isCMTCRate(true).isNonNegative(true)
-                                        .partitionOptions(this)
-                                        .taxonSet(taxonSet)
-                                        .build(parameters);
-                                createScaleOperator(parameterName, demoTuning, rateWeights);
+                    case FIXED_LOCAL_CLOCK:
+                        for (Taxa taxonSet : options.taxonSets) {
+                            if (options.taxonSetsMono.get(taxonSet)) {
+                                String parameterName = taxonSet.getId() + ".rate";
+                                if (!hasParameter(parameterName)) {
+                                    new Parameter.Builder(parameterName, "substitution rate")
+                                            .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR)
+                                            .initial(rate)
+                                            .isCMTCRate(true).isNonNegative(true)
+                                            .partitionOptions(this)
+                                            .taxonSet(taxonSet)
+                                            .build(parameters);
+                                    createScaleOperator(parameterName, demoTuning, rateWeights);
+                                }
+
+                                params.add(getParameter(taxonSet.getId() + ".rate"));
                             }
-
-                            params.add(getParameter(taxonSet.getId() + ".rate"));
                         }
-                    }
-                    break;
+                        break;
 
-                case UNCORRELATED:
-                    // add the scale parameter (if needed) for the distribution. The location parameter will be added
-                    // in getClockRateParameter.
-                    switch (clockDistributionType) {
-                        case LOGNORMAL:
-                            params.add(getParameter(ClockType.UCLD_STDEV));
-                            break;
-                        case GAMMA:
-                            params.add(getParameter(ClockType.UCGD_SHAPE));
-                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
+                    case UNCORRELATED:
+                        // add the scale parameter (if needed) for the distribution. The location parameter will be added
+                        // in getClockRateParameter.
+                        switch (clockDistributionType) {
+                            case LOGNORMAL:
+                                params.add(getParameter(ClockType.UCLD_STDEV));
+                                break;
+                            case GAMMA:
+                                params.add(getParameter(ClockType.UCGD_SHAPE));
+                                break;
+                            case CAUCHY:
+                                throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                            break;
-                        case EXPONENTIAL:
-                            break;
-                    }
-                    break;
+                            case EXPONENTIAL:
+                                break;
+                        }
+                        break;
 
-                case AUTOCORRELATED:
-                    throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
+                    case AUTOCORRELATED:
+                        throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                    params.add(getParameter("branchRates.var"));
 //                    break;
 
-                default:
-                    throw new IllegalArgumentException("Unknown clock model");
+                    default:
+                        throw new IllegalArgumentException("Unknown clock model");
+                }
+                Parameter rateParam = getClockRateParameter();
+                params.add(rateParam);
             }
 
-            Parameter rateParam = getClockRateParameter();
-            params.add(rateParam);
         }
         return params;
     }
@@ -399,71 +414,89 @@ public class PartitionClockModel extends PartitionOptions {
                 }
 
             } else {
-                Operator rateOperator = getOperator("clock.rate");
-                switch (clockType) {
-                    case STRICT_CLOCK:
-                        ops.add(rateOperator);
-                        break;
+                if (performModelAveraging) {
+                    ops.add(getOperator(ClockType.UCLD_MEAN));
+                    ops.add(getOperator(ClockType.UCLD_STDEV));
+                    ops.add(getOperator(ClockType.UCGD_MEAN));
+                    ops.add(getOperator(ClockType.UCGD_SHAPE));
+                    ops.add(getOperator(ClockType.UCED_MEAN));
 
-                    case RANDOM_LOCAL_CLOCK:
-                        ops.add(rateOperator);
-                        ops.add(getOperator(ClockType.LOCAL_CLOCK + ".relativeRates"));
-                        ops.add(getOperator(ClockType.LOCAL_CLOCK + ".changes"));
-                        break;
+                    ops.add(getOperator("uniformBranchRateQuantiles"));
 
-                    case FIXED_LOCAL_CLOCK:
-                        ops.add(rateOperator);
-                        for (Taxa taxonSet : options.taxonSets) {
-                            if (options.taxonSetsMono.get(taxonSet)) {
-                                ops.add(getOperator(taxonSet.getId() + ".rate"));
+                    ops.add(getOperator("uniformBranchRateDistributionIndex"));
+                } else {
+                    Operator rateOperator = getOperator("clock.rate");
+                    switch (clockType) {
+                        case STRICT_CLOCK:
+                            ops.add(rateOperator);
+                            break;
+
+                        case RANDOM_LOCAL_CLOCK:
+                            ops.add(rateOperator);
+                            ops.add(getOperator(ClockType.LOCAL_CLOCK + ".relativeRates"));
+                            ops.add(getOperator(ClockType.LOCAL_CLOCK + ".changes"));
+                            break;
+
+                        case FIXED_LOCAL_CLOCK:
+                            ops.add(rateOperator);
+                            for (Taxa taxonSet : options.taxonSets) {
+                                if (options.taxonSetsMono.get(taxonSet)) {
+                                    ops.add(getOperator(taxonSet.getId() + ".rate"));
+                                }
                             }
-                        }
-                        break;
+                            break;
 
-                    case UNCORRELATED:
-                        switch (clockDistributionType) {
-                            case LOGNORMAL:
-                                ops.add(rateOperator = getOperator(ClockType.UCLD_MEAN));
-                                ops.add(getOperator(ClockType.UCLD_STDEV));
-                                break;
-                            case GAMMA:
-                                ops.add(rateOperator = getOperator(ClockType.UCGD_MEAN));
-                                ops.add(getOperator(ClockType.UCGD_SHAPE));
-                                break;
-                            case CAUCHY:
+                        case UNCORRELATED:
+                            switch (clockDistributionType) {
+                                case LOGNORMAL:
+                                    ops.add(rateOperator = getOperator(ClockType.UCLD_MEAN));
+                                    ops.add(getOperator(ClockType.UCLD_STDEV));
+                                    break;
+                                case GAMMA:
+                                    ops.add(rateOperator = getOperator(ClockType.UCGD_MEAN));
+                                    ops.add(getOperator(ClockType.UCGD_SHAPE));
+                                    break;
+                                case CAUCHY:
 //                                throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
-                                break;
-                            case EXPONENTIAL:
-                                ops.add(rateOperator = getOperator(ClockType.UCED_MEAN));
-                                break;
-                        }
+                                    break;
+                                case EXPONENTIAL:
+                                    ops.add(rateOperator = getOperator(ClockType.UCED_MEAN));
+                                    break;
+                            }
 
-                        if (isContinuousQuantile()) {
-                            ops.add(getOperator("uniformBranchRateQuantiles"));
-                        } else {
-                            ops.add(getOperator("swapBranchRateCategories"));
-                            ops.add(getOperator("uniformBranchRateCategories"));
-                        }
-                        break;
+                            if (isContinuousQuantile()) {
+                                ops.add(getOperator("uniformBranchRateQuantiles"));
+                            } else {
+                                ops.add(getOperator("swapBranchRateCategories"));
+                                ops.add(getOperator("uniformBranchRateCategories"));
+                            }
+                            break;
 
-                    case AUTOCORRELATED:
-                        throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
+                        case AUTOCORRELATED:
+                            throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                        break;
 
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
+                        default:
+                            throw new IllegalArgumentException("Unknown clock model");
+                    }
 
-                if (!rateOperator.isParameterFixed()) {
-                    Operator upDownOperator = getUpDownOperator();
-                    // need to set the node heights parameter again in case the treeModel has changed and
-                    upDownOperator.setParameter1(
-                            getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"));
-                    ops.add(upDownOperator);
-                } else {
-                    ops.add(getPartitionTreeModel().getOperator("treeModel.allInternalNodeHeights"));
-                }
+                    if (!rateOperator.isParameterFixed()) {
+                        if (performModelAveraging) {
+                            ops.add(getOperator("upDownUCLDMeanHeights"));
+                            ops.add(getOperator("upDownUCGDMeanHeights"));
+                            ops.add(getOperator("upDownUCEDMeanHeights"));
+                        } else {
+                            Operator upDownOperator = getUpDownOperator();
+                            // need to set the node heights parameter again in case the treeModel has changed and
+                            upDownOperator.setParameter1(
+                                    getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"));
+                            ops.add(upDownOperator);
+                        }
+                    } else {
+                        ops.add(getPartitionTreeModel().getOperator("treeModel.allInternalNodeHeights"));
+                    }
 
+                }
             }
         }
 
@@ -509,6 +542,14 @@ public class PartitionClockModel extends PartitionOptions {
         this.clockDistributionType = clockDistributionType;
     }
 
+    public boolean performModelAveraging() {
+        return performModelAveraging;
+    }
+
+    public void setPerformModelAveraging(boolean performModelAveraging) {
+        this.performModelAveraging = performModelAveraging;
+    }
+
     public boolean isContinuousQuantile() {
         return continuousQuantile;
     }
@@ -539,5 +580,6 @@ public class PartitionClockModel extends PartitionOptions {
         clockType = source.clockType;
         clockDistributionType = source.clockDistributionType;
         continuousQuantile = source.continuousQuantile;
+        performModelAveraging = source.performModelAveraging;
     }
 }

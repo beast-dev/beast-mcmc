@@ -148,6 +148,15 @@ public class ParameterPriorGenerator extends Generator {
             case NONE_IMPROPER:
                 writer.writeComment("Improper uniform prior: " + parameter.getName());
                 break;
+            case DISCRETE_UNIFORM_PRIOR:
+                writer.writeOpenTag(PriorParsers.DISCRETE_UNIFORM_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.DISCRETE_UNIFORM_PRIOR);
+                break;
             case UNIFORM_PRIOR:
                 if (parameter.isPriorImproper()) {
                     throw new IllegalArgumentException("Uniform priors cannot have infinite bounds (use 'NONE_IMPROPER')");
@@ -272,6 +281,8 @@ public class ParameterPriorGenerator extends Generator {
                                 treeModel = pd.getPartitionTreeModel();
                                 break; // todo - This breaks after the first iteration. Why a loop?
                             }
+                        } else if (pcm.performModelAveraging()) {
+                            treeModel = pcm.getPartitionTreeModel();
                         }
                     }
                 }

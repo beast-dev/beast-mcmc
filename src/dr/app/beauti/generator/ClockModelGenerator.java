@@ -510,6 +510,10 @@ public class ClockModelGenerator extends Generator {
     public String getClockRateString(PartitionClockModel model) {
         String prefix = model.getPrefix();
 
+        if (model.performModelAveraging()) {
+            return prefix + "meanRate";
+        }
+
         switch (model.getClockType()) {
             case STRICT_CLOCK:
             case RANDOM_LOCAL_CLOCK:

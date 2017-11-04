@@ -432,18 +432,15 @@ public class PartitionClockModel extends PartitionOptions {
                     ops.add(getOperator(ClockType.UCGD_SHAPE));
                     ops.add(getOperator(ClockType.UCED_MEAN));
 
-                    /*switch (clockDistributionType) {
-
-                    }
-                    if (!rateOperator.isParameterFixed()) {
+                    if (!getOperator(ClockType.UCLD_MEAN).isParameterFixed()) {
                         ops.add(getOperator("upDownUCLDMeanHeights"));
+                    }
+                    if (!getOperator(ClockType.UCGD_MEAN).isParameterFixed()) {
                         ops.add(getOperator("upDownUCGDMeanHeights"));
+                    }
+                    if (!getOperator(ClockType.UCED_MEAN).isParameterFixed()) {
                         ops.add(getOperator("upDownUCEDMeanHeights"));
-                    }*/
-
-                    ops.add(getOperator("upDownUCLDMeanHeights"));
-                    ops.add(getOperator("upDownUCGDMeanHeights"));
-                    ops.add(getOperator("upDownUCEDMeanHeights"));
+                    }
 
                     ops.add(getOperator("uniformBranchRateQuantiles"));
                     ops.add(getOperator("uniformBranchRateDistributionIndex"));

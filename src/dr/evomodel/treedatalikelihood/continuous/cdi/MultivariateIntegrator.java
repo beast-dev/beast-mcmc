@@ -45,26 +45,26 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             sb.append("\nTIMING:");
             for (String key : times.keySet()) {
                 String value = String.format("%4.3e", (double) times.get(key));
-                sb.append("\n" + key + "\t\t" + value);
+                sb.append("\n").append(key).append("\t\t").append(value);
             }
             sb.append("\n");
         }
         return sb.toString();
     }
 
-    private static final boolean TIMING = false;
+    static final boolean TIMING = false;
 
     private final Map<String, Long> times;
 
-    private DenseMatrix64F matrix0;
-    private DenseMatrix64F matrix1;
-    private DenseMatrix64F matrix2;
-    private DenseMatrix64F matrix3;
-    private DenseMatrix64F matrix4;
-    private DenseMatrix64F matrix5;
-    private DenseMatrix64F matrix6;
+    DenseMatrix64F matrix0;
+    DenseMatrix64F matrix1;
+    DenseMatrix64F matrix2;
+    DenseMatrix64F matrix3;
+    DenseMatrix64F matrix4;
+    DenseMatrix64F matrix5;
+    DenseMatrix64F matrix6;
 
-    private double[] vector0;
+    double[] vector0;
 
     private void allocateStorage() {
         inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
@@ -522,11 +522,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     private final Map<String, Long> startTimes = new HashMap<String, Long>();
 
-    private void startTime(String key) {
+    void startTime(String key) {
         startTimes.put(key, System.nanoTime());
     }
 
-    private void endTime(String key) {
+    void endTime(String key) {
         long start = startTimes.get(key);
 
         Long total = times.get(key);
@@ -644,5 +644,5 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         }
     }
 
-    private double[] inverseDiffusions;
+    double[] inverseDiffusions;
 }

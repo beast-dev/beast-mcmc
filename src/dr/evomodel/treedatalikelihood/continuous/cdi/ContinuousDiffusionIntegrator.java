@@ -85,18 +85,18 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     class Basic implements ContinuousDiffusionIntegrator {
 
-        private int instance = -1;
+//        private int instance = -1;
         private InstanceDetails details = new InstanceDetails();
 
-        private final PrecisionType precisionType;
-        protected final int numTraits;
-        protected final int dimTrait;
-        protected final int bufferCount;
-        protected final int diffusionCount;
+//        private final PrecisionType precisionType;
+        final int numTraits;
+        final int dimTrait;
+        final int bufferCount;
+        final int diffusionCount;
 
-        protected final int dimMatrix;
-        protected final int dimPartialForTrait;
-        protected final int dimPartial;
+        final int dimMatrix;
+        final int dimPartialForTrait;
+        final int dimPartial;
 
         @Override
         public String getReport() {
@@ -115,7 +115,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert(bufferCount > 0);
             assert(diffusionCount > 0);
 
-            this.precisionType = precisionType;
+//            assert (precisionType == PrecisionType.SCALAR);
+
+//            this.precisionType = precisionType;
             this.numTraits = numTraits;
             this.dimTrait = dimTrait;
             this.bufferCount = bufferCount;
@@ -325,7 +327,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 }
 
                 updatePartial(
-                        operations[offset + 0],
+                        operations[offset    ],
                         operations[offset + 1],
                         operations[offset + 2],
                         operations[offset + 3],
@@ -371,24 +373,24 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         // Internal storage
-        protected double[] partials;
+        double[] partials;
 
-        protected double[] branchLengths;
-        protected double[] variances;
-        protected double[] precisions;
+        double[] branchLengths;
+        double[] variances;
+        double[] precisions;
 
-        protected double[] remainders;
-        protected double[] diffusions;
-        protected double[] determinants;
-        protected int[] degreesOfFreedom;
-        protected double[] outerProducts;
-        protected double[] prePartials;
+        double[] remainders;
+        double[] diffusions;
+        double[] determinants;
+        int[] degreesOfFreedom;
+        double[] outerProducts;
+        double[] prePartials;
 
         // Set during updateDiffusionMatrices() and used in updatePartials()
-        protected int precisionOffset;
-        protected double precisionLogDet;
+        int precisionOffset;
+        double precisionLogDet;
 
-        protected static final boolean INLINE = true;
+        static final boolean INLINE = true;
 
         @Override
         public void updatePreOrderPartial(
@@ -676,7 +678,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                             }
                         }
 
-                        if (DEBUG && incrementOuterProducts) {
+                        if (DEBUG) {
                             System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                         }
 

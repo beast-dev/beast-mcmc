@@ -2,12 +2,8 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
-import mpi.Comm;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
@@ -16,7 +12,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  * @author Marc A. Suchard
  */
 
-public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic {
+public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
     private static boolean DEBUG = false;
 
@@ -24,193 +20,193 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
                                       int diffusionCount) {
         super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
 
-        assert precisionType == PrecisionType.FULL;
-
-        allocateStorage();
-
-        if (TIMING) {
-            times = new HashMap<String, Long>();
-        } else {
-            times = null;
-        }
+//        assert precisionType == PrecisionType.FULL;
+//
+//        allocateStorage();
+//
+//        if (TIMING) {
+//            times = new HashMap<String, Long>();
+//        } else {
+//            times = null;
+//        }
 
         System.err.println("Trying SafeMultivariateIntegrator");
     }
 
-    @Override
-    public String getReport() {
-
-        StringBuilder sb = new StringBuilder();
-
-        if (TIMING) {
-            sb.append("\nTIMING:");
-            for (String key : times.keySet()) {
-                String value = String.format("%4.3e", (double) times.get(key));
-                sb.append("\n" + key + "\t\t" + value);
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
-    }
+//    @Override
+//    public String getReport() {
+//
+//        StringBuilder sb = new StringBuilder();
+//
+//        if (TIMING) {
+//            sb.append("\nTIMING:");
+//            for (String key : times.keySet()) {
+//                String value = String.format("%4.3e", (double) times.get(key));
+//                sb.append("\n" + key + "\t\t" + value);
+//            }
+//            sb.append("\n");
+//        }
+//        return sb.toString();
+//    }
 
     private static final boolean TIMING = false;
 
-    private final Map<String, Long> times;
+//    private final Map<String, Long> times;
+//
+//    private DenseMatrix64F matrix0;
+//    private DenseMatrix64F matrix1;
+//    private DenseMatrix64F matrix2;
+//    private DenseMatrix64F matrix3;
+//    private DenseMatrix64F matrix4;
+//    private DenseMatrix64F matrix5;
+//    private DenseMatrix64F matrix6;
+//
+//    private double[] vector0;
 
-    private DenseMatrix64F matrix0;
-    private DenseMatrix64F matrix1;
-    private DenseMatrix64F matrix2;
-    private DenseMatrix64F matrix3;
-    private DenseMatrix64F matrix4;
-    private DenseMatrix64F matrix5;
-    private DenseMatrix64F matrix6;
+//    private void allocateStorage() {
+//        inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
+//
+//        vector0 = new double[dimTrait];
+//        matrix0 = new DenseMatrix64F(dimTrait, dimTrait);
+//        matrix1 = new DenseMatrix64F(dimTrait, dimTrait);
+//        matrix2 = new DenseMatrix64F(dimTrait, dimTrait);
+//        matrix3 = new DenseMatrix64F(dimTrait, dimTrait);
+//        matrix4 = new DenseMatrix64F(dimTrait, dimTrait);
+//        matrix5 = new DenseMatrix64F(dimTrait, dimTrait);
+//        matrix6 = new DenseMatrix64F(dimTrait, dimTrait);
+//    }
 
-    private double[] vector0;
-
-    private void allocateStorage() {
-        inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
-
-        vector0 = new double[dimTrait];
-        matrix0 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix1 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix2 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix3 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix4 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix5 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix6 = new DenseMatrix64F(dimTrait, dimTrait);
-    }
-
-    @Override
-    public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
-        super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
-
-        assert (inverseDiffusions != null);
-
-        final int offset = dimTrait * dimTrait * precisionIndex;
-        DenseMatrix64F precision = wrap(diffusions, offset, dimTrait, dimTrait);
-        DenseMatrix64F variance = new DenseMatrix64F(dimTrait, dimTrait);
-        CommonOps.invert(precision, variance);
-        unwrap(variance, inverseDiffusions, offset);
-
-        if (DEBUG) {
-            System.err.println("At precision index: " + precisionIndex);
-            System.err.println("precision: " + precision);
-            System.err.println("variance : " + variance);
-        }
-    }
+//    @Override
+//    public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
+//        super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
+//
+//        assert (inverseDiffusions != null);
+//
+//        final int offset = dimTrait * dimTrait * precisionIndex;
+//        DenseMatrix64F precision = wrap(diffusions, offset, dimTrait, dimTrait);
+//        DenseMatrix64F variance = new DenseMatrix64F(dimTrait, dimTrait);
+//        CommonOps.invert(precision, variance);
+//        unwrap(variance, inverseDiffusions, offset);
+//
+//        if (DEBUG) {
+//            System.err.println("At precision index: " + precisionIndex);
+//            System.err.println("precision: " + precision);
+//            System.err.println("variance : " + variance);
+//        }
+//    }
 
 //    @Override
 //    public boolean requireDataAugmentationForOuterProducts() {
 //        return true;
 //    }
 
-    @Override
-    public void updatePreOrderPartial(
-            final int kBuffer, // parent
-            final int iBuffer, // node
-            final int iMatrix,
-            final int jBuffer, // sibling
-            final int jMatrix) {
-
-        // Determine buffer offsets
-        int kbo = dimPartial * kBuffer;
-        int ibo = dimPartial * iBuffer;
-        int jbo = dimPartial * jBuffer;
-
-        // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
-
-        // Read variance increments along descendent branches of k
-        final double vi = branchLengths[imo];
-        final double vj = branchLengths[jmo];
-
-        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
-
-        if (DEBUG) {
-            System.err.println("updatePreOrderPartial for node " + iBuffer);
-//                System.err.println("variance diffusion: " + Vd);
-            System.err.println("\tvi: " + vi + " vj: " + vj);
-//                System.err.println("precisionOffset = " + precisionOffset);
-        }
-
-        // For each trait // TODO in parallel
-        for (int trait = 0; trait < numTraits; ++trait) {
-
-            // A. Get current precision of k and j
-            final DenseMatrix64F Pk = wrap(prePartials, kbo + dimTrait, dimTrait, dimTrait);
-//                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
-
-//                final DenseMatrix64F Vk = wrap(prePartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-
-            // B. Inflate variance along sibling branch using matrix inversion
-//                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Vjp = matrix0;
-            CommonOps.add(Vj, vj, Vd, Vjp);
-
-//                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pjp = matrix1;
-            InversionResult cj = safeInvert(Vjp, Pjp, false);
-
-//                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pip = matrix2;
-            CommonOps.add(Pk, Pjp, Pip);
-
-//                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Vip = matrix3;
-            InversionResult cip = safeInvert(Pip, Vip, false);
-
-            // C. Compute prePartial mean
-//                final double[] tmp = new double[dimTrait];
-            final double[] tmp = vector0;
-            for (int g = 0; g < dimTrait; ++g) {
-                double sum = 0.0;
-                for (int h = 0; h < dimTrait; ++h) {
-                    sum += Pk.unsafe_get(g, h) * prePartials[kbo + h]; // Read parent
-                    sum += Pjp.unsafe_get(g, h) * partials[jbo + h];   // Read sibling
-                }
-                tmp[g] = sum;
-            }
-            for (int g = 0; g < dimTrait; ++g) {
-                double sum = 0.0;
-                for (int h = 0; h < dimTrait; ++h) {
-                    sum += Vip.unsafe_get(g, h) * tmp[h];
-                }
-                prePartials[ibo + g] = sum; // Write node
-            }
-
-            // C. Inflate variance along node branch
-            final DenseMatrix64F Vi = Vip;
-            CommonOps.add(vi, Vd, Vip, Vi);
-
-//                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pi = matrix4;
-            InversionResult ci = safeInvert(Vi, Pi, false);
-
-            // X. Store precision results for node
-            unwrap(Pi, prePartials, ibo + dimTrait);
-            unwrap(Vi, prePartials, ibo + dimTrait + dimTrait * dimTrait);
-
-            if (DEBUG) {
-                System.err.println("trait: " + trait);
-                System.err.println("pM: " + new WrappedVector.Raw(prePartials, kbo, dimTrait));
-                System.err.println("pP: " + Pk);
-                System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
-                System.err.println("sV: " + Vj);
-                System.err.println("sVp: " + Vjp);
-                System.err.println("sPp: " + Pjp);
-                System.err.println("Pip: " + Pip);
-                System.err.println("cM: " + new WrappedVector.Raw(prePartials, ibo, dimTrait));
-                System.err.println("cV: " + Vi);
-            }
-
-            // Get ready for next trait
-            kbo += dimPartialForTrait;
-            ibo += dimPartialForTrait;
-            jbo += dimPartialForTrait;
-        }
-    }
+//    @Override
+//    public void updatePreOrderPartial(
+//            final int kBuffer, // parent
+//            final int iBuffer, // node
+//            final int iMatrix,
+//            final int jBuffer, // sibling
+//            final int jMatrix) {
+//
+//        // Determine buffer offsets
+//        int kbo = dimPartial * kBuffer;
+//        int ibo = dimPartial * iBuffer;
+//        int jbo = dimPartial * jBuffer;
+//
+//        // Determine matrix offsets
+//        final int imo = dimMatrix * iMatrix;
+//        final int jmo = dimMatrix * jMatrix;
+//
+//        // Read variance increments along descendent branches of k
+//        final double vi = branchLengths[imo];
+//        final double vj = branchLengths[jmo];
+//
+//        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
+//
+//        if (DEBUG) {
+//            System.err.println("updatePreOrderPartial for node " + iBuffer);
+////                System.err.println("variance diffusion: " + Vd);
+//            System.err.println("\tvi: " + vi + " vj: " + vj);
+////                System.err.println("precisionOffset = " + precisionOffset);
+//        }
+//
+//        // For each trait // TODO in parallel
+//        for (int trait = 0; trait < numTraits; ++trait) {
+//
+//            // A. Get current precision of k and j
+//            final DenseMatrix64F Pk = wrap(prePartials, kbo + dimTrait, dimTrait, dimTrait);
+////                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+//
+////                final DenseMatrix64F Vk = wrap(prePartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//
+//            // B. Inflate variance along sibling branch using matrix inversion
+////                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
+//            final DenseMatrix64F Vjp = matrix0;
+//            CommonOps.add(Vj, vj, Vd, Vjp);
+//
+////                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
+//            final DenseMatrix64F Pjp = matrix1;
+//            InversionResult cj = safeInvert(Vjp, Pjp, false);
+//
+////                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
+//            final DenseMatrix64F Pip = matrix2;
+//            CommonOps.add(Pk, Pjp, Pip);
+//
+////                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
+//            final DenseMatrix64F Vip = matrix3;
+//            InversionResult cip = safeInvert(Pip, Vip, false);
+//
+//            // C. Compute prePartial mean
+////                final double[] tmp = new double[dimTrait];
+//            final double[] tmp = vector0;
+//            for (int g = 0; g < dimTrait; ++g) {
+//                double sum = 0.0;
+//                for (int h = 0; h < dimTrait; ++h) {
+//                    sum += Pk.unsafe_get(g, h) * prePartials[kbo + h]; // Read parent
+//                    sum += Pjp.unsafe_get(g, h) * partials[jbo + h];   // Read sibling
+//                }
+//                tmp[g] = sum;
+//            }
+//            for (int g = 0; g < dimTrait; ++g) {
+//                double sum = 0.0;
+//                for (int h = 0; h < dimTrait; ++h) {
+//                    sum += Vip.unsafe_get(g, h) * tmp[h];
+//                }
+//                prePartials[ibo + g] = sum; // Write node
+//            }
+//
+//            // C. Inflate variance along node branch
+//            final DenseMatrix64F Vi = Vip;
+//            CommonOps.add(vi, Vd, Vip, Vi);
+//
+////                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
+//            final DenseMatrix64F Pi = matrix4;
+//            InversionResult ci = safeInvert(Vi, Pi, false);
+//
+//            // X. Store precision results for node
+//            unwrap(Pi, prePartials, ibo + dimTrait);
+//            unwrap(Vi, prePartials, ibo + dimTrait + dimTrait * dimTrait);
+//
+//            if (DEBUG) {
+//                System.err.println("trait: " + trait);
+//                System.err.println("pM: " + new WrappedVector.Raw(prePartials, kbo, dimTrait));
+//                System.err.println("pP: " + Pk);
+//                System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
+//                System.err.println("sV: " + Vj);
+//                System.err.println("sVp: " + Vjp);
+//                System.err.println("sPp: " + Pjp);
+//                System.err.println("Pip: " + Pip);
+//                System.err.println("cM: " + new WrappedVector.Raw(prePartials, ibo, dimTrait));
+//                System.err.println("cV: " + Vi);
+//            }
+//
+//            // Get ready for next trait
+//            kbo += dimPartialForTrait;
+//            ibo += dimPartialForTrait;
+//            jbo += dimPartialForTrait;
+//        }
+//    }
 
     @Override
     protected void updatePartial(
@@ -394,7 +390,7 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
             CommonOps.add(Pip, Pjp, Pk);
 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Vk = matrix5;
+//            final DenseMatrix64F Vk = matrix5;
 
 //            if (useVariance) {
 ////            InversionResult ck =
@@ -589,26 +585,26 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
         }
     }
 
-    private final Map<String, Long> startTimes = new HashMap<String, Long>();
-
-    private void startTime(String key) {
-        startTimes.put(key, System.nanoTime());
-    }
-
-    private void endTime(String key) {
-        long start = startTimes.get(key);
-
-        Long total = times.get(key);
-        if (total == null) {
-            total = new Long(0);
-        }
-
-        long run = total + (System.nanoTime() - start);
-        times.put(key, run);
-
-//            System.err.println("run = " + run);
-//            System.exit(-1);
-    }
+//    private final Map<String, Long> startTimes = new HashMap<String, Long>();
+//
+//    private void startTime(String key) {
+//        startTimes.put(key, System.nanoTime());
+//    }
+//
+//    private void endTime(String key) {
+//        long start = startTimes.get(key);
+//
+//        Long total = times.get(key);
+//        if (total == null) {
+//            total = new Long(0);
+//        }
+//
+//        long run = total + (System.nanoTime() - start);
+//        times.put(key, run);
+//
+////            System.err.println("run = " + run);
+////            System.exit(-1);
+//    }
 
 //        private void incrementTiming(long start, long end, String key) {
 //            Long total = times.get(key);
@@ -637,7 +633,7 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
         int priorOffset = dimPartial * priorBufferIndex;
 
         final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
-        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
+//        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
         // TODO For each trait in parallel
         for (int trait = 0; trait < numTraits; ++trait) {
@@ -749,5 +745,5 @@ public class SafeMultivariateIntegrator extends ContinuousDiffusionIntegrator.Ba
         }
     }
 
-    private double[] inverseDiffusions;
+//    double[] inverseDiffusions;
 }

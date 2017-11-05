@@ -66,7 +66,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.traitParameter = traitParameter;
         this.loadings = loadings;
         this.traitPrecision = traitPrecision; // TODO Generalize for non-diagonal precision
-//        this.missingIndices = missingIndices;
 
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
@@ -306,20 +305,20 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return sum;
     }
 
-    @Deprecated
-    private double getTraitDeterminant(final int taxon) {
-
-        final double[] observed = observedIndicators[taxon];
-
-        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
-        double det = 1.0;
-        for (int k = 0; k < dimTrait; ++k) {
-            if (observed[k] == 1.0) {
-                det *= traitPrecision.getParameterValue(k);
-            }
-        }
-        return det;
-    }
+//    @Deprecated
+//    private double getTraitDeterminant(final int taxon) {
+//
+//        final double[] observed = observedIndicators[taxon];
+//
+//        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
+//        double det = 1.0;
+//        for (int k = 0; k < dimTrait; ++k) {
+//            if (observed[k] == 1.0) {
+//                det *= traitPrecision.getParameterValue(k);
+//            }
+//        }
+//        return det;
+//    }
 
     private double getTraitLogDeterminant(final int taxon) {
 
@@ -400,10 +399,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
                             "\n\n");
 
-                    if (Double.isInfinite(getTraitDeterminant(taxon))) {
-                        System.err.println("\tOffending parameter: " +
-                                new dr.math.matrixAlgebra.Vector(traitPrecision.getParameterValues()));
-                    }
+//                    if (Double.isInfinite(getTraitDeterminant(taxon))) {
+//                        System.err.println("\tOffending parameter: " +
+//                                new dr.math.matrixAlgebra.Vector(traitPrecision.getParameterValues()));
+//                    }
                 }
 
                 constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -

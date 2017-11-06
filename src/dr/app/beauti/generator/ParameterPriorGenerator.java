@@ -276,13 +276,13 @@ public class ParameterPriorGenerator extends Generator {
                     treeModel = options.taxonSetsTreeModel.get(parameter.getTaxonSet());
                 } else {
                     for (PartitionClockModel pcm : options.getPartitionClockModels()) {
-                        if (pcm.getClockRateParameter() == parameter) {
+                        if (pcm.performModelAveraging()) {
+                            treeModel = pcm.getPartitionTreeModel();
+                        } else if (pcm.getClockRateParameter() == parameter) {
                             for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
                                 treeModel = pd.getPartitionTreeModel();
                                 break; // todo - This breaks after the first iteration. Why a loop?
                             }
-                        } else if (pcm.performModelAveraging()) {
-                            treeModel = pcm.getPartitionTreeModel();
                         }
                     }
                 }

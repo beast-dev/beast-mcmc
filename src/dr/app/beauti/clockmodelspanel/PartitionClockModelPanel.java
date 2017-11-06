@@ -51,11 +51,15 @@ public class PartitionClockModelPanel extends OptionsPanel {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,
 //            ClockDistributionType.CAUCHY,
-            ClockDistributionType.EXPONENTIAL
+            ClockDistributionType.EXPONENTIAL,
+            ClockDistributionType.MODEL_AVERAGING
     });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
 
-    private JCheckBox modelAveragingCheck = new JCheckBox("Use Bayesian Model Averaging.");
+    private JLabel modelAveragingInfo = new JLabel(
+            "<html>Using the Bayesian Model Averaging (BMA) approach on the<br>" +
+                    "available relaxed clock models as described by Li & Drummond (2012)<br>" +
+                    " Mol. Biol. Evol. 29:751-761.<html>");
 
     protected final PartitionClockModel model;
 
@@ -80,6 +84,15 @@ public class PartitionClockModelPanel extends OptionsPanel {
         clockDistributionCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setClockDistributionType((ClockDistributionType) clockDistributionCombo.getSelectedItem());
+                if (clockDistributionCombo.getSelectedItem() == ClockDistributionType.MODEL_AVERAGING) {
+                    continuousQuantileCheck.setSelected(true);
+                    addComponent(modelAveragingInfo);
+                    model.setPerformModelAveraging(true);
+                } else {
+                    remove(modelAveragingInfo);
+                    model.setPerformModelAveraging(false);
+                }
+                model.setContinuousQuantile(continuousQuantileCheck.isSelected());
             }
         });
         clockDistributionCombo.setToolTipText("<html>Select the distribution that describes the variation in rate.</html>");
@@ -99,28 +112,9 @@ public class PartitionClockModelPanel extends OptionsPanel {
                     }
                 });
 
-        PanelUtils.setupComponent(modelAveragingCheck);
-        modelAveragingCheck.setToolTipText("<html>" +
-                "Select this option to perform Bayesian Model Averaging (BMA) of the<br>" +
-                "available relaxed clock models as described by Li & Drummond (2012) MBE 29:751-61.<html>");
-        modelAveragingCheck.setSelected(model.performModelAveraging());
-        modelAveragingCheck.addItemListener(
-                new ItemListener() {
-                    @Override
-                    public void itemStateChanged(ItemEvent e) {
-                        model.setPerformModelAveraging(modelAveragingCheck.isSelected());
-                        //set the clockTypeCombo to Uncorrelated Relaxed Clock to facilitate XML generation
-                        if (model.performModelAveraging()) {
-                            clockTypeCombo.setSelectedItem(ClockType.UNCORRELATED);
-                            continuousQuantileCheck.setSelected(true);
-                            model.setContinuousQuantile(true);
-                        }
-                    }
-                }
-        );
-
         setupPanel();
         setOpaque(false);
+
     }
 
 
@@ -156,11 +150,6 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 throw new IllegalArgumentException("Unknown clock model type");
 
         }
-
-        addComponent(new JLabel(
-                "<html>Select the option below to perform Bayesian Model Averaging (BMA) of the<br>" +
-                        "available relaxed clock models as described by Li & Drummond (2012) MBE 29:751-61.<html>"));
-        addComponent(modelAveragingCheck);
 
     }
 

@@ -154,7 +154,8 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            if (!model.getClockRateParameter().isFixed()) {
+
+            if (model.performModelAveraging() || !model.getClockRateParameter().isFixed()) {
                 writer.writeOpenTag(ColumnsParser.COLUMN,
                         new Attribute[]{
                                 new Attribute.Default<String>(ColumnsParser.LABEL, clockModelGenerator.getClockRateString(model)),
@@ -167,6 +168,7 @@ public class LogGenerator extends Generator {
 
                 writer.writeCloseTag(ColumnsParser.COLUMN);
             }
+
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {

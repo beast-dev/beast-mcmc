@@ -399,8 +399,6 @@ public class PartitionClockModel extends PartitionOptions {
 //                            break;
                     case EXPONENTIAL:
                         return getOperator("upDownUCEDMeanHeights");
-                    case MODEL_AVERAGING:
-                        return getOperator("upDownAllMeanHeights");
                 }
                 break;
 
@@ -473,7 +471,7 @@ public class PartitionClockModel extends PartitionOptions {
                                 break;
                             case MODEL_AVERAGING:
                                 ops.add(getOperator(ClockType.UCLD_MEAN));
-                                ops.add(getOperator(ClockType.UCGD_MEAN));
+                                ops.add(getOperator(ClockType.UCLD_STDEV));
                                 ops.add(getOperator(ClockType.UCGD_MEAN));
                                 ops.add(getOperator(ClockType.UCGD_SHAPE));
                                 ops.add(getOperator(ClockType.UCED_MEAN));

@@ -689,31 +689,34 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             logLikelihoods[trait] = logLike + remainder;
 
             if (incrementOuterProducts) {
-                int opo = dimTrait * dimTrait * trait;
-                int opd = precisionOffset;
 
-                double rootScalar = partials[rootOffset + dimTrait + 2 * dimTrait * dimTrait];
-                final double priorScalar = partials[priorOffset + dimTrait];
+                assert false : "Should not get here";
 
-                if (!Double.isInfinite(priorScalar)) {
-                    rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
-                }
-
-                for (int g = 0; g < dimTrait; ++g) {
-                    final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
-
-                    for (int h = 0; h < dimTrait; ++h) {
-                        final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
-
-                        outerProducts[opo] += gDifference * hDifference
-//                                    * Ptotal.unsafe_get(g, h) / diffusions[opd];
-                                * rootScalar;
-                        ++opo;
-                        ++opd;
-                    }
-                }
-
-                degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
+//                int opo = dimTrait * dimTrait * trait;
+//                int opd = precisionOffset;
+//
+//                double rootScalar = partials[rootOffset + dimTrait + 2 * dimTrait * dimTrait];
+//                final double priorScalar = partials[priorOffset + dimTrait];
+//
+//                if (!Double.isInfinite(priorScalar)) {
+//                    rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
+//                }
+//
+//                for (int g = 0; g < dimTrait; ++g) {
+//                    final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
+//
+//                    for (int h = 0; h < dimTrait; ++h) {
+//                        final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
+//
+//                        outerProducts[opo] += gDifference * hDifference
+////                                    * Ptotal.unsafe_get(g, h) / diffusions[opd];
+//                                * rootScalar;
+//                        ++opo;
+//                        ++opd;
+//                    }
+//                }
+//
+//                degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
             }
 
             if (DEBUG) {
@@ -730,6 +733,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //                System.err.println("Vtotal: " + Vtotal);
 //                    System.err.println("prec: " + partials[rootOffset + dimTrait]);
                 System.err.println("\t" + logLike + " " + (logLike + remainder));
+
                 if (incrementOuterProducts) {
                     System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                 }
@@ -741,9 +745,6 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
         if (DEBUG) {
             System.err.println("End");
-//                System.exit(-1);
         }
     }
-
-//    double[] inverseDiffusions;
 }

@@ -52,7 +52,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
             ClockDistributionType.GAMMA,
 //            ClockDistributionType.CAUCHY,
             ClockDistributionType.EXPONENTIAL,
-            ClockDistributionType.MODEL_AVERAGING
+            //ClockDistributionType.MODEL_AVERAGING
     });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
 

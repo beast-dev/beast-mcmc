@@ -68,15 +68,20 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
                 double newLogLikelihood = likelihood.getLogLikelihood();
 
                 if (Math.abs(logLikelihood - newLogLikelihood) >  tolerance) {
-                    System.err.println("Likelihood is not invariant to transformation:");
-                    System.err.println("Before: " + logLikelihood);
-                    System.err.println("After : " + newLogLikelihood);
-                    System.exit(-1);
+                    String sb = "Likelihood is not invariant to transformation:\n" +
+                            "Before: " + logLikelihood + "\n" +
+                            "After : " + newLogLikelihood + "\n";
+                    throw new RuntimeException(sb);
                 }
             }
         }
 
         return 0;
+    }
+
+    @Override
+    public void setPathParameter(double beta) {
+        // Do nothing  // TODO - need a better option
     }
 
     protected abstract void transform(Parameter parameter);

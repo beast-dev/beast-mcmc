@@ -28,18 +28,17 @@ package dr.inference.operators;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.DirtyLikelihoodOperatorParser;
-import dr.math.MathUtils;
 
 /**
  * @author Marc Suchard
  */
 public abstract class InvariantOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public InvariantOperator(Parameter parameter, Likelihood likelihood, double weight,
+    private InvariantOperator(Parameter parameter, Likelihood likelihood, double weight,
                              boolean checkLikelihood) {
         this.parameter = parameter;
         this.likelihood = likelihood;
-        this.checkLikelihood = DEBUG || checkLikelihood;
+        this.checkLikelihood = checkLikelihood || DEBUG;
 
         setWeight(weight);
     }
@@ -97,12 +96,15 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
 
         private final boolean translationInvariant;
         private final boolean rotationInvariant;
+        private final int dim;
 
-        public Rotation(Parameter parameter, double weight, Likelihood likelihood,
+        public Rotation(Parameter parameter, int dim,
+                        double weight, Likelihood likelihood,
                         boolean translate, boolean rotate,
                         boolean checkLikelihood) {
             super(parameter, likelihood, weight, checkLikelihood);
 
+            this.dim = dim;
             this.translationInvariant = translate;
             this.rotationInvariant = rotate;
         }
@@ -112,7 +114,7 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
 
             double[] x = parameter.getParameterValues();
 
-            EllipticalSliceOperator.transformPoint(x, translationInvariant, rotationInvariant, 2);
+            EllipticalSliceOperator.transformPoint(x, translationInvariant, rotationInvariant, dim);
 
             final int len = x.length;
             for (int i = 0; i < len; ++i) {

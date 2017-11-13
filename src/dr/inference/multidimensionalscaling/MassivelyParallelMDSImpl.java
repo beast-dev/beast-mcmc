@@ -45,13 +45,12 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private NativeMDSSingleton singleton = null;
     private int instance = -1; // Get instance # via initialization
 
-    public MassivelyParallelMDSImpl() {
+    MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
     }
 
     @Override
     public void initialize(int embeddingDimension, int locationCount, long flags) {
-        this.isLeftTruncated = (flags & LEFT_TRUNCATION) != 0;
         instance = singleton.initialize(embeddingDimension, locationCount, flags);
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
     }
@@ -81,8 +80,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public double calculateLogLikelihood() {
         double sumOfIncrements = singleton.getSumOfIncrements(instance);
 
-        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount - sumOfIncrements;
-        return logLikelihood;
+        return 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount - sumOfIncrements;
     }
 
     @Override
@@ -129,7 +127,6 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private int observationCount;
     private double precision;
     private double storedPrecision;
-    private boolean isLeftTruncated;
 
     private static final boolean CHECK_GRADIENT = false;
     private static final boolean CHECK_GRADIENT_KILL = true;

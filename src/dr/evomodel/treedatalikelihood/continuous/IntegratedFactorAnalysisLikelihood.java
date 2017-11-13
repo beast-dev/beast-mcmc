@@ -310,7 +310,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 //
 //        final double[] observed = observedIndicators[taxon];
 //
-//        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
+//        // Compute det( D_i \Gamma D_i^t)
 //        double det = 1.0;
 //        for (int k = 0; k < dimTrait; ++k) {
 //            if (observed[k] == 1.0) {

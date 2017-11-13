@@ -27,12 +27,9 @@ package dr.inferencexml.operators;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.DirtyLikelihoodOperator;
 import dr.inference.operators.InvariantOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
-
-import static dr.inference.operators.InvariantOperator.*;
 
 /**
  *
@@ -40,9 +37,10 @@ import static dr.inference.operators.InvariantOperator.*;
 public class InvariantOperatorParser extends AbstractXMLObjectParser {
 
     public static final String OPERATOR_NAME = "invariantOperator";
-    public static final String CHECK_LIKELIHOOD = "checkLikelihood";
-    public static final String TRANSLATE = "translate";
-    public static final String ROTATE = "rotate";
+    private static final String CHECK_LIKELIHOOD = "checkLikelihood";
+    private static final String TRANSLATE = "translate";
+    private static final String ROTATE = "rotate";
+    private static final String DIMENSION = "dimension";
 
     public String getParserName() {
         return OPERATOR_NAME;
@@ -60,7 +58,9 @@ public class InvariantOperatorParser extends AbstractXMLObjectParser {
         boolean rotate = xo.getAttribute(ROTATE, true);
         boolean checkLikelihood = xo.getAttribute(CHECK_LIKELIHOOD, true);
 
-        return new InvariantOperator.Rotation(parameter, weight, likelihood,
+        int dim = xo.getIntegerAttribute(DIMENSION);
+
+        return new InvariantOperator.Rotation(parameter, dim, weight, likelihood,
                 translate, rotate, checkLikelihood);
 
     }
@@ -87,6 +87,7 @@ public class InvariantOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(TRANSLATE, true),
             AttributeRule.newBooleanRule(ROTATE, true),
             AttributeRule.newBooleanRule(CHECK_LIKELIHOOD, true),
+            AttributeRule.newIntegerRule(DIMENSION),
             new ElementRule(Likelihood.class, true),
     };
 }

@@ -61,7 +61,9 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
             }
         }
 
-        transform(parameter);
+        if (pathParameter == 1.0) {
+            transform(parameter);
+        }
 
         if (checkLikelihood) {
             if (likelihood != null) {
@@ -81,8 +83,10 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
 
     @Override
     public void setPathParameter(double beta) {
-        // Do nothing  // TODO - need a better option
+        pathParameter = beta;
     }
+
+    private double pathParameter = 1.0;
 
     protected abstract void transform(Parameter parameter);
 

@@ -213,7 +213,7 @@ public class Trace {
     }
 
     //******************** TraceCorrelation ****************************
-    protected TraceCorrelation traceStatistics;
+    private TraceCorrelation traceStatistics;
 
     public TraceCorrelation getTraceStatistics() {
         return traceStatistics;

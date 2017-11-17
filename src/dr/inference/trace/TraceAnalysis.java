@@ -457,7 +457,7 @@ public class TraceAnalysis {
                 break;
             //+++++ categorical +++++
             case 15:
-                value = tc.getMode().toString();
+                value = Integer.toString(tc.getMode()); // todo map to category string
                 break;
             case 16:
                 value = tc.getFrequencyOfMode();
@@ -466,15 +466,15 @@ public class TraceAnalysis {
                 value = tc.getProbabilityOfMode();
                 break;
             case 18:
-                value = tc.printUniqueValues();
+                value = tc.getCredibleSet().toString(); // todo full set
                 break;
             case 19:
-                value = tc.printCredibleSet();
+                value = tc.getCredibleSet().toString(); // todo render as list using category strings
                 break;
         }
         if (value == null)
             return "";
-        else if (value instanceof Double && Double.isNaN(((Double) value).doubleValue()))
+        else if (value instanceof Double && Double.isNaN((Double) value))
             return "";
         else
             return value.toString();

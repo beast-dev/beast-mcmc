@@ -25,10 +25,8 @@
 
 package dr.inference.trace;
 
-import dr.stats.CredibleSetAnalysis;
 import dr.stats.DiscreteStatistics;
 import dr.stats.FrequencyCounter;
-import dr.stats.Mode;
 import dr.util.HeapSort;
 
 import java.util.*;
@@ -40,42 +38,60 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class TraceDistribution<T> {
+public class TraceDistribution {
     private TraceType traceType;
 
+    private Map<Integer, String> categoryLabelMap;
     private Map<Integer, Integer> categoryOrderMap;
 
-    public TraceDistribution(List<T> values, TraceType traceType) {
+    public TraceDistribution(List<Double> values, TraceType traceType) {
         this.traceType = traceType;
-        categoryOrderMap = null;
         initStatistics(values, 0.95);
     }
 
-    public TraceDistribution(List<T> values, Map<Integer, Integer> categoryOrderMap) {
+    public TraceDistribution(List<Double> values, Map<Integer, String> categoryLabelMap) {
         this.traceType = TraceType.CATEGORICAL;
-        this.categoryOrderMap = categoryOrderMap;
+        this.categoryLabelMap = categoryLabelMap;
+        this.categoryOrderMap = getNaturalOrder(categoryLabelMap);
         initStatistics(values, 0.95);
     }
-//    @Deprecated
-//    public TraceDistribution(List<T> values, TraceType traceType, double ESS) {
-//        this(values, traceType);
-//        this.ESS = ESS; // // move to TraceCorrelation
-//    }
 
-    public TraceType getTraceType() {
-        return traceType;
+    private void initStatistics(List<Double> values, double proportion) {
+        if (values.size() < 1) throw new RuntimeException("There is no value sent to statistics calculation !");
+
+        if (traceType.isNumber()) {
+            analyseDistributionNumeric(values, proportion);
+        }
+
+        if (traceType != TraceType.REAL) {
+            analyseDistributionDiscrete(values, proportion);
+        }
     }
 
-    public Map<Integer, Integer> getCategoryOrderMap() {
+
+    public Map<Integer, Integer> getNaturalOrder(Map<Integer, String> categoryMap) {
+        categoryOrderMap = new HashMap<Integer, Integer>();
+
+        List<String> labels = new ArrayList<String>(categoryMap.values());
+        Collections.sort(labels);
+
+        for (Integer index : categoryMap.keySet()) {
+            String l = categoryMap.get(index);
+            categoryOrderMap.put(labels.indexOf(l), index);
+        }
+
         return categoryOrderMap;
     }
 
-    public void setCategoryOrderMap(Map<Integer, Integer> categoryOrderMap) {
-        this.categoryOrderMap =  categoryOrderMap;
+    public Map<Integer, Integer> getFrequencyOrder() {
+        categoryOrderMap = new HashMap<Integer, Integer>();
+
+        Set<Integer> values = frequencyCounter.getUniqueValues();
+        return categoryOrderMap;
     }
 
-    public void setTraceType(TraceType traceType) {
-        this.traceType = traceType;
+    public TraceType getTraceType() {
+        return traceType;
     }
 
     public boolean isMinEqualToMax() {
@@ -166,10 +182,13 @@ public class TraceDistribution<T> {
 
     /**
      * The major method to analyse traces in numeric values including Double, Integer
-     * @param values the values to analyze
+     * @param valueList the values to analyze
      */
-    private void analyseDistributionNumeric(double[] values, double proportion) {
-//        this.values = values;   // move to TraceDistribution(T[] values)
+    private void analyseDistributionNumeric(List<Double> valueList, double proportion) {
+        double[] values = new double[valueList.size()];
+        for (int i = 0; i < valueList.size(); i++) {
+            values[i] = valueList.get(i);
+        }
 
         size = values.length;
         mean = DiscreteStatistics.mean(values);
@@ -242,40 +261,20 @@ public class TraceDistribution<T> {
     // new types
     //************************************************************************
 
-    // frequency counter for T = Integer and String
-    public FrequencyCounter<T> frequencyCounter;
-    protected Mode<T> mode;
-    public CredibleSetAnalysis<T> credibleSetAnalysis;
-
-    public void initStatistics(List<T> values, double proportion) {
-        if (values.size() < 1) throw new RuntimeException("There is no value sent to statistics calculation !");
-
-        if (traceType.isNumber()) {
-            double[] newValues = new double[values.size()];
-            for (int i = 0; i < values.size(); i++) {
-                newValues[i] = ((Number) values.get(i)).doubleValue();
-            }
-            analyseDistributionNumeric(newValues, proportion);
-        }
-
-        if (traceType != TraceType.REAL) {
-            analyseDistributionDiscrete(values, proportion);
-        }
-    }
+    // frequency counter for discrete traces
+    private FrequencyCounter<Integer> frequencyCounter;
 
     // init FrequencyCounter used for Integer and String
-    private void analyseDistributionDiscrete(List<T> values, double proportion) {
+    private void analyseDistributionDiscrete(List<Double> valueList, double proportion) {
+        List<Integer> values = new ArrayList<Integer>();
+        for (Double value : valueList) {
+            values.add(value.intValue());
+        }
+
         if (size == 0) {
             size = values.size();
         }
-        frequencyCounter = new FrequencyCounter<T>(values, false);
-        mode = frequencyCounter.getModeStats();
-        credibleSetAnalysis = frequencyCounter.getCredibleSetAnalysis(proportion);
-    }
-
-    //************ Used by panels or FrequencyPlot *************
-    public int getIndex(T value) {
-        return frequencyCounter.getKeyIndex(value);
+        frequencyCounter = new FrequencyCounter<Integer>(values);
     }
 
     // categorical data is stored as integer values (in a double list) - mapping to
@@ -329,45 +328,77 @@ public class TraceDistribution<T> {
 //        return intData;
 //    }
 
-    public boolean credibleSetContains(int valueORIndex) {
-        return credibleSetAnalysis.getCredibleSet().contains((double)valueORIndex);
+    public boolean credibleSetContains(int value) {
+        int index = categoryOrderMap.get(value);
+        return frequencyCounter.getCredibleSet().contains(index);
     }
 
-    public boolean incredibleSetContains(int valueORIndex) {
-        return credibleSetAnalysis.getIncredibleSet().contains((double)valueORIndex);
+    public boolean incredibleSetContains(int value) {
+        int index = categoryOrderMap.get(value);
+        return frequencyCounter.getIncredibleSet().contains(index);
     }
 
-    public String printCredibleSet() {
-        return credibleSetAnalysis.toStringCredibleSet();
+    public Set<Integer> getValueSet() {
+        Set<Integer> valueSet = new LinkedHashSet<Integer>();
+        for (Integer value : frequencyCounter.getUniqueValues()) {
+            int index = categoryOrderMap.get(value);
+            valueSet.add(index);
+        }
+        return valueSet;
     }
 
-    public String printIncredibleSet() {
-        return credibleSetAnalysis.toStringIncredibleSet();
+    public Set<Integer> getCredibleSet() {
+        Set<Integer> credibleSet = new LinkedHashSet<Integer>();
+        for (Integer value : frequencyCounter.getCredibleSet()) {
+            int index = categoryOrderMap.get(value);
+            credibleSet.add(index);
+        }
+        return credibleSet;
     }
 
-    public String printUniqueValues() {
-        return FrequencyCounter.Utils.setToString(frequencyCounter.uniqueValues());
+    public Set<Integer> getIncredibleSet() {
+        Set<Integer> incredibleSet = new LinkedHashSet<Integer>();
+        for (Integer value : frequencyCounter.getIncredibleSet()) {
+            int index = categoryOrderMap.get(value);
+            incredibleSet.add(index);
+        }
+        return incredibleSet;
     }
 
-    public T getMode() {
-        if (mode == null) return null;
-        return mode.getMode();
+    public String setToString(Set<Integer> aSet) {
+        StringBuilder sb = new StringBuilder("{");
+        boolean isFirst = true;
+        for (int value : aSet) {
+            String label = categoryLabelMap.get(value);
+            if (!isFirst) {
+                sb.append(", ");
+            } else {
+                isFirst = false;
+            }
+            sb.append(label);
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    public int getMode() {
+        return frequencyCounter.getMode();
     }
 
     public int getFrequencyOfMode() {
-        if (mode == null) return 0;
-        return mode.getFrequencyOfMode();
+        return frequencyCounter.getFrequency(getMode());
     }
 
     public double getProbabilityOfMode() {
-        if (getSize() > 0)
+        if (getSize() > 0) {
             return (double) getFrequencyOfMode() / (double) getSize();
+        }
         return 0;
     }
 
     public List<String> getRange() {
         List<String> valuesList = new ArrayList<String>();
-        for (T value : frequencyCounter.uniqueValues()) {
+        for (Integer value : frequencyCounter.getUniqueValues() ) {
             if (traceType.isInteger()) { // as Integer is stored as Double in Trace
                 if (!valuesList.contains(Integer.toString(((Number) value).intValue())))
                     valuesList.add(Integer.toString(((Number) value).intValue()));

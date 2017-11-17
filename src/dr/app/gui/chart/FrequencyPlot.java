@@ -278,11 +278,11 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     }
 
     /**
-     * Set arbitrary intervals to use (0 for none).
+     * Use incredible set for tails.
      */
-    public void setInCredibleSet(TraceDistribution traceD) {
+    public void setIncredibleSet(TraceDistribution traceD) {
         this.traceDistribution = traceD;
-        hasIncredibleSet = traceD.credibleSetAnalysis != null && traceD.credibleSetAnalysis.getIncredibleSet().size() > 0;
+        hasIncredibleSet = traceD.getIncredibleSet().size() > 0;
     }
 
     /**

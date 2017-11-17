@@ -25,7 +25,6 @@
 
 package dr.app.gui.chart;
 
-import dr.stats.CredibleSetAnalysis;
 import dr.stats.FrequencyCounter;
 import dr.stats.Variate;
 
@@ -98,12 +97,12 @@ public class TangHuLuPlot extends ScatterPlot {
         }
 
         // find unique pairs
-        xyFC = new FrequencyCounter<XY>(xyList, false);
+        xyFC = new FrequencyCounter<XY>(xyList);
 
         List<Double> xUnique = new ArrayList<Double>();
         List<Double> yUnique = new ArrayList<Double>();
         uniqueXYList = new ArrayList<XY>();
-        for (XY xy : xyFC.uniqueValues()) {
+        for (XY xy : xyFC.getUniqueValues()) {
             xUnique.add(xy.x);
             yUnique.add(xy.y);
             uniqueXYList.add(xy); // store counts for circle size
@@ -147,10 +146,9 @@ public class TangHuLuPlot extends ScatterPlot {
 
             XY xy = uniqueXYList.get(i);
             // probability is proportional to area not diameter
-            double diameter = maxDiameter * Math.sqrt(xyFC.getFreqScaledMaxTo1(xy));
+            double diameter = maxDiameter * Math.sqrt(xyFC.getProportionalFrequency(xy));
 
-            CredibleSetAnalysis credibleSetAnalysis = xyFC.getCredibleSetAnalysis(credProb);
-            Set incredibleSet = credibleSetAnalysis.getIncredibleSet();
+            Set<XY> incredibleSet = xyFC.getIncredibleSet();
 
             // background tiles
             g2.setPaint(incredibleSet.contains(xy) ? TILE_OUTSIDE_COLOR : TILE_COLOR);

@@ -33,11 +33,11 @@ public class TruncatedDistributionLikelihood extends DistributionLikelihood {
             if(!Double.isInfinite(low.getParameterValue(i % low.getDimension())))
                 p2 = getDistribution().cdf(low.getParameterValue(i % low.getDimension()));
 //            System.out.println(p2);
-            double p3 = 1;
+            double p3 = 0;
             if(!Double.isInfinite(high.getParameterValue(i % high.getDimension())))
                 p3 = 1 - getDistribution().cdf(high.getParameterValue(i % high.getDimension()));
 //            System.out.println(p3);
-            return p1 - Math.log(p3 + p2);
+            return p1 - Math.log(1 - (p3 + p2));
         }
         else{
 //            System.out.println(high.getParameterValue(i % high.getDimension()));

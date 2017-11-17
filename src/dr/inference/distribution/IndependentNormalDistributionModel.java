@@ -26,7 +26,7 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
         this.precision = precision;
         this.variance = variance;
         this.data = data;
-
+        addVariable(data);
     }
 
 
@@ -81,5 +81,17 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
     @Override
     public void makeDirty() {
 
+    }
+
+    public Parameter getPrecision() {
+        return precision;
+    }
+
+    public Parameter getVariance() {
+        return variance;
+    }
+
+    public Parameter getMean() {
+        return mean;
     }
 }

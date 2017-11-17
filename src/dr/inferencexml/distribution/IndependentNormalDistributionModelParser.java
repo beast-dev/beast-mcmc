@@ -6,7 +6,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 public class IndependentNormalDistributionModelParser extends AbstractXMLObjectParser {
-    public static String INDEPENDENT_NORMAL_DISTRIBUTION_MODEL = "IndependentNormalDistributionModel";
+    public static String INDEPENDENT_NORMAL_DISTRIBUTION_MODEL = "independentNormalDistributionModel";
     public static String MEAN = "mean";
     public static String VARIANCE = "variance";
     public static String PRECISION = "precision";

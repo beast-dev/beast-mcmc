@@ -26,9 +26,11 @@
 package dr.inferencexml.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.IndependentNormalDistributionModel;
 import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
+import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.operators.LoadingsGibbsOperator;
 import dr.inference.operators.LoadingsGibbsTruncatedOperator;
@@ -49,7 +51,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final String CUTOFF_PRIOR = "cutoffPrior";
     private final String MULTI_THREADED = "multiThreaded";
     private final String NUM_THREADS = "numThreads";
-    public final String PATH_PARAMETER = "pathParameter";
+    private final String PATH_PARAMETER = "pathParameter";
+    private final String UPPER_TRIANGLE = "upperTriangle";
 
 
     @Override
@@ -59,6 +62,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         LatentFactorModelInterface LFM = (LatentFactorModelInterface) xo.getChild(LatentFactorModelInterface.class);
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
+        IndependentNormalDistributionModel prior3 = (IndependentNormalDistributionModel) xo.getChild(IndependentNormalDistributionModel.class);
         DistributionLikelihood cutoffPrior = null;
         if(xo.hasChildNamed(CUTOFF_PRIOR)){
             cutoffPrior = (DistributionLikelihood) xo.getChild(CUTOFF_PRIOR).getChild(DistributionLikelihood.class);
@@ -74,9 +78,12 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             WorkingPrior = (DistributionLikelihood) xo.getChild(WORKING_PRIOR).getChild(DistributionLikelihood.class);
         }
         boolean multiThreaded = xo.getAttribute(MULTI_THREADED, false);
+        boolean upperTriangle = xo.getAttribute(UPPER_TRIANGLE, true);
 
-        if(prior!=null){
-            LoadingsGibbsOperator lfmOp = new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
+
+        if(prior !=null || prior3 != null){
+            LoadingsGibbsOperator lfmOp = new LoadingsGibbsOperator(LFM, prior, prior3, loadings, weight, randomScan,
+                    WorkingPrior, multiThreaded, numThreads, upperTriangle);
             if(xo.hasAttribute(PATH_PARAMETER)){
                 System.out.println("WARNING: Setting Path Parameter is intended for debugging purposes only!");
                 lfmOp.setPathParameter(xo.getDoubleAttribute(PATH_PARAMETER));
@@ -96,7 +103,9 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             new ElementRule(LatentFactorModelInterface.class),
 
             new XORRule(
-            new ElementRule(DistributionLikelihood.class),
+                    new XORRule(
+                            new ElementRule(IndependentNormalDistributionModel.class),
+        new ElementRule(DistributionLikelihood.class)),
                     new AndRule(
             new ElementRule(MomentDistributionModel.class),
 
@@ -110,6 +119,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                     new ElementRule(DistributionLikelihood.class)
             }, true),
             AttributeRule.newDoubleRule(PATH_PARAMETER, true),
+            AttributeRule.newBooleanRule(UPPER_TRIANGLE, true)
     };
 
     @Override

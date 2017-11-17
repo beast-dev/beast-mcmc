@@ -204,13 +204,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     public MatrixParameter getFactors(){
-        TreeTrait[] facDraw = delegate.getCallbackLikelihood().getTreeTraits();
+        TreeDataLikelihood likelihood = delegate.getCallbackLikelihood();
+        TreeTrait factorDraw = likelihood.getTreeTrait("trait");
+        Tree tree = likelihood.getTree();
         MatrixParameter factors = new MatrixParameter("factors");
         for (int i = 0; i < numTaxa; i++) {
-            double[] factorsToAdd = new double[((double[]) facDraw[2].getTrait(delegate.getCallbackLikelihood().getTree(), delegate.getCallbackLikelihood().getTree().getNode(0))).length];
-            for (int j = 0; j < factorsToAdd.length; j++) {
-                factorsToAdd[j] = ((double[]) facDraw[2].getTrait(delegate.getCallbackLikelihood().getTree(), delegate.getCallbackLikelihood().getTree().getNode(i)))[j];
-            }
+            double[] factorsToAdd = (double[]) factorDraw.getTrait(tree, tree.getNode(i));
             Parameter tip = new Parameter.Default(factorsToAdd);
             factors.addParameter(tip);
         }

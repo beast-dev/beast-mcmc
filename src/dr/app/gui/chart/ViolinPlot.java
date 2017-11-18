@@ -45,6 +45,7 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
 
     private final boolean isVertical;
     private final double violinWidth;
+    private final boolean showTails;
     private final boolean showQuantiles;
     private final double upper, lower;
     private double y1, y2;
@@ -53,12 +54,13 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
         this(true, violinWidth, true, data, minimumBinCount);
     }
 
-    public ViolinPlot(boolean isVertical, double violinWidth, boolean showQuantiles, java.util.List<Double> data, int minimumBinCount) {
+    public ViolinPlot(boolean isVertical, double violinWidth, boolean showTails, java.util.List<Double> data, int minimumBinCount) {
         super(data, minimumBinCount); // TODO Remove when all linked together
 
         this.isVertical = isVertical;
         this.violinWidth = violinWidth;
-        this.showQuantiles = showQuantiles;
+        this.showQuantiles = true;
+        this.showTails = showTails;
 
         // setData again because in super, the width weren't set.
         setData(data, minimumBinCount);
@@ -67,7 +69,7 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
         upper = getQuantile(0.975);
     }
 
-    public ViolinPlot(boolean isVertical, double violinWidth, double lower, double upper, java.util.List<Double> data, int minimumBinCount) {
+    public ViolinPlot(boolean isVertical, double violinWidth, double lower, double upper, boolean showTails, java.util.List<Double> data, int minimumBinCount) {
         super(data, minimumBinCount); // TODO Remove when all linked together
 
         this.isVertical = isVertical;
@@ -76,7 +78,9 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
 
         this.lower = lower;
         this.upper = upper;
-        
+
+        this.showTails = showTails;
+
         // setData again because in super, the width weren't set.
         setData(data, minimumBinCount);
 
@@ -153,7 +157,9 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
             float y = (float) transformY(((Number)xData.get(0)).doubleValue());
             float x = (float) transformX(((Number)yData.get(0)).doubleValue() + plotNumber + 1);
 
-            path.moveTo(x, y);
+            if (showTails) {
+                path.moveTo(x, y);
+            }
 
             // create the quantile cropped path
             float v1 = (float) transformY(lower);
@@ -166,24 +172,46 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
             x = (float) transformX(y1 + plotNumber + 1);
             intervalPath.lineTo(x, y);
 
+            if (!showTails) {
+                path.moveTo(x, y);
+            }
+
             boolean crossedAxis = false;
 
             for (int i = 1; i < n; i++) {
                 y = (float) transformY(((Number) xData.get(i)).doubleValue());
                 x = (float) transformX(((Number) yData.get(i)).doubleValue() + plotNumber + 1);
 
-                path.lineTo(x, y);
+                if (showTails) {
+                    path.lineTo(x, y);
+                }
 
                 if (y < v1) {
                     if (y > v2) {
+                        if (!showTails) {
+                            path.lineTo(x, y);
+                        }
+
                         intervalPath.lineTo(x, y);
-                    } else if (!crossedAxis) {
-                        y = v2;
-                        x = (float) transformX(y2 + plotNumber + 1);
-                        intervalPath.lineTo(x, y);
-                        x = (float) transformX(-y2 + plotNumber + 1);
-                        intervalPath.lineTo(x, y);
-                        crossedAxis = true;
+                    } else {
+                        if (!crossedAxis) {
+                            y = v2;
+                            x = (float) transformX(y2 + plotNumber + 1);
+                            intervalPath.lineTo(x, y);
+
+                            if (!showTails) {
+                                path.lineTo(x, y);
+                            }
+
+                            x = (float) transformX(-y2 + plotNumber + 1);
+                            intervalPath.lineTo(x, y);
+
+                            if (!showTails) {
+                                path.moveTo(x, y);
+                            }
+
+                            crossedAxis = true;
+                        }
                     }
                 }
             }
@@ -192,6 +220,10 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
             y = v1;
             x = (float) transformX(-y1 + plotNumber + 1);
             intervalPath.lineTo(x, y);
+
+            if (!showTails) {
+                path.lineTo(x, y);
+            }
 
             x = (float) transformX(plotNumber + 1);
             intervalPath.lineTo(x, y);
@@ -242,7 +274,7 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
 
             y = (float) transformY(plotNumber + 1);
             intervalPath.lineTo(x, y);
-            
+
         }
 
         if (solid) {
@@ -255,12 +287,13 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
             if (showQuantiles) {
                 intervalPath.closePath();
                 g2.fill(intervalPath);
-            } else {
-                path.closePath();
-                g2.fill(path);
             }
         }
 
+        if (showTails) {
+            path.closePath();
+        }
+        
         g2.setStroke(lineStroke);
         g2.setPaint(linePaint);
         g2.draw(path);

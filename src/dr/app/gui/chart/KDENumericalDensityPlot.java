@@ -166,6 +166,14 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
         return new Variate.D(points);
     }
 
+    protected double getQuantile(double y) {
+        return kde.quantile(y);
+    }
+
+    protected double getDensity(double x) {
+        return kde.pdf(x);
+    }
+
     private KernelDensityEstimatorDistribution kde;
     private NumericalDensityPlot densityPlot;
 

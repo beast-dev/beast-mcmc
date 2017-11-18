@@ -32,11 +32,8 @@ import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
-import dr.inferencexml.model.MaskedParameterParser;
 import dr.util.Transform;
 import dr.xml.*;
-
-import java.util.List;
 
 /**
  * @author Max Tolkoff
@@ -44,16 +41,14 @@ import java.util.List;
  */
 
 public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser {
-    public final static String HMC_OPERATOR = "HamiltonianMonteCarloOperator";
 
-    public final static String N_STEPS = "nSteps";
-    public final static String STEP_SIZE = "stepSize";
-    public final static String DRAW_VARIANCE = "drawVariance";
-    public static final String MODE = "mode";
-    public static final String MASKING = MaskedParameterParser.MASKING;
-
-    public static final String NUTS = "nuts";
-    public static final String VANILLA = "vanilla";
+    private final static String HMC_OPERATOR = "HamiltonianMonteCarloOperator";
+    private final static String N_STEPS = "nSteps";
+    private final static String STEP_SIZE = "stepSize";
+    private final static String DRAW_VARIANCE = "drawVariance";
+    private final static String MODE = "mode";
+    private final static String NUTS = "nuts";
+    private final static String VANILLA = "vanilla";
 
     @Override
     public String getParserName() {

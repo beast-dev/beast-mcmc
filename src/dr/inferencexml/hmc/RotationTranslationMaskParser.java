@@ -25,10 +25,7 @@
 
 package dr.inferencexml.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.MaskedGradient;
 import dr.inference.model.Parameter;
-import dr.inferencexml.model.MaskedParameterParser;
 import dr.xml.*;
 
 /**
@@ -36,8 +33,8 @@ import dr.xml.*;
  */
 public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
 
-    public final static String MASK = "rotationalTranslationalMask";
-    public final static String DIMENSION = "dimension";
+    private final static String MASK = "rotationalTranslationalMask";
+    private final static String DIMENSION = "dimension";
 
     @Override
     public String getParserName() {

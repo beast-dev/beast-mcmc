@@ -52,7 +52,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
         switch (type) {
             case GAUSSIAN: return new NormalKDEDistribution(samples);
             case GAMMA: return new GammaKDEDistribution(samples);
-            case LOGTRANSFORMEDGAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
+            case LOG_TRANSFORMED_GAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
             default:
                 throw new RuntimeException("Unknown type");
         }

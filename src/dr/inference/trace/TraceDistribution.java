@@ -46,6 +46,9 @@ public class TraceDistribution {
 
     public TraceDistribution(List<Double> values, TraceType traceType) {
         this.traceType = traceType;
+
+        assert traceType != TraceType.CATEGORICAL : "cant use this constructor with categorical data";
+
         initStatistics(values, 0.95);
     }
 

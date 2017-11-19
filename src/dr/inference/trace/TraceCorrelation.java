@@ -26,6 +26,7 @@
 package dr.inference.trace;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A class that stores the correlation statistics for a trace.
@@ -41,6 +42,16 @@ public class TraceCorrelation extends TraceDistribution {
 
     public TraceCorrelation(List<Double> values, TraceType traceType, long stepSize) {
         super(values, traceType);
+        this.stepSize = stepSize;
+
+        if (stepSize > 0) {
+            analyseCorrelation(values, stepSize);
+        }
+    }
+
+    public TraceCorrelation(List<Double> values, Map<Integer, String> categoryLabelMap, long stepSize) {
+        super(values, categoryLabelMap);
+
         this.stepSize = stepSize;
 
         if (stepSize > 0) {

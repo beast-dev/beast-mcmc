@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
+public class KDENumericalDensityPlot extends NumericalDensityPlot {
     private final static boolean DEBUG = false;
 
     public KDENumericalDensityPlot(List<Double> data, int minimumBinCount) {

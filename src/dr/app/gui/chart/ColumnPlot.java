@@ -44,7 +44,8 @@ public class ColumnPlot extends Plot.AbstractPlot {
     private double upperInterval = 0.0;
     private double lowerInterval = 0.0;
 
-    private boolean columnsOnTicks = false;
+    private double columnWidth = 0.9;
+    private boolean columnsOnTicks = true;
 
     public ColumnPlot() {
         super();
@@ -93,13 +94,20 @@ public class ColumnPlot extends Plot.AbstractPlot {
         double x1, y1, x2, y2;
         int n = xData.getCount();
 
-        g2.setStroke(lineStroke);
-        for (int i = 0; i < n; i += 2) {
+        double delta = (1.0 - columnWidth) / 2;
 
-            x1 = (Double) xData.get(i);
-            y1 = (Double) yData.get(i);
-            x2 = (Double) xData.get(i + 1);
-            y2 = (Double) yData.get(i + 1);
+        g2.setStroke(lineStroke);
+        for (int i = 0; i < n; i ++) {
+
+            x1 = (Double)xData.get(i) + delta;
+            y1 = 0.0;
+            x2 = (Double)xData.get(i) + 1 - delta;
+            y2 = (Double) yData.get(i);
+
+            if (columnsOnTicks) {
+                x1 -= 0.5;
+                x2 -= 0.5;
+            }
 
             if (y1 != y2) {
                 if (barPaint != null) {
@@ -142,21 +150,5 @@ public class ColumnPlot extends Plot.AbstractPlot {
             }
         }
     }
-
-    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (columnsOnTicks) {
-            super.fillRect(g2, x1-(x2-x1), y1, x2, y2);
-        } else {
-            super.fillRect(g2, x1, y1, x2, y2);
-        }
-    }
-
-    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (columnsOnTicks) {
-            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
-        } else {
-            super.drawRect(g2, x1, y1, x2, y2);
-        }
-    }
-
+    
 }

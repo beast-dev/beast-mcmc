@@ -37,7 +37,7 @@ import java.util.*;
 public final class FrequencyCounter<T> {
 
     private Map<T, Integer> frequencies;
-    private List<T> sortedValues = new ArrayList<T>();
+    private Map<Integer, T> valueOrderMap = null;
     private Set<T> credibleSet = new TreeSet<T>();
     private Set<T> incredibleSet = new TreeSet<T>();
 
@@ -68,24 +68,43 @@ public final class FrequencyCounter<T> {
         min = minMax[0];
         max = minMax[1];
         mode = calculateMode();
+
+        sortByFrequency();
+
         calculateCredibleSet(probabilityThreshold);
+    }
+
+    public Map<Integer, T> getValueOrderMap() {
+        return valueOrderMap;
     }
 
     public Map<T, Integer> getFrequencies() {
         return frequencies;
     }
 
-    public int getCounterSize() {
+    public int getSize() {
         return frequencies.size();
     }
 
-//    /**
-//     * sort counter by counts to calculate correct credibility set
-//     */
-//    public void sortCounterByCounts() {
-//        frequencies = Utils.sortByValue(frequencies);
-//    }
-//
+    /**
+     * sort counter by counts to calculate correct credibility set
+     */
+    private void sortByFrequency() {
+        List<T> orderedValues = new ArrayList<T>(frequencies.keySet());
+        Collections.sort(orderedValues, new Comparator<T>() {
+            public int compare(T value1, T value2) {
+                return getFrequency(value1) - getFrequency(value2);
+            }
+        });
+
+        valueOrderMap = new TreeMap<Integer, T>();
+        int i = 0;
+        for (T value : orderedValues) {
+            valueOrderMap.put(i, value);
+            i++;
+        }
+    }
+
     /**
      * the unique values in a frequency counter,
      * which are also the keys of the map
@@ -93,7 +112,12 @@ public final class FrequencyCounter<T> {
      * @return
      */
     public Set<T> getUniqueValues() {
-        return new TreeSet<T>(frequencies.keySet());
+        if (valueOrderMap != null) {
+            return new TreeSet<T>(valueOrderMap.values());
+        } else {
+            return new TreeSet<T>(frequencies.keySet());
+        }
+
     }
 
 
@@ -160,14 +184,8 @@ public final class FrequencyCounter<T> {
     }
 
     private int[] calculateMinMaxFrequency() {
-        int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
-        for (int value : frequencies.values()) {
-            if (min > value)
-                min = value;
-            if (max < value)
-                max = value;
-        }
+        int min = Collections.min(frequencies.values());
+        int max = Collections.max(frequencies.values());
         return new int[]{min, max};
     }
 
@@ -194,25 +212,6 @@ public final class FrequencyCounter<T> {
                 incredibleSet.add(value);
             }
             totalProbability += probability;
-        }
-    }
-
-    public static class Utils {
-        // http://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java
-        public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-            List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
-            Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
-                @Override
-                public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
-                    return (o1.getValue()).compareTo(o2.getValue()) * -1;
-                }
-            });
-
-            Map<K, V> result = new LinkedHashMap<K, V>();
-            for (Map.Entry<K, V> entry : list) {
-                result.put(entry.getKey(), entry.getValue());
-            }
-            return result;
         }
     }
 

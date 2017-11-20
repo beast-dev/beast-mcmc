@@ -27,6 +27,7 @@ package dr.app.gui.chart;
 
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceType;
+import dr.stats.FrequencyCounter;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -47,8 +48,9 @@ public class ColumnPlot extends Plot.AbstractPlot {
     private double columnWidth = 0.9;
     private boolean columnsOnTicks = true;
 
-    public ColumnPlot() {
+    public ColumnPlot(FrequencyCounter<Integer> frequencyCounter, boolean showFrequency) {
         super();
+        setData(frequencyCounter, showFrequency);
     }
 
     public ColumnPlot(List<Double> xData, List<Double> yData) {
@@ -60,7 +62,19 @@ public class ColumnPlot extends Plot.AbstractPlot {
         super();
         setData(xData, yData);
     }
-    
+
+    private void setData(FrequencyCounter<Integer> frequencyCounter, boolean showFrequency) {
+        Variate.D xd = new Variate.D();
+        Variate.D yd = new Variate.D();
+
+        for (int value : frequencyCounter.getUniqueValues()) {
+            xd.add((double)value);
+            yd.add(showFrequency ? frequencyCounter.getFrequency(value) : frequencyCounter.getProbability(value));
+        }
+        
+        setData(xd, yd);
+    }
+
     /**
      * Set paints
      */

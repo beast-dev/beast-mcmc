@@ -331,20 +331,10 @@ public class TraceDistribution {
 //        return intData;
 //    }
 
-    public boolean credibleSetContains(int value) {
-        int index = categoryOrderMap.get(value);
-        return frequencyCounter.getCredibleSet().contains(index);
-    }
-
-    public boolean incredibleSetContains(int value) {
-        int index = categoryOrderMap.get(value);
-        return frequencyCounter.getIncredibleSet().contains(index);
-    }
-
     public Set<Integer> getValueSet() {
         Set<Integer> valueSet = new LinkedHashSet<Integer>();
         for (Integer value : frequencyCounter.getUniqueValues()) {
-            int index = categoryOrderMap.get(value);
+            int index = (categoryOrderMap != null ? categoryOrderMap.get(value) : value);
             valueSet.add(index);
         }
         return valueSet;
@@ -353,7 +343,7 @@ public class TraceDistribution {
     public Set<Integer> getCredibleSet() {
         Set<Integer> credibleSet = new LinkedHashSet<Integer>();
         for (Integer value : frequencyCounter.getCredibleSet()) {
-            int index = categoryOrderMap.get(value);
+            int index = (categoryOrderMap != null ? categoryOrderMap.get(value) : value);
             credibleSet.add(index);
         }
         return credibleSet;
@@ -362,7 +352,7 @@ public class TraceDistribution {
     public Set<Integer> getIncredibleSet() {
         Set<Integer> incredibleSet = new LinkedHashSet<Integer>();
         for (Integer value : frequencyCounter.getIncredibleSet()) {
-            int index = categoryOrderMap.get(value);
+            int index = (categoryOrderMap != null ? categoryOrderMap.get(value) : value);
             incredibleSet.add(index);
         }
         return incredibleSet;

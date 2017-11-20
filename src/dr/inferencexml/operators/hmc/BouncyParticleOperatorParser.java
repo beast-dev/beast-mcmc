@@ -29,22 +29,20 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
 import dr.inferencexml.model.MaskedParameterParser;
 import dr.util.Transform;
 import dr.xml.*;
 
-import java.util.List;
-
 /**
- * @author Max Tolkoff
+ * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 
-public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser {
-    public final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
+public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
+    public final static String BPO_OPERATOR = "bouncyParticleOperator";
 
     public final static String N_STEPS = "nSteps";
     public final static String STEP_SIZE = "stepSize";
@@ -57,7 +55,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
     @Override
     public String getParserName() {
-        return HMC_OPERATOR;
+        return BPO_OPERATOR;
     }
 
     private int parseRunMode(XMLObject xo) throws XMLParseException {
@@ -71,6 +69,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        System.err.println("HERE?");
+        System.exit(-1);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         int nSteps = xo.getIntegerAttribute(N_STEPS);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);

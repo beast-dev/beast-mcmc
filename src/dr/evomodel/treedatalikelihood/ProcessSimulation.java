@@ -30,10 +30,10 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
-
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -43,19 +43,18 @@ import java.util.List;
 public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
     private final Tree tree;
-    private final String name;
 
     private final SimulationTreeTraversal treeTraversalDelegate;
     private final TreeDataLikelihood treeDataLikelihood;
-    private final DataLikelihoodDelegate likelihoodDelegate;
     private final ProcessSimulationDelegate simulationDelegate;
+
+    private final int[] operations;
 
     private boolean validSimulation;
 
-    public ProcessSimulation(String name, TreeDataLikelihood treeDataLikelihood,
+    public ProcessSimulation(TreeDataLikelihood treeDataLikelihood,
                              ProcessSimulationDelegate simulationDelegate) {
 
-        this.name = name;
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
 
@@ -63,16 +62,17 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         treeTraversalDelegate = new SimulationTreeTraversal(tree, branchRateModel,
                 simulationDelegate.getOptimalTraversalType());
 
-        this.likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
         treeDataLikelihood.addModelListener(this);
 
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
 
+        this.operations = new int[tree.getNodeCount() * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
+
         validSimulation = false;
     }
 
-    protected final void cacheSimulatedTraits(final NodeRef node) {
+    public final void cacheSimulatedTraits(final NodeRef node) {
 
         treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
 
@@ -82,7 +82,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         }
     }
 
-    private final void simulateTraits(final NodeRef targetNode) {
+    private void simulateTraits(final NodeRef targetNode) {
 
         if (targetNode == null) {
             treeTraversalDelegate.updateAllNodes();
@@ -91,9 +91,10 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         }
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        final NodeRef root = tree.getRoot();
+        int count = simulationDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(), operations);
 
-        simulationDelegate.simulate(treeTraversalDelegate, root.getNumber());
+        final NodeRef root = tree.getRoot();
+        simulationDelegate.simulate(operations, count, root.getNumber());
 
         treeTraversalDelegate.setAllNodesUpdated();
     }

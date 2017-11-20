@@ -25,13 +25,8 @@
 
 package dr.inferencexml;
 
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.TwoStates;
-import dr.evomodel.continuous.OrderedLatentLiabilityLikelihood;
 import dr.inference.model.Bounds;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inferencexml.model.MaskedParameterParser;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -62,7 +57,7 @@ public class SignTransformParser extends AbstractXMLObjectParser {
             } else {
                 transforms.add(Transform.NONE);
             }
-            transforms.add(Transform.LOG);
+//            transforms.add(Transform.LOG); // TODO What is this doing here?  REMOVE?
         }
 
 //        for (int i = 0; i < parameter.getDimension(); i++) {

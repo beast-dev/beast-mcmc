@@ -262,6 +262,12 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID && Double.isNaN(prior.getSkyGridInterval())) {
+                    throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", BeautiFrame.TREES);
+                }
+            }
+
             //+++++++++++++++ Starting tree ++++++++++++++++
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 if (model.getStartingTreeType() == StartingTreeType.USER) {

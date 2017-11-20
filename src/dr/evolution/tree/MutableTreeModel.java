@@ -30,9 +30,9 @@ import dr.inference.model.Model;
 /**
  * @author Marc A. Suchard
  */
-public interface MultivariateTraitTree extends MutableTree, Model {
+public interface MutableTreeModel extends MutableTree, Model {
 
-    public double[] getMultivariateNodeTrait(NodeRef node, String name);
+    double[] getMultivariateNodeTrait(NodeRef node, String name);
 
-    public void setMultivariateTrait(NodeRef n, String name, double[] value);
+    void setMultivariateTrait(NodeRef n, String name, double[] value);
 }

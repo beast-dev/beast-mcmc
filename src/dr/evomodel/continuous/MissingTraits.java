@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.tree.TreeModel;
 
 import java.util.Arrays;
@@ -51,7 +51,7 @@ public interface MissingTraits {
 
         protected static final boolean DEBUG = false;
 
-        Abstract(MultivariateTraitTree treeModel, List<Integer> missingIndices, int dim) {
+        Abstract(MutableTreeModel treeModel, List<Integer> missingIndices, int dim) {
             this.treeModel = treeModel;
             this.dim = dim;
             this.missingIndices = missingIndices;
@@ -61,7 +61,7 @@ public interface MissingTraits {
             Arrays.fill(completelyMissing, treeModel.getExternalNodeCount(), treeModel.getNodeCount(), true); // All internal and root nodes are missing
         }
 
-        final protected MultivariateTraitTree treeModel;
+        final protected MutableTreeModel treeModel;
         final protected int dim;
         final protected List<Integer> missingIndices;
         final protected boolean[] completelyMissing;
@@ -69,7 +69,7 @@ public interface MissingTraits {
 
     public class CompletelyMissing extends Abstract {
 
-        CompletelyMissing(MultivariateTraitTree treeModel, List<Integer> missingIndices, int dim) {
+        CompletelyMissing(MutableTreeModel treeModel, List<Integer> missingIndices, int dim) {
             super(treeModel, missingIndices, dim);
         }
 

@@ -25,10 +25,7 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeDoubleTraitProvider;
-import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.*;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -45,7 +42,7 @@ import dr.inference.model.Variable;
  */
 public class TreeParameterModel extends AbstractModel implements TreeTrait<Double>, TreeDoubleTraitProvider {
 
-    protected final TreeModel tree;
+    protected final MutableTreeModel tree;
 
     // The tree parameter;
     private final Parameter parameter;
@@ -66,7 +63,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
      * @param parameter   the parameter to keep in sync with tree topology moves.
      * @param includeRoot tree if the parameter includes a value associated with the root node.
      */
-    public TreeParameterModel(TreeModel tree, Parameter parameter, boolean includeRoot) {
+    public TreeParameterModel(MutableTreeModel tree, Parameter parameter, boolean includeRoot) {
         this(tree, parameter, includeRoot, Intent.NODE);
     }
 
@@ -78,7 +75,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
      * @param parameter   the parameter to keep in sync with tree topology moves.
      * @param includeRoot tree if the parameter includes a value associated with the root node.
      */
-    public TreeParameterModel(TreeModel tree, Parameter parameter, boolean includeRoot, Intent intent) {
+    public TreeParameterModel(MutableTreeModel tree, Parameter parameter, boolean includeRoot, Intent intent) {
 
         super("treeParameterModel");
         this.tree = tree;
@@ -214,7 +211,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     /**
      * @return the tree model that this parameter is synchronized with
      */
-    public TreeModel getTreeModel() {
+    public MutableTreeModel getTreeModel() {
         return tree;
     }
 

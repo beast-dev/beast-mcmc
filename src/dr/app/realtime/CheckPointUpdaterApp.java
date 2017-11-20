@@ -38,6 +38,7 @@ import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
 import dr.inference.model.Likelihood;
+import dr.util.Transform;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;

@@ -82,7 +82,7 @@ public class BeastParser extends XMLParser {
             if (System.getProperty("parsers") != null) {
                 // If a system property has been set then allow this to override the default
                 // e.g. -Dparsers=development
-                parsers = properties.getProperty("parsers");
+                parsers = System.getProperty("parsers");
             }
 
             if (parsers.equalsIgnoreCase(DEV)) {

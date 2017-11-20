@@ -333,7 +333,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         unlinkTreesAction.setEnabled(canUnlink);
         linkTreesAction.setEnabled(canLink);
 
-        viewPartitionAction.setEnabled(options.dataPartitions.size() > 1 && hasSelection);
+        viewPartitionAction.setEnabled(options.dataPartitions.size() > 0 && hasSelection);
     }
 
     public void setOptions(BeautiOptions options) {

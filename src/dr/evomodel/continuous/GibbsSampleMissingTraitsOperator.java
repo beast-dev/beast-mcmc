@@ -31,7 +31,6 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
@@ -42,7 +41,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsRealizedDelegate.PARTIAL;
+//import static dr.evomodel.treedatalikelihood.preorder.ConditionalOnPartiallyMissingTipsRealizedDelegate.PARTIAL;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.MISSING;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
@@ -53,14 +52,16 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
 //        implements GibbsOperator
 {
 
+
+    private static final String PARTIAL = "partial";
+
     final private TreeDataLikelihood treeLikelihood;
     final private TreeTrait treeTrait;
     final private Parameter parameter;
     final private Parameter missing;
 
     public GibbsSampleMissingTraitsOperator(TreeDataLikelihood treeLikelihood,
-                                            TreeTrait treeTrait, Parameter parameter, Parameter missing,
-                                            ContinuousDataLikelihoodDelegate traitDelegate) {
+                                            TreeTrait treeTrait, Parameter parameter, Parameter missing) {
         super();
 
         this.treeLikelihood = treeLikelihood;
@@ -122,7 +123,7 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-            ContinuousDataLikelihoodDelegate traitDelegate = parseContinuousDataLikelihoodDelegate(xo);
+//            ContinuousDataLikelihoodDelegate traitDelegate = parseContinuousDataLikelihoodDelegate(xo);
 
             TreeTrait treeTrait = parseTreeTrait(xo, PARTIAL);
 
@@ -135,8 +136,7 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
 
             GibbsSampleMissingTraitsOperator operator = new GibbsSampleMissingTraitsOperator(treeLikelihood,
                     treeTrait,
-                    parameter, missing,
-                    traitDelegate);
+                    parameter, missing);
 
             operator.setWeight(weight);
 
@@ -186,7 +186,7 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
         return (ContinuousDataLikelihoodDelegate) delegate;
     }
 
-    public static TreeTrait parseTreeTrait(XMLObject xo, String prefix) throws XMLParseException {
+    private static TreeTrait parseTreeTrait(XMLObject xo, String prefix) throws XMLParseException {
 
         TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
@@ -211,7 +211,7 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
         return treeTrait;
     }
 
-    public static List<String> matchedTraitNames(final TreeTrait[] traits, final String prefix) {
+    private static List<String> matchedTraitNames(final TreeTrait[] traits, final String prefix) {
         List<String> names = new ArrayList<String>();
         for (TreeTrait trait : traits) {
             if (trait.getTraitName().startsWith(prefix)) {

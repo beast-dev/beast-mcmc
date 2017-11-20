@@ -465,6 +465,22 @@ public class TreeUtils {
         return n1;
     }
 
+    public static NodeRef getCommonAncestorSafely(Tree tree, NodeRef n1, NodeRef n2) {
+        while( n1 != n2 ) {
+
+            if (tree.isRoot(n1)) return n1;
+
+            if (tree.isRoot(n2)) return n2;
+
+            if( tree.getNodeHeight(n1) < tree.getNodeHeight(n2) ) {
+                n1 = tree.getParent(n1);
+            } else {
+                n2 = tree.getParent(n2);
+            }
+        }
+        return n1;
+    }
+
     // A lightweight version for finding the most recent common ancestor of a group of taxa.
     // return the node-ref of the MRCA.
 

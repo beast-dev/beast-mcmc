@@ -29,6 +29,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
@@ -144,11 +145,11 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
+            if (object instanceof TreeChangedEvent) {
 
-                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+                if (((TreeChangedEvent) object).isNodeChanged()) {
 
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
+                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
 
                 } else {
                     updateAllNodes();

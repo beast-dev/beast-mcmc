@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.treelikelihood;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.StandardizeTraits;
 import dr.inference.model.*;
 import dr.math.MathUtils;
@@ -251,7 +251,7 @@ public class TreeTraitParserUtilities {
     public TraitsAndMissingIndices parseTraitsFromTaxonAttributes(
             XMLObject xo,
             String inTraitName,
-            MultivariateTraitTree treeModel,
+            Tree treeModel,
             boolean integrateOutInternalStates) throws XMLParseException {
 
         XMLObject xoc = xo.getChild(TRAIT_PARAMETER);
@@ -449,7 +449,7 @@ public class TreeTraitParserUtilities {
             }
 
             // Give warnings if trait exist for internal and root nodes when integrating them out
-            if (integrateOutInternalStates) {
+            if (false) {
                 int numTraits = traitParameter.getParameterCount();
                 if (numTraits != treeModel.getExternalNodeCount()) {
                     throw new XMLParseException(
@@ -462,7 +462,7 @@ public class TreeTraitParserUtilities {
                     if (parameterName.startsWith("node") || parameterName.startsWith("root")) {
                         throw new XMLParseException(
                                 "Internal/root node trait parameters are not allowed when " +
-                                        "using the integrated observed data multivariateTraitLikelihoood");
+                                        "using the integrated observed data likelihood");
                     }
                 }
             }
@@ -473,6 +473,10 @@ public class TreeTraitParserUtilities {
 //            missingIndices = new ArrayList<Integer>(); // return empty
             useMissingIndices = false;
 
+        }
+
+        if (missingIndices == null || missingIndices.size() == 0) {
+            useMissingIndices = false;
         }
 
         return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName,

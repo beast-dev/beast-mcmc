@@ -43,6 +43,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
     public static final String DEGREES_OF_FREEDOM = "df";
     public static final String INDICATORS = "indicators";
     public static final String PICKONEPROB = "pickoneprob";
+    public static final String IGNORE_BOUNDS = "ignoreBounds";
 
     public String getParserName() {
         return SCALE_OPERATOR;
@@ -53,6 +54,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         final boolean scaleAll = xo.getAttribute(SCALE_ALL, false);
         final boolean scaleAllInd = xo.getAttribute(SCALE_ALL_IND, false);
         final int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
+        final boolean ignoreBounds = xo.getAttribute(IGNORE_BOUNDS, false);
 
         final CoercionMode mode = CoercionMode.parseMode(xo);
 
@@ -69,7 +71,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
             if (bounds.getLowerLimit(dim) < 0.0) {
                 throw new XMLParseException("Scale operator can only be used on parameters with a lower bound of zero (" + parameter.getId() + ")");
             }
-            if (!Double.isInfinite(bounds.getUpperLimit(dim))) {
+            if (!ignoreBounds && !Double.isInfinite(bounds.getUpperLimit(dim))) {
                 throw new XMLParseException("Scale operator can't be used on parameters with a finite upper bound (use a RandomWalk) (" + parameter.getId() + ")");
             }
         }
@@ -118,6 +120,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newIntegerRule(DEGREES_OF_FREEDOM, true),
+            AttributeRule.newBooleanRule(IGNORE_BOUNDS, true),
 
             new ElementRule(Parameter.class),
             new ElementRule(INDICATORS,

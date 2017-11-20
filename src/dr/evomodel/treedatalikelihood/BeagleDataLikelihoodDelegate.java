@@ -404,6 +404,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return patternCount;
     }
 
+    @Override
+    public RateRescalingScheme getRateRescalingScheme() {
+        return RateRescalingScheme.NONE;
+    }
+
     public PatternList getPatternList() {
         return this.patternList;
     }
@@ -881,6 +886,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
         // Callback not necessary
+    }
+
+    @Override
+    public int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

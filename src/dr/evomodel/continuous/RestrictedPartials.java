@@ -26,6 +26,7 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
@@ -72,13 +73,15 @@ public class RestrictedPartials extends AbstractModel {
 
     // Public API
 
+    final TreeModel getTreeModel() { return treeModel; }
+
     final double[] getPartials() { return meanParameter.getParameterValues(); }
 
     final double getPartial(int i) { return meanParameter.getParameterValue(i); }
 
     final double getPriorSampleSize() { return priorSampleSize.getParameterValue(0); }
 
-    final double[] getRestrictionPartial() {
+    final double[] getRestrictedPartials() {
         assert(false);
         return null;
     }

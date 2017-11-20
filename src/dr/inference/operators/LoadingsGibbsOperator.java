@@ -42,34 +42,28 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Created with IntelliJ IDEA.
- * User: max
- * Date: 5/23/14
- * Time: 2:23 PM
- * To change this template use File | Settings | File Templates.
+ * Author Max R. Tolkoff
  */
 public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
-    NormalDistribution prior;
-    NormalDistribution workingPrior;
-    LatentFactorModel LFM;
-    ArrayList<double[][]> precisionArray;
-    ArrayList<double[]> meanMidArray;
-    ArrayList<double[]> meanArray;
-    boolean randomScan;
-    double pathParameter=1.0;
-    final Parameter missingIndicator;
+
+    private NormalDistribution workingPrior;
+    private LatentFactorModel LFM;
+    private ArrayList<double[][]> precisionArray;
+    private ArrayList<double[]> meanMidArray;
+    private ArrayList<double[]> meanArray;
+    private boolean randomScan;
+    private double pathParameter = 1.0;
+    private final Parameter missingIndicator;
 
 
-    double priorPrecision;
-    double priorMeanPrecision;
-    double priorPrecisionWorking;
-    double priorMeanPrecisionWorking;
-    private double a;
+    private double priorPrecision;
+    private double priorMeanPrecision;
+    private double priorPrecisionWorking;
 
     public LoadingsGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan, DistributionLikelihood workingPrior, boolean multiThreaded, int numThreads) {
         setWeight(weight);
 
-        this.prior = (NormalDistribution) prior.getDistribution();
+        NormalDistribution prior1 = (NormalDistribution) prior.getDistribution();
         if (workingPrior != null) {
             this.workingPrior = (NormalDistribution) workingPrior.getDistribution();
         }
@@ -124,15 +118,16 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //
 //
 //            }
-        priorPrecision = 1 / (this.prior.getSD() * this.prior.getSD());
-        priorMeanPrecision = this.prior.getMean() * priorPrecision;
+        priorPrecision = 1 / (prior1.getSD() * prior1.getSD());
+        priorMeanPrecision = prior1.getMean() * priorPrecision;
 
+//        double priorMeanPrecisionWorking;
         if (workingPrior == null) {
-            priorMeanPrecisionWorking = priorMeanPrecision;
+//            priorMeanPrecisionWorking = priorMeanPrecision;
             priorPrecisionWorking = priorPrecision;
         } else {
             priorPrecisionWorking = 1 / (this.workingPrior.getSD() * this.workingPrior.getSD());
-            priorMeanPrecisionWorking = this.workingPrior.getMean() * priorPrecisionWorking;
+//            priorMeanPrecisionWorking = this.workingPrior.getMean() * priorPrecisionWorking;
         }
 
         if (multiThreaded) {
@@ -142,12 +137,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                 else
                     drawCallers.add(new DrawCaller(i, new double[LFM.getFactorDimension()][LFM.getFactorDimension()], new double[LFM.getFactorDimension()], new double[LFM.getFactorDimension()]));
             }
-            int threads = numThreads;
 
 //                    Integer.parseInt(System.getProperty("thread.count"));
-            pool = Executors.newFixedThreadPool(threads);
-        }
-        else{
+            pool = Executors.newFixedThreadPool(numThreads);
+        } else {
             pool = null;
         }
         missingIndicator = LFM.getMissingIndicator();
@@ -185,27 +178,31 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
 //        System.out.println(answer.getRowDimension());
 //        System.out.println(answer.getColumnDimension());
+
         MatrixParameterInterface data = LFM.getScaledData();
         MatrixParameterInterface Left = LFM.getFactors();
-        int p = data.getColumnDimension();
+
+        final int p = data.getColumnDimension();
+
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
-            for (int k = 0; k < p; k++)
-            {
-                if(missingIndicator == null || missingIndicator.getParameterValue(k * LFM.getScaledData().getRowDimension() + dataColumn) != 1)
+
+            for (int k = 0; k < p; k++) {
+                if (missingIndicator == null || missingIndicator.getParameterValue(k * LFM.getScaledData().getRowDimension() + dataColumn) != 1)
                     sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
             }
+
             sum = sum * LFM.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
             sum += priorMeanPrecision;
             midMean[i] = sum;
         }
+
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
             for (int k = 0; k < newRowDimension; k++)
                 sum += variance[i][k] * midMean[k];
             mean[i] = sum;
         }
-
     }
 
     private void getPrecision(int i, double[][] answer) {
@@ -242,21 +239,21 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 //            }
         }
-        for (int j = 0; j < mean.length ; j++) {//TODO implement for generic prior
+        for (int j = 0; j < mean.length; j++) { //TODO implement for generic prior
             mean[j] *= pathParameter;
         }
 
     }
 
     private void copy(int i, double[] random) {
-       MatrixParameterInterface changing = LFM.getLoadings();
+        MatrixParameterInterface changing = LFM.getLoadings();
         for (int j = 0; j < random.length; j++) {
             changing.setParameterValueQuietly(i, j, random[j]);
         }
     }
 
     private void drawI(int i, double[][] precision, double[] midMean, double[] mean) {
-        double[] draws = null;
+        double[] draws;
         double[][] variance;
         double[][] cholesky = null;
         getPrecision(i, precision);
@@ -279,8 +276,8 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //        }
 //    }
         if (i < draws.length) {
-            //if (draws[i] > 0) { TODO implement as option
-                copy(i, draws);
+            //if (draws[i] > 0) { // TODO implement as option
+            copy(i, draws);
             //}
         } else {
             copy(i, draws);
@@ -293,16 +290,15 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //       copy(i, draws);
 
     }
-
     
     @Override
     public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     @Override
     public String getOperatorName() {
-        return "loadingsGibbsOperator";  //To change body of implemented methods use File | Settings | File Templates.
+        return "loadingsGibbsOperator";
     }
 
     private static boolean DEBUG = false;
@@ -315,7 +311,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         }
 
         int size = LFM.getLoadings().getRowDimension();
-        if(LFM.getFactorDimension() != precisionArray.listIterator().next().length){
+        if (LFM.getFactorDimension() != precisionArray.listIterator().next().length) {
 
             if (DEBUG) {
                 System.err.println("!= length");
@@ -357,21 +353,19 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             }
         }
 
-        if(pool != null){
+        if (pool != null) {
 
             if (DEBUG) {
                 System.err.println("!= poll");
             }
-            
+
             try {
                 pool.invokeAll(drawCallers);
                 LFM.getLoadings().fireParameterChangedEvent();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
-
-        else {
+        } else {
 
             if (DEBUG) {
                 System.err.println("inner");
@@ -385,8 +379,8 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                 double[] midMean = null;
                 double[] mean = null;
                 for (int i = 0; i < size; i++) {
-                    if(i < LFM.getFactorDimension())
-                    {precision = currentPrecision.next();
+                    if (i < LFM.getFactorDimension()) {
+                        precision = currentPrecision.next();
                         midMean = currentMidMean.next();
                         mean = currentMean.next();
                     }
@@ -437,11 +431,11 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         return 0;
     }
 
-    public void setPathParameter(double beta){
-        pathParameter=beta;
+    public void setPathParameter(double beta) {
+        pathParameter = beta;
     }
 
-    public double getAdjustedPriorPrecision() {
+    private double getAdjustedPriorPrecision() {
         return priorPrecision * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
     }
 
@@ -453,18 +447,19 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         double[] midMean;
         double[] mean;
 
-        public DrawCaller(int i, double[][] precision, double[] midMean, double [] mean) {
+        DrawCaller(int i, double[][] precision, double[] midMean, double[] mean) {
             this.i = i;
             this.precision = precision;
             this.midMean = midMean;
             this.mean = mean;
         }
 
-
         private final boolean DEBUG_PARALLEL_EVALUATION = false;
+
         public Double call() throws Exception {
+
             if (DEBUG_PARALLEL_EVALUATION) {
-                System.err.print("Invoking thread #" + i + " for "  + ": ");
+                System.err.print("Invoking thread #" + i + " for " + ": ");
             }
             drawI(i, precision, midMean, mean);
             return null;

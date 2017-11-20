@@ -28,6 +28,7 @@ package dr.evomodel.treelikelihood;
 import beagle.*;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -646,18 +647,18 @@ public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood impleme
         fireModelChanged();
 
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
+            if (object instanceof TreeChangedEvent) {
 
-                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+                if (((TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
+                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
                     updateRestrictedNodePartials = true;
 
-                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+                } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
 //                    System.err.println("Full tree update event - these events currently aren't used\n" +

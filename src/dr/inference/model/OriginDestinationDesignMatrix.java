@@ -150,7 +150,7 @@ public class OriginDestinationDesignMatrix extends DesignMatrix {
 
         for (int i = 0; i < baseMatrix.getUniqueParameterCount(); ++i) {
             Parameter param = baseMatrix.getUniqueParameter(i);
-            System.err.println("Name: " + param.getId());
+//            System.err.println("Name: " + param.getId());
             super.addParameter(param);
             if (param != latParameter && param != longParameter) {
                 covariates.add(new Origin(param));

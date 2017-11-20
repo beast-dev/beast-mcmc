@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.math.KroneckerOperation;
@@ -41,7 +41,7 @@ import java.util.Set;
 public class MultivariateTraitUtils {
 
     public static NodeRef findMRCA(FullyConjugateMultivariateTraitLikelihood trait, int iTip, int jTip) {
-        MultivariateTraitTree treeModel = trait.getTreeModel();
+        MutableTreeModel treeModel = trait.getTreeModel();
         Set<String> leafNames = new HashSet<String>();
         leafNames.add(treeModel.getTaxonId(iTip));
         leafNames.add(treeModel.getTaxonId(jTip));
@@ -106,7 +106,7 @@ public class MultivariateTraitUtils {
 
     private static double[][] computeLinCombMatrix(FullyConjugateMultivariateTraitLikelihood trait) {
 
-        MultivariateTraitTree treeModel = trait.getTreeModel();
+        MutableTreeModel treeModel = trait.getTreeModel();
         final int tipCount = treeModel.getExternalNodeCount();
         final int branchCount = 2 * tipCount - 2;
         double[][] linCombMatrix = new double[tipCount][branchCount];
@@ -141,7 +141,7 @@ public class MultivariateTraitUtils {
 
 
     private static double[] computeRootMultipliers(FullyConjugateMultivariateTraitLikelihood trait) {
-        MultivariateTraitTree myTreeModel = trait.getTreeModel();
+        MutableTreeModel myTreeModel = trait.getTreeModel();
         final int tipCount = myTreeModel.getExternalNodeCount();
         double[] multiplierVect = new double[tipCount];
         NodeRef tempNode;
@@ -164,7 +164,7 @@ public class MultivariateTraitUtils {
 
     private static double[] getShiftContributionToMean(NodeRef node, FullyConjugateMultivariateTraitLikelihood trait) {
 
-        MultivariateTraitTree treeModel = trait.getTreeModel();
+        MutableTreeModel treeModel = trait.getTreeModel();
         double shiftContribution[] = new double[trait.dimTrait];
 
         if (!treeModel.isRoot(node)) {
@@ -192,7 +192,7 @@ public class MultivariateTraitUtils {
         }
 
         if (trait.driftModels != null) {
-            MultivariateTraitTree myTreeModel = trait.getTreeModel();
+            MutableTreeModel myTreeModel = trait.getTreeModel();
             for (int i = 0; i < nTaxa; ++i) {
                 double[] shiftContribution = getShiftContributionToMean(myTreeModel.getExternalNode(i), trait);
                 for (int j = 0; j < trait.dimTrait; ++j) {
@@ -207,7 +207,7 @@ public class MultivariateTraitUtils {
     public static double[] computeTreeTraitMeanOU(FullyConjugateMultivariateTraitLikelihood trait, double[] rootValue, boolean conditionOnRoot) {
 
         double[] root = trait.getPriorMean();
-        MultivariateTraitTree myTreeModel = trait.getTreeModel();
+        MutableTreeModel myTreeModel = trait.getTreeModel();
         double[][] linCombMatrix = computeLinCombMatrix(trait);
         double[] rootMultiplierVect = computeRootMultipliers(trait);
 
@@ -262,7 +262,7 @@ public class MultivariateTraitUtils {
     }
 
     public static double[][] computeTreeVariance(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
-        MultivariateTraitTree treeModel = trait.getTreeModel();
+        MutableTreeModel treeModel = trait.getTreeModel();
         final int tipCount = treeModel.getExternalNodeCount();
         double[][] variance = new double[tipCount][tipCount];
 
@@ -324,7 +324,7 @@ public class MultivariateTraitUtils {
     }
 
     public static double[][] computeTreeVarianceOU(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
-        MultivariateTraitTree treeModel = trait.getTreeModel();
+        MutableTreeModel treeModel = trait.getTreeModel();
         final int tipCount = treeModel.getExternalNodeCount();
         final int branchCount = 2 * tipCount - 2;
         double[][] variance = new double[tipCount][tipCount];

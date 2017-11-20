@@ -26,6 +26,7 @@
 package dr.inference.distribution;
 
 import dr.math.distributions.Distribution;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -101,9 +102,9 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     public double calculateLogLikelihood() {
 
         if (DEBUG) {
-            System.out.println("Calling DistributionLikelihood.calculateLogLikelihood()");
-            System.out.println(distribution.toString());
-            System.out.println(dataList.toString() + "\n");
+            System.err.println("Calling DistributionLikelihood.calculateLogLikelihood()");
+            System.err.println(distribution.toString());
+            System.err.println(dataList.toString() + "\n");
         }
 
         double logL = 0.0;
@@ -112,6 +113,10 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
             // Using this in the loop is incredibly wasteful, especially in the loop condition to get the length
             final double[] attributeValue = data.getAttributeValue();
+
+            if (DEBUG) {
+                System.err.println("\t" + new Vector(attributeValue));
+            }
 
             for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
 

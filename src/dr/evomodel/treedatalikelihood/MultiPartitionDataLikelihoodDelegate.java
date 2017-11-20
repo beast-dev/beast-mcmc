@@ -480,6 +480,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return totalPatternCount;
     }
 
+    @Override
+    public RateRescalingScheme getRateRescalingScheme() {
+        return RateRescalingScheme.NONE;
+    }
+
     private void updateSubstitutionModels(boolean... state) {
         for (int i = 0; i < updateSubstitutionModels.length; i++) {
             updateSubstitutionModels[i] = (state.length < 1 || state[0]);
@@ -1178,6 +1183,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
         // Callback not necessary
+    }
+
+    @Override
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

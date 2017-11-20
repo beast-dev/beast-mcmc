@@ -25,15 +25,14 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import beagle.Beagle;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
-import dr.evomodel.treedatalikelihood.EvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.io.Serializable;
 
@@ -43,34 +42,30 @@ import java.io.Serializable;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public final class HomogenousDiffusionModelDelegate implements DiffusionProcessDelegate, Serializable {
+public abstract class AbstractDiffusionModelDelegate extends AbstractModel implements DiffusionProcessDelegate, Serializable {
 
-    private static final boolean DEBUG = false;
+//    private static final boolean DEBUG = false;
 
+    final Tree tree;
     private final MultivariateDiffusionModel diffusionModel;
-
-    private final int eigenCount = 1;
-    private final int nodeCount;
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
-    public HomogenousDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel) {
-        this(tree, diffusionModel, 0);
-    }
+    AbstractDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel,
+                                          int partitionNumber) {
 
-    public HomogenousDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel,
-                                            int partitionNumber) {
+        super("AbstractDiffusionModelDelegate");
 
+        this.tree = tree;
         this.diffusionModel = diffusionModel;
-
-        nodeCount = tree.getNodeCount();
+        addModel(diffusionModel);
 
         // two eigen buffers for each decomposition for store and restore.
-        eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);
+        eigenBufferHelper = new BufferIndexHelper(1, 0, partitionNumber);
 
         // two matrices for each node less the root
-        matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
+        matrixBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, partitionNumber);
     }
 
     @Override
@@ -125,11 +120,31 @@ public final class HomogenousDiffusionModelDelegate implements DiffusionProcessD
             probabilityIndices[i] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
         }
 
-        cdi.updateDiffusionMatrices(
+        cdi.updateBrownianDiffusionMatrices(
                 eigenBufferHelper.getOffsetIndex(0),
                 probabilityIndices,
                 edgeLengths,
+                getDriftRates(branchIndices, updateCount),
                 updateCount);
+    }
+
+    protected abstract double[] getDriftRates(int[] branchIndices, int updateCount);
+
+    @Override
+    public boolean hasDrift() { return false; }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == diffusionModel) {
+            fireModelChanged(model);
+        } else {
+            throw new RuntimeException("Unknown model");
+        }
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
     }
 
     @Override
@@ -142,5 +157,10 @@ public final class HomogenousDiffusionModelDelegate implements DiffusionProcessD
     public void restoreState() {
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
+    }
+
+    @Override
+    protected void acceptState() {
+
     }
 }

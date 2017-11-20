@@ -26,6 +26,12 @@
 package dr.inference.operators.hmc;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
+import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
@@ -42,47 +48,58 @@ import dr.util.Transform;
 
 public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
-    final GradientWrtParameterProvider gradientProvider;
+//    final GradientWrtParameterProvider gradientProvider;
     final MatrixParameterInterface precisionMatrix;
     // Something that returns the conditional distribution
     final double[][] sigma0;
 
-//    protected double stepSize;
-//    protected final int nSteps;
-//    final NormalDistribution drawDistribution;
-//    final LeapFrogEngine leapFrogEngine;
+    private final TreeDataLikelihood treeDataLikelihood;
+    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
-
+    private final TreeTrait gradientProvider;
+    private final TreeTrait densityProvider;
+    private final Tree tree;
+    
     public NewBouncyParticleOperator(CoercionMode mode, double weight,
-                                     GradientWrtParameterProvider gradientProvider,
-                                     MatrixParameterInterface precisionMatrix,
-                                     double[][] sigma0) {
-//        super(mode);
-
-        this.gradientProvider = gradientProvider;
-        this.precisionMatrix = precisionMatrix;
-        this.sigma0 = sigma0;
+                                     TreeDataLikelihood treeDataLikelihood,
+                                     ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                     String traitName) {
 
         setWeight(weight);
 
+        this.treeDataLikelihood  = treeDataLikelihood;
+        this.likelihoodDelegate = likelihoodDelegate;
+
+        String gradientName = TipGradientViaFullConditionalDelegate.getName(traitName);
+        if (treeDataLikelihood.getTreeTrait(gradientName) == null) {
+            likelihoodDelegate.addFullConditionalGradientTrait(traitName);
+        }
+        gradientProvider = treeDataLikelihood.getTreeTrait(gradientName);
+
+        assert (gradientProvider != null);
+
+        String fcdName = TipFullConditionalDistributionDelegate.getName(traitName);
+        if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
+            likelihoodDelegate.addFullConditionalDensityTrait(traitName);
+        }
+        densityProvider = treeDataLikelihood.getTreeTrait(fcdName);
+
+        assert (densityProvider != null);
+
+        this.tree = treeDataLikelihood.getTree();
+        this.precisionMatrix = likelihoodDelegate.getPrecisionParameter();
+
+        this.sigma0 = getTreeVariance();
+
     }
 
-//    public NewBouncyParticleOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-//                                     Parameter parameter, Transform transform,
-//                                     double stepSize, int nSteps, double drawVariance) {
-////        super(mode);
-////        setWeight(weight);
-////        setTargetAcceptanceProbability(0.8); // Stan default
-////
-////        this.gradientProvider = gradientProvider;
-////        this.stepSize = stepSize;
-////        this.nSteps = nSteps;
-////        this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
-////        this.leapFrogEngine = (transform != null ?
-////                new LeapFrogEngine.WithTransform(parameter, transform) :
-////                new LeapFrogEngine.Default(parameter));
-//
-//    }
+    private double[][] getTreeVariance() {
+
+        double priorSampleSize = likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
+
+        return MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0,
+                /*Double.POSITIVE_INFINITY*/ priorSampleSize);
+    }
 
     @Override
     public String getPerformanceSuggestion() {
@@ -94,26 +111,18 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
         return "Bouncy Particle operator";
     }
 
-//    static double getScaledDotProduct(final double[] momentum,
-//                                      final double sigmaSquared) {
-//        double total = 0.0;
-//        for (double m : momentum) {
-//            total += m * m;
-//        }
-//
-//        return total / (2 * sigmaSquared);
-//    }
-
-//    static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
-//        double[] momentum = new double[dim];
-//        for (int i = 0; i < dim; i++) {
-//            momentum[i] = (Double) distribution.nextRandom();
-//        }
-//        return momentum;
-//    }
-
     @Override
     public double doOperation() {
+
+
+        // Get all gradients
+
+//        for (int taxon = 0; taxon < nTaxa; ++taxon) {
+//            double[] taxonGradient = (double[]) gradientProvider.getTrait(tree, tree.getExternalNode(taxon));
+//            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
+//            offsetOutput += taxonGradient.length;
+//        }
+
 //        return leapFrog();
         return 0.0;
     }

@@ -89,7 +89,7 @@ public class TraceDistribution {
     public Map<Integer, Integer> getFrequencyOrder() {
         categoryOrderMap = new HashMap<Integer, Integer>();
 
-        Set<Integer> values = frequencyCounter.getUniqueValues();
+        List<Integer> values = frequencyCounter.getUniqueValues();
         return categoryOrderMap;
     }
 

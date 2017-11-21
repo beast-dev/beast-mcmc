@@ -25,6 +25,8 @@
 
 package dr.inference.trace;
 
+import dr.stats.FrequencyCounter;
+
 import java.util.*;
 
 /**
@@ -35,16 +37,17 @@ import java.util.*;
  * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
 public class Trace {
-    public static final int MAX_UNIQUE_VALUES = 100; // the maximum allowed number of unique values
+    private static final int MAX_UNIQUE_VALUES = 100; // the maximum allowed number of unique values
 
-    protected TraceType traceType = TraceType.REAL;
-    protected List<Double> values = new ArrayList<Double>();
-    protected String name;
+    private TraceType traceType = TraceType.REAL;
+    private List<Double> values = new ArrayList<Double>();
+    private String name;
 
-    List<String> categoryValueList = new ArrayList<String>();
-    Map<Integer, String> categoryLabelMap = new TreeMap<Integer, String>();
-    Map<Integer, Integer> categoryOrderMap = new TreeMap<Integer, Integer>();
-    Set<Integer> uniqueValues = new HashSet<Integer>();
+    protected List<String> categoryValueList = new ArrayList<String>();
+    protected Map<Integer, String> categoryLabelMap = new TreeMap<Integer, String>();
+    protected Map<Integer, Integer> categoryOrderMap = new TreeMap<Integer, Integer>();
+    protected FrequencyCounter<Integer> frequencyCounter = null;
+    protected Set<Integer> uniqueValues = new HashSet<Integer>();
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
         this.name = name;
@@ -112,6 +115,18 @@ public class Trace {
         }
     }
 
+    public FrequencyCounter<Integer> getFrequencyCounter() {
+        assert traceType.isDiscrete();
+        if (frequencyCounter == null) {
+            List<Integer> integerValues = new ArrayList<Integer>();
+            for (Double value : values) {
+                integerValues.add(value.intValue());
+            }
+            frequencyCounter = new FrequencyCounter<Integer>(integerValues);
+        }
+        return frequencyCounter;
+    }
+
     public Map<Integer, Integer> getCategoryOrderMap() {
         return categoryOrderMap;
     }
@@ -119,6 +134,39 @@ public class Trace {
     public void setCategoryOrderMap(Map<Integer, Integer> categoryOrderMap) {
         this.categoryOrderMap.clear();
         this.categoryOrderMap.putAll(categoryOrderMap);
+    }
+
+    /**
+     * Reset to the original order (i.e., the order the unique values were read).
+     */
+    public void setDefaultOrder() {
+        this.categoryOrderMap.clear();
+        for (int i = 0; i < getUniqueValueCount(); i ++) {
+            categoryOrderMap.put(i, i);
+        }
+    }
+
+    /**
+     * Set to the natural ordering of the labels
+     */
+    public void setNaturalOrder() {
+        this.categoryOrderMap.clear();
+        for (int i = 0; i < getUniqueValueCount(); i ++) {
+            categoryOrderMap.put(i, i);
+        }
+    }
+
+    /**
+     * Set to the order by frequency
+     */
+    public void setFrequencyOrder() {
+        this.categoryOrderMap.clear();
+
+        FrequencyCounter<Integer> frequencies = getFrequencyCounter();
+        frequencies.getFrequencies();
+        for (int i = 0; i < getUniqueValueCount(); i ++) {
+            categoryOrderMap.put(i, i);
+        }
     }
 
     public int getValueCount() {

@@ -26,6 +26,8 @@
 package dr.stats;
 
 
+import dr.util.Pair;
+
 import java.util.*;
 
 /**
@@ -36,8 +38,8 @@ import java.util.*;
  */
 public final class FrequencyCounter<T> {
 
+    private List<T> uniqueValues;
     private Map<T, Integer> frequencies;
-    private Map<Integer, T> valueOrderMap = null;
     private Set<T> credibleSet = new TreeSet<T>();
     private Set<T> incredibleSet = new TreeSet<T>();
 
@@ -69,13 +71,9 @@ public final class FrequencyCounter<T> {
         max = minMax[1];
         mode = calculateMode();
 
-        sortByFrequency();
+        this.uniqueValues = new ArrayList<T>(frequencies.keySet());
 
         calculateCredibleSet(probabilityThreshold);
-    }
-
-    public Map<Integer, T> getValueOrderMap() {
-        return valueOrderMap;
     }
 
     public Map<T, Integer> getFrequencies() {
@@ -89,20 +87,22 @@ public final class FrequencyCounter<T> {
     /**
      * sort counter by counts to calculate correct credibility set
      */
-    private void sortByFrequency() {
-        List<T> orderedValues = new ArrayList<T>(frequencies.keySet());
-        Collections.sort(orderedValues, new Comparator<T>() {
-            public int compare(T value1, T value2) {
-                return getFrequency(value1) - getFrequency(value2);
+    private List<Integer> getOrderByFrequency() {
+        List<Pair<T, Integer>> values = new ArrayList<Pair<T, Integer>>();
+        int i = 0;
+        for (T value : uniqueValues) {
+            values.add(new Pair<T, Integer>(value, i));
+        }
+        Collections.sort(values, new Comparator<Pair<T, Integer>>() {
+            public int compare(Pair<T, Integer> value1, Pair<T, Integer> value2) {
+                return getFrequency(value1.fst) - getFrequency(value2.fst);
             }
         });
-
-        valueOrderMap = new TreeMap<Integer, T>();
-        int i = 0;
-        for (T value : orderedValues) {
-            valueOrderMap.put(i, value);
-            i++;
+        List<Integer> order = new ArrayList<Integer>();
+        for (Pair<T, Integer> value : values) {
+            order.add(value.snd);
         }
+        return order;
     }
 
     /**
@@ -111,13 +111,8 @@ public final class FrequencyCounter<T> {
      *
      * @return
      */
-    public Set<T> getUniqueValues() {
-        if (valueOrderMap != null) {
-            return new TreeSet<T>(valueOrderMap.values());
-        } else {
-            return new TreeSet<T>(frequencies.keySet());
-        }
-
+    public List<T> getUniqueValues() {
+        return new ArrayList<T>(uniqueValues);
     }
 
 
@@ -203,7 +198,8 @@ public final class FrequencyCounter<T> {
 
     private void calculateCredibleSet(double probabilityThreshold) {
         double totalProbability = 0;
-        for (T value : getUniqueValues()) {
+        for (int index : getOrderByFrequency()) {
+            T value = uniqueValues.get(index);
             double probability = getProbability(value);
             // include the last one to make totPr >= probability
             if (totalProbability < probabilityThreshold) {

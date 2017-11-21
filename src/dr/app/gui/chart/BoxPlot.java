@@ -40,6 +40,9 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
     private final boolean showTails;
     private final double upper, lower, mean, lowerTail, upperTail;
 
+    protected Stroke meanLineStroke = new BasicStroke(1.5f);
+    protected Paint meanLinePaint = Color.black;
+
     public BoxPlot(boolean isVertical, double boxWidth, double lower, double upper, double lowerTail, double upperTail, double mean) {
         super();
 
@@ -68,6 +71,14 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
         }
 
         valueAxis.addRange(minValue, maxValue);
+    }
+
+    /**
+     * Set line style
+     */
+    public void setMeanLineStyle(Stroke lineStroke, Paint linePaint) {
+        this.meanLineStroke = lineStroke;
+        this.meanLinePaint = linePaint;
     }
 
     protected boolean hasData() {
@@ -108,8 +119,8 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
             }
 
             float y = (float) transformY(mean);
-            tailPath.moveTo(x1, y);
-            tailPath.lineTo(x2, y);
+            meanPath.moveTo(x1, y);
+            meanPath.lineTo(x2, y);
 
 
         } else {
@@ -136,8 +147,8 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
             }
 
             float x = (float) transformX(mean);
-            tailPath.moveTo(x, y1);
-            tailPath.lineTo(x, y2);
+            meanPath.moveTo(x, y1);
+            meanPath.lineTo(x, y2);
 
 
         }
@@ -153,6 +164,10 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
             g2.fill(boxPath);
         }
 
+        g2.setPaint(meanLinePaint);
+        g2.setStroke(meanLineStroke);
+        g2.draw(meanPath);
+
         g2.setStroke(lineStroke);
         g2.setPaint(linePaint);
 
@@ -160,8 +175,8 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
             g2.draw(tailPath);
         }
 
-        g2.draw(meanPath);
         g2.draw(boxPath);
+
     }
 
 

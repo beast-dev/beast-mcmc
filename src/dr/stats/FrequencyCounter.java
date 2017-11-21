@@ -31,25 +31,26 @@ import dr.util.Pair;
 import java.util.*;
 
 /**
- * frequency counter
+ * A utility class to store the frequency of a set of discrete values
+ * and provide some basic statistics on them (mode, credible sets etc).
  *
  * @author Walter Xie
  * @author Andrew Rambaut
  */
 public final class FrequencyCounter<T> {
 
-    private List<T> uniqueValues;
-    private Map<T, Integer> frequencies;
-    private Set<T> credibleSet = new TreeSet<T>();
-    private Set<T> incredibleSet = new TreeSet<T>();
+    private final List<T> uniqueValues;
+    private final Map<T, Integer> frequencies;
+    private final Set<T> credibleSet = new LinkedHashSet<T>();
+    private final Set<T> incredibleSet = new LinkedHashSet<T>();
 
-    private int total;
-    private int min;
-    private int max;
-    private T mode;
+    private final int total;
+    private final int min;
+    private final int max;
+    private final T mode;
 
     public FrequencyCounter(List<T> values) {
-        this(values, 0.05);
+        this(values, 0.95);
     }
     
     public FrequencyCounter(List<T> values, double probabilityThreshold) {
@@ -65,13 +66,13 @@ public final class FrequencyCounter<T> {
             }
         }
 
+        this.uniqueValues = new ArrayList<T>(frequencies.keySet());
+
         total = calculateTotalFrequency();
         int[] minMax = calculateMinMaxFrequency();
         min = minMax[0];
         max = minMax[1];
         mode = calculateMode();
-
-        this.uniqueValues = new ArrayList<T>(frequencies.keySet());
 
         calculateCredibleSet(probabilityThreshold);
     }
@@ -87,15 +88,16 @@ public final class FrequencyCounter<T> {
     /**
      * sort counter by counts to calculate correct credibility set
      */
-    private List<Integer> getOrderByFrequency() {
+    public List<Integer> getOrderByFrequency() {
         List<Pair<T, Integer>> values = new ArrayList<Pair<T, Integer>>();
         int i = 0;
         for (T value : uniqueValues) {
             values.add(new Pair<T, Integer>(value, i));
+            i++;
         }
         Collections.sort(values, new Comparator<Pair<T, Integer>>() {
             public int compare(Pair<T, Integer> value1, Pair<T, Integer> value2) {
-                return getFrequency(value1.fst) - getFrequency(value2.fst);
+                return getFrequency(value2.fst) - getFrequency(value1.fst);
             }
         });
         List<Integer> order = new ArrayList<Integer>();

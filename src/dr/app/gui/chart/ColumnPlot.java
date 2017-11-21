@@ -48,9 +48,9 @@ public class ColumnPlot extends Plot.AbstractPlot {
     private double columnWidth = 0.9;
     private boolean columnsOnTicks = true;
 
-    public ColumnPlot(FrequencyCounter<Integer> frequencyCounter, boolean showFrequency) {
+    public ColumnPlot(FrequencyCounter<Integer> frequencyCounter, List<Integer> order, boolean showFrequency) {
         super();
-        setData(frequencyCounter, showFrequency);
+        setData(frequencyCounter, order, showFrequency);
     }
 
     public ColumnPlot(List<Double> xData, List<Double> yData) {
@@ -63,15 +63,20 @@ public class ColumnPlot extends Plot.AbstractPlot {
         setData(xData, yData);
     }
 
-    private void setData(FrequencyCounter<Integer> frequencyCounter, boolean showFrequency) {
+    private void setData(FrequencyCounter<Integer> frequencyCounter, List<Integer> order, boolean showFrequency) {
         Variate.D xd = new Variate.D();
         Variate.D yd = new Variate.D();
 
-        for (int value : frequencyCounter.getUniqueValues()) {
-            xd.add((double)value);
-            yd.add(showFrequency ? frequencyCounter.getFrequency(value) : frequencyCounter.getProbability(value));
+        int i = 0;
+        if (order == null) {
+            order = frequencyCounter.getUniqueValues();
         }
-        
+        for (int value : order) {
+            xd.add((double)i);
+            yd.add(showFrequency ? frequencyCounter.getFrequency(value) : frequencyCounter.getProbability(value));
+            i++;
+        }
+
         setData(xd, yd);
     }
 
@@ -86,7 +91,7 @@ public class ColumnPlot extends Plot.AbstractPlot {
     /**
      * Set arbitrary intervals to use (0 for none).
      */
-    public void setIntervals(double upper, double lower) {
+    public void setIntervals(double lower, double upper) {
         hasIntervals = (upper > 0.0 || lower > 0.0);
         upperInterval = upper;
         lowerInterval = lower;
@@ -105,7 +110,7 @@ public class ColumnPlot extends Plot.AbstractPlot {
      */
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
-        double x1, y1, x2, y2;
+        double x, x1, y1, x2, y2;
         int n = xData.getCount();
 
         double delta = (1.0 - columnWidth) / 2;
@@ -113,9 +118,11 @@ public class ColumnPlot extends Plot.AbstractPlot {
         g2.setStroke(lineStroke);
         for (int i = 0; i < n; i ++) {
 
-            x1 = (Double)xData.get(i) + delta;
+            x = (Double)xData.get(i);
+
+            x1 = x + delta;
             y1 = 0.0;
-            x2 = (Double)xData.get(i) + 1 - delta;
+            x2 = x + 1 - delta;
             y2 = (Double) yData.get(i);
 
             if (columnsOnTicks) {
@@ -125,35 +132,12 @@ public class ColumnPlot extends Plot.AbstractPlot {
 
             if (y1 != y2) {
                 if (barPaint != null) {
-                    if (hasIntervals) {
-                        if (x1 < lowerInterval) {
-                            if (x2 <= lowerInterval) {
-                                g2.setPaint(intervalTailPaint);
-                                fillRect(g2, x1, y1, x2, y2);
-                            } else {
-                                g2.setPaint(intervalTailPaint);
-                                fillRect(g2, x1, y1, lowerInterval, y2);
-                                g2.setPaint(barPaint);
-                                fillRect(g2, lowerInterval, y1, x2, y2);
-                            }
-                        } else if (x2 > upperInterval) {
-                            if (x1 >= upperInterval) {
-                                g2.setPaint(intervalTailPaint);
-                                fillRect(g2, x1, y1, x2, y2);
-                            } else {
-                                g2.setPaint(barPaint);
-                                fillRect(g2, x1, y1, upperInterval, y2);
-                                g2.setPaint(intervalTailPaint);
-                                fillRect(g2, upperInterval, y1, x2, y2);
-                            }
-                        } else {
-                            g2.setPaint(barPaint);
-                            fillRect(g2, x1, y1, x2, y2);
-                        }
+                    if (hasIntervals && (x < lowerInterval || x >= upperInterval)) {
+                        g2.setPaint(intervalTailPaint);
                     } else {
                         g2.setPaint(barPaint);
-                        fillRect(g2, x1, y1, x2, y2);
                     }
+                    fillRect(g2, x1, y1, x2, y2);
                 }
 
                 if (lineStroke != null && linePaint != null) {
@@ -164,5 +148,5 @@ public class ColumnPlot extends Plot.AbstractPlot {
             }
         }
     }
-    
+
 }

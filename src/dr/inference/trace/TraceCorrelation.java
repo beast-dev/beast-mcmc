@@ -49,8 +49,8 @@ public class TraceCorrelation extends TraceDistribution {
         }
     }
 
-    public TraceCorrelation(List<Double> values, Map<Integer, String> categoryLabelMap, long stepSize) {
-        super(values, categoryLabelMap);
+    public TraceCorrelation(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder, long stepSize) {
+        super(values, categoryLabelMap, categoryOrder);
 
         this.stepSize = stepSize;
 

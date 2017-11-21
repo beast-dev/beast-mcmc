@@ -34,30 +34,21 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 
 	private final boolean originBetweenCategories;
 	private final boolean showEveryCategory;
-	private final Map<Integer, String> categoryLabelMap = new HashMap<Integer, String>();
-	private final Map<Integer, Integer> categoryOrderMap = new HashMap<Integer, Integer>();
+	private final Map<Integer, String> categoryLabelMap;
+	private final List<Integer> categoryOrder;
 
 	public DiscreteAxis(boolean originBetweenCategories, boolean showEveryCategory) {
-		super(AT_MAJOR_TICK, AT_MAJOR_TICK, true);
-
-		this.originBetweenCategories = originBetweenCategories;
-		this.showEveryCategory = showEveryCategory;
+		this(null, null, originBetweenCategories, showEveryCategory);
 	}
 
-	public DiscreteAxis(Map<Integer, String> categoryLabelMap, Map<Integer, Integer> categoryOrderMap, boolean originBetweenCategories, boolean showEveryCategory) {
+	public DiscreteAxis(Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder, boolean originBetweenCategories, boolean showEveryCategory) {
 		super(AT_MAJOR_TICK, AT_MAJOR_TICK, true);
 
 		this.originBetweenCategories = originBetweenCategories;
 		this.showEveryCategory = showEveryCategory;
 
-		this.categoryLabelMap.putAll(categoryLabelMap);
-		if (categoryOrderMap == null || categoryOrderMap.size() < categoryLabelMap.size()) {
-			for (int i = 0; i < categoryLabelMap.size(); i++) {
-				this.categoryOrderMap.put(i, i);
-			}
-		} else {
-			this.categoryOrderMap.putAll(categoryOrderMap);
-		}
+		this.categoryLabelMap = categoryLabelMap;
+		this.categoryOrder = categoryOrder;
 	}
 
 	/**
@@ -76,8 +67,8 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 
 	@Override
 	public String format(double value) {
-		if (categoryLabelMap.size() > 0) {
-			Integer index = categoryOrderMap.get((int)value);
+		if (categoryLabelMap != null) {
+			Integer index = categoryOrder.get((int)value);
 			if (index == null) {
 				return "Missing";
 			}

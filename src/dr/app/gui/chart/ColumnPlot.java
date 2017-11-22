@@ -80,6 +80,10 @@ public class ColumnPlot extends Plot.AbstractPlot {
         setData(xd, yd);
     }
 
+    public void setColumnWidth(double columnWidth) {
+        this.columnWidth = columnWidth;
+    }
+
     /**
      * Set paints
      */
@@ -132,7 +136,7 @@ public class ColumnPlot extends Plot.AbstractPlot {
 
             if (y1 != y2) {
                 if (barPaint != null) {
-                    if (hasIntervals && (x < lowerInterval || x >= upperInterval)) {
+                    if (hasIntervals && (x < lowerInterval || x > upperInterval)) {
                         g2.setPaint(intervalTailPaint);
                     } else {
                         g2.setPaint(barPaint);

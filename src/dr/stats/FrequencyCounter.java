@@ -37,7 +37,7 @@ import java.util.*;
  * @author Walter Xie
  * @author Andrew Rambaut
  */
-public final class FrequencyCounter<T> {
+public final class FrequencyCounter<T extends Comparable> {
 
     private final List<T> uniqueValues;
     private final Map<T, Integer> frequencies;
@@ -114,7 +114,9 @@ public final class FrequencyCounter<T> {
      * @return
      */
     public List<T> getUniqueValues() {
-        return new ArrayList<T>(uniqueValues);
+        List<T> values = new ArrayList<T>(uniqueValues);
+        Collections.sort(values);
+        return values;
     }
 
 

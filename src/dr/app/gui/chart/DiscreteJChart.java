@@ -50,8 +50,8 @@ public class DiscreteJChart extends JChart {
         }
     }
 
-    public void setXAxis(Map<Integer, String> categoryLabelMap, List<Integer> categoryOrderMap) {
-            super.setXAxis(new DiscreteAxis(categoryLabelMap, categoryOrderMap, true, true));
+    public void setXAxis(Map<Integer, String> categoryLabelMap) {
+            super.setXAxis(new DiscreteAxis(categoryLabelMap, true, true));
     }
 
     public void setYAxis(boolean isInteger) {
@@ -62,8 +62,8 @@ public class DiscreteJChart extends JChart {
         }
     }
 
-    public void setYAxis(Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder) {
-        super.setYAxis(new DiscreteAxis(categoryLabelMap, categoryOrder, true, true));
+    public void setYAxis(Map<Integer, String> categoryLabelMap) {
+        super.setYAxis(new DiscreteAxis(categoryLabelMap, true, true));
     }
 
     protected void paintMajorTick(Graphics2D g2, double value, String label, boolean horizontalAxis) {

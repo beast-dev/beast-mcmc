@@ -56,7 +56,7 @@ public class Trace {
     protected List<Integer> categoryOrder = null;
 
     protected FrequencyCounter<Integer> frequencyCounter = null;
-    protected Set<Integer> uniqueValues = new HashSet<Integer>();
+    protected Set<Integer> uniqueValues = new TreeSet<Integer>();
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
         this.name = name;
@@ -161,24 +161,30 @@ public class Trace {
     }
 
     private List<Integer> getNaturalOrder() {
-        List<Pair<Comparable, Integer>> values = new ArrayList<Pair<Comparable, Integer>>();
-        int i = 0;
-        for (Integer value : getFrequencyCounter().getUniqueValues()) {
-            if (categoryLabelMap != null) {
-                values.add(new Pair<Comparable, Integer>(categoryLabelMap.get(value), i));
-            } else {
-                values.add(new Pair<Comparable, Integer>(value, i));
+        List<Integer> order;
+        if (traceType == TraceType.CATEGORICAL) {
+            List<Pair<Comparable, Integer>> values = new ArrayList<Pair<Comparable, Integer>>();
+            int i = 0;
+            for (Integer value : getFrequencyCounter().getUniqueValues()) {
+                if (categoryLabelMap != null) {
+                    values.add(new Pair<Comparable, Integer>(categoryLabelMap.get(value), i));
+                } else {
+                    values.add(new Pair<Comparable, Integer>(value, i));
+                }
+                i++;
             }
-            i++;
-        }
-        Collections.sort(values, new Comparator<Pair<Comparable, Integer>>() {
-            public int compare(Pair<Comparable, Integer> value1, Pair<Comparable, Integer> value2) {
-                return value1.fst.compareTo(value1.fst);
+            Collections.sort(values, new Comparator<Pair<Comparable, Integer>>() {
+                public int compare(Pair<Comparable, Integer> value1, Pair<Comparable, Integer> value2) {
+                    return value1.fst.compareTo(value2.fst);
+                }
+            });
+            order = new ArrayList<Integer>();
+            for (Pair<Comparable, Integer> value : values) {
+                order.add(value.snd);
             }
-        });
-        List<Integer> order = new ArrayList<Integer>();
-        for (Pair<Comparable, Integer> value : values) {
-            order.add(value.snd);
+        } else {
+            order = new ArrayList<Integer>(getFrequencyCounter().getUniqueValues());
+            Collections.sort(order);
         }
         return order;
     }

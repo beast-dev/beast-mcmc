@@ -35,20 +35,18 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 	private final boolean originBetweenCategories;
 	private final boolean showEveryCategory;
 	private final Map<Integer, String> categoryLabelMap;
-	private final List<Integer> categoryOrder;
 
 	public DiscreteAxis(boolean originBetweenCategories, boolean showEveryCategory) {
-		this(null, null, originBetweenCategories, showEveryCategory);
+		this(null,originBetweenCategories, showEveryCategory);
 	}
 
-	public DiscreteAxis(Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder, boolean originBetweenCategories, boolean showEveryCategory) {
+	public DiscreteAxis(Map<Integer, String> categoryLabelMap, boolean originBetweenCategories, boolean showEveryCategory) {
 		super(AT_MAJOR_TICK, AT_MAJOR_TICK, true);
 
 		this.originBetweenCategories = originBetweenCategories;
 		this.showEveryCategory = showEveryCategory;
 
 		this.categoryLabelMap = categoryLabelMap;
-		this.categoryOrder = categoryOrder;
 	}
 
 	/**
@@ -68,12 +66,7 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 	@Override
 	public String format(double value) {
 		if (categoryLabelMap != null) {
-			Integer index = categoryOrder.get((int)value);
-			if (index == null) {
-				return "Missing";
-			}
-
-			String label = categoryLabelMap.get(index);
+			String label = categoryLabelMap.get((int)value);
 			if (label == null) {
 				return "Missing";
 			}

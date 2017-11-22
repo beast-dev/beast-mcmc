@@ -67,14 +67,20 @@ public class ColumnPlot extends Plot.AbstractPlot {
         Variate.D xd = new Variate.D();
         Variate.D yd = new Variate.D();
 
-        int i = 0;
-        if (order == null) {
-            order = frequencyCounter.getUniqueValues();
+        List<Integer> values = order;
+        if (values == null) {
+            values = frequencyCounter.getUniqueValues();
         }
-        for (int value : order) {
-            xd.add((double)i);
+
+        int i = 0;
+        for (int value : values) {
+            if (order == null) {
+                xd.add((double) value);
+            } else {
+                xd.add((double) i);
+                i++;
+            }
             yd.add(showFrequency ? frequencyCounter.getFrequency(value) : frequencyCounter.getProbability(value));
-            i++;
         }
 
         setData(xd, yd);

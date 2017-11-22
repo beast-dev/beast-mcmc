@@ -50,12 +50,13 @@ public final class FrequencyCounter<T extends Comparable> {
     private final T mode;
 
     public FrequencyCounter(List<T> values) {
-        this(values, 0.95);
+        this(values, 0.0);
     }
     
     public FrequencyCounter(List<T> values, double probabilityThreshold) {
-        // http://stackoverflow.com/questions/12998568/hashmap-vs-linkedhashmap-performance-in-iteration-over-values
-        frequencies = new LinkedHashMap<T, Integer>();
+
+        // use a treemap so the keys are sorted by their value
+        frequencies = new TreeMap<T, Integer>();
 
         for (T value : values) {
             if (frequencies.containsKey(value)) {
@@ -74,7 +75,9 @@ public final class FrequencyCounter<T extends Comparable> {
         max = minMax[1];
         mode = calculateMode();
 
-        calculateCredibleSet(probabilityThreshold);
+        if (probabilityThreshold > 0.0) {
+            calculateCredibleSet(probabilityThreshold);
+        }
     }
 
     public Map<T, Integer> getFrequencies() {

@@ -41,8 +41,10 @@ import java.util.*;
 public class TraceDistribution {
     private TraceType traceType;
 
+    // For discrete and categorical traces
     private Map<Integer, String> categoryLabelMap;
     private List<Integer> categoryOrder;
+    private FrequencyCounter<Integer> frequencyCounter;
 
     public TraceDistribution(List<Double> values, TraceType traceType) {
         this.traceType = traceType;
@@ -242,20 +244,24 @@ public class TraceDistribution {
     // new types
     //************************************************************************
 
-    // frequency counter for discrete traces
-    private FrequencyCounter<Integer> frequencyCounter;
 
     // init FrequencyCounter used for Integer and String
     private void analyseDistributionDiscrete(List<Double> valueList, double proportion) {
-        List<Integer> values = new ArrayList<Integer>();
+        List<Integer> integerValues = new ArrayList<Integer>();
         for (Double value : valueList) {
-            values.add(value.intValue());
+            integerValues.add(value.intValue());
         }
 
         if (size == 0) {
-            size = values.size();
+            size = integerValues.size();
         }
-        frequencyCounter = new FrequencyCounter<Integer>(values);
+
+        if (getTraceType() == TraceType.CATEGORICAL) {
+            frequencyCounter = new FrequencyCounter<Integer>(integerValues, proportion);
+        } else {
+            frequencyCounter = new FrequencyCounter<Integer>(integerValues);
+        }
+
     }
 
     public Set<Integer> getValueSet() {
@@ -264,6 +270,11 @@ public class TraceDistribution {
         } else {
             return new LinkedHashSet<Integer>(frequencyCounter.getUniqueValues());
         }
+    }
+
+    public FrequencyCounter<Integer> getFrequencyCounter() {
+        assert traceType.isDiscrete();
+        return frequencyCounter;
     }
 
     public Set<Integer> getCredibleSet() {
@@ -322,25 +333,5 @@ public class TraceDistribution {
         return valuesList;
     }
 
-//    private boolean contains(Set<T> aSet, int valueORIndex) {
-//        if (traceType.isNumber()) {
-//            // T is either Double or Integer
-//            return aSet.contains((double) valueORIndex);
-//        } else { // String
-//            String valueString = null;
-//            int i = -1;
-//            for (T v : frequencies.uniqueValues()) {
-//                i++;
-//                if (i == valueORIndex) {
-//                    valueString = v.toString();
-//                    break;
-//                }
-//            }
-//            if (valueString == null) {
-//                return false;
-//            }
-//            return aSet.contains(valueString);
-//        }
-//    }
 
 }

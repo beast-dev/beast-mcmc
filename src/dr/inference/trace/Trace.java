@@ -55,7 +55,6 @@ public class Trace {
     protected OrderType orderType = OrderType.DEFAULT;
     protected List<Integer> categoryOrder = null;
 
-    protected FrequencyCounter<Integer> frequencyCounter = null;
     protected Set<Integer> uniqueValues = new TreeSet<Integer>();
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
@@ -128,14 +127,7 @@ public class Trace {
 
     public FrequencyCounter<Integer> getFrequencyCounter() {
         assert traceType.isDiscrete();
-        if (frequencyCounter == null) {
-            List<Integer> integerValues = new ArrayList<Integer>();
-            for (Double value : values) {
-                integerValues.add(value.intValue());
-            }
-            frequencyCounter = new FrequencyCounter<Integer>(integerValues);
-        }
-        return frequencyCounter;
+        return getTraceStatistics().getFrequencyCounter();
     }
 
     public List<Integer> getCategoryOrder() {
@@ -272,7 +264,7 @@ public class Trace {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public TraceType getTraceType() {
         return traceType;
     }

@@ -419,7 +419,7 @@ public class JChart extends JPanel {
     protected void paintContents(Graphics2D g2) {
         int plotNumber = 0;
         for (Plot plot : plots) {
-            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber);
+            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber, plots.size());
             plotNumber += 1;
         }
     }

@@ -131,14 +131,15 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Paint actual plot
      */
+    @Override
     public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                          double xOffset, double yOffset, int plotNumber) {
+                          double xOffset, double yOffset, int plotNumber, int plotCount) {
 
         if (distribution == null) {
             return;
         }
 
-        super.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber);
+        super.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber, plotCount);
 
         g2.setPaint(linePaint);
         g2.setStroke(lineStroke);
@@ -159,6 +160,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
+    @Override
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         // do nothing because paintPlot is overridden
     }

@@ -37,7 +37,6 @@ import java.util.Map;
 
 public class ColumnPlot extends Plot.AbstractPlot {
 
-    //    protected Paint barPaint = Color.blue;
     private Paint barPaint = new Color(124, 164, 221);
     private Paint intervalTailPaint = new Color(232, 114, 103);
 
@@ -93,26 +92,18 @@ public class ColumnPlot extends Plot.AbstractPlot {
     /**
      * Set paints
      */
-    public void setPaints(Paint barPaint, Paint quantilePaint) {
+    public void setPaints(Paint barPaint, Paint intervalTailPaint) {
         this.barPaint = barPaint;
-        this.intervalTailPaint = quantilePaint;
+        this.intervalTailPaint = intervalTailPaint;
     }
 
     /**
      * Set arbitrary intervals to use (0 for none).
      */
     public void setIntervals(double lower, double upper) {
-        hasIntervals = (upper > 0.0 || lower > 0.0);
+        hasIntervals = true;
         upperInterval = upper;
         lowerInterval = lower;
-    }
-
-    /**
-     * Set bar fill style. Use a barPaint of null to not fill bar.
-     * Bar outline style is set using setLineStyle
-     */
-    public void setBarFillStyle(Paint barPaint) {
-        this.barPaint = barPaint;
     }
 
     /**
@@ -123,16 +114,18 @@ public class ColumnPlot extends Plot.AbstractPlot {
         double x, x1, y1, x2, y2;
         int n = xData.getCount();
 
-        double delta = (1.0 - columnWidth) / 2;
+        double width = 1.0 / plotCount;
+        double barWidth = width * columnWidth;
+        double delta = (width - barWidth) / 2;
 
         g2.setStroke(lineStroke);
         for (int i = 0; i < n; i ++) {
 
-            x = (Double)xData.get(i);
+            x = (Double)xData.get(i) + (plotNumber * width);
 
             x1 = x + delta;
             y1 = 0.0;
-            x2 = x + 1 - delta;
+            x2 = x + width - delta;
             y2 = (Double) yData.get(i);
 
             if (columnsOnTicks) {

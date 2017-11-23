@@ -1,7 +1,7 @@
 <!--
   ~ build.xml
   ~
-  ~ Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+  ~ Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
   ~
   ~ This file is part of BEAST.
   ~ See the NOTICE file distributed with this work for additional
@@ -252,6 +252,11 @@
 
     </target>
 
+    <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
+    <target name="copy_trace_jar" depends="dist" >
+        <copy file="${dist}/trace.jar" todir="../Tracer/lib"/>
+    </target>
+
     <!-- run beast.jar -->
     <target name="run_BEAST">
         <java jar="${dist}/beast.jar" fork="true"/>
@@ -314,7 +319,8 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.10-VEME2017"/>
+    <property name="version" value="1.10-Java9"/>
+    <property name="jvm_version" value="1.9+"/>
 
     <property name="version_number" value="1.10.0"/>
     <property name="copyright" value="Copyright 2002-2017"/>
@@ -511,7 +517,7 @@
 
         <copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
-        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
+        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->                                             
         <copy todir="${Mac_package_dir}/lib">
             <fileset dir="${Mac_dir}/lib"/>
         </copy>
@@ -527,7 +533,7 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
-                    jvmversion="1.6+"
+                    jvmversion="${jvm_version}"
                     vmoptions="-d64 -Xmx2048M"
                     arguments="-window -working -options"
                     version="${version}"
@@ -559,7 +565,7 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub_quaqua"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
-                    jvmversion="1.6+"
+                    jvmversion="${jvm_version}"
                     vmoptions="-d64 -Xmx2048M"
                     arguments=""
                     version="${version}"
@@ -597,7 +603,7 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
-                    jvmversion="1.6+"
+                    jvmversion="${jvm_version}"
                     vmoptions="-d64 -Xmx2048M"
                     arguments=""
                     version="${version}"
@@ -625,7 +631,7 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
-                    jvmversion="1.6+"
+                    jvmversion="${jvm_version}"
                     vmoptions="-d64 -Xmx4096M"
                     arguments=""
                     version="${version}"
@@ -653,7 +659,7 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/TreeStat.icns"
-                    jvmversion="1.6+"
+                    jvmversion="${jvm_version}"
                     vmoptions="-d64 -Xmx1024M"
                     arguments=""
                     version="${version}"

@@ -113,10 +113,14 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         }
 
         if (iP == tree.getRoot() || j == tree.getRoot()) {
-            throw new RuntimeException("Root changes not allowed!");
+            logq = Double.NEGATIVE_INFINITY;
+            return;
         }
 
-        if (jP == iP || j == iP || jP == i) throw new RuntimeException("Move failed");
+        if (jP == iP || j == iP || jP == i){
+            logq = Double.NEGATIVE_INFINITY;
+            return;
+        }
 
         final NodeRef CiP = getOtherChild(tree, iP, i);
         NodeRef PiP = tree.getParent(iP);

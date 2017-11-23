@@ -21,7 +21,7 @@ We also include a program that can convert NEXUS files into this format.
 
 # Documentation
 
-[BEAST Documentation Website](http://beast.bio.ed.ac.uk)
+[BEAST Documentation Website](http://beast.community)
 
 
 # Acknowledgements

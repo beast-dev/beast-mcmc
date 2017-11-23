@@ -37,6 +37,7 @@ import dr.math.MathUtils;
  * @author Joseph Heled
  * @version $Id$
  */
+@Deprecated // Doing a random walk on a log scaled parameter is now supported in RandomWalkOperator
 public class LogRandomWalkOperator extends AbstractCoercableOperator {
 
     private double size;

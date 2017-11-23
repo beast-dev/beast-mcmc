@@ -38,6 +38,9 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SUBTREE_LEAP = "subtreeLeap";
 
+    public static final String SIZE = "size";
+    public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+
     public String getParserName() {
         return SUBTREE_LEAP;
     }
@@ -49,23 +52,24 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        final double size = xo.getAttribute("size", 1.0);
-        final double prob = xo.getAttribute("accP", 0.234);
+        // size attribute is mandatory
+        final double size = xo.getAttribute(SIZE, Double.NaN);
+        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-        if (Double.isInfinite(size) || size <= 0.0) {
-            throw new XMLParseException("size attribute must be positive and not infinite. was " + size);
+        if (size <= 0.0) {
+            throw new XMLParseException("The SubTreeLeap size attribute must be positive and non-zero.");
         }
-        
-        if (prob <= 0.0 || prob >= 1.0) {
-            throw new XMLParseException("Target acceptance probability has to lie in (0, 1). Currently: " + prob);
+
+        if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
+            throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
-        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, prob, mode);
+        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, targetAcceptance, mode);
 
         return operator;
     }
 
     public String getParserDescription() {
-        return "An operator that moves subtree a certain distance.";
+        return "An operator that moves a subtree a certain patristic distance.";
     }
 
     public Class getReturnType() {
@@ -78,8 +82,8 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newDoubleRule("size", true),
-            AttributeRule.newDoubleRule("accP", true),
+            AttributeRule.newDoubleRule(SIZE, false),
+            AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };

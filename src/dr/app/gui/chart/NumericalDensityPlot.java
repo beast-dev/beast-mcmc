@@ -25,7 +25,7 @@
 
 package dr.app.gui.chart;
 
-import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceType;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -34,7 +34,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 
-public class NumericalDensityPlot extends FrequencyPlot {
+public class NumericalDensityPlot extends HistogramPlot {
 
     boolean relativeDensity = true;
     boolean pointsOnly = false;

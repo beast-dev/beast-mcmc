@@ -31,9 +31,12 @@ import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class FrequencyPlot extends Plot.AbstractPlot {
+public class HistogramPlot extends Plot.AbstractPlot {
 
     protected Variate raw = null;
 
@@ -48,41 +51,37 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     private double upperInterval = 0.0;
     private double lowerInterval = 0.0;
 
-    private boolean hasIncredibleSet = false;
+    private Set<Integer> incredibleSet = Collections.EMPTY_SET;
+
+//    private boolean hasIncredibleSet = false;
 //    private TraceDistribution.CredibleSetAnalysis credSet;
 
-    protected TraceDistribution traceDistribution = null;
-    // for categorical only
 
-    protected FrequencyPlot(TraceDistribution traceDistribution) {
-        super();
-        this.traceDistribution = traceDistribution;
-    }
-
-    public FrequencyPlot(List<Double> data, int minimumBinCount) {
+    public HistogramPlot(List<Double> data, int minimumBinCount) {
         super();
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(Variate.D data, int minimumBinCount) {
+    public HistogramPlot(Variate.D data, int minimumBinCount) {
         super();
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution) {
-        this(traceDistribution);
+    public HistogramPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution) {
+        super();
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<String> data, TraceDistribution traceDistribution) {
-        this(traceDistribution);
-        if (!traceDistribution.getTraceType().isCategorical())
-            throw new IllegalArgumentException("Categorical value is required for frequency plot !");
-
-        List<Double> intData = traceDistribution.indexingData(data);
-        // set data by index of unique categorical values
-        setData(intData, -1);
-    }
+//    public FrequencyPlot(List<Integer> data, TraceType traceType) {
+//        this(traceType);
+//        if (!traceType.isCategorical()) {
+//            throw new IllegalArgumentException("Categorical value is required for frequency plot.");
+//        }
+//
+////        List<Double> intData = traceDistribution.indexingData(data);
+//        // set data by index of unique categorical values
+//        setIntegerData(data, 1);
+//    }
 
     /**
      * Set data
@@ -93,7 +92,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     }
 
     /**
-     * Set data
+     * Set paints
      */
     public void setPaints(Paint barPaint, Paint quantilePaint) {
         this.barPaint = barPaint;
@@ -127,11 +126,38 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(xData, yData);
     }
 
-    public Variate getRawData() {
+    /**
+     * Set data
+     */
+//    public void setIntegerData(Variate.I data, int minimumBinCount) {
+//
+//        setRawData(data);
+//        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
+//
+//        Variate.D xData = new Variate.D();
+//        Variate.D yData = new Variate.D();
+//
+//        double x = frequency.getLowerBound();
+//
+//        for (int i = 0; i < frequency.getBinCount(); i++) {
+//
+//            xData.add(x);
+//            yData.add(0.0);
+//
+//            x += frequency.getBinSize();
+//
+//            xData.add(x);
+//            yData.add((double) frequency.getFrequency(i));
+//
+//        }
+//        setData(xData, yData);
+//    }
+
+    protected Variate getRawData() {
         return raw;
     }
 
-    public void setRawData(Variate raw) {
+    protected void setRawData(Variate raw) {
         this.raw = raw;
     }
 
@@ -139,8 +165,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      * Get the FrequencyDistribution object
      */
     protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
-        double min = (Double) data.getMin();
-        double max = (Double) data.getMax();
+        double min = ((Number) data.getMin()).doubleValue();
+        double max = ((Number) data.getMax()).doubleValue();
 
         if (min == max) {
             if (min == 0) {
@@ -156,8 +182,9 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         }
 
         Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
-        if (minimumBinCount <= 0)
+        if (minimumBinCount <= 0) {
             axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+        }
         axis.setRange(min, max);
 
         int majorTickCount = axis.getMajorTickCount();
@@ -188,11 +215,38 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {
-            frequency.addValue((Double) raw.get(i));
+            frequency.addValue(((Number) raw.get(i)).doubleValue());
         }
 
         return frequency;
     }
+
+    /**
+     * Get the FrequencyDistribution object
+     */
+//    protected FrequencyDistribution getDiscreteFrequencyDistribution(Variate data, Map<Integer, Integer> categoryOrderMap) {
+//        int min = ((Number) data.getMin()).intValue();
+//        int max = ((Number) data.getMax()).intValue();
+//
+//        if (min == max) {
+//            min -= -1.0;
+//            max += 1.0;
+//        }
+//
+//        double binSize = 1;
+//        int binCount = max - min + 1;
+//
+//        double start = min;
+//
+//        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
+//
+//        for (int i = 0; i < raw.getCount(); i++) {
+//            int index = categoryOrderMap.get(((Number)raw.get(i)).intValue());
+//            frequency.addValue(index);
+//        }
+//
+//        return frequency;
+//    }
 
     /**
      * Set quantiles to use (0 for none).
@@ -214,11 +268,10 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     }
 
     /**
-     * Set arbitrary intervals to use (0 for none).
+     * Use incredible set for tails.
      */
-    public void setInCredibleSet(TraceDistribution traceD) {
-        this.traceDistribution = traceD;
-        hasIncredibleSet = traceD.credibleSetAnalysis != null && traceD.credibleSetAnalysis.getIncredibleSet().size() > 0;
+    public void setIncredibleSet(Set<Integer> incredibleSet) {
+        this.incredibleSet = incredibleSet;
     }
 
     /**
@@ -239,8 +292,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         int n = xData.getCount();
 
         if (hasQuantiles) {
-            lower = raw.getQuantile(quantiles);
-            upper = raw.getQuantile(1.0 - quantiles);
+            lower = getRawData().getQuantile(quantiles);
+            upper = getRawData().getQuantile(1.0 - quantiles);
         } else if (hasIntervals) {
             lower = lowerInterval;
             upper = upperInterval;
@@ -281,13 +334,6 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                             g2.setPaint(barPaint);
                             fillRect(g2, x1, y1, x2, y2);
                         }
-                    } else if (hasIncredibleSet) {
-                        if (traceDistribution.incredibleSetContains((int) x1) || traceDistribution.incredibleSetContains((int) x2)) {
-                            g2.setPaint(quantilePaint);
-                        } else {
-                            g2.setPaint(barPaint);
-                        }
-                        fillRect(g2, x1, y1, x2, y2);
                     } else {
                         g2.setPaint(barPaint);
                         fillRect(g2, x1, y1, x2, y2);
@@ -302,21 +348,4 @@ public class FrequencyPlot extends Plot.AbstractPlot {
             }
         }
     }
-
-    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceDistribution != null && traceDistribution.getTraceType() != TraceType.REAL) {
-            super.fillRect(g2, x1-(x2-x1), y1, x2, y2);
-        } else {
-            super.fillRect(g2, x1, y1, x2, y2);
-        }
-    }
-
-    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceDistribution != null && traceDistribution.getTraceType() != TraceType.REAL) {
-            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
-        } else {
-            super.drawRect(g2, x1, y1, x2, y2);
-        }
-    }
-
 }

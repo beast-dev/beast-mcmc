@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
+public class KDENumericalDensityPlot extends NumericalDensityPlot {
     private final static boolean DEBUG = false;
 
     public KDENumericalDensityPlot(List<Double> data, int minimumBinCount) {
@@ -52,7 +52,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
         switch (type) {
             case GAUSSIAN: return new NormalKDEDistribution(samples);
             case GAMMA: return new GammaKDEDistribution(samples);
-            case LOGTRANSFORMEDGAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
+            case LOG_TRANSFORMED_GAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
             default:
                 throw new RuntimeException("Unknown type");
         }
@@ -164,6 +164,14 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
             points[i] = kde.pdf(xData.get(i));
         }
         return new Variate.D(points);
+    }
+
+    protected double getQuantile(double y) {
+        return kde.quantile(y);
+    }
+
+    protected double getDensity(double x) {
+        return kde.pdf(x);
     }
 
     private KernelDensityEstimatorDistribution kde;

@@ -44,6 +44,16 @@ public class BetaKDEDistribution extends KernelDensityEstimatorDistribution {
 
      }
 
+    @Override
+    public double getFromPoint() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double getToPoint() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
      protected void processBounds(Double lowerBound, Double upperBound) {
          if (lowerBound == null || upperBound == null || upperBound - lowerBound <= 0) {
              throw new RuntimeException("BetaKDEDistribution must be bounded");

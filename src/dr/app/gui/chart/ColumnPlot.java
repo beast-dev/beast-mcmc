@@ -114,14 +114,16 @@ public class ColumnPlot extends Plot.AbstractPlot {
         double x, x1, y1, x2, y2;
         int n = xData.getCount();
 
-        double width = 1.0 / plotCount;
+        double spaceWidth = 1.0 * columnWidth;
+        double spaceDelta = (1 - spaceWidth) / 2;
+        double width = spaceWidth / plotCount;
         double barWidth = width * columnWidth;
         double delta = (width - barWidth) / 2;
 
         g2.setStroke(lineStroke);
         for (int i = 0; i < n; i ++) {
 
-            x = (Double)xData.get(i) + (plotNumber * width);
+            x = (Double)xData.get(i) + (plotNumber * width) + spaceDelta;
 
             x1 = x + delta;
             y1 = 0.0;

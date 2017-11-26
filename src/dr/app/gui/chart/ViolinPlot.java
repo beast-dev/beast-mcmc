@@ -54,23 +54,36 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
         this(true, violinWidth, true, data, minimumBinCount);
     }
 
+    public ViolinPlot(boolean isVertical, double violinWidth, boolean showTails, java.util.List<Double> data) {
+        this(true, violinWidth, showTails, data, DEFAULT_KDE_BINS);
+    }
+
     public ViolinPlot(boolean isVertical, double violinWidth, boolean showTails, java.util.List<Double> data, int minimumBinCount) {
-        super(data, minimumBinCount); // TODO Remove when all linked together
+        super(data, minimumBinCount);
 
         this.isVertical = isVertical;
         this.violinWidth = violinWidth;
-        this.showQuantiles = true;
+        this.showQuantiles = showTails;
         this.showTails = showTails;
 
         // setData again because in super, the width weren't set.
         setData(data, minimumBinCount);
 
-        lower = getQuantile(0.025);
-        upper = getQuantile(0.975);
+        if (showQuantiles) {
+            lower = getQuantile(0.025);
+            upper = getQuantile(0.975);
+        } else {
+            lower = Collections.min(data);
+            upper = Collections.max(data);
+        }
+    }
+
+    public ViolinPlot(boolean isVertical, double violinWidth, double lower, double upper, boolean showTails, java.util.List<Double> data) {
+        this(isVertical, violinWidth, lower, upper, showTails, data, DEFAULT_KDE_BINS);
     }
 
     public ViolinPlot(boolean isVertical, double violinWidth, double lower, double upper, boolean showTails, java.util.List<Double> data, int minimumBinCount) {
-        super(data, minimumBinCount); // TODO Remove when all linked together
+        super(data, minimumBinCount);
 
         this.isVertical = isVertical;
         this.violinWidth = violinWidth;

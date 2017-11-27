@@ -36,6 +36,7 @@ import java.util.List;
 
 public class JChart extends JPanel {
 
+    private static final boolean DEBUG = true;
     /**
      *
      */
@@ -411,6 +412,9 @@ public class JChart extends JPanel {
             g2.setTransform(orig);
 
         } catch (ChartRuntimeException cre) {
+            if (DEBUG) {
+                System.err.println(cre.getStackTrace());
+            }
             // ignore (just won't paint chart)
         }
 

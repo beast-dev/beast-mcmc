@@ -275,7 +275,8 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         for (Parameter parameter1 : uniqueParameters) {
             if (variable == parameter1) {
                 if (!doNotPropogateChangeUp) {
-                    fireParameterChangedEvent(dim + index, type);
+                    int subparameterIndex = (index == -1) ? -1 : dim + index;
+                    fireParameterChangedEvent(subparameterIndex, type);
                 }
                 break;
             }

@@ -32,118 +32,92 @@ import java.util.*;
  * frequency counter
  *
  * @author Walter Xie
+ * @author Andrew Rambaut
  */
-public class FrequencyCounter<T> {
+public final class FrequencyCounter<T> {
 
-    private int MAX_COUNTER_SIZE = 100;
-    protected Map<T, Integer> frequencyCounter;
-    protected boolean sortedByCounts = false;
+    private Map<T, Integer> frequencies;
+    private List<T> sortedValues = new ArrayList<T>();
+    private Set<T> credibleSet = new TreeSet<T>();
+    private Set<T> incredibleSet = new TreeSet<T>();
 
-    protected int total;
-    protected int min;
-    protected int max;
+    private int total;
+    private int min;
+    private int max;
+    private T mode;
 
-    public FrequencyCounter(List<T> values, boolean sortedByCounts) {
+    public FrequencyCounter(List<T> values) {
+        this(values, 0.05);
+    }
+    
+    public FrequencyCounter(List<T> values, double probabilityThreshold) {
         // http://stackoverflow.com/questions/12998568/hashmap-vs-linkedhashmap-performance-in-iteration-over-values
-        frequencyCounter = new LinkedHashMap<T, Integer>();
+        frequencies = new LinkedHashMap<T, Integer>();
 
         for (T value : values) {
-            if (frequencyCounter.containsKey(value)) {
-                int i = frequencyCounter.get(value) + 1;
-                frequencyCounter.put(value, i);
+            if (frequencies.containsKey(value)) {
+                int i = frequencies.get(value) + 1;
+                frequencies.put(value, i);
             } else {
-                frequencyCounter.put(value, 1);
+                frequencies.put(value, 1);
             }
         }
 
-        // limit the counter size, avoid expensive computation
-//        if (frequencyCounter.size() > MAX_COUNTER_SIZE)
-//            throw new IllegalArgumentException("Fail to create frequency counter: " +
-//                    "number of unique values must <=" + MAX_COUNTER_SIZE + " !");
-
-
-        if (sortedByCounts && frequencyCounter.size() > 0)
-            sortCounterByCounts();
-
-        // store {total min max} counts
-        total = calculateTotalCount();
-        int[] minMax = calculateMinMaxCount();
+        total = calculateTotalFrequency();
+        int[] minMax = calculateMinMaxFrequency();
         min = minMax[0];
         max = minMax[1];
+        mode = calculateMode();
+        calculateCredibleSet(probabilityThreshold);
     }
 
-    public Map<T, Integer> getFrequencyCounter() {
-        return frequencyCounter;
+    public Map<T, Integer> getFrequencies() {
+        return frequencies;
     }
 
     public int getCounterSize() {
-        return frequencyCounter.size();
+        return frequencies.size();
     }
 
-    /**
-     * sort counter by counts to calculate correct credibility set
-     */
-    public void sortCounterByCounts() {
-        frequencyCounter = Utils.sortByValue(frequencyCounter);
-        sortedByCounts = true;
-    }
-
-    public boolean isSortedByCounts() {
-        return sortedByCounts;
-    }
-
+//    /**
+//     * sort counter by counts to calculate correct credibility set
+//     */
+//    public void sortCounterByCounts() {
+//        frequencies = Utils.sortByValue(frequencies);
+//    }
+//
     /**
      * the unique values in a frequency counter,
      * which are also the keys of the map
      *
-     * @param sort
      * @return
      */
-    public Set<T> uniqueValues(boolean sort) {
-        if (sort)
-            return new TreeSet<T>(frequencyCounter.keySet());
-        else
-            return frequencyCounter.keySet();
+    public Set<T> getUniqueValues() {
+        return new TreeSet<T>(frequencies.keySet());
     }
 
-    /**
-     * default to sort unique values (keys).
-     *
-     * @return
-     */
-    public Set<T> uniqueValues() {
-        return uniqueValues(true);
+
+    public int getMinFrequency() {
+        return min;
     }
 
-    public String uniqueValuesToString() {
-        return Utils.setToString(uniqueValues());
+    public int getMaxFrequency() {
+        return max;
+    }
+
+    public T getMode() {
+        return mode;
     }
 
 
     /**
-     * sort the key of frequency counter, and return the index of a given key,
-     * if not exist, return -1.
+     * get the count from counter given a value
      *
-     * @param key
+     * @param value
      * @return
      */
-    public int getKeyIndex(T key) {
-        int i = -1;
-        for (T v : uniqueValues()) {
-            i++;
-            if (v.equals(key)) return i;
-        }
-        return i;
-    }
-
-    /**
-     * get the count from counter given a key
-     *
-     * @param key
-     * @return
-     */
-    public int getCount(T key) {
-        return frequencyCounter.get(key);
+    public int getFrequency(T value) {
+        return frequencies.get(value);
     }
 
     /**
@@ -151,96 +125,79 @@ public class FrequencyCounter<T> {
      *
      * @return
      */
-    public int calculateTotalCount() {
-        int tot = 0;
-        for (Map.Entry<T, Integer> entry : frequencyCounter.entrySet()) {
-            Integer count = entry.getValue();
-            tot += count;
-        }
-        return tot;
-    }
-
-    public int getTotalCount() {
-        if (total <= 0)
-            total= calculateTotalCount();
+    public int getTotalFrequency() {
         return total;
     }
 
-    public double getProbability(T key) {
-        return (double) getCount(key) / (double) getTotalCount();
+    public double getProbability(T value) {
+        return (double) getFrequency(value) / (double)total;
     }
 
     /**
      * rescale the frequency to make maximum count equal to 1.
      * <code>count / max_count</code>.
-     * @param key
+     * @param value
      * @return
      */
-    public double getFreqScaledMaxTo1(T key) {
-        return (double) getCount(key) / (double) getMaxCount();
+    public double getProportionalFrequency(T value) {
+        return (double) getFrequency(value) / (double)max;
     }
 
-    /**
-     * the min and max count in the frequency counter
-     *
-     * @return <code>int[]</code>, 1st is min, 2nd is max.
-     */
-    public int[] calculateMinMaxCount() {
+    public Set<T> getCredibleSet() {
+        return credibleSet;
+    }
+
+    public Set<T> getIncredibleSet() {
+        return incredibleSet;
+    }
+
+    private int calculateTotalFrequency() {
+        int total = 0;
+        for (int value : frequencies.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    private int[] calculateMinMaxFrequency() {
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
-        for (Map.Entry<T, Integer> entry : frequencyCounter.entrySet()) {
-            Integer count = entry.getValue();
-            if (min > count)
-                min = count;
-            if (max < count)
-                max = count;
+        for (int value : frequencies.values()) {
+            if (min > value)
+                min = value;
+            if (max < value)
+                max = value;
         }
         return new int[]{min, max};
     }
 
-    public int getMaxCount() {
-        if (max <= 0) {
-            int[] minMax = calculateMinMaxCount();
-            min = minMax[0];
-            max = minMax[1];
+    private T calculateMode() {
+        int maxFreq = 0;
+        T mode = null;
+        for (T value : getUniqueValues()) {
+            if (getFrequency(value) > maxFreq) {
+                maxFreq = getFrequency(value);
+                mode = value;
+            }
         }
-        return max;
+        return mode;
     }
 
-    /**
-     * mode calculated from this frequency counter
-     *
-     * @return
-     */
-    public Mode<T> getModeStats() {
-        return new Mode<T>(this);
-    }
-
-    /**
-     * Include credible and incredible set calculated from this frequency counter
-     *
-     * @param probability
-     * @return
-     */
-    public CredibleSetAnalysis<T> getCredibleSetAnalysis(double probability) {
-        return new CredibleSetAnalysis<T>(this, probability);
+    private void calculateCredibleSet(double probabilityThreshold) {
+        double totalProbability = 0;
+        for (T value : getUniqueValues()) {
+            double probability = getProbability(value);
+            // include the last one to make totPr >= probability
+            if (totalProbability < probabilityThreshold) {
+                credibleSet.add(value);
+            } else {
+                incredibleSet.add(value);
+            }
+            totalProbability += probability;
+        }
     }
 
     public static class Utils {
-        public static <T> String setToString(Set<T> aSet) {
-            String line = "{";
-            for (T value : aSet) {
-                line = line + value + ", ";
-            }
-            if (line.endsWith(", ")) {
-                line = line.substring(0, line.lastIndexOf(", ")) + "}";
-            } else {
-                line = "{}";
-            }
-            return line;
-        }
-
-
         // http://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java
         public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
             List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());

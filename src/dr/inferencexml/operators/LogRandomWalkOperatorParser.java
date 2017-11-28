@@ -34,6 +34,7 @@ import dr.xml.*;
 
 /**
  */
+@Deprecated
 public class LogRandomWalkOperatorParser extends AbstractXMLObjectParser {
 
     public static final String LOGRANDOMWALK_OPERATOR = "logRandomWalkOperator";

@@ -519,7 +519,7 @@ public class Parameter implements Serializable {
     public double getLowerBound() {
         double lower = Double.NEGATIVE_INFINITY;
 
-        if (priorType == PriorType.UNIFORM_PRIOR) {
+        if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.DISCRETE_UNIFORM_PRIOR) {
             lower = uniformLower;
         }
 
@@ -543,7 +543,7 @@ public class Parameter implements Serializable {
             }
         }
 
-        if (priorType == PriorType.UNIFORM_PRIOR) {
+        if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.DISCRETE_UNIFORM_PRIOR) {
             upper = uniformUpper;
         }
 

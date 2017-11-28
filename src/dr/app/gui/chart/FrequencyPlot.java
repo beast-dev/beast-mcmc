@@ -32,6 +32,7 @@ import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
 public class FrequencyPlot extends Plot.AbstractPlot {
 
@@ -74,14 +75,15 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<String> data, TraceDistribution traceDistribution) {
+    public FrequencyPlot(List<Integer> data, TraceDistribution traceDistribution) {
         this(traceDistribution);
-        if (!traceDistribution.getTraceType().isCategorical())
-            throw new IllegalArgumentException("Categorical value is required for frequency plot !");
+        if (!traceDistribution.getTraceType().isCategorical()) {
+            throw new IllegalArgumentException("Categorical value is required for frequency plot.");
+        }
 
-        List<Double> intData = traceDistribution.indexingData(data);
+//        List<Double> intData = traceDistribution.indexingData(data);
         // set data by index of unique categorical values
-        setData(intData, -1);
+        setIntegerData(data, 1);
     }
 
     /**
@@ -95,6 +97,13 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
+    public void setIntegerData(List<Integer> data, int minimumBinCount) {
+        setIntegerData(new Variate.I(data), minimumBinCount);
+    }
+
+    /**
+     * Set paints
+     */
     public void setPaints(Paint barPaint, Paint quantilePaint) {
         this.barPaint = barPaint;
         this.quantilePaint = quantilePaint;
@@ -104,6 +113,33 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      * Set data
      */
     public void setData(Variate.D data, int minimumBinCount) {
+
+        setRawData(data);
+        FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
+
+        Variate.D xData = new Variate.D();
+        Variate.D yData = new Variate.D();
+
+        double x = frequency.getLowerBound();
+
+        for (int i = 0; i < frequency.getBinCount(); i++) {
+
+            xData.add(x);
+            yData.add(0.0);
+
+            x += frequency.getBinSize();
+
+            xData.add(x);
+            yData.add((double) frequency.getFrequency(i));
+
+        }
+        setData(xData, yData);
+    }
+
+    /**
+     * Set data
+     */
+    public void setIntegerData(Variate.I data, int minimumBinCount) {
 
         setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
@@ -139,8 +175,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      * Get the FrequencyDistribution object
      */
     protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
-        double min = (Double) data.getMin();
-        double max = (Double) data.getMax();
+        double min = ((Number) data.getMin()).doubleValue();
+        double max = ((Number) data.getMax()).doubleValue();
 
         if (min == max) {
             if (min == 0) {
@@ -156,8 +192,9 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         }
 
         Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
-        if (minimumBinCount <= 0)
+        if (minimumBinCount <= 0) {
             axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+        }
         axis.setRange(min, max);
 
         int majorTickCount = axis.getMajorTickCount();
@@ -188,7 +225,34 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {
-            frequency.addValue((Double) raw.get(i));
+            frequency.addValue(((Number) raw.get(i)).doubleValue());
+        }
+
+        return frequency;
+    }
+
+    /**
+     * Get the FrequencyDistribution object
+     */
+    protected FrequencyDistribution getDiscreteFrequencyDistribution(Variate data, Map<Integer, Integer> categoryOrderMap) {
+        int min = ((Number) data.getMin()).intValue();
+        int max = ((Number) data.getMax()).intValue();
+
+        if (min == max) {
+            min -= -1.0;
+            max += 1.0;
+        }
+
+        double binSize = 1;
+        int binCount = max - min + 1;
+
+        double start = min;
+
+        FrequencyDistribution frequency = new FrequencyDistribution(start, binCount, binSize);
+
+        for (int i = 0; i < raw.getCount(); i++) {
+            int index = categoryOrderMap.get(((Number)raw.get(i)).intValue());
+            frequency.addValue(index);
         }
 
         return frequency;
@@ -214,11 +278,11 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     }
 
     /**
-     * Set arbitrary intervals to use (0 for none).
+     * Use incredible set for tails.
      */
-    public void setInCredibleSet(TraceDistribution traceD) {
+    public void setIncredibleSet(TraceDistribution traceD) {
         this.traceDistribution = traceD;
-        hasIncredibleSet = traceD.credibleSetAnalysis != null && traceD.credibleSetAnalysis.getIncredibleSet().size() > 0;
+        hasIncredibleSet = traceD.getIncredibleSet().size() > 0;
     }
 
     /**

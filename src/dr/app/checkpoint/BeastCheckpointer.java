@@ -133,7 +133,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 System.out.println(savedLnL + "    " + restoredString);
                 //assume values will be nearly identical
                 int digits = 0;
-                for (int i = 0; i < Math.max(originalString.length(), restoredString.length()); i++) {
+                for (int i = 0; i < Math.min(originalString.length(), restoredString.length()); i++) {
                     if (originalString.charAt(i) == restoredString.charAt(i)) {
                         if (!(originalString.charAt(i) == '-' || originalString.charAt(i) == '.')) {
                             digits++;

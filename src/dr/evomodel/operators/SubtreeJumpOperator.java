@@ -198,39 +198,44 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     }
 
     private int getNormalizedProbabilities(Tree tree, NodeRef node0, double height, NodeRef originalNode,
-                                           List<NodeRef> intersectingEdges, double size, double[] weights) {
-        double[] heights = new double[intersectingEdges.size()];
-        double[] lpdfs =  new double[intersectingEdges.size()];
-        int originalIndex = -1;
-        int i = 0;
-        for (NodeRef node1 : intersectingEdges) {
-            assert (node1 != node0);
+    		List<NodeRef> intersectingEdges, double size, double[] weights) {
+    	double[] heights = new double[intersectingEdges.size()];
+    	double[] lpdfs =  new double[intersectingEdges.size()];
+    	int originalIndex = -1;
+    	int i = 0;
+    	for (NodeRef node1 : intersectingEdges) {
+    		assert (node1 != node0);
 
-            NodeRef mrcaNode = TreeUtils.getCommonAncestor(tree, node0, node1);
-            heights[i] = tree.getNodeHeight(mrcaNode) - height;
-            lpdfs[i] = NormalDistribution.logPdf(heights[i], 0, size);
+    		NodeRef mrcaNode = TreeUtils.getCommonAncestor(tree, node0, node1);
+    		heights[i] = tree.getNodeHeight(mrcaNode) - height;
+    		//            lpdfs[i] = NormalDistribution.logPdf(heights[i], 0, size);
+    		lpdfs[i] = dr.math.distributions.TDistribution.logPDF(heights[i], 0, size, 1); // Cauchy
 
-            if (node1 == originalNode) {
-                originalIndex = i;
-            }
-            i++;
-        }
-       double[] normWeights =  normLog(weights, 1E-20);
-        
-        for (int j = 0; j < weights.length; j++) {
-            weights[j] = normWeights[j];
-        }
+    		if (node1 == originalNode) {
+    			originalIndex = i;
+    		}
+    		i++;
+    	}
+    	double[] normWeights =  normLog(weights, 1E-20);
 
-        return originalIndex;
+    	for (int j = 0; j < weights.length; j++) {
+    		weights[j] = normWeights[j];
+    	}
+
+    	return originalIndex;
     }
 
     public static double [] normLog(double[] x, double epsilon){ 
     	/* x is a vector of log values
     	 * @return its normalised version y (sum(y) = 1) */
-    	double[] sortedX = x;
-    	java.util.Arrays.sort(sortedX);  
+    	    	
+    	/* sorting only makes sense for very large n*/
+    	//    	double[] sortedX = x;
+    	//    	java.util.Arrays.sort(sortedX);  
+    	//    	double maxVal = sortedX[sortedX.length];
+
     	double maxVal = Double.NEGATIVE_INFINITY;
-    	for (double a : sortedX) {
+    	for (double a : x) {
     		maxVal = Math.max(a, maxVal);
     	}
 
@@ -239,7 +244,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     	double sum = 0.0;
     	double factor = Math.log(epsilon)-Math.log(x.length);
     	for (int k = 0; k < alpha.length; k++) {
-    		alpha[k] = ( (sortedX[k]-maxVal) >= factor ? Math.exp(sortedX[k]-maxVal) : 0);
+    		alpha[k] = ( (x[k]-maxVal) >= factor ? Math.exp(x[k]-maxVal) : 0);
     		sum += alpha[k];
     	}
     	double[] y =  new double[alpha.length];

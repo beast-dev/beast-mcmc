@@ -823,6 +823,8 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
                                 writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                 break;
+                            case MODEL_AVERAGING:
+                                throw new RuntimeException("Marginal likelihood estimation cannot be performed on a clock model that performs model averaging.");
                         }
                         break;
 

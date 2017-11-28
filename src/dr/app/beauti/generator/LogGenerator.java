@@ -32,6 +32,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.MixtureModelBranchRates;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
@@ -153,7 +154,8 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            if (!model.getClockRateParameter().isFixed()) {
+
+            if (model.performModelAveraging() || !model.getClockRateParameter().isFixed()) {
                 writer.writeOpenTag(ColumnsParser.COLUMN,
                         new Attribute[]{
                                 new Attribute.Default<String>(ColumnsParser.LABEL, clockModelGenerator.getClockRateString(model)),
@@ -166,6 +168,7 @@ public class LogGenerator extends Generator {
 
                 writer.writeCloseTag(ColumnsParser.COLUMN);
             }
+
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
@@ -531,9 +534,13 @@ public class LogGenerator extends Generator {
                         break;
 
                     case UNCORRELATED:
-                        tag = model.isContinuousQuantile() ?
-                                ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
-                                DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                        if (model.performModelAveraging()) {
+                            tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
+                        } else {
+                            tag = model.isContinuousQuantile() ?
+                                    ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                                    DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                        }
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
@@ -573,7 +580,7 @@ public class LogGenerator extends Generator {
                     break;
 
                 case UNCORRELATED:
-                    writeTreeTrait(writer, model.isContinuousQuantile() ?
+                    writeTreeTrait(writer, model.performModelAveraging() ? MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES : model.isContinuousQuantile() ?
                                     ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
                                     DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                             prefix + BranchRateModel.BRANCH_RATES,

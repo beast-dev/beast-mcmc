@@ -34,18 +34,17 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
-public class Trace<T> { // TODO get rid of generic to make things easy
+public class Trace {
+    public static final int MAX_UNIQUE_VALUES = 100; // the maximum allowed number of unique values
 
-//    public static final int INITIAL_SIZE = 1000;
-//    public static final int INCREMENT_SIZE = 1000;
-
-    // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
     protected TraceType traceType = TraceType.REAL;
-    protected List<T> values = new ArrayList<T>(); // TODO change to String only, and parse to double, int or string in getValues according to trace type
-    //    protected int valueCount = 0;
+    protected List<Double> values = new ArrayList<Double>();
     protected String name;
 
-//    private Object[] range;
+    List<String> categoryValueList = new ArrayList<String>();
+    Map<Integer, String> categoryLabelMap = new TreeMap<Integer, String>();
+    Map<Integer, Integer> categoryOrderMap = new TreeMap<Integer, Integer>();
+    Set<Integer> uniqueValues = new HashSet<Integer>();
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
         this.name = name;
@@ -56,37 +55,94 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         setTraceType(traceType);
     }
 
-//    public Trace(String name, T[] valuesArray) {
-//        this(name);
-////        List<T> newVL = Arrays.asList(valuesArray);
-//        Collections.addAll(this.values, valuesArray);
-//    }
-
     /**
      * @param value the valued to be added
      */
-    public void add(T value) {
+    public void add(Double value) {
+        if (uniqueValues.size() < MAX_UNIQUE_VALUES) {
+            // unique values are treated as integers
+            uniqueValues.add(value.intValue());
+        }
+
         values.add(value);
     }
 
     /**
      * @param valuesArray the values to be added
      */
-    public void add(T[] valuesArray) {
-        Collections.addAll(this.values, valuesArray);
+    public void add(Double[] valuesArray) {
+        for (Double value : valuesArray) {
+            add(value);
+        }
+    }
+
+    /**
+     * @param value the valued to be added
+     */
+    public void add(Integer value) {
+        if (uniqueValues.size() < MAX_UNIQUE_VALUES) {
+            // unique values are treated as integers
+            uniqueValues.add(value);
+        }
+
+        values.add(value.doubleValue());
+    }
+
+    /**
+     * Add a categorical value
+     * @param value the valued to be added
+     */
+    public void add(String value) {
+        int index = categoryValueList.indexOf(value);
+        if (index < 0) {
+            categoryValueList.add(value);
+            index = categoryValueList.size() - 1;
+            categoryLabelMap.put(index, value);
+            categoryOrderMap.put(index, index);
+        }
+        add(index);
+    }
+
+    /**
+     * @param valuesArray the values to be added
+     */
+    public void add(String[] valuesArray) {
+        for (String value : valuesArray) {
+            add(value);
+        }
+    }
+
+    public Map<Integer, Integer> getCategoryOrderMap() {
+        return categoryOrderMap;
+    }
+
+    public void setCategoryOrderMap(Map<Integer, Integer> categoryOrderMap) {
+        this.categoryOrderMap.clear();
+        this.categoryOrderMap.putAll(categoryOrderMap);
     }
 
     public int getValueCount() {
         return values.size();
     }
 
-    public int getUniqueVauleCount() {
-        Set<T> uniqueValues = new HashSet<T>(values);
+    public int getUniqueValueCount() {
         return uniqueValues.size();
     }
 
-    public T getValue(int index) {
+    public double getValue(int index) {
         return values.get(index);
+    }
+
+    public int getCategory(int index) {
+        return categoryOrderMap.get(values.get(index).intValue());
+    }
+
+    public String getCategoryLabel(int index) {
+        return categoryLabelMap.get(getCategory(index));
+    }
+
+    public Map<Integer, String> getCategoryLabelMap() {
+        return categoryLabelMap;
     }
 
     public double[] getRange() { // Double => bounds; Integer and String => unique values
@@ -97,11 +153,11 @@ public class Trace<T> { // TODO get rid of generic to make things easy
 
             Double min = Double.MAX_VALUE;
             Double max = Double.MIN_VALUE;
-            for (Object t : values) {
-                if ((Double) t < min) {
-                    min = (Double) t;
-                } else if ((Double) t > max) {
-                    max = (Double) t;
+            for (Double value : values) {
+                if ( value < min) {
+                    min = value;
+                } else if (value > max) {
+                    max = value;
                 }
             }
             return new double[] {min, max};
@@ -110,27 +166,25 @@ public class Trace<T> { // TODO get rid of generic to make things easy
         }
     }
 
-    public Set<String> getCategoricalValues() {
-        return new TreeSet<String>((List<String>) values);
-    }
     /**
      * @param fromIndex low endpoint (inclusive) of the subList.
      * @param toIndex   high endpoint (exclusive) of the subList.
      * @return The list of values (which are selected values if filter applied)
      */
-    public List<T> getValues(int fromIndex, int toIndex) {
+    public List<Double> getValues(int fromIndex, int toIndex) {
         return getValues(fromIndex, toIndex, null);
     }
 
-    public List<T> getValues(int fromIndex, int toIndex, boolean[] filtered) {
-        if (toIndex > getValueCount() || fromIndex > toIndex)
+    public List<Double> getValues(int fromIndex, int toIndex, boolean[] filtered) {
+        if (toIndex > getValueCount() || fromIndex > toIndex) {
             throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
                     + "; List size = " + getValueCount() + "; in Trace " + name);
+        }
 
         if (filtered == null || filtered.length < 1) {
             return values.subList(fromIndex, toIndex);
         } else {
-            List<T> valuesList = new ArrayList<T>();
+            List<Double> valuesList = new ArrayList<Double>();
             for (int i = fromIndex; i < toIndex; i++) {
                 if (!filtered[i])
                     valuesList.add(values.get(i));
@@ -149,14 +203,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
     public void setName(String name) {
         this.name = name;
     }
-
-//    public Class getTraceType() {
-//        if (values.get(0) == null) {
-//            return null;
-//        }
-//        return values.get(0).getClass();
-//    }
-
+    
     public TraceType getTraceType() {
         return traceType;
     }
@@ -166,7 +213,7 @@ public class Trace<T> { // TODO get rid of generic to make things easy
     }
 
     //******************** TraceCorrelation ****************************
-    protected TraceCorrelation<T> traceStatistics;
+    private TraceCorrelation traceStatistics;
 
     public TraceCorrelation getTraceStatistics() {
         return traceStatistics;

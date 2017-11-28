@@ -51,6 +51,16 @@ public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
 
     }
 
+    @Override
+    public double getFromPoint() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double getToPoint() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     protected void processBounds(Double lowerBound, Double upperBound) {
         if (lowerBound > DiscreteStatistics.min(sample)) {
             throw new RuntimeException("Sample min out of bounds.  Gamma kernel for use with positive data only: " + DiscreteStatistics.min(sample));

@@ -252,6 +252,11 @@
 
     </target>
 
+    <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
+    <target name="copy_trace_jar" depends="dist" >
+        <copy file="${dist}/trace.jar" todir="../Tracer/lib"/>
+    </target>
+
     <!-- run beast.jar -->
     <target name="run_BEAST">
         <java jar="${dist}/beast.jar" fork="true"/>

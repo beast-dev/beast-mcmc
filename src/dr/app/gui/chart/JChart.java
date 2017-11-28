@@ -30,9 +30,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,8 +72,17 @@ public class JChart extends JPanel {
 
     private double xScale, yScale, xOffset, yOffset;
 
+    private double aspectRatio;
+    private boolean useAspectRatio = false;
+
     public JChart(Axis xAxis, Axis yAxis) {
         this(null, xAxis, yAxis);
+    }
+
+    public JChart(Axis xAxis, Axis yAxis, double aspectRatio) {
+        this(null, xAxis, yAxis);
+        this.aspectRatio = aspectRatio;
+        this.useAspectRatio = true;
     }
 
     public JChart(Plot plot, Axis xAxis, Axis yAxis) {
@@ -85,8 +92,12 @@ public class JChart extends JPanel {
         this.xAxis = xAxis;
         this.yAxis = yAxis;
 
-        if (plot != null)
+        if (plot != null) {
             addPlot(plot);
+        }
+
+        this.aspectRatio = 1.0;
+        this.useAspectRatio = false;
 
         addMouseListener(new MListener());
         addMouseMotionListener(new MMListener());
@@ -328,6 +339,20 @@ public class JChart extends JPanel {
             double w = size.width - (majorTickSize * 1.25) - maxYTickLabelWidth - (maxXTickLabelWidth / 2);
             double h = size.height - yTickLabelOffset - (majorTickSize * 1.25) - tickLabelHeight;
 
+            //store current transformation in case of a translate transform
+            AffineTransform orig = g2.getTransform();
+            if (useAspectRatio) {
+                double newH = w / aspectRatio;
+                if (newH > h) {
+                    w = h * aspectRatio;
+                } else {
+                    h = newH;
+                }
+                if (size.width > size.height) {
+                    g2.translate((size.width - size.height)/2.0, 0.0);
+                }
+            }
+
             plotBounds = new Rectangle2D.Double((majorTickSize * 1.25) + maxYTickLabelWidth, yTickLabelOffset, w, h);
 
             xOffset = plotBounds.getX();
@@ -381,6 +406,10 @@ public class JChart extends JPanel {
 
             paintAxis(g2, xAxis, true);
             paintAxis(g2, yAxis, false);
+
+            //restore transformation in any case
+            g2.setTransform(orig);
+
         } catch (ChartRuntimeException cre) {
             // ignore (just won't paint chart)
         }
@@ -602,7 +631,16 @@ public class JChart extends JPanel {
 
             g2.setPaint(labelPaint);
             double width = g2.getFontMetrics().stringWidth(label);
-            g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+            /*if (rotateHorizontal) {
+                AffineTransform orig = g2.getTransform();
+                g2.rotate(Math.toRadians(90), (float) (pos - width / 2), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset - width / 2));
+                g2.setTransform(orig);
+            } else {
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+            }*/
+            g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+
         } else {
             String label = getYAxisLabel(value);
             double pos = transformY(value);

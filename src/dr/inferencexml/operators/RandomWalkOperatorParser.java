@@ -57,18 +57,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            Double lower = null;
-            Double upper = null;
-
-            if (xo.hasAttribute(LOWER)) {
-                lower = xo.getDoubleAttribute(LOWER);
-            }
-
-            if (xo.hasAttribute(UPPER)) {
-                upper = xo.getDoubleAttribute(UPPER);
-            }
-
-            if (lower != null || upper != null) {
+            if (xo.hasAttribute(LOWER) || xo.hasAttribute(UPPER)) {
                 throw new XMLParseException("Do not provide lower/upper bounds on for a RandomWalkOperator; set these values are parameter bounds");
             }
 
@@ -76,22 +65,29 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
                     xo.getAttribute(BOUNDARY_CONDITION, RandomWalkOperator.BoundaryCondition.reflecting.name()));
 
 
-            if (condition == RandomWalkOperator.BoundaryCondition.logit) {
-                final Bounds<Double> bounds = parameter.getBounds();
-                final int dim = parameter.getDimension();
+            final Bounds<Double> bounds = parameter.getBounds();
+            final int dim = parameter.getDimension();
 
-                boolean boundsSet = true;
-                for (int i = 0; i < dim; ++i) {
-                    if (bounds.getLowerLimit(i) == null || Double.isInfinite(bounds.getLowerLimit(i))) {
-                        boundsSet = false;
-                    }
-                    if (bounds.getUpperLimit(i) == null || Double.isInfinite(bounds.getUpperLimit(i))) {
-                        boundsSet = false;
-                    }
+            boolean lowerBoundsSet = true;
+            boolean upperBoundsSet = true;
+            for (int i = 0; i < dim; ++i) {
+                if (bounds.getLowerLimit(i) == null || Double.isInfinite(bounds.getLowerLimit(i))) {
+                    lowerBoundsSet = false;
                 }
+                if (bounds.getUpperLimit(i) == null || Double.isInfinite(bounds.getUpperLimit(i))) {
+                    upperBoundsSet = false;
+                }
+            }
 
-                if (!boundsSet) {
+            if (condition == RandomWalkOperator.BoundaryCondition.logit) {
+                if (!lowerBoundsSet || !upperBoundsSet) {
                     throw new XMLParseException("The logit transformed RandomWalkOperator cannot be used on a parameter without bounds.");
+                }
+            }
+
+            if (condition == RandomWalkOperator.BoundaryCondition.log) {
+                if (!lowerBoundsSet) {
+                    throw new XMLParseException("The log transformed RandomWalkOperator cannot be used on a parameter without lower bounds.");
                 }
             }
 
@@ -101,10 +97,10 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
                 if (updateIndex.getDimension() != parameter.getDimension())
                     throw new RuntimeException("Parameter to update and missing indices must have the same dimension");
                 return new RandomWalkOperator(parameter, updateIndex, windowSize, condition,
-                        weight, mode, lower, upper);
+                        weight, mode);
             }
 
-            return new RandomWalkOperator(parameter, null, windowSize, condition, weight, mode, lower, upper);
+            return new RandomWalkOperator(parameter, null, windowSize, condition, weight, mode);
         }
 
         //************************************************************************
@@ -126,8 +122,6 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                AttributeRule.newDoubleRule(LOWER, true),
-                AttributeRule.newDoubleRule(UPPER, true),
                 AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
                 new ElementRule(UPDATE_INDEX,
                         new XMLSyntaxRule[] {

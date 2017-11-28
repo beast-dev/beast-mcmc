@@ -27,6 +27,7 @@ package dr.app.gui.chart;
 
 import java.awt.*;
 import java.awt.geom.Line2D;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,36 +35,43 @@ import java.util.Map;
  */
 public class DiscreteJChart extends JChart {
 
-    // todo merge with dr.stats.FrequencyCounter
-    protected Map<Integer, String> categoryDataMap;
+    private final Map<Integer, Integer> categoryOrderMap = new HashMap<Integer, Integer>();
 
     public DiscreteJChart(Axis xAxis, Axis yAxis) {
         super(xAxis, yAxis);
     }
 
-    public void setXAxis(boolean isInteger, Map<Integer, String> categoryDataMap) {
-        if (isInteger || (categoryDataMap != null && !categoryDataMap.isEmpty())) {
+    public void setXAxis(boolean isInteger) {
+        if (isInteger) {
             super.setXAxis(new DiscreteAxis(true, true));
         } else {
             super.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS));
         }
-        this.categoryDataMap = categoryDataMap;
     }
 
-    public void setYAxis(boolean isInteger, Map<Integer, String> categoryDataMap) {
-        if (isInteger || (categoryDataMap != null && !categoryDataMap.isEmpty())) {
+    public void setXAxis(Map<Integer, String> categoryLabelMap, Map<Integer, Integer> categoryOrderMap) {
+            super.setXAxis(new DiscreteAxis(categoryLabelMap, categoryOrderMap, true, true));
+    }
+
+    public void setYAxis(boolean isInteger) {
+        if (isInteger) {
             super.setYAxis(new DiscreteAxis(true, true));
         } else {
             super.setYAxis(new LinearAxis());
         }
-        this.categoryDataMap = categoryDataMap;
+    }
+
+    public void setYAxis(Map<Integer, String> categoryLabelMap, Map<Integer, Integer> categoryOrderMap) {
+        super.setYAxis(new DiscreteAxis(categoryLabelMap, categoryOrderMap, true, true));
     }
 
     protected void paintMajorTick(Graphics2D g2, double value, String label, boolean horizontalAxis) {
         g2.setPaint(getAxisPaint());
         g2.setStroke(getAxisStroke());
 
-        if (label == null) label = " ";
+        if (label == null) {
+            label = " ";
+        }
 
         if (horizontalAxis) {
             double pos = transformX(value);
@@ -92,19 +100,19 @@ public class DiscreteJChart extends JChart {
     }
 
     protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis) {
-        if (categoryDataMap != null && (!categoryDataMap.isEmpty()) && axis.getIsDiscrete()) {
+        if (axis.getIsDiscrete()) {
             int n1 = axis.getMajorTickCount();
             int n2, i, j;
 
             n2 = axis.getMinorTickCount(-1);
 
             for (i = 0; i < n1; i++) {
-                paintMajorTick(g2, axis.getMajorTickValue(i), categoryDataMap.get((int) axis.getMajorTickValue(i)), horizontalAxis);
+                paintMajorTick(g2, axis.getMajorTickValue(i), axis.getMajorTickLabel(i), horizontalAxis);
                 n2 = axis.getMinorTickCount(i);
 
                 if (i == (n1 - 1) && axis.getLabelLast()) { // Draw last minor tick as a major one
 
-                    paintMajorTick(g2, axis.getMinorTickValue(0, i), categoryDataMap.get((int) axis.getMinorTickValue(0, i)), horizontalAxis);
+                    paintMajorTick(g2, axis.getMinorTickValue(0, i), axis.format((int) axis.getMinorTickValue(0, i)), horizontalAxis);
 
                     for (j = 1; j < n2; j++) {
                         paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);

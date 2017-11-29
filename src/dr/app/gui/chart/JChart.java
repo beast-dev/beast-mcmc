@@ -36,6 +36,7 @@ import java.util.List;
 
 public class JChart extends JPanel {
 
+    private static final boolean DEBUG = true;
     /**
      *
      */
@@ -411,6 +412,9 @@ public class JChart extends JPanel {
             g2.setTransform(orig);
 
         } catch (ChartRuntimeException cre) {
+            if (DEBUG) {
+                System.err.println(cre.getStackTrace());
+            }
             // ignore (just won't paint chart)
         }
 
@@ -419,7 +423,7 @@ public class JChart extends JPanel {
     protected void paintContents(Graphics2D g2) {
         int plotNumber = 0;
         for (Plot plot : plots) {
-            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber);
+            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber, plots.size());
             plotNumber += 1;
         }
     }
@@ -624,13 +628,14 @@ public class JChart extends JPanel {
         g2.setStroke(axisStroke);
         if (horizontalAxis) {
             String label = getXAxisLabel(value);
-            double pos = transformX(value);
+            if (label != null) {
+                double pos = transformX(value);
 
-            Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
-            g2.draw(line);
+                Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
+                g2.draw(line);
 
-            g2.setPaint(labelPaint);
-            double width = g2.getFontMetrics().stringWidth(label);
+                g2.setPaint(labelPaint);
+                double width = g2.getFontMetrics().stringWidth(label);
             /*if (rotateHorizontal) {
                 AffineTransform orig = g2.getTransform();
                 g2.rotate(Math.toRadians(90), (float) (pos - width / 2), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
@@ -639,18 +644,21 @@ public class JChart extends JPanel {
             } else {
                 g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
             }*/
-            g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+            }
 
         } else {
             String label = getYAxisLabel(value);
-            double pos = transformY(value);
+            if (label != null) {
+                double pos = transformY(value);
 
-            Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);
-            g2.draw(line);
+                Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);
+                g2.draw(line);
 
-            g2.setPaint(labelPaint);
-            double width = g2.getFontMetrics().stringWidth(label);
-            g2.drawString(label, (float)(plotBounds.getMinX() - width - (majorTickSize * 1.25)), (float)(pos + yTickLabelOffset));
+                g2.setPaint(labelPaint);
+                double width = g2.getFontMetrics().stringWidth(label);
+                g2.drawString(label, (float) (plotBounds.getMinX() - width - (majorTickSize * 1.25)), (float) (pos + yTickLabelOffset));
+            }
         }
     }
 

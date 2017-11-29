@@ -253,17 +253,18 @@ public class PartitionClockModel extends PartitionOptions {
 
             switch (clockType) {
                 case STRICT_CLOCK:
-//                    rateParam = getParameter("clock.rate");
+                    params.add(getClockRateParameter());
                     break;
 
                 case RANDOM_LOCAL_CLOCK:
-//                    rateParam = getParameter("clock.rate");
+                    params.add(getClockRateParameter());
                     getParameter(ClockType.LOCAL_CLOCK + ".changes");
                     params.add(getParameter("rateChanges"));
                     params.add(getParameter(ClockType.LOCAL_CLOCK + ".relativeRates"));
                     break;
 
                 case FIXED_LOCAL_CLOCK:
+                    params.add(getClockRateParameter());
                     for (Taxa taxonSet : options.taxonSets) {
                         if (options.taxonSetsMono.get(taxonSet)) {
                             String parameterName = taxonSet.getId() + ".rate";
@@ -336,7 +337,13 @@ public class PartitionClockModel extends PartitionOptions {
         Parameter rateParam = null;
         switch (clockType) {
             case STRICT_CLOCK:
+                rateParam = getParameter("clock.rate");
+                break;
+
             case RANDOM_LOCAL_CLOCK:
+                rateParam = getParameter("clock.rate");
+                break;
+
             case FIXED_LOCAL_CLOCK:
                 rateParam = getParameter("clock.rate");
                 break;
@@ -384,7 +391,9 @@ public class PartitionClockModel extends PartitionOptions {
     private Operator getUpDownOperator() {
         switch (clockType) {
             case STRICT_CLOCK:
+                return getOperator("upDownRateHeights");
             case RANDOM_LOCAL_CLOCK:
+                return getOperator("upDownRateHeights");
             case FIXED_LOCAL_CLOCK:
                 return getOperator("upDownRateHeights");
 

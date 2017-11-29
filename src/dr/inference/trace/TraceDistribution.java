@@ -285,14 +285,17 @@ public class TraceDistribution {
         return frequencyCounter.getIncredibleSet();
     }
 
+    public String valueToString(int value) {
+        if (categoryLabelMap != null) {
+            return categoryLabelMap.get(value);
+        }
+        return Integer.toString(value);
+    }
     public String setToString(Set<Integer> aSet) {
         StringBuilder sb = new StringBuilder("{");
         boolean isFirst = true;
         for (int value : aSet) {
-            String label = Integer.toString(value);
-            if (categoryLabelMap != null) {
-                label = categoryLabelMap.get(value);
-            }
+            String label = valueToString(value);
             if (!isFirst) {
                 sb.append(", ");
             } else {

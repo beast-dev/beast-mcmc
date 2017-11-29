@@ -25,6 +25,8 @@
 
 package dr.inferencexml.operators;
 
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
@@ -62,6 +64,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
 
         // Get main objects
         LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
+
+        // TODO The next 3 lines are not necessary, nor in XML rules
         MatrixParameterInterface loadings = null;
         if (xo.getChild(MatrixParameterInterface.class) != null) {
             loadings = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
@@ -84,8 +88,19 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         // Dispatch
         if (prior != null) {
             if (useNewMode) {
-                return new NewLoadingsGibbsOperator(new FactorAnalysisOperatorAdaptor.Original(LFM),
-                                    prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
+
+                final FactorAnalysisOperatorAdaptor adaptor;
+                if (LFM != null) {
+                    adaptor = new FactorAnalysisOperatorAdaptor.SampledFactors(LFM);
+                } else {
+                    IntegratedFactorAnalysisLikelihood integratedLikelihood = (IntegratedFactorAnalysisLikelihood)
+                            xo.getChild(IntegratedFactorAnalysisLikelihood.class);
+                    TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+                    adaptor = new FactorAnalysisOperatorAdaptor.IntegratedFactors(integratedLikelihood, treeLikelihood);
+                }
+
+                return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,
+                        multiThreaded, numThreads);
             } else {
                 return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
             }
@@ -100,7 +115,13 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(LatentFactorModel.class),
+            new XORRule(
+                    new ElementRule(LatentFactorModel.class),
+                    new AndRule(
+                            new ElementRule(IntegratedFactorAnalysisLikelihood.class),
+                            new ElementRule(TreeDataLikelihood.class)
+                    )
+            ),
             new XORRule(
                     new ElementRule(DistributionLikelihood.class),
                     new AndRule(

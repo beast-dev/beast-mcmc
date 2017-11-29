@@ -202,6 +202,20 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         // Do nothing
     }
 
+    // Access for FactorAnalysisOperatorAdaptor
+
+    public int getNumberOfFactors() { return numFactors; }
+
+    public int getNumberOfTaxa() {  return numTaxa; }
+
+    public int getNumberOfTraits() { return dimTrait; }
+
+    public MatrixParameterInterface getLoadings() { return loadings; }
+
+    public Parameter getPrecision() { return traitPrecision; }
+
+    // Private class functions
+
     private double calculateLogLikelihood() {
 
         checkStatistics();

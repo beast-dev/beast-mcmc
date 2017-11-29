@@ -19,6 +19,8 @@ import java.util.List;
  */
 public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSimulationDelegate.AbstractContinuousTraitDelegate {
 
+    public final static String REALIZED_TIP_TRAIT = "tip";
+
     AbstractRealizedContinuousTraitDelegate(String name,
                                             Tree tree,
                                             MultivariateDiffusionModel diffusionModel,
@@ -102,7 +104,7 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
     }
 
     public static String getTipTraitName(String name) {
-        return "tip." + name;
+        return REALIZED_TIP_TRAIT + "." + name;
     }
 
     private static String getTipPrecisionName(String name) {

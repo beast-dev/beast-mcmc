@@ -66,6 +66,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
+    public static final String FACTOR_NAME = "factors";
+
     public String getParserName() {
         return CONTINUOUS_DATA_LIKELIHOOD;
     }
@@ -130,6 +132,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         final boolean allowSingular;
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
+
+            if (traitName == TreeTraitParserUtilities.DEFAULT_TRAIT_NAME) {
+                traitName = FACTOR_NAME;
+            }
+
             if (xo.hasAttribute(ALLOW_SINGULAR)) {
                 allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
             } else {

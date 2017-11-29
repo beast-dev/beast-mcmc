@@ -26,12 +26,8 @@
 package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
@@ -260,9 +256,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     }
 
     @Override
-    public String getOperatorName() {
-        return "loadingsGibbsOperator";
-    }
+    public String getOperatorName() { return "newLoadingsGibbsOperator"; }
 
     private static boolean DEBUG = false;
 
@@ -272,6 +266,9 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         if (DEBUG) {
             System.err.println("Start doOp");
         }
+
+        // Draw new factors if necessary
+        adaptor.drawFactors();
 
         int size = adaptor.getNumberOfTraits();
         if (adaptor.getNumberOfFactors() != precisionArray.listIterator().next().length) {

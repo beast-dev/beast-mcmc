@@ -210,13 +210,13 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     }
 
-    private void copy(int i, double[] random) {
-        adaptor.setLoadingsForTraitQuietly(i, random);
-//        MatrixParameterInterface changing = adaptor.getLoadings();
-//        for (int j = 0; j < random.length; j++) {
-//            changing.setParameterValueQuietly(i, j, random[j]);
-//        }
-    }
+//    private void copy(int i, double[] random) {
+//        adaptor.setLoadingsForTraitQuietly(i, random);
+////        MatrixParameterInterface changing = adaptor.getLoadings();
+////        for (int j = 0; j < random.length; j++) {
+////            changing.setParameterValueQuietly(i, j, random[j]);
+////        }
+//    }
 
     private void drawI(int i, double[][] precision, double[] midMean, double[] mean) {
 
@@ -236,18 +236,17 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
-        if (i < draws.length) {
-            copy(i, draws);
-        } else {
-            copy(i, draws);
-        }
+        adaptor.setLoadingsForTraitQuietly(i, draws);
+
+//        if (i < draws.length) {
+//            copy(i, draws);
+//        } else {
+//            copy(i, draws);
+//        }
 
         if (DEBUG) {
             System.err.println("draw: " + new Vector(draws));
         }
-
-//       copy(i, draws);
-
     }
     
     @Override

@@ -181,7 +181,7 @@ public interface FactorAnalysisOperatorAdaptor {
         @Override
         public boolean isNotMissing(int trait, int taxon) {
             // TODO
-            return false;
+            return true;
         }
 
         private static final boolean DEBUG = false;

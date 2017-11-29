@@ -25,18 +25,14 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.distribution.WishartGammalDistributionModel;
 import dr.inference.model.DiagonalConstrainedMatrixView;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
@@ -80,7 +76,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
     private double priorDf;
     private SymmetricMatrix priorInverseScaleMatrix;
-    private final MultivariateTraitTree treeModel;
+    private final MutableTreeModel treeModel;
     private final int dim;
     private double numberObservations;
     private final String traitName;
@@ -175,7 +171,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.conjugateWishartProvider = wishartStatisticsProvider;
         this.meanParam = null;
         this.precisionParam = (extraPrecisionParam != null ? extraPrecisionParam :
-                conjugateWishartProvider.getPrecisionParamter());
+                conjugateWishartProvider.getPrecisionParameter());
         isSampledTraitLikelihood = false;
         this.treeModel = null;
         this.traitName = null;
@@ -494,7 +490,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             }
 
             if (ws != null) {
-                precMatrix = ws.getPrecisionParamter();
+                precMatrix = ws.getPrecisionParameter();
                 prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
             }
 

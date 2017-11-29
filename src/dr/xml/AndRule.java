@@ -100,7 +100,7 @@ public class AndRule implements XMLSyntaxRule {
      * Describes the rule.
      */
     public String markdownRuleString(XMLDocumentationHandler handler, String prefix) {
-        String html = prefix + "* All of:\n";
+        String html = prefix + "All of:\n";
         for (XMLSyntaxRule rule : rules) {
             html += rule.markdownRuleString(handler, prefix + "    ");
         }

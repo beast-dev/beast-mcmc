@@ -30,6 +30,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -81,7 +82,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String OPTIMAL_TRAITS = "optimalTraits";
 
 //    public AbstractMultivariateTraitLikelihood(String traitName,
-//                                               MultivariateTraitTree treeModel,
+//                                               MutableTreeModel treeModel,
 //                                               MultivariateDiffusionModel diffusionModel,
 //                                               CompoundParameter traitParameter,
 //                                               List<Integer> missingIndices,
@@ -97,7 +98,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 //    }
 
     public AbstractMultivariateTraitLikelihood(String traitName,
-                                               MultivariateTraitTree treeModel,
+                                               MutableTreeModel treeModel,
                                                MultivariateDiffusionModel diffusionModel,
                                                CompoundParameter traitParameter,
                                                Parameter deltaParameter,
@@ -187,7 +188,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
 //    public AbstractMultivariateTraitLikelihood(String traitName,
-//                                               MultivariateTraitTree treeModel,
+//                                               MutableTreeModel treeModel,
 //                                               MultivariateDiffusionModel diffusionModel,
 //                                               CompoundParameter traitParameter,
 //                                               Parameter deltaParameter,
@@ -594,7 +595,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected void acceptState() {
     } // nothing to do
 
-    public MultivariateTraitTree getTreeModel() {
+    public MutableTreeModel getTreeModel() {
         return treeModel;
     }
 
@@ -749,7 +750,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
-            MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
+            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
 
             boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, true);
             boolean integrate = xo.getAttribute(INTEGRATE, false);
@@ -761,20 +762,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-            List<BranchRateModel> driftModels = null;
-            if (xo.hasChildNamed(DRIFT_MODELS)) {
-                driftModels = new ArrayList<BranchRateModel>();
-                XMLObject cxo = xo.getChild(DRIFT_MODELS);
-                final int number = cxo.getChildCount();
-                if (number != diffusionModel.getPrecisionmatrix().length) {
-                    throw new XMLParseException("Wrong number of drift models (" + number + ") for a trait of" +
-                            " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
-                    );
-                }
-                for (int i = 0; i < number; ++i) {
-                    driftModels.add((BranchRateModel) cxo.getChild(i));
-                }
-            }
+            List<BranchRateModel> driftModels = parseDriftModels(xo, diffusionModel);
 
             List<BranchRateModel> optimalValues = null;
             BranchRateModel strengthOfSelection = null;
@@ -1017,7 +1005,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         new ElementRule(Taxon.class)
                 }, true),
                 new ElementRule(MultivariateDiffusionModel.class),
-                new ElementRule(MultivariateTraitTree.class),
+                new ElementRule(MutableTreeModel.class),
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleArrayRule("cut", true),
                 AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
@@ -1047,6 +1035,33 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
     };
 
+
+    public static List<BranchRateModel> parseDriftModels(XMLObject xo,
+                                                         MultivariateDiffusionModel diffusionModel)
+            throws XMLParseException {
+
+        List<BranchRateModel> driftModels = null;
+
+        if (xo.hasChildNamed(DRIFT_MODELS)) {
+            driftModels = new ArrayList<BranchRateModel>();
+            XMLObject cxo = xo.getChild(DRIFT_MODELS);
+
+            final int number = cxo.getChildCount();
+
+            if (number != diffusionModel.getPrecisionmatrix().length) {
+                throw new XMLParseException("Wrong number of drift models (" + number + ") for a trait of" +
+                        " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
+                );
+            }
+
+            for (int i = 0; i < number; ++i) {
+                driftModels.add((BranchRateModel) cxo.getChild(i));
+            }
+
+        }
+        return driftModels;
+    }
+
     public static List<RestrictedPartials> parseRestrictedPartials(XMLObject xo, boolean integrate)
             throws XMLParseException {
         
@@ -1072,7 +1087,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         throw new IllegalArgumentException("Not implemented for this model type");
     }
 
-    MultivariateTraitTree treeModel = null;
+    MutableTreeModel treeModel = null;
     MultivariateDiffusionModel diffusionModel = null;
     String traitName = null;
     CompoundParameter traitParameter;

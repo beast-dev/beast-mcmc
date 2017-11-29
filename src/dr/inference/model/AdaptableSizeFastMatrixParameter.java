@@ -85,7 +85,7 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
 
         if (row >= col || !lowerTriangle){
             super.setParameterValueQuietly(row, col, value);
-            fireParameterChangedEvent(index, null);
+            fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
         }
     }
 

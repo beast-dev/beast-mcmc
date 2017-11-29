@@ -31,6 +31,7 @@ import dr.evolution.datatype.MutationDeathType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.oldevomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.oldevomodel.treelikelihood.LikelihoodCore;
@@ -298,8 +299,8 @@ abstract public class AbstractObservationProcess extends AbstractModel {
             weightKnown = false;
         }
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
-                if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+            if (object instanceof TreeChangedEvent) {
+                if (((TreeChangedEvent) object).isTreeChanged()) {
                     nodePatternInclusionKnown = false;
                 }
             }

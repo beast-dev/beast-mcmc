@@ -25,11 +25,13 @@
 
 package dr.evomodel.treelikelihood.utilities;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.xml.Report;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,53 +43,133 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class TreeTraitLogger implements Loggable {
+public class TreeTraitLogger implements Loggable, Reportable {
 
-    public TreeTraitLogger(Tree tree,
-                           TreeTraitProvider[] traitProviders) {
-        this.tree = tree;
-        for (TreeTraitProvider provider : traitProviders) {
-            addTraits(provider.getTreeTraits());
-        }
+    public TreeTraitLogger(Tree tree, TreeTrait[] traits) {
+        this(tree, traits, NodeRestriction.ALL);
     }
 
     public TreeTraitLogger(Tree tree,
-                           TreeTrait[] traits) {
+                           TreeTrait[] traits,
+                           NodeRestriction nodeRestriction) {
         this.tree = tree;
+        this.nodeRestriction = nodeRestriction;
         addTraits(traits);
     }
 
-    public void addTraits(TreeTrait[] traits) {
-        if (loggableTreeTraits == null) {
-            loggableTreeTraits = new ArrayList<TreeTrait>();
+    private void addTraits(TreeTrait[] traits) {
+        if (treeTraits == null) {
+            treeTraits = new ArrayList<TreeTrait>();
         }
+
         for (TreeTrait trait : traits) {
-            if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
-                loggableTreeTraits.add(trait);
-            }
+            treeTraits.add(trait);
         }
     }
 
     public LogColumn[] getColumns() {
 
-        if (loggableTreeTraits.size() == 0) {
-            return null;
-        }
+        List<LogColumn> columns = new ArrayList<LogColumn>();
 
-        LogColumn[] columns = new LogColumn[loggableTreeTraits.size()];
+        for (final TreeTrait trait : treeTraits) {
 
-        for (int i = 0; i < loggableTreeTraits.size(); i++) {
-            final TreeTrait trait = loggableTreeTraits.get(i);
-            columns[i] = new LogColumn.Abstract(trait.getTraitName()) {
-                @Override
-                protected String getFormattedValue() {
-                    return trait.getTraitString(tree, null);
+            if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
+                LogColumn column = new LogColumn.Abstract(trait.getTraitName()) {
+                    @Override
+                    protected String getFormattedValue() {
+                        return trait.getTraitString(tree, null);
+                    }
+                };
+
+                columns.add(column);
+
+            } else {
+
+                for (int i = nodeRestriction.begin(tree); i < nodeRestriction.end(tree); ++i) {
+                    final NodeRef node = tree.getNode(i);
+
+                    if (!tree.isRoot(node) || trait.getIntent() == TreeTrait.Intent.NODE) {
+
+                        if (trait instanceof TreeTrait.DA) {
+
+                            final int dim = ((double [])trait.getTrait(tree, node)).length;
+                            for (int j = 0; j < dim; ++j) {
+
+                                final int idx = j;
+                                LogColumn column = new LogColumn.Abstract(trait.getTraitName()
+                                        + "." + (i + 1) + "." + (j + 1)) {
+                                    @Override
+                                    protected String getFormattedValue() {
+                                        double[] x = (double[]) trait.getTrait(tree, node);
+                                        return Double.toString(x[idx]);
+                                    }
+                                };
+
+                                columns.add(column);
+                            }
+
+                        } else {
+
+                            LogColumn column = new LogColumn.Abstract(trait.getTraitName()
+                                    + "." + (i + 1)) {
+                                @Override
+                                protected String getFormattedValue() {
+                                    return trait.getTraitString(tree, node);
+                                }
+                            };
+
+                            columns.add(column);
+                        }
+                    }
                 }
-            };
+            }
         }
-        return columns;
+
+        return columns.toArray(new LogColumn[columns.size()]);
     }
 
-    private Tree tree;
-    private List<TreeTrait> loggableTreeTraits;
+    private final Tree tree;
+    private List<TreeTrait> treeTraits;
+    private final NodeRestriction nodeRestriction;
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+
+        for (LogColumn column : getColumns()) {
+            sb.append(column.getFormatted());
+            sb.append("\t");
+        }
+
+        return sb.toString();
+    }
+
+    public enum NodeRestriction {
+        ALL {
+            int begin(Tree tree) { return 0; }
+            int end(Tree tree) { return tree.getNodeCount(); }
+        },
+        EXTERNAL {
+            int begin(Tree tree) { return 0; }
+            int end(Tree tree) { return tree.getExternalNodeCount(); }
+        },
+        INTERNAL {
+            int begin(Tree tree) { return tree.getExternalNodeCount(); }
+            int end(Tree tree) { return tree.getNodeCount(); }
+        };
+
+        abstract int begin(Tree tree);
+        abstract int end(Tree tree);
+
+        public static NodeRestriction parse(String text) {
+             String lower = text.toLowerCase();
+             if (lower.compareTo("external") == 0) {
+                 return EXTERNAL;
+             } else if (lower.compareTo("internal") == 0) {
+                return INTERNAL;
+            } else {
+                 return ALL;
+            }
+        }
+    }
 }

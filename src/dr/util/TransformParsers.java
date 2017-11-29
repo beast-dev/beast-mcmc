@@ -183,7 +183,7 @@ public class TransformParsers {
 
              Transform thisTransform = Transform.NONE;
              String name = (String) xo.getAttribute(TYPE);
-             System.err.println("name: " + name);
+//             System.err.println("name: " + name);
 
              thisTransform = null;
              for (Transform.Type type: Transform.Type.values()) {

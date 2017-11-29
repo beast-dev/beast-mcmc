@@ -193,4 +193,27 @@ public class KroneckerOperation {
             }
         }        
     }
+
+    public static double[] vectorize(double[][] A) {
+        double[] out = new double[A.length * A[0].length];
+        vectorize(A, out);
+        return out;
+    }
+
+    public static void vectorize(double[][] A, double[] out) {
+        final int m = A.length;
+        final int n = A[0].length;
+
+        if (out == null || out.length != m * n) {
+            throw new RuntimeException("Wrong dimensions in vectorize");
+        }
+
+        int offset = 0;
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                out[offset] = A[i][j];
+                ++offset;
+            }
+        }
+    }
 }

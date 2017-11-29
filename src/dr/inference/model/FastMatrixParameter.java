@@ -77,17 +77,17 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         @Override
         protected void storeValues() {
-            throw new RuntimeException("Do not call");
+            // Do nothing; storeValues() on whole matrix should have been called.
         }
 
         @Override
         protected void restoreValues() {
-            throw new RuntimeException("Do not call");
+            // Do nothing; restoreValues() on whole matrix should have been called.
         }
 
         @Override
         protected void acceptValues() {
-            throw new RuntimeException("Do not call");
+            // Do nothing; acceptValues() on whole matrix should have been called.
         }
 
         @Override
@@ -103,6 +103,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         @Override
         public void setParameterValue(int dim, double value) {
             matrix.setParameterValue(dim, column, value);
+            super.fireParameterChangedEvent(dim, Parameter.ChangeType.VALUE_CHANGED);
         }
 
         @Override
@@ -132,7 +133,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         @Override
         public void fireParameterChangedEvent(int index, ChangeType type){
-            matrix.fireParameterChangedEvent(index, type);
+            matrix.fireParameterChangedEvent(index + column * getDimension(), type);
+            super.fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
         }
 
         @Override

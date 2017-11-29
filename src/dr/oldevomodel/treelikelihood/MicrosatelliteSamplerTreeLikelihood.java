@@ -26,6 +26,7 @@
 package dr.oldevomodel.treelikelihood;
 
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.oldevomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -86,14 +87,14 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
 
                 if(((TreeModel.TreeChangedEvent) object).areAllInternalHeightsChanged()){
                     updateAllNodes();
-                }else if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+                } else if (((TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
-                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
+                } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // Currently this event type is not used.
                     System.err.println("Full tree update event - these events currently aren't used\n" +

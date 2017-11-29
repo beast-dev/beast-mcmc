@@ -45,23 +45,8 @@ public class StratifiedTraitLoggerParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        TreeTraitProvider traitProvider =
-                (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
 
-        String traitName = (String) xo.getAttribute(TRAIT_NAME);
-
-        TreeTrait trait = traitProvider.getTreeTrait(traitName);
-        if (trait == null || trait.getIntent() != TreeTrait.Intent.WHOLE_TREE) {
-            StringBuilder sb = new StringBuilder("Unable to find whole tree trait '" + traitName + "' in '" + xo.getId() + "\n");
-            sb.append("\tPossible traits:");
-            for (TreeTrait existingTrait : traitProvider.getTreeTraits()) {
-                if (existingTrait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
-                    sb.append(" " +existingTrait.getTraitName());
-                }
-            }
-            sb.append("\n");
-            throw new XMLParseException(sb.toString());
-        }
+        TreeTrait trait = TraitLoggerParser.parseTreeTrait(xo, true);
 
         boolean partition = xo.getAttribute(PARTITION, false);
 
@@ -90,7 +75,6 @@ public class StratifiedTraitLoggerParser extends AbstractXMLObjectParser {
   private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
           AttributeRule.newStringRule(TRAIT_NAME),
           AttributeRule.newBooleanRule(PARTITION, true),
-//          AttributeRule.newStringRule(LOG_FORMAT, true),
           new ElementRule(TreeModel.class),
           new ElementRule(TreeTraitProvider.class),
     };

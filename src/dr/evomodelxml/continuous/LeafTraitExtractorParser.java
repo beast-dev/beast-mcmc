@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.continuous;
 
-import dr.evomodel.tree.TreeModel;
+import dr.evolution.tree.MutableTree;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -42,7 +42,7 @@ public class LeafTraitExtractorParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeModel model = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTree model = (MutableTree) xo.getChild(MutableTree.class);
         final CompoundParameter allTraits = (CompoundParameter) xo.getChild(CompoundParameter.class);
 
         String taxonString = (String) xo.getAttribute(TreeModelParser.TAXON);
@@ -68,7 +68,7 @@ public class LeafTraitExtractorParser extends AbstractXMLObjectParser {
         return new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(TreeModelParser.TAXON),
                 AttributeRule.newBooleanRule(SET_BOUNDS, true),
-                new ElementRule(TreeModel.class),
+                new ElementRule(MutableTree.class),
                 new ElementRule(CompoundParameter.class),
         };
     }

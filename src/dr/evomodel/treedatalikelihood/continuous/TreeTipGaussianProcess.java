@@ -30,6 +30,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -39,7 +41,7 @@ import dr.math.distributions.GaussianProcessRandomGenerator;
 
 import java.util.List;
 
-import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 import static dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate.createWithMissingData;
 
 /**
@@ -61,7 +63,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
     private final boolean[] doSample;
     private final boolean[] doNotSample;
 
-    private final TreeTrait<double[]> tipSampleTrait;
+    private final TreeTrait tipSampleTrait;
 
     private final boolean truncateToMissingOnly;
 
@@ -83,12 +85,11 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
             likelihoodDelegate = createWithMissingData(likelihoodDelegate);
 
             ProcessSimulationDelegate simulationDelegate =
-                    new ProcessSimulationDelegate.MultivariateConditionalOnTipsRealizedDelegate(traitName, treeDataLikelihood.getTree(),
+                    new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeDataLikelihood.getTree(),
                             likelihoodDelegate.getDiffusionModel(), likelihoodDelegate.getDataModel(), likelihoodDelegate.getRootPrior(),
-                            likelihoodDelegate.getRateTransformation(), treeDataLikelihood.getBranchRateModel(), likelihoodDelegate);
+                            likelihoodDelegate.getRateTransformation(), likelihoodDelegate);
 
-            TreeTraitProvider traitProvider = new ProcessSimulation(traitName,
-                    treeDataLikelihood, simulationDelegate);
+            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
 
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
 
@@ -130,8 +131,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
     private double[] drawAllTraits() {
         //treeDataLikelihood.fireModelChanged();
         doPostOrderTraversal();
-        double[] sample = tipSampleTrait.getTrait(treeDataLikelihood.getTree(), null);
-        return sample;
+        return (double []) tipSampleTrait.getTrait(treeDataLikelihood.getTree(), null);
     }
 
     private double[] drawSelectedTraits() {
@@ -165,11 +165,11 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
         }
     }
 
-    private double[] crop(double[] in, int length) {
-        double[] out = new double[length];
-        System.arraycopy(in, 0, out, 0, length);
-        return out;
-    }
+//    private double[] crop(double[] in, int length) {
+//        double[] out = new double[length];
+//        System.arraycopy(in, 0, out, 0, length);
+//        return out;
+//    }
 
     private double[] maskDraw(double[] in, boolean[] mask) {
         double[] out = new double[missingLength];
@@ -230,7 +230,7 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
 
         private int index;
 
-        public TipSampleColumn(String label, int index) {
+        TipSampleColumn(String label, int index) {
             super(label);
             this.index = index;
         }

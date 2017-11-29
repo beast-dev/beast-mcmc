@@ -35,19 +35,19 @@ import java.util.List;
  */
 public class CompoundMatrixParameter extends MatrixParameter {
 
-    public CompoundMatrixParameter(String name, List<MatrixParameter> matrices) {
+    public CompoundMatrixParameter(String name, List<MatrixParameterInterface> matrices) {
         super(name, compoundMatrices(matrices));
     }
 
-    private static Parameter[] compoundMatrices(List<MatrixParameter> matrices) {
+    private static Parameter[] compoundMatrices(List<MatrixParameterInterface> matrices) {
         int length = 0;
-        for (MatrixParameter matrix : matrices) {
+        for (MatrixParameterInterface matrix : matrices) {
             length += matrix.getColumnDimension();
         }
 
         Parameter[] parameters = new Parameter[length];
         int index = 0;
-        for (MatrixParameter matrix : matrices) {
+        for (MatrixParameterInterface matrix : matrices) {
             for (int i = 0; i < matrix.getColumnDimension(); ++i) {
                 parameters[index] = matrix.getParameter(i);
                 ++index;
@@ -66,10 +66,10 @@ public class CompoundMatrixParameter extends MatrixParameter {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            List<MatrixParameter> matrices = new ArrayList<MatrixParameter>();
+            List<MatrixParameterInterface> matrices = new ArrayList<MatrixParameterInterface>();
 
             for (int i = 0; i < xo.getChildCount(); ++i) {
-                matrices.add((MatrixParameter) xo.getChild(i));
+                matrices.add((MatrixParameterInterface) xo.getChild(i));
             }
 
             final String name = xo.hasId() ? xo.getId() : null;

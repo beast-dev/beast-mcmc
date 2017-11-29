@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -40,8 +40,6 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
     public final static String DATA_FROM_TREE_TIPS = "dataFromTreeTips";
     public final static String DATA = "data";
     public static final String CONTINUOUS = "continuous";
-    public static final String SAMPLE_MISSING = "sampleMissing";
-    public static final String MISSING_PARAMETER = "missingParameter";
 
 
     public String getParserName() {
@@ -53,20 +51,15 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
         TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
         String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
 
-        MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
-        boolean sampleMissing;
-        if(xo.hasAttribute(SAMPLE_MISSING))
-            sampleMissing = xo.getBooleanAttribute(SAMPLE_MISSING);
-        else
-            sampleMissing = true;
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, sampleMissing);
+                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
         MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
                 returnValue.traitParameter);
 
-        if (xo.hasChildNamed(MISSING_PARAMETER)) {
-            Parameter missing = (Parameter) xo.getChild(MISSING_PARAMETER).getChild(Parameter.class);
+        if (xo.hasChildNamed(TreeTraitParserUtilities.MISSING)) {
+            Parameter missing = (Parameter) xo.getChild(TreeTraitParserUtilities.MISSING).getChild(Parameter.class);
             missing.setDimension(dataParameter.getDimension());
 
             for (int i = 0; i < missing.getDimension(); i++) {
@@ -82,9 +75,8 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
     }
 
     private static final XMLSyntaxRule[] rules = {
-            new ElementRule(MultivariateTraitTree.class),
+            new ElementRule(MutableTreeModel.class),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
-            AttributeRule.newBooleanRule(SAMPLE_MISSING, true),
             new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),

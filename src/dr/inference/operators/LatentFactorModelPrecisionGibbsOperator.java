@@ -91,11 +91,6 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
     }
 
     @Override
-    public int getStepCount() {
-        return 0;
-    }
-
-    @Override
     public String getPerformanceSuggestion() {
         return "Only works for diagonal column precision matrices for a LatentFactorModel with a gamma prior";
     }

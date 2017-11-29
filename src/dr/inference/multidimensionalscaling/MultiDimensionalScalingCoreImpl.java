@@ -101,7 +101,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     @Override
     public void updateLocation(int locationIndex, double[] location) {
         if (updatedLocation != -1 || locationIndex == -1) {
-            // more than one location updated - do a full recomputation
+            // more than one location updated - do a full re-computation
             incrementsKnown = false;
             storedIncrements = null;
          }
@@ -138,17 +138,6 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
                 computeSumOfSquaredResiduals();
             } else {
                 updateSumOfSquaredResiduals();
-                if (REPORT_ROUNDOFF) {
-                    // Report round-off error
-                    double storedSumOfSquaredResults = sumOfIncrements;
-                    computeSumOfSquaredResiduals();
-                    if (Math.abs(storedSumOfSquaredResults - sumOfIncrements) > 1E-6) {
-                        System.err.println(storedSumOfSquaredResults);
-                        System.err.println(sumOfIncrements);
-                        System.err.println(storedSumOfSquaredResults - sumOfIncrements);
-                        System.err.println("");
-                    }
-                }
             }
             sumOfIncrementsKnown = true;
         }
@@ -225,7 +214,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         incrementsKnown = false;
     }
 
-    protected void computeSumOfSquaredResiduals() {
+    private void computeSumOfSquaredResiduals() {
 
         final double oneOverSd = Math.sqrt(precision);
         final double scale = 0.5 * precision;
@@ -241,7 +230,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
                 if (isLeftTruncated) {
                     increment = scale * increment;
                     if (i != j) {
-                        increment += computeTruncation(distance, precision, oneOverSd);
+                        increment += computeTruncation(distance, oneOverSd);
 //                        increment += computeTruncation(Math.sqrt(residual * residual), precision, oneOverSd); // OLD .. believed incorrect
                     }
                 }
@@ -257,7 +246,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         sumOfIncrementsKnown = true;
     }
 
-    protected void updateSumOfSquaredResiduals() {
+    private void updateSumOfSquaredResiduals() {
 
         final double oneOverSd = Math.sqrt(precision);
         final double scale = 0.5 * precision;
@@ -277,7 +266,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
             if (isLeftTruncated) {
                 increment = scale * increment;
                 if (i != j) {
-                    increment += computeTruncation(distance, precision, oneOverSd);
+                    increment += computeTruncation(distance, oneOverSd);
 //                    increment += computeTruncation(Math.sqrt(residual * residual), precision, oneOverSd); // OLD .. believed incorrect
                 }
             }
@@ -290,7 +279,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         sumOfIncrements += delta;
     }
 
-    protected double calculateDistance(double[] X, double[] Y) {
+    private double calculateDistance(double[] X, double[] Y) {
         double sum = 0.0;
         for (int i = 0; i < embeddingDimension; i++) {
             double difference = X[i] - Y[i];
@@ -299,7 +288,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         return Math.sqrt(sum);
     }
 
-    protected double computeTruncation(double mean, double precision, double oneOverSd) {
+    private double computeTruncation(double mean, double oneOverSd) {
         return NormalDistribution.standardCDF(mean * oneOverSd, true); // Should be standardCDF(mean / sd, true);
     }
 
@@ -325,7 +314,5 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     private double sumOfIncrements;
     private double storedSumOfIncrements;
-
-    private static boolean REPORT_ROUNDOFF = false;
 
 }

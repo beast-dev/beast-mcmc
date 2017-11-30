@@ -35,6 +35,7 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
 
     private final static String MASK = "rotationalTranslationalMask";
     private final static String DIMENSION = "dimension";
+    private final static String RESET = "reset";
 
     @Override
     public String getParserName() {
@@ -51,6 +52,8 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Dimension and parameter length are not divisible");
         }
 
+        boolean reset = xo.getAttribute(RESET, true);
+
         Parameter mask = new Parameter.Default(parameter.getDimension(), 1.0);
 
         int offset = 0;
@@ -58,6 +61,9 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
         // Translational invariance
         for (int i = 0; i < dim; ++i) {
             mask.setParameterValue(offset, 0.0);
+            if (reset) {
+                parameter.setParameterValue(offset, 0.0);
+            }
             ++offset;
         }
 
@@ -65,6 +71,9 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
         ++offset;
         for (int i = 1; i < dim; ++i) {
             mask.setParameterValue(offset, 0.0);
+            if (reset) {
+                parameter.setParameterValue(offset, 0.0);
+            }
             ++offset;
         }
 
@@ -78,6 +87,7 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(DIMENSION),
+            AttributeRule.newBooleanRule(RESET, true),
             new ElementRule(Parameter.class),
     };
 

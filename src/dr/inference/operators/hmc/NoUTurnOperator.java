@@ -94,9 +94,9 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 stepSize = Math.exp(logStepSize);
             }
 
-          // stepSize = 0.05; //todo: use to hand tune the stepsize.
-            //stepSize = tempStepsize * (MathUtils.nextDouble()*0.2 + 0.9);//todo: randomize the stepsize each iteration.
-            //System.err.println("m is " + m + " stepsize is " + stepSize);
+          // stepSize = 0.05; //todo: use to hand tune the step-size.
+            //stepSize = tempStepSize * (MathUtils.nextDouble()*0.2 + 0.9);//todo: randomize the step-size each iteration.
+            //System.err.println("m is " + m + " step-size is " + stepSize);
         }
     }
 
@@ -306,7 +306,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
 
             if (count > options.findMax) {
-                throw new RuntimeException("Cannot find a reasonable stepsize in " + options.findMax + " iterations");
+                throw new RuntimeException("Cannot find a reasonable step-size in " + options.findMax + " iterations");
             }
         }
 

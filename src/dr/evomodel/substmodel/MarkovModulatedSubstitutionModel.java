@@ -125,7 +125,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         addModel(freqModel);
 
         if (stateCount != stateSizes) {
-            throw new RuntimeException("Incompatible state counts in " + getModelName() + ". Models add up to " + stateSizes + ".");
+            throw new RuntimeException("Incompatible state counts in " + getModelName() + " (currently: " + stateCount + "). Models add up to " + stateSizes + ".");
         }
 
         birthDeathModel = true;

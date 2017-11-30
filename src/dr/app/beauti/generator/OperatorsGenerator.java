@@ -636,7 +636,7 @@ public class OperatorsGenerator extends Generator {
 
                 for (Parameter parameter : options.selectParameters()) {
                     if (parameter.isAdaptiveMultivariateCompatible && !parameter.isFixed()) {
-                        System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
+                        //System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
                         if (parameter.isNonNegative && !parameter.isMaintainedSum) {
                             logList.add(parameter);
                         } else if (parameter.isInRealSpace()) {

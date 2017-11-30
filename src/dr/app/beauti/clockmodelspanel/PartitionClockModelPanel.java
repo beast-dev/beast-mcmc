@@ -51,9 +51,15 @@ public class PartitionClockModelPanel extends OptionsPanel {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,
 //            ClockDistributionType.CAUCHY,
-            ClockDistributionType.EXPONENTIAL
+            ClockDistributionType.EXPONENTIAL,
+            //ClockDistributionType.MODEL_AVERAGING
     });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
+
+    private JLabel modelAveragingInfo = new JLabel(
+            "<html>Using the Bayesian Model Averaging (BMA) approach on the<br>" +
+                    "available relaxed clock models as described by Li & Drummond (2012)<br>" +
+                    " Mol. Biol. Evol. 29:751-761.</html>");
 
     protected final PartitionClockModel model;
 
@@ -78,6 +84,17 @@ public class PartitionClockModelPanel extends OptionsPanel {
         clockDistributionCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setClockDistributionType((ClockDistributionType) clockDistributionCombo.getSelectedItem());
+                if (clockDistributionCombo.getSelectedItem() == ClockDistributionType.MODEL_AVERAGING) {
+                    model.setPerformModelAveraging(true);
+                    continuousQuantileCheck.setSelected(true);
+                    continuousQuantileCheck.setEnabled(false);
+                    addComponent(modelAveragingInfo);
+                } else {
+                    model.setPerformModelAveraging(false);
+                    continuousQuantileCheck.setEnabled(true);
+                    remove(modelAveragingInfo);
+                }
+                model.setContinuousQuantile(continuousQuantileCheck.isSelected());
             }
         });
         clockDistributionCombo.setToolTipText("<html>Select the distribution that describes the variation in rate.</html>");
@@ -99,6 +116,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
 
         setupPanel();
         setOpaque(false);
+
     }
 
 

@@ -407,7 +407,7 @@ public class OldDnDsPerSiteAnalysis {
 
                     double[][] countPerSite = new double[numberOfSites][];
                     for (int a = 0; a < numberOfSites; a++) {
-                        List<Double> values = traces.getValues((a + traceStartIndex));
+                        List<Double> values = (List)traces.getValues((a + traceStartIndex));
                         countPerSite[a] = new double[values.size()];
                         for (int i = 0; i < values.size(); i++) {
                             countPerSite[a][i] = values.get(i);

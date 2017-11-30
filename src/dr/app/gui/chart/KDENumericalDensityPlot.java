@@ -38,11 +38,17 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
+public class KDENumericalDensityPlot extends NumericalDensityPlot {
     private final static boolean DEBUG = false;
 
+    protected static final int DEFAULT_KDE_BINS = 5000;
+
+    public KDENumericalDensityPlot(List<Double> data) {
+        super(data, DEFAULT_KDE_BINS);
+    }
+
     public KDENumericalDensityPlot(List<Double> data, int minimumBinCount) {
-        super(data, minimumBinCount); // TODO Remove when all linked together
+        super(data, minimumBinCount);
     }
 
     private KernelDensityEstimatorDistribution getKDE(Double[] samples) {

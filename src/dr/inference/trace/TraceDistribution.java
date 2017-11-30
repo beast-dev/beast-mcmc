@@ -41,18 +41,23 @@ import java.util.*;
 public class TraceDistribution {
     private TraceType traceType;
 
+    // For discrete and categorical traces
     private Map<Integer, String> categoryLabelMap;
-    private Map<Integer, Integer> categoryOrderMap;
+    private List<Integer> categoryOrder;
+    private FrequencyCounter<Integer> frequencyCounter;
 
     public TraceDistribution(List<Double> values, TraceType traceType) {
         this.traceType = traceType;
+
+        assert traceType != TraceType.CATEGORICAL : "cant use this constructor with categorical data";
+
         initStatistics(values, 0.95);
     }
 
-    public TraceDistribution(List<Double> values, Map<Integer, String> categoryLabelMap) {
+    public TraceDistribution(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder) {
         this.traceType = TraceType.CATEGORICAL;
         this.categoryLabelMap = categoryLabelMap;
-        this.categoryOrderMap = getNaturalOrder(categoryLabelMap);
+        this.categoryOrder = categoryOrder;
         initStatistics(values, 0.95);
     }
 
@@ -66,28 +71,6 @@ public class TraceDistribution {
         if (traceType != TraceType.REAL) {
             analyseDistributionDiscrete(values, proportion);
         }
-    }
-
-
-    public Map<Integer, Integer> getNaturalOrder(Map<Integer, String> categoryMap) {
-        categoryOrderMap = new HashMap<Integer, Integer>();
-
-        List<String> labels = new ArrayList<String>(categoryMap.values());
-        Collections.sort(labels);
-
-        for (Integer index : categoryMap.keySet()) {
-            String l = categoryMap.get(index);
-            categoryOrderMap.put(labels.indexOf(l), index);
-        }
-
-        return categoryOrderMap;
-    }
-
-    public Map<Integer, Integer> getFrequencyOrder() {
-        categoryOrderMap = new HashMap<Integer, Integer>();
-
-        Set<Integer> values = frequencyCounter.getUniqueValues();
-        return categoryOrderMap;
     }
 
     public TraceType getTraceType() {
@@ -261,115 +244,58 @@ public class TraceDistribution {
     // new types
     //************************************************************************
 
-    // frequency counter for discrete traces
-    private FrequencyCounter<Integer> frequencyCounter;
 
     // init FrequencyCounter used for Integer and String
     private void analyseDistributionDiscrete(List<Double> valueList, double proportion) {
-        List<Integer> values = new ArrayList<Integer>();
+        List<Integer> integerValues = new ArrayList<Integer>();
         for (Double value : valueList) {
-            values.add(value.intValue());
+            integerValues.add(value.intValue());
         }
 
         if (size == 0) {
-            size = values.size();
+            size = integerValues.size();
         }
-        frequencyCounter = new FrequencyCounter<Integer>(values);
-    }
 
-    // categorical data is stored as integer values (in a double list) - mapping to
-    // category labels is done by the Traces themselves.
-//    /**
-//     * Convert a categorical value to the index of unique values,
-//     * and put it into a map <code>Map<Integer, String></code>.
-//     * Key is the index of unique values, value of map is that unique value.
-//     *
-//     * @return
-//     */
-//    public Map<Integer, String> getIndexMap() {
-//        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-//        if (frequencies != null && categoryDataMap.size() == 0) {
-//            int i = -1;
-//            for (Object key : frequencies.uniqueValues()) {
-//                i++;
-//                String value = key.toString();
-//                categoryDataMap.put(i, value);
-//            }
-//        }
-//        return categoryDataMap;
-//    }
+        if (getTraceType() == TraceType.CATEGORICAL) {
+            frequencyCounter = new FrequencyCounter<Integer>(integerValues, proportion);
+        } else {
+            frequencyCounter = new FrequencyCounter<Integer>(integerValues);
+        }
 
-//    /**
-//     * Convert a list of categorical values into a list of indices of their unique values,
-//     * given the map <code>categoryDataMap</code>.
-//     * Key is the index of unique values, value of map is that unique value
-//     *
-//     * @param values
-//     * @return
-//     */
-//    public List<Double> indexingData(List<String> values) {
-//        List<Double> intData = new ArrayList<Double>();
-//        Map<Integer, String> categoryDataMap = getIndexMap();
-//        if (categoryDataMap.size() < 1) return intData;
-//
-//        for (int v = 0; v < values.size(); v++) {
-//            for (Map.Entry<Integer, String> entry : categoryDataMap.entrySet()) {
-//                if (values.get(v).equals(entry.getValue())) {
-//                    // add index
-//                    intData.add(v, (double) entry.getKey());
-//                    break;
-//                }
-//            }
-//
-//        }
-//        if (intData.size() > 0 && values.size() != intData.size())
-//            System.err.println("values.size(" + values.size() + ") != intData.size(" + intData.size() + ") !");
-//
-//        return intData;
-//    }
-
-    public boolean credibleSetContains(int value) {
-        int index = categoryOrderMap.get(value);
-        return frequencyCounter.getCredibleSet().contains(index);
-    }
-
-    public boolean incredibleSetContains(int value) {
-        int index = categoryOrderMap.get(value);
-        return frequencyCounter.getIncredibleSet().contains(index);
     }
 
     public Set<Integer> getValueSet() {
-        Set<Integer> valueSet = new LinkedHashSet<Integer>();
-        for (Integer value : frequencyCounter.getUniqueValues()) {
-            int index = categoryOrderMap.get(value);
-            valueSet.add(index);
+        if (categoryOrder != null) {
+            return new LinkedHashSet<Integer>(categoryOrder);
+        } else {
+            return new LinkedHashSet<Integer>(frequencyCounter.getUniqueValues());
         }
-        return valueSet;
+    }
+
+    public FrequencyCounter<Integer> getFrequencyCounter() {
+        assert traceType.isDiscrete();
+        return frequencyCounter;
     }
 
     public Set<Integer> getCredibleSet() {
-        Set<Integer> credibleSet = new LinkedHashSet<Integer>();
-        for (Integer value : frequencyCounter.getCredibleSet()) {
-            int index = categoryOrderMap.get(value);
-            credibleSet.add(index);
-        }
-        return credibleSet;
+        return frequencyCounter.getCredibleSet();
     }
 
     public Set<Integer> getIncredibleSet() {
-        Set<Integer> incredibleSet = new LinkedHashSet<Integer>();
-        for (Integer value : frequencyCounter.getIncredibleSet()) {
-            int index = categoryOrderMap.get(value);
-            incredibleSet.add(index);
-        }
-        return incredibleSet;
+        return frequencyCounter.getIncredibleSet();
     }
 
+    public String valueToString(int value) {
+        if (categoryLabelMap != null) {
+            return categoryLabelMap.get(value);
+        }
+        return Integer.toString(value);
+    }
     public String setToString(Set<Integer> aSet) {
         StringBuilder sb = new StringBuilder("{");
         boolean isFirst = true;
         for (int value : aSet) {
-            String label = categoryLabelMap.get(value);
+            String label = valueToString(value);
             if (!isFirst) {
                 sb.append(", ");
             } else {
@@ -410,25 +336,5 @@ public class TraceDistribution {
         return valuesList;
     }
 
-//    private boolean contains(Set<T> aSet, int valueORIndex) {
-//        if (traceType.isNumber()) {
-//            // T is either Double or Integer
-//            return aSet.contains((double) valueORIndex);
-//        } else { // String
-//            String valueString = null;
-//            int i = -1;
-//            for (T v : frequencies.uniqueValues()) {
-//                i++;
-//                if (i == valueORIndex) {
-//                    valueString = v.toString();
-//                    break;
-//                }
-//            }
-//            if (valueString == null) {
-//                return false;
-//            }
-//            return aSet.contains(valueString);
-//        }
-//    }
 
 }

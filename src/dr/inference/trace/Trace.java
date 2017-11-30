@@ -25,6 +25,9 @@
 
 package dr.inference.trace;
 
+import dr.stats.FrequencyCounter;
+import dr.util.Pair;
+
 import java.util.*;
 
 /**
@@ -35,16 +38,24 @@ import java.util.*;
  * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
 public class Trace {
-    public static final int MAX_UNIQUE_VALUES = 100; // the maximum allowed number of unique values
+    public enum OrderType {
+        DEFAULT,
+        NATURAL,
+        FREQUENCY
+    }
 
-    protected TraceType traceType = TraceType.REAL;
-    protected List<Double> values = new ArrayList<Double>();
-    protected String name;
+    private static final int MAX_UNIQUE_VALUES = 100; // the maximum allowed number of unique values
 
-    List<String> categoryValueList = new ArrayList<String>();
-    Map<Integer, String> categoryLabelMap = new TreeMap<Integer, String>();
-    Map<Integer, Integer> categoryOrderMap = new TreeMap<Integer, Integer>();
-    Set<Integer> uniqueValues = new HashSet<Integer>();
+    private TraceType traceType = TraceType.REAL;
+    private List<Double> values = new ArrayList<Double>();
+    private String name;
+
+    protected List<String> categoryValueList = new ArrayList<String>();
+    protected Map<Integer, String> categoryLabelMap = null;
+    protected OrderType orderType = OrderType.DEFAULT;
+    protected List<Integer> categoryOrder = null;
+
+    protected Set<Integer> uniqueValues = new TreeSet<Integer>();
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
         this.name = name;
@@ -97,8 +108,10 @@ public class Trace {
         if (index < 0) {
             categoryValueList.add(value);
             index = categoryValueList.size() - 1;
+            if (categoryLabelMap == null) {
+                categoryLabelMap = new HashMap<Integer, String>();
+            }
             categoryLabelMap.put(index, value);
-            categoryOrderMap.put(index, index);
         }
         add(index);
     }
@@ -112,14 +125,62 @@ public class Trace {
         }
     }
 
-    public Map<Integer, Integer> getCategoryOrderMap() {
-        return categoryOrderMap;
+    public FrequencyCounter<Integer> getFrequencyCounter() {
+        assert traceType.isDiscrete();
+        return getTraceStatistics().getFrequencyCounter();
     }
 
-    public void setCategoryOrderMap(Map<Integer, Integer> categoryOrderMap) {
-        this.categoryOrderMap.clear();
-        this.categoryOrderMap.putAll(categoryOrderMap);
+    public List<Integer> getCategoryOrder() {
+        return categoryOrder;
     }
+
+    public void setOrderType(OrderType orderType) {
+        this.orderType = orderType;
+        switch (orderType) {
+            case DEFAULT:
+                categoryOrder = new ArrayList<Integer>();
+                for (int i = 0; i < getUniqueValueCount(); i ++) {
+                    categoryOrder.add(i);
+                }
+                break;
+            case NATURAL:
+                categoryOrder = getNaturalOrder();
+                break;
+            case FREQUENCY:
+                categoryOrder = getFrequencyCounter().getOrderByFrequency();
+                break;
+        }
+    }
+
+    private List<Integer> getNaturalOrder() {
+        List<Integer> order;
+        if (traceType == TraceType.CATEGORICAL) {
+            List<Pair<Comparable, Integer>> values = new ArrayList<Pair<Comparable, Integer>>();
+            int i = 0;
+            for (Integer value : getFrequencyCounter().getUniqueValues()) {
+                if (categoryLabelMap != null) {
+                    values.add(new Pair<Comparable, Integer>(categoryLabelMap.get(value), i));
+                } else {
+                    values.add(new Pair<Comparable, Integer>(value, i));
+                }
+                i++;
+            }
+            Collections.sort(values, new Comparator<Pair<Comparable, Integer>>() {
+                public int compare(Pair<Comparable, Integer> value1, Pair<Comparable, Integer> value2) {
+                    return value1.fst.compareTo(value2.fst);
+                }
+            });
+            order = new ArrayList<Integer>();
+            for (Pair<Comparable, Integer> value : values) {
+                order.add(value.snd);
+            }
+        } else {
+            order = new ArrayList<Integer>(getFrequencyCounter().getUniqueValues());
+            Collections.sort(order);
+        }
+        return order;
+    }
+
 
     public int getValueCount() {
         return values.size();
@@ -134,7 +195,7 @@ public class Trace {
     }
 
     public int getCategory(int index) {
-        return categoryOrderMap.get(values.get(index).intValue());
+        return values.get(index).intValue();
     }
 
     public String getCategoryLabel(int index) {
@@ -203,7 +264,7 @@ public class Trace {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public TraceType getTraceType() {
         return traceType;
     }

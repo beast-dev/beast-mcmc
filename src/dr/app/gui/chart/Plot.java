@@ -119,7 +119,7 @@ public interface Plot {
      * Paint actual plot
      */
     void paintPlot(Graphics2D g2, double xScale, double yScale,
-                   double xOffset, double yOffset, int plotNumber);
+                   double xOffset, double yOffset, int plotNumber, int plotCount);
 
     /**
      * Set name
@@ -213,7 +213,7 @@ public interface Plot {
         protected double xScale, yScale, xOffset, yOffset;
 
         private String name;
-        protected int plotNumber;
+        protected int plotNumber, plotCount;
 
         private Set<Integer> selectedPoints = new HashSet<Integer>();
 
@@ -533,8 +533,9 @@ public interface Plot {
         /**
          * Paint actual plot
          */
+        @Override
         public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                              double xOffset, double yOffset, int plotNumber) {
+                              double xOffset, double yOffset, int plotNumber, int plotCount) {
             if (xAxis == null || yAxis == null)
                 return;
 
@@ -544,8 +545,9 @@ public interface Plot {
             this.yOffset = yOffset;
 
             this.plotNumber = plotNumber;
+            this.plotCount = plotCount;
 
-            if (xData != null && yData != null && xData.getCount() > 0) {
+            if (hasData()) {
                 paintData(g2, xData, yData);
             }
         }
@@ -554,6 +556,10 @@ public interface Plot {
          * Paint data series
          */
         abstract protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData);
+
+        protected boolean hasData() {
+            return (xData != null && yData != null && xData.getCount() > 0);
+        }
 
         /**
          * A point on the plot has been clicked

@@ -25,10 +25,11 @@
 
 package dr.app.gui.chart;
 
-import java.awt.*;
-import java.awt.geom.Line2D;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.awt.*;
+import java.awt.geom.Line2D;
 
 /**
  *
@@ -49,8 +50,8 @@ public class DiscreteJChart extends JChart {
         }
     }
 
-    public void setXAxis(Map<Integer, String> categoryLabelMap, Map<Integer, Integer> categoryOrderMap) {
-            super.setXAxis(new DiscreteAxis(categoryLabelMap, categoryOrderMap, true, true));
+    public void setXAxis(Map<Integer, String> categoryLabelMap) {
+            super.setXAxis(new DiscreteAxis(categoryLabelMap, true, true));
     }
 
     public void setYAxis(boolean isInteger) {
@@ -61,8 +62,8 @@ public class DiscreteJChart extends JChart {
         }
     }
 
-    public void setYAxis(Map<Integer, String> categoryLabelMap, Map<Integer, Integer> categoryOrderMap) {
-        super.setYAxis(new DiscreteAxis(categoryLabelMap, categoryOrderMap, true, true));
+    public void setYAxis(Map<Integer, String> categoryLabelMap) {
+        super.setYAxis(new DiscreteAxis(categoryLabelMap, true, true));
     }
 
     protected void paintMajorTick(Graphics2D g2, double value, String label, boolean horizontalAxis) {

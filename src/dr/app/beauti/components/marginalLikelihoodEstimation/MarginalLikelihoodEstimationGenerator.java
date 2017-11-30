@@ -32,13 +32,12 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
-import dr.evomodelxml.branchratemodel.ContinuousBranchRatesParser;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
@@ -826,6 +825,43 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             case MODEL_AVERAGING:
                                 throw new RuntimeException("Marginal likelihood estimation cannot be performed on a clock model that performs model averaging.");
                         }
+                        break;
+
+                    case FIXED_LOCAL_CLOCK:
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
+                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        for (Taxa taxonSet : beautiOptions.taxonSets) {
+                            if (beautiOptions.taxonSetsMono.get(taxonSet)) {
+                                String parameterName = taxonSet.getId() + ".rate";
+
+                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                        new Attribute[]{
+                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + parameterName),
+                                                new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                        });
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + parameterName);
+                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                            }
+                        }
+
+                        writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        break;
+
+                    case RANDOM_LOCAL_CLOCK:
+
+                        //TODO
+
+
+
+                        writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
                     default:

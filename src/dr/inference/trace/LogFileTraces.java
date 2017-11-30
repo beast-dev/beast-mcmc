@@ -404,7 +404,7 @@ public class LogFileTraces extends AbstractTraceList {
             } else { // String
                 type = TraceType.CATEGORICAL;
 //                System.out.println("Auto detect " + type + " type for trace " + name + " at " + traceIndex);
-                changeTraceType(traceIndex, type);
+                trace = changeTraceType(traceIndex, type);
             }
         }
 
@@ -446,7 +446,7 @@ public class LogFileTraces extends AbstractTraceList {
         traces.add(new Trace(name, traceType));
     }
 
-    public void changeTraceType(int id, TraceType newType) throws TraceException {
+    public Trace changeTraceType(int id, TraceType newType) throws TraceException {
         if (id >= getTraceCount() || id < 0)
             throw new TraceException("Invalid trace id : " + id + ", which should 0 < and >= " + getTraceCount());
         Trace trace = getTrace(id);
@@ -489,12 +489,15 @@ public class LogFileTraces extends AbstractTraceList {
             // copy the categorical values across in case it is switched back
             newTrace.categoryValueList = trace.categoryValueList;
             newTrace.categoryLabelMap = trace.categoryLabelMap;
-            newTrace.categoryOrderMap = trace.categoryOrderMap;
+            newTrace.orderType = trace.orderType;
+            newTrace.categoryOrder = trace.categoryOrder;
             newTrace.uniqueValues = trace.uniqueValues;
 
 
 //            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
+            return newTrace;
         }
+        return trace;
     }
 
     /**

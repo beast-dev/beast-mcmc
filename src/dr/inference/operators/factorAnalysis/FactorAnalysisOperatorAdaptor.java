@@ -3,6 +3,7 @@ package dr.inference.operators.factorAnalysis;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
@@ -126,7 +127,7 @@ public interface FactorAnalysisOperatorAdaptor {
         private final TreeDataLikelihood treeLikelihood;
 
         private final Parameter precision;
-        private final MatrixParameterInterface data;
+        private final CompoundParameter data;
 
         private final TreeTrait factorTrait;
         private double[] factors;
@@ -138,7 +139,7 @@ public interface FactorAnalysisOperatorAdaptor {
             this.treeLikelihood = treeLikelihood;
 
             this.precision = factorLikelihood.getPrecision();
-            this.data = (MatrixParameterInterface) factorLikelihood.getParameter();
+            this.data = factorLikelihood.getParameter();
 
             factorTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + FACTOR_NAME);
 

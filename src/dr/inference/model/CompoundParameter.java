@@ -284,6 +284,10 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
+    public double getParameterValue(int index, int parameter) {
+        return getParameter(parameter).getParameterValue(index);
+    }
+
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************

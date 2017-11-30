@@ -221,7 +221,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         if (variable == maskParameter) {
             updateMask();
-            fireParameterChangedEvent();
+            super.fireParameterChangedEvent();
         } else if (variable == parameter) { // variable == parameter
             if (!doNotPropogateChangeUp) {
                 if (index == -1) {

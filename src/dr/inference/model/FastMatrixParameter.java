@@ -28,7 +28,6 @@ package dr.inference.model;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,9 +35,9 @@ import java.util.List;
  */
 public class FastMatrixParameter extends CompoundParameter implements MatrixParameterInterface {
 
-    public static final String FAST_MATRIX_PARAMETER = "fastMatrixParameter";
-    public static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
-    public static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
+    private static final String FAST_MATRIX_PARAMETER = "fastMatrixParameter";
+    private static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
+    private static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
 
     public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue) {
         super(id);
@@ -155,7 +154,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     }
 
-    private final int index(int row, int col) {
+    private int index(int row, int col) {
         // column-major
         if(col > getColumnDimension()){
             throw new RuntimeException("Column " + col + " out of bounds: Compared to " + getColumnDimension() + "maximum size.");
@@ -282,9 +281,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
             final int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
             final int colDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
 
-            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, 1);
-
-            return matrixParameter;
+            return new FastMatrixParameter(name, rowDimension, colDimension, 1);
         }
 
         //************************************************************************

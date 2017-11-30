@@ -25,8 +25,11 @@
 
 package dr.inferencexml.hmc;
 
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
@@ -66,6 +69,22 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
             }
             ++offset;
         }
+
+        // Reflection invariance
+        if (reset) {
+            parameter.setParameterValue(offset,
+                    Math.abs(parameter.getParameterValue(offset)));
+        }
+
+        // TODO The following does not yet work for masked parameter
+//        double[] lower = new double[parameter.getDimension()];
+//        Arrays.fill(lower, Double.NEGATIVE_INFINITY);
+//
+//        double[] upper = new double[parameter.getDimension()];
+//        Arrays.fill(upper, Double.POSITIVE_INFINITY);
+//
+//        lower[offset] = 0.0;
+//        parameter.addBounds(new Parameter.DefaultBounds(upper, lower));
 
         // Rotational invariance
         ++offset;

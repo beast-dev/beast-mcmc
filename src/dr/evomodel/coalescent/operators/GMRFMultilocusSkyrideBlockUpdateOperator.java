@@ -1,39 +1,12 @@
-/*
- * GMRFMultilocusSkyrideBlockUpdateOperator.java
- *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.evomodel.coalescent.operators;
 
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import no.uib.cipr.matrix.*;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 /* A Metropolis-Hastings operator to update the log population sizes and precision parameter jointly under a Gaussian Markov random field prior
@@ -43,9 +16,7 @@ import java.util.logging.Logger;
  * @author Mandev Gill
  * @version $Id: GMRFMultilocusSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
-public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
-
-    private static boolean FAIL_SILENTLY = false;
+public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableOperator implements ApproximateGibbsOperator {
 
     private double scaleFactor;
     private double lambdaScaleFactor;
@@ -57,8 +28,6 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
     private Parameter popSizeParameter;
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
-    private List<Parameter> betaParameter;
-    private List<MatrixParameter> covariates;
 
     GMRFMultilocusSkyrideLikelihood gmrfField;
 
@@ -72,8 +41,6 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();
         precisionParameter = gmrfLikelihood.getPrecisionParameter();
         lambdaParameter = gmrfLikelihood.getLambdaParameter();
-        betaParameter = gmrfLikelihood.getBetaListParameter();
-        covariates = gmrfLikelihood.getCovariates();
 
         this.scaleFactor = scaleFactor;
         lambdaScaleFactor = 0.0;
@@ -101,8 +68,7 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         double length = scaleFactor - 1 / scaleFactor;
         double returnValue;
 
-
-        if (scaleFactor == 1)
+        if (scaleFactor == 1.0)
             return currentValue;
         if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
             returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
@@ -150,26 +116,24 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         return returnValue;
     }
 
-
-    public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
-        int length = Mean.size();
-        DenseVector tempValue = new DenseVector(length);
-        DenseVector returnValue = new DenseVector(length);
-        UpperSPDDenseMatrix ab = Variance.copy();
-
-        for (int i = 0; i < returnValue.size(); i++)
-            tempValue.set(i, MathUtils.nextGaussian());
-
-        DenseCholesky chol = new DenseCholesky(length, true);
-        chol.factor(ab);
-
-        UpperTriangDenseMatrix x = chol.getU();
-
-        x.transMult(tempValue, returnValue);
-        returnValue.add(Mean);
-        return returnValue;
-    }
-
+//    public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
+//        int length = Mean.size();
+//        DenseVector tempValue = new DenseVector(length);
+//        DenseVector returnValue = new DenseVector(length);
+//        UpperSPDDenseMatrix ab = Variance.copy();
+//
+//        for (int i = 0; i < returnValue.size(); i++)
+//            tempValue.set(i, MathUtils.nextGaussian());
+//
+//        DenseCholesky chol = new DenseCholesky(length, true);
+//        chol.factor(ab);
+//
+//        UpperTriangDenseMatrix x = chol.getU();
+//
+//        x.transMult(tempValue, returnValue);
+//        returnValue.add(Mean);
+//        return returnValue;
+//    }
 
     public static double logGeneralizedDeterminant(UpperTriangBandMatrix Matrix) {
         double returnValue = 0;
@@ -182,38 +146,13 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
 
         return returnValue;
     }
-
-    public DenseVector getZBeta(List<MatrixParameter> covariates, List<Parameter> beta){
-
-        DenseVector temporaryVect = new DenseVector(fieldLength);
-        
-        // TODO: Update for covariateMatrix block as well !!!
-        
-        if(covariates != null) {
-           // DenseVector currentBeta = new DenseVector(beta.getParameterValues());
-            DenseVector currentBeta = new DenseVector(beta.size());
-            for(int i =0; i < beta.size(); i++){
-                currentBeta.set(i, beta.get(i).getParameterValue(0));
-            }
-
-            for (int i = 0; i < covariates.size(); i++) {
-                for (int j = 0; j < covariates.get(i).getColumnDimension(); j++) {
-                    temporaryVect.set(j, covariates.get(i).getParameterValue(0, j) * currentBeta.get(i));
-                }
-            }
-            return temporaryVect;
-        }else{
-            return temporaryVect.zero();
-        }
-    }
-
-    public DenseVector newtonRaphson(double[] data1, double[] data2, DenseVector currentGamma,
-                                     SymmTridiagMatrix proposedQ, DenseVector ZBeta) {
-        return newNewtonRaphson(data1, data2, currentGamma, proposedQ, maxIterations, stopValue, ZBeta);
+   
+    public DenseVector newtonRaphson(double[] data1, double[] data2, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException {
+        return newNewtonRaphson(data1, data2, currentGamma, proposedQ, maxIterations, stopValue, pathWeight);
     }
 
     public static DenseVector newNewtonRaphson(double[] data1, double[] data2, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
-                                               int maxIterations, double stopValue, DenseVector ZBeta) {
+                                               int maxIterations, double stopValue, double pathWeight) throws OperatorFailedException {
 
         DenseVector iterateGamma = currentGamma.copy();
         DenseVector tempValue = currentGamma.copy();
@@ -221,39 +160,23 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         int numberIterations = 0;
 
 
-        while (gradient(data1, data2, iterateGamma, proposedQ, ZBeta).norm(Vector.Norm.Two) > stopValue) {
+        while (gradient(data1, data2, iterateGamma, proposedQ, pathWeight).norm(Vector.Norm.Two) > stopValue) {
            try {
-                jacobian(data2, iterateGamma, proposedQ).solve(gradient(data1, data2, iterateGamma, proposedQ, ZBeta), tempValue);
+                jacobian(data2, iterateGamma, proposedQ, pathWeight).solve(gradient(data1, data2, iterateGamma, proposedQ, pathWeight), tempValue);
            } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
-               if (FAIL_SILENTLY) {
-                   // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
-                   return null;
-               }
-               throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
-                       "Try starting BEAST with a more accurate initial tree.");
-           } catch (no.uib.cipr.matrix.MatrixSingularException e) {
+                throw new OperatorFailedException("");
+            } catch (no.uib.cipr.matrix.MatrixSingularException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
-               if (FAIL_SILENTLY) {
-                   // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
-                   return null;
-               }
-               throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
-                       "Try starting BEAST with a more accurate initial tree.");
-            }
+                throw new OperatorFailedException("");
+            }     
 
             iterateGamma.add(tempValue);
             numberIterations++;
 
             if (numberIterations > maxIterations) {
-                if (FAIL_SILENTLY) {
-                    // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
-                    return null;
-                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                         "Try starting BEAST with a more accurate initial tree.");
             }
         }
@@ -263,30 +186,39 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
 
     }
 
-    private static DenseVector gradient(double[] data1, double[] data2, DenseVector value,
-                                        SymmTridiagMatrix Q, DenseVector ZBeta) {
+//    static int count = 0;
+//    static int magicCount =  4;
+
+    private static DenseVector gradient(double[] data1, double[] data2, DenseVector value, SymmTridiagMatrix Q, double pathWeight) {
 
         DenseVector returnValue = new DenseVector(value.size());
-        DenseVector returnValueCov = new DenseVector(ZBeta.size());
         Q.mult(value, returnValue);
-        //check this
-        Q.mult(ZBeta, returnValueCov);
         for (int i = 0; i < value.size(); i++) {
-            returnValue.set(i, -returnValue.get(i) +returnValueCov.get(i) - data1[i] + data2[i] * Math.exp(-value.get(i)));
+            returnValue.set(i, -returnValue.get(i) - pathWeight * data1[i] + pathWeight * data2[i] * Math.exp(-value.get(i)));
         }
         return returnValue;
     }
 
+    public void setPathParameter(double beta) {
+        if (beta < 0.0 || beta > 1.0) {
+            throw new IllegalArgumentException("Illegal path weight of " + beta);
+        }
+        pathWeight = beta;
+    }
 
-    private static SPDTridiagMatrix jacobian(double[] data2, DenseVector value, SymmTridiagMatrix Q) {
+    private double pathWeight = 1.0;
+
+    private static SPDTridiagMatrix jacobian(double[] data2, DenseVector value, SymmTridiagMatrix Q, double pathWeight) {
         SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
         for (int i = 0, n = value.size(); i < n; i++) {
-            jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data2[i]);
+            jacobian.set(i, i, jacobian.get(i, i) + pathWeight * Math.exp(-value.get(i)) * data2[i]);
         }
         return jacobian;
     }
 
-    public double doOperation() {
+    public double doOperation() throws OperatorFailedException {
+
+//        count++;
 
         double currentPrecision = precisionParameter.getParameterValue(0);
         double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
@@ -296,6 +228,8 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
 
         precisionParameter.setParameterValue(0, proposedPrecision);
         lambdaParameter.setParameterValue(0, proposedLambda);
+
+//        double[] oldGamma = gmrfField.getPopSizeParameter().getParameterValues();
 
         DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
         DenseVector proposedGamma;
@@ -315,31 +249,24 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         DenseVector diagonal1 = new DenseVector(fieldLength);
         DenseVector diagonal2 = new DenseVector(fieldLength);
         DenseVector diagonal3 = new DenseVector(fieldLength);
-        DenseVector ZBetaVector = getZBeta(covariates, betaParameter);
-        DenseVector QZBetaProp = new DenseVector(fieldLength);
-        DenseVector QZBetaCurrent = new DenseVector(fieldLength);
-        forwardQW.mult(ZBetaVector, QZBetaProp);
-        backwardQW.mult(ZBetaVector, QZBetaCurrent);
 
-        DenseVector modeForward = newtonRaphson(numCoalEv, wNative, currentGamma, proposedQ.copy(), ZBetaVector);
-
-        if (modeForward == null) {
-            // used to pass on an OperatorFailedException
-            return Double.NEGATIVE_INFINITY;
-        }
-
+        DenseVector modeForward = newtonRaphson(numCoalEv, wNative, currentGamma, proposedQ.copy());
+       
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
             diagonal2.set(i, modeForward.get(i) + 1);
 
             forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
             //diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-            diagonal1.set(i, QZBetaProp.get(i) + diagonal1.get(i) * diagonal2.get(i) - numCoalEv[i]);
+            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - numCoalEv[i]);
         }
 
         forwardCholesky.factor(forwardQW.copy());
 
         DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
+
+//        double[] saveForwardMode = modeForward.getData();
+//        double[] saveForwardMean = forwardMean.getData();
 
         DenseVector stand_norm = new DenseVector(zeros);
 
@@ -362,8 +289,7 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         for (int i = 0; i < fieldLength; i++)
             popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
 
-        ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
-
+        popSizeParameter.fireParameterChangedEvent();
 
         double hRatio = 0;
 
@@ -371,12 +297,7 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         diagonal2.zero();
         diagonal3.zero();
 
-        DenseVector modeBackward = newtonRaphson(numCoalEv, wNative, proposedGamma, currentQ.copy(), ZBetaVector);
-
-        if (modeBackward == null) {
-            // used to pass on an OperatorFailedException
-            return Double.NEGATIVE_INFINITY;
-        }
+        DenseVector modeBackward = newtonRaphson(numCoalEv, wNative, proposedGamma, currentQ.copy());
 
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
@@ -384,12 +305,15 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
 
             backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
             //diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-            diagonal1.set(i, QZBetaCurrent.get(i) + diagonal1.get(i) * diagonal2.get(i) - numCoalEv[i]);
+            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - numCoalEv[i]);
         }
 
         backwardCholesky.factor(backwardQW.copy());
 
         DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
+
+//        double[] savedBackwardMode = modeBackward.getData();
+//        double[] savedBackwardMean = backwardMean.getData();
 
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
@@ -397,11 +321,94 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
 
         backwardQW.mult(diagonal1, diagonal3);
 
-        hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
+        double tmp1 = logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 *  diagonal1.dot(diagonal3);
+        double tmp2 = logGeneralizedDeterminant( forwardCholesky.getU()) - 0.5 * stand_norm.dot(stand_norm);
+
+        hRatio += tmp1;
+        hRatio -= tmp2;
+
+//        double SSE1 = diagonal1.dot(diagonal3);
+//        double SSE2 = stand_norm.dot(stand_norm);
+//
+//        double D1 = logGeneralizedDeterminant(backwardCholesky.getU());
+//        double D2 = logGeneralizedDeterminant( forwardCholesky.getU());
+//
+//        final int d =  backwardCholesky.getU().numColumns();
+//        double[] tDiagB = new double[d];
+//        double[] tDiagF = new double[d];
+//
+//        if (count == magicCount) {
+//            for (int i = 0; i < d; i++) {
+//                tDiagB[i] = backwardCholesky.getU().get(i,i);
+//                tDiagF[i] = forwardCholesky.getU().get(i,i);
+//            }
+//        }
+//
+//        // NEW
+//        for (int i = 0; i < fieldLength; ++i) {
+//            diagonal1.set(i, proposedGamma.get(i) - forwardMean.get(i));
+//        }
+//
+//        forwardQW.mult(diagonal1, diagonal3);
+//
+//        double tmp3 = logGeneralizedDeterminant( forwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
+//        double SSE3 = diagonal1.dot(diagonal3);
+//
+//
+//
+//        if (count == magicCount) { // HERE IS THE PROBLEM
+//            double[] newGamma = gmrfField.getPopSizeParameter().getParameterValues();
+//            System.err.println("old: " + new dr.math.matrixAlgebra.Vector(oldGamma));
+//            System.err.println("new: " + new dr.math.matrixAlgebra.Vector(newGamma));
+//
+//            double max = 0.0;
+//            int index = -1;
+//            for (int i = 0; i < oldGamma.length;++i) {
+//                double diff =    Math.abs(oldGamma[i] - newGamma[i]);
+//                if (diff > max) {
+//                    max = diff;
+//                    index = i;
+//                }
+//            }
+//            System.err.println("Max: " + max + " at " + index);
+//            System.err.println("");
+//
+//            for (int i = 0; i < oldGamma.length; ++i) {
+//                System.err.print(f(oldGamma[i]) + "\t" + f(newGamma[i]) + "\t" + f((oldGamma[i] - newGamma[i])));
+//                System.err.print("\t" + f(saveForwardMode[i]) + "\t" + f(savedBackwardMode[i]));
+//                System.err.print("\t" + f(saveForwardMean[i]) + "\t" + f(savedBackwardMean[i]));
+//                System.err.print("\t" + numCoalEv[i]);
+//                if (i == index) {
+//                    System.err.println("\t***");
+//                } else {
+//                    System.err.println("");
+//                }
+//            }
+//            System.err.println("");
+//            System.err.println("cQ: " + currentQ.get(1,1) + " " + currentQ.get(1,2));
+//            System.err.println("pQ: " + proposedQ.get(1,1) + " " + proposedQ.get(1,2));
+//            System.err.println("cmp:" + tmp1 + "\t" + tmp2 + "\t" + tmp3);
+//            System.err.println("SSE: " + SSE1 + "\t" + SSE2 + "\t" + SSE3);
+//            System.err.println("GD: " + D1 + "\t" + D2);
+//            System.err.println("");
+//            System.err.println(new dr.math.matrixAlgebra.Vector(tDiagB));
+//            System.err.println(new dr.math.matrixAlgebra.Vector(tDiagF));
+//            System.err.println("Precision: " + currentPrecision + " -> " + proposedPrecision);
+//            System.err.println("hRatio = " + hRatio);
+//            System.exit(-1);
+//        }
+//
+//        if (count == magicCount + 1) {
+//            System.err.println("DONE");
+//            System.exit(-1);
+//        }
 
        return hRatio;
     }
+
+//    String f(double d) {
+//        return String.format("%3.2f", d);
+//    }
 
     //MCMCOperator INTERFACE
 
@@ -461,7 +468,5 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
             return "Try setting scaleFactor to about " + formatter.format(sf);
         } else return "";
     }
-
-
 }
 

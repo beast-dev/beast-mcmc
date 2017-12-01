@@ -27,6 +27,7 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.math.distributions.NormalDistribution;
@@ -226,8 +227,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 for (int j = 0; j < dim; ++j) {
                     parameter.setParameterValueQuietly(j, position[j]);
                 }
-//                parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
-                parameter.setParameterValueNotifyChangedAll(0, position[0]);
+                parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
+//                parameter.setParameterValueNotifyChangedAll(0, position[0]);
             }
         }
 

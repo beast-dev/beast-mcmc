@@ -79,7 +79,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
     public NewBouncyParticleOperator(CoercionMode mode, double weight,
                                      TreeDataLikelihood treeDataLikelihood,
                                      ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                     String traitName,Parameter parameter, NormalDistribution drawDistribution) {
+                                     String traitName,Parameter parameter, double drawVariance) {
 
         setWeight(weight);
 
@@ -88,7 +88,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         this.parameter = parameter;
 
-        this.drawDistribution = drawDistribution;
+        this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
         
         location = getInitialPosition();
         phi_w = getPhiw();

@@ -25,14 +25,18 @@
 
 package dr.inferencexml.operators.hmc;
 
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
+import dr.inference.operators.hmc.NewBouncyParticleOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
 import dr.inferencexml.model.MaskedParameterParser;
+import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -44,26 +48,12 @@ import dr.xml.*;
 public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     public final static String BPO_OPERATOR = "bouncyParticleOperator";
 
-    public final static String N_STEPS = "nSteps";
-    public final static String STEP_SIZE = "stepSize";
     public final static String DRAW_VARIANCE = "drawVariance";
     public static final String MODE = "mode";
-    public static final String MASKING = MaskedParameterParser.MASKING;
-
-    public static final String NUTS = "nuts";
-    public static final String VANILLA = "vanilla";
 
     @Override
     public String getParserName() {
         return BPO_OPERATOR;
-    }
-
-    private int parseRunMode(XMLObject xo) throws XMLParseException {
-        int mode = 0;
-        if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(NUTS) == 0) {
-            mode = 1;
-        }
-        return mode;
     }
 
     @Override
@@ -72,15 +62,20 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         System.err.println("HERE?");
         System.exit(-1);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        int nSteps = xo.getIntegerAttribute(N_STEPS);
-        double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
-        int runMode = parseRunMode(xo);
 
         CoercionMode coercionMode = CoercionMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
+
+        TreeDataLikelihood treeDataLikelihood =
+                (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
+        ContinuousDataLikelihoodDelegate likelihoodDelegate =
+                (ContinuousDataLikelihoodDelegate) xo.getChild(ContinuousDataLikelihoodDelegate.class);
+
+        String traitName = (String) xo.getChild(String.class);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
@@ -93,13 +88,9 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         }
 
 
-        if (runMode == 0) {
-            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
-                    stepSize, nSteps, drawVariance);
-        } else {
-            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
-                    stepSize, nSteps, drawVariance);
-        }
+        return new NewBouncyParticleOperator(coercionMode, weight, treeDataLikelihood, likelihoodDelegate, traitName,
+                    parameter, drawVariance);
+
     }
 
     @Override
@@ -109,8 +100,6 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newIntegerRule(N_STEPS),
-            AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(MODE, true),

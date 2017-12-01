@@ -28,6 +28,7 @@ package dr.inference.operators;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.DirtyLikelihoodOperatorParser;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Marc Suchard

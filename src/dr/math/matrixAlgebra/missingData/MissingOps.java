@@ -363,6 +363,29 @@ public class MissingOps {
         }
     }
 
+    public static void matrixVectorMultiple(final DenseMatrix64F A,
+                                       final WrappedVector x,
+                                       final WrappedVector y,
+                                       final int dim) {
+        if (buffer.length < dim) {
+            buffer = new double[dim];
+        }
+
+        for (int row = 0; row < dim; ++row) {
+            double sum = 0.0;
+            for (int col = 0; col < dim; ++col) {
+                sum += A.unsafe_get(row, col) * x.get(col);
+            }
+            buffer[row] = sum;
+        }
+
+        for (int col = 0; col < dim; ++col) {
+            y.set(col, buffer[col]);
+        }
+    }
+
+    private static double[] buffer = new double[16];
+
     public static void weightedAverage(final WrappedVector mi,
                                        final DenseMatrix64F Pi,
                                        final WrappedVector mj,

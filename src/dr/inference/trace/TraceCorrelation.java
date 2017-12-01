@@ -26,6 +26,7 @@
 package dr.inference.trace;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A class that stores the correlation statistics for a trace.
@@ -36,11 +37,21 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
-public class TraceCorrelation<T> extends TraceDistribution<T> {
-    final long stepSize;
+public class TraceCorrelation extends TraceDistribution {
+    private final long stepSize;
 
-    public TraceCorrelation(List<T> values, TraceType traceType, long stepSize) {
+    public TraceCorrelation(List<Double> values, TraceType traceType, long stepSize) {
         super(values, traceType);
+        this.stepSize = stepSize;
+
+        if (stepSize > 0) {
+            analyseCorrelation(values, stepSize);
+        }
+    }
+
+    public TraceCorrelation(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder, long stepSize) {
+        super(values, categoryLabelMap, categoryOrder);
+
         this.stepSize = stepSize;
 
         if (stepSize > 0) {
@@ -64,22 +75,22 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     // private methods
     //************************************************************************
 
-    protected double stdErrorOfMean;
-    protected double stdErrorOfVariance;
-    protected double ACT;
-    protected double stdErrOfACT;
-    protected double ESS;
+    private double stdErrorOfMean;
+    private double stdErrorOfVariance;
+    private double ACT;
+    private double stdErrOfACT;
+    private double ESS;
 
     private static final int MAX_LAG = 2000;
 
-    private void analyseCorrelation(List<T> values, long stepSize) {
+    private void analyseCorrelation(List<Double> values, long stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
         if (stepSize > 0) {
             if (getTraceType().isNumber()) {
                 double[] doubleValues = new double[values.size()];
                 for (int i = 0; i < values.size(); i++) {
-                    doubleValues[i] = ((Number) values.get(i)).doubleValue();
+                    doubleValues[i] = values.get(i);
                 }
                 analyseCorrelationNumeric(doubleValues, stepSize);
 

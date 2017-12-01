@@ -1,7 +1,7 @@
 /*
- * Mode.java
+ * CorrelationData.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,38 +23,47 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.stats;
+package dr.app.gui.util;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
- * simple statistics related to mode.
- * the input is a frequency counter,
- * keys are unique values, Integer values of map are counts of that key
- *
- * @author Walter Xie
+ * @author Guy Baele
  */
-public class Mode <T> {
-    protected T mode;
-    protected int freqOfMode = 0;
+public class CorrelationData {
 
-    public Mode(FrequencyCounter<T> frequencyCounter) {
-        calculateMode(frequencyCounter);
+    private HashMap<String, List<Double>> data;
+
+    public CorrelationData() {
+        data = new HashMap<String, List<Double>>();
     }
 
-    private void calculateMode(FrequencyCounter<T> frequencyCounter) {
-        for (T key : frequencyCounter.uniqueValues()) {
-            if (freqOfMode < frequencyCounter.getCount(key)) {
-                freqOfMode = frequencyCounter.getCount(key);
-                mode = key;
-            }
+    public void add(String traceName, List values) {
+        if (data.containsKey(traceName)) {
+            List temp = data.get(traceName);
+            temp.addAll(values);
+            data.put(traceName, temp);
+        } else {
+            data.put(traceName, values);
         }
     }
 
-    public T getMode() {
-        return mode;
+    public Set<String> getTraceNames() {
+        return data.keySet();
     }
 
-    public int getFrequencyOfMode() {
-        return freqOfMode;
+    public List getDataForKey(String traceName) {
+        return data.get(traceName);
     }
+
+    public int numberOfEntries() {
+        return data.size();
+    }
+
+    public void clear() {
+        this.data.clear();
+    }
+
 }

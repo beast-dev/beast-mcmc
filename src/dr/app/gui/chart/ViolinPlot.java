@@ -45,19 +45,58 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
 
     private final boolean isVertical;
     private final double violinWidth;
+    private final boolean showTails;
+    private final boolean showQuantiles;
+    private final double upper, lower;
+    private double y1, y2;
 
     public ViolinPlot(double violinWidth, java.util.List<Double> data, int minimumBinCount) {
-        this(true, violinWidth, data, minimumBinCount);
+        this(true, violinWidth, true, data, minimumBinCount);
     }
 
-    public ViolinPlot(boolean isVertical, double violinWidth, java.util.List<Double> data, int minimumBinCount) {
-        super(data, minimumBinCount); // TODO Remove when all linked together
+    public ViolinPlot(boolean isVertical, double violinWidth, boolean showTails, java.util.List<Double> data) {
+        this(true, violinWidth, showTails, data, DEFAULT_KDE_BINS);
+    }
+
+    public ViolinPlot(boolean isVertical, double violinWidth, boolean showTails, java.util.List<Double> data, int minimumBinCount) {
+        super(data, minimumBinCount);
 
         this.isVertical = isVertical;
         this.violinWidth = violinWidth;
+        this.showQuantiles = showTails;
+        this.showTails = showTails;
 
         // setData again because in super, the width weren't set.
         setData(data, minimumBinCount);
+
+        if (showQuantiles) {
+            lower = getQuantile(0.025);
+            upper = getQuantile(0.975);
+        } else {
+            lower = Collections.min(data);
+            upper = Collections.max(data);
+        }
+    }
+
+    public ViolinPlot(boolean isVertical, double violinWidth, double lower, double upper, boolean showTails, java.util.List<Double> data) {
+        this(isVertical, violinWidth, lower, upper, showTails, data, DEFAULT_KDE_BINS);
+    }
+
+    public ViolinPlot(boolean isVertical, double violinWidth, double lower, double upper, boolean showTails, java.util.List<Double> data, int minimumBinCount) {
+        super(data, minimumBinCount);
+
+        this.isVertical = isVertical;
+        this.violinWidth = violinWidth;
+        this.showQuantiles = true;
+
+        this.lower = lower;
+        this.upper = upper;
+
+        this.showTails = showTails;
+
+        // setData again because in super, the width weren't set.
+        setData(data, minimumBinCount);
+
     }
 
     /**
@@ -77,6 +116,9 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
             this.xData.add(((Number) xData.get(i)).doubleValue());
             this.yData.add(-((Number) yData.get(i)).doubleValue() * scale);
         }
+
+        y1 = getDensity(lower) * scale;
+        y2 = getDensity(upper) * scale;
     }
 
     /**
@@ -121,44 +163,150 @@ public class ViolinPlot extends KDENumericalDensityPlot { //Plot.AbstractPlot {
         int n = xData.getCount();
 
         GeneralPath path = new GeneralPath();
+        GeneralPath intervalPath = new GeneralPath();
 
         if (isVertical) {
             // rotate -90
             float y = (float) transformY(((Number)xData.get(0)).doubleValue());
             float x = (float) transformX(((Number)yData.get(0)).doubleValue() + plotNumber + 1);
 
-            path.moveTo(x, y);
+            if (showTails) {
+                path.moveTo(x, y);
+            }
+
+            // create the quantile cropped path
+            float v1 = (float) transformY(lower);
+            float v2 = (float) transformY(upper);
+
+            y = v1;
+            x = (float) transformX(plotNumber + 1);
+            intervalPath.moveTo(x, y);
+
+            x = (float) transformX(y1 + plotNumber + 1);
+            intervalPath.lineTo(x, y);
+
+            if (!showTails) {
+                path.moveTo(x, y);
+            }
+
+            boolean crossedAxis = false;
 
             for (int i = 1; i < n; i++) {
                 y = (float) transformY(((Number) xData.get(i)).doubleValue());
                 x = (float) transformX(((Number) yData.get(i)).doubleValue() + plotNumber + 1);
 
+                if (showTails) {
+                    path.lineTo(x, y);
+                }
+
+                if (y < v1) {
+                    if (y > v2) {
+                        if (!showTails) {
+                            path.lineTo(x, y);
+                        }
+
+                        intervalPath.lineTo(x, y);
+                    } else {
+                        if (!crossedAxis) {
+                            y = v2;
+                            x = (float) transformX(y2 + plotNumber + 1);
+                            intervalPath.lineTo(x, y);
+
+                            if (!showTails) {
+                                path.lineTo(x, y);
+                            }
+
+                            x = (float) transformX(-y2 + plotNumber + 1);
+                            intervalPath.lineTo(x, y);
+
+                            if (!showTails) {
+                                path.moveTo(x, y);
+                            }
+
+                            crossedAxis = true;
+                        }
+                    }
+                }
+            }
+
+            // finish the quantile cropped path
+            y = v1;
+            x = (float) transformX(-y1 + plotNumber + 1);
+            intervalPath.lineTo(x, y);
+
+            if (!showTails) {
                 path.lineTo(x, y);
             }
+
+            x = (float) transformX(plotNumber + 1);
+            intervalPath.lineTo(x, y);
+
         } else {
             float x = (float) transformX(((Number)xData.get(0)).doubleValue());
             float y = (float) transformY(((Number)yData.get(0)).doubleValue() + plotNumber + 1);
 
             path.moveTo(x, y);
 
+            // create the quantile cropped path
+            float v1 = (float) transformX(lower);
+            float v2 = (float) transformX(upper);
+
+            x = v1;
+            y = (float) transformY(plotNumber + 1);
+            intervalPath.moveTo(x, y);
+
+            y = (float) transformY(y1 + plotNumber + 1);
+            intervalPath.lineTo(x, y);
+
+            boolean crossedAxis = false;
+
             for (int i = 1; i < n; i++) {
                 x = (float) transformX(((Number) xData.get(i)).doubleValue());
                 y = (float) transformY(((Number) yData.get(i)).doubleValue() + plotNumber + 1);
 
                 path.lineTo(x, y);
+
+                if (x < v1) {
+                    if (x > v2) {
+                        intervalPath.lineTo(x, y);
+                    } else if (!crossedAxis) {
+                        x = v2;
+                        y = (float) transformY(y2 + plotNumber + 1);
+                        intervalPath.lineTo(x, y);
+                        y = (float) transformY(-y2 + plotNumber + 1);
+                        intervalPath.lineTo(x, y);
+                        crossedAxis = true;
+                    }
+                }
             }
+
+            // finish the quantile cropped path
+            x = v1;
+            y = (float) transformY(-y1 + plotNumber + 1);
+            intervalPath.lineTo(x, y);
+
+            y = (float) transformY(plotNumber + 1);
+            intervalPath.lineTo(x, y);
+
         }
-        
+
         if (solid) {
-            path.closePath();
             Paint fillPaint = new Color(
                     ((Color) linePaint).getRed(),
                     ((Color) linePaint).getGreen(),
                     ((Color) linePaint).getBlue(), 32);
             g2.setPaint(fillPaint);
-            g2.fill(path);
+
+            if (showQuantiles) {
+                intervalPath.closePath();
+                g2.fill(intervalPath);
+            }
         }
 
+        if (showTails) {
+            path.closePath();
+        }
+        
         g2.setStroke(lineStroke);
         g2.setPaint(linePaint);
         g2.draw(path);

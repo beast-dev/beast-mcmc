@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.XMLWriter;
@@ -71,7 +72,6 @@ public class ClockModelGenerator extends Generator {
 
         Attribute[] attributes;
 
-
         PartitionTreeModel treeModel = clockModel.getPartitionTreeModel();
 
         String treePrefix = treeModel.getPrefix();
@@ -96,74 +96,129 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
 
-                writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )");
+                if (clockModel.performModelAveraging()) {
+                    tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
 
-                if (clockModel.isContinuousQuantile()) {
+                    writer.writeComment("Bayesian Model Averaging (BMA) of the available relaxed clock models as described by" +
+                            " Li & Drummond (2012) MBE 29:751-61.");
+                    //Bayesian Model Averaging uses the continuous quantile implementation by default
                     writer.writeComment("  Continuous quantile implementation (Li & Drummond (2012) Mol Biol Evol 29:751-61)");
-                    tag = ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES;
-                }
 
-                attributes = new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID,
-                                prefix  + BranchRateModel.BRANCH_RATES)};
-                writer.writeOpenTag(tag, attributes);
-                // tree
-                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID,
+                                    prefix  + BranchRateModel.BRANCH_RATES)};
+                    writer.writeOpenTag(tag, attributes);
+                    // tree
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 
-                writer.writeOpenTag("distribution");
+                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+                            new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
+                    writeParameter("mean", ClockType.UCLD_MEAN, clockModel, writer);
+                    writeParameter("stdev", ClockType.UCLD_STDEV, clockModel, writer);
+                    writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
+                    writer.writeCloseTag("distribution");
 
-                switch (clockModel.getClockDistributionType()) {
+                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                    writeParameter("mean", ClockType.UCGD_MEAN, clockModel, writer);
+                    writeParameter("shape", ClockType.UCGD_SHAPE, clockModel, writer);
+                    writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                    writer.writeCloseTag("distribution");
 
-                    case LOGNORMAL:
-                        writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
-                                new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
+                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                    writeParameter("mean", ClockType.UCED_MEAN, clockModel, writer);
+                    writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                    writer.writeCloseTag("distribution");
 
-                        writeParameter("mean", ClockType.UCLD_MEAN, clockModel, writer);
-                        writeParameter("stdev", ClockType.UCLD_STDEV, clockModel, writer);
+                    writer.writeOpenTag(MixtureModelBranchRatesParser.DISTRIBUTION_INDEX);
+                    writeParameter(clockModel.getParameter("branchRates.distributionIndex"), -1, writer);
+                    writer.writeCloseTag(MixtureModelBranchRatesParser.DISTRIBUTION_INDEX);
 
-                        writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
-                        break;
-                    case GAMMA:
-                        writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
-
-                        writeParameter("mean", ClockType.UCGD_MEAN, clockModel, writer);
-                        writeParameter("shape", ClockType.UCGD_SHAPE, clockModel, writer);
-
-                        writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
-                        break;
-                    case CAUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
-//                            break;
-                    case EXPONENTIAL:
-                        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
-
-                        writeParameter("mean", ClockType.UCED_MEAN, clockModel, writer);
-
-                        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
-                        break;
-                }
-
-                writer.writeCloseTag("distribution");
-
-                if (clockModel.isContinuousQuantile()) {
-                    writer.writeOpenTag(ContinuousBranchRatesParser.RATE_QUANTILES);
+                    writer.writeOpenTag(MixtureModelBranchRatesParser.RATE_CATEGORY_QUANTILES);
                     writeParameter(clockModel.getParameter("branchRates.quantiles"), -1, writer);
-                    writer.writeCloseTag(ContinuousBranchRatesParser.RATE_QUANTILES);
+                    writer.writeCloseTag(MixtureModelBranchRatesParser.RATE_CATEGORY_QUANTILES);
                     writer.writeCloseTag(tag);
+
+                    writeMeanRateStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCovarianceStatistic(writer, tag, prefix, treePrefix);
+
                 } else {
-                    writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                    writeParameter(clockModel.getParameter("branchRates.categories"), -1, writer);
-                    writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                    writer.writeCloseTag(tag);
+                    tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+
+                    writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )");
+
+                    if (clockModel.isContinuousQuantile()) {
+                        writer.writeComment("  Continuous quantile implementation (Li & Drummond (2012) Mol Biol Evol 29:751-61)");
+                        tag = ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES;
+                    }
+
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID,
+                                    prefix  + BranchRateModel.BRANCH_RATES)};
+                    writer.writeOpenTag(tag, attributes);
+                    // tree
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+
+                    writer.writeOpenTag("distribution");
+
+                    switch (clockModel.getClockDistributionType()) {
+
+                        case LOGNORMAL:
+                            writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+                                    new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
+
+                            writeParameter("mean", ClockType.UCLD_MEAN, clockModel, writer);
+                            writeParameter("stdev", ClockType.UCLD_STDEV, clockModel, writer);
+
+                            writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
+                            break;
+                        case GAMMA:
+                            writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+
+                            writeParameter("mean", ClockType.UCGD_MEAN, clockModel, writer);
+                            writeParameter("shape", ClockType.UCGD_SHAPE, clockModel, writer);
+
+                            writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                            break;
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+//                            break;
+                        case EXPONENTIAL:
+                            writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+
+                            writeParameter("mean", ClockType.UCED_MEAN, clockModel, writer);
+
+                            writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                            break;
+                    }
+
+                    writer.writeCloseTag("distribution");
+
+                    if (clockModel.isContinuousQuantile()) {
+                        writer.writeOpenTag(ContinuousBranchRatesParser.RATE_QUANTILES);
+                        writeParameter(clockModel.getParameter("branchRates.quantiles"), -1, writer);
+                        writer.writeCloseTag(ContinuousBranchRatesParser.RATE_QUANTILES);
+                        writer.writeCloseTag(tag);
+                    } else {
+                        writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
+                        writeParameter(clockModel.getParameter("branchRates.categories"), -1, writer);
+                        writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
+                        writer.writeCloseTag(tag);
+                    }
+
+                    writeMeanRateStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCovarianceStatistic(writer, tag, prefix, treePrefix);
+
                 }
-
-                writeMeanRateStatistic(writer, tag, prefix, treePrefix);
-
-                writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
-
-                writeCovarianceStatistic(writer, tag, prefix, treePrefix);
 
                 break;
 
@@ -391,9 +446,13 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                tag = model.isContinuousQuantile() ?
-                        ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
-                        DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                if (model.performModelAveraging()) {
+                    tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
+                } else {
+                    tag = model.isContinuousQuantile() ?
+                            ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                            DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                }
                 id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                 break;
 
@@ -450,6 +509,10 @@ public class ClockModelGenerator extends Generator {
 
     public String getClockRateString(PartitionClockModel model) {
         String prefix = model.getPrefix();
+
+        if (model.performModelAveraging()) {
+            return prefix + "meanRate";
+        }
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:
@@ -516,21 +579,37 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                switch (model.getClockDistributionType()) {
-                    case LOGNORMAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
-                        break;
-                    case GAMMA:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
-                        break;
-                    case CAUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
+
+                if (model.performModelAveraging()) {
+
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
+
+                    writer.writeIDref(ParameterParser.PARAMETER, "branchRates.distributionIndex");
+                    writer.writeIDref(ParameterParser.PARAMETER, "branchRates.quantiles");
+
+                } else {
+
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
+                            break;
+                        case GAMMA:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
+                            break;
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
 //                        break;
-                    case EXPONENTIAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
-                        break;
+                        case EXPONENTIAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
+                            break;
+                    }
+
                 }
 
             case AUTOCORRELATED:

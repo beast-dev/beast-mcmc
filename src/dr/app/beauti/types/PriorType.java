@@ -41,6 +41,7 @@ public enum PriorType {
     NONE_IMPROPER("Infinite Uniform (Improper)", true, false, false),
     NONE_FIXED("Fixed value", true, false, false),
     UNIFORM_PRIOR("Uniform", true, false, false),
+    DISCRETE_UNIFORM_PRIOR("Discrete Uniform", true, false, false),
     EXPONENTIAL_PRIOR("Exponential", true, true, true),
     LAPLACE_PRIOR("Laplace", true, true, true),
     NORMAL_PRIOR("Normal", true, true, true),
@@ -158,6 +159,13 @@ public enum PriorType {
                 break;
             case UNDEFINED:
                 buffer.append("Not yet specified");
+                break;
+            case DISCRETE_UNIFORM_PRIOR:
+                buffer.append("Uniform [");
+                buffer.append(NumberUtil.formatDecimal(lower, 10, 6));
+                buffer.append(", ");
+                buffer.append(NumberUtil.formatDecimal(upper, 10, 6));
+                buffer.append("]");
                 break;
             case UNIFORM_PRIOR:
                 if (!parameter.isDiscrete) { // && !param.isStatistic) {

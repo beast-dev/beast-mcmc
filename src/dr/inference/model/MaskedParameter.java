@@ -33,12 +33,27 @@ import java.util.Arrays;
 
 public class MaskedParameter extends Parameter.Abstract implements VariableListener {
 
+    public enum Signaling {
+        NORMAL, NO_DEPENDENT;
+    }
+
+    private final Signaling signaling;
+
     public MaskedParameter(Parameter parameter, Parameter maskParameter, boolean ones) {
-        this(parameter);
+        this(parameter, maskParameter, ones, Signaling.NORMAL);
+    }
+
+    public MaskedParameter(Parameter parameter, Parameter maskParameter, boolean ones,
+                           Signaling signaling) {
+        this(parameter, signaling);
         addMask(maskParameter, ones);
     }
 
     public MaskedParameter(Parameter parameter) {
+        this(parameter, Signaling.NORMAL);
+    }
+
+    public MaskedParameter(Parameter parameter, Signaling signaling) {
         this.parameter = parameter;
         parameter.addParameterListener(this);
 
@@ -53,6 +68,8 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
             inverseMap[i] = i;
         }
         length = map.length;
+
+        this.signaling = signaling;
     }
 
     public void addMask(Parameter maskParameter, boolean ones) {
@@ -118,15 +135,21 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     }
 
     public void fireParameterChangedEvent() {
-        doNotPropagateChangeUp = true;
-        parameter.fireParameterChangedEvent();
-        doNotPropagateChangeUp = false;
+        if (signaling == Signaling.NORMAL) {
+            doNotPropagateChangeUp = true;
+            parameter.fireParameterChangedEvent();
+            doNotPropagateChangeUp = false;
+        }
+        super.fireParameterChangedEvent();
     }
 
     public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
-        doNotPropagateChangeUp = true;
-        parameter.fireParameterChangedEvent(index, type);
-        doNotPropagateChangeUp = false;
+        if (signaling == Signaling.NORMAL) {
+            doNotPropagateChangeUp = true;
+            parameter.fireParameterChangedEvent(index, type);
+            doNotPropagateChangeUp = false;
+        }
+        super.fireParameterChangedEvent(index, type);
     }
 
     protected void acceptValues() {
@@ -161,7 +184,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     public String getParameterName() {
         if (getId() == null)
-            return "masked" + parameter.getParameterName();
+            return "masked." + parameter.getParameterName();
         return getId();
     }
 
@@ -220,15 +243,17 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         if (variable == maskParameter) {
             updateMask();
-            fireParameterChangedEvent();
-        } else { // variable == parameter
+            super.fireParameterChangedEvent();
+        } else if (variable == parameter) { // variable == parameter
             if (!doNotPropagateChangeUp) {
                 if (index == -1) {
-                    fireParameterChangedEvent();
+                    super.fireParameterChangedEvent();
                 } else if (inverseMap[index] != -1) {
-                    fireParameterChangedEvent(inverseMap[index], type);
+                    super.fireParameterChangedEvent(inverseMap[index], type);
                 }
             }
+        } else {
+            throw new IllegalArgumentException("Unknown variable");
         }
     }
 

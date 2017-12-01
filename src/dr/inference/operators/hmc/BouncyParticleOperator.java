@@ -100,7 +100,7 @@ public class BouncyParticleOperator {
             this.t0 = t0;
             this.precisionmatrix = precisionmatrix;
             this.drawDistribution = new NormalDistribution(0, Math.sqrt(1));
-            
+
     }
 
     public double doOperation(double[] location, double[] v, double t, double[] phi_w) {
@@ -180,7 +180,7 @@ public class BouncyParticleOperator {
 
             double[] finalV;
             double[] verticalV;
-          
+
             verticalV = getConstantVector(minusGrad, getDotProduct(v, minusGrad)/getDotProduct(minusGrad, minusGrad));
             finalV = addArray(v, getConstantVector(verticalV, -2.0), false);
 

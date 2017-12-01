@@ -118,15 +118,17 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     }
 
     public void fireParameterChangedEvent() {
-        doNotPropogateChangeUp = true;
+        doNotPropagateChangeUp = true;
         parameter.fireParameterChangedEvent();
-        doNotPropogateChangeUp = false;
+        doNotPropagateChangeUp = false;
+        super.fireParameterChangedEvent();
     }
 
     public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
-        doNotPropogateChangeUp = true;
+        doNotPropagateChangeUp = true;
         parameter.fireParameterChangedEvent(index, type);
-        doNotPropogateChangeUp = false;
+        doNotPropagateChangeUp = false;
+        super.fireParameterChangedEvent(index, type);
     }
 
     protected void acceptValues() {
@@ -154,13 +156,14 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         parameter.setParameterValueNotifyChangedAll(map[dim], value);
     }
 
+    @SuppressWarnings("unused")
     public double getParameterMaskValue(int i){
         return maskParameter.getParameterValue(i);
     }
 
     public String getParameterName() {
         if (getId() == null)
-            return "masked" + parameter.getParameterName();
+            return "masked." + parameter.getParameterName();
         return getId();
     }
 
@@ -219,15 +222,17 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         if (variable == maskParameter) {
             updateMask();
-            fireParameterChangedEvent();
-        } else { // variable == parameter
-            if (!doNotPropogateChangeUp) {
+            super.fireParameterChangedEvent();
+        } else if (variable == parameter) { // variable == parameter
+            if (!doNotPropagateChangeUp) {
                 if (index == -1) {
-                    fireParameterChangedEvent();
+                    super.fireParameterChangedEvent();
                 } else if (inverseMap[index] != -1) {
-                    fireParameterChangedEvent(inverseMap[index], type);
+                    super.fireParameterChangedEvent(inverseMap[index], type);
                 }
             }
+        } else {
+            throw new IllegalArgumentException("Unknown variable");
         }
     }
 
@@ -245,5 +250,5 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     private int length;
     private int equalValue;
 
-    private boolean doNotPropogateChangeUp = false;
+    private boolean doNotPropagateChangeUp = false;
 }

@@ -27,7 +27,9 @@ package dr.inferencexml.hmc;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
+import org.ejml.alg.dense.decomposition.eig.watched.WatchedDoubleStepQREigenvector;
 
 import java.util.Arrays;
 
@@ -87,15 +89,19 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
 //        parameter.addBounds(new Parameter.DefaultBounds(upper, lower));
 
         // Rotational invariance
-        ++offset;
-        for (int i = 1; i < dim; ++i) {
-            mask.setParameterValue(offset, 0.0);
-            if (reset) {
-                parameter.setParameterValue(offset, 0.0);
-            }
-            ++offset;
-        }
+        for (int column = 1; column < dim; ++column) {
 
+            for (int i = 0; i < dim; ++i) {
+                if (i >= column) {
+                    mask.setParameterValue(offset, 0.0);
+                    if (reset) {
+                        parameter.setParameterValue(offset, 0.0);
+                    }
+                }
+                ++offset;
+            }
+        }
+        
         return mask;
     }
 

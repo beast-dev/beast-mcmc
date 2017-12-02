@@ -187,8 +187,8 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs a uniform draw of branch rate quantiles",
-                "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);
+        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
+                "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 0, branchWeights / 3);
 
         createOperator("uniformBranchRateDistributionIndex", "branchRates.distributionIndex", "Performs a uniform draw of the distribution index",
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);

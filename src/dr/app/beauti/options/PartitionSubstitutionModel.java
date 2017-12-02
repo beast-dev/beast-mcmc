@@ -361,11 +361,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
 
-        createScaleOperator("pInv", demoTuning, substWeights);
+        createOperator("pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
         for (int i = 1; i <= 3; i++) {
-            createScaleOperator("CP" + i + ".pInv", demoTuning, substWeights);
+            createOperator("CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
         }
-        createScaleOperator("CP1+2.pInv", demoTuning, substWeights);
+        createOperator("CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
         createScaleOperator("bcov.s", demoTuning, substWeights);

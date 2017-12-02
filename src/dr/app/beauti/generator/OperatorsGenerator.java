@@ -44,6 +44,7 @@ import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.RandomWalkOperator;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
@@ -135,13 +136,16 @@ public class OperatorsGenerator extends Generator {
                 writeRandomWalkOperator(operator, writer);
                 break;
             case RANDOM_WALK_ABSORBING:
-                writeRandomWalkOperator(operator, false, writer);
-                break;
-            case RANDOM_WALK_INT:
-                writeRandomWalkIntegerOperator(operator, writer);
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.absorbing, writer);
                 break;
             case RANDOM_WALK_REFLECTING:
-                writeRandomWalkOperator(operator, true, writer);
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.reflecting, writer);
+                break;
+            case RANDOM_WALK_LOG:
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.log, writer);
+                break;
+            case RANDOM_WALK_LOGIT:
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.logit, writer);
                 break;
             case INTEGER_RANDOM_WALK:
                 writeIntegerRandomWalkOperator(operator, writer);
@@ -280,7 +284,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(name);
     }
 
-    private void writeRandomWalkOperator(Operator operator, boolean reflecting, XMLWriter writer) {
+    private void writeRandomWalkOperator(Operator operator, RandomWalkOperator.BoundaryCondition boundaryCondition, XMLWriter writer) {
         final String name = RandomWalkOperatorParser.RANDOM_WALK_OPERATOR;
         writer.writeOpenTag(
                 name,
@@ -288,25 +292,13 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>("windowSize", operator.getTuning()),
                         getWeightAttribute(operator.getWeight()),
                         new Attribute.Default<String>("boundaryCondition",
-                                (reflecting ? "reflecting" : "absorbing")),
+                                boundaryCondition.name()),
                         (operator.isAutoOptimize() == false ?
                                 new Attribute.Default<Boolean>("autoOptimize", false) :
                                 null)
                 });
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(name);
-    }
-
-    private void writeRandomWalkIntegerOperator(Operator operator, XMLWriter writer) {
-        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR;
-        writer.writeOpenTag(
-                name,
-                new Attribute[]{
-                        new Attribute.Default<Double>("windowSize", operator.getTuning()),
-                        getWeightAttribute(operator.getWeight())
-                });
-        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(name);
     }
 

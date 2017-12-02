@@ -46,7 +46,6 @@ public enum OperatorType {
     MICROSAT_UP_DOWN("microsatUpDown"),
     SCALE_ALL(ScaleOperatorParser.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
-    CENTERED_SCALE("centeredScale"),
     DELTA_EXCHANGE("deltaExchange"),
     WEIGHTED_DELTA_EXCHANGE("weightedDeltaExchange"),
     INTEGER_DELTA_EXCHANGE("integerDeltaExchange"),

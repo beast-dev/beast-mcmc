@@ -162,9 +162,6 @@ public class OperatorsGenerator extends Generator {
             case SCALE_INDEPENDENTLY:
                 writeScaleOperator(operator, writer, true);
                 break;
-            case CENTERED_SCALE:
-                writeCenteredOperator(operator, writer);
-                break;
             case DELTA_EXCHANGE:
                 writeDeltaOperator(operator, false, writer);
                 break;
@@ -339,18 +336,6 @@ public class OperatorsGenerator extends Generator {
         }
 
         writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
-    }
-
-    private void writeCenteredOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(CenteredScaleOperatorParser.CENTERED_SCALE,
-                new Attribute[]{
-                        new Attribute.Default<Double>(CenteredScaleOperatorParser.SCALE_FACTOR, operator.getTuning()),
-                        getWeightAttribute(operator.getWeight())
-                }
-        );
-        writeParameter1Ref(writer, operator);
-//        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(CenteredScaleOperatorParser.CENTERED_SCALE);
     }
 
     private void writeDeltaOperator(Operator operator, boolean weighted, XMLWriter writer) {

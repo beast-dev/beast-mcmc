@@ -248,6 +248,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         final double[] observed = observedIndicators[taxon];
 
+        // TODO Only need to compute for each unique set of observed[] << numTaxa
+
         // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
         for (int row = 0; row < numFactors; ++row) {
             for (int col = 0; col < numFactors; ++col) {

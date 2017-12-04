@@ -146,7 +146,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             for (int j = i; j < newRowDimension; j++) {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
-//                    sum += full.getParameterValue(i, k) * full.getParameterValue(j, k);
                     sum += adapator.getFactorValue(i, k) * adapator.getFactorValue(j, k);
                 answer[i][j] = sum * adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
@@ -207,25 +206,14 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         for (int j = 0; j < mean.length; j++) { //TODO implement for generic prior
             mean[j] *= pathParameter;
         }
-
     }
 
-//    private void copy(int i, double[] random) {
-//        adaptor.setLoadingsForTraitQuietly(i, random);
-////        MatrixParameterInterface changing = adaptor.getLoadings();
-////        for (int j = 0; j < random.length; j++) {
-////            changing.setParameterValueQuietly(i, j, random[j]);
-////        }
-//    }
+    private void drawI(int i, double[][] precision, double[] midMean, double[] mean) {  // TODO Flatten precision
 
-    private void drawI(int i, double[][] precision, double[] midMean, double[] mean) {
-
-        double[] draws;
-        double[][] variance;
-        double[][] cholesky = null;
         getPrecision(i, precision);
-        variance = (new SymmetricMatrix(precision)).inverse().toComponents();
 
+        double[][] variance = (new SymmetricMatrix(precision)).inverse().toComponents();
+        double[][] cholesky = null;
         try {
             cholesky = new CholeskyDecomposition(variance).getL();
         } catch (IllegalDimension illegalDimension) {
@@ -234,15 +222,13 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
-        draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+        // TODO Use back-solve to avoid inverting precision first
+//        double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+//                 mean, precision); // TODO Flatten precision
+
+        double[] draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
         adaptor.setLoadingsForTraitQuietly(i, draws);
-
-//        if (i < draws.length) {
-//            copy(i, draws);
-//        } else {
-//            copy(i, draws);
-//        }
 
         if (DEBUG) {
             System.err.println("draw: " + new Vector(draws));
@@ -363,7 +349,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 }
                 drawI(i, currentPrecision.next(), currentMidMean.next(), currentMean.next());
                 adaptor.fireLoadingsChanged();
-//                adaptor.getLoadings().fireParameterChangedEvent(i, null);
             }
 
         }

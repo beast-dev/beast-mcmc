@@ -25,10 +25,9 @@
 
 package dr.math.matrixAlgebra;
 
-import dr.inference.model.Parameter;
 
 /**
- * Created by msuchard on 1/27/17.
+ * @author Marc A. Suchard
  */
 
 public interface WrappedVector {

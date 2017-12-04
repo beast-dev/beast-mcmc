@@ -1,16 +1,12 @@
 package dr.math.matrixAlgebra.missingData;
 
-import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.util.Transform;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
-import org.ejml.alg.dense.decomposition.qr.QRColPivDecompositionHouseholderColumn_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
 import org.ejml.alg.dense.misc.UnrolledInverseFromMinor;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolverFactory;
-import org.ejml.interfaces.decomposition.QRPDecomposition;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;

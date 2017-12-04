@@ -29,6 +29,9 @@ import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
+import org.ejml.alg.dense.decomposition.TriangularSolver;
+import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionInner_D64;
+import org.ejml.data.DenseMatrix64F;
 
 /**
  * @author Marc Suchard
@@ -259,6 +262,42 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return cholesky;
     }
 
+    public static double[] nextMultivariateNormalViaBackSolvePrecision(double[] mean, double[][] precision) {
+
+        final double[] p = new double[mean.length * mean.length];
+
+        int offset = 0;
+        for (int i = 0; i < mean.length; ++i) {
+            System.arraycopy(precision[i], 0, p, offset, mean.length);
+            offset += mean.length;
+        }
+
+        return nextMultivariateNormalViaBackSolvePrecision(mean, p);
+    }
+
+    public static double[] nextMultivariateNormalViaBackSolvePrecision(double[] mean, double[] precision) {
+
+        final int dim = mean.length;
+
+        DenseMatrix64F p = DenseMatrix64F.wrap(dim,dim, precision);
+        CholeskyDecompositionInner_D64 dd = new CholeskyDecompositionInner_D64();
+        dd.decompose(p); // Now holds Cholesky decomposition (destructive)
+
+        double[] epsilon = new double[dim];
+        for (int i = 0; i < dim; ++i) {
+            epsilon[i] = MathUtils.nextGaussian();
+        }
+
+        // Back-solve
+        TriangularSolver.solveTranL(p.getData(), epsilon, dim);
+
+        for (int i = 0; i < dim; ++i) {
+            epsilon[i] += mean[i];
+        }
+        
+        return epsilon;
+    }
+
     public static double[] nextMultivariateNormalPrecision(double[] mean, double[][] precision) {
         return nextMultivariateNormalVariance(mean, getInverse(precision));
     }
@@ -360,7 +399,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
         double[] start = {1, 2};
         double[][] precision = {{2, 0.5}, {0.5, 1}};
-        int length = 100000;
+        int length = 1000000;
 
 
         System.err.println("Random draws (via precision) ...");
@@ -369,7 +408,8 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         double[] var = new double[2];
         double ZZ = 0;
         for (int i = 0; i < length; i++) {
-            double[] draw = nextMultivariateNormalPrecision(start, precision);
+//            double[] draw = nextMultivariateNormalPrecision(start, precision);
+            double[] draw = nextMultivariateNormalViaBackSolvePrecision(start, precision);
             for (int j = 0; j < 2; j++) {
                 mean[j] += draw[j];
                 SS[j] += draw[j] * draw[j];

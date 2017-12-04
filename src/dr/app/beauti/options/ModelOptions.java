@@ -53,7 +53,7 @@ public abstract class ModelOptions implements Serializable {
     public static final double demoWeights = 3.0;
 
     protected static final double branchWeights = 30.0;
-    protected static final double treeWeights = 15.0;
+    protected static final double treeWeights = 30.0;
     protected static final double rateWeights = 3.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
@@ -100,9 +100,14 @@ public abstract class ModelOptions implements Serializable {
     }
 
     public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
-                                                              PriorScaleType scaleType, double maintainedSum, boolean amtk) {
-        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR)
-                .isNonNegative(true).maintainedSum(maintainedSum)
+                                                              int dimension, double maintainedSum, boolean amtk) {
+        return createNonNegativeParameterDirichletPrior(name, description, options, dimension, maintainedSum, false, amtk);
+    }
+
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
+                                                              int dimension, double maintainedSum, boolean priorFixed, boolean amtk) {
+        return new Parameter.Builder(name, description).dimension(dimension).prior(PriorType.DIRICHLET_PRIOR)
+                .isNonNegative(true).maintainedSum(maintainedSum).isPriorFixed(priorFixed)
                 .isAdaptiveMultivariateCompatible(amtk)
                 .partitionOptions(options).build(parameters);
     }
@@ -236,26 +241,16 @@ public abstract class ModelOptions implements Serializable {
     }
 
     public Operator createScaleOperator(String parameterName, double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
-        String description;
-        if (parameter.getDescription() == null) {
-            description = parameterName;
-        } else {
-            description = parameter.getDescription();
-        }
-        return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).
-                build(operators);
+        return createScaleOperator(parameterName, null, tuning, weight);
     }
 
     public Operator createScaleOperator(String parameterName, String description, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
+        if (description == null) {
+            description = (parameter.getDescription() == null ? parameterName : parameter.getDescription());
+        }
         return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
     }
-
-//    public void createScaleAllOperator(String parameterName, double tuning, double weight) { // tuning = 0.75
-//        Parameter parameter = getParameter(parameterName);
-//        new Operator.Builder(parameterName, parameterName, parameter, OperatorType.SCALE_ALL, tuning, weight).build(operators);
-//    }
 
     public Operator createOperator(String key, String name, String description, String parameterName, OperatorType type,
                                    double tuning, double weight) {

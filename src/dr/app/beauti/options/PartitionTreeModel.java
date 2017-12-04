@@ -109,8 +109,13 @@ public class PartitionTreeModel extends PartitionOptions {
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
 
+        double weight = Math.max(options.taxonList.getTaxonCount(), 30);
         createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
-                OperatorType.SUBTREE_LEAP, 1.0, options.taxonList.getTaxonCount() < treeWeights ? treeWeights : options.taxonList.getTaxonCount());
+                OperatorType.SUBTREE_LEAP, 1.0, weight);
+
+        weight = Math.max(weight / 10, 3);
+        createOperator("subtreeJump", "Tree", "Performs the subtree-jump rearrangement of the tree", "tree",
+                OperatorType.SUBTREE_JUMP, 1.0, weight);
 
     }
 
@@ -163,6 +168,7 @@ public class PartitionTreeModel extends PartitionOptions {
         operators.add(getOperator("uniformHeights"));
 
         operators.add(getOperator("subtreeLeap"));
+        operators.add(getOperator("subtreeJump"));
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {
             // do nothing
@@ -195,6 +201,7 @@ public class PartitionTreeModel extends PartitionOptions {
             getOperator("uniformHeights").setUsed(branchesInUse);
 
             getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
+            getOperator("subtreeJump").setUsed(newTreeOperatorsInUse);
         }
         return operators;
     }

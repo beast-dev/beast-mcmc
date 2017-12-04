@@ -274,7 +274,7 @@ public class SubstitutionModelGenerator extends Generator {
             String prefix1 = model.getPrefix(num);
             writer.writeOpenTag(GTRParser.RATES);
             // fix the initial value to give maintained sum
-            double initialValue = parameter.maintainedSum / parameter.getParent().getDimensionWeight();
+            double initialValue = parameter.maintainedSum / parameter.dimension;
             writeParameter(prefix1 + PartitionSubstitutionModel.GTR_RATES, 6, initialValue, 0.0, Double.NaN, writer);
             writer.writeCloseTag(GTRParser.RATES);
         } else {
@@ -677,7 +677,7 @@ public class SubstitutionModelGenerator extends Generator {
             } else {
                 parameter = model.getParameter("nu");
             }
-            if (parameter.getSubParameters().size() > 0) {
+            if (parameter.getParent().getSubParameters().size() > 0) {
                 writeNuRelativeRateBlock(writer, prefix, parameter);
             }
         } else {
@@ -840,7 +840,7 @@ public class SubstitutionModelGenerator extends Generator {
         double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
         writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
                 new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
-        writeParameter(prefix + "nu", 1, parameter.getInitial() / dim, 0.0, Double.NaN, writer);
+        writeParameter(prefix + "nu", 1, 1.0, 0.0, Double.NaN, writer);
         writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
     }
 

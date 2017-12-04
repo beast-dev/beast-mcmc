@@ -32,6 +32,9 @@ import dr.evolution.util.Taxa;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dr.app.beauti.options.BeautiOptions.DEFAULT_QUANTILE_RELAXED_CLOCK;
+import static dr.app.beauti.options.BeautiOptions.LOGIT_PINV_KERNEL;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -43,7 +46,7 @@ public class PartitionClockModel extends PartitionOptions {
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
-    private boolean continuousQuantile = false;
+    private boolean continuousQuantile = DEFAULT_QUANTILE_RELAXED_CLOCK; // a switch at the top of BeautiOptions
     private boolean performModelAveraging = false;
 
     private PartitionTreeModel treeModel = null;
@@ -171,7 +174,7 @@ public class PartitionClockModel extends PartitionOptions {
 
         // A vector of relative rates across all partitions...
 
-        createNonNegativeParameterDirichletPrior("allNus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createNonNegativeParameterDirichletPrior("allNus", "relative rates amongst partitions parameter", this, 0, 1.0, true, true);
         createOperator("deltaNus", "allNus",
                 "Change partition rates relative to each other maintaining mean", "allNus",
                 OperatorType.DELTA_EXCHANGE, 0.01, 3.0);
@@ -187,8 +190,8 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs a uniform draw of branch rate quantiles",
-                "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);
+        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
+                "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 0, branchWeights / 3);
 
         createOperator("uniformBranchRateDistributionIndex", "branchRates.distributionIndex", "Performs a uniform draw of the distribution index",
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);

@@ -40,8 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static dr.app.beauti.options.BeautiOptions.LOGIT_PINV_KERNEL;
-
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -222,44 +220,45 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         // create the relative rate parameters for the GTR rate matrix
 
-        if (options.NEW_GTR_PARAMETERIZATION) {
-            createNonNegativeParameterDirichletPrior(GTR_RATES, "GTR transition rates parameter",
+        // if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+        createNonNegativeParameterDirichletPrior(GTR_RATES, "GTR transition rates parameter",
+                this, 6, 6.0, true);
+        for (int i = 1; i <= 3; i++) {
+            createNonNegativeParameterDirichletPrior("CP" + i + "." + GTR_RATES, "GTR transition rates parameter",
                     this, 6, 6.0, true);
-            for (int i = 1; i <= 3; i++) {
-                createNonNegativeParameterDirichletPrior("CP" + i + "." + GTR_RATES, "GTR transition rates parameter",
-                        this, 6, 6.0, true);
+        }
+        createNonNegativeParameterDirichletPrior("CP1+2." + GTR_RATES, "GTR transition rates parameter",
+                this, 6, 6.0, true);
+
+        //} else {
+        for (int j = 0; j < 5; j++) {
+            if (j == 1) { // ag
+                createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
+            } else {
+                createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
             }
-            createNonNegativeParameterDirichletPrior("CP1+2." + GTR_RATES, "GTR transition rates parameter",
-                    this, 6, 6.0, true);
-        } else {
-            for (int j = 0; j < 5; j++) {
+
+            for (int i = 1; i <= 3; i++) {
                 if (j == 1) { // ag
-                    createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
+                    createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
                             PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
                 } else {
-                    createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
+                    createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
                             PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
                 }
+            }
 
-                for (int i = 1; i <= 3; i++) {
-                    if (j == 1) { // ag
-                        createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
-                    } else {
-                        createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
-                    }
-                }
-
-                if (j == 1) { // ag
-                    createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
-                } else {
-                    createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
-                }
+            if (j == 1) { // ag
+                createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false, true);
+            } else {
+                createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false, true);
             }
         }
+        //}
 
 //        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
 //
@@ -332,7 +331,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createOperator("CP1+2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        if (options.NEW_GTR_PARAMETERIZATION) {
+        // if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
             createOperator("deltaGTR", "deltaGTR",
                     "Change GTR transition rates relative to each other maintaining mean",
                     GTR_RATES,
@@ -347,7 +346,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     "Change GTR transition rates relative to each other maintaining mean",
                     "CP1+2." + GTR_RATES,
                     OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        } else {
+        // } else {
             for (String rateName : GTR_RATE_NAMES) {
                 createScaleOperator(rateName, demoTuning, substWeights);
                 for (int j = 1; j <= 3; j++) {
@@ -355,7 +354,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
                 createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
             }
-        }
+        // }
 
         createScaleOperator("alpha", demoTuning, substWeights);
         for (int i = 1; i <= 3; i++) {
@@ -363,20 +362,20 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
 
-        if (LOGIT_PINV_KERNEL) { // a switch at the top of BeautiOptions
-            createOperator("pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        // if (!options.classicOperatorsAndPriors && LOGIT_PINV_KERNEL) { // a switch at the top of BeautiOptions
+            createOperator("rwPInv", "rwPInv", "Random walk on pInv in logit space", "pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
             for (int i = 1; i <= 3; i++) {
-                createOperator("CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+                createOperator("rwCP" + i + ".pInv", "rwCP" + i + ".pInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
             }
-            createOperator("CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
-        } else {
+            createOperator("rwCP1+2.pInv", "rwCP1+2.pInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        // } else {
             // old (and not very appropriate scale operator)
             createScaleOperator("pInv", demoTuning, substWeights);
             for (int i = 1; i <= 3; i++) {
                 createScaleOperator("CP" + i + ".pInv", demoTuning, substWeights);
             }
             createScaleOperator("CP1+2.pInv", demoTuning, substWeights);
-        }
+        // }
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
         createScaleOperator("bcov.s", demoTuning, substWeights);
@@ -426,7 +425,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                     params.add(getParameter("CP" + i + ".kappa2"));
                                     break;
                                 case GTR:
-                                    if (options.NEW_GTR_PARAMETERIZATION) {
+                                    if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
                                         params.add(getParameter("CP" + i + "." + GTR_RATES));
                                     } else {
                                         for (String rateName : GTR_RATE_NAMES) {
@@ -455,7 +454,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 params.add(getParameter("CP3.kappa2"));
                                 break;
                             case GTR:
-                                if (options.NEW_GTR_PARAMETERIZATION) {
+                                if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
                                     params.add(getParameter("CP1+2." + GTR_RATES));
                                     params.add(getParameter("CP3." + GTR_RATES));
                                 } else {
@@ -487,7 +486,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             params.add(getParameter("kappa2"));
                             break;
                         case GTR:
-                            if (options.NEW_GTR_PARAMETERIZATION) {
+                            if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
                                 params.add(getParameter("gtr"));
                             } else {
 
@@ -617,30 +616,30 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         int[] weights = getPartitionCodonWeights();
         if (getCodonPartitionCount() > 1) {
             if (codonHeteroPattern.equals("123")) {
-                Parameter parameter = getParameter("CP1." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                Parameter parameter = getParameter("CP1." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[0]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP2." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                parameter = getParameter("CP2." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[1]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP3." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                parameter = getParameter("CP3." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[2]);
                 allMus.add(parameter);
             } else if (codonHeteroPattern.equals("112")) {
-                Parameter parameter = getParameter("CP1+2." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                Parameter parameter = getParameter("CP1+2." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[0]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP3." + (options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                parameter = getParameter("CP3." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[1]);
                 allMus.add(parameter);
             } else {
                 throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
             }
         } else {
-            Parameter mu = getParameter(options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu");
+            Parameter mu = getParameter(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu");
             mu.setDimensionWeight(weights[0]);
             allMus.add(mu);
         }
@@ -698,7 +697,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             case GTR:
 
                                 for (int i = 1; i <= 3; i++) {
-                                    if (options.NEW_GTR_PARAMETERIZATION) {
+                                    if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
                                         ops.add(getOperator("CP" + i + ".deltaGTR"));
                                     } else {
                                         for (String rateName : GTR_RATE_NAMES) {
@@ -729,7 +728,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 break;
 
                             case GTR:
-                                if (options.NEW_GTR_PARAMETERIZATION) {
+                                if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
                                     ops.add(getOperator("CP1+2.deltaGTR"));
                                     ops.add(getOperator("CP3.deltaGTR"));
                                 } else {
@@ -764,7 +763,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             break;
 
                         case GTR:
-                            if (options.NEW_GTR_PARAMETERIZATION) {
+                            if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
                                 ops.add(getOperator("deltaGTR"));
                             } else {
                                 for (String rateName : GTR_RATE_NAMES) {
@@ -861,19 +860,20 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
+            String prefix = (!options.classicOperatorsAndPriors && options.LOGIT_PINV_KERNEL ? "rw" : "");
             if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
-                    ops.add(getOperator("CP1.pInv"));
-                    ops.add(getOperator("CP2.pInv"));
-                    ops.add(getOperator("CP3.pInv"));
+                    ops.add(getOperator(prefix + "CP1.pInv"));
+                    ops.add(getOperator(prefix + "CP2.pInv"));
+                    ops.add(getOperator(prefix + "CP3.pInv"));
                 } else if (codonHeteroPattern.equals("112")) {
-                    ops.add(getOperator("CP1+2.pInv"));
-                    ops.add(getOperator("CP3.pInv"));
+                    ops.add(getOperator(prefix + "CP1+2.pInv"));
+                    ops.add(getOperator(prefix + "CP3.pInv"));
                 } else {
                     throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                 }
             } else {
-                ops.add(getOperator("pInv"));
+                ops.add(getOperator(prefix + "pInv"));
             }
         }
 

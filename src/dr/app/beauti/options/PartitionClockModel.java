@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dr.app.beauti.options.BeautiOptions.DEFAULT_QUANTILE_RELAXED_CLOCK;
-import static dr.app.beauti.options.BeautiOptions.LOGIT_PINV_KERNEL;
 
 /**
  * @author Alexei Drummond
@@ -190,8 +189,13 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
-                "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 0, branchWeights / 3);
+        if (!options.classicOperatorsAndPriors) {
+            createOperator("rwBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
+                    "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 0, branchWeights / 3);
+        } else {
+            createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
+                    "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);
+        }
 
         createOperator("uniformBranchRateDistributionIndex", "branchRates.distributionIndex", "Performs a uniform draw of the distribution index",
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);
@@ -498,13 +502,16 @@ public class PartitionClockModel extends PartitionOptions {
                                     ops.add(getOperator("upDownUCEDMeanHeights"));
                                 }
 
-                                //ops.add(getOperator("uniformBranchRateQuantiles"));
                                 ops.add(getOperator("uniformBranchRateDistributionIndex"));
                                 break;
                         }
 
                         if (isContinuousQuantile()) {
-                            ops.add(getOperator("uniformBranchRateQuantiles"));
+                            if (!options.classicOperatorsAndPriors) {
+                                ops.add(getOperator("rwBranchRateQuantiles"));
+                            } else {
+                                ops.add(getOperator("uniformBranchRateQuantiles"));
+                            }
                         } else {
                             ops.add(getOperator("swapBranchRateCategories"));
                             ops.add(getOperator("uniformBranchRateCategories"));
@@ -522,12 +529,12 @@ public class PartitionClockModel extends PartitionOptions {
             }
         }
 
-        Parameter allMus = getParameter(options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus");
+        Parameter allMus = getParameter(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus");
 
         if (allMus.getSubParameters().size() > 1) {
             Operator muOperator;
 
-            muOperator = getOperator(options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "deltaNus" : "deltaMus");
+            muOperator = getOperator(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "deltaNus" : "deltaMus");
 
             ops.add(muOperator);
         }

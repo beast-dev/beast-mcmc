@@ -482,7 +482,7 @@ public class ClockModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeAllMus(PartitionClockModel model, XMLWriter writer) {
-        String parameterName = options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus";
+        String parameterName = !options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus";
 
         Parameter allMus = model.getParameter(parameterName);
         if (allMus.getSubParameters().size() > 1) {
@@ -547,7 +547,7 @@ public class ClockModelGenerator extends Generator {
     public void writeLog(PartitionClockModel model, XMLWriter writer) {
         String prefix = model.getPrefix();
 
-        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
             Parameter allNus = model.getParameter("allNus");
             if (allNus.getSubParameters().size() > 1) {
                 writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");

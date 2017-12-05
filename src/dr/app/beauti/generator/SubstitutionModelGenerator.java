@@ -677,7 +677,7 @@ public class SubstitutionModelGenerator extends Generator {
             } else {
                 parameter = model.getParameter("nu");
             }
-            if (parameter.getParent().getSubParameters().size() > 0) {
+            if (parameter.getParent() != null && parameter.getParent().getSubParameters().size() > 0) {
                 writeNuRelativeRateBlock(writer, prefix, parameter);
             }
         } else {
@@ -836,7 +836,6 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer the writer
      */
     private void writeNuRelativeRateBlock(XMLWriter writer, String prefix, Parameter parameter) {
-        int dim = parameter.getParent().getSubParameters().size();
         double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
         writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
                 new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));

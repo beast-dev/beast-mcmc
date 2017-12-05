@@ -365,16 +365,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         // if (!options.classicOperatorsAndPriors && LOGIT_PINV_KERNEL) { // a switch at the top of BeautiOptions
             createOperator("rwPInv", "rwPInv", "Random walk on pInv in logit space", "pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
             for (int i = 1; i <= 3; i++) {
-                createOperator("rwCP" + i + ".pInv", "rwCP" + i + ".pInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+                createOperator("CP" + i + ".rwPInv", "CP" + i + ".rwPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
             }
-            createOperator("rwCP1+2.pInv", "rwCP1+2.pInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+            createOperator("CP1+2.rwPInv", "CP1+2.rwPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
         // } else {
             // old (and not very appropriate scale operator)
-            createScaleOperator("pInv", demoTuning, substWeights);
+        createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space", "pInv", OperatorType.UNIFORM, demoTuning, substWeights);
             for (int i = 1; i <= 3; i++) {
-                createScaleOperator("CP" + i + ".pInv", demoTuning, substWeights);
+                createOperator("CP" + i + ".uniformPInv", "CP" + i + ".uniformPInv", "Random walk on pInv in logit space",  "CP" + i + ".pInv", OperatorType.UNIFORM, demoTuning, substWeights);
             }
-            createScaleOperator("CP1+2.pInv", demoTuning, substWeights);
+        createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space",  "CP1+2.pInv", OperatorType.UNIFORM, demoTuning, substWeights);
         // }
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
@@ -860,20 +860,20 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            String prefix = (!options.classicOperatorsAndPriors && options.LOGIT_PINV_KERNEL ? "rw" : "");
+            String name = (!options.classicOperatorsAndPriors && options.LOGIT_PINV_KERNEL ? "rwPInv" : "uniformPInv");
             if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
-                    ops.add(getOperator(prefix + "CP1.pInv"));
-                    ops.add(getOperator(prefix + "CP2.pInv"));
-                    ops.add(getOperator(prefix + "CP3.pInv"));
+                    ops.add(getOperator("CP1." + name));
+                    ops.add(getOperator("CP2." + name));
+                    ops.add(getOperator("CP3." + name));
                 } else if (codonHeteroPattern.equals("112")) {
-                    ops.add(getOperator(prefix + "CP1+2.pInv"));
-                    ops.add(getOperator(prefix + "CP3.pInv"));
+                    ops.add(getOperator("CP1+2." + name));
+                    ops.add(getOperator("CP3." + name));
                 } else {
                     throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                 }
             } else {
-                ops.add(getOperator(prefix + "pInv"));
+                ops.add(getOperator(name));
             }
         }
 

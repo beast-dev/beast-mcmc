@@ -21,7 +21,6 @@ public class ShrinkageGibbsOperator extends SimpleMCMCOperator implements GibbsO
     }
 
 
-    @Override
     public int getStepCount() {
         return 0;
     }

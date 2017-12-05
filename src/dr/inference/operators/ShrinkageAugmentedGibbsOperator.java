@@ -46,7 +46,6 @@ public class ShrinkageAugmentedGibbsOperator extends SimpleMCMCOperator implemen
         this.pathParameter = 1;
     }
 
-    @Override
     public int getStepCount() {
         return 0;
     }

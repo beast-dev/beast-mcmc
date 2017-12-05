@@ -51,7 +51,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     // Instance variables
 
     public static final String GTR_RATES = "gtr.rates";
-    public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
+    public static final String[] GTR_RATE_NAMES = {"gtr.AC", "gtr.AG", "gtr.AT", "gtr.CG", "gtr.GT"};
     private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
@@ -332,17 +332,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         // if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
-            createOperator("deltaGTR", "deltaGTR",
+            createOperator("deltaGTR", "gtr.rates",
                     "Change GTR transition rates relative to each other maintaining mean",
                     GTR_RATES,
                     OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
             for (int j = 1; j <= 3; j++) {
-                createOperator("CP" + j + ".deltaGTR", "CP" + j + ".deltaGTR",
+                createOperator("CP" + j + ".deltaGTR", "CP" + j + ".gtr.rates",
                         "Change GTR transition rates relative to each other maintaining mean",
                         "CP" + j + "." + GTR_RATES,
                         OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
             }
-            createOperator("CP1+2.deltaGTR", "CP1+2.deltaGTR",
+            createOperator("CP1+2.deltaGTR", "CP1+2.gtr.rates",
                     "Change GTR transition rates relative to each other maintaining mean",
                     "CP1+2." + GTR_RATES,
                     OperatorType.DELTA_EXCHANGE, 0.01, substWeights);

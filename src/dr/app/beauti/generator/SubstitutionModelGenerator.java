@@ -278,11 +278,11 @@ public class SubstitutionModelGenerator extends Generator {
             writeParameter(prefix1 + PartitionSubstitutionModel.GTR_RATES, 6, initialValue, 0.0, Double.NaN, writer);
             writer.writeCloseTag(GTRParser.RATES);
         } else {
-            writeParameter(num, GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
-            writeParameter(num, GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
-            writeParameter(num, GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
-            writeParameter(num, GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
-            writeParameter(num, GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+            writeParameter(num, GTRParser.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+            writeParameter(num, GTRParser.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+            writeParameter(num, GTRParser.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+            writeParameter(num, GTRParser.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+            writeParameter(num, GTRParser.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
         }
 
         writer.writeCloseTag(GTRParser.GTR_MODEL);

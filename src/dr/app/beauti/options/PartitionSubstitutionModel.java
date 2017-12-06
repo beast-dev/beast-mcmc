@@ -165,7 +165,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         //Substitution model parameters
         if (options.FREQUENCIES_DIRICHLET_PRIOR) {
-            createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 4,1.0, true);
+            createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 4, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 4, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 4, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", this, 4, 1.0, true);
@@ -287,15 +287,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         // nu parameters are an alternative parameterization of relative rates suitable for using with a Dirichlet prior.
         // They sum to 1 and their product with the evolutionary rate is weighted by the partitions size.
-        createNonNegativeParameterInfinitePrior("nu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
-        createNonNegativeParameterInfinitePrior("CP1.nu", "relative rate parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
-        createNonNegativeParameterInfinitePrior("CP2.nu", "relative rate parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
-        createNonNegativeParameterInfinitePrior("CP1+2.nu", "relative rate parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
-        createNonNegativeParameterInfinitePrior("CP3.nu", "relative rate parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
+        createZeroOneParameterUniformPrior("nu", "relative rate parameter", 1.0, true);
+        createZeroOneParameterUniformPrior("CP1.nu", "relative rate parameter for codon position 1", 1.0, true);
+        createZeroOneParameterUniformPrior("CP2.nu", "relative rate parameter for codon position 2", 1.0, true);
+        createZeroOneParameterUniformPrior("CP1+2.nu", "relative rate parameter for codon positions 1 & 2", 1.0, true);
+        createZeroOneParameterUniformPrior("CP3.nu", "relative rate parameter for codon position 3", 1.0, true);
 
         createNonNegativeParameterInfinitePrior("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         createNonNegativeParameterInfinitePrior("CP1.mu", "relative rate parameter for codon position 1",

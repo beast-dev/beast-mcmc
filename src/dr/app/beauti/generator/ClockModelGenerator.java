@@ -33,6 +33,8 @@ import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticParser;
 import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
@@ -551,9 +553,12 @@ public class ClockModelGenerator extends Generator {
             Parameter allNus = model.getParameter("allNus");
             if (allNus.getSubParameters().size() > 1) {
                 writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
-            }
 
-            // todo write mu s here as statistics (or per-partition rates?).
+                for (Parameter parameter : allNus.getSubParameters()) {
+                    String name = parameter.getName();
+                    writer.writeIDref(StatisticParser.STATISTIC, name.substring(0, name.lastIndexOf(".")) + ".mu");
+                }
+            }
 
         } else {
             Parameter allMus = model.getParameter("allMus");

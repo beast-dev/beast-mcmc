@@ -529,14 +529,10 @@ public class PartitionClockModel extends PartitionOptions {
             }
         }
 
-        Parameter allMus = getParameter(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus");
+        Parameter allMusNus = getParameter(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus");
 
-        if (allMus.getSubParameters().size() > 1) {
-            Operator muOperator;
-
-            muOperator = getOperator(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "deltaNus" : "deltaMus");
-
-            ops.add(muOperator);
+        if (allMusNus.getSubParameters().size() > 1) {
+            ops.add(getOperator(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "deltaNus" : "deltaMus"));
         }
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {

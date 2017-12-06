@@ -297,7 +297,7 @@ public class BeautiOptions extends ModelOptions {
 
                 // add the total weight of all mus/nus to the allMus parameter
                 allMus.setDimensionWeight(totalWeight);
-                allMus.maintainedSum = relativeRateParameters.size();
+                allMus.maintainedSum = (!classicOperatorsAndPriors && NEW_RELATIVE_RATE_PARAMETERIZATION ? 1.0 : relativeRateParameters.size());
                 allMus.isMaintainedSum = true;
             }
 

@@ -43,6 +43,7 @@ import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.TN93Parser;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.inference.model.StatisticParser;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
 import dr.oldevomodel.substmodel.LinearBiasModel;
 import dr.oldevomodel.substmodel.TwoPhaseModel;
@@ -141,6 +142,7 @@ public class SubstitutionModelGenerator extends Generator {
 
                 //****************** Site Model *****************
                 writeAASiteModel(writer, model);
+
                 break;
 
             case DataType.TWO_STATES:
@@ -725,7 +727,11 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
-        writer.writeText("");
+
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+        }
+
     }
 
     /**
@@ -783,6 +789,11 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+        }
+
     }
 
     /**
@@ -828,6 +839,12 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+        }
+
+
     }
 
     /**
@@ -839,8 +856,24 @@ public class SubstitutionModelGenerator extends Generator {
         double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
         writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
                 new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
-        writeParameter(prefix + "nu", 1, 1.0, 0.0, Double.NaN, writer);
+        // Initial values must sum to 1.0
+        double initial = 1.0 / parameter.getParent().getSubParameters().size();
+        writeParameter(prefix + "nu", 1, initial, 0.0, 1.0, writer);
         writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
+    }
+
+    /**
+     * Write a statistic for mu from a site model (when parameterised using nu).
+     *
+     * @param writer the writer
+     */
+    private void writeMuStatistic(XMLWriter writer, String prefix, String siteModelTag) {
+        writer.writeComment("");
+        writer.writeOpenTag(StatisticParser.STATISTIC, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + "mu"),
+                new Attribute.Default<String>(StatisticParser.NAME, "mu")});
+        writer.writeIDref(siteModelTag, prefix + siteModelTag);
+        writer.writeCloseTag(StatisticParser.STATISTIC);
     }
 
     private void writeMicrosatSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {

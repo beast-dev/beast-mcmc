@@ -539,6 +539,36 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
+    public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex) {
+
+        super.calculatePreOrderRoot(priorBufferIndex, rootNodeIndex);
+
+        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
+        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
+
+        int rootOffset = dimPartial * rootNodeIndex;
+
+        // TODO For each trait in parallel
+        for (int trait = 0; trait < numTraits; ++trait) {
+
+            final DenseMatrix64F Proot = wrap(prePartials, rootOffset + dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Vroot = wrap(prePartials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+
+            // TODO Block below is for the conjugate prior ONLY
+            {
+                final DenseMatrix64F tmp = matrix0;
+
+                CommonOps.mult(Pd, Proot, tmp);
+                unwrap(tmp, prePartials, rootOffset + dimTrait);
+
+                CommonOps.mult(Vd, Vroot, tmp);
+                unwrap(tmp, prePartials, rootOffset + dimTrait + dimTrait * dimTrait);
+            }
+            rootOffset += dimPartialForTrait;
+        }
+    }
+
+    @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
                                            boolean incrementOuterProducts) {
         assert(logLikelihoods.length == numTraits);

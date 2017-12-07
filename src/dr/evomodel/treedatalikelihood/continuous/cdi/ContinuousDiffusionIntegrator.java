@@ -83,6 +83,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     // TODO Only send a list of operations
     void updatePreOrderPartial(int kp, int ip, int im, int jp, int jm);
 
+    void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex);
+
     class Basic implements ContinuousDiffusionIntegrator {
 
 //        private int instance = -1;
@@ -517,6 +519,12 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 jbo += dimPartialForTrait;
             }
 //            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex) {
+            System.arraycopy(partials, dimPartial * priorBufferIndex, // Copy from prior
+                    prePartials, dimPartial * rootNodeIndex, dimPartial); // To pre-order root
         }
 
         protected void updatePartial(

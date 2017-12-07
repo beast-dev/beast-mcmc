@@ -478,9 +478,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                         new Matrix(jointVariance), cMissing, cNotMissing);
 
                 double[] cMean = cVariance.getConditionalMean(rawDatum, 0, drift, 0);
+                Matrix cVar = cVariance.getConditionalVariance();
 
                 sb.append("cMean #").append(tip).append(" ").append(new dr.math.matrixAlgebra.Vector(cMean))
-                    .append("\n");
+                    .append(" cVar ").append(cVar).append("\n");
             }
         }
 

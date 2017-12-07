@@ -37,6 +37,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     public static String SUM = "sum";
     public static String ELEMENTWISE = "elementwise";
     public static String CONSTANT = "constant";
+    public static String ABSOLUTE = "absolute";
 
     public String[] getParserNames() {
         return new String[]{getParserName(), SUM};
@@ -49,6 +50,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean elementwise = xo.getAttribute(ELEMENTWISE, false);
+        boolean absolute = xo.getAttribute(ABSOLUTE, false);
 
         String name = SUM_STATISTIC;
         if (xo.hasAttribute(Statistic.NAME)) {
@@ -66,7 +68,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
             throw new XMLParseException("The constant given to " + getParserName() + " should be a single value if element-wise is being used.");
         }
 
-        final SumStatistic sumStatistic = new SumStatistic(name, elementwise, constants);
+        final SumStatistic sumStatistic = new SumStatistic(name, elementwise, constants, absolute);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);
@@ -109,6 +111,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(ELEMENTWISE, true),
             AttributeRule.newStringRule(Statistic.NAME, true),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(ABSOLUTE, true)
     };
 }

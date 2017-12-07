@@ -88,17 +88,17 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
             if (type == Parameter.ChangeType.VALUE_CHANGED) {
                 fireModelChanged(this, getTaxonIndex(index));
             } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED){
-                if (!allDataChange) {
+//                if (!allDataChange) {
                     fireModelChanged(this);
-                    allDataChange = true;
-                }
+//                    allDataChange = true;
+//                }
             } else {
                 throw new RuntimeException("Unhandled parameter change type");
             }
         }
     }
 
-    private boolean allDataChange = false;
+//    private boolean allDataChange = false;
 
     private int getTaxonIndex(int parameterIndex) {
         return parameterIndex / (dimTrait * numTraits);
@@ -106,7 +106,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     @Override
     protected void storeState() {
-        allDataChange = false;
+//        allDataChange = false;
     }
 
     @Override

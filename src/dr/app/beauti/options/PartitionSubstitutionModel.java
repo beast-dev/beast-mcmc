@@ -40,6 +40,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static dr.app.beauti.options.BeautiOptions.LOGIT_PINV_KERNEL;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -165,11 +167,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         //Substitution model parameters
         if (options.FREQUENCIES_DIRICHLET_PRIOR) {
-            createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 1.0, true);
-            createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 1.0, true);
-            createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 1.0, true);
-            createNonNegativeParameterDirichletPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", this, 1.0, true);
-            createNonNegativeParameterDirichletPrior("CP3.frequencies", "base frequencies for codon position 3", this, 1.0, true);
+            createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 4,1.0, true);
+            createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 4, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 4, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", this, 4, 1.0, true);
+            createNonNegativeParameterDirichletPrior("CP3.frequencies", "base frequencies for codon position 3", this, 4, 1.0, true);
         } else {
             createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25, true);
             createZeroOneParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1", 0.25, true);
@@ -222,13 +224,13 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         if (options.NEW_GTR_PARAMETERIZATION) {
             createNonNegativeParameterDirichletPrior(GTR_RATES, "GTR transition rates parameter",
-                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
+                    this, 6, 6.0, true);
             for (int i = 1; i <= 3; i++) {
                 createNonNegativeParameterDirichletPrior("CP" + i + "." + GTR_RATES, "GTR transition rates parameter",
-                        this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
+                        this, 6, 6.0, true);
             }
             createNonNegativeParameterDirichletPrior("CP1+2." + GTR_RATES, "GTR transition rates parameter",
-                    this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 6.0, true);
+                    this, 6, 6.0, true);
         } else {
             for (int j = 0; j < 5; j++) {
                 if (j == 1) { // ag
@@ -361,11 +363,20 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
 
-        createScaleOperator("pInv", demoTuning, substWeights);
-        for (int i = 1; i <= 3; i++) {
-            createScaleOperator("CP" + i + ".pInv", demoTuning, substWeights);
+        if (LOGIT_PINV_KERNEL) { // a switch at the top of BeautiOptions
+            createOperator("pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+            for (int i = 1; i <= 3; i++) {
+                createOperator("CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+            }
+            createOperator("CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        } else {
+            // old (and not very appropriate scale operator)
+            createScaleOperator("pInv", demoTuning, substWeights);
+            for (int i = 1; i <= 3; i++) {
+                createScaleOperator("CP" + i + ".pInv", demoTuning, substWeights);
+            }
+            createScaleOperator("CP1+2.pInv", demoTuning, substWeights);
         }
-        createScaleOperator("CP1+2.pInv", demoTuning, substWeights);
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
         createScaleOperator("bcov.s", demoTuning, substWeights);

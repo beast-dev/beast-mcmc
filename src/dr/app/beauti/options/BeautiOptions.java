@@ -54,8 +54,19 @@ import dr.inference.operators.OperatorSchedule;
  */
 public class BeautiOptions extends ModelOptions {
 
-    public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = false;
-    public static final boolean NEW_GTR_PARAMETERIZATION = false;
+    // Switches to a dirichlet prior & delta exchange on nus
+    public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = true;
+
+    // Switches to a dirichlet prior & delta exchange on relative rates
+    public static final boolean NEW_GTR_PARAMETERIZATION = true;
+
+    // Makes sets the initial state of PartitionClockModel.continuousQuantile
+    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = true;
+
+    // Uses a logit transformed random walk on pInv parameters
+    public static final boolean LOGIT_PINV_KERNEL = true;
+
+    // Switches to a dirichlet prior & delta exchange on state frequencies
     public static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
 
     private static final long serialVersionUID = -3676802825545741012L;

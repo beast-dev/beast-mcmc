@@ -40,9 +40,7 @@ import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
@@ -149,6 +147,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+        statisticsKnown = false;
     }
 
     @Override
@@ -243,29 +242,94 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private final double nuggetPrecision;
 
+    private class HashedMissingArray {
+
+        final private double[] array;
+
+        HashedMissingArray(final double[] array) {
+            this.array = array;
+        }
+
+        public double[] getArray() {
+            return array;
+        }
+
+        public double get(int index) {
+            return array[index];
+        }
+
+        public int getLength() {
+            return array.length;
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(array);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof HashedMissingArray) {
+                return Arrays.equals(array, ((HashedMissingArray) obj).array);
+            } else {
+                return false;
+            }
+        }
+
+        public String toString() {
+            return new Vector(array).toString();
+        }
+    }
+
     private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
                                            final int numFactors) {
 
         final double[] observed = observedIndicators[taxon];
 
+        final HashedMissingArray observedArray;
+        DenseMatrix64F hashedPrecision;
+
+        if (USE_CACHE) {
+            observedArray = new HashedMissingArray(observed);
+            hashedPrecision = precisionMatrixMap.get(observedArray);
+        }
+        
         // TODO Only need to compute for each unique set of observed[] << numTaxa
 
-        // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
-        for (int row = 0; row < numFactors; ++row) {
-            for (int col = 0; col < numFactors; ++col) {
-                double sum = 0;
-                for (int k = 0; k < dimTrait; ++k) {
-                    double thisPrecision = (observed[k] == 1.0) ? traitPrecision.getParameterValue(k) : nuggetPrecision;
-                    sum += loadings.getParameterValue(k, row) *
-                            thisPrecision *
-                            loadings.getParameterValue(k, col);
+        if (!USE_CACHE || hashedPrecision == null) {
+
+            // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
+            for (int row = 0; row < numFactors; ++row) {
+                for (int col = 0; col < numFactors; ++col) {
+                    double sum = 0;
+                    for (int k = 0; k < dimTrait; ++k) {
+                        double thisPrecision = (observed[k] == 1.0) ?
+                                traitPrecision.getParameterValue(k) : nuggetPrecision;
+                        sum += loadings.getParameterValue(k, row) *
+                                thisPrecision *
+                                loadings.getParameterValue(k, col);
+                    }
+                    precision.unsafe_set(row, col, sum);
                 }
-                precision.unsafe_set(row, col, sum);
             }
+
+            if (USE_CACHE) {
+                precisionMatrixMap.put(observedArray, precision);
+            }
+
+        } else {
+            System.arraycopy(hashedPrecision.getData(), 0,
+                    precision.getData(), 0, numFactors * numFactors);
         }
     }
 
-    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision, final int taxon) {
+    private static final boolean USE_CACHE = false;
+
+    private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap =
+            new HashMap<HashedMissingArray, DenseMatrix64F>();
+
+    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision,
+                                               final int taxon) {
 
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
@@ -363,6 +427,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         
         final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
         final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
+
+        if (USE_CACHE) {
+            precisionMatrixMap.clear();
+            if (DEBUG) {
+                System.err.println("Hash CLEARED");
+            }
+        }
 
         int partialsOffset = 0;
         for (int taxon = 0; taxon < numTaxa; ++taxon) {

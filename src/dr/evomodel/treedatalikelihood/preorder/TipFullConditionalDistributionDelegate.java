@@ -146,9 +146,7 @@ public class TipFullConditionalDistributionDelegate extends ProcessSimulationDel
             System.err.println("Simulate root node " + rootIndex);
         }
 
-        // Copy from prior to root pre-order buffer
-        cdi.getPostOrderPartial(rootProcessDelegate.getPriorBufferIndex(), partialRootBuffer); // No double-buffering
-        cdi.setPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(rootIndex), partialRootBuffer); // With double-buffering
+        cdi.calculatePreOrderRoot(rootProcessDelegate.getPriorBufferIndex(), likelihoodDelegate.getActiveNodeIndex(rootIndex));
 
         if (DEBUG) {
             System.err.println("Root: " + new WrappedVector.Raw(partialRootBuffer, 0, partialRootBuffer.length));

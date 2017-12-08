@@ -8,6 +8,7 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,9 @@ public class NewTipFullConditionalDistributionDelegate extends
                                                      ContinuousTraitPartialsProvider dataModel,
                                                      ConjugateRootTraitPrior rootPrior,
                                                      ContinuousRateTransformation rateTransformation,
-                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
+                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                     ContinuousDiffusionIntegrator.PartialIntent intent) {
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate, intent);
     }
 
     @Override
@@ -36,7 +38,7 @@ public class NewTipFullConditionalDistributionDelegate extends
                 new TreeTrait<List<NormalSufficientStatistics>>() {
 
             public String getTraitName() {
-                return NAME_PREFIX + "." + name;
+                return intent.getPrefix() + NAME_PREFIX + "." + name;
             }
 
             public Intent getIntent() {
@@ -76,6 +78,9 @@ public class NewTipFullConditionalDistributionDelegate extends
     protected List<NormalSufficientStatistics> getTraitForNode(NodeRef node) {
 
         assert simulationProcess != null;
+        assert Pd != null;
+        assert dimPartial > 0;
+        assert dimTrait > 0;
 
         simulationProcess.cacheSimulatedTraits(node);
 
@@ -84,7 +89,7 @@ public class NewTipFullConditionalDistributionDelegate extends
 
         cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(
                 (node == null) ? -1 : node.getNumber()
-        ), partial);
+        ), partial, intent);
 
         List<NormalSufficientStatistics> statistics = new ArrayList<NormalSufficientStatistics>();
 

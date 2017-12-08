@@ -8,6 +8,7 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 import java.util.List;
 
@@ -23,7 +24,8 @@ public class TipFullConditionalDistributionDelegate extends AbstractFullConditio
                                                   ConjugateRootTraitPrior rootPrior,
                                                   ContinuousRateTransformation rateTransformation,
                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate,
+                ContinuousDiffusionIntegrator.PartialIntent.NODE);
     }
 
     public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations,
@@ -109,7 +111,7 @@ public class TipFullConditionalDistributionDelegate extends AbstractFullConditio
         simulationProcess.cacheSimulatedTraits(node);
 
         double[] partial = new double[dimPartial * numTraits];
-        cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(node.getNumber()), partial);
+        cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(node.getNumber()), partial, ContinuousDiffusionIntegrator.PartialIntent.NODE);
 
         return partial;
     }

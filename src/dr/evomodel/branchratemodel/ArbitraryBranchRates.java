@@ -44,10 +44,10 @@ import dr.inference.model.Variable;
 public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
     // The rates of each branch
-    final TreeParameterModel rates;
-    final Parameter rateParameter;
-    final boolean reciprocal;
-    final boolean exp;
+    private final TreeParameterModel rates;
+    private final Parameter rateParameter;
+    private final boolean reciprocal;
+    private final boolean exp;
 
     public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, boolean reciprocal, boolean exp, boolean setRates) {
 
@@ -96,6 +96,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
         return rate;
     }
+
+    public int getParameterIndexFromNode(final NodeRef node) {
+        return rates.getParameterIndexFromNodeNumber(node.getNumber());
+    }
+
+    public Parameter getRateParameter() { return rateParameter; }
 
     public boolean usingReciprocal() {
         return reciprocal;

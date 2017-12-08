@@ -25,6 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import java.util.Arrays;
+
 /**
  * @author Marc A. Suchard
  */
@@ -49,6 +51,28 @@ public enum PrecisionType {
                         partial[pOffset + i] : Double.NaN;
             }
         }
+
+        @Override
+        public int getPrecisionOffset(int dimTrait) {
+            return dimTrait;
+        }
+
+        @Override
+        public int getVarianceOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
+        public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
+            double scalar = partial[offset + getPrecisionOffset(dimTrait)];
+
+            double[] precision = new double[diffusionPrecision.length];
+            for (int i = 0; i < diffusionPrecision.length; ++i) {
+                precision[i] = scalar * diffusionPrecision[i];
+            }
+
+            return precision;
+        }
     },
     MIXED("mixed method", 1) {
         @Override
@@ -63,6 +87,21 @@ public enum PrecisionType {
                 data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait + i]) ?
                         partial[pOffset + i] : Double.NaN;
             }
+        }
+
+        @Override
+        public int getPrecisionOffset(int dimTrait) {
+            return dimTrait;
+        }
+
+        @Override
+        public int getVarianceOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
+        public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
+            throw new RuntimeException("Not yet implemented");
         }
     },
     FULL("full precision matrix per branch", 2) {
@@ -86,6 +125,27 @@ public enum PrecisionType {
         @Override
         public int getMatrixLength(int dimTrait) {
             return 2 * super.getMatrixLength(dimTrait) + 1;
+        }
+
+        @Override
+        public int getPrecisionOffset(int dimTrait) {
+            return dimTrait + 2 * dimTrait * dimTrait;
+        }
+
+        @Override
+        public int getVarianceOffset(int dimTrait) {
+            return dimTrait + dimTrait * dimTrait;
+        }
+
+        @Override
+        public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
+
+            double[] precision = new double[dimTrait * dimTrait];
+            System.arraycopy(partial, offset + getPrecisionOffset(dimTrait),
+                    precision, 0,
+                    dimTrait * dimTrait);
+
+            return precision;
         }
     };
 
@@ -123,4 +183,9 @@ public enum PrecisionType {
 
     abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
 
+    abstract public int getPrecisionOffset(int dimTrait);
+
+    abstract public int getVarianceOffset(int dimTrait);
+
+    abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
 }

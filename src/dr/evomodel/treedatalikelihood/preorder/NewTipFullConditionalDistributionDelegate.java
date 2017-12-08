@@ -19,7 +19,7 @@ import java.util.List;
 public class NewTipFullConditionalDistributionDelegate extends
         AbstractFullConditionalDistributionDelegate {
 
-    private static final String NAME_PREFIX = "nfcd";
+    private static final String NAME_PREFIX = "nFcd";
 
     public NewTipFullConditionalDistributionDelegate(String name, Tree tree,
                                                      MultivariateDiffusionModel diffusionModel,
@@ -28,7 +28,11 @@ public class NewTipFullConditionalDistributionDelegate extends
                                                      ContinuousRateTransformation rateTransformation,
                                                      ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                                      ContinuousDiffusionIntegrator.PartialIntent intent) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate, intent);
+        super(intent.getPrefix() + name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate, intent);
+    }
+
+    public static String getName(String name) {
+        return NAME_PREFIX + "." + name;
     }
 
     @Override
@@ -38,7 +42,7 @@ public class NewTipFullConditionalDistributionDelegate extends
                 new TreeTrait<List<NormalSufficientStatistics>>() {
 
             public String getTraitName() {
-                return intent.getPrefix() + NAME_PREFIX + "." + name;
+                return getName(name);
             }
 
             public Intent getIntent() {
@@ -69,7 +73,7 @@ public class NewTipFullConditionalDistributionDelegate extends
 
         StringBuilder sb = new StringBuilder();
         for (NormalSufficientStatistics stat : statistics) {
-            sb.append(stat);
+            sb.append(stat.toVectorizedString()).append(";\t");
         }
 
         return sb.toString();
@@ -78,7 +82,6 @@ public class NewTipFullConditionalDistributionDelegate extends
     protected List<NormalSufficientStatistics> getTraitForNode(NodeRef node) {
 
         assert simulationProcess != null;
-        assert Pd != null;
         assert dimPartial > 0;
         assert dimTrait > 0;
 

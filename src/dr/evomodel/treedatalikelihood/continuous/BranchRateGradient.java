@@ -140,6 +140,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         }
 
         public BranchInformation(double[] fcd, NodeRef node, NodeRef parent) {
+
         }
     }
 

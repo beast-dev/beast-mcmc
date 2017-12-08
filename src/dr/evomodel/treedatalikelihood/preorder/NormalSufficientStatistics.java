@@ -42,4 +42,18 @@ public class NormalSufficientStatistics {
     public String toString() {
         return mean + " " + precision;
     }
+
+    public String toVectorizedString() {
+        return toVectorizedString(mean.getData()) + " " + toVectorizedString(precision.getData());
+    }
+
+    private static String toVectorizedString(double[] vector) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < vector.length - 1; ++i) {
+            sb.append(vector[i]).append(" ");
+        }
+        sb.append(vector[vector.length - 1]);
+        return sb.toString();
+    }
+
 }

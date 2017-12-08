@@ -25,8 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import java.util.Arrays;
-
 /**
  * @author Marc A. Suchard
  */
@@ -129,7 +127,7 @@ public enum PrecisionType {
 
         @Override
         public int getPrecisionOffset(int dimTrait) {
-            return dimTrait + 2 * dimTrait * dimTrait;
+            return dimTrait;
         }
 
         @Override
@@ -183,8 +181,10 @@ public enum PrecisionType {
 
     abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
 
+    @SuppressWarnings("unused")
     abstract public int getPrecisionOffset(int dimTrait);
 
+    @SuppressWarnings("unused")
     abstract public int getVarianceOffset(int dimTrait);
 
     abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);

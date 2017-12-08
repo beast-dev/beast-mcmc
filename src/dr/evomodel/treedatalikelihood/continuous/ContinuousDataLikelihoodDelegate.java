@@ -46,10 +46,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
-import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
-import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
+import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -843,6 +840,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 getDiffusionModel(),
                 getDataModel(), getRootPrior(),
                 getRateTransformation(), this);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
+
+        getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
+    }
+
+    public void addNewFullConditionalDensityTrait(String traitName, ContinuousDiffusionIntegrator.PartialIntent intent) {
+
+        ProcessSimulationDelegate gradientDelegate = new NewTipFullConditionalDistributionDelegate(traitName,
+                getCallbackLikelihood().getTree(),
+                getDiffusionModel(),
+                getDataModel(), getRootPrior(),
+                getRateTransformation(), this, intent);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
 

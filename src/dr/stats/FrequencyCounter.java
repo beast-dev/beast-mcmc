@@ -143,7 +143,11 @@ public final class FrequencyCounter<T extends Comparable> {
      * @return
      */
     public int getFrequency(T value) {
-        return frequencies.get(value);
+        if (frequencies.containsKey(value)) {
+            return frequencies.get(value);
+        } else {
+            return 0;
+        }
     }
 
     /**

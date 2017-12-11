@@ -284,7 +284,7 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
-            Parameter allMus = model.getParameter(NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
+            Parameter allMus = model.getParameter(!classicOperatorsAndPriors && NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
             allMus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
 
@@ -297,7 +297,7 @@ public class BeautiOptions extends ModelOptions {
 
                 // add the total weight of all mus/nus to the allMus parameter
                 allMus.setDimensionWeight(totalWeight);
-                allMus.maintainedSum = relativeRateParameters.size();
+                allMus.maintainedSum = (!classicOperatorsAndPriors && NEW_RELATIVE_RATE_PARAMETERIZATION ? 1.0 : relativeRateParameters.size());
                 allMus.isMaintainedSum = true;
             }
 
@@ -1385,6 +1385,8 @@ public class BeautiOptions extends ModelOptions {
     public GlobalModelOptions globalModelOptions = new GlobalModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
+
+    public boolean classicOperatorsAndPriors = false;
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
 

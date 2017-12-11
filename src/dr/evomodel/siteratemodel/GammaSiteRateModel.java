@@ -356,6 +356,10 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             return 1;
         }
 
+        public String getDimensionName(int dim) {
+            return getId();
+        }
+
         public double getStatisticValue(int dim) {
             return getMu();
         }

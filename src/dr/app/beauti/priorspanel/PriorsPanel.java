@@ -67,6 +67,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     JButton hpmButton = null;
     JButton unlinkButton = null;
 
+    JCheckBox classicPriorsCheck = null;
+
     public List<Parameter> parameters = new ArrayList<Parameter>();
 
     BeautiFrame frame = null;
@@ -159,7 +161,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         linkButton.setEnabled(false);
         linkButton.setToolTipText("<html>Join the selected parameters so their values are<br>" +
                 "kept the same. This will create a new controlling<br>" +
-                "parameter which can be given a prior.");
+                "parameter which can be given a prior.</html>");
 
         Action setHierarchicalAction = new AbstractAction("Link parameters into a hierarchical model") {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -187,9 +189,23 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         unlinkButton.setEnabled(false);
         unlinkButton.setToolTipText("<html>Unlink parameters joined as a linked parameter<br>" +
                 "or hierarchical model. Will delete the enclosing<br>" +
-                "model.");
+                "model.</html>");
 
         messageLabel.setText(getMessage());
+
+        Action classicPriorsAction = new AbstractAction("Use classic priors/operators") {
+            public void actionPerformed(ActionEvent actionEvent) {
+                options.classicOperatorsAndPriors = classicPriorsCheck.isSelected();
+                priorTableModel.fireTableDataChanged();
+                frame.setAllOptions();
+            }
+        };
+
+        classicPriorsCheck = new JCheckBox(classicPriorsAction);
+        classicPriorsCheck.setVisible(true);
+        classicPriorsCheck.setEnabled(true);
+        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8.4) prior and operator combinations.</html>");
+
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
@@ -224,6 +240,17 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             southPanel.add(toolBar1, BorderLayout.NORTH);
             southPanel.add(messageLabel, BorderLayout.SOUTH);
             add(southPanel, BorderLayout.SOUTH);
+
+            JToolBar toolBar2 = new JToolBar();
+            toolBar2.setFloatable(false);
+            toolBar2.setOpaque(false);
+            toolBar2.setBorder(BorderFactory.createEmptyBorder());
+            toolBar2.setLayout(new BoxLayout(toolBar2, BoxLayout.X_AXIS));
+
+            PanelUtils.setupComponent(classicPriorsCheck);
+            toolBar2.add(classicPriorsCheck);
+
+            add(toolBar2, BorderLayout.NORTH);
         } else {
             add(messageLabel, BorderLayout.SOUTH);
         }

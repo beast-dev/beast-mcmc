@@ -27,11 +27,13 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -57,8 +59,12 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
-        if (branchRateModel != null && branchRateModel instanceof ArbitraryBranchRates) {
-            ArbitraryBranchRates arbitraryBranchRates = (ArbitraryBranchRates) branchRateModel;
+        if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
+
+            Parameter branchRates = null;
+            if (branchRateModel instanceof ArbitraryBranchRates) {
+                branchRates = ((ArbitraryBranchRates) branchRateModel).getRateParameter();
+            }
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
             if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
@@ -66,7 +72,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
             }
             final ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
 
-            return new BranchRateGradient(traitName, treeDataLikelihood, continuousData, arbitraryBranchRates.getRateParameter());
+            return new BranchRateGradient(traitName, treeDataLikelihood, continuousData, branchRates);
 
         } else {
             throw new XMLParseException("Only implemented for an arbitrary rates model");
@@ -81,6 +87,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
 //            new XORRule(
 //                    new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+            AttributeRule.newStringRule(TRAIT_NAME),
             new ElementRule(TreeDataLikelihood.class)
 //            ),
 //            new ElementRule(MASKING,

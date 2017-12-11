@@ -124,7 +124,9 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                 final int external) {
 
         cdi.getPostOrderPartial(nodePartial, partialNodeBuffer);
-        final double branchPrecision = cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
+//        final double branchPrecision = cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
+        final double branchPrecision = cdi.getInverseBranchLength(nodeMatrix);
+//        cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
 
         int offsetPartial = 0;
         int offsetSample = dimNode * nodeNumber;

@@ -26,21 +26,23 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
     }
 
     @Override
-    public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
+    public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         assert (precision != null);
         assert (precision.length >= dimTrait * dimTrait);
 
         assert (displacement != null);
-        assert (displacement.length >- dimTrait);
+        assert (displacement.length >= dimTrait);
 
         System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
                 precision, 0, dimTrait * dimTrait);
 
         System.arraycopy(displacements, bufferIndex * dimTrait,
                 displacement, 0, dimTrait);
-
-        return super.getBranchMatrices(bufferIndex, precision, displacement);
     }
 
     private static final boolean TIMING = false;

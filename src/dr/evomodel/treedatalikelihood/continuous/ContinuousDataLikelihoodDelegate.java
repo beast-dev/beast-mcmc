@@ -272,6 +272,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public ConjugateRootTraitPrior getRootPrior() { return rootPrior; }
 
+    public int getPartialBufferCount() { return partialBufferHelper.getBufferCount(); }
+
     @Override
     public String getReport() {
 
@@ -846,13 +848,26 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    public void addNewFullConditionalDensityTrait(String traitName, ContinuousDiffusionIntegrator.PartialIntent intent) {
+    void addNewFullConditionalDensityTrait(String traitName, ContinuousDiffusionIntegrator.PartialIntent intent) {
 
         ProcessSimulationDelegate gradientDelegate = new NewTipFullConditionalDistributionDelegate(traitName,
                 getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
                 getDataModel(), getRootPrior(),
                 getRateTransformation(), this, intent);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
+
+        getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
+    }
+
+    void addBranchConditionalDensityTrait(String traitName) {
+
+        ProcessSimulationDelegate gradientDelegate = new BranchConditionalDistributionDelegate(traitName,
+                getCallbackLikelihood().getTree(),
+                getDiffusionModel(),
+                getDataModel(), getRootPrior(),
+                getRateTransformation(), this);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
 

@@ -28,6 +28,8 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
+import java.util.Arrays;
+
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
@@ -62,7 +64,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getPostOrderPartial(int bufferIndex, final double[] partial);
 
-    double getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement);
+    double getInverseBranchLength(int bufferIndex); // TODO Get rid of inverse
+
+    void getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement); // TODO Use single buffer for consistency with other getters/setters
 
     @SuppressWarnings("unused")
     void setPreOrderPartial(int bufferIndex, final double[] partial, PartialIntent intent);
@@ -187,10 +191,33 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
             System.arraycopy(partials, dimPartial * bufferIndex, partial, 0, dimPartial);
         }
+
+        @Override
+        public double getInverseBranchLength(int bufferIndex) {
+            return 1.0 / branchLengths[bufferIndex * dimMatrix];
+        }
         
         @Override
-        public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
-            return 1.0 / branchLengths[bufferIndex * dimMatrix];
+        public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
+            if (bufferIndex == -1) {
+                throw new IllegalArgumentException("Not yet implemented");
+            }
+
+            int numberOfBranches = 1;
+
+            assert (precision != null);
+            assert (precision.length >= dimTrait * dimTrait * numberOfBranches);
+
+            assert (displacement != null);
+            assert (displacement.length >= dimTrait * numberOfBranches);
+
+            // Fill in displacement
+            Arrays.fill(displacement, 0, dimTrait, 0.0);
+
+            double scalar = getInverseBranchLength(bufferIndex);
+            for (int i = 0; i < dimTrait * dimTrait; ++i) { // TODO Write generic function for WrappedVector?
+                precision[i] = scalar * diffusions[precisionOffset + i];
+            }
         }
 
         @Override

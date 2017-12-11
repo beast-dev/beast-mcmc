@@ -4,6 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 
@@ -31,6 +32,7 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
         missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
     }
 
+    @Override
     protected double[] getTraitForNode(NodeRef node) {
 
         assert simulationProcess != null;
@@ -57,7 +59,7 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                     conditionalNodeBuffer = new double[dimPartial * numTraits];
 
                     simulationProcess.cacheSimulatedTraits(node);
-                    cdi.getPreOrderPartial(nodeBuffer, conditionalNodeBuffer);
+                    cdi.getPreOrderPartial(nodeBuffer, conditionalNodeBuffer, ContinuousDiffusionIntegrator.PartialIntent.NODE);
                 }
 
                 System.err.println("Missing tip = " + node.getNumber() + " (" + nodeBuffer + "), trait = " + trait);

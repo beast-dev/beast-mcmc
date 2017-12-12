@@ -80,6 +80,21 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         rates.setNodeValue(tree, node, value);
     }
 
+    public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
+
+        double rate = getBranchRate(tree, node);
+
+        if (exp) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        if (reciprocal) {
+            return -1.0 * rate;
+        }
+        // else
+        return 1.0 / rate;
+    }
+
     public double getBranchRate(final Tree tree, final NodeRef node) {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
@@ -94,8 +109,13 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
             rate = 1.0 / rate;
         }
 
+        // else
         return rate;
     }
+//
+//    public int getNodeNumberFromParameterIndex(int parameterIndex) {
+//        return rates.getNodeNumberFromParameterIndex(parameterIndex);
+//    }
 
     public int getParameterIndexFromNode(final NodeRef node) {
         return rates.getParameterIndexFromNodeNumber(node.getNumber());

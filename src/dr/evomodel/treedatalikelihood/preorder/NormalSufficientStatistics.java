@@ -72,6 +72,22 @@ public class NormalSufficientStatistics {
         return variance.unsafe_get(row, col);
     }
 
+    @Deprecated
+    public DenseMatrix64F getRawPrecision() { return precision; }
+
+    @Deprecated
+    public DenseMatrix64F getRawMean() { return mean; }
+
+    @Deprecated
+    public DenseMatrix64F getRawVariance() {
+        if (variance == null) { // TODO Code duplication
+            variance = new DenseMatrix64F(precision.numRows, precision.numCols);
+            safeInvert(precision, variance, false);
+        }
+
+        return variance;
+    }
+
     public String toString() {
         return mean + " " + precision;
     }

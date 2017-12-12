@@ -43,7 +43,13 @@ public interface DiffusionProcessDelegate extends Model {
 
     int getEigenBufferCount();
 
+    int getEigenBufferOffsetIndex(int i);
+
     int getMatrixBufferCount();
+
+    public int getMatrixBufferOffsetIndex(int i);
+
+    void flipMatrixBufferOffset(int i);
 
     MultivariateDiffusionModel getDiffusionModel(int index);
 
@@ -55,6 +61,8 @@ public interface DiffusionProcessDelegate extends Model {
                                  int updateCount, boolean flipBuffers);
 
     boolean hasDrift();
+
+    boolean hasActualization();
 
     void storeState();
 

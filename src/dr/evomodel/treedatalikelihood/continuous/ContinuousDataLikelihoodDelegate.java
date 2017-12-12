@@ -171,8 +171,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
-                    base = new SafeMultivariateWithDriftIntegrator(
+                if (diffusionProcessDelegate instanceof OrnsteinUhlenbeckDiffusionModelDelegate) {
+                    base = new SafeMultivariateActualizedWithDriftIntegrator(
                             precisionType,
                             numTraits,
                             dimTrait,
@@ -180,8 +180,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                             matrixBufferCount
                     );
                 } else {
-                    if (allowSingular) {
-                        base = new SafeMultivariateIntegrator(
+                    if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
+                        base = new SafeMultivariateWithDriftIntegrator(
                                 precisionType,
                                 numTraits,
                                 dimTrait,
@@ -189,13 +189,23 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                 matrixBufferCount
                         );
                     } else {
-                        base = new MultivariateIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
+                        if (allowSingular) {
+                            base = new SafeMultivariateIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount
+                            );
+                        } else {
+                            base = new MultivariateIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount
+                            );
+                        }
                     }
                 }
 

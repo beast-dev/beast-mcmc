@@ -1,36 +1,36 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import com.android.tools.profiler.proto.Common;
 import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
+import mpi.Comm;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-
-import java.util.Arrays;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 
-public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegrator {
+public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivariateWithDriftIntegrator {
 
     private static boolean DEBUG = false;
 
-    public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
-                                               int diffusionCount) {
+    public SafeMultivariateActualizedWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
+                                                         int diffusionCount) {
         super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
 
         allocateStorage();
 
-        System.err.println("Trying SafeMultivariateWithDriftIntegrator");
+        System.err.println("Trying SafeMultivariateActualizedWithDriftIntegrator");
     }
 
     @Override
     public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement, double[] actualization) {
-
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -41,17 +41,17 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         assert (displacement != null);
         assert (displacement.length >= dimTrait);
 
+        assert (actualization != null);
+        assert (actualization.length >= dimTrait * dimTrait);
+
         System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
                 precision, 0, dimTrait * dimTrait);
 
         System.arraycopy(displacements, bufferIndex * dimTrait,
                 displacement, 0, dimTrait);
 
-        // Fill in actualization
-        assert (actualization != null);
-        assert (actualization.length >= dimTrait * dimTrait);
-
-        KroneckerOperation.makeIdentityMatrix(dimTrait, actualization);
+        System.arraycopy(actualizations, bufferIndex * dimTrait * dimTrait,
+                actualization, 0, dimTrait * dimTrait);
     }
 
     private static final boolean TIMING = false;
@@ -64,33 +64,89 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         displacements = new double[dimTrait * bufferCount];
         precisions = new double[dimTrait * dimTrait * bufferCount];
         variances = new double[dimTrait * dimTrait * bufferCount];
+        actualizations = new double[dimTrait * dimTrait * bufferCount];
         vector1 = new double[dimTrait];
         vector2 = new double[dimTrait];
     }
 
-    @Override
-    public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
-        super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
 
-        assert (diffusions != null);
-        assert (inverseDiffusions != null);
+    public void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha) {
+
+        assert (stationaryVariances != null);
 
         final int offset = dimTrait * dimTrait * precisionIndex;
-        DenseMatrix64F precision = wrap(diffusions, offset, dimTrait, dimTrait);
-        DenseMatrix64F variance = new DenseMatrix64F(dimTrait, dimTrait);
-        CommonOps.invert(precision, variance);
-        unwrap(variance, inverseDiffusions, offset);
+        DenseMatrix64F variance = wrap(inverseDiffusions, offset, dimTrait, dimTrait);
+        DenseMatrix64F alphaMatrix = wrap(alpha, offset, dimTrait, dimTrait);
+        DenseMatrix64F stationaryVariance = new DenseMatrix64F(dimTrait, dimTrait);
+
+        computeStationaryVariance(variance, alphaMatrix, stationaryVariance);
+        unwrap(stationaryVariance, stationaryVariances, offset);
 
         if (DEBUG) {
             System.err.println("At precision index: " + precisionIndex);
-            System.err.println("precision: " + precision);
             System.err.println("variance : " + variance);
+            System.err.println("stationary variance: " + stationaryVariance);
         }
     }
 
-    public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                                final double[] edgeLengths, final double[] driftRates,
-                                                int updateCount) {
+
+    private void computeStationaryVariance(DenseMatrix64F diffusion, DenseMatrix64F alphaMatrix, DenseMatrix64F stationaryVariance){
+        DenseMatrix64F variance_vec = vectorize(diffusion);
+        DenseMatrix64F kro_sum_A_inv = sumKronecker(alphaMatrix, alphaMatrix);
+        CommonOps.invert(kro_sum_A_inv);
+        DenseMatrix64F stationaryVarianceVec = new DenseMatrix64F(dimTrait * dimTrait, 1);
+        CommonOps.mult(kro_sum_A_inv, variance_vec, stationaryVarianceVec);
+        unVectorizeSquare(stationaryVarianceVec, stationaryVariance);
+    }
+
+    private DenseMatrix64F vectorize(DenseMatrix64F A){
+        int m = A.numRows;
+        int n = A.numCols;
+        DenseMatrix64F B = new DenseMatrix64F(m * n, 1);
+
+        for (int i = 0; i < n; ++i){
+            CommonOps.extract(A, 0, m, i, i+1, B, i * m, 0);
+        }
+
+        return B;
+    }
+
+    private DenseMatrix64F sumKronecker(DenseMatrix64F A, DenseMatrix64F B){
+        int m = A.numCols;
+        int n = B.numCols;
+
+        if (m != A.numRows || n != B.numRows){
+            throw new RuntimeException("Wrong dimensions in Kronecker sum");
+        }
+
+        DenseMatrix64F C1 = new DenseMatrix64F(m * n, m * n);
+        DenseMatrix64F C2 = new DenseMatrix64F(m * n, m * n);
+
+        DenseMatrix64F I_m = CommonOps.identity(m);
+        DenseMatrix64F I_n = CommonOps.identity(n);
+
+        CommonOps.kron(A, I_n, C1);
+        CommonOps.kron(B, I_m, C2);
+        CommonOps.addEquals(C1, C2);
+
+        return C1;
+    }
+
+    private void unVectorizeSquare(DenseMatrix64F vector, DenseMatrix64F matrix){
+        int n = matrix.numRows;
+        if (1 != vector.numCols || n * n != vector.numRows || n != matrix.numCols){
+            throw new RuntimeException("Wrong dimensions in unVectorizeSquare");
+        }
+
+        for (int i = 0; i < n * n; ++i){
+            CommonOps.extract(vector, i * n, (i+1) * n, 0, 1, matrix, 0, i);
+        }
+    }
+
+    public void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                         final double[] edgeLengths, final double[] optimalRates,
+                                                         final double[] strengthOfSelectionMatrix,
+                                                         int updateCount) {
 
         assert (diffusions != null);
         assert (probabilityIndices.length >= updateCount);
@@ -103,8 +159,9 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         final int matrixSize = dimTrait * dimTrait;
         final int unscaledOffset = matrixSize * precisionIndex;
 
+
         if (TIMING) {
-            startTime("diffusion");
+            startTime("actualization");
         }
 
         for (int up = 0; up < updateCount; ++up) {
@@ -118,52 +175,117 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
 
             final int scaledOffset = matrixSize * probabilityIndices[up];
 
-            scale(diffusions, unscaledOffset, 1.0 / edgeLength, precisions, scaledOffset, matrixSize);
-            scale(inverseDiffusions, unscaledOffset, edgeLength, variances, scaledOffset, matrixSize); // TODO Only if necessary
+            computeActualization(strengthOfSelectionMatrix, edgeLength, dimTrait, strengthOfSelectionMatrix, scaledOffset);
+        }
+
+        if (TIMING) {
+            endTime("actualization");
+        }
+
+
+        if (TIMING) {
+            startTime("diffusion");
+        }
+
+        for (int up = 0; up < updateCount; ++up) {
+
+            if (DEBUG) {
+                System.err.println("\t" + probabilityIndices[up] + " <- " + edgeLengths[up]);
+            }
+
+            final int scaledOffset = matrixSize * probabilityIndices[up];
+
+            computeVarianceBranch(stationaryVariances, unscaledOffset, dimTrait, actualizations, variances, scaledOffset);
+            invertVector(variances, precisions, scaledOffset, dimTrait);
         }
 
         if (TIMING) {
             endTime("diffusion");
         }
 
+        assert (optimalRates != null);
+        assert (displacements != null);
+        assert (optimalRates.length >= updateCount * dimTrait);
 
-        if (driftRates != null) {
+        if (TIMING) {
+            startTime("drift1");
+        }
 
-            assert (displacements != null);
-            assert (driftRates.length >= updateCount * dimTrait);
+        int offset = 0;
+        for (int up = 0; up < updateCount; ++up) {
 
-            if (TIMING) {
-                startTime("drift1");
-            }
+            final int scaledOffset = matrixSize * probabilityIndices[up];
+            final int pio = dimTrait * probabilityIndices[up];
 
-            int offset = 0;
-            for (int up = 0; up < updateCount; ++up) {
+            computeDisplacement(optimalRates, offset, actualizations, scaledOffset, displacements, pio, dimTrait);
+            offset += dimTrait;
+        }
 
-                final double edgeLength = edgeLengths[up];
-                final int pio = dimTrait * probabilityIndices[up];
-
-                scale(driftRates, offset, edgeLength, displacements, pio, dimTrait);
-                offset += dimTrait;
-            }
-
-            if (TIMING) {
-                endTime("drift1");
-            }
+        if (TIMING) {
+            endTime("drift1");
         }
 
         precisionOffset = dimTrait * dimTrait * precisionIndex;
         precisionLogDet = determinants[precisionIndex];
     }
 
-    private static void scale(final double[] source,
-                              final int sourceOffset,
-                              final double scale,
-                              final double[] destination,
-                              final int destinationOffset,
-                              final int length) {
-        for (int i = 0; i < length; ++i) {
-            destination[destinationOffset + i] = scale * source[sourceOffset + i];
-        }
+
+    private static void computeActualization(final double[] source,
+                                             final double edgeLength,
+                                             final int dim,
+                                             final double[] destination,
+                                             final int destinationOffset) {
+        DenseMatrix64F alphaMatrix = wrap(source, 0, dim, dim);
+        DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
+        scaledMatrixExponential(alphaMatrix, edgeLength, actualization); // QUESTION: Does this already exist ?
+        unwrap(actualization, destination, destinationOffset);
+    }
+
+    private static void computeVarianceBranch(final double[] source,
+                                              final int sourceOffset,
+                                              final int dim,
+                                              final double[] actualizations,
+                                              final double[] destination,
+                                              final int destinationOffset) {
+        DenseMatrix64F actualization = wrap(actualizations, destinationOffset, dim, dim);
+        DenseMatrix64F variance = wrap(source, sourceOffset, dim, dim);
+        DenseMatrix64F temp = new DenseMatrix64F(dim, dim);
+
+        CommonOps.multTransA(variance, actualization, temp);
+        CommonOps.multAdd(-1.0, actualization, temp, variance);
+
+        unwrap(variance, destination, destinationOffset);
+    }
+
+    private static void invertVector(final double[] source,
+                                     final double[] destination,
+                                     final int offset,
+                                     final int dim) {
+        DenseMatrix64F sourceMatrix = wrap(source, offset, dim, dim);
+        DenseMatrix64F destinationMatrix = new DenseMatrix64F(dim, dim);
+
+        CommonOps.invert(sourceMatrix, destinationMatrix);
+
+        unwrap(destinationMatrix, destination, offset);
+    }
+
+
+    private static void computeDisplacement(final double[] source,
+                                            final int sourceOffset,
+                                            final double[] actualizations,
+                                            final int actualizationOffset,
+                                            final double[] destination,
+                                            final int destinationOffset,
+                                            final int dim) {
+        DenseMatrix64F actualization = wrap(actualizations, actualizationOffset, dim, dim);
+        DenseMatrix64F optVal = wrap(source, sourceOffset, dim, 1);
+        DenseMatrix64F temp = CommonOps.identity(dim);
+        DenseMatrix64F displacement = new DenseMatrix64F(dim, 1);
+
+        CommonOps.addEquals(temp, -1.0, actualization);
+        CommonOps.mult(temp, optVal, displacement);
+
+        unwrap(displacement, destination, destinationOffset);
     }
 
     @Override
@@ -547,5 +669,6 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         }
     }
 
-    protected double[] displacements;
+    private double[] actualizations;
+    private double[] stationaryVariances;
 }

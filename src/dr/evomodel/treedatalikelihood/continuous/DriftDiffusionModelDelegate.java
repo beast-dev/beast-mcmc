@@ -86,6 +86,9 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
     public boolean hasDrift() { return true; }
 
     @Override
+    public boolean hasActualization() { return false; }
+
+    @Override
     protected double[] getDriftRates(int[] branchIndices, int updateCount) {
 
         final double[] drift = new double[updateCount * dim];  // TODO Reuse?

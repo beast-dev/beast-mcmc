@@ -131,6 +131,15 @@ public interface Plot {
      */
     String getName();
 
+    int getPlotNumber();
+
+    void setPlotNumber(int plotNumber);
+
+    int getPlotCount();
+
+    void setPlotCount(int plotCount);
+
+
     /**
      * A point on the plot has been clicked
      */
@@ -213,7 +222,24 @@ public interface Plot {
         protected double xScale, yScale, xOffset, yOffset;
 
         private String name;
-        protected int plotNumber, plotCount;
+
+        public int getPlotNumber() {
+            return plotNumber;
+        }
+
+        public void setPlotNumber(int plotNumber) {
+            this.plotNumber = plotNumber;
+        }
+
+        public int getPlotCount() {
+            return plotCount;
+        }
+
+        public void setPlotCount(int plotCount) {
+            this.plotCount = plotCount;
+        }
+
+        private int plotNumber, plotCount;
 
         private Set<Integer> selectedPoints = new HashSet<Integer>();
 

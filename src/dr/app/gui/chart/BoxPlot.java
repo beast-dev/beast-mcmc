@@ -97,9 +97,9 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
         if (isVertical) {
             // rotate -90
             float y1 = (float) transformY(lower);
-            float x1 = (float) transformX(plotNumber + 1 - (boxWidth / 2));
+            float x1 = (float) transformX(getPlotNumber() + 1 - (boxWidth / 2));
             float y2 = (float) transformY(upper);
-            float x2 = (float) transformX(plotNumber + 1 + (boxWidth / 2));
+            float x2 = (float) transformX(getPlotNumber() + 1 + (boxWidth / 2));
 
             boxPath.moveTo(x1, y1);
             boxPath.lineTo(x2, y1);
@@ -109,7 +109,7 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
             boxPath.closePath();
 
             if (showTails) {
-                float x = (float) transformX(plotNumber + 1);
+                float x = (float) transformX(getPlotNumber() + 1);
                 float y3 = (float) transformY(lowerTail);
                 float y4 = (float) transformY(upperTail);
                 tailPath.moveTo(x, y3);
@@ -125,9 +125,9 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
 
         } else {
             float x1 = (float) transformX(lower);
-            float y1 = (float) transformY(plotNumber + 1 - (boxWidth / 2));
+            float y1 = (float) transformY(getPlotNumber() + 1 - (boxWidth / 2));
             float x2 = (float) transformX(upper);
-            float y2 = (float) transformY(plotNumber + 1 + (boxWidth / 2));
+            float y2 = (float) transformY(getPlotNumber() + 1 + (boxWidth / 2));
 
             boxPath.moveTo(x1, y1);
             boxPath.lineTo(x2, y1);
@@ -137,7 +137,7 @@ public class BoxPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
             boxPath.closePath();
 
             if (showTails) {
-                float y = (float) transformY(plotNumber + 1);
+                float y = (float) transformY(getPlotNumber() + 1);
                 float x3 = (float) transformX(lowerTail);
                 float x4 = (float) transformX(upperTail);
                 tailPath.moveTo(x3, y);

@@ -259,6 +259,7 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
             return node != null;
         }
 
+        @Override
         public boolean isNodeParameterChanged() {
             return parameter != null;
         }

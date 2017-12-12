@@ -38,20 +38,14 @@ public abstract class AbstractAlgebraStatistic extends Statistic.Abstract {
     private int dimension = 0;
     private boolean elementwise;
     private final double[] constants;
-    private boolean absolute;
 
-    public AbstractAlgebraStatistic(String name, boolean elementwise, double[] constants, boolean absolute) {
+    public AbstractAlgebraStatistic(String name, boolean elementwise, double[] constants) {
         super(name);
         this.elementwise = elementwise;
         this.constants = constants;
         if (constants != null) {
             firstDataDimension = constants.length;
         }
-        this.absolute = absolute;
-    }
-
-    public AbstractAlgebraStatistic(String name, boolean elementwise, double[] constants) {
-        this(name, elementwise, constants, false);
     }
 
     public void addStatistic(Statistic statistic) {
@@ -100,14 +94,8 @@ public abstract class AbstractAlgebraStatistic extends Statistic.Abstract {
                 if (Double.isNaN(value)) {
                     value = statistic.getStatisticValue(0);
                 }
-                if(absolute){
-                    for (int j = 1; j < statistic.getDimension(); j++) {
-                        value = doOperation(Math.abs(value), Math.abs(statistic.getStatisticValue(j)));
-                    }
-                }else {
-                    for (int j = 1; j < statistic.getDimension(); j++) {
-                        value = doOperation(value, statistic.getStatisticValue(j));
-                    }
+                for (int j = 1; j < statistic.getDimension(); j++) {
+                    value = doOperation(value, statistic.getStatisticValue(j));
                 }
             } else {
                 if (Double.isNaN(value)) {

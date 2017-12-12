@@ -31,16 +31,23 @@ package dr.inference.model;
  */
 public class SumStatistic  extends AbstractAlgebraStatistic {
 
+    private boolean absolute;
+
     public SumStatistic(String name, boolean elementwise, double[] constants, boolean absolute) {
-        super(name, elementwise, constants, absolute);
+        super(name, elementwise, constants);
+        this.absolute = absolute;
     }
 
-    public SumStatistic(String name, boolean elementwise, double[] constants) {
+    public SumStatistic(String name, boolean elementwise, double[] constants){
         this(name, elementwise, constants, false);
     }
 
     @Override
     protected double doOperation(double a, double b) {
-        return a + b;
+        if(!absolute) {
+            return a + b;
+        }else{
+            return Math.abs(a) + Math.abs(b);
+        }
     }
 }

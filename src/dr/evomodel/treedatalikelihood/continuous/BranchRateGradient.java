@@ -29,16 +29,23 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateWithDriftIntegrator;
+import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
+import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.Reportable;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.CholeskyDecomposition;
+import org.ejml.ops.CommonOps;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -46,17 +53,19 @@ import org.ejml.data.DenseMatrix64F;
 public class BranchRateGradient implements GradientWrtParameterProvider, Reportable {
 
     private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait treeTraitProvider;
+    private final TreeTrait<List<BranchSufficientStatistics>> treeTraitProvider;
     private final Tree tree;
-
-    private final int nTaxa;
     private final int nTraits;
-    private final int dimTrait;
-    private final int dimPartial;
-
+    private final int dim;
     private final Parameter rateParameter;
-    private final MatrixParameterInterface diffusionParameter;
     private final ArbitraryBranchRates branchRateModel;
+    private final MatrixParameterInterface diffusionParameter;
+
+    private final DenseMatrix64F L;
+    private final DenseMatrix64F Lt;
+    private final DenseMatrix64F matrix0;
+    private final DenseMatrix64F matrix1;
+    private final DenseMatrix64F vector0;
 
     public BranchRateGradient(String traitName,
                               TreeDataLikelihood treeDataLikelihood,
@@ -68,30 +77,39 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.rateParameter = rateParameter;
-
-
-
         this.diffusionParameter = likelihoodDelegate.getDiffusionModel().getPrecisionParameter();
-        branchRateModel = (ArbitraryBranchRates) treeDataLikelihood.getBranchRateModel();
+
+        BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
+        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null; 
 
         // TODO Move into different constructor / parser
-        String fcdName = TipFullConditionalDistributionDelegate.getName(traitName);
-        if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
-            likelihoodDelegate.addFullConditionalDensityTrait(traitName);
+        String bcdName = BranchConditionalDistributionDelegate.getName(traitName);
+        if (treeDataLikelihood.getTreeTrait(bcdName) == null) {
+            likelihoodDelegate.addBranchConditionalDensityTrait(traitName);
         }
 
-        treeTraitProvider = treeDataLikelihood.getTreeTrait(fcdName);
+        @SuppressWarnings("unchecked")
+        TreeTrait<List<BranchSufficientStatistics>> unchecked = treeDataLikelihood.getTreeTrait(bcdName);
+        treeTraitProvider = unchecked;
 
         assert (treeTraitProvider != null);
 
-        nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
         nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
-        dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-        dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
-
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
+        dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+        assert (dim == diffusionParameter.getColumnDimension());
+
+        if (likelihoodDelegate.getIntegrator() instanceof SafeMultivariateWithDriftIntegrator) {
+            throw new RuntimeException("Not yet implemented with drift");
+        }
+
+        L = new DenseMatrix64F(dim, dim);
+        Lt = new DenseMatrix64F(dim, dim);
+        matrix0 = new DenseMatrix64F(dim, dim);
+        matrix1 = new DenseMatrix64F(dim, dim);
+        vector0 = new DenseMatrix64F(dim, 1);
     }
 
     @Override
@@ -109,71 +127,33 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         return getParameter().getDimension();
     }
 
-    private class BranchInformation {
-
-        WrappedVector childMean;
-        DenseMatrix64F childPrecision;
-        DenseMatrix64F childVariance;
-
-        WrappedVector parentMean;
-        DenseMatrix64F parentPrecision;
-        DenseMatrix64F parentVariance;
-
-        DenseMatrix64F branchPrecision;
-
-        private BranchInformation(final double[] fcd,
-                                  final NodeRef node, final NodeRef parent,
-                                  final DenseMatrix64F branchPrecision) {
-
-            int nodeOffset = dimPartial * node.getNumber();
-            int parentOffset = dimPartial * parent.getNumber();
-
-            this.childMean = new WrappedVector.Raw(fcd, nodeOffset, dimTrait);
-            this.childPrecision = MissingOps.wrap(fcd, nodeOffset + dimTrait, dimTrait, dimTrait);
-            this.childVariance = MissingOps.wrap(fcd, nodeOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-
-            this.parentMean = new WrappedVector.Raw(fcd, parentOffset, dimTrait);
-            this.parentPrecision = MissingOps.wrap(fcd, parentOffset + dimTrait, dimTrait, dimTrait);
-            this.parentVariance = MissingOps.wrap(fcd, parentOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-
-            this.branchPrecision = branchPrecision;
-        }
-
-        public BranchInformation(double[] fcd, NodeRef node, NodeRef parent) {
-        }
-    }
-
-    class WrappedMatrix extends DenseMatrix64F {
-
-        public WrappedMatrix() {
-            super();
-        }
-    }
-
-    DenseMatrix64F test;
-    
     @Override
     public double[] getGradientLogDensity() {
 
         double[] result = new double[rateParameter.getDimension()];
 
-        double[] fcd = (double[]) treeTraitProvider.getTrait(tree, null);
+        getCholeskyDecomposition(diffusionParameter, L, Lt);
 
-        DenseMatrix64F branchPrecision = new DenseMatrix64F(diffusionParameter.getParameterAsMatrix());
+        // TODO Do single call to traitProvider with node == null (get full tree)
+//        List<BranchSufficientStatistics> statisticsForTree = (List<BranchSufficientStatistics>)
+//                treeTraitProvider.getTrait(tree, null);
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
 
             if (!tree.isRoot(node)) {
 
-                NodeRef parent = tree.getParent(node);
+                List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
 
-                BranchInformation branchInformation = new BranchInformation(fcd, node, parent);
+                assert (statisticsForNode.size() == nTraits);
 
                 double gradient = 0.0;
-                // TODO Compute
 
-                final int destinationIndex = branchRateModel.getParameterIndexFromNode(node);
+                for (int trait = 0; trait < nTraits; ++trait) {
+                    gradient += getGradientForBranch(statisticsForNode.get(trait), L, Lt);
+                }
+
+                final int destinationIndex = getParameterIndexFromNode(node);
                 assert (destinationIndex != -1);
 
                 result[destinationIndex] = gradient;
@@ -183,34 +163,76 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         return result;
     }
 
-    private static double getGradientForBranch(BranchInformation branch) {
+    private void getCholeskyDecomposition(MatrixParameterInterface input, DenseMatrix64F L, DenseMatrix64F Lt) {
 
-        double gradient = 0.0;
+        CholeskyDecomposition<DenseMatrix64F> cholesky = DecompositionFactory.chol(dim, true);
+        DenseMatrix64F matrix = DenseMatrix64F.wrap(dim, dim, input.getParameterValues());
 
+        if( !cholesky.decompose(matrix)) {
+            throw new RuntimeException("Cholesky decomposition failed!");
+        }
+
+//        return cholesky.getT(null);
+        cholesky.getT(L);
+        CommonOps.transpose(L, Lt);
+    }
+
+    private int getParameterIndexFromNode(NodeRef node) {
+        return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
+    }
+
+    private double getGradientForBranch(BranchSufficientStatistics statistics,
+                                               DenseMatrix64F L, DenseMatrix64F Lt) {
+
+        final NormalSufficientStatistics child = statistics.getChild();
+        final NormalSufficientStatistics branch = statistics.getBranch();
+        final NormalSufficientStatistics parent = statistics.getParent();
 
         if (DEBUG) {
-            System.err.println(branch.childMean);
-            System.err.println(branch.childPrecision);
-            System.err.println(branch.parentMean);
-            System.err.println(branch.parentPrecision);
+            System.err.println("L = " + NormalSufficientStatistics.toVectorizedString(L));
+            System.err.println("B = " + statistics.toVectorizedString());
+        }
+
+        // TODO Consider having traitProvider return variance, if rate-limiting
+        DenseMatrix64F V = matrix0;
+        DenseMatrix64F delta = vector0;
+
+        for (int row = 0; row < dim; ++row) {
+            delta.unsafe_set(row, 0,
+                    child.getMean(row) - parent.getMean(row) // TODO Correct for drift
+            );
+        }
+
+        for (int row = 0; row < dim; ++row) {
+            for (int col = 0; col < dim; ++col) {
+
+                V.unsafe_set(row, col,
+                        child.getVariance(row, col)
+                                - 2 * branch.getVariance(row, col)
+                                + parent.getVariance(row, col)
+                                + delta.unsafe_get(row, 0) * delta.unsafe_get(col, 0)
+                );
+            }
+        }
+
+        if (DEBUG) {
+            System.err.println("V = " + NormalSufficientStatistics.toVectorizedString(V));
+        }
+
+        DenseMatrix64F tmp = matrix1;
+        CommonOps.mult(Lt, V, tmp);
+        DenseMatrix64F LtVL = matrix0;
+        CommonOps.mult(tmp, L, LtVL);
+
+        double gradient = LtVL.unsafe_get(0, 0);
+
+        if (DEBUG) {
+            System.err.println("LtVL = " + NormalSufficientStatistics.toVectorizedString(LtVL));
+            System.err.println("gradient = " + gradient);
         }
 
         return gradient;
     }
-
-//    private double[] map(final double[] in) {
-//        double[] out = new double[in.length];
-//
-//        for (int i = 0; i < tree.getNodeCount(); ++i) {
-//            NodeRef node = tree.getNode(i);
-//            int index = branchRateModel.getParameterIndexFromNode(node);
-//            if (index != -1) {
-//                out[index] = in[node.getNumber()];
-//            }
-//        }
-//
-//        return out;
-//    }
 
     @Override
     public String getReport() {

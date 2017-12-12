@@ -317,12 +317,6 @@ public class ParameterPriorGenerator extends Generator {
                 // Do nothing, densities are already in a distributionLikelihood
                 break;
             case DIRICHLET_PRIOR:
-                // at the moment I don't think we want anything other than Dirichlet(1, ..., 1)
-//                int dimensions = parameter.getParameterDimensionWeights().length;
-//                String counts = "1.0";
-//                for (int i = 1; i < dimensions; i++) {
-//                    counts += " 1.0";
-//                }
                 writer.writeOpenTag(PriorParsers.DIRICHLET_PRIOR,
                         new Attribute[]{
                                 new Attribute.Default<String>(PriorParsers.ALPHA, "1.0"),

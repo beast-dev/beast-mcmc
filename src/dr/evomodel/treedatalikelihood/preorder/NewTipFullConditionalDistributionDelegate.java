@@ -8,7 +8,6 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +25,8 @@ public class NewTipFullConditionalDistributionDelegate extends
                                                      ContinuousTraitPartialsProvider dataModel,
                                                      ConjugateRootTraitPrior rootPrior,
                                                      ContinuousRateTransformation rateTransformation,
-                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                                     ContinuousDiffusionIntegrator.PartialIntent intent) {
-        super(intent.getPrefix() + name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate, intent);
+                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
     }
 
     public static String getName(String name) {
@@ -92,7 +90,7 @@ public class NewTipFullConditionalDistributionDelegate extends
 
         cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(
                 (node == null) ? -1 : node.getNumber()
-        ), partial, intent);
+        ), partial);
 
         List<NormalSufficientStatistics> statistics = new ArrayList<NormalSufficientStatistics>();
 

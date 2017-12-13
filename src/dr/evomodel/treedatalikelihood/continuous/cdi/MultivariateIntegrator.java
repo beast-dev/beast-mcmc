@@ -137,7 +137,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         for (int trait = 0; trait < numTraits; ++trait) {
 
             // A. Get current precision of k and j
-            final DenseMatrix64F Pk = wrap(preNodePartials, kbo + dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Pk = wrap(preOrderPartials, kbo + dimTrait, dimTrait, dimTrait);
 //                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
 
 //                final DenseMatrix64F Vk = wrap(prePartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
@@ -166,7 +166,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             for (int g = 0; g < dimTrait; ++g) {
                 double sum = 0.0;
                 for (int h = 0; h < dimTrait; ++h) {
-                    sum += Pk.unsafe_get(g, h) * preNodePartials[kbo + h]; // Read parent
+                    sum += Pk.unsafe_get(g, h) * preOrderPartials[kbo + h]; // Read parent
                     sum += Pjp.unsafe_get(g, h) * partials[jbo + h];   // Read sibling
                 }
                 tmp[g] = sum;
@@ -176,8 +176,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
                 for (int h = 0; h < dimTrait; ++h) {
                     sum += Vip.unsafe_get(g, h) * tmp[h];
                 }
-                preNodePartials[ibo + g] = sum; // Write node
-                preBranchPartials[ibo +g] = sum; // TODO Only when necessary
+                preOrderPartials[ibo + g] = sum; // Write node
+//                preBranchPartials[ibo +g] = sum; // TODO Only when necessary
             }
 
             // C. Inflate variance along node branch
@@ -189,20 +189,20 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             InversionResult ci = safeInvert(Vi, Pi, false);
 
             // X. Store precision results for node
-            unwrap(Pi, preNodePartials, ibo + dimTrait);
-            unwrap(Vi, preNodePartials, ibo + dimTrait + dimTrait * dimTrait);
-            unwrap(Pip, preBranchPartials, ibo + dimTrait); // TODO Only when necessary
+            unwrap(Pi, preOrderPartials, ibo + dimTrait);
+            unwrap(Vi, preOrderPartials, ibo + dimTrait + dimTrait * dimTrait);
+//            unwrap(Pip, preBranchPartials, ibo + dimTrait); // TODO Only when necessary
 
             if (DEBUG) {
                 System.err.println("trait: " + trait);
-                System.err.println("pM: " + new WrappedVector.Raw(preNodePartials, kbo, dimTrait));
+                System.err.println("pM: " + new WrappedVector.Raw(preOrderPartials, kbo, dimTrait));
                 System.err.println("pP: " + Pk);
                 System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
                 System.err.println("sV: " + Vj);
                 System.err.println("sVp: " + Vjp);
                 System.err.println("sPp: " + Pjp);
                 System.err.println("Pip: " + Pip);
-                System.err.println("cM: " + new WrappedVector.Raw(preNodePartials, ibo, dimTrait));
+                System.err.println("cM: " + new WrappedVector.Raw(preOrderPartials, ibo, dimTrait));
                 System.err.println("cV: " + Vi);
             }
 
@@ -553,18 +553,18 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         // TODO For each trait in parallel
         for (int trait = 0; trait < numTraits; ++trait) {
 
-            final DenseMatrix64F Proot = wrap(preNodePartials, rootOffset + dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Vroot = wrap(preNodePartials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Proot = wrap(preOrderPartials, rootOffset + dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Vroot = wrap(preOrderPartials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
             // TODO Block below is for the conjugate prior ONLY
             {
                 final DenseMatrix64F tmp = matrix0;
 
                 CommonOps.mult(Pd, Proot, tmp);
-                unwrap(tmp, preNodePartials, rootOffset + dimTrait);
+                unwrap(tmp, preOrderPartials, rootOffset + dimTrait);
 
                 CommonOps.mult(Vd, Vroot, tmp);
-                unwrap(tmp, preNodePartials, rootOffset + dimTrait + dimTrait * dimTrait);
+                unwrap(tmp, preOrderPartials, rootOffset + dimTrait + dimTrait * dimTrait);
             }
             rootOffset += dimPartialForTrait;
         }

@@ -382,6 +382,48 @@ public class MissingOps {
 
     private static double[] buffer = new double[16];
 
+    public static void safeWeightedAverage(final WrappedVector mi,
+                                           final DenseMatrix64F Pi,
+                                           final WrappedVector mj,
+                                           final DenseMatrix64F Pj,
+                                           final WrappedVector mk,
+                                           final DenseMatrix64F Vk,
+                                           final int dimTrait) {
+//        countZeroDiagonals(Vk);
+        final double[] tmp = new double[dimTrait];
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            boolean iInf = Double.isInfinite(Pi.unsafe_get(g,g));
+            boolean jInf = Double.isInfinite(Pj.unsafe_get(g,g));
+            if (iInf && jInf) {
+                throw new IllegalArgumentException("Both precision matrices are infinite in dimension " + g);
+            } else if (iInf) {
+                sum = mi.get(g);
+            } else if (jInf) {
+                sum = mj.get(g);
+            } else {
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += Pi.unsafe_get(g, h) * mi.get(h);
+                    sum += Pj.unsafe_get(g, h) * mj.get(h);
+                }
+            }
+
+            tmp[g] = sum;
+        }
+
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            if (Vk.unsafe_get(g, g) == 0.0) {
+                sum = tmp[g];
+            } else {
+                for (int h = 0; h < dimTrait; ++h) {
+                    sum += Vk.unsafe_get(g, h) * tmp[h];
+                }
+            }
+            mk.set(g, sum);
+        }
+    }
+
     public static void weightedAverage(final WrappedVector mi,
                                        final DenseMatrix64F Pi,
                                        final WrappedVector mj,

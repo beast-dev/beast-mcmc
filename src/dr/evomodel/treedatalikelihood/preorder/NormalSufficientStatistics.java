@@ -55,6 +55,12 @@ public class NormalSufficientStatistics {
         this.precision = precision;
     }
 
+    public NormalSufficientStatistics(DenseMatrix64F mean, DenseMatrix64F precision, DenseMatrix64F variance) {
+        this.mean = mean;
+        this.precision = precision;
+        this.variance = variance;
+    }
+
     public double getMean(int row) {
         return mean.get(row);
     }

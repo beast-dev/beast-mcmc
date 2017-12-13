@@ -62,13 +62,9 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
     private final int dim;
     private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
-//    private final MatrixParameterInterface diffusionParameter;
 
-//    private final DenseMatrix64F L;
-//    private final DenseMatrix64F Lt;
     private final DenseMatrix64F matrix0;
     private final DenseMatrix64F matrix1;
-//    private final DenseMatrix64F matrix2;
     private final DenseMatrix64F vector0;
 
     public BranchRateGradient(String traitName,
@@ -81,7 +77,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.rateParameter = rateParameter;
-//        this.diffusionParameter = likelihoodDelegate.getDiffusionModel().getPrecisionParameter();
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
         this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
@@ -103,17 +98,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
         dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-//        assert (dim == diffusionParameter.getColumnDimension());
 
         if (likelihoodDelegate.getIntegrator() instanceof SafeMultivariateWithDriftIntegrator) {
             throw new RuntimeException("Not yet implemented with drift");
         }
 
-//        L = new DenseMatrix64F(dim, dim);
-//        Lt = new DenseMatrix64F(dim, dim);
         matrix0 = new DenseMatrix64F(dim, dim);
         matrix1 = new DenseMatrix64F(dim, dim);
-//        matrix2 = new DenseMatrix64F(dim, dim);
         vector0 = new DenseMatrix64F(dim, 1);
     }
 
@@ -167,43 +158,14 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         return result;
     }
 
-//    private void getCholeskyDecomposition(MatrixParameterInterface input, DenseMatrix64F L, DenseMatrix64F Lt) {
-//
-//        CholeskyDecomposition<DenseMatrix64F> cholesky = DecompositionFactory.chol(dim, true);
-//        DenseMatrix64F matrix = DenseMatrix64F.wrap(dim, dim, input.getParameterValues());
-//
-//        if( !cholesky.decompose(matrix)) {
-//            throw new RuntimeException("Cholesky decomposition failed!");
-//        }
-//
-////        return cholesky.getT(null);
-//        cholesky.getT(L);
-//        CommonOps.transpose(L, Lt);
-//    }
-//
-//    private void getCholeskyDecomposition(DenseMatrix64F input, DenseMatrix64F L, DenseMatrix64F Lt) {
-//
-//        CholeskyDecomposition<DenseMatrix64F> cholesky = DecompositionFactory.chol(dim, true);
-//
-//        if( !cholesky.decompose(input)) {
-//            throw new RuntimeException("Cholesky decomposition failed!");
-//        }
-//
-////        return cholesky.getT(null);
-//        cholesky.getT(L);
-//        CommonOps.transpose(L, Lt);
-//    }
-//
-
     private int getParameterIndexFromNode(NodeRef node) {
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
-
-
+    
+    @SuppressWarnings("deprecation")
     private NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics child,
                                                               NormalSufficientStatistics parent) {
 
-        @SuppressWarnings("deprecated")
         DenseMatrix64F totalP = new DenseMatrix64F(dim, dim);
         CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
 
@@ -223,6 +185,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         return new NormalSufficientStatistics(mean, totalP, totalV);
     }
 
+    @SuppressWarnings("deprecation")
     private double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
 
         final NormalSufficientStatistics child = statistics.getChild();
@@ -230,7 +193,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         final NormalSufficientStatistics parent = statistics.getParent();
 
         if (DEBUG) {
-//            System.err.println("L = " + NormalSufficientStatistics.toVectorizedString(L));
             System.err.println("B = " + statistics.toVectorizedString());
         }
 
@@ -298,8 +260,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
 
         return grad1 + grad2;
     }
-
-
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override

@@ -82,17 +82,15 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
 
-        double rate = getBranchRate(tree, node);
-
-        if (exp) {
-            throw new RuntimeException("Not yet implemented");
-        }
-
+        double differential = exp ? 1.0 : getBranchRate(tree, node);
+        
         if (reciprocal) {
-            return -1.0 * rate;
+            differential = -differential;
+        } else {
+            differential = 1 / differential;
         }
-        // else
-        return 1.0 / rate;
+        
+        return differential;
     }
 
     public double getBranchRate(final Tree tree, final NodeRef node) {

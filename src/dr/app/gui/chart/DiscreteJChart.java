@@ -83,7 +83,7 @@ public class DiscreteJChart extends JChart {
             g2.setPaint(getLabelPaint());
             double width = g2.getFontMetrics().stringWidth(label);
 
-            if (label == null) label = xAxis.format(value);
+            if (label == null) label = getXAxis().format(value);
             g2.drawString(label, (float) (pos - (width / 2)), (float) (getPlotBounds().getMaxY() + (getMajorTickSize() * 1.25) + getXTickLabelOffset()));
 
         } else {
@@ -95,7 +95,7 @@ public class DiscreteJChart extends JChart {
             g2.setPaint(getLabelPaint());
             double width = g2.getFontMetrics().stringWidth(label);
 
-            if (label == null) label = yAxis.format(value);
+            if (label == null) label = getYAxis().format(value);
 			g2.drawString(label, (float)(getPlotBounds().getMinX() - width - (getMajorTickSize() * 1.25)), (float)(pos + getYTickLabelOffset()));
         }
     }

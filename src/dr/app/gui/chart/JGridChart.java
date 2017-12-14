@@ -63,9 +63,6 @@ public class JGridChart extends JChart {
         xVariableAxis = new CustomAxis(1, 2);
         yVariableAxis = new CustomAxis(1, 2);
 
-        xVariableAxis.setRange(1.0, columnCount);
-        yVariableAxis.setRange(1.0, rowCount);
-
         //this sets the axes on the JGridChart
         setXAxis(xVariableAxis);
         setYAxis(yVariableAxis);
@@ -87,14 +84,34 @@ public class JGridChart extends JChart {
     @Override
     public void addPlot(Plot plot) {
 
-        plot.setAxes(xAxis, yAxis);
-        plots.add(plot);
+        super.addPlot(plot);
+
+        int rowCount = this.rowCount;
+        int columnCount = this.columnCount;
 
         if (rowCount < 1 || columnCount < 1) {
             // set the range manually to the square root of the number of plots
-            xVariableAxis.setRange(1.0, Math.sqrt(getPlotCount()));
-            yVariableAxis.setRange(1.0, Math.sqrt(getPlotCount()));
+            int k = (int)Math.sqrt(getPlotCount());
+            rowCount = getPlotCount() / k;
+            columnCount = getPlotCount() % k;
+
+            if (plot.getXLocation() < 0 || plot.getYLocation() < 0) {
+                int x = 0;
+                int y = 0;
+                for (Plot p : getPlots()) {
+                    p.setLocation(x, y);
+                    x++;
+                    if (x >= columnCount) {
+                        x = 0;
+                        y++;
+                    }
+                }
+            }
         }
+
+        xVariableAxis.setRange(1.0, columnCount);
+        yVariableAxis.setRange(1.0, rowCount);
+
 
         recalibrate();
         repaint();

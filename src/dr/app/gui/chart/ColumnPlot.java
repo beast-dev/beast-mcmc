@@ -116,7 +116,7 @@ public class ColumnPlot extends Plot.AbstractPlot {
 
         double spaceWidth = 1.0 * columnWidth;
         double spaceDelta = (1 - spaceWidth) / 2;
-        double width = spaceWidth / getPlotCount();
+        double width = spaceWidth / getChart().getPlotCount();
         double barWidth = width * columnWidth;
         double delta = (width - barWidth) / 2;
 

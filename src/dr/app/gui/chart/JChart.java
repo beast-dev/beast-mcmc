@@ -41,8 +41,8 @@ public class JChart extends JPanel {
      *
      */
     private static final long serialVersionUID = -7064065852204509247L;
-    protected Axis yAxis, xAxis;
-    protected List<Plot> plots = new ArrayList<Plot>();
+    private Axis yAxis, xAxis;
+    private List<Plot> plots = new ArrayList<Plot>();
 
     private Paint plotBackgroundPaint = Color.white;
 
@@ -138,6 +138,8 @@ public class JChart extends JPanel {
 
     public void addPlot(Plot plot) {
         plot.setAxes(xAxis, yAxis);
+        plot.setChart(this);
+        plot.setPlotNumber(plots.size());
         plots.add(plot);
         recalibrate();
         repaint();
@@ -160,6 +162,14 @@ public class JChart extends JPanel {
         yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
         recalibrate();
         repaint();
+    }
+
+    public List<Plot> getPlots() {
+        return plots;
+    }
+
+    public void setPlots(List<Plot> plots) {
+        this.plots = plots;
     }
 
     public int getPlotCount() {

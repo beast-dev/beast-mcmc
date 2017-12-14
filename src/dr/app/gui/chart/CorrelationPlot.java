@@ -68,7 +68,7 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
             new Color(251, 106, 74, 32),
             new Color(252, 174, 145, 32),
             new Color(254, 229, 217, 32),
-            new Color( 255, 255, 255, 32),
+            new Color(255, 255, 255, 32),
             new Color(239, 243, 255, 32),
             new Color(189, 215, 231, 32),
             new Color(107, 174, 214, 32),
@@ -147,10 +147,10 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
         //g2.setPaint(linePaint);
         //g2.setStroke(lineStroke);
 
-        double x1 = (getPlotNumber() / (int) Math.sqrt(getPlotCount())) + (1.0 - ELLIPSE_HALF_WIDTH);
-        double y1 = (getPlotNumber() % (int) Math.sqrt(getPlotCount())) + (1.0 - ELLIPSE_HALF_WIDTH);
-        double x2 = (getPlotNumber() / (int) Math.sqrt(getPlotCount())) + (1.0 + ELLIPSE_HALF_WIDTH);
-        double y2 = (getPlotNumber() % (int) Math.sqrt(getPlotCount())) + (1.0 + ELLIPSE_HALF_WIDTH);
+        double x1 = (1.0 - ELLIPSE_HALF_WIDTH);
+        double y1 = (1.0 - ELLIPSE_HALF_WIDTH);
+        double x2 = (1.0 + ELLIPSE_HALF_WIDTH);
+        double y2 = (1.0 + ELLIPSE_HALF_WIDTH);
 
         //System.out.println("(" + x1 + "," + y1 + ") (" + x2 + "," + y2 + ")");
 

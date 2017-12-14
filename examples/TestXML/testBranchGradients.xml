@@ -42,7 +42,7 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<arbitraryBranchRates id="branchRates" reciprocal="false" centerAtOne="false">
+	<arbitraryBranchRates id="branchRates" reciprocal="false" exp="true" centerAtOne="false">
 		<rates>
 			<parameter id="actual.rates" value="4 3 2 1" lower="0"/>
 		</rates>

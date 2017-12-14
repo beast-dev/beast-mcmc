@@ -460,14 +460,39 @@ public class MissingOps {
                                        final DenseMatrix64F Vk,
                                        final int dimTrait) {
         final double[] tmp = new double[dimTrait];
+        weightedAverage(ipartial, ibo, Pi, jpartial, jbo, Pj, kpartial, kbo, Vk, dimTrait, tmp);
+    }
+
+    public static void weightedSum(final double[] ipartial,
+                                       final int ibo,
+                                       final DenseMatrix64F Pi,
+                                       final double[] jpartial,
+                                       final int jbo,
+                                       final DenseMatrix64F Pj,
+                                       final int dimTrait,
+                                       final double[] out) {
         for (int g = 0; g < dimTrait; ++g) {
             double sum = 0.0;
             for (int h = 0; h < dimTrait; ++h) {
                 sum += Pi.unsafe_get(g, h) * ipartial[ibo + h];
                 sum += Pj.unsafe_get(g, h) * jpartial[jbo + h];
             }
-            tmp[g] = sum;
+            out[g] = sum;
         }
+    }
+
+    public static void weightedAverage(final double[] ipartial,
+                                       final int ibo,
+                                       final DenseMatrix64F Pi,
+                                       final double[] jpartial,
+                                       final int jbo,
+                                       final DenseMatrix64F Pj,
+                                       final double[] kpartial,
+                                       final int kbo,
+                                       final DenseMatrix64F Vk,
+                                       final int dimTrait,
+                                       final double[] tmp) {
+        weightedSum(ipartial, ibo, Pi, jpartial, jbo, Pj, dimTrait, tmp);
         for (int g = 0; g < dimTrait; ++g) {
             double sum = 0.0;
             for (int h = 0; h < dimTrait; ++h) {
@@ -476,4 +501,61 @@ public class MissingOps {
             kpartial[kbo + g] = sum;
         }
     }
+
+    public static double weightedInnerProduct(final double[] partials,
+                                              final int bo,
+                                              final DenseMatrix64F P,
+                                              final int dimTrait) {
+        double SS = 0;
+
+        // vector-matrix-vector TODO in parallel
+        for (int g = 0; g < dimTrait; ++g) {
+            final double ig = partials[bo + g];
+            for (int h = 0; h < dimTrait; ++h) {
+                final double ih = partials[bo + h];
+                SS += ig * P.unsafe_get(g, h) * ih;
+            }
+        }
+
+        return SS;
+    }
+
+    public static double weightedThreeInnerProduct(final double[] ipartials,
+                                                   final int ibo,
+                                                   final DenseMatrix64F Pip,
+                                                   final double[] jpartials,
+                                                   final int jbo,
+                                                   final DenseMatrix64F Pjp,
+                                                   final double[] kpartials,
+                                                   final int kbo,
+                                                   final DenseMatrix64F Pk,
+                                                   final int dimTrait) {
+
+        // TODO Is it better to split into 3 separate calls to weightedInnerProduct?
+
+        double SSi = 0;
+        double SSj = 0;
+        double SSk = 0;
+
+        // vector-matrix-vector TODO in parallel
+        for (int g = 0; g < dimTrait; ++g) {
+            final double ig = ipartials[ibo + g];
+            final double jg = jpartials[jbo + g];
+            final double kg = kpartials[kbo + g];
+
+            for (int h = 0; h < dimTrait; ++h) {
+                final double ih = ipartials[ibo + h];
+                final double jh = jpartials[jbo + h];
+                final double kh = kpartials[kbo + h];
+
+                SSi += ig * Pip.unsafe_get(g, h) * ih;
+                SSj += jg * Pjp.unsafe_get(g, h) * jh;
+                SSk += kg * Pk .unsafe_get(g, h) * kh;
+            }
+        }
+
+        return SSi + SSj - SSk;
+    }
+
+
 }

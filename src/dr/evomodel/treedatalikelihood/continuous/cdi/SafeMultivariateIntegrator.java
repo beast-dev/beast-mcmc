@@ -411,14 +411,16 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
 //                final double[] tmp = new double[dimTrait];
             final double[] tmp = vector0;
-            for (int g = 0; g < dimTrait; ++g) {
-                double sum = 0.0;
-                for (int h = 0; h < dimTrait; ++h) {
-                    sum += Pip.unsafe_get(g, h) * partials[ibo + h];
-                    sum += Pjp.unsafe_get(g, h) * partials[jbo + h];
-                }
-                tmp[g] = sum;
-            }
+//            for (int g = 0; g < dimTrait; ++g) {
+//                double sum = 0.0;
+//                for (int h = 0; h < dimTrait; ++h) {
+//                    sum += Pip.unsafe_get(g, h) * partials[ibo + h];
+//                    sum += Pjp.unsafe_get(g, h) * partials[jbo + h];
+//                }
+//                tmp[g] = sum;
+//            }
+            weightedSum(partials, ibo, Pip, partials, jbo, Pjp, dimTrait, tmp);
+
 
 //            for (int g = 0; g < dimTrait; ++g) {
 //                double sum = 0.0;
@@ -461,23 +463,24 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             }
 
             if (DEBUG) {
-                System.err.println("\ttrait: " + trait);
-                System.err.println("Pi: " + Pi);
-                System.err.println("Pj: " + Pj);
-                System.err.println("Pk: " + Pk);
-                System.err.print("\t\tmean i:");
-                for (int e = 0; e < dimTrait; ++e) {
-                    System.err.print(" " + partials[ibo + e]);
-                }
-                System.err.print("\t\tmean j:");
-                for (int e = 0; e < dimTrait; ++e) {
-                    System.err.print(" " + partials[jbo + e]);
-                }
-                System.err.print("\t\tmean k:");
-                for (int e = 0; e < dimTrait; ++e) {
-                    System.err.print(" " + partials[kbo + e]);
-                }
-                System.err.println("");
+                reportMeansAndPrecisions(trait, ibo, jbo, kbo, Pi, Pj, Pk);
+//                System.err.println("\ttrait: " + trait);
+//                System.err.println("Pi: " + Pi);
+//                System.err.println("Pj: " + Pj);
+//                System.err.println("Pk: " + Pk);
+//                System.err.print("\t\tmean i:");
+//                for (int e = 0; e < dimTrait; ++e) {
+//                    System.err.print(" " + partials[ibo + e]);
+//                }
+//                System.err.print("\t\tmean j:");
+//                for (int e = 0; e < dimTrait; ++e) {
+//                    System.err.print(" " + partials[jbo + e]);
+//                }
+//                System.err.print("\t\tmean k:");
+//                for (int e = 0; e < dimTrait; ++e) {
+//                    System.err.print(" " + partials[kbo + e]);
+//                }
+//                System.err.println("");
             }
 
             // Computer remainder at node k
@@ -503,26 +506,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 }
 
                 // Inner products
-                double SSk = 0;
-                double SSj = 0;
-                double SSi = 0;
-
-                // vector-matrix-vector TODO in parallel
-                for (int g = 0; g < dimTrait; ++g) {
-                    final double ig = partials[ibo + g];
-                    final double jg = partials[jbo + g];
-                    final double kg = partials[kbo + g];
-
-                    for (int h = 0; h < dimTrait; ++h) {
-                        final double ih = partials[ibo + h];
-                        final double jh = partials[jbo + h];
-                        final double kh = partials[kbo + h];
-
-                        SSi += ig * Pip.unsafe_get(g, h) * ih;
-                        SSj += jg * Pjp.unsafe_get(g, h) * jh;
-                        SSk += kg * Pk .unsafe_get(g, h) * kh;
-                    }
-                }
+                double SS = weightedThreeInnerProduct(
+                        partials, ibo, Pip,
+                        partials, kbo, Pjp,
+                        partials, kbo, Pk,
+                        dimTrait);
 
 //                    final DenseMatrix64F Vt = new DenseMatrix64F(dimTrait, dimTrait);
 //                final DenseMatrix64F Vt = matrix6;
@@ -547,17 +535,17 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
 //                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
                         (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
-                        - 0.5 * (SSi + SSj - SSk);
+                        - 0.5 * SS;
 
                 // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
 
                 if (DEBUG) {
-                    System.err.println("\t\t\tSSi = " + (SSi));
-                    System.err.println("\t\t\tSSj = " + (SSj));
-                    System.err.println("\t\t\tSSk = " + (SSk));
-                    System.err.println("\t\t\tdeti = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetj = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetk = " + Math.log(ci.getDeterminant()));
+//                    System.err.println("\t\t\tSSi = " + (SSi));
+//                    System.err.println("\t\t\tSSj = " + (SSj));
+//                    System.err.println("\t\t\tSSk = " + (SSk));
+                    System.err.println("\t\t\tDetI = " + Math.log(ci.getDeterminant()));
+                    System.err.println("\t\t\tDetJ = " + Math.log(ci.getDeterminant()));
+                    System.err.println("\t\t\tDetK = " + Math.log(ci.getDeterminant()));
                     System.err.println("\t\tremainder: " + remainder);
 //                        System.exit(-1);
                 }

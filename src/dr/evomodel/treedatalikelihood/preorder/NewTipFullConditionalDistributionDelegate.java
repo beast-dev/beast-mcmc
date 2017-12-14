@@ -85,12 +85,11 @@ public class NewTipFullConditionalDistributionDelegate extends
 
         simulationProcess.cacheSimulatedTraits(node);
 
-        int numberOfNodes = (node == null) ? tree.getNodeCount() : 1;
+        final int numberOfNodes = (node == null) ? tree.getNodeCount() : 1;
         double[] partial = new double[dimPartial * numTraits * numberOfNodes];
 
-        cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(
-                (node == null) ? -1 : node.getNumber()
-        ), partial);
+        final int index = (node == null) ? -1 : likelihoodDelegate.getActiveNodeIndex(node.getNumber());
+        cdi.getPreOrderPartial(index, partial);
 
         List<NormalSufficientStatistics> statistics = new ArrayList<NormalSufficientStatistics>();
 

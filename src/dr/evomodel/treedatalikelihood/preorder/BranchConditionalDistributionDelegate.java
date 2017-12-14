@@ -8,7 +8,6 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,7 @@ public class BranchConditionalDistributionDelegate extends
                                                  ConjugateRootTraitPrior rootPrior,
                                                  ContinuousRateTransformation rateTransformation,
                                                  ContinuousDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate, null);
+        super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
     }
 
     public static String getName(String name) {
@@ -100,7 +99,7 @@ public class BranchConditionalDistributionDelegate extends
 
         cdi.getPostOrderPartial(nodeNumber, childPartial);
         cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
-        cdi.getPreOrderPartial(nodeNumber, parentPartial, ContinuousDiffusionIntegrator.PartialIntent.NODE);
+        cdi.getPreOrderPartial(nodeNumber, parentPartial);
 
 
         

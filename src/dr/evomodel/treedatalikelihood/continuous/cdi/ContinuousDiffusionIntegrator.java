@@ -42,23 +42,6 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 
-    enum PartialIntent {
-        NODE {
-            @Override
-            public String getPrefix() {
-                return "";
-            }
-        },
-        BRANCH {
-            @Override
-            public String getPrefix() {
-                return "branch.";
-            }
-        };
-
-        public abstract String getPrefix();
-    }
-
     void finalize() throws Throwable;
 
     void setPostOrderPartial(int bufferIndex, final double[] partial);
@@ -70,9 +53,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
 
     @SuppressWarnings("unused")
-    void setPreOrderPartial(int bufferIndex, final double[] partial, PartialIntent intent);
+    void setPreOrderPartial(int bufferIndex, final double[] partial);
 
-    void getPreOrderPartial(int bufferIndex, final double[] partial, PartialIntent intent);
+    void getPreOrderPartial(int bufferIndex, final double[] partial);
 
     void setWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts);
 
@@ -236,25 +219,21 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public void setPreOrderPartial(int bufferIndex, final double[] partial, PartialIntent intent) {
+        public void setPreOrderPartial(int bufferIndex, final double[] partial) {
 
             System.arraycopy(partial, 0,
-                    getPreOrderArray(intent), getArrayStart(bufferIndex),
+                    preOrderPartials, getArrayStart(bufferIndex),
                     getArrayLength(bufferIndex));
         }
 
         @Override
-        public void getPreOrderPartial(int bufferIndex, final double[] partial, PartialIntent intent) {
+        public void getPreOrderPartial(int bufferIndex, final double[] partial) {
 
-            System.arraycopy(getPreOrderArray(intent), getArrayStart(bufferIndex),
+            System.arraycopy(preOrderPartials, getArrayStart(bufferIndex),
                     partial, 0,
                     getArrayLength(bufferIndex));
         }
-
-        private double[] getPreOrderArray(PartialIntent intent) {
-            return (intent == PartialIntent.NODE) ? preNodePartials : preBranchPartials;
-        }
-
+        
         private int getArrayStart(int bufferIndex) {
             return (bufferIndex == -1) ? 0 : dimPartial * bufferIndex;
         }
@@ -472,8 +451,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         double[] determinants;
         int[] degreesOfFreedom;
         double[] outerProducts;
-        double[] preNodePartials;
-        double[] preBranchPartials;
+        double[] preOrderPartials;
 
         // Set during updateDiffusionMatrices() and used in updatePartials()
         int precisionOffset;
@@ -513,7 +491,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             for (int trait = 0; trait < numTraits; ++trait) {
 
                 // A. Get current precision of k and j
-                final double pk = preNodePartials[kbo + dimTrait];
+                final double pk = preOrderPartials[kbo + dimTrait];
                 final double pj = partials[jbo + dimTrait];
 
 //                final DenseMatrix64F Pk = wrap(prePartials, kbo + dimTrait, dimTrait, dimTrait);
@@ -565,9 +543,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //                }
 
                 for (int g = 0; g < dimTrait; ++g) {
-                    double mean = (pk * preNodePartials[kbo + g] + pjp * partials[jbo + g]) / pip;
-                    preNodePartials[ibo + g] = mean;
-                    preBranchPartials[ibo + g] = mean; // TODO Only when necessary
+                    double mean = (pk * preOrderPartials[kbo + g] + pjp * partials[jbo + g]) / pip;
+                    preOrderPartials[ibo + g] = mean;
+//                    preBranchPartials[ibo + g] = mean; // TODO Only when necessary
                 }
 
                 // C. Inflate variance along node branch
@@ -584,22 +562,22 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //
 //                // X. Store precision results for node
 
-                preNodePartials[ibo + dimTrait] = pi;
-                preBranchPartials[ibo + dimTrait] = pip; // TODO Ony when necessary
+                preOrderPartials[ibo + dimTrait] = pi;
+//                preBranchPartials[ibo + dimTrait] = pip; // TODO Ony when necessary
 
 //                unwrap(Pi, prePartials, ibo + dimTrait);
 //                unwrap(Vi, prePartials, ibo + dimTrait + dimTrait * dimTrait);
 //
                 if (DEBUG) {
                     System.err.println("trait: " + trait);
-                    System.err.println("pM: " + new WrappedVector.Raw(preNodePartials, kbo, dimTrait));
+                    System.err.println("pM: " + new WrappedVector.Raw(preOrderPartials, kbo, dimTrait));
                     System.err.println("pk: " + pk);
                     System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
                     System.err.println("sV: " + vj);
 //                    System.err.println("sVp: " + Vjp);
                     System.err.println("sPp: " + pjp);
                     System.err.println("Pip: " + pip);
-                    System.err.println("cM: " + new WrappedVector.Raw(preNodePartials, ibo, dimTrait));
+                    System.err.println("cM: " + new WrappedVector.Raw(preOrderPartials, ibo, dimTrait));
                     System.err.println("cV: " + pi);
                 }
 //
@@ -614,7 +592,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         @Override
         public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex) {
             System.arraycopy(partials, dimPartial * priorBufferIndex, // Copy from prior
-                    preNodePartials, dimPartial * rootNodeIndex, dimPartial); // To pre-order root
+                    preOrderPartials, dimPartial * rootNodeIndex, dimPartial); // To pre-order root
         }
 
         protected void updatePartial(
@@ -822,8 +800,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             degreesOfFreedom = new int[numTraits];
             outerProducts = new double[dimTrait * dimTrait * numTraits];
 
-            preNodePartials = new double[dimPartial * bufferCount];
-            preBranchPartials = new double[dimPartial * bufferCount];
+            preOrderPartials = new double[dimPartial * bufferCount];
+//            preBranchPartials = new double[dimPartial * bufferCount];
         }
 
         private String getOperationString(final int[] operations, final int offset) {

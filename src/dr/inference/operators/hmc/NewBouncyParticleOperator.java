@@ -122,7 +122,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         double priorSampleSize = likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
 
-        return MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0,
+        return MultivariateTraitDebugUtilities.getTreeVariance(tree, treeDataLikelihood.getBranchRateModel(), 1.0,
                 /*Double.POSITIVE_INFINITY*/ priorSampleSize);
     }
 

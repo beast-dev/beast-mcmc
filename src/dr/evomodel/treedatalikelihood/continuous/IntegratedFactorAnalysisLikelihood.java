@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -674,18 +675,19 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (delegate != null) {
 
             final Tree tree = delegate.getCallbackLikelihood().getTree();
+            final BranchRates branchRates = delegate.getCallbackLikelihood().getBranchRateModel();
             sb.append(tree.toString());
             sb.append("\n\n");
 
             final double normalization = delegate.getRateTransformation().getNormalization();
             final double priorSampleSize = delegate.getRootProcessDelegate().getPseudoObservations();
 
-            double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+            double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, 1.0, Double.POSITIVE_INFINITY);
             sb.append("Tree structure:\n");
             sb.append(new Matrix(treeStructure));
             sb.append("\n\n");
 
-            double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
+            double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, normalization, priorSampleSize);
 
             Matrix treeV = new Matrix(treeVariance);
             Matrix treeP = treeV.inverse();

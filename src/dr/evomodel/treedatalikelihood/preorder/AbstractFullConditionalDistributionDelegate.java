@@ -22,8 +22,7 @@ public abstract class AbstractFullConditionalDistributionDelegate
                                                 ContinuousTraitPartialsProvider dataModel,
                                                 ConjugateRootTraitPrior rootPrior,
                                                 ContinuousRateTransformation rateTransformation,
-                                                ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                                ContinuousDiffusionIntegrator.PartialIntent intent) {
+                                                ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         this.likelihoodDelegate = likelihoodDelegate;
@@ -31,7 +30,6 @@ public abstract class AbstractFullConditionalDistributionDelegate
         this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
         this.partialNodeBuffer = new double[numTraits * dimPartial];
         this.partialRootBuffer = new double[numTraits * dimPartial];
-        this.intent = intent;
     }
 
     public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations,
@@ -48,7 +46,6 @@ public abstract class AbstractFullConditionalDistributionDelegate
     protected final int dimPartial;
     final double[] partialNodeBuffer;
     private final double[] partialRootBuffer;
-    protected final ContinuousDiffusionIntegrator.PartialIntent intent;
 
     protected abstract void constructTraits(Helper treeTraitHelper);
 
@@ -82,7 +79,7 @@ public abstract class AbstractFullConditionalDistributionDelegate
                 siblingMatrix);
 
         if (DEBUG) {
-            cdi.getPreOrderPartial(nodeNumber, partialRootBuffer, ContinuousDiffusionIntegrator.PartialIntent.NODE);
+            cdi.getPreOrderPartial(nodeNumber, partialRootBuffer);
             System.err.println("Node: " + nodeNumber + " "
                     + new WrappedVector.Raw(partialRootBuffer, 0, partialRootBuffer.length));
             System.err.println("");

@@ -290,12 +290,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         final double normalization = rateTransformation.getNormalization();
         final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
 
-        double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+        double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(),
+                1.0, Double.POSITIVE_INFINITY);
         sb.append("Tree structure:\n");
         sb.append(new Matrix(treeStructure));
         sb.append("\n\n");
 
-        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
+        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(), normalization, priorSampleSize);
         double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
@@ -347,7 +348,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append("data: ").append(new dr.math.matrixAlgebra.Vector(data));
         sb.append("\n\n");
 
-        double[][] graphStructure = MultivariateTraitDebugUtilities.getGraphVariance(tree, 1.0,
+        double[][] graphStructure = MultivariateTraitDebugUtilities.getGraphVariance(tree, callbackLikelihood.getBranchRateModel(), 1.0,
                 priorSampleSize);
         double[][] jointGraphVariance = KroneckerOperation.product(graphStructure, traitVariance.toComponents());
 
@@ -848,13 +849,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    void addNewFullConditionalDensityTrait(String traitName, ContinuousDiffusionIntegrator.PartialIntent intent) {
+    void addNewFullConditionalDensityTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new NewTipFullConditionalDistributionDelegate(traitName,
                 getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
                 getDataModel(), getRootPrior(),
-                getRateTransformation(), this, intent);
+                getRateTransformation(), this);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
 

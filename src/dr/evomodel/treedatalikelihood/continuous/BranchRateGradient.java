@@ -37,15 +37,18 @@ import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.factory.DecompositionFactory;
-import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.ops.CommonOps;
 
 import java.util.List;
+
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
 
 /**
  * @author Marc A. Suchard
@@ -59,10 +62,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
     private final int dim;
     private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
-    private final MatrixParameterInterface diffusionParameter;
 
-    private final DenseMatrix64F L;
-    private final DenseMatrix64F Lt;
     private final DenseMatrix64F matrix0;
     private final DenseMatrix64F matrix1;
     private final DenseMatrix64F vector0;
@@ -77,10 +77,9 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.rateParameter = rateParameter;
-        this.diffusionParameter = likelihoodDelegate.getDiffusionModel().getPrecisionParameter();
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
-        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null; 
+        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
 
         // TODO Move into different constructor / parser
         String bcdName = BranchConditionalDistributionDelegate.getName(traitName);
@@ -99,14 +98,11 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
         dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-        assert (dim == diffusionParameter.getColumnDimension());
 
         if (likelihoodDelegate.getIntegrator() instanceof SafeMultivariateWithDriftIntegrator) {
             throw new RuntimeException("Not yet implemented with drift");
         }
 
-        L = new DenseMatrix64F(dim, dim);
-        Lt = new DenseMatrix64F(dim, dim);
         matrix0 = new DenseMatrix64F(dim, dim);
         matrix1 = new DenseMatrix64F(dim, dim);
         vector0 = new DenseMatrix64F(dim, 1);
@@ -132,8 +128,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
 
         double[] result = new double[rateParameter.getDimension()];
 
-        getCholeskyDecomposition(diffusionParameter, L, Lt);
-
         // TODO Do single call to traitProvider with node == null (get full tree)
 //        List<BranchSufficientStatistics> statisticsForTree = (List<BranchSufficientStatistics>)
 //                treeTraitProvider.getTrait(tree, null);
@@ -147,10 +141,11 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
 
                 assert (statisticsForNode.size() == nTraits);
 
-                double gradient = 0.0;
+                double differential = branchRateModel.getBranchRateDifferential(tree, node);
 
+                double gradient = 0.0;
                 for (int trait = 0; trait < nTraits; ++trait) {
-                    gradient += getGradientForBranch(statisticsForNode.get(trait), L, Lt);
+                    gradient += getGradientForBranch(statisticsForNode.get(trait), differential);
                 }
 
                 final int destinationIndex = getParameterIndexFromNode(node);
@@ -163,81 +158,154 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         return result;
     }
 
-    private void getCholeskyDecomposition(MatrixParameterInterface input, DenseMatrix64F L, DenseMatrix64F Lt) {
-
-        CholeskyDecomposition<DenseMatrix64F> cholesky = DecompositionFactory.chol(dim, true);
-        DenseMatrix64F matrix = DenseMatrix64F.wrap(dim, dim, input.getParameterValues());
-
-        if( !cholesky.decompose(matrix)) {
-            throw new RuntimeException("Cholesky decomposition failed!");
-        }
-
-//        return cholesky.getT(null);
-        cholesky.getT(L);
-        CommonOps.transpose(L, Lt);
-    }
-
     private int getParameterIndexFromNode(NodeRef node) {
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
+    
+    @SuppressWarnings("deprecation")
+    private NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics child,
+                                                              NormalSufficientStatistics parent) {
 
-    private double getGradientForBranch(BranchSufficientStatistics statistics,
-                                               DenseMatrix64F L, DenseMatrix64F Lt) {
+        DenseMatrix64F totalP = new DenseMatrix64F(dim, dim);
+        CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
+
+        DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
+        safeInvert(totalP, totalV, false);
+
+        DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
+        safeWeightedAverage(
+                new WrappedVector.Raw(child.getRawMean().getData(), 0, dim),
+                child.getRawPrecision(),
+                new WrappedVector.Raw(parent.getRawMean().getData(), 0, dim),
+                parent.getRawPrecision(),
+                new WrappedVector.Raw(mean.getData(), 0, dim),
+                totalV,
+                dim);
+
+        return new NormalSufficientStatistics(mean, totalP, totalV);
+    }
+
+    @SuppressWarnings("deprecation")
+    private double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
 
         final NormalSufficientStatistics child = statistics.getChild();
         final NormalSufficientStatistics branch = statistics.getBranch();
         final NormalSufficientStatistics parent = statistics.getParent();
 
         if (DEBUG) {
-            System.err.println("L = " + NormalSufficientStatistics.toVectorizedString(L));
             System.err.println("B = " + statistics.toVectorizedString());
         }
 
-        // TODO Consider having traitProvider return variance, if rate-limiting
-        DenseMatrix64F V = matrix0;
-        DenseMatrix64F delta = vector0;
+        DenseMatrix64F Qi = parent.getRawPrecision();
+        DenseMatrix64F Si = matrix1; //new DenseMatrix64F(dim, dim); // matrix1;
+        CommonOps.scale(differentialScaling, branch.getRawVariance(), Si);
 
+        if (DEBUG) {
+            System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
+            System.err.println("\tSi = " + NormalSufficientStatistics.toVectorizedString(Si));
+        }
+
+        DenseMatrix64F logDetComponent = matrix0; //new DenseMatrix64F(dim, dim); //matrix0;
+        CommonOps.mult(Qi, Si, logDetComponent);
+
+        double grad1 = 0.0;
+        for (int row = 0; row < dim; ++row) {
+            grad1 -= 0.5 * logDetComponent.unsafe_get(row, row);
+        }
+
+        if (DEBUG) {
+            System.err.println("grad1 = " + grad1);
+        }
+
+        DenseMatrix64F quadraticComponent = matrix1; //new DenseMatrix64F(dim, dim); //matrix1;
+        CommonOps.mult(logDetComponent, Qi, quadraticComponent);
+
+        if (DEBUG) {
+            System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
+            System.err.println("\tQQ = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
+        }
+
+        NormalSufficientStatistics jointStatistics = computeJointStatistics(child, parent);
+
+        DenseMatrix64F additionalVariance = matrix0; //new DenseMatrix64F(dim, dim);
+        CommonOps.mult(quadraticComponent, jointStatistics.getRawVariance(), additionalVariance);
+
+        DenseMatrix64F delta = vector0;
         for (int row = 0; row < dim; ++row) {
             delta.unsafe_set(row, 0,
-                    child.getMean(row) - parent.getMean(row) // TODO Correct for drift
+                    jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row) // TODO Correct for drift
             );
         }
 
+        double grad2 = 0.0;
         for (int row = 0; row < dim; ++row) {
             for (int col = 0; col < dim; ++col) {
 
-                V.unsafe_set(row, col,
-                        child.getVariance(row, col)
-                                - 2 * branch.getVariance(row, col)
-                                + parent.getVariance(row, col)
-                                + delta.unsafe_get(row, 0) * delta.unsafe_get(col, 0)
-                );
+                grad2 += 0.5 * delta.unsafe_get(row, 0)
+                        * quadraticComponent.unsafe_get(row, col)
+                        * delta.unsafe_get(col, 0);
+
             }
+
+            grad2 += 0.5 * additionalVariance.unsafe_get(row, row);
         }
 
         if (DEBUG) {
-            System.err.println("V = " + NormalSufficientStatistics.toVectorizedString(V));
+            System.err.println("\tchild variance = " + NormalSufficientStatistics.toVectorizedString(child.getRawVariance()));
+            System.err.println("\tquadratic      = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
+            System.err.println("\tadditional     = " + NormalSufficientStatistics.toVectorizedString(additionalVariance));
+            System.err.println("delta: " + NormalSufficientStatistics.toVectorizedString(delta));
+            System.err.println("grad2 = " + grad2);
         }
 
-        DenseMatrix64F tmp = matrix1;
-        CommonOps.mult(Lt, V, tmp);
-        DenseMatrix64F LtVL = matrix0;
-        CommonOps.mult(tmp, L, LtVL);
-
-        double gradient = LtVL.unsafe_get(0, 0);
-
-        if (DEBUG) {
-            System.err.println("LtVL = " + NormalSufficientStatistics.toVectorizedString(LtVL));
-            System.err.println("gradient = " + gradient);
-        }
-
-        return gradient;
+        return grad1 + grad2;
     }
+
+    private MultivariateFunction numeric1 = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            for (int i = 0; i < argument.length; ++i) {
+                rateParameter.setParameterValue(i, argument[i]);
+            }
+
+            treeDataLikelihood.makeDirty();
+            return treeDataLikelihood.getLogLikelihood();
+        }
+
+        @Override
+        public int getNumArguments() {
+            return rateParameter.getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return 0;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
 
     @Override
     public String getReport() {
-        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
+
+        double[] savedValues = rateParameter.getParameterValues();
+        double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
+        for (int i = 0; i < savedValues.length; ++i) {
+            rateParameter.setParameterValue(i, savedValues[i]);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
+        sb.append("\n");
+        sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+        sb.append("\n");
+        
+        return sb.toString();
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 }

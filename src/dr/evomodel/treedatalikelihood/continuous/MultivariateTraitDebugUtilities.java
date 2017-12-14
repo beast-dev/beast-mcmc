@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
@@ -37,13 +38,17 @@ import java.util.Set;
  */
 public class MultivariateTraitDebugUtilities {
 
-    public static double getLengthToRoot(final Tree tree, final NodeRef nodeRef) {
+    public static double getLengthToRoot(final Tree tree, final BranchRates branchRates, final NodeRef nodeRef) {
 
         double length = 0;
 
         if (!tree.isRoot(nodeRef)) {
             NodeRef parent = tree.getParent(nodeRef);
-            length += tree.getBranchLength(nodeRef) + getLengthToRoot(tree, parent);
+            double rateScalar = 1.0;
+            if (branchRates != null) {
+                rateScalar = branchRates.getBranchRate(tree, nodeRef);
+            }
+            length += rateScalar * tree.getBranchLength(nodeRef) + getLengthToRoot(tree, branchRates, parent);
         }
 
         return length;
@@ -70,7 +75,7 @@ public class MultivariateTraitDebugUtilities {
         }
     }
 
-    public static double[][] getGraphVariance(final Tree tree, final double normalization, final double priorSampleSize) {
+    public static double[][] getGraphVariance(final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
 
         final int nodeCount = tree.getNodeCount();
 //        final double[][] variance = new double[nodeCount + 1][nodeCount + 1];
@@ -79,13 +84,13 @@ public class MultivariateTraitDebugUtilities {
         for (int i = 0; i < nodeCount; i++) {
 
             // Fill in diagonal
-            double marginalTime = getLengthToRoot(tree, tree.getNode(i)) * normalization;
+            double marginalTime = getLengthToRoot(tree, branchRates, tree.getNode(i)) * normalization;
             variance[i][i] = marginalTime;
 
             // Fill in upper right triangle,
             for (int j = i + 1; j < nodeCount; j++) {
                 NodeRef mrca = TreeUtils.getCommonAncestorSafely(tree, tree.getNode(i), tree.getNode(j));
-                variance[i][j] = getLengthToRoot(tree, mrca) * normalization;
+                variance[i][j] = getLengthToRoot(tree, branchRates, mrca) * normalization;
             }
         }
 
@@ -96,7 +101,7 @@ public class MultivariateTraitDebugUtilities {
         return variance;
     }
 
-    public static double[][] getTreeVariance(final Tree tree, final double normalization, final double priorSampleSize) {
+    public static double[][] getTreeVariance(final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
 
         final int tipCount = tree.getExternalNodeCount();
 
@@ -105,14 +110,14 @@ public class MultivariateTraitDebugUtilities {
         for (int i = 0; i < tipCount; i++) {
 
             // Fill in diagonal
-            double marginalTime = getLengthToRoot(tree, tree.getExternalNode(i)) * normalization;
+            double marginalTime = getLengthToRoot(tree, branchRates, tree.getExternalNode(i)) * normalization;
             variance[i][i] = marginalTime;
 
             // Fill in upper right triangle,
 
             for (int j = i + 1; j < tipCount; j++) {
                 NodeRef mrca = findMRCA(tree, i, j);
-                variance[i][j] = getLengthToRoot(tree, mrca) * normalization;
+                variance[i][j] = getLengthToRoot(tree, branchRates, mrca) * normalization;
             }
         }
 

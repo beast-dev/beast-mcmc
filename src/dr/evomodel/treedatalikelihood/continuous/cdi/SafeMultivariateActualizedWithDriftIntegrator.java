@@ -61,12 +61,13 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
     private void allocateStorage() {
 
-        displacements = new double[dimTrait * bufferCount];
-        precisions = new double[dimTrait * dimTrait * bufferCount];
-        variances = new double[dimTrait * dimTrait * bufferCount];
         actualizations = new double[dimTrait * dimTrait * bufferCount];
-        vector1 = new double[dimTrait];
-        vector2 = new double[dimTrait];
+        stationaryVariances = new double[dimTrait * dimTrait * diffusionCount];
+
+        matrix7 = new DenseMatrix64F(dimTrait, dimTrait);
+        matrix8 = new DenseMatrix64F(dimTrait, dimTrait);
+        matrix9 = new DenseMatrix64F(dimTrait, dimTrait);
+        matrix10 = new DenseMatrix64F(dimTrait, dimTrait);
     }
 
 
@@ -341,6 +342,9 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         final DenseMatrix64F Pdi = wrap(precisions, imo, dimTrait, dimTrait); // TODO Only if needed
         final DenseMatrix64F Pdj = wrap(precisions, jmo, dimTrait, dimTrait); // TODO Only if needed
 
+        final DenseMatrix64F Qdi = wrap(actualizations, imo, dimTrait, dimTrait);
+        final DenseMatrix64F Qdj = wrap(actualizations, jmo, dimTrait, dimTrait);
+
         // TODO End fix
 
         if (DEBUG) {
@@ -414,6 +418,9 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                 CommonOps.add(Pi, -1, PiPlusPdInv, Pip);
                 ci = safeDeterminant(Pip, false);
             }
+            // Actualization
+            final DenseMatrix64F QdiPip = matrix7;
+            CommonOps.multTransA(Qdi, Pip, QdiPip);
 
             if (useVariancej) {
 
@@ -435,6 +442,9 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                 CommonOps.add(Pj, -1, PjPlusPdInv, Pjp);
                 cj = safeDeterminant(Pjp, false);
             }
+            // Actualization
+            final DenseMatrix64F QdjPjp = matrix8;
+            CommonOps.multTransA(Qdj, Pjp, QdjPjp);
 
             if (TIMING) {
                 endTime("peel2");
@@ -448,7 +458,11 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
 //                final DenseMatrix64F Pk = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pk = matrix4;
-            CommonOps.add(Pip, Pjp, Pk);
+            final DenseMatrix64F QdiPipQdi = matrix9; // TODO Could re-use matrix0 and matrix1 ?
+            final DenseMatrix64F QdjPjpQdj = matrix10;
+            CommonOps.mult(QdiPip, Qdi, QdiPipQdi);
+            CommonOps.mult(QdjPjp, Qdj, QdjPjpQdj);
+            CommonOps.add(QdiPipQdi, QdjPjpQdj, Pk);
 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
 //            final DenseMatrix64F Vk = matrix5;
@@ -486,8 +500,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
             for (int g = 0; g < dimTrait; ++g) {
                 double sum = 0.0;
                 for (int h = 0; h < dimTrait; ++h) {
-                    sum += Pip.unsafe_get(g, h) * displacementi[h];
-                    sum += Pjp.unsafe_get(g, h) * displacementj[h];
+                    sum += QdiPip.unsafe_get(g, h) * displacementi[h];
+                    sum += QdjPjp.unsafe_get(g, h) * displacementj[h];
                 }
                 tmp[g] = sum;
             }
@@ -671,4 +685,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
     private double[] actualizations;
     private double[] stationaryVariances;
+    private DenseMatrix64F matrix7;
+    private DenseMatrix64F matrix8;
+    private DenseMatrix64F matrix9;
+    private DenseMatrix64F matrix10;
 }

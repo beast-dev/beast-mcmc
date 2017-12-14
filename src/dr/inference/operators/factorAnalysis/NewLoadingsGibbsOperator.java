@@ -60,9 +60,12 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private final FactorAnalysisOperatorAdaptor adaptor;
 
+    private final ConstrainedSampler constrainedSampler;
+
     public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, DistributionLikelihood prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
-                                    boolean multiThreaded, int numThreads) {
+                                    boolean multiThreaded, int numThreads,
+                                    ConstrainedSampler constrainedSampler) {
 
         setWeight(weight);
 
@@ -76,7 +79,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         precisionArray = new ArrayList<double[][]>();
         double[][] temp;
         this.randomScan = randomScan;
-
+        this.constrainedSampler = constrainedSampler;
 
         meanArray = new ArrayList<double[]>();
         meanMidArray = new ArrayList<double[]>();
@@ -137,21 +140,21 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     }
 
 
-    private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adapator, //MatrixParameterInterface full,
+    private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adaptor, //MatrixParameterInterface full,
                                          int newRowDimension, int row, double[][] answer) {
 
-        int p = adapator.getNumberOfTaxa(); //.getColumnDimension();
+        int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
 
         for (int i = 0; i < newRowDimension; i++) {
             for (int j = i; j < newRowDimension; j++) {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
-                    sum += adapator.getFactorValue(i, k) * adapator.getFactorValue(j, k);
-                answer[i][j] = sum * adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
+                    sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
+                answer[i][j] = sum * this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
                     answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();
                 } else {
-                    answer[i][j] *= pathParameter;
+                    answer[i][j] *= pathParameter; // TODO Fix for non-generic priors
                     answer[j][i] = answer[i][j];
                 }
             }
@@ -222,11 +225,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
-        // TODO Use back-solve to avoid inverting precision first
-//        double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
-//                 mean, precision); // TODO Flatten precision
-
-        double[] draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+        double[] draws = constrainedSampler.sample(mean, cholesky);
 
         adaptor.setLoadingsForTraitQuietly(i, draws);
 
@@ -365,9 +364,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             for (double[][] p : precisionArray) {
                 System.err.println(new Matrix(p));
             }
-        }
 
-        if (DEBUG) {
             System.err.println("End doOp");
         }
 
@@ -411,4 +408,80 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private final List<Callable<Double>> drawCallers = new ArrayList<Callable<Double>>();
     private final ExecutorService pool;
+
+    public enum ConstrainedSampler {
+
+        NONE("none") {
+            @Override
+            double[] sample(double[] mean, double[][] cholesky) {
+                // TODO Use back-solve to avoid inverting precision first
+//                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+//                         mean, precision); // TODO Flatten precision
+
+                return MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+            }
+        },
+        REJECTION_SAMPLING("rejection") {
+            @Override
+            double[] sample(double[] mean, double[][] cholesky) {
+
+                boolean repeat = true;
+                int attempts = 0;
+
+                double[] draw = null;
+                while (repeat) {
+
+                    draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+                    if (draw[0] > 0.0) {
+                        repeat = false;
+                    }
+
+                    ++attempts;
+                    if (attempts >= MAX_TRIES) {
+                        throw new RuntimeException("Too many failed attempts to draw positive element");
+                    }
+                }
+
+                return draw;
+            }
+        },
+        REFLECTION("reflection") {
+            @Override
+            double[] sample(double[] mean, double[][] cholesky) {
+                double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+
+                if (draw[0] < 0) {
+                    for (int i = 0; i < draw.length; ++i) {
+                        draw[i] *= -1.0;
+                    }
+                }
+
+                return draw;
+            }
+        };
+
+        ConstrainedSampler(String name) {
+            this.name = name;
+        }
+
+        private String name;
+
+        abstract double[] sample(double[] mean, double[][] cholesky);
+
+        private static final int MAX_TRIES = 10000;
+
+        public String getName() {
+            return name;
+        }
+
+        public static ConstrainedSampler parse(String name) {
+            name = name.toLowerCase();
+            for (ConstrainedSampler sampler : ConstrainedSampler.values()) {
+                if (name.compareTo(sampler.getName()) == 0) {
+                    return sampler;
+                }
+            }
+            throw new IllegalArgumentException("Unknown sampler type");
+        }
+    }
 }

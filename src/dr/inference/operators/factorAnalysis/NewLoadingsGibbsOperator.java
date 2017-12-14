@@ -225,7 +225,9 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
-        double[] draws = constrainedSampler.sample(mean, cholesky);
+        int constrainedIndex = (i < mean.length) ? i : -1;
+
+        double[] draws = constrainedSampler.sample(mean, cholesky, constrainedIndex);
 
         adaptor.setLoadingsForTraitQuietly(i, draws);
 
@@ -413,7 +415,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         NONE("none") {
             @Override
-            double[] sample(double[] mean, double[][] cholesky) {
+            double[] sample(double[] mean, double[][] cholesky, int constrainedIndex) {
                 // TODO Use back-solve to avoid inverting precision first
 //                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
 //                         mean, precision); // TODO Flatten precision
@@ -423,7 +425,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         },
         REJECTION_SAMPLING("rejection") {
             @Override
-            double[] sample(double[] mean, double[][] cholesky) {
+            double[] sample(double[] mean, double[][] cholesky, int constrainedIndex) {
 
                 boolean repeat = true;
                 int attempts = 0;
@@ -431,8 +433,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 double[] draw = null;
                 while (repeat) {
 
-                    draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
-                    if (draw[0] > 0.0) {
+                    draw = NONE.sample(mean, cholesky, constrainedIndex);
+                    if (constrainedIndex == -1 || draw[constrainedIndex] > 0.0) {
                         repeat = false;
                     }
 
@@ -443,14 +445,16 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 }
 
                 return draw;
+
             }
         },
         REFLECTION("reflection") {
             @Override
-            double[] sample(double[] mean, double[][] cholesky) {
-                double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+            double[] sample(double[] mean, double[][] cholesky, int constrainedIndex) {
 
-                if (draw[0] < 0) {
+                double[] draw = NONE.sample(mean, cholesky, constrainedIndex);
+
+                if (constrainedIndex != -1 && draw[constrainedIndex] < 0) {
                     for (int i = 0; i < draw.length; ++i) {
                         draw[i] *= -1.0;
                     }
@@ -466,7 +470,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         private String name;
 
-        abstract double[] sample(double[] mean, double[][] cholesky);
+        abstract double[] sample(double[] mean, double[][] cholesky, int constrainedIndex);
 
         private static final int MAX_TRIES = 10000;
 

@@ -435,13 +435,14 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
             double remainder = 0.0;
 
             if (DEBUG) {
-                System.err.println("i status: " + ci);
-                System.err.println("j status: " + cj);
-                System.err.println("k status: " + ck);
-                System.err.println("Pip: " + Pip);
-//                System.err.println("Vip: " + Vip);
-                System.err.println("Pjp: " + Pjp);
-//                System.err.println("Vjp: " + Vjp);
+                reportInversions(ci, cj, ck, Pip, Pjp);
+//                System.err.println("i status: " + ci);
+//                System.err.println("j status: " + cj);
+//                System.err.println("k status: " + ck);
+//                System.err.println("Pip: " + Pip);
+////                System.err.println("Vip: " + Vip);
+//                System.err.println("Pjp: " + Pjp);
+////                System.err.println("Vjp: " + Vjp);
             }
 
             if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {

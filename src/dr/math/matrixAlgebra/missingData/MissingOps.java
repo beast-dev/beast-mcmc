@@ -508,7 +508,7 @@ public class MissingOps {
                                               final int dimTrait) {
         double SS = 0;
 
-        // vector-matrix-vector TODO in parallel
+        // vector-matrix-vector
         for (int g = 0; g < dimTrait; ++g) {
             final double ig = partials[bo + g];
             for (int h = 0; h < dimTrait; ++h) {
@@ -519,6 +519,28 @@ public class MissingOps {
 
         return SS;
     }
+
+    public static double weightedInnerProductOfDifferences(final double[] source1,
+                                                           final int source1Offset,
+                                                           final double[] source2,
+                                                           final int source2Offset,
+                                                           final DenseMatrix64F P,
+                                                           final int dimTrait) {
+        double SS = 0;
+        for (int g = 0; g < dimTrait; ++g) {
+            final double gDifference = source1[source1Offset + g] - source2[source2Offset + g];
+
+            for (int h = 0; h < dimTrait; ++h) {
+                final double hDifference = source1[source1Offset + h] - source2[source2Offset + h];
+
+                SS += gDifference * P.unsafe_get(g, h) * hDifference;
+            }
+        }
+
+        return SS;
+    }
+
+
 
     public static double weightedThreeInnerProduct(final double[] ipartials,
                                                    final int ibo,

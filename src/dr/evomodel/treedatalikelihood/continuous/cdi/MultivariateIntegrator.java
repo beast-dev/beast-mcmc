@@ -684,16 +684,20 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final DenseMatrix64F PTotal = new DenseMatrix64F(dimTrait, dimTrait);
             CommonOps.invert(VTotal, PTotal);  // TODO Can return determinant at same time to avoid extra QR decomposition
 
-            double SS = 0;
-            for (int g = 0; g < dimTrait; ++g) {
-                final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
-
-                for (int h = 0; h < dimTrait; ++h) {
-                    final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
-
-                    SS += gDifference * PTotal.unsafe_get(g, h) * hDifference;
-                }
-            }
+//            double SS = 0;
+//            for (int g = 0; g < dimTrait; ++g) {
+//                final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
+//
+//                for (int h = 0; h < dimTrait; ++h) {
+//                    final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
+//
+//                    SS += gDifference * PTotal.unsafe_get(g, h) * hDifference;
+//                }
+//            }
+            double SS = weightedInnerProductOfDifferences(
+                    partials, rootOffset,
+                    partials, priorOffset,
+                    PTotal, dimTrait);
 
             final double logLike = -dimTrait * LOG_SQRT_2_PI - 0.5 * Math.log(CommonOps.det(VTotal)) - 0.5 * SS;
 

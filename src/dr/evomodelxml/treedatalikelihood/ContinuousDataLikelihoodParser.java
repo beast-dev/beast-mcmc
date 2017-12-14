@@ -58,7 +58,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     private static final String SCALE_BY_TIME = AbstractMultivariateTraitLikelihood.SCALE_BY_TIME;
     private static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
     private static final String DRIFT_MODELS = AbstractMultivariateTraitLikelihood.DRIFT_MODELS;
-    private static final String OPTIMAL_TRAITS= AbstractMultivariateTraitLikelihood.OPTIMAL_TRAITS;
+    private static final String OPTIMAL_TRAITS = AbstractMultivariateTraitLikelihood.OPTIMAL_TRAITS;
 
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     private static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";

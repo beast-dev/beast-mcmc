@@ -1,12 +1,14 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import com.android.tools.profiler.proto.Common;
-import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
-import mpi.Comm;
+
+import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.EigenDecomposition;
 import org.ejml.ops.CommonOps;
+import org.ejml.ops.EigenOps;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
@@ -61,6 +63,12 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
     private void allocateStorage() {
 
+        displacements = new double[dimTrait * bufferCount];
+        precisions = new double[dimTrait * dimTrait * bufferCount];
+        variances = new double[dimTrait * dimTrait * bufferCount];
+        vector1 = new double[dimTrait];
+        vector2 = new double[dimTrait];
+
         actualizations = new double[dimTrait * dimTrait * bufferCount];
         stationaryVariances = new double[dimTrait * dimTrait * diffusionCount];
 
@@ -77,7 +85,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         final int offset = dimTrait * dimTrait * precisionIndex;
         DenseMatrix64F variance = wrap(inverseDiffusions, offset, dimTrait, dimTrait);
-        DenseMatrix64F alphaMatrix = wrap(alpha, offset, dimTrait, dimTrait);
+        DenseMatrix64F alphaMatrix = wrap(alpha, 0, dimTrait, dimTrait);
         DenseMatrix64F stationaryVariance = new DenseMatrix64F(dimTrait, dimTrait);
 
         computeStationaryVariance(variance, alphaMatrix, stationaryVariance);
@@ -139,7 +147,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
             throw new RuntimeException("Wrong dimensions in unVectorizeSquare");
         }
 
-        for (int i = 0; i < n * n; ++i){
+        for (int i = 0; i < n; ++i){
             CommonOps.extract(vector, i * n, (i+1) * n, 0, 1, matrix, 0, i);
         }
     }
@@ -176,7 +184,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
             final int scaledOffset = matrixSize * probabilityIndices[up];
 
-            computeActualization(strengthOfSelectionMatrix, edgeLength, dimTrait, strengthOfSelectionMatrix, scaledOffset);
+            computeActualization(strengthOfSelectionMatrix, edgeLength, dimTrait, actualizations, scaledOffset);
         }
 
         if (TIMING) {
@@ -287,6 +295,24 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         CommonOps.mult(temp, optVal, displacement);
 
         unwrap(displacement, destination, destinationOffset);
+    }
+
+    private static void scaledMatrixExponential(DenseMatrix64F A, double lambda, DenseMatrix64F C){
+        int n = A.numCols;
+        if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
+        EigenDecomposition eigA = DecompositionFactory.eig(n, true);
+        if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
+        DenseMatrix64F expDiag = CommonOps.identity(n);
+        for (int p = 0; p < n; ++p) {
+            Complex64F ev = eigA.getEigenvalue(p);
+            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+            expDiag.set(p, p, Math.exp(lambda * ev.real));
+        }
+        DenseMatrix64F V = EigenOps.createMatrixV(eigA);
+        DenseMatrix64F tmp = new DenseMatrix64F(n, n);
+        CommonOps.mult(V, expDiag, tmp);
+        CommonOps.invert(V);
+        CommonOps.mult(tmp, V, C);
     }
 
     @Override

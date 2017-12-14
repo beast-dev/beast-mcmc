@@ -33,9 +33,6 @@ import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
-import dr.math.KroneckerOperation;
-import dr.math.distributions.MultivariateNormalDistribution;
-import org.ejml.ops.CommonOps;
 
 import java.util.List;
 

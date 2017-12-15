@@ -135,7 +135,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         DenseMatrix64F I_n = CommonOps.identity(n);
 
         CommonOps.kron(A, I_n, C1);
-        CommonOps.kron(B, I_m, C2);
+        CommonOps.kron(I_m, B, C2);
         CommonOps.addEquals(C1, C2);
 
         return C1;
@@ -715,4 +715,17 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     private DenseMatrix64F matrix8;
     private DenseMatrix64F matrix9;
     private DenseMatrix64F matrix10;
+
+    public double[] getStationaryVariance(int precisionIndex) {
+
+        assert (stationaryVariances != null);
+
+        final int offset = dimTrait * dimTrait * precisionIndex;
+
+        double[] buffer = new double[dimTrait * dimTrait];
+
+        System.arraycopy(stationaryVariances, offset, buffer, 0, dimTrait * dimTrait);
+
+        return buffer;
+    }
 }

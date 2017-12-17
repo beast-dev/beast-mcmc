@@ -246,7 +246,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                                              final int destinationOffset) {
         DenseMatrix64F alphaMatrix = wrap(source, 0, dim, dim);
         DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
-        scaledMatrixExponential(alphaMatrix, edgeLength, actualization); // QUESTION: Does this already exist ?
+        scaledMatrixExponential(alphaMatrix, -edgeLength, actualization); // QUESTION: Does this already exist ?
         unwrap(actualization, destination, destinationOffset);
     }
 

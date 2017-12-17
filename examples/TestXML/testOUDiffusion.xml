@@ -42,7 +42,7 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<traitDataLikelihood id="OULikelihood" traitName="X" forceFullPrecision="true">
+	<traitDataLikelihood id="ouLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 <!-- 		<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/> -->
 		<treeModel idref="treeModel"/>
@@ -63,8 +63,8 @@
 		</optimalTraits>
         <strengthOfSelectionMatrix>
             <matrixParameter id="strengthOfSelectionMatrix">
-				<parameter id="alpha.col1" value="1.0 0.0"/>
-				<parameter id="alpha.col2" value="0.0 2.0"/>
+				<parameter id="alpha.col1" value="1.0 0.1"/>
+				<parameter id="alpha.col2" value="0.1 2.0"/>
             </matrixParameter>
         </strengthOfSelectionMatrix>
      	<conjugateRootPrior>
@@ -79,46 +79,46 @@
 
 	<report>
 		With OU likelihood =
-		<traitDataLikelihood idref="OULikelihood"/>
+		<traitDataLikelihood idref="ouLikelihood"/>
 	</report>
 
 <!--
 	<traitGradientOnTree traitName="X">
-		<traitDataLikelihood idref="OULikelihood"/>
+		<traitDataLikelihood idref="ouLikelihood"/>
 	</traitGradientOnTree>
 
 	<report>
 		<traitLogger traitName="fcd.X" nodes="external">
-			<traitDataLikelihood idref="OULikelihood"/>
+			<traitDataLikelihood idref="ouLikelihood"/>
 			<treeModel idref="treeModel"/>
 		</traitLogger>
 	</report>
  -->
 
-	<operators id="OUOperators">
+	<operators id="ouOperators">
        <dirtyLikelihood weight="1">
-            <traitDataLikelihood idref="OULikelihood"/>
+            <traitDataLikelihood idref="ouLikelihood"/>
         </dirtyLikelihood>
 	</operators>
 
-	<mcmc id="OUMcmc" chainLength="10">
-		<posterior id="OUPosterior">
-			<traitDataLikelihood idref="OULikelihood"/>
+	<mcmc id="ouMcmc" chainLength="10">
+		<posterior id="ouPosterior">
+			<traitDataLikelihood idref="ouLikelihood"/>
 		</posterior>
-		<operators idref="OUOperators"/>
+		<operators idref="ouOperators"/>
 		<log logEvery="10">
-			<posterior idref="OUPosterior"/>
+			<posterior idref="ouPosterior"/>
 		</log>
 
 		<log logEvery="1" fileName="testOU.log">
 			<traitLogger traitName="X" nodes="all">
-				<traitDataLikelihood idref="OULikelihood"/>
+				<traitDataLikelihood idref="ouLikelihood"/>
 <!-- 				<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/> -->
 				<treeModel idref="treeModel"/>
 			</traitLogger>
 			<parameter idref="rate.1"/>
 			<parameter idref="rate.2"/>
-			<traitDataLikelihood idref="OULikelihood"/>
+			<traitDataLikelihood idref="ouLikelihood"/>
             <matrixParameter idref="precisionMatrix"/>
 			<parameter idref="meanRoot"/>
 			<parameter idref="sampleSizeRoot"/>
@@ -126,7 +126,7 @@
 		</log>
 
 		<logTree logEvery="1" nexusFormat="true" fileName="testOU.trees">
-			<traitDataLikelihood idref="OULikelihood"/>
+			<traitDataLikelihood idref="ouLikelihood"/>
 			<treeModel idref="treeModel"/>
 		</logTree>
 	</mcmc>
@@ -150,7 +150,7 @@
 
 	<mcmc id="sampleOUMcmc" chainLength="1000">
 		<posterior id="sampleOUPosterior">
-			<traitDataLikelihood idref="OULikelihood"/>
+			<traitDataLikelihood idref="ouLikelihood"/>
 			<normalPrior mean="0.0" stdev="1">
 				<parameter idref="rate.1"/>
 			</normalPrior>

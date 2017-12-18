@@ -55,7 +55,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private double pathParameter = 1.0;
 
     private final double priorPrecision;
-    private final double priorMeanPrecision;
+    private final double priorMean;
     private final double priorPrecisionWorking;
 
     private final FactorAnalysisOperatorAdaptor adaptor;
@@ -117,7 +117,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         }
 
         priorPrecision = 1 / (prior1.getSD() * prior1.getSD());
-        priorMeanPrecision = prior1.getMean() * priorPrecision;
+        priorMean = prior1.getMean();
 
         if (workingPrior == null) {
             priorPrecisionWorking = priorPrecision;
@@ -154,7 +154,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 if (i == j) {
                     answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();
                 } else {
-                    answer[i][j] *= pathParameter; // TODO Fix for non-generic priors
+                    answer[i][j] *= pathParameter;
                     answer[j][i] = answer[i][j];
                 }
             }
@@ -177,7 +177,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
 
             sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
-            sum += priorMeanPrecision;
+            sum += priorMean * priorPrecision;
             midMean[i] = sum;
         }
 
@@ -206,8 +206,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         } else {
             getTruncatedMean(size, i, variance, midMean, mean);
         }
-        for (int j = 0; j < mean.length; j++) { //TODO implement for generic prior
-            mean[j] *= pathParameter;
+        for (int j = 0; j < mean.length; j++) {
+            mean[j] *= pathParameter;  // TODO Is this missing the working prior component?
         }
     }
 
@@ -418,7 +418,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             double[] sample(double[] mean, double[][] cholesky, int constrainedIndex) {
                 // TODO Use back-solve to avoid inverting precision first
 //                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
-//                         mean, precision); // TODO Flatten precision
+//                         mean, precision);
 
                 return MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
             }

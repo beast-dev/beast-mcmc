@@ -225,9 +225,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
-        int constrainedIndex = (i < mean.length) ? i : -1;
+        // TODO Use back-solve to avoid inverting precision first
+//                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+//                         mean, precision);
 
-        double[] draws = constrainedSampler.sample(mean, cholesky, constrainedIndex);
+        double[] draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
         adaptor.setLoadingsForTraitQuietly(i, draws);
 
@@ -333,6 +335,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
                     drawI(i, precision, midMean, mean);
                 }
+                constrainedSampler.applyConstraint(adaptor);
                 adaptor.fireLoadingsChanged();
             } else {
                 int i = MathUtils.nextInt(adaptor.getNumberOfTraits());
@@ -349,6 +352,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                     currentMean = meanArray.listIterator();
                 }
                 drawI(i, currentPrecision.next(), currentMidMean.next(), currentMean.next());
+                constrainedSampler.applyConstraint(adaptor);
                 adaptor.fireLoadingsChanged();
             }
 
@@ -415,52 +419,16 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         NONE("none") {
             @Override
-            double[] sample(double[] mean, double[][] cholesky, int constrainedIndex) {
-                // TODO Use back-solve to avoid inverting precision first
-//                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
-//                         mean, precision);
-
-                return MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
-            }
-        },
-        REJECTION_SAMPLING("rejection") {
-            @Override
-            double[] sample(double[] mean, double[][] cholesky, int constrainedIndex) {
-
-                boolean repeat = true;
-                int attempts = 0;
-
-                double[] draw = null;
-                while (repeat) {
-
-                    draw = NONE.sample(mean, cholesky, constrainedIndex);
-                    if (constrainedIndex == -1 || draw[constrainedIndex] > 0.0) {
-                        repeat = false;
-                    }
-
-                    ++attempts;
-                    if (attempts >= MAX_TRIES) {
-                        throw new RuntimeException("Too many failed attempts to draw positive element");
-                    }
-                }
-
-                return draw;
-
+            void applyConstraint(FactorAnalysisOperatorAdaptor adaptor) {
+                // Do nothing
             }
         },
         REFLECTION("reflection") {
             @Override
-            double[] sample(double[] mean, double[][] cholesky, int constrainedIndex) {
-
-                double[] draw = NONE.sample(mean, cholesky, constrainedIndex);
-
-                if (constrainedIndex != -1 && draw[constrainedIndex] < 0) {
-                    for (int i = 0; i < draw.length; ++i) {
-                        draw[i] *= -1.0;
-                    }
+            void applyConstraint(FactorAnalysisOperatorAdaptor adaptor) {
+                for (int factor = 0; factor < adaptor.getNumberOfFactors(); ++factor) {
+                    adaptor.reflectLoadingsForFactor(factor);
                 }
-
-                return draw;
             }
         };
 
@@ -469,10 +437,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         }
 
         private String name;
-
-        abstract double[] sample(double[] mean, double[][] cholesky, int constrainedIndex);
-
-        private static final int MAX_TRIES = 10000;
 
         public String getName() {
             return name;
@@ -487,5 +451,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
             throw new IllegalArgumentException("Unknown sampler type");
         }
+
+        abstract void applyConstraint(FactorAnalysisOperatorAdaptor adaptor);
     }
 }

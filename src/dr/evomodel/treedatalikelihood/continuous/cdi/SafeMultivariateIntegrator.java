@@ -345,7 +345,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 // Inner products
                 double SS = weightedThreeInnerProduct(
                         partials, ibo, Pip,
-                        partials, kbo, Pjp,
+                        partials, jbo, Pjp,
                         partials, kbo, Pk,
                         dimTrait);
 

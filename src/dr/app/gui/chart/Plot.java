@@ -229,7 +229,7 @@ public interface Plot {
         private String name;
 
         private int plotNumber = -1, plotCount = -1;
-        private double xLocation = -1, yLocation = -1;
+        private double xLocation = 0, yLocation = 0;
 
         private Set<Integer> selectedPoints = new HashSet<Integer>();
 

@@ -706,7 +706,7 @@ public class JChart extends JPanel {
 
 
         if (horizontalAxis) {
-            if (label == null) {
+                if (label == null) {
                 label = getXAxisLabel(value);
             }
 

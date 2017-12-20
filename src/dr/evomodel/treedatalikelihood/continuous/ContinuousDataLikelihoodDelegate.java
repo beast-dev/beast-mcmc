@@ -36,10 +36,7 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @version $Id$
  */
 
-import dr.evolution.tree.MutableTreeModel;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -306,40 +303,29 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append(new Matrix(treeStructure));
         sb.append("\n\n");
 
-        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(), normalization, priorSampleSize);
         double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
-        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+        double[][] jointVariance = MultivariateTraitDebugUtilities.getJointVariance(tree, normalization,
+                priorSampleSize, callbackLikelihood, traitVariance, sb, diffusionProcessDelegate);
 
-        Matrix treeV = new Matrix(treeVariance);
-        Matrix treeP = treeV.inverse();
-
-        sb.append("Tree variance:\n");
-        sb.append(treeV);
-        sb.append("Tree precision:\n");
-        sb.append(treeP);
+        double[] priorMean = rootPrior.getMean();
+        sb.append("prior mean: ").append(new dr.math.matrixAlgebra.Vector(priorMean));
         sb.append("\n\n");
 
-        sb.append("Trait variance:\n");
-        sb.append(traitVariance);
-        sb.append("\n\n");
+//        for (int index = 0; index < drift.length / dimTrait; ++index) {
+//            for (int dim = 0; dim < dimTrait; ++dim) {
+//                drift[index * dimTrait + dim] += priorMean[dim];
+//            }
+//        }
 
-        sb.append("Joint variance:\n");
-        sb.append(new Matrix(jointVariance));
-        sb.append("\n\n");
+        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, diffusionProcessDelegate, priorMean, sb);
 
-        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, diffusionProcessDelegate);
-        if (diffusionProcessDelegate.hasDrift()) {
-            sb.append("Tree drift:\n");
-            sb.append(new Matrix(treeDrift));
-            sb.append("\n\n");
-        }
         double[] drift = KroneckerOperation.vectorize(treeDrift);
 
         final int datumLength = tipCount * dimTrait;
 
-        sb.append("Tree dim : ").append(treeVariance.length).append("\n");
+        sb.append("Tree dim : ").append(treeStructure.length).append("\n");
         sb.append("dimTrait : ").append(dimTrait).append("\n");
         sb.append("numTraits: ").append(numTraits).append("\n");
         sb.append("jVar dim : ").append(jointVariance.length).append("\n");
@@ -365,16 +351,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append("graph structure:\n");
         sb.append(new Matrix(graphStructure));
         sb.append("\n\n");
-
-        double[] priorMean = rootPrior.getMean();
-        sb.append("prior mean: ").append(new dr.math.matrixAlgebra.Vector(priorMean));
-        sb.append("\n\n");
-
-        for (int index = 0; index < drift.length / dimTrait; ++index) {
-            for (int dim = 0; dim < dimTrait; ++dim) {
-                drift[index * dimTrait + dim] += priorMean[dim];
-            }
-        }
 
         for (int trait = 0; trait < numTraits; ++trait) {
             sb.append("Trait #").append(trait).append("\n");

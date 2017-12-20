@@ -6,7 +6,7 @@
 			<attr name="X">10 11</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">2 3</attr>
+			<attr name="X">NA 3</attr>
 		</taxon>
 		<taxon id="C">
 			<attr name="X">3 4</attr>

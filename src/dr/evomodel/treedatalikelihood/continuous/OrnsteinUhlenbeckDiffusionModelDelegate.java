@@ -29,10 +29,16 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateWithDriftIntegrator;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
+import org.ejml.data.Complex64F;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.EigenDecomposition;
+import org.ejml.ops.CommonOps;
+import org.ejml.ops.EigenOps;
 
 import java.util.List;
 
@@ -55,12 +61,12 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
 
     protected MatrixParameterInterface strengthOfSelectionMatrixParameter;
     private double[][] strengthOfSelectionMatrix;
-    private double[][] savedStrengthOfSelectionMatrix;
+//    private double[][] savedStrengthOfSelectionMatrix;
 
 //    private double[][] stationaryPrecisionMatrix;
 //    private double[][] savedStationaryPrecisionMatrix;
 
-    private final BufferIndexHelper matrixActualizationBufferHelper;
+//    private final BufferIndexHelper matrixActualizationBufferHelper;
 
     public OrnsteinUhlenbeckDiffusionModelDelegate(Tree tree,
                                                    MultivariateDiffusionModel diffusionModel,
@@ -96,12 +102,16 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
         addVariable(strengthOfSelectionMatrixParameter);
 
         // two more matrices for each node less the root
-        matrixActualizationBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, partitionNumber);
+//        matrixActualizationBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, partitionNumber);
     }
 
     protected void calculateStrengthOfSelectionInfo(MultivariateDiffusionModel diffusionModel) {
         strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
 //        stationaryPrecisionMatrix = computeStationaryVariance(strengthOfSelectionMatrix, diffusionModel.getPrecisionParameter())
+    }
+
+    public double[][] getStrengthOfSelection() {
+        return strengthOfSelectionMatrixParameter.getParameterAsMatrix();
     }
 
     @Override
@@ -169,5 +179,60 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
                 getDriftRates(branchIndices, updateCount),
                 strengthOfSelectionMatrixParameter.getParameterValues(),
                 updateCount);
+    }
+
+    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
+        final DenseMatrix64F drift = new DenseMatrix64F(dim, 1, true, priorMean);
+        recursivelyAccumulateDrift(node, drift);
+        return drift.data;
+    }
+
+    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift) {
+        if (!tree.isRoot(node)) {
+
+            // Compute parent
+            recursivelyAccumulateDrift(tree.getParent(node), drift);
+
+            // Actualize
+            int[] branchIndice = new int[1];
+            branchIndice[0] = getMatrixBufferOffsetIndex(node.getNumber());
+
+            final double length = tree.getBranchLength(node);
+
+            DenseMatrix64F alphaMatrix = new DenseMatrix64F(strengthOfSelectionMatrixParameter.getParameterAsMatrix());
+
+            DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
+            computeActualizationBranch(-length, actualization);
+
+            DenseMatrix64F temp = new DenseMatrix64F(dim, 1);
+            CommonOps.mult(actualization, drift, temp);
+            CommonOps.scale(1.0, temp, drift);
+
+            // Add optimal value
+            DenseMatrix64F idMinusAct = CommonOps.identity(dim);
+            CommonOps.addEquals(idMinusAct, -1.0, actualization);
+
+            DenseMatrix64F optVal = new DenseMatrix64F(dim, 1, true, getDriftRates(branchIndice, 1));
+
+            CommonOps.multAdd(idMinusAct, optVal, drift);
+
+        }
+    }
+
+    private void computeActualizationBranch(double lambda, DenseMatrix64F C){
+        DenseMatrix64F A = new DenseMatrix64F(strengthOfSelectionMatrixParameter.getParameterAsMatrix());
+        EigenDecomposition eigA = DecompositionFactory.eig(dim, true);
+        if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
+        DenseMatrix64F expDiag = CommonOps.identity(dim);
+        for (int p = 0; p < dim; ++p) {
+            Complex64F ev = eigA.getEigenvalue(p);
+            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+            expDiag.set(p, p, Math.exp(lambda * ev.real));
+        }
+        DenseMatrix64F V = EigenOps.createMatrixV(eigA);
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
+        CommonOps.mult(V, expDiag, tmp);
+        CommonOps.invert(V);
+        CommonOps.mult(tmp, V, C);
     }
 }

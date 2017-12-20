@@ -109,8 +109,9 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
         return drift;
     }
 
-    double[] getAccumulativeDrift(final NodeRef node) {
+    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
         final double[] drift = new double[dim];
+        System.arraycopy(priorMean, 0, drift, 0, priorMean.length);
         recursivelyAccumulateDrift(node, drift);
         return drift;
     }

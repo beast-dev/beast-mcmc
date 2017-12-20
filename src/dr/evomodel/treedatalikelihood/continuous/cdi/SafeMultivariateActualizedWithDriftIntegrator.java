@@ -238,7 +238,6 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         precisionLogDet = determinants[precisionIndex];
     }
 
-
     private static void computeActualization(final double[] source,
                                              final double edgeLength,
                                              final int dim,
@@ -644,53 +643,51 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
                         SSi += ig * Pip.unsafe_get(g, h) * ih;
                         SSj += jg * Pjp.unsafe_get(g, h) * jh;
-                        SSk += kg * Pk .unsafe_get(g, h) * kh;
+                        SSk += kg * Pk.unsafe_get(g, h) * kh;
                     }
                 }
-
-//                    final DenseMatrix64F Vt = new DenseMatrix64F(dimTrait, dimTrait);
-//                final DenseMatrix64F Vt = matrix6;
-//                CommonOps.add(Vip, Vjp, Vt);
-
-//                if (DEBUG) {
-//                    System.err.println("Vt: " + Vt);
-//                }
-
-                int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
-                        - ck.getEffectiveDimension();
-
-//                    System.err.println(ci.getDeterminant());
-//                    System.err.println(CommonOps.det(Vip));
-//
-//                    System.err.println(cj.getDeterminant());
-//                    System.err.println(CommonOps.det(Vjp));
-//
-//                    System.err.println(1.0 / ck.getDeterminant());
-//                    System.err.println(CommonOps.det(Vk));
-
-                remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
-//                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
-                        (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
-                        - 0.5 * (SSi + SSj - SSk);
-
                 // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
 
                 if (DEBUG) {
                     System.err.println("\t\t\tSSi = " + (SSi));
                     System.err.println("\t\t\tSSj = " + (SSj));
                     System.err.println("\t\t\tSSk = " + (SSk));
-                    System.err.println("\t\t\tdeti = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetj = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetk = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\tremainder: " + remainder);
+                }
+
+                remainder += -0.5 * (SSi + SSj - SSk);
+
+            }
+
+            int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
+                    - ck.getEffectiveDimension();
+
+            remainder += -dimensionChange * LOG_SQRT_2_PI;
+
+            double deti = 0;
+            double detj = 0;
+            double detk = 0;
+            if (!(ci.getReturnCode() == NOT_OBSERVED)) {
+                deti = Math.log(ci.getDeterminant()); // TODO: use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
+            }
+            if (!(cj.getReturnCode() == NOT_OBSERVED)) {
+                detj = Math.log(cj.getDeterminant());
+            }
+            if (!(ck.getReturnCode() == NOT_OBSERVED)) {
+                detk = Math.log(ck.getDeterminant());
+            }
+            remainder += - 0.5 * (deti + detj + detk);
+
+            if (DEBUG) {
+                System.err.println("\t\t\tdeti = " + Math.log(ci.getDeterminant()));
+                System.err.println("\t\t\tdetj = " + Math.log(ci.getDeterminant()));
+                System.err.println("\t\t\tdetk = " + Math.log(ci.getDeterminant()));
+                System.err.println("\t\tremainder: " + remainder);
 //                        System.exit(-1);
-                }
+            }
 
-                if (TIMING) {
-                    endTime("remain");
-                }
-
-            } // End if remainder
+            if (TIMING) {
+                endTime("remain");
+            }
 
             // Accumulate remainder up tree and store
 

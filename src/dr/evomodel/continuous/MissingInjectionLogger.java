@@ -38,25 +38,83 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class MissingInjectionLogger implements Loggable {
+public class MissingInjectionLogger implements Loggable, Reportable {
 
     private static final String MISSING_INJECTION_LOGGER = "injectedMissingTraitsLogger";
+    private static final String ADJUSTMENT = "adjustment";
 
     private final TreeTrait traitProvider;
     private final List<MissingInjection.TaxonInformation> taxonInformation;
     private final Tree tree;
+    private final Adjustment adjustment;
+
+    public enum Adjustment {
+        DIFFERENCE("difference") {
+            @Override
+            double adjustedValue(double newValue, double oldValue) {
+                return newValue - oldValue;
+            }
+        },
+        ORIGINAL("original") {
+            @Override
+            double adjustedValue(double newValue, double oldValue) {
+                return oldValue;
+            }
+        },
+        RAW("raw"){
+            @Override
+            double adjustedValue(double newValue, double oldValue) {
+                return newValue;
+            }
+        };
+
+        Adjustment(String name) {
+            this.name = name;
+        }
+
+        private String name;
+
+        public String getName() {
+            return name;
+        }
+
+        public static Adjustment parse(String name) {
+            name = name.toLowerCase();
+            for (Adjustment adjustment : Adjustment.values()) {
+                if (name.compareTo(adjustment.getName()) == 0) {
+                    return adjustment;
+                }
+            }
+            throw new IllegalArgumentException("Unknown adjustment type");
+        }
+
+        abstract double adjustedValue(double newValue, double oldValue);
+    }
 
     private MissingInjectionLogger(MissingInjection injector,
                                    TreeTrait traitProvider,
-                                   Tree tree) {
+                                   Tree tree,
+                                   Adjustment adjustment) {
 
         this.taxonInformation = injector.getTaxonInformation();
         this.traitProvider = traitProvider;
         this.tree = tree;
+        this.adjustment = adjustment;
     }
+
+    private LogColumn[] logColumns = null;
 
     @Override
     public LogColumn[] getColumns() {
+
+        if (logColumns == null) {
+            logColumns = createLogColumns();
+        }
+        return logColumns;
+    }
+
+    private LogColumn[] createLogColumns() {
+
         int count = getNumberOfMissingValues();
 
         LogColumn[] columns = new LogColumn[count];
@@ -67,7 +125,10 @@ public class MissingInjectionLogger implements Loggable {
                 columns[index] = new NumberColumn(getColumnName(info, missing)) {
                     @Override
                     public double getDoubleValue() {
-                        return getTraitValue(info.index, missing.index) - missing.originalValue;
+                        return adjustment.adjustedValue(
+                                getTraitValue(info.index, missing.index),
+                                missing.originalValue
+                        );
                     }
                 };
                 ++index;
@@ -111,7 +172,11 @@ public class MissingInjectionLogger implements Loggable {
                 throw new XMLParseException("Unable to find trait '" + traitName + "'");
             }
 
-            return new MissingInjectionLogger(injector, treeTrait, tree);
+            Adjustment adjustment = Adjustment.parse(
+                    xo.getAttribute(ADJUSTMENT,
+                    Adjustment.DIFFERENCE.getName()));
+
+            return new MissingInjectionLogger(injector, treeTrait, tree, adjustment);
         }
 
         @Override
@@ -137,6 +202,19 @@ public class MissingInjectionLogger implements Loggable {
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 new ElementRule(MissingInjection.class),
                 new ElementRule(TreeDataLikelihood.class),
+                AttributeRule.newStringRule(ADJUSTMENT, true),
         };
     };
+
+    @Override
+    public String getReport() {
+        LogColumn[] columns = getColumns();
+
+        StringBuilder sb = new StringBuilder();
+        for (LogColumn column : columns) {
+            sb.append(column.getFormatted()).append("\t");
+        }
+        return sb.toString();
+
+    }
 }

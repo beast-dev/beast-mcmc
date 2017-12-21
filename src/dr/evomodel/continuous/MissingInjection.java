@@ -43,14 +43,15 @@ public class MissingInjection {
 
     private static final String MISSING_INJECTION = "injectMissingTraits";
     private static final String MISSING_PROBABILITY = "missingProbability";
+    private static final String DIMENSION = "dimension";
     private static final String TRAIT_NAME = dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
     private final List<TaxonInformation> taxonInformation;
     private final String traitName;
 
-    public MissingInjection(Tree tree,  String traitName, double missingProbability)
+    public MissingInjection(Tree tree,  String traitName, double missingProbability, int dimension)
             throws TaxonList.MissingAttributeException {
-        taxonInformation = injectMissingValues(traitName, tree, missingProbability);
+        taxonInformation = injectMissingValues(traitName, tree, missingProbability, dimension);
         this.traitName = traitName;
     }
 
@@ -87,7 +88,9 @@ public class MissingInjection {
 
     private List<TaxonInformation> injectMissingValues(String traitName,
                                                        Tree treeModel,
-                                                       double missingProbability)
+                                                       double missingProbability,
+                                                       int dimension
+                                                       )
             throws TaxonList.MissingAttributeException {
 
         List<TaxonInformation> taxonInformationList = new ArrayList<TaxonInformation>();
@@ -101,7 +104,7 @@ public class MissingInjection {
                         "\" not found for taxa \"" + taxonName + "\"");
             }
 
-            TaxonInformation taxonInformation = injectForOneTaxon(object, missingProbability);
+            TaxonInformation taxonInformation = injectForOneTaxon(object, missingProbability, dimension);
             Taxon taxon = treeModel.getTaxon(index);
             taxon.setAttribute(traitName, taxonInformation.newAttribute);
 
@@ -114,26 +117,27 @@ public class MissingInjection {
         return taxonInformationList;
     }
 
-    private TaxonInformation injectForOneTaxon(String object, double missingProbability) {
+    private TaxonInformation injectForOneTaxon(String object, double missingProbability, int dimension) {
 
         List<InjectedMissingValue> injectedMissingValues = new ArrayList<InjectedMissingValue>();
         StringBuilder sb = new StringBuilder();
         StringTokenizer st = new StringTokenizer(object);
         int count = st.countTokens();
-
         for (int j = 0; j < count; j++) {
-
             String oneValue = st.nextToken();
-            if (!TreeTraitParserUtilities.isMissing(oneValue)) {
-                if (MathUtils.nextDouble() < missingProbability) {
-                    injectedMissingValues.add(new InjectedMissingValue(
-                            j, new Double(oneValue)
-                    ));
-                    oneValue = "?";
+            if (dimension < 0 || dimension==j) {
+                    if (!TreeTraitParserUtilities.isMissing(oneValue)) {
+                        if (MathUtils.nextDouble() < missingProbability) {
+                            injectedMissingValues.add(new InjectedMissingValue(
+                                    j, new Double(oneValue)
+                            ));
+                            oneValue = "?";
+                        }
+                    }
                 }
-            }
 
-            sb.append(oneValue).append(" ");
+                sb.append(oneValue).append(" ");
+
         }
 
         return new TaxonInformation(injectedMissingValues, sb.toString());
@@ -152,9 +156,14 @@ public class MissingInjection {
                 throw new XMLParseException("Must provide a missing probability 0 <= x <= 1");
             }
 
+            int dimension = -1;
+            if (xo.hasAttribute(DIMENSION)){
+                dimension = xo.getIntegerAttribute(DIMENSION) - 1;
+            }
+
             MissingInjection injector;
             try {
-                injector = new MissingInjection(tree, traitName, missingProbability);
+                injector = new MissingInjection(tree, traitName, missingProbability, dimension);
             } catch (TaxonList.MissingAttributeException e) {
                 throw new XMLParseException(e.getMessage());
             }

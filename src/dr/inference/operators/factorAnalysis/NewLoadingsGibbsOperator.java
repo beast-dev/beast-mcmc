@@ -55,14 +55,17 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private double pathParameter = 1.0;
 
     private final double priorPrecision;
-    private final double priorMeanPrecision;
+    private final double priorMean;
     private final double priorPrecisionWorking;
 
     private final FactorAnalysisOperatorAdaptor adaptor;
 
+    private final ConstrainedSampler constrainedSampler;
+
     public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, DistributionLikelihood prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
-                                    boolean multiThreaded, int numThreads) {
+                                    boolean multiThreaded, int numThreads,
+                                    ConstrainedSampler constrainedSampler) {
 
         setWeight(weight);
 
@@ -76,7 +79,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         precisionArray = new ArrayList<double[][]>();
         double[][] temp;
         this.randomScan = randomScan;
-
+        this.constrainedSampler = constrainedSampler;
 
         meanArray = new ArrayList<double[]>();
         meanMidArray = new ArrayList<double[]>();
@@ -114,7 +117,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         }
 
         priorPrecision = 1 / (prior1.getSD() * prior1.getSD());
-        priorMeanPrecision = prior1.getMean() * priorPrecision;
+        priorMean = prior1.getMean();
 
         if (workingPrior == null) {
             priorPrecisionWorking = priorPrecision;
@@ -137,17 +140,17 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     }
 
 
-    private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adapator, //MatrixParameterInterface full,
+    private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adaptor, //MatrixParameterInterface full,
                                          int newRowDimension, int row, double[][] answer) {
 
-        int p = adapator.getNumberOfTaxa(); //.getColumnDimension();
+        int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
 
         for (int i = 0; i < newRowDimension; i++) {
             for (int j = i; j < newRowDimension; j++) {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
-                    sum += adapator.getFactorValue(i, k) * adapator.getFactorValue(j, k);
-                answer[i][j] = sum * adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
+                    sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
+                answer[i][j] = sum * this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
                     answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();
                 } else {
@@ -174,7 +177,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
 
             sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
-            sum += priorMeanPrecision;
+            sum += priorMean * priorPrecision;
             midMean[i] = sum;
         }
 
@@ -203,8 +206,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         } else {
             getTruncatedMean(size, i, variance, midMean, mean);
         }
-        for (int j = 0; j < mean.length; j++) { //TODO implement for generic prior
-            mean[j] *= pathParameter;
+        for (int j = 0; j < mean.length; j++) {
+            mean[j] *= pathParameter;  // TODO Is this missing the working prior component?
         }
     }
 
@@ -223,8 +226,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         getMean(i, variance, midMean, mean);
 
         // TODO Use back-solve to avoid inverting precision first
-//        double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
-//                 mean, precision); // TODO Flatten precision
+//                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+//                         mean, precision);
 
         double[] draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
@@ -332,6 +335,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
                     drawI(i, precision, midMean, mean);
                 }
+                constrainedSampler.applyConstraint(adaptor);
                 adaptor.fireLoadingsChanged();
             } else {
                 int i = MathUtils.nextInt(adaptor.getNumberOfTraits());
@@ -348,6 +352,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                     currentMean = meanArray.listIterator();
                 }
                 drawI(i, currentPrecision.next(), currentMidMean.next(), currentMean.next());
+                constrainedSampler.applyConstraint(adaptor);
                 adaptor.fireLoadingsChanged();
             }
 
@@ -365,9 +370,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             for (double[][] p : precisionArray) {
                 System.err.println(new Matrix(p));
             }
-        }
 
-        if (DEBUG) {
             System.err.println("End doOp");
         }
 
@@ -411,4 +414,44 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private final List<Callable<Double>> drawCallers = new ArrayList<Callable<Double>>();
     private final ExecutorService pool;
+
+    public enum ConstrainedSampler {
+
+        NONE("none") {
+            @Override
+            void applyConstraint(FactorAnalysisOperatorAdaptor adaptor) {
+                // Do nothing
+            }
+        },
+        REFLECTION("reflection") {
+            @Override
+            void applyConstraint(FactorAnalysisOperatorAdaptor adaptor) {
+                for (int factor = 0; factor < adaptor.getNumberOfFactors(); ++factor) {
+                    adaptor.reflectLoadingsForFactor(factor);
+                }
+            }
+        };
+
+        ConstrainedSampler(String name) {
+            this.name = name;
+        }
+
+        private String name;
+
+        public String getName() {
+            return name;
+        }
+
+        public static ConstrainedSampler parse(String name) {
+            name = name.toLowerCase();
+            for (ConstrainedSampler sampler : ConstrainedSampler.values()) {
+                if (name.compareTo(sampler.getName()) == 0) {
+                    return sampler;
+                }
+            }
+            throw new IllegalArgumentException("Unknown sampler type");
+        }
+
+        abstract void applyConstraint(FactorAnalysisOperatorAdaptor adaptor);
+    }
 }

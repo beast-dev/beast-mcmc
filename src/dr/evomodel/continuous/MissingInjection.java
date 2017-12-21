@@ -49,7 +49,7 @@ public class MissingInjection {
     private final List<TaxonInformation> taxonInformation;
     private final String traitName;
 
-    public MissingInjection(Tree tree,  String traitName, double missingProbability, int dimension)
+    public MissingInjection(Tree tree,  String traitName, double missingProbability, int[] dimension)
             throws TaxonList.MissingAttributeException {
         taxonInformation = injectMissingValues(traitName, tree, missingProbability, dimension);
         this.traitName = traitName;
@@ -89,7 +89,7 @@ public class MissingInjection {
     private List<TaxonInformation> injectMissingValues(String traitName,
                                                        Tree treeModel,
                                                        double missingProbability,
-                                                       int dimension
+                                                       int[] dimension
                                                        )
             throws TaxonList.MissingAttributeException {
 
@@ -117,7 +117,7 @@ public class MissingInjection {
         return taxonInformationList;
     }
 
-    private TaxonInformation injectForOneTaxon(String object, double missingProbability, int dimension) {
+    private TaxonInformation injectForOneTaxon(String object, double missingProbability, int[] dimension) {
 
         List<InjectedMissingValue> injectedMissingValues = new ArrayList<InjectedMissingValue>();
         StringBuilder sb = new StringBuilder();
@@ -125,8 +125,8 @@ public class MissingInjection {
         int count = st.countTokens();
         for (int j = 0; j < count; j++) {
             String oneValue = st.nextToken();
-            if (dimension < 0 || dimension==j) {
-                    if (!TreeTraitParserUtilities.isMissing(oneValue)) {
+            if(dimension==null || inDimension(dimension,j)){
+                if (!TreeTraitParserUtilities.isMissing(oneValue)) {
                         if (MathUtils.nextDouble() < missingProbability) {
                             injectedMissingValues.add(new InjectedMissingValue(
                                     j, new Double(oneValue)
@@ -135,14 +135,40 @@ public class MissingInjection {
                         }
                     }
                 }
-
-                sb.append(oneValue).append(" ");
-
+            sb.append(oneValue).append(" ");
         }
 
         return new TaxonInformation(injectedMissingValues, sb.toString());
     }
-    
+
+    private static int[] parseVariableLengthIntegerArray(String inString) {
+
+        List<Integer> returnList = new ArrayList<Integer>();
+        StringTokenizer st = new StringTokenizer(inString, " ");
+        while (st.hasMoreTokens()) {
+            returnList.add(Integer.parseInt(st.nextToken()));
+        }
+
+        if (returnList.size() > 0) {
+            int[] intArray = new int[returnList.size()];
+            for (int i = 0; i < intArray.length; i++)
+                intArray[i] = (returnList.get(i) -1);
+            return intArray;
+        }
+        return null;
+    }
+
+    private boolean inDimension(int[] dimension, int dim){
+        boolean returnBoolean = false;
+        for (int i = 0; i < dimension.length; i++){
+            if(dim == dimension[i]){
+                returnBoolean = true;
+            }
+        }
+        return returnBoolean;
+    }
+
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         @Override
@@ -156,9 +182,9 @@ public class MissingInjection {
                 throw new XMLParseException("Must provide a missing probability 0 <= x <= 1");
             }
 
-            int dimension = -1;
+            int[] dimension = null;
             if (xo.hasAttribute(DIMENSION)){
-                dimension = xo.getIntegerAttribute(DIMENSION) - 1;
+                dimension = parseVariableLengthIntegerArray(xo.getStringAttribute(DIMENSION));
             }
 
             MissingInjection injector;

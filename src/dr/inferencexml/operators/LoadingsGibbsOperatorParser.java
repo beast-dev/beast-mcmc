@@ -51,6 +51,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final static String MULTI_THREADED = "multiThreaded";
     private final static String NUM_THREADS = "numThreads";
     private final static String MODE = "newMode";
+    private final static String CONSTRAINT = "constraint";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -99,8 +100,12 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                     adaptor = new FactorAnalysisOperatorAdaptor.IntegratedFactors(integratedLikelihood, treeLikelihood);
                 }
 
+                NewLoadingsGibbsOperator.ConstrainedSampler sampler = NewLoadingsGibbsOperator.ConstrainedSampler.parse(
+                        xo.getAttribute(CONSTRAINT, NewLoadingsGibbsOperator.ConstrainedSampler.NONE.getName())
+                );
+
                 return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,
-                        multiThreaded, numThreads);
+                        multiThreaded, numThreads, sampler);
             } else {
                 return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
             }
@@ -134,6 +139,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(MULTI_THREADED, true),
             AttributeRule.newIntegerRule(NUM_THREADS, true),
             AttributeRule.newBooleanRule(MODE, true),
+            AttributeRule.newStringRule(CONSTRAINT, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),

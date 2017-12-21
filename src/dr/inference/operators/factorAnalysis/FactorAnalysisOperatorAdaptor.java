@@ -31,7 +31,9 @@ public interface FactorAnalysisOperatorAdaptor {
 
     void setLoadingsForTraitQuietly(int trait, double[] value);
 
-    void fireLoadingsChanged(); // TODO Merge into setLoadings
+    void reflectLoadingsForFactor(int factor);
+
+    void fireLoadingsChanged();
 
     void drawFactors();
     
@@ -49,6 +51,17 @@ public interface FactorAnalysisOperatorAdaptor {
         public void setLoadingsForTraitQuietly(int trait, double[] value) {
             for (int j = 0; j < value.length; j++) {
                 loadings.setParameterValueQuietly(trait, j, value[j]);
+            }
+        }
+
+        @Override
+        public void reflectLoadingsForFactor(int factor) {
+            double pivot = loadings.getParameterValue(factor, factor);
+            if (pivot < 0.0) {
+                for (int trait = factor; trait < loadings.getRowDimension(); ++trait) {
+                    loadings.setParameterValueQuietly(trait, factor,
+                            -1.0 * loadings.getParameterValue(trait, factor));
+                }
             }
         }
 

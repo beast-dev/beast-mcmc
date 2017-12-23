@@ -33,6 +33,8 @@ import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticParser;
 import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
@@ -482,7 +484,7 @@ public class ClockModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeAllMus(PartitionClockModel model, XMLWriter writer) {
-        String parameterName = options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus";
+        String parameterName = !options.classicOperatorsAndPriors && BeautiOptions.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus";
 
         Parameter allMus = model.getParameter(parameterName);
         if (allMus.getSubParameters().size() > 1) {
@@ -547,13 +549,18 @@ public class ClockModelGenerator extends Generator {
     public void writeLog(PartitionClockModel model, XMLWriter writer) {
         String prefix = model.getPrefix();
 
-        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (!options.classicOperatorsAndPriors && BeautiOptions.NEW_RELATIVE_RATE_PARAMETERIZATION) {
             Parameter allNus = model.getParameter("allNus");
             if (allNus.getSubParameters().size() > 1) {
-                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
-            }
+                // The mu's are the more relevent parameter and allow comparisons with the old parameterization
+                // It would be confusing to log the nus and mus.
+//                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
 
-            // todo write mu s here as statistics (or per-partition rates?).
+                for (Parameter parameter : allNus.getSubParameters()) {
+                    String name = parameter.getName();
+                    writer.writeIDref(StatisticParser.STATISTIC, name.substring(0, name.lastIndexOf(".")) + ".mu");
+                }
+            }
 
         } else {
             Parameter allMus = model.getParameter("allMus");

@@ -25,57 +25,57 @@
 
 package dr.inferencexml.operators.hmc;
 
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
+import dr.inference.operators.hmc.NewBouncyParticleOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
+import dr.inferencexml.model.MaskedParameterParser;
+import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 import dr.xml.*;
 
 /**
- * @author Max Tolkoff
+ * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 
-public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser {
+public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
+    public final static String BPO_OPERATOR = "bouncyParticleOperator";
 
-    private final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
-    private final static String N_STEPS = "nSteps";
-    private final static String STEP_SIZE = "stepSize";
-    private final static String DRAW_VARIANCE = "drawVariance";
-    private final static String MODE = "mode";
-    private final static String NUTS = "nuts";
-    private final static String VANILLA = "vanilla";
+    public final static String DRAW_VARIANCE = "drawVariance";
+    public static final String MODE = "mode";
 
     @Override
     public String getParserName() {
-        return HMC_OPERATOR;
-    }
-
-    private int parseRunMode(XMLObject xo) throws XMLParseException {
-        int mode = 0;
-        if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(NUTS) == 0) {
-            mode = 1;
-        }
-        return mode;
+        return BPO_OPERATOR;
     }
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        System.err.println("HERE?");
+        System.exit(-1);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        int nSteps = xo.getIntegerAttribute(N_STEPS);
-        double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
-        int runMode = parseRunMode(xo);
 
         CoercionMode coercionMode = CoercionMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
+
+        TreeDataLikelihood treeDataLikelihood =
+                (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
+        ContinuousDataLikelihoodDelegate likelihoodDelegate =
+                (ContinuousDataLikelihoodDelegate) xo.getChild(ContinuousDataLikelihoodDelegate.class);
+
+        String traitName = (String) xo.getChild(String.class);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
@@ -88,13 +88,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         }
 
 
-        if (runMode == 0) {
-            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
-                    stepSize, nSteps, drawVariance);
-        } else {
-            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
-                    stepSize, nSteps, drawVariance);
-        }
+        return new NewBouncyParticleOperator(coercionMode, weight, treeDataLikelihood, likelihoodDelegate, traitName,
+                    parameter, drawVariance);
+
     }
 
     @Override
@@ -104,8 +100,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newIntegerRule(N_STEPS),
-            AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(MODE, true),

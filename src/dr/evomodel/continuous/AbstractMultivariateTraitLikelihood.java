@@ -29,6 +29,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -445,8 +446,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         // ignoring object instance Parameter case
 
         else if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
-                TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
+            if (object instanceof TreeChangedEvent) {
+                TreeChangedEvent event = (TreeChangedEvent) object;
                 if (event.isTreeChanged()) {
                     recalculateTreeLength();
                     updateAllNodes();

@@ -19,7 +19,9 @@ public interface TreeChangedEvent {
 
     boolean isTreeChanged();
 
-//    boolean isHeightChanged();
+    boolean isNodeParameterChanged();
+
+    boolean isHeightChanged();
 
     public class WholeTree implements TreeChangedEvent {
 
@@ -32,5 +34,9 @@ public interface TreeChangedEvent {
         @Override public boolean isNodeChanged() { return false; }
 
         @Override public boolean isTreeChanged() { return true; }
+
+        @Override public boolean isNodeParameterChanged() { return false; }
+
+        @Override public boolean isHeightChanged() { return false; }
     }
 }

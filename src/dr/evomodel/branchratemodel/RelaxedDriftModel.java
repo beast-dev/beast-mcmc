@@ -50,7 +50,8 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
     public RelaxedDriftModel(TreeModel treeModel,
                              Parameter rateIndicatorParameter,
                              Parameter ratesParameter,
-                             Parameter driftRates) {
+                             Parameter driftRates,
+                             ArbitraryBranchRates branchChanges) {
 
         super(RelaxedDriftModelParser.RELAXED_DRIFT);
 
@@ -74,8 +75,9 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
         if (driftRates != null) {
             this.driftRates = driftRates;
             driftRates.setDimension(ratesParameter.getDimension());
-        } else {
-            driftRates = null;
+        }
+        if (branchChanges != null){
+            this.branchChanges = branchChanges;
         }
 
         branchRates = new double[treeModel.getNodeCount()];
@@ -174,6 +176,10 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
                 driftRates.setParameterValue(nodeNumber0, rate + getVariable(tree, childNode0));
                 driftRates.setParameterValue(nodeNumber1, rate);
             }
+            if (branchChanges != null){
+                branchChanges.setBranchRate(tree, childNode0, 1.0);
+                branchChanges.setBranchRate(tree, childNode1, 0.0);
+            }
 
         } else if (nodeIndicator > 0) {
             //  System.err.println("child1 change");
@@ -185,6 +191,10 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
                 driftRates.setParameterValue(nodeNumber0, rate);
                 driftRates.setParameterValue(nodeNumber1, rate + getVariable(tree, childNode1));
             }
+            if (branchChanges != null){
+                branchChanges.setBranchRate(tree, childNode0, 0.0);
+                branchChanges.setBranchRate(tree, childNode1, 1.0);
+            }
 
         } else {
             // System.err.println("NO CHANGES!!!");
@@ -194,6 +204,10 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
             if (driftRates != null) {
                 driftRates.setParameterValue(nodeNumber0, rate);
                 driftRates.setParameterValue(nodeNumber1, rate);
+            }
+            if (branchChanges != null){
+                branchChanges.setBranchRate(tree, childNode0, 0.0);
+                branchChanges.setBranchRate(tree, childNode1, 0.0);
             }
         }
 
@@ -238,6 +252,7 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
     private TreeParameterModel indicators;
     private TreeParameterModel rates;
     private Parameter driftRates;
+    private ArbitraryBranchRates branchChanges;
 
     boolean recalculationNeeded = true;
 }

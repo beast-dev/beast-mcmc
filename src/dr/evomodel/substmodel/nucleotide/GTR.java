@@ -48,12 +48,12 @@ import java.util.List;
  */
 public class GTR extends BaseSubstitutionModel implements Citable {
 
-    public static final String A_TO_C = "rateAC";
-    public static final String A_TO_G = "rateAG";
-    public static final String A_TO_T = "rateAT";
-    public static final String C_TO_G = "rateCG";
-    public static final String C_TO_T = "rateCT";
-    public static final String G_TO_T = "rateGT";
+    public static final String A_TO_C = "AC";
+    public static final String A_TO_G = "AG";
+    public static final String A_TO_T = "AT";
+    public static final String C_TO_G = "CG";
+    public static final String C_TO_T = "CT";
+    public static final String G_TO_T = "GT";
 
     private Parameter ratesParameter = null;
 

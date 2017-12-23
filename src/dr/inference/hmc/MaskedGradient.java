@@ -39,7 +39,6 @@ public class MaskedGradient implements GradientWrtParameterProvider, VariableLis
     private final Parameter parameter;
 
     private final int[] map;
-    private final int[] inverseMap;
 
     public MaskedGradient(GradientWrtParameterProvider gradient, Parameter mask) {
         this.gradient = gradient;
@@ -49,7 +48,7 @@ public class MaskedGradient implements GradientWrtParameterProvider, VariableLis
         this.parameter = new MaskedParameter(originalParameter, mask, true);
 
         this.map = new int[originalParameter.getDimension()];
-        this.inverseMap = new int[originalParameter.getDimension()];
+        int[] inverseMap = new int[originalParameter.getDimension()];
 
         this.dimension = MaskedParameter.updateMask(mask, map, inverseMap, 1);
     }

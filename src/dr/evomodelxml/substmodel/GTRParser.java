@@ -43,6 +43,13 @@ public class GTRParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES = "frequencies";
     public static final String RATES = "rates";
 
+    public static final String A_TO_C = "rateAC";
+    public static final String A_TO_G = "rateAG";
+    public static final String A_TO_T = "rateAT";
+    public static final String C_TO_G = "rateCG";
+    public static final String C_TO_T = "rateCT";
+    public static final String G_TO_T = "rateGT";
+
     public String getParserName() {
         return GTR_MODEL;
     }
@@ -56,12 +63,12 @@ public class GTRParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(RATES)) {
             rates = (Parameter) xo.getElementFirstChild(RATES);
             rates.setDimensionNames(new String[] {
-                    rates.getId() + A_TO_C,
-                    rates.getId() + A_TO_G,
-                    rates.getId() + A_TO_T,
-                    rates.getId() + C_TO_G,
-                    rates.getId() + C_TO_T,
-                    rates.getId() + G_TO_T});
+                    rates.getId() + "." + A_TO_C,
+                    rates.getId() + "." + A_TO_G,
+                    rates.getId() + "." + A_TO_T,
+                    rates.getId() + "." + C_TO_G,
+                    rates.getId() + "." + C_TO_T,
+                    rates.getId() + "." + G_TO_T});
 
             return new GTR(rates, freqModel);
         } else {
@@ -98,8 +105,9 @@ public class GTRParser extends AbstractXMLObjectParser {
             if (rateCTVariable == null) countNull++;
             if (rateGTVariable == null) countNull++;
 
-            if (countNull != 1)
+            if (countNull != 1) {
                 throw new XMLParseException("Only five parameters may be specified in GTR, leave exactly one out, the others will be specifed relative to the one left out.");
+            }
             return new GTR(rateACVariable, rateAGVariable, rateATVariable, rateCGVariable, rateCTVariable, rateGTVariable, freqModel);
         }
     }

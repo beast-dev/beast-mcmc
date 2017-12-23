@@ -25,12 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import beagle.BeagleFlag;
-
-/**
- * Created by msuchard on 9/14/16.
- */
-
 public class ResourceDetails {
     private final int number;
     private String name;
@@ -74,11 +68,10 @@ public class ResourceDetails {
         var1.append("").append(this.getNumber()).append(" : ").append(this.getName()).append("\n");
         if(this.getDescription() != null) {
             String[] var2 = this.getDescription().split("\\|");
-            String[] var3 = var2;
             int var4 = var2.length;
 
             for(int var5 = 0; var5 < var4; ++var5) {
-                String var6 = var3[var5];
+                String var6 = var2[var5];
                 if(var6.trim().length() > 0) {
                     var1.append("    ").append(var6.trim()).append("\n");
                 }

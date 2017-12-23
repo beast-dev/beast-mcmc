@@ -202,13 +202,10 @@
 	</report>
 
 
-<!--
 	<mcmc id="mcmc" chainLength="1000000">
 		<posterior id="posterior">
 			<integratedFactorModel idref="factorModel"/>
 			<traitDataLikelihood idref="traitLikelihood"/>
-<!~~ 			<multivariateTraitLikelihood idref="oldTraitLikelihood"/> ~~>
-			<multivariateWishartPrior idref="precisionPrior"/>
 		</posterior>
 		<operators idref="operators"/>
 		<log logEvery="1000">
@@ -220,87 +217,12 @@
 			<integratedFactorModel idref="factorModel"/>
 			<traitDataLikelihood idref="traitLikelihood"/>
 		</log>
-
-<!~~
 		<logTree logEvery="1000" nexusFormat="true" fileName="testIntegratedTraitLikelihood.trees">
 			<traitDataLikelihood idref="traitLikelihood"/>
 			<treeModel idref="treeModel"/>
 		</logTree>
- ~~>
 	</mcmc>
- -->
+
 
 </beast>
 
-<!--
-# R script
-library(mvtnorm)
-
--->
-
-<!--
-
-NO MISSING DATA:
-
-# -overwrite -beagle -seed 666 new_traits.xml
-state	posterior
-0	-394.7939523709884	-
-1000	-36.37427532716558	-
-2000	-37.04981479092325	-
-3000	-36.61844759176243	-
-4000	-35.196247837650795	-
-5000	-38.581383922812066	-
-6000	-34.676920570499746	-
-7000	-34.9434608561104	-
-8000	-35.04719504815088	-
-9000	-35.63573264148823	-
-10000	-35.55350998983423	-
-
-
-TOTAL DEBUG logLikelihood = -212.2681254133979
-dr.evomodel.treedatalikelihood.TreeDataLikelihood(-212.26812541339797)
-
-END OF PRE-ORDER
-Missing tip = 1 (6), trait = 1
-post: [ 0.0, 0.0 ]
-pre : [ 5.82258064516129, 6.620967741935483 ]
-V: Type = dense real , numRows = 2 , numCols = 2
- 0.921   0.302
- 0.302   0.619
-
-
-cM: [ 8.666666666666668 ]
-CV: Type = dense real , numRows = 1 , numCols = 1
- 0.667
-
-
- cM: [ 5.791666666666666 ]
-CV: Type = dense real , numRows = 1 , numCols = 1
- 0.542
-
--->
-
-
-<!--
-
-
-CHECK CONDITIONAL NORMAL
-
-m <- c(5.82258064516129, 6.620967741935483)
-t <- c(0.921, 0.302, 0.302, 0.619)
-v <- matrix(t, ncol = 2)
-condMVN(mean = m, sigma = v, dependent.ind = 2, given.ind = 1, X.given = 1)
-
-
-
-
-
-t <- c(1.26,0.42000, 0.66,  0.22,  0.06  ,0.020, 0.42, 0.84,  0.22,  0.44, 0.020,  0.04, 0.66 ,0.22,  1.26 , 0.42, 0.06 , 0.02, 0.22,  0.44,  0.42,  0.84,  0.02,  0.04, 0.06 , 0.02,  0.06 , 0.02, 1.26  , 0.42, 0.02, 0.04,  0.02,  0.04,  0.42,  0.84)
-v <- matrix(t, ncol = 6)
-m <- rep(0,6)
-condMVN(m, v, dependent.ind = 4, given.ind = c(1,2,3,5,6), X.given = c(11.0, 12.0, 1.0, 3.0, 3.0))
-
-t <- c(1, 0, 0.5, 0, 0, 1, 0, 0.5, 0.5, 0, 1, 0, 0, 0.5, 0, 1)
-v <- matrix(t, ncol = 4)
-condMVN(m, v, dependent.ind = 4, given.ind = c(1,2,3), X.given = c(11, 12, 1))
--->

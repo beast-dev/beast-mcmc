@@ -96,6 +96,7 @@ public class Parameter implements Serializable {
     private boolean isFixed;
     private double initial;
     public double maintainedSum;
+    public double dimension;
     public boolean isTruncated;
     public double truncationUpper;
     public double truncationLower;
@@ -141,6 +142,7 @@ public class Parameter implements Serializable {
         private boolean isAdaptiveMultivariateCompatible = false;
 
         private double maintainedSum = 1.0;
+        private double dimension = 1;
         private double initial = Double.NaN;
         //        private double upper = Double.NaN;
 //        private double lower = Double.NaN;
@@ -184,6 +186,7 @@ public class Parameter implements Serializable {
             isPriorFixed = source.isPriorFixed;
             isAdaptiveMultivariateCompatible = source.isAdaptiveMultivariateCompatible;
             initial = source.initial;
+            dimension = source.dimension;
             maintainedSum = source.maintainedSum;
             isTruncated = source.isTruncated;
             truncationUpper = source.truncationUpper;
@@ -208,6 +211,11 @@ public class Parameter implements Serializable {
 
         public Builder initial(double initial) {
             this.initial = initial;
+            return this;
+        }
+
+        public Builder dimension(int dimension) {
+            this.dimension = dimension;
             return this;
         }
 
@@ -378,6 +386,7 @@ public class Parameter implements Serializable {
         scaleType = builder.scaleType;
         initial = builder.initial;
         maintainedSum = builder.maintainedSum;
+        dimension = builder.dimension;
         taxaId = builder.taxaId;
         isNodeHeight = builder.isNodeHeight;
         isStatistic = builder.isStatistic;
@@ -416,6 +425,10 @@ public class Parameter implements Serializable {
     }
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++
+    public String getPrefix() {
+        return prefix;
+    }
+
     public void setPrefix(String prefix) {
         this.prefix = prefix;
     }

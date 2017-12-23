@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -51,7 +51,7 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
         TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
         String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
 
-        MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
@@ -75,7 +75,7 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
     }
 
     private static final XMLSyntaxRule[] rules = {
-            new ElementRule(MultivariateTraitTree.class),
+            new ElementRule(MutableTreeModel.class),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
             new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)

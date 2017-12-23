@@ -35,7 +35,7 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.LatentTruncation;
@@ -78,7 +78,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     protected double rootPriorSampleSize;
 
     private final MatrixParameter precisionParam;
-    private final MultivariateTraitTree treeModel;
+    private final MutableTreeModel treeModel;
     private final int dim;
 
     public double[][] postMeans;
@@ -110,7 +110,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
         this.traitModel = traitModel;
         this.tipTraitParameter = tipTraitParameter;
 
-        
+
         this.rootPriorMean = traitModel.getPriorMean();
         this.rootPriorSampleSize = traitModel.getPriorSampleSize();
 
@@ -123,7 +123,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
             hasMask=true;
           //  printInformation(mask);
         }
-        
+
 
         postMeans = new double[treeModel.getNodeCount()][dim];
         preMeans = new double[treeModel.getNodeCount()][dim];
@@ -512,7 +512,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     public double sampleNode2(NodeRef node) {
 
         final int thisNumber = node.getNumber();
-   
+
 
 
 //        double[] mean = new double[dim];
@@ -643,7 +643,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
 
 
             traitModel.getTraitParameter().getParameter(thisNumber).fireParameterChangedEvent();
-            
+
 
             return logq;
 

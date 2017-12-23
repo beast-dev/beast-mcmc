@@ -140,9 +140,9 @@ public class IntegerViolinPlot extends Plot.AbstractPlot { //Plot.AbstractPlot {
             x = (Double)xData.get(i);
 
             x1 = x - 0.5;
-            y1 = plotNumber + 1 - (Double) yData.get(i);
+            y1 = getPlotNumber() + 1 - (Double) yData.get(i);
             x2 = x + 0.5;
-            y2 = plotNumber + 1 + (Double) yData.get(i);
+            y2 = getPlotNumber() + 1 + (Double) yData.get(i);
 
             if (barPaint != null) {
                 if (hasIntervals && (x < lowerInterval || x > upperInterval)) {

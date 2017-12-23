@@ -54,8 +54,19 @@ import dr.inference.operators.OperatorSchedule;
  */
 public class BeautiOptions extends ModelOptions {
 
-    public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = false;
-    public static final boolean NEW_GTR_PARAMETERIZATION = false;
+    // Switches to a dirichlet prior & delta exchange on nus
+    public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = true;
+
+    // Switches to a dirichlet prior & delta exchange on relative rates
+    public static final boolean NEW_GTR_PARAMETERIZATION = true;
+
+    // Makes sets the initial state of PartitionClockModel.continuousQuantile
+    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = true;
+
+    // Uses a logit transformed random walk on pInv parameters
+    public static final boolean LOGIT_PINV_KERNEL = true;
+
+    // Switches to a dirichlet prior & delta exchange on state frequencies
     public static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
 
     private static final long serialVersionUID = -3676802825545741012L;
@@ -273,7 +284,7 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
-            Parameter allMus = model.getParameter(NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
+            Parameter allMus = model.getParameter(!classicOperatorsAndPriors && NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
             allMus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
 
@@ -286,7 +297,7 @@ public class BeautiOptions extends ModelOptions {
 
                 // add the total weight of all mus/nus to the allMus parameter
                 allMus.setDimensionWeight(totalWeight);
-                allMus.maintainedSum = relativeRateParameters.size();
+                allMus.maintainedSum = (!classicOperatorsAndPriors && NEW_RELATIVE_RATE_PARAMETERIZATION ? 1.0 : relativeRateParameters.size());
                 allMus.isMaintainedSum = true;
             }
 
@@ -1374,6 +1385,8 @@ public class BeautiOptions extends ModelOptions {
     public GlobalModelOptions globalModelOptions = new GlobalModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
+
+    public boolean classicOperatorsAndPriors = false;
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
 

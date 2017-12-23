@@ -43,6 +43,7 @@ import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.TN93Parser;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.inference.model.StatisticParser;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
 import dr.oldevomodel.substmodel.LinearBiasModel;
 import dr.oldevomodel.substmodel.TwoPhaseModel;
@@ -141,6 +142,7 @@ public class SubstitutionModelGenerator extends Generator {
 
                 //****************** Site Model *****************
                 writeAASiteModel(writer, model);
+
                 break;
 
             case DataType.TWO_STATES:
@@ -269,20 +271,20 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModelDNA(writer, model, num);
         writer.writeCloseTag(GTRParser.FREQUENCIES);
 
-        if (options.NEW_GTR_PARAMETERIZATION) {
+        if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
             Parameter parameter = model.getParameter(model.getPrefixCodon(num) + PartitionSubstitutionModel.GTR_RATES);
             String prefix1 = model.getPrefix(num);
             writer.writeOpenTag(GTRParser.RATES);
             // fix the initial value to give maintained sum
-            double initialValue = parameter.maintainedSum / parameter.getParent().getDimensionWeight();
+            double initialValue = parameter.maintainedSum / parameter.dimension;
             writeParameter(prefix1 + PartitionSubstitutionModel.GTR_RATES, 6, initialValue, 0.0, Double.NaN, writer);
             writer.writeCloseTag(GTRParser.RATES);
         } else {
-            writeParameter(num, GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
-            writeParameter(num, GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
-            writeParameter(num, GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
-            writeParameter(num, GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
-            writeParameter(num, GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+            writeParameter(num, GTRParser.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+            writeParameter(num, GTRParser.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+            writeParameter(num, GTRParser.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+            writeParameter(num, GTRParser.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+            writeParameter(num, GTRParser.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
         }
 
         writer.writeCloseTag(GTRParser.GTR_MODEL);
@@ -502,7 +504,7 @@ public class SubstitutionModelGenerator extends Generator {
                     case GTR:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                if (options.NEW_GTR_PARAMETERIZATION) {
+                                if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES);
                                 } else {
                                     for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
@@ -670,14 +672,14 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
             Parameter parameter;
             if (model.hasCodonPartitions()) {
                 parameter = model.getParameter(model.getPrefixCodon(num) + "nu");
             } else {
                 parameter = model.getParameter("nu");
             }
-            if (parameter.getSubParameters().size() > 0) {
+            if (parameter.getParent() != null && parameter.getParent().getSubParameters().size() > 0) {
                 writeNuRelativeRateBlock(writer, prefix, parameter);
             }
         } else {
@@ -725,7 +727,11 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
-        writer.writeText("");
+
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+        }
+
     }
 
     /**
@@ -761,7 +767,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
             Parameter parameter = model.getParameter("nu");
             String prefix1 = options.getPrefix();
             if (parameter.getSubParameters().size() > 0) {
@@ -783,6 +789,11 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+        }
+
     }
 
     /**
@@ -804,7 +815,7 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
             Parameter parameter = model.getParameter("nu");
             String prefix1 = options.getPrefix();
             if (parameter.getSubParameters().size() > 0) {
@@ -828,6 +839,12 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+
+        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+        }
+
+
     }
 
     /**
@@ -836,12 +853,27 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer the writer
      */
     private void writeNuRelativeRateBlock(XMLWriter writer, String prefix, Parameter parameter) {
-        int dim = parameter.getParent().getSubParameters().size();
         double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
         writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
                 new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
-        writeParameter(prefix + "nu", 1, parameter.getInitial() / dim, 0.0, Double.NaN, writer);
+        // Initial values must sum to 1.0
+        double initial = 1.0 / parameter.getParent().getSubParameters().size();
+        writeParameter(prefix + "nu", 1, initial, 0.0, 1.0, writer);
         writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
+    }
+
+    /**
+     * Write a statistic for mu from a site model (when parameterised using nu).
+     *
+     * @param writer the writer
+     */
+    private void writeMuStatistic(XMLWriter writer, String prefix, String siteModelTag) {
+        writer.writeComment("");
+        writer.writeOpenTag(StatisticParser.STATISTIC, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + "mu"),
+                new Attribute.Default<String>(StatisticParser.NAME, "mu")});
+        writer.writeIDref(siteModelTag, prefix + siteModelTag);
+        writer.writeCloseTag(StatisticParser.STATISTIC);
     }
 
     private void writeMicrosatSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {

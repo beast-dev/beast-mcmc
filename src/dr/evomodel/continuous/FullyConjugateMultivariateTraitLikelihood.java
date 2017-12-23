@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -52,7 +52,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         implements ConjugateWishartStatisticsProvider, GibbsSampleFromTreeInterface, Reportable {
 
 //    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-//                                                     MultivariateTraitTree treeModel,
+//                                                     MutableTreeModel treeModel,
 //                                                     MultivariateDiffusionModel diffusionModel,
 //                                                     CompoundParameter traitParameter,
 //                                                     Parameter deltaParameter,
@@ -79,7 +79,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //
 //
 //    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-//                                                     MultivariateTraitTree treeModel,
+//                                                     MutableTreeModel treeModel,
 //                                                     MultivariateDiffusionModel diffusionModel,
 //                                                     CompoundParameter traitParameter,
 //                                                     Parameter deltaParameter,
@@ -106,7 +106,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //    }
 
     public FullyConjugateMultivariateTraitLikelihood(String traitName,
-                                                     MultivariateTraitTree treeModel,
+                                                     MutableTreeModel treeModel,
                                                      MultivariateDiffusionModel diffusionModel,
                                                      CompoundParameter traitParameter,
                                                      Parameter deltaParameter,
@@ -236,7 +236,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
     @Override
-    public MatrixParameterInterface getPrecisionParamter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return diffusionModel.getPrecisionParameter();
     }
 

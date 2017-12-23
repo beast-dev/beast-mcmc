@@ -227,9 +227,4 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
         else
             return draw;
     }
-
-    @Override
-    public int getStepCount() {
-        return 0;
-    }
 }

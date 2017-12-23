@@ -45,11 +45,14 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
 
     void restoreState();
 
-    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException;
+    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
+                               int rootNodeNumber) throws LikelihoodException;
 
     int getTraitCount();
 
     int getTraitDim();
+
+    RateRescalingScheme getRateRescalingScheme();
 
     class LikelihoodException extends Exception { }
 
@@ -58,4 +61,10 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
     class LikelihoodRescalingException extends LikelihoodException { }
 
     void setCallback(TreeDataLikelihood treeDataLikelihood);
+
+    int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations);
+
+//    int getActiveNodeIndex(final int index);
+//
+//    int getActiveMatrixIndex(final int index);
 }

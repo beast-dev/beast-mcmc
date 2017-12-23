@@ -41,8 +41,8 @@ public class JChart extends JPanel {
      *
      */
     private static final long serialVersionUID = -7064065852204509247L;
-    protected Axis yAxis, xAxis;
-    protected List<Plot> plots = new ArrayList<Plot>();
+    private Axis yAxis, xAxis;
+    private List<Plot> plots = new ArrayList<Plot>();
 
     private Paint plotBackgroundPaint = Color.white;
 
@@ -138,6 +138,8 @@ public class JChart extends JPanel {
 
     public void addPlot(Plot plot) {
         plot.setAxes(xAxis, yAxis);
+        plot.setChart(this);
+        plot.setPlotNumber(plots.size());
         plots.add(plot);
         recalibrate();
         repaint();
@@ -160,6 +162,14 @@ public class JChart extends JPanel {
         yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
         recalibrate();
         repaint();
+    }
+
+    public List<Plot> getPlots() {
+        return plots;
+    }
+
+    public void setPlots(List<Plot> plots) {
+        this.plots = plots;
     }
 
     public int getPlotCount() {
@@ -573,42 +583,67 @@ public class JChart extends JPanel {
         return maxWidth;
     }
 
-    protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis)
-    {
-        int n1 = axis.getMajorTickCount();
-        int n2, i, j;
+    protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis) {
+        if (axis.getIsDiscrete()) {
+            int n1 = axis.getMajorTickCount();
+            int n2, i, j;
 
-        n2 = axis.getMinorTickCount(-1);
-        if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
+            n2 = axis.getMinorTickCount(-1);
 
-            paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
+            for (i = 0; i < n1; i++) {
+                paintMajorTick(g2, axis.getMajorTickValue(i), axis.getMajorTickLabel(i), horizontalAxis);
+                n2 = axis.getMinorTickCount(i);
 
-            for (j = 1; j < n2; j++) {
-                paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
+                if (i == (n1 - 1) && axis.getLabelLast()) { // Draw last minor tick as a major one
+
+                    paintMajorTick(g2, axis.getMinorTickValue(0, i), axis.format((int) axis.getMinorTickValue(0, i)), horizontalAxis);
+
+                    for (j = 1; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
+                } else {
+
+                    for (j = 0; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
+                }
             }
         } else {
+            int n1 = axis.getMajorTickCount();
+            int n2, i, j;
 
-            for (j = 0; j < n2; j++) {
-                paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
-            }
-        }
+            n2 = axis.getMinorTickCount(-1);
+            if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
 
-        for (i = 0; i < n1; i++) {
-
-            paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
-            n2 = axis.getMinorTickCount(i);
-
-            if (i == (n1-1) && axis.getLabelLast()) { // Draw last minor tick as a major one
-
-                paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
+                paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
 
                 for (j = 1; j < n2; j++) {
-                    paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
                 }
             } else {
 
-                for (j = 0; j <  n2; j++) {
-                    paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                for (j = 0; j < n2; j++) {
+                    paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
+                }
+            }
+
+            for (i = 0; i < n1; i++) {
+
+                paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
+                n2 = axis.getMinorTickCount(i);
+
+                if (i == (n1 - 1) && axis.getLabelLast()) { // Draw last minor tick as a major one
+
+                    paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
+
+                    for (j = 1; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
+                } else {
+
+                    for (j = 0; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
                 }
             }
         }
@@ -622,12 +657,59 @@ public class JChart extends JPanel {
         return yAxis.format(value);
     }
 
-    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
+//    protected void paintMajorTick(Graphics2D g2, double value, String label, boolean horizontalAxis) {
+//        g2.setPaint(getAxisPaint());
+//        g2.setStroke(getAxisStroke());
+//
+//        if (label == null) {
+//            label = " ";
+//        }
+//
+//        if (horizontalAxis) {
+//            double pos = transformX(value);
+//
+//            Line2D line = new Line2D.Double(pos, getPlotBounds().getMaxY(), pos, getPlotBounds().getMaxY() + getMajorTickSize());
+//            g2.draw(line);
+//
+//            g2.setPaint(getLabelPaint());
+//            double width = g2.getFontMetrics().stringWidth(label);
+//
+//            if (label == null) {
+//                label = getXAxis().format(value);
+//            }
+//            g2.drawString(label, (float) (pos - (width / 2)), (float) (getPlotBounds().getMaxY() + (getMajorTickSize() * 1.25) + getXTickLabelOffset()));
+//
+//        } else {
+//            double pos = transformY(value);
+//
+//            Line2D line = new Line2D.Double(getPlotBounds().getMinX(), pos, getPlotBounds().getMinX() - getMajorTickSize(), pos);
+//            g2.draw(line);
+//
+//            g2.setPaint(getLabelPaint());
+//            double width = g2.getFontMetrics().stringWidth(label);
+//
+//            if (label == null) {
+//                label = getYAxis().format(value);
+//            }
+//            g2.drawString(label, (float)(getPlotBounds().getMinX() - width - (getMajorTickSize() * 1.25)), (float)(pos + getYTickLabelOffset()));
+//        }
+//    }
+
+    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis) {
+        paintMajorTick(g2, value, null, horizontalAxis);
+    }
+
+    protected void paintMajorTick(Graphics2D g2, double value, String label, boolean horizontalAxis)
     {
         g2.setPaint(axisPaint);
         g2.setStroke(axisStroke);
+
+
         if (horizontalAxis) {
-            String label = getXAxisLabel(value);
+                if (label == null) {
+                label = getXAxisLabel(value);
+            }
+
             if (label != null) {
                 double pos = transformX(value);
 
@@ -648,7 +730,10 @@ public class JChart extends JPanel {
             }
 
         } else {
-            String label = getYAxisLabel(value);
+            if (label == null) {
+                label = getYAxisLabel(value);
+            }
+
             if (label != null) {
                 double pos = transformY(value);
 

@@ -32,11 +32,8 @@ import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
-import dr.inferencexml.model.MaskedParameterParser;
 import dr.util.Transform;
 import dr.xml.*;
-
-import java.util.List;
 
 /**
  * @author Max Tolkoff
@@ -44,19 +41,28 @@ import java.util.List;
  */
 
 public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser {
-    public final static String HMC_OPERATOR = "HamiltonianMonteCarloOperator";
 
-    public final static String N_STEPS = "nSteps";
-    public final static String STEP_SIZE = "stepSize";
-    public final static String DRAW_VARIANCE = "drawVariance";
-    public static final String MODE = "mode";
-    public static final String MASKING = MaskedParameterParser.MASKING;
+    private final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
+    private final static String N_STEPS = "nSteps";
+    private final static String STEP_SIZE = "stepSize";
+    private final static String DRAW_VARIANCE = "drawVariance";
+    private final static String MODE = "mode";
+    private final static String NUTS = "nuts";
+    private final static String VANILLA = "vanilla";
 
     @Override
     public String getParserName() {
         return HMC_OPERATOR;
     }
-    
+
+    private int parseRunMode(XMLObject xo) throws XMLParseException {
+        int mode = 0;
+        if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(NUTS) == 0) {
+            mode = 1;
+        }
+        return mode;
+    }
+
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -64,25 +70,14 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         int nSteps = xo.getIntegerAttribute(N_STEPS);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
-        int mode = xo.getAttribute(MODE, 0);
-
+        int runMode = parseRunMode(xo);
 
         CoercionMode coercionMode = CoercionMode.parseMode(xo);
-
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-//        Transform transform = null;
-//
-//        if (parameter == null) {
-//
-//            Transform.MultivariableTransformWithParameter collection =
-//                    (Transform.MultivariableTransformWithParameter) xo.getChild(Transform.MultivariableTransformWithParameter.class);
-//            parameter = collection.getParameter();
-//            transform = collection;
-//        }
 
         Transform transform = (Transform.MultivariableTransformWithParameter)
                 xo.getChild(Transform.MultivariableTransformWithParameter.class);
@@ -92,11 +87,12 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
-        if (mode == 0) {
+
+        if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
                     stepSize, nSteps, drawVariance);
         } else {
-            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,
+            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
                     stepSize, nSteps, drawVariance);
         }
     }
@@ -112,11 +108,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
-            AttributeRule.newIntegerRule(MODE, true),
-//            new XORRule(
-//                    new ElementRule(Parameter.class),
-//                    new ElementRule(Transform.MultivariableTransformWithParameter.class)
-//            ),
+            AttributeRule.newStringRule(MODE, true),
             new ElementRule(Parameter.class),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),

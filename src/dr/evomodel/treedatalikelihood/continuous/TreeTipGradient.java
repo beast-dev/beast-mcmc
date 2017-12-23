@@ -27,78 +27,70 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
  */
-public class TreeTipGradient implements GradientWrtParameterProvider {
+public class TreeTipGradient implements GradientWrtParameterProvider, Reportable {
 
-    private final String traitName;
-    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait<double[]> treeTraitProvider;
+    private final TreeTrait treeTraitProvider;
     private final Tree tree;
     private final Parameter traitParameter;
 
     private final int nTaxa;
     private final int nTraits;
     private final int dimTrait;
-    private final int dimPartial;
 
     private final Parameter maskParameter;
-
-//    private final PartiallyMissingInformation missingInformation;
-
-//    private final boolean missingOnlyGradient;
 
     public TreeTipGradient(String traitName,
                            TreeDataLikelihood treeDataLikelihood,
                            ContinuousDataLikelihoodDelegate likelihoodDelegate,
-//                           Parameter traitParameter,
                            Parameter maskParameter) {
-        this.traitName = traitName;
-        this.treeDataLikelihood = treeDataLikelihood;
-        this.likelihoodDelegate = likelihoodDelegate;
-        this.tree = treeDataLikelihood.getTree();
-//        this.traitParameter = traitParameter;
-        this.maskParameter = maskParameter;
-
-//        this.missingOnlyGradient = missingOnly;
 
         assert(treeDataLikelihood != null);
 
-        String name =
-                ProcessSimulationDelegate.TipGradientViaFullConditionalDelegate.getTraitName(traitName);
+        this.treeDataLikelihood = treeDataLikelihood;
+        this.tree = treeDataLikelihood.getTree();
+        this.maskParameter = maskParameter;
 
-        System.err.println("name: " + name);
-        System.exit(-1);
+        String name =
+                TipGradientViaFullConditionalDelegate.getName(traitName);
+
+        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
+
+        if (test == null) {
+            likelihoodDelegate.addFullConditionalGradientTrait(traitName);
+        }
+
+        // TODO Move into different constructor / parser
+        String fcdName = TipFullConditionalDistributionDelegate.getName(traitName);
+        if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
+            likelihoodDelegate.addFullConditionalDensityTrait(traitName);
+        }
 
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
+
+        assert (treeTraitProvider != null);
+
         nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
         nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
         dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
 
-//        missingInformation = new PartiallyMissingInformation(treeDataLikelihood.getTree(),
-//                likelihoodDelegate.getDataModel(), likelihoodDelegate);
-
-        PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
-        dimPartial = precisionType.getMatrixLength(dimTrait);
-
-        if (precisionType != PrecisionType.SCALAR) {
-            throw new RuntimeException("Not yet implemented for full precision");
-        }
-
+//        PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
+//        int dimPartial = precisionType.getMatrixLength(dimTrait);
+        
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
-
 
         this.traitParameter = likelihoodDelegate.getDataModel().getParameter();
 
@@ -130,7 +122,7 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
 
         int offsetOutput = 0;
         for (int taxon = 0; taxon < nTaxa; ++taxon) {
-            double[] taxonGradient = treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
+            double[] taxonGradient = (double[]) treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
             System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
             offsetOutput += taxonGradient.length;
         }
@@ -144,5 +136,10 @@ public class TreeTipGradient implements GradientWrtParameterProvider {
         }
 
         return gradient;
+    }
+
+    @Override
+    public String getReport() {
+        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
     }
 }

@@ -37,7 +37,7 @@ import dr.inference.model.Model;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public interface DiffusionProcessDelegate {
+public interface DiffusionProcessDelegate extends Model {
 
     int getDiffusionModelCount();
 
@@ -53,6 +53,8 @@ public interface DiffusionProcessDelegate {
 
     void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
                                  int updateCount, boolean flipBuffers);
+
+    boolean hasDrift();
 
     void storeState();
 

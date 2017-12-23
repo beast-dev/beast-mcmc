@@ -45,17 +45,14 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
 
     private static final boolean PRINT_VISUAL_AIDES = false;
 
-    private final double ELLIPSE_HALF_WIDTH = 0.325;
+    private final double ELLIPSE_WIDTH = 0.65;
+    private final double ELLIPSE_HALF_WIDTH = ELLIPSE_WIDTH / 2;
 
     private final double NEGATIVE_CORRELATION_DEGREE = 0.785398163;
     private final double POSITIVE_CORRELATION_DEGREE = 2.35619449;
 
-    private boolean samples = false;
-    private boolean asPoints = false;
-    private boolean translucent = false;
-
     //colors from plotcorr R package
-    private final Color[] colors = {new Color(165,15,21),
+    private final Color[] colorbrewer_RdBu = {new Color(165,15,21),
             new Color(222, 45, 38),
             new Color(251, 106, 74),
             new Color(252, 174, 145),
@@ -67,52 +64,51 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
             new Color(49, 130, 189),
             new Color(8, 81, 156)};
 
+    private final Color[] colorbrewer_RdYlBu = {
+            new Color(165,0,38),
+            new Color(215,48,39),
+            new Color(244,109,67),
+            new Color(253,174,97),
+            new Color(254,224,144),
+            new Color(255,255,191),
+            new Color(224,243,248),
+            new Color(171,217,233),
+            new Color(116,173,209),
+            new Color(69,117,180),
+            new Color(49,54,149)};
+
+    private final Color[] colorbrewer_Spectral = {
+            new Color(158,1,66),
+            new Color(213,62,79),
+            new Color(244,109,67),
+            new Color(253,174,97),
+            new Color(254,224,139),
+            new Color(255,255,191),
+            new Color(230,245,152),
+            new Color(171,221,164),
+            new Color(102,194,165),
+            new Color(50,136,189),
+            new Color(94,79,162)};
+
     private final Color[] translucentColors = {new Color(165,15,21, 32),
             new Color(222, 45, 38, 32),
             new Color(251, 106, 74, 32),
             new Color(252, 174, 145, 32),
             new Color(254, 229, 217, 32),
-            new Color( 255, 255, 255, 32),
+            new Color(255, 255, 255, 32),
             new Color(239, 243, 255, 32),
             new Color(189, 215, 231, 32),
             new Color(107, 174, 214, 32),
             new Color(49, 130, 189, 32),
             new Color(8, 81, 156, 32)};
 
-    private int plotCount;
+    private final Color[] colors = colorbrewer_RdYlBu;
+    private final boolean showPoints;
 
-    public CorrelationPlot(java.util.List<Double> data, int minimumBinCount) {
-        super(data, data);
-        //System.out.println("CorrelationPlot: " + data.size());
-        setName("null");
-        this.plotCount = 1;
-    }
-
-    public CorrelationPlot(java.util.List<Double> xData, java.util.List<Double> yData) {
-        super(xData, yData);
-        //System.out.println("xData: " + xData.size());
-        //System.out.println("yData: " + yData.size());
-        setName("null");
-        this.plotCount = 1;
-    }
-
-    public CorrelationPlot(String name, java.util.List<Double> xData, java.util.List<Double> yData) {
+    public CorrelationPlot(String name, java.util.List<Double> xData, java.util.List<Double> yData, boolean showPoints) {
         super(xData, yData);
         setName(name);
-        this.plotCount = 1;
-    }
-
-    public CorrelationPlot(String name, java.util.List<Double> xData, java.util.List<Double> yData, boolean asPoints, boolean samples, boolean translucent) {
-        super(xData, yData);
-        setName(name);
-        this.asPoints = asPoints;
-        this.samples = samples;
-        this.translucent = translucent;
-        this.plotCount = 1;
-    }
-
-    public void setTotalPlotCount(int count) {
-        this.plotCount = count;
+        this.showPoints = showPoints;
     }
 
     /**
@@ -127,186 +123,154 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
         int xCount = xData.getCount();
         int yCount = yData.getCount();
 
-        double minX = 0.0;
-        double maxX = 0.0;
-        double minY = 0.0;
-        double maxY = 0.0;
+        double minX = (Double)xData.getMin();
+        double maxX = (Double)xData.getMax();
+        double minY = (Double)yData.getMin();
+        double maxY = (Double)yData.getMax();
 
-        if (xCount > 0) {
-            minX = (Double) xData.get(0);
-            maxX = (Double) xData.get(0);
-            minY = (Double) yData.get(0);
-            maxY = (Double) yData.get(0);
+        double xMean = (Double)xData.getMean();
+        double yMean = (Double)yData.getMean();
+
+        double[] xDataArray = new double[xCount];
+        double[] yDataArray = new double[yCount];
+        for (int i = 0; i < xCount; i++) {
+            xDataArray[i] = (Double) xData.get(i);
+            yDataArray[i] = (Double) yData.get(i);
         }
 
-        double[] xDataArray;
-        double[] yDataArray;
+//        if (this.samples) {
+//
+//            //Only using a subset of available samples
+//            int minCount = Math.min(xCount, yCount);
+//            int sampleSize = minCount;
+//            /*if (sampleSize < 20) {
+//                sampleSize = 20;
+//            }*/
+//            if (sampleSize > 200) {
+//                sampleSize = 200;
+//            }
+//
+//            xDataArray = new double[sampleSize];
+//            yDataArray = new double[sampleSize];
+//
+//            int k = 0;
+//            for (int i = 0; i < sampleSize; i++) {
+//
+//                xDataArray[i] = (Double) xData.get(k);
+//                yDataArray[i] = (Double) yData.get(k);
+//                k += minCount / sampleSize;
+//
+//                if (xDataArray[i] < minX) {
+//                    minX = xDataArray[i];
+//                }
+//                if (xDataArray[i] > maxX) {
+//                    maxX = xDataArray[i];
+//                }
+//                if (yDataArray[i] < minY) {
+//                    minY = yDataArray[i];
+//                }
+//                if (yDataArray[i] > maxY) {
+//                    maxY = yDataArray[i];
+//                }
+//            }
+//
+//            xCount = sampleSize;
+//            yCount = sampleSize;
+//
+//
+//        }
 
-        if (this.samples) {
+        double correlation = DiscreteStatistics.covariance(xDataArray, yDataArray);
 
-            //Only using a subset of available samples
-            int minCount = Math.min(xCount, yCount);
-            int sampleSize = minCount;
-            /*if (sampleSize < 20) {
-                sampleSize = 20;
-            }*/
-            if (sampleSize > 200) {
-                sampleSize = 200;
-            }
+        //System.out.println("plotNumber: " + plotNumber + " ; correlation = " + correlation);
 
-            xDataArray = new double[sampleSize];
-            yDataArray = new double[sampleSize];
+        Color fillColor = colors[(int) (5 + 5 * correlation)];
+        g2.setColor(fillColor);
 
-            int k = 0;
-            for (int i = 0; i < sampleSize; i++) {
+        //g2.setPaint(linePaint);
+        //g2.setStroke(lineStroke);
 
-                xDataArray[i] = (Double) xData.get(k);
-                yDataArray[i] = (Double) yData.get(k);
-                k += minCount / sampleSize;
+        double x1 = (1.0 - ELLIPSE_HALF_WIDTH);
+        double y1 = (1.0 - ELLIPSE_HALF_WIDTH);
+        double x2 = (1.0 + ELLIPSE_HALF_WIDTH);
+        double y2 = (1.0 + ELLIPSE_HALF_WIDTH);
 
-                if (xDataArray[i] < minX) {
-                    minX = xDataArray[i];
-                }
-                if (xDataArray[i] > maxX) {
-                    maxX = xDataArray[i];
-                }
-                if (yDataArray[i] < minY) {
-                    minY = yDataArray[i];
-                }
-                if (yDataArray[i] > maxY) {
-                    maxY = yDataArray[i];
-                }
-            }
+        //System.out.println("(" + x1 + "," + y1 + ") (" + x2 + "," + y2 + ")");
 
-            xCount = sampleSize;
-            yCount = sampleSize;
-
-        } else {
-            xDataArray = new double[xCount];
-            yDataArray = new double[yCount];
-
-            for (int i = 0; i < xCount; i++) {
-
-                xDataArray[i] = (Double) xData.get(i);
-                yDataArray[i] = (Double) yData.get(i);
-
-                if (xDataArray[i] < minX) {
-                    minX = xDataArray[i];
-                }
-                if (xDataArray[i] > maxX) {
-                    maxX = xDataArray[i];
-                }
-                if (yDataArray[i] < minY) {
-                    minY = yDataArray[i];
-                }
-                if (yDataArray[i] > maxY) {
-                    maxY = yDataArray[i];
-                }
-
-            }
+        if (PRINT_VISUAL_AIDES) {
+            drawRect(g2, x1, y1, x2, y2);
+            g2.drawString("plot" + getPlotNumber(), (float) transformX(x1), (float) transformY(y1));
         }
 
-        if (this.asPoints) {
+        double rotationDegree = NEGATIVE_CORRELATION_DEGREE;
+        if (correlation > 0) {
+            rotationDegree = POSITIVE_CORRELATION_DEGREE;
+        }
 
-            g2.setColor(Color.BLACK);
+        double selectedHeight;
+        double absCorrelation = Math.abs(correlation);
+        selectedHeight = 1.0 - absCorrelation;
 
-            double x1 = (plotNumber / (int) Math.sqrt(plotCount));
-            double y1 = (plotNumber % (int) Math.sqrt(plotCount));
+        //System.out.println("selectedHeight = " + selectedHeight);
 
-            //System.out.println("Plot: " + plotNumber + " ( x1 = " + x1 + ", y1 = " + y1 + ")");
+        double ellipseWidth = Math.abs(transformX(x2) - transformX(x1));
+        //double ellipseHeight = 0.5 * Math.abs(transformY(y2) - transformY(y1));
+        double ellipseHeight = selectedHeight * Math.abs(transformY(y2) - transformY(y1));
+
+        AffineTransform oldTransform = g2.getTransform();
+
+        //double drawOffset = Math.abs(transformY(y2) - transformY(y1)) - ellipseHeight;
+        //System.out.println("ellipse draw offset = " + drawOffset);
+
+        Shape ellipse = new Ellipse2D.Double(transformX(x1), transformY(y2), ellipseWidth, ellipseHeight);
+
+        //this transformation rotates around the upper right rectangle corner
+        //Shape rotatedEllipse = AffineTransform.getRotateInstance(rotationDegree, transformX(x1), transformY(y2)).createTransformedShape(ellipse);
+
+        //rotate around rectangle center
+        //Shape rotatedEllipse = AffineTransform.getRotateInstance(rotationDegree, transformX((x1+x2)/2.0), transformY((y1+y2)/2.0)).createTransformedShape(ellipse);
+        //rotate around ellipse center
+        Shape rotatedEllipse = AffineTransform.getRotateInstance(rotationDegree, transformX((x1 + x2) / 2.0), transformY(y2) + ellipseHeight / 2.0).createTransformedShape(ellipse);
+
+        //center rotated ellipse within rectangle
+        Shape translatedEllipse = AffineTransform.getTranslateInstance(0.0, transformY((y1 + y2) / 2.0) - (transformY(y2) + ellipseHeight / 2.0)).createTransformedShape(rotatedEllipse);
+
+        //g2.fill(rotatedEllipse);
+        g2.fill(translatedEllipse);
+
+        g2.setColor(Color.BLACK);
+        //g2.draw(rotatedEllipse);
+
+        g2.draw(translatedEllipse);
+
+        if (PRINT_VISUAL_AIDES) {
+            //draw ellipse center in black
+            g2.fill(new Ellipse2D.Double(transformX((x1 + x2) / 2.0), transformY(y2) + ellipseHeight / 2.0, 5, 5));
+
+            //draw rectangle center in black
+            ///g2.fill(new Ellipse2D.Double(transformX((x1+x2)/2.0), transformY((y1+y2)/2.0), 5, 5));
+            g2.draw(new Ellipse2D.Double(transformX((x1 + x2) / 2.0), transformY((y1 + y2) / 2.0), 10, 10));
+        }
+
+        if (showPoints) {
+
+            g2.setColor(new Color(0, 0, 0, 32));
 
             for (int i = 0; i < xDataArray.length; i++) {
-                //first perform a a translation
-                double newX = xDataArray[i] - (maxX+minX)/2.0;
-                double newY = yDataArray[i] - (maxY+minY)/2.0;
-
                 //1 unit wide, so divide by maximum data value on both axes
-                newX = x1 + 1.0 + newX/(maxX-minX);
-                newY = y1 + 1.0 + newY/(maxY-minY);
+                double newX = x1 + ((xDataArray[i] - minX) * ELLIPSE_WIDTH / (maxX - minX));
+                double newY = y1 + ((yDataArray[i] - minY) * ELLIPSE_WIDTH / (maxY - minY));
 
                 //System.out.println("(" + xDataArray[i] + "," + yDataArray[i] + ")  >>>  (" + newX + "," + newY + ")");
-                g2.fill(new Ellipse2D.Double(transformX(newX), transformY(newY), 4, 4));
+                g2.fill(new Ellipse2D.Double(transformX(newX), transformY(newY), 2, 2));
             }
-
-        } else {
-
-            double correlation = DiscreteStatistics.covariance(xDataArray, yDataArray);
-
-            //System.out.println("plotNumber: " + plotNumber + " ; correlation = " + correlation);
-
-            Color fillColor = translucent ?  translucentColors[(int) (5 + 5 * correlation)] : colors[(int) (5 + 5 * correlation)];
-            g2.setColor(fillColor);
-
-            //g2.setPaint(linePaint);
-            //g2.setStroke(lineStroke);
-
-            double x1 = (plotNumber / (int) Math.sqrt(plotCount)) + (1.0 - ELLIPSE_HALF_WIDTH);
-            double y1 = (plotNumber % (int) Math.sqrt(plotCount)) + (1.0 - ELLIPSE_HALF_WIDTH);
-            double x2 = (plotNumber / (int) Math.sqrt(plotCount)) + (1.0 + ELLIPSE_HALF_WIDTH);
-            double y2 = (plotNumber % (int) Math.sqrt(plotCount)) + (1.0 + ELLIPSE_HALF_WIDTH);
-
-            //System.out.println("(" + x1 + "," + y1 + ") (" + x2 + "," + y2 + ")");
-
-            if (PRINT_VISUAL_AIDES) {
-                drawRect(g2, x1, y1, x2, y2);
-                g2.drawString("plot" + plotNumber, (float) transformX(x1), (float) transformY(y1));
-            }
-
-            double rotationDegree = NEGATIVE_CORRELATION_DEGREE;
-            if (correlation > 0) {
-                rotationDegree = POSITIVE_CORRELATION_DEGREE;
-            }
-
-            double selectedHeight;
-            double absCorrelation = Math.abs(correlation);
-            selectedHeight = 1.0 - absCorrelation;
-
-            //System.out.println("selectedHeight = " + selectedHeight);
-
-            double ellipseWidth = Math.abs(transformX(x2) - transformX(x1));
-            //double ellipseHeight = 0.5 * Math.abs(transformY(y2) - transformY(y1));
-            double ellipseHeight = selectedHeight * Math.abs(transformY(y2) - transformY(y1));
-
-            AffineTransform oldTransform = g2.getTransform();
-
-            //double drawOffset = Math.abs(transformY(y2) - transformY(y1)) - ellipseHeight;
-            //System.out.println("ellipse draw offset = " + drawOffset);
-
-            Shape ellipse = new Ellipse2D.Double(transformX(x1), transformY(y2), ellipseWidth, ellipseHeight);
-
-            //this transformation rotates around the upper right rectangle corner
-            //Shape rotatedEllipse = AffineTransform.getRotateInstance(rotationDegree, transformX(x1), transformY(y2)).createTransformedShape(ellipse);
-
-            //rotate around rectangle center
-            //Shape rotatedEllipse = AffineTransform.getRotateInstance(rotationDegree, transformX((x1+x2)/2.0), transformY((y1+y2)/2.0)).createTransformedShape(ellipse);
-            //rotate around ellipse center
-            Shape rotatedEllipse = AffineTransform.getRotateInstance(rotationDegree, transformX((x1 + x2) / 2.0), transformY(y2) + ellipseHeight / 2.0).createTransformedShape(ellipse);
-
-            //center rotated ellipse within rectangle
-            Shape translatedEllipse = AffineTransform.getTranslateInstance(0.0, transformY((y1 + y2) / 2.0) - (transformY(y2) + ellipseHeight / 2.0)).createTransformedShape(rotatedEllipse);
-
-            //g2.fill(rotatedEllipse);
-            g2.fill(translatedEllipse);
-
-            g2.setColor(Color.BLACK);
-            //g2.draw(rotatedEllipse);
-
-            g2.draw(translatedEllipse);
-
-            if (PRINT_VISUAL_AIDES) {
-                //draw ellipse center in black
-                g2.fill(new Ellipse2D.Double(transformX((x1 + x2) / 2.0), transformY(y2) + ellipseHeight / 2.0, 5, 5));
-
-                //draw rectangle center in black
-                ///g2.fill(new Ellipse2D.Double(transformX((x1+x2)/2.0), transformY((y1+y2)/2.0), 5, 5));
-                g2.draw(new Ellipse2D.Double(transformX((x1 + x2) / 2.0), transformY((y1 + y2) / 2.0), 10, 10));
-            }
-
-            g2.setTransform(oldTransform);
 
         }
 
+        g2.setTransform(oldTransform);
+
     }
+
 
     @Override
     public Citation.Category getCategory() {
@@ -326,7 +290,7 @@ public class CorrelationPlot extends Plot.AbstractPlot implements Citable {
     public static Citation CITATION = new Citation(
             new Author[]{
                     new Author("DJ", "Murdoch"),
-                    new Author("ED", "Chpw")
+                    new Author("ED", "Chow")
             },
             "A graphical display of large correlation matrices",
             1986,

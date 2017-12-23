@@ -25,10 +25,10 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.app.util.Arguments;
-import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
@@ -166,7 +166,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         }
 
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
-            MultivariateTraitTree tree = traitLikelihood.getTreeModel();
+            MutableTreeModel tree = traitLikelihood.getTreeModel();
             BranchRateModel branchRates = traitLikelihood.getBranchRateModel();
 
             String traitName = traitLikelihood.getTraitName();
@@ -639,7 +639,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return returnString;
     }
 
-    public double[] getStateTimeAndDistanceFromRoot(MultivariateTraitTree tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, double[] precision, BranchRateModel branchRates, boolean useGreatCircleDistance){
+    public double[] getStateTimeAndDistanceFromRoot(MutableTreeModel tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, double[] precision, BranchRateModel branchRates, boolean useGreatCircleDistance){
 
         NodeRef nodeOfInterest = node;
 
@@ -679,7 +679,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return timeDistance;
     }
 
-    public double[] getTimeAndDistanceFromRoot(MultivariateTraitTree tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, boolean useGreatCircleDistance){
+    public double[] getTimeAndDistanceFromRoot(MutableTreeModel tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, boolean useGreatCircleDistance){
 
         NodeRef nodeOfInterest = node;
         double[] timeDistance = new double[]{0,0};
@@ -713,7 +713,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     }
 
 
-    public boolean inClade(MultivariateTraitTree tree, NodeRef node, TaxonList taxonList) throws TreeUtils.MissingTaxonException {
+    public boolean inClade(MutableTreeModel tree, NodeRef node, TaxonList taxonList) throws TreeUtils.MissingTaxonException {
 
         Set leafSubSet;
         leafSubSet = TreeUtils.getLeavesForTaxa(tree, taxonList);

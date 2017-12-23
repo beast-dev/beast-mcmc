@@ -42,7 +42,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MultivariateTraitTree, Keywordable, Citable {
+public class TreeModel extends AbstractModel implements MutableTreeModel, Keywordable, Citable {
 
     //
     // Public stuff
@@ -175,7 +175,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
     /**
      * Push a tree changed event into the event stack.
      */
-    public void pushTreeChangedEvent(TreeChangedEvent event) {
+    public void pushTreeChangedEvent(dr.evomodel.tree.TreeChangedEvent event) {
 
         if (!isTreeRandom) throw new IllegalStateException("Attempting state change in fixed tree");
 
@@ -205,7 +205,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
     }
 
 
-    private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
+    private final List<dr.evomodel.tree.TreeChangedEvent> treeChangedEvents = new ArrayList<dr.evomodel.tree.TreeChangedEvent>();
 
     public boolean hasRates() {
         return hasRates;
@@ -215,7 +215,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
         return inEdit;
     }
 
-    public class TreeChangedEvent {
+    public class TreeChangedEvent implements dr.evomodel.tree.TreeChangedEvent {
         static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
 
         final Node node;
@@ -236,10 +236,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
             this.index = index;
         }
 
+        @Override
         public int getIndex() {
             return index;
         }
 
+        @Override
         public Node getNode() {
             return node;
         }
@@ -252,10 +254,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
             return parameter == null;
         }
 
+        @Override
         public boolean isNodeChanged() {
             return node != null;
         }
 
+        @Override
         public boolean isNodeParameterChanged() {
             return parameter != null;
         }
@@ -517,7 +521,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
     private Node oldRoot;
 
     public boolean beginTreeEdit() {
-        if (inEdit) throw new RuntimeException("Alreading in edit transaction mode!");
+        if (inEdit) throw new RuntimeException("Already in edit transaction mode!");
 
         oldRoot = root;
 
@@ -543,7 +547,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
             }
         }
 
-        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+        for (dr.evomodel.tree.TreeChangedEvent treeChangedEvent : treeChangedEvents) {
             listenerHelper.fireModelChanged(this, treeChangedEvent);
         }
         treeChangedEvents.clear();
@@ -1626,7 +1630,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, K
         return isTipDateSampled;
     }
 
-    public boolean isTreeRandom() {
+    @Override
+    public boolean isVariable() {
         return isTreeRandom;
     }
 

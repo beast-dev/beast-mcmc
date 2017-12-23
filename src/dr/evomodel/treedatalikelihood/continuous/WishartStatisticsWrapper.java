@@ -42,7 +42,7 @@ import dr.xml.*;
 
 import java.util.List;
 
-import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
@@ -183,7 +183,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     }
 
     @Override
-    public MatrixParameterInterface getPrecisionParamter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return likelihoodDelegate.getDiffusionModel().getPrecisionParameter();
     }
 

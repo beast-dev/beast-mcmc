@@ -47,6 +47,8 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 		this.showEveryCategory = showEveryCategory;
 
 		this.categoryLabelMap = categoryLabelMap;
+
+		prefMajorTickCount = 20;
 	}
 
 	/**
@@ -87,19 +89,19 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 		if (!showEveryCategory) {
 			while (majorTickCount > prefMajorTickCount) {
 				majorTickCount=(int)((maxTick-minTick)/(majorTick*2))+1;
-				if (majorTickCount > prefMajorTickCount) {
+				if (majorTickCount <= prefMajorTickCount) {
 					majorTick*=2;
-					break;
+                    break;
 				}
 				majorTickCount=(int)((maxTick-minTick)/(majorTick*4))+1;
-				if (majorTickCount > prefMajorTickCount) {
+				if (majorTickCount <= prefMajorTickCount) {
 					majorTick*=4;
-					break;
+                    break;
 				}
 				majorTickCount=(int)((maxTick-minTick)/(majorTick*5))+1;
-				if (majorTickCount > prefMajorTickCount) {
+				if (majorTickCount <= prefMajorTickCount) {
 					majorTick*=5;
-					break;
+                    break;
 				}
 
 				majorTick*=10;

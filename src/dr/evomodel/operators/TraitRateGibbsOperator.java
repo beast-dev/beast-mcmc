@@ -25,7 +25,7 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
@@ -50,7 +50,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
 
     public static final String GIBBS_OPERATOR = "traitRateGibbsOperator";
 
-    private final MultivariateTraitTree treeModel;
+    private final MutableTreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
     private final AbstractMultivariateTraitLikelihood traitModel;
     private final GammaDistributionModel ratePriorModel;

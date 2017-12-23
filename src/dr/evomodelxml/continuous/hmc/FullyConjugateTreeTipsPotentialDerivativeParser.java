@@ -31,9 +31,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.TreeTipGradient;
-import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inferencexml.model.MaskedParameterParser;
 import dr.xml.*;
@@ -47,10 +45,10 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXMLObjectParser {
 
-    public final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE = "fullyConjugateTreeTipsPotentialDerivative";
-    public final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2 = "traitGradientOnTree";
+    private final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE = "fullyConjugateTreeTipsPotentialDerivative";
+    private final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2 = "traitGradientOnTree";
     public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    public static final String MASKING = MaskedParameterParser.MASKING;
+    private static final String MASKING = MaskedParameterParser.MASKING;
 
     @Override
     public String getParserName() {
@@ -65,9 +63,9 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String name = xo.hasId() ? xo.getId() : FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2;
+//        String name = xo.hasId() ? xo.getId() : FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2;
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
-        Object co = xo.getChild(0);
+//        Object co = xo.getChild(0);
 
         final FullyConjugateMultivariateTraitLikelihood fcTreeLikelihood = (FullyConjugateMultivariateTraitLikelihood) xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
@@ -91,9 +89,7 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
 
             final ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
 
-            return new TreeTipGradient(traitName,
-                    treeDataLikelihood, continuousData, mask);
-
+            return new TreeTipGradient(traitName, treeDataLikelihood, continuousData, mask);
         } else {
             throw new XMLParseException("Must provide a tree likelihood");
         }

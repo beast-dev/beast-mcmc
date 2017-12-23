@@ -57,8 +57,8 @@ public class JParallelChart extends JChart {
 
     @Override
     public void addPlot(Plot plot) {
-        plot.setAxes(xAxis, yAxis);
-        plots.add(plot);
+        super.addPlot(plot);
+
         // set the range manually to the number of plots
         parallelAxis.setRange(1.0, getPlotCount());
         recalibrate();

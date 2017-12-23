@@ -73,6 +73,18 @@ public class ScatterPlot extends Plot.AbstractPlot {
     }
 
     /**
+     * Constructor
+     */
+    public ScatterPlot(String name, List<Double> xData, List<Double> yData) {
+        super(xData, yData);
+        setName(name);
+        setMarkStyle(CIRCLE_MARK, 5, new BasicStroke(1),
+                Color.black, Color.yellow);
+        setHilightedMarkStyle(new BasicStroke(1),
+                Color.black, Color.blue);
+    }
+
+    /**
      * Set mark style
      */
     public void setHilightedMarkStyle(Stroke hilightedMarkStroke,

@@ -46,14 +46,14 @@ public class ShrinkageGibbsOperator extends SimpleMCMCOperator implements GibbsO
         Parameter globalAugmented = globalPrior.getScale();
 
         for (int i = 0; i < local.getDimension(); i++) {
-            double scale = localAugmented.getParameterValue(i) * pathParameter + data.getParameterValue(i) * data.getParameterValue(i) / (2 * global.getParameterValue(0)) + (1 - pathParameter);
-            double draw = InverseGammaDistribution.nextInverseGamma(localShape.getParameterValue(i) * pathParameter + .5 + (1 - pathParameter), scale);
+            double scale = localAugmented.getParameterValue(i) + data.getParameterValue(i) * data.getParameterValue(i) / (2 * global.getParameterValue(0));
+            double draw = InverseGammaDistribution.nextInverseGamma(localShape.getParameterValue(i) + .5, scale);
             local.setParameterValueQuietly(i, draw);
         }
         local.fireParameterChangedEvent();
 
-        double shape = local.getDimension() / 2 + pathParameter * globalShape.getParameterValue(0) + (1 - pathParameter) * 1;
-        double scale = pathParameter * globalAugmented.getParameterValue(0) + (1 - pathParameter);
+        double shape = local.getDimension() / 2 + globalShape.getParameterValue(0);
+        double scale = globalAugmented.getParameterValue(0);
         for (int i = 0; i < local.getDimension(); i++) {
             scale += .5 * (data.getParameterValue(i) * data.getParameterValue(i)) / local.getParameterValue(i);
         }
@@ -64,9 +64,5 @@ public class ShrinkageGibbsOperator extends SimpleMCMCOperator implements GibbsO
         return 0;
     }
 
-    @Override
-    public void setPathParameter(double beta) {
-        if(usePathParameter)
-            pathParameter = beta;
-    }
+
 }

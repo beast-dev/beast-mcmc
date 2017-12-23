@@ -63,23 +63,19 @@ public class ShrinkageAugmentedGibbsOperator extends SimpleMCMCOperator implemen
     @Override
     public double doOperation() {
         for (int i = 0; i < local.getDimension(); i++) {
-            double shape = localAugmentedShape + pathParameter * localShape.getParameterValue(i);
-            double rate = localAugmentedRate + pathParameter * 1 / local.getParameterValue(i);
+            double shape = localAugmentedShape +  localShape.getParameterValue(i);
+            double rate = localAugmentedRate +  1 / local.getParameterValue(i);
 //            double scale = 1 / localAugmentedRate + pathParameter * local.getParameterValue(i);
             localAugmented.setParameterValueQuietly(i, GammaDistribution.nextGamma(shape, 1 / rate));
         }
         localAugmented.fireParameterChangedEvent();
 
-        double shape = globalAugmentedShape + pathParameter * globalShape.getParameterValue(0);
-        double rate = globalAugmentedRate + pathParameter * 1 / global.getParameterValue(0);
+        double shape = globalAugmentedShape +  globalShape.getParameterValue(0);
+        double rate = globalAugmentedRate +  1 / global.getParameterValue(0);
 //        double scale = 1 / globalAugmentedRate + pathParameter *  global.getParameterValue(0);
         globalAugmented.setParameterValue(0, GammaDistribution.nextGamma(shape, 1 / rate));
 
         return 0;
     }
 
-    @Override
-    public void setPathParameter(double beta) {
-        pathParameter = beta;
-    }
 }

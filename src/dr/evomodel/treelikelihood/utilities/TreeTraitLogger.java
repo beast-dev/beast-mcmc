@@ -30,10 +30,10 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.xml.Report;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -62,9 +62,7 @@ public class TreeTraitLogger implements Loggable, Reportable {
             treeTraits = new ArrayList<TreeTrait>();
         }
 
-        for (TreeTrait trait : traits) {
-            treeTraits.add(trait);
-        }
+        treeTraits.addAll(Arrays.asList(traits));
     }
 
     public LogColumn[] getColumns() {

@@ -43,15 +43,17 @@ public class MissingInjection {
 
     private static final String MISSING_INJECTION = "injectMissingTraits";
     private static final String MISSING_PROBABILITY = "missingProbability";
+    private static final String MISSING_COUNT = "maxMissingCount";
     private static final String DIMENSION = "dimension";
     private static final String TRAIT_NAME = dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
     private final List<TaxonInformation> taxonInformation;
     private final String traitName;
 
-    public MissingInjection(Tree tree,  String traitName, double missingProbability, int[] dimension)
+    public MissingInjection(Tree tree,  String traitName, double missingProbability, int[] dimension,
+                            int maxMissingCount)
             throws TaxonList.MissingAttributeException {
-        taxonInformation = injectMissingValues(traitName, tree, missingProbability, dimension);
+        taxonInformation = injectMissingValues(traitName, tree, missingProbability, dimension, maxMissingCount);
         this.traitName = traitName;
     }
 
@@ -89,7 +91,8 @@ public class MissingInjection {
     private List<TaxonInformation> injectMissingValues(String traitName,
                                                        Tree treeModel,
                                                        double missingProbability,
-                                                       int[] dimension
+                                                       int[] dimension,
+                                                       int maxMissingCount
                                                        )
             throws TaxonList.MissingAttributeException {
 
@@ -104,7 +107,8 @@ public class MissingInjection {
                         "\" not found for taxa \"" + taxonName + "\"");
             }
 
-            TaxonInformation taxonInformation = injectForOneTaxon(object, missingProbability, dimension);
+            TaxonInformation taxonInformation = injectForOneTaxon(object, missingProbability, dimension,
+                    maxMissingCount);
             Taxon taxon = treeModel.getTaxon(index);
             taxon.setAttribute(traitName, taxonInformation.newAttribute);
 
@@ -117,7 +121,10 @@ public class MissingInjection {
         return taxonInformationList;
     }
 
-    private TaxonInformation injectForOneTaxon(String object, double missingProbability, int[] dimension) {
+    private final static boolean DEBUG = true;
+
+    private TaxonInformation injectForOneTaxon(String object, double missingProbability, int[] dimension,
+                                               int maxMissingCount) {
 
         List<InjectedMissingValue> injectedMissingValues = new ArrayList<InjectedMissingValue>();
         StringBuilder sb = new StringBuilder();
@@ -125,16 +132,20 @@ public class MissingInjection {
         int count = st.countTokens();
         for (int j = 0; j < count; j++) {
             String oneValue = st.nextToken();
-            if(dimension==null || inDimension(dimension,j)){
+            if (dimension==null || inDimension(dimension,j)) {
                 if (!TreeTraitParserUtilities.isMissing(oneValue)) {
-                        if (MathUtils.nextDouble() < missingProbability) {
-                            injectedMissingValues.add(new InjectedMissingValue(
-                                    j, new Double(oneValue)
-                            ));
-                            oneValue = "?";
+                    if (MathUtils.nextDouble() < missingProbability
+                            && injectedMissingValues.size() < maxMissingCount) {
+                        if (DEBUG) {
+                            System.err.println("Making value " + oneValue + " missing.");
                         }
+                        injectedMissingValues.add(new InjectedMissingValue(
+                                j, new Double(oneValue)
+                        ));
+                        oneValue = "?";
                     }
                 }
+            }
             sb.append(oneValue).append(" ");
         }
 
@@ -152,22 +163,20 @@ public class MissingInjection {
         if (returnList.size() > 0) {
             int[] intArray = new int[returnList.size()];
             for (int i = 0; i < intArray.length; i++)
-                intArray[i] = (returnList.get(i) -1);
+                intArray[i] = (returnList.get(i) - 1);
             return intArray;
         }
         return null;
     }
 
-    private boolean inDimension(int[] dimension, int dim){
-        boolean returnBoolean = false;
-        for (int i = 0; i < dimension.length; i++){
-            if(dim == dimension[i]){
-                returnBoolean = true;
+    private boolean inDimension(final int[] dimension, final int key) {
+        for (int dim : dimension) {
+            if (key == dim) {
+                return true;
             }
         }
-        return returnBoolean;
+        return false;
     }
-
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -187,9 +196,11 @@ public class MissingInjection {
                 dimension = parseVariableLengthIntegerArray(xo.getStringAttribute(DIMENSION));
             }
 
+            int maxMissingCount = xo.getAttribute(MISSING_COUNT, Integer.MAX_VALUE);
+
             MissingInjection injector;
             try {
-                injector = new MissingInjection(tree, traitName, missingProbability, dimension);
+                injector = new MissingInjection(tree, traitName, missingProbability, dimension, maxMissingCount);
             } catch (TaxonList.MissingAttributeException e) {
                 throw new XMLParseException(e.getMessage());
             }
@@ -220,6 +231,7 @@ public class MissingInjection {
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 AttributeRule.newStringRule(TRAIT_NAME),
                 AttributeRule.newDoubleRule(MISSING_PROBABILITY),
+                AttributeRule.newIntegerRule(MISSING_COUNT, true),
         };
     };
 }

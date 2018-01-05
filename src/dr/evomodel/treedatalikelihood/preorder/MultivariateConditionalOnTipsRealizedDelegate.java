@@ -1,11 +1,9 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;

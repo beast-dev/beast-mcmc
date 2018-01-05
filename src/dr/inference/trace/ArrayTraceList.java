@@ -57,6 +57,10 @@ public class ArrayTraceList extends AbstractTraceList {
         return name;
     }
 
+    public String getFullName() {
+        return name;
+    }
+    
     public int getTraceCount() {
         return traces.size();
     }

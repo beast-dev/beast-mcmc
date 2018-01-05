@@ -51,6 +51,13 @@ public class LogFileTraces extends AbstractTraceList {
         return name;
     }
 
+    /**
+     * @return the path of this traceset
+     */
+    public String getFullName() {
+        return file.getPath();
+    }
+
     public File getFile() {
         return file;
     }

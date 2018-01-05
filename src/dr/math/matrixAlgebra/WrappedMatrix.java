@@ -25,25 +25,17 @@
 
 package dr.math.matrixAlgebra;
 
+import org.ejml.data.DenseMatrix64F;
+
 import java.util.Arrays;
 
 /**
- * Created by msuchard on 1/27/17.
+ * @author Marc A. Suchard
  */
 
-public interface WrappedMatrix {
-
-    double get(final int i);
-
-    void set(final int i, final double x);
-
-    double get(final int i, final int j);
+public interface WrappedMatrix extends ReadableMatrix, WritableVector {
 
     void set(final int i, final int j, final double x);
-
-    int getMajorDim();
-
-    int getMinorDim();
 
     double[] getBuffer();
 
@@ -51,11 +43,28 @@ public interface WrappedMatrix {
 
     double[] data = null;
 
-    abstract class Abstract implements WrappedMatrix {
-        final protected double[] buffer;
-        final protected int offset;
-        final protected int dimMajor;
-        final protected int dimMinor;
+    String toString();
+
+    abstract class Base implements WrappedMatrix {
+
+        final public String toString() {
+            StringBuilder sb = new StringBuilder("[ ");
+            if (getDim() > 0) {
+                sb.append(get(0));
+            }
+            for (int i = 1; i < getDim(); ++i) {
+                sb.append(", ").append(get(i));
+            }
+            sb.append(" ]");
+            return sb.toString();
+        }
+    }
+
+    abstract class Abstract extends Base {
+        final double[] buffer;
+        final int offset;
+        final int dimMajor;
+        final int dimMinor;
 
         public Abstract(final double[] buffer, final int offset, final int dimMajor, final int dimMinor) {
             this.buffer = buffer;
@@ -78,18 +87,116 @@ public interface WrappedMatrix {
             return dimMinor;
         }
 
-        final public String toString() {
-            StringBuilder sb = new StringBuilder("[ ");
-            // TODO
-//            if (dim > 0) {
-//                sb.append(get(0));
-//            }
-//            for (int i = 1; i < dim; ++i) {
-//                sb.append(", ").append(get(i));
-//            }
-//            sb.append(" ]");
+        final public int getDim() { return getMajorDim() * getMinorDim(); }
+    }
 
-            return sb.toString();
+    final class WrappedDenseMatrix extends Base  {
+
+        private final DenseMatrix64F matrix;
+
+        public WrappedDenseMatrix(DenseMatrix64F matrix) {
+            this.matrix = matrix;
+        }
+
+        @Override
+        public void set(int i, double x) {
+            matrix.data[i] = x;
+        }
+
+        @Override
+        public double get(int i) {
+            return matrix.data[i];
+        }
+
+        @Override
+        public int getDim() {
+            return matrix.getNumElements();
+        }
+
+        @Override
+        public double get(int i, int j) {
+            return matrix.unsafe_get(i, j);
+        }
+
+        @Override
+        public int getMajorDim() {
+            return matrix.getNumCols();
+        }
+
+        @Override
+        public int getMinorDim() {
+            return matrix.getNumRows();
+        }
+
+        @Override
+        public void set(int i, int j, double x) {
+            matrix.unsafe_set(i, j, x);
+        }
+
+        @Override
+        public double[] getBuffer() {
+            return matrix.data;
+        }
+
+        @Override
+        public int getOffset() {
+            return 0;
+        }
+    }
+
+    final class ArrayOfArray extends Base {
+
+        private final double[][] arrays;
+        private final int dimMajor;
+        private final int dimMinor;
+
+        public ArrayOfArray(final double[][] arrays) {
+            this.arrays = arrays;
+            this.dimMajor = arrays.length;
+            this.dimMinor = arrays[0].length;
+        }
+
+        @Override
+        public double get(int i) {
+            return arrays[i / dimMajor][i % dimMajor];
+        }
+
+        @Override
+        public void set(int i, double x) {
+            arrays[i / dimMajor][i % dimMajor] = x;
+        }
+
+        @Override
+        public double get(int i, int j) {
+            return arrays[i][j];
+        }
+
+        @Override
+        public void set(int i, int j, double x) {
+            arrays[i][j] = x;
+        }
+
+        @Override
+        public int getMajorDim() {
+            return dimMajor;
+        }
+
+        @Override
+        public int getMinorDim() {
+            return dimMinor;
+        }
+
+        @Override
+        public int getDim() { return getMajorDim() * getMinorDim(); }
+
+        @Override
+        public double[] getBuffer() {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public int getOffset() {
+            return 0;
         }
     }
 
@@ -143,7 +250,7 @@ public interface WrappedMatrix {
         @Override
         final public void set(int i, double x) { throw new RuntimeException("Not yet implemented"); }
 
-        private final int getIndex(final int i, final int j) {
+        private int getIndex(final int i, final int j) {
             return offset + indicesMajor[i] * dimMajor + indicesMinor[j];
         }
     }

@@ -1,6 +1,8 @@
 package dr.math.matrixAlgebra.missingData;
 
+import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.WritableVector;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
@@ -380,6 +382,13 @@ public class MissingOps {
         }
     }
 
+    private void junk() {
+
+        DenseMatrix64F mat;
+
+
+    }
+
     private static double[] buffer = new double[16];
 
     public static void safeWeightedAverage(final WrappedVector mi,
@@ -424,11 +433,11 @@ public class MissingOps {
         }
     }
 
-    public static void weightedAverage(final WrappedVector mi,
+    public static void weightedAverage(final ReadableVector mi,
                                        final DenseMatrix64F Pi,
-                                       final WrappedVector mj,
+                                       final ReadableVector mj,
                                        final DenseMatrix64F Pj,
-                                       final WrappedVector mk,
+                                       final WritableVector mk,
                                        final DenseMatrix64F Vk,
                                        final int dimTrait) {
         final double[] tmp = new double[dimTrait];

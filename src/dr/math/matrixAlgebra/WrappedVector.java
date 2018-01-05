@@ -30,13 +30,7 @@ package dr.math.matrixAlgebra;
  * @author Marc A. Suchard
  */
 
-public interface WrappedVector {
-
-    double get(final int i);
-
-    void set(final int i, final double x);
-
-    int getDim();
+public interface WrappedVector extends ReadableVector, WritableVector {
 
     double[] getBuffer();
 

@@ -34,7 +34,7 @@ import java.util.Arrays;
 public class MaskedParameter extends Parameter.Abstract implements VariableListener {
 
     public enum Signaling {
-        NORMAL, NO_DEPENDENT;
+        NORMAL, NO_DEPENDENT
     }
 
     private final Signaling signaling;
@@ -43,7 +43,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         this(parameter, maskParameter, ones, Signaling.NORMAL);
     }
 
-    public MaskedParameter(Parameter parameter, Parameter maskParameter, boolean ones,
+    private MaskedParameter(Parameter parameter, Parameter maskParameter, boolean ones,
                            Signaling signaling) {
         this(parameter, signaling);
         addMask(maskParameter, ones);

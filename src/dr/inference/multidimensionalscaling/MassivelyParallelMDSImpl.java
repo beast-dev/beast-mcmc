@@ -124,6 +124,9 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
         singleton.makeDirty(instance);
     }
 
+    @Override
+    public int getInternalDimension() { return singleton.getInternalDimension(instance); }
+
     private int observationCount;
     private double precision;
     private double storedPrecision;

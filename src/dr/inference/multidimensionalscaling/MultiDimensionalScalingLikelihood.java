@@ -91,6 +91,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
     /**
      * A simple constructor for a fully specified symmetrical data matrix
      * @param mdsDimension
+     * @param vectorDimension
      * @param mdsPrecision
      * @param locationsParameter
      * @param dataTable
@@ -154,7 +155,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
             }
         }
 
-        initialize(mdsDimension, mdsPrecision, isLeftTruncated, locationsParameter,
+        this.vectorDimension = initialize(mdsDimension, mdsPrecision, isLeftTruncated, locationsParameter,
                 rowLabels, observations, observationTypes);
     }
 
@@ -223,7 +224,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
 
     public int getLocationCount() { return locationCount; }
 
-    protected void initialize(
+    protected int initialize(
             final int mdsDimension,
             final Parameter mdsPrecision,
             final boolean isLeftTruncated,
@@ -244,6 +245,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         this.locationLabels = locationLabels;
 
         this.locationsParameter = locationsParameter;
+        int internalDimension = mdsCore.getInternalDimension();
         setupLocationsParameter(this.locationsParameter);
         addVariable(locationsParameter);
 
@@ -252,13 +254,18 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
 
         mdsCore.setParameters(mdsPrecisionParameter.getParameterValues());
         mdsCore.setPairwiseData(observations);
-//        for (int i = 0; i < locationCount; i++) {
-//            mdsCore.updateLocation(i, locationsParameter.getColumnValues(i));
-//        }
-        mdsCore.updateLocation(-1, locationsParameter.getParameterValues());
+
+        updateAllLocations(locationsParameter);
 
         // make sure everything is calculated on first evaluation
         makeDirty();
+
+        return internalDimension;
+    }
+
+    private void updateAllLocations(MatrixParameterInterface locationsParameter) {
+        // TODO Can make more efficient (if necessary) using vectorDimension padding
+        mdsCore.updateLocation(-1, locationsParameter.getParameterValues());
     }
 
     private void setupLocationsParameter(MatrixParameterInterface locationsParameter) {
@@ -303,8 +310,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         if (variable == locationsParameter) {
 
             if (index == -1) {
-
-                mdsCore.updateLocation(-1, locationsParameter.getParameterValues());
+                updateAllLocations(locationsParameter);
             } else {
 
                 int locationIndex = index / mdsDimension;
@@ -439,6 +445,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
     }
 
     private final int mdsDimension;
+    private final int vectorDimension;
     private final int locationCount;
 
     private MultiDimensionalScalingCore mdsCore;

@@ -40,11 +40,11 @@ package dr.inference.multidimensionalscaling;
  */
 public class NativeMDSSingleton {
 
-    public static final String LIBRARY_NAME = "mds_jni";
-    public static final String LIBRARY_PATH_LABEL = "mds.library.path";
-    public static final String LIBRARY_PLATFORM_NAME = getPlatformSpecificLibraryName();
-    public static final String LIBRARY_PLATFORM_EXTENSION = getPlatformSpecificLibraryExtension();
-    public static final String LIBRARY_PLATFORM_PREFIX = getPlatformSpecificLibraryPrefix();
+    private static final String LIBRARY_NAME = "mds_jni";
+    private static final String LIBRARY_PATH_LABEL = "mds.library.path";
+    private static final String LIBRARY_PLATFORM_NAME = getPlatformSpecificLibraryName();
+    private static final String LIBRARY_PLATFORM_EXTENSION = getPlatformSpecificLibraryExtension();
+    private static final String LIBRARY_PLATFORM_PREFIX = getPlatformSpecificLibraryPrefix();
 
 
     private NativeMDSSingleton() {
@@ -125,6 +125,8 @@ public class NativeMDSSingleton {
     public native double[] getPairwiseData(int instance);
 
     public native void getLocationGradient(int instance, double[] gradient);
+
+    public native int getInternalDimension(int instance);
 
 //jsize size = env->GetArrayLength( arr );
 //std::vector<double> input( size );

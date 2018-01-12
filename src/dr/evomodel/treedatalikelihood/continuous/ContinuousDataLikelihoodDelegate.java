@@ -581,9 +581,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
         int index = node.getNumber();
-        String name1 = dataModel.getParameter().getParameter(index).getParameterName();
-        Taxon taxon = tree.getNodeTaxon(node);
-        return name1.contains(taxon.getId());
+        Parameter traitParameter = dataModel.getParameter().getParameter(index);
+        if (traitParameter == null) {
+            return true;
+        } else {
+            String name1 = traitParameter.getParameterName();
+            Taxon taxon = tree.getNodeTaxon(node);
+            return name1.contains(taxon.getId());
+        }
     }
 
     @Override

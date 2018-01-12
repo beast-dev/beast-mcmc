@@ -28,7 +28,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                                          ContinuousRateTransformation rateTransformation,
                                                          ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
-        missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
+        missingInformation = new PartiallyMissingInformation(tree, dataModel);
     }
 
     @Override

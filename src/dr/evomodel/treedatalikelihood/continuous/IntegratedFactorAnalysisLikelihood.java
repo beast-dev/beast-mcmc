@@ -1,7 +1,7 @@
 /*
  * IntegratedFactorTraitDataModel.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -43,7 +43,6 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.*;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
 import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
 
@@ -64,7 +63,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         this.traitParameter = traitParameter;
         this.loadings = loadings;
-        this.traitPrecision = traitPrecision; // TODO Generalize for non-diagonal precision
+        this.traitPrecision = traitPrecision;
 
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
@@ -270,11 +269,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof HashedMissingArray) {
-                return Arrays.equals(array, ((HashedMissingArray) obj).array);
-            } else {
-                return false;
-            }
+            return obj instanceof HashedMissingArray && Arrays.equals(array,
+                    ((HashedMissingArray) obj).array);
         }
 
         public String toString() {
@@ -299,7 +295,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         if (!USE_CACHE || hashedPrecision == null) {
 
-            // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
+            // Compute L D_i \Gamma D_i^t L^t
             for (int row = 0; row < numFactors; ++row) {
                 for (int col = 0; col < numFactors; ++col) {
                     double sum = 0;
@@ -366,7 +362,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
 
-        // Compute Y_i^t D_i^t \Gamma D_i Y_i // TODO Generalize for non-diagonal \Gamma
+        // Compute Y_i^t D_i^t \Gamma D_i Y_i
         double sum = 0;
         for (int k = 0; k < dimTrait; ++k) {
             sum += Y.getParameterValue(k) * Y.getParameterValue(k) *
@@ -405,7 +401,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         final double[] observed = observedIndicators[taxon];
 
-        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
+        // Compute det( D_i \Gamma D_i^t)
         double logDet = 0.0;
         for (int k = 0; k < dimTrait; ++k) {
             if (observed[k] == 1.0) {
@@ -499,12 +495,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
             
             // store in precision, variance and normalization constant
-            unwrap(precision, partials, partialsOffset + numFactors); // TODO PrecisionType should do this offset math
+            unwrap(precision, partials, partialsOffset + numFactors);
 
-            if (STORE_VARIANCE) { // TODO Remove
-                safeInvert(precision, variance, true);
-                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
-            }
+//            if (STORE_VARIANCE) {
+//                safeInvert(precision, variance, true);
+//                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
+//            }
 
             normalizationConstants[taxon] = constant;
 
@@ -512,7 +508,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
     }
 
-    private static final boolean STORE_VARIANCE = false;
+//    private static final boolean STORE_VARIANCE = false;
     private static final boolean DEBUG = false;
 
     private void checkStatistics() {

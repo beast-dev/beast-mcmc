@@ -135,6 +135,11 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         if (DEBUG) {
             System.err.println("Simulate for node " + nodeNumber);
         }
+
+        if (!hasNoDrift) {
+            cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
+        }
+
         for (int trait = 0; trait < numTraits; ++trait) {
 
             simulateTraitForNode(nodeNumber, trait, offsetSample, offsetParent, offsetPartial, external, branchPrecision);

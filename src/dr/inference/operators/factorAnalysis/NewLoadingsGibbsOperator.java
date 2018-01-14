@@ -229,9 +229,9 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 //                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
 //                         mean, precision);
 
-        double[] draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
-        adaptor.setLoadingsForTraitQuietly(i, draws);
+        adaptor.setLoadingsForTraitQuietly(i, draw);
 
         if (DEBUG) {
             System.err.println("draw: " + new Vector(draws));

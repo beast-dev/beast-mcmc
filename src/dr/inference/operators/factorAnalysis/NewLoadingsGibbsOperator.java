@@ -234,7 +234,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         adaptor.setLoadingsForTraitQuietly(i, draw);
 
         if (DEBUG) {
-            System.err.println("draw: " + new Vector(draws));
+            System.err.println("draw: " + new Vector(draw));
         }
     }
     

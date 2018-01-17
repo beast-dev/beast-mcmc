@@ -106,8 +106,8 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
             }
         }
 
-        double precision = priorPrecision + likelihoodPrecision * n;
-        double mu = (priorPrecision * priorMean + likelihoodPrecision * total) / precision;
+        double precision = priorPrecision + pathParameter * likelihoodPrecision * n;
+        double mu = (priorPrecision * priorMean + pathParameter * likelihoodPrecision * total) / precision;
         meanParameter.setParameterValue(0,
                 MathUtils.nextGaussian() / Math.sqrt(precision) + mu);  // N(\mu, \precision)
         return 0;
@@ -115,7 +115,11 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
     @Override
     public void setPathParameter(double beta) {
-        throw new RuntimeException("Not yet implemeneted");
+        if (beta < 0.0 || beta > 1.0) {
+            throw new IllegalArgumentException("Invalid pathParameter value");
+        }
+
+        this.pathParameter = beta;
     }
 
     /**
@@ -187,4 +191,6 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
     private final List<Attribute<double[]>> dataList;
     private final Parameter meanParameter;
+
+    private double pathParameter = 1.0;
 }

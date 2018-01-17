@@ -126,8 +126,8 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
-        final double shape = priorShape + n / 2.0;
-        final double rate = priorRate + 0.5 * SSE;
+        final double shape = priorShape + pathParameter * n / 2.0;
+        final double rate = priorRate + pathParameter * 0.5 * SSE;
 
         final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
         precisionParameter.setParameterValue(0, draw);
@@ -137,7 +137,11 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     @Override
     public void setPathParameter(double beta) {
-        throw new RuntimeException("Not yet implemeneted");
+        if (beta < 0.0 || beta > 1.0) {
+            throw new IllegalArgumentException("Invalid pathParameter value");
+        }
+
+        this.pathParameter = beta;
     }
 
     /**
@@ -209,4 +213,6 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     private final List<Attribute<double[]>> dataList;
     private final Parameter meanParameter;
     private final Parameter precisionParameter;
+
+    private double pathParameter = 1.0;
 }

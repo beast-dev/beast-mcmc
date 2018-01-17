@@ -113,6 +113,11 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
         return 0;
     }
 
+    @Override
+    public void setPathParameter(double beta) {
+        throw new RuntimeException("Not yet implemeneted");
+    }
+
     /**
      * @return the number of steps the operator performs in one go.
      */

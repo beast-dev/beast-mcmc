@@ -274,7 +274,6 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
     private final static boolean NEW_CHOLESKY = false;
 
-    // TODO Expression try
     private ReadableVector getMeanWithDrift(final ReadableVector mean,
                                             final ReadableVector drift) {
         return new ReadableVector.Sum(mean, drift);

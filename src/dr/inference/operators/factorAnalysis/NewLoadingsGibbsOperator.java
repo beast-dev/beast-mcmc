@@ -225,10 +225,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
-        // TODO Use back-solve to avoid inverting precision first
-//                double[] draws = MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
-//                         mean, precision);
-
         double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
         adaptor.setLoadingsForTraitQuietly(i, draw);

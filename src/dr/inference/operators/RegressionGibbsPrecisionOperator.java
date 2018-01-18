@@ -69,19 +69,8 @@ public class RegressionGibbsPrecisionOperator extends SimpleMCMCOperator impleme
         double[] Y = linearModel.getTransformedDependentParameter();
         double[] xBeta = linearModel.getXBeta();
 
-        final double priorMean = prior.mean();
-        final double priorVariance = prior.variance();
-
-        double priorRate;
-        double priorShape;
-
-        if (priorMean == 0) {
-            priorRate = 0;
-            priorShape = -0.5; // Uninformative prior
-        } else {
-            priorRate = priorMean / priorVariance;
-            priorShape = priorMean * priorRate;
-        }
+        NormalGammaPrecisionGibbsOperator.GammaParametrization priorParametrization =
+                new NormalGammaPrecisionGibbsOperator.GammaParametrization(prior.mean(), prior.variance());
 
         for (int k = 0; k < dim; k++) { // Do draw for precision[k]
 
@@ -96,8 +85,8 @@ public class RegressionGibbsPrecisionOperator extends SimpleMCMCOperator impleme
                 }
             }
 
-            final double shape = priorShape + n / 2.0;
-            final double rate = priorRate + 0.5 * SSE;
+            final double shape = priorParametrization.getShape() + n / 2.0;
+            final double rate = priorParametrization.getRate() + 0.5 * SSE;
 
             final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
             precision.setParameterValue(k, draw);

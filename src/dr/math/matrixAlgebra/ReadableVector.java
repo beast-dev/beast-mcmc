@@ -1,7 +1,7 @@
 /*
- * PathDependentOperator.java
+ * WrappedVector.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,16 +23,37 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.operators;
+package dr.math.matrixAlgebra;
+
 
 /**
- * @author Guy Baele
+ * @author Marc A. Suchard
  */
-public interface PathDependentOperator {
 
-    /**
-     * Set the path parameter for sampling from power-posterior
-     */
-    void setPathParameter(double beta);
+public interface ReadableVector {
 
+    double get(final int i);
+
+    int getDim();
+
+    class Sum implements ReadableVector {
+
+        private ReadableVector lhs;
+        private ReadableVector rhs;
+
+        public Sum(final ReadableVector lhs, final ReadableVector rhs) {
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
+
+        @Override
+        public double get(int i) {
+            return lhs.get(i) + rhs.get(i);
+        }
+
+        @Override
+        public int getDim() {
+            return Math.min(lhs.getDim(), rhs.getDim());
+        }
+    }
 }

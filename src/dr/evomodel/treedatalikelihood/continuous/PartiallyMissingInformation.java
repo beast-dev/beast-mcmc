@@ -37,11 +37,10 @@ import java.util.List;
 
 public class PartiallyMissingInformation {
 
-    public PartiallyMissingInformation(Tree tree, ContinuousTraitPartialsProvider dataModel,
-                                       ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+    public PartiallyMissingInformation(Tree tree, ContinuousTraitPartialsProvider dataModel) {
         this.tipCount = tree.getExternalNodeCount();
-        this.numTraits = dataModel.getTraitCount(); //likelihoodDelegate.getTraitCount();
-        this.dimTrait = dataModel.getTraitDimension(); //likelihoodDelegate.getTraitDim();
+        this.numTraits = dataModel.getTraitCount();
+        this.dimTrait = dataModel.getTraitDimension();
 
         this.rawMissingIndices = dataModel.getMissingIndices();
 
@@ -146,9 +145,9 @@ public class PartiallyMissingInformation {
             return array.length;
         }
 
-        public int getComplementLength() {
-            return complement.length;
-        }
+//        public int getComplementLength() {
+//            return complement.length;
+//        }
 
         @Override
         public int hashCode() {
@@ -157,11 +156,7 @@ public class PartiallyMissingInformation {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof int[]) {
-                return Arrays.equals(array, (int[]) obj);
-            } else {
-                return false;
-            }
+            return obj instanceof int[] && Arrays.equals(array, (int[]) obj);
         }
 
         public String toString() {

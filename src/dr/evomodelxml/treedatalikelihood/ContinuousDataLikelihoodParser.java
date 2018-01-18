@@ -125,6 +125,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                 precisionType = PrecisionType.FULL;
             }
 
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                 utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+             }
+
 //            System.err.println("Using precisionType == " + precisionType + " for data model.");
 
             dataModel = new ContinuousTraitDataModel(traitName,
@@ -263,6 +267,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
             AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
+            TreeTraitParserUtilities.jitterRules(true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

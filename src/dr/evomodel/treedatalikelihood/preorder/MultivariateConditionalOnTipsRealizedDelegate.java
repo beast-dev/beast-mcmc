@@ -4,7 +4,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -27,7 +28,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                                          ContinuousRateTransformation rateTransformation,
                                                          ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
-        missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
+        missingInformation = new PartiallyMissingInformation(tree, dataModel);
     }
 
     @Override
@@ -123,7 +124,15 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         }
     }
 
-    private void  simulateTraitForExternalNode(final int nodeIndex,
+//    // TODO Delegate to approach process
+//    private WrappedVector getBranchSpecificMeanForChild(final WrappedVector parent) {
+//        return parent;
+//    }
+//
+
+    private final static boolean NEW_TIP_WITH_NO_DATA = true;
+
+    private void simulateTraitForExternalNode(final int nodeIndex,
                                               final int traitIndex,
                                               final int offsetSample,
                                               final int offsetParent,
@@ -144,14 +153,35 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
                 final double sqrtScale = Math.sqrt(1.0 / branchPrecision);
 
-                // TODO Drift?
-                assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
+                if (NEW_TIP_WITH_NO_DATA) {
 
-                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                        sample, offsetParent, // input mean
-                        cholesky, sqrtScale, // input variance
-                        sample, offsetSample, // output sample
-                        tmpEpsilon);
+                    final ReadableVector parentSample = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+
+                    final ReadableVector M;
+                    if (hasNoDrift) {
+                        M = parentSample;
+                    } else {
+                        M = getMeanWithDrift(parentSample,
+                                new WrappedVector.Raw(displacementBuffer, 0, dimTrait));
+                    }
+
+                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                            M, // input mean
+                            new WrappedMatrix.ArrayOfArray(cholesky), sqrtScale, // input variance
+                            new WrappedVector.Raw(sample, offsetSample, dimTrait),
+                            tmpEpsilon);
+                    
+                } else {
+
+                    // TODO Drift?
+                    assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
+
+                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                            sample, offsetParent, // input mean
+                            cholesky, sqrtScale, // input variance
+                            sample, offsetSample, // output sample
+                            tmpEpsilon);
+                }
 
             } else {
 
@@ -189,17 +219,28 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     CommonOps.add(cP0, cP1, cP2);
 
                     safeInvert(cP2, cV2, false);
-                    double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
 
                     // TODO Drift?
                     assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
 
-                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                            cM2, // input mean
-                            cC2, 1.0, // input variance
-                            new WrappedVector.Indexed(sample, offsetSample, missing, missing.length), // output sample
-                            tmpEpsilon);
+                    if (NEW_CHOLESKY) {
+                        DenseMatrix64F cC2 = getCholeskyOfVariance(cV2, missing.length);
 
+                        MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                                cM2, // input mean
+                                new WrappedMatrix.WrappedDenseMatrix(cC2), 1.0, // input variance
+                                new WrappedVector.Indexed(sample, offsetSample, missing, missing.length), // output sample
+                                tmpEpsilon);
+                    } else {
+                        double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
+
+
+                        MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                                cM2, // input mean
+                                new WrappedMatrix.ArrayOfArray(cC2), 1.0, // input variance
+                                new WrappedVector.Indexed(sample, offsetSample, missing, missing.length), // output sample
+                                tmpEpsilon);
+                    }
 
                     if (DEBUG) {
                         final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
@@ -222,7 +263,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                         System.err.println("cP1: " + cP1);
                         System.err.println("cP2: " + cP2);
                         System.err.println("cV2: " + cV2);
-                        System.err.println("cC2: " + new Matrix(cC2));
+//                        System.err.println("cC2: " + new Matrix(cC2));
                         System.err.println("SS: " + newSample);
                         System.err.println("");
                     }
@@ -231,12 +272,19 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         }
     }
 
-    private WrappedVector getMeanWithDrift(double[] mean, int offsetMean, double[] drift, int dim) {
-        for (int i = 0;i < dim; ++i) {
-            tmpDrift[i] = mean[offsetMean + i] + drift[i];
-        }
-        return new WrappedVector.Raw(tmpDrift, 0, dimTrait);
+    private final static boolean NEW_CHOLESKY = false;
+
+    private ReadableVector getMeanWithDrift(final ReadableVector mean,
+                                            final ReadableVector drift) {
+        return new ReadableVector.Sum(mean, drift);
     }
+
+//    private ReadableVector getMeanWithDrift(double[] mean, int offsetMean, double[] drift, int dim) {
+//        for (int i = 0;i < dim; ++i) {
+//            tmpDrift[i] = mean[offsetMean + i] + drift[i];
+//        }
+//        return new WrappedVector.Raw(tmpDrift, 0, dimTrait);
+//    }
 
     private void simulateTraitForInternalNode(final int offsetSample,
                                               final int offsetParent,
@@ -248,33 +296,20 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
             final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
 
-            final WrappedVector M1;
+            final ReadableVector parentSample = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+
+            final ReadableVector M1;
             final DenseMatrix64F P1;
 
             if (hasNoDrift) {
-                M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+                M1 = parentSample; // new WrappedVector.Raw(sample, offsetParent, dimTrait);
                 P1 = new DenseMatrix64F(dimTrait, dimTrait);
                 CommonOps.scale(branchPrecision, Pd, P1);
             } else {
-                M1 = getMeanWithDrift(sample, offsetParent, displacementBuffer, dimTrait);
+                M1 = getMeanWithDrift(parentSample,
+                        new WrappedVector.Raw(displacementBuffer, 0, dimTrait)); //getMeanWithDrift(sample, offsetParent, displacementBuffer, dimTrait);
                 P1 = DenseMatrix64F.wrap(dimTrait, dimTrait, precisionBuffer);
             }
-
-//            boolean DEBUG_PRECISION = false;
-//
-//            if (DEBUG_PRECISION) {
-//                DenseMatrix64F tP1 = new DenseMatrix64F(dimTrait, dimTrait);
-//                CommonOps.scale(branchPrecision, Pd, tP1);
-//
-//                for (int i = 0; i < dimTrait; ++i) {
-//                    for (int j = 0; j < dimTrait; ++j) {
-//                        if (Math.abs(tP1.get(i,j) - P1.get(i,j)) != 0.0) {
-//                            System.err.println("Unequal");
-//                            System.exit(-1);
-//                        }
-//                    }
-//                }
-//            }
 
             final WrappedVector M2 = new WrappedVector.Raw(tmpMean, 0, dimTrait);
             final DenseMatrix64F P2 = new DenseMatrix64F(dimTrait, dimTrait);
@@ -284,13 +319,27 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             safeInvert(P2, V2, false);
             weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
-            double[][] C2 = getCholeskyOfVariance(V2.getData(), dimTrait);
+            final WrappedMatrix C2;
+            if (NEW_CHOLESKY) {
+                DenseMatrix64F tC2 = getCholeskyOfVariance(V2, dimTrait);
+                C2 = new WrappedMatrix.WrappedDenseMatrix(tC2);
 
-            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    M2.getBuffer(), 0, // input mean
-                    C2, 1.0, // input variance
-                    sample, offsetSample, // output sample
-                    tmpEpsilon);
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        M2, // input mean
+                        C2, 1.0, // input variance
+                        new WrappedVector.Raw(sample, offsetSample, dimTrait),
+                        tmpEpsilon);
+
+            } else {
+                double[][] tC2 = getCholeskyOfVariance(V2.getData(), dimTrait);
+                C2 = new WrappedMatrix.ArrayOfArray(tC2);
+
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        M2, // input mean
+                        C2, 1.0, // input variance
+                        new WrappedVector.Raw(sample, offsetSample, dimTrait),
+                        tmpEpsilon);
+            }
 
             if (DEBUG) {
                 System.err.println("sT F I N");
@@ -300,7 +349,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                 System.err.println("P1: " + P1);
                 System.err.println("M2: " + M2);
                 System.err.println("V2: " + V2);
-                System.err.println("C2: " + new Matrix(C2));
+                System.err.println("C2: " + C2);
                 System.err.println("SS: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
                 System.err.println("");
 
@@ -320,7 +369,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         }
     }
 
-    private boolean check(WrappedVector m2) {
+    private boolean check(ReadableVector m2) {
         for (int i = 0; i < m2.getDim(); ++i) {
             if (Double.isNaN(m2.get(i))) {
                 return false;

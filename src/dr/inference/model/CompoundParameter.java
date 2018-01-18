@@ -47,7 +47,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         for (Parameter parameter : params) {
             for (int j = 0; j < parameter.getDimension(); j++) {
                 parameters.add(parameter);
-                pindex.add(j);
+                pIndex.add(j);
             }
             uniqueParameters.add(parameter);
             labelParameter(parameter);
@@ -71,7 +71,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         uniqueParameters.add(param);
         for (int j = 0; j < param.getDimension(); j++) {
             parameters.add(param);
-            pindex.add(j);
+            pIndex.add(j);
         }
         dimension += param.getDimension();
         if (dimension != parameters.size()) {
@@ -95,7 +95,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
         for (int i = 0; i < param.getDimension(); i++) {
             parameters.remove(dim);
-            pindex.remove(dim);
+            pIndex.remove(dim);
         }
 
         if (parameters.contains(param)) throw new RuntimeException();
@@ -124,7 +124,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public String getDimensionName(int dim) {
-        return parameters.get(dim).getDimensionName(pindex.get(dim));
+        return parameters.get(dim).getDimensionName(pIndex.get(dim));
     }
 
     public int getDimension() {
@@ -158,52 +158,48 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
     public void addDimension(int index, double value) {
         Parameter p = parameters.get(index);
-        int pi = pindex.get(index);
+        int pi = pIndex.get(index);
 
         parameters.add(index, p);
-        pindex.add(index, pi);
+        pIndex.add(index, pi);
 
         p.addDimension(pi, value);
         for (int i = pi; i < p.getDimension(); i++) {
-            pindex.set(index, i);
+            pIndex.set(index, i);
             index += 1;
         }
     }
 
     public double removeDimension(int index) {
         Parameter p = parameters.get(index);
-        int pi = pindex.get(index);
+        int pi = pIndex.get(index);
 
         parameters.remove(index);
-        pindex.remove(index);
+        pIndex.remove(index);
 
         double v = p.removeDimension(pi);
         for (int i = pi; i < p.getDimension(); i++) {
-            pindex.set(index, i);
+            pIndex.set(index, i);
             index += 1;
         }
         return v;
     }
 
     public void fireParameterChangedEvent() {
-        doNotPropogateChangeUp = true;
+        doNotPropagateChangeUp = true;
         for (Parameter p : parameters) {
             p.fireParameterChangedEvent();
         }
-        doNotPropogateChangeUp = false;
+        doNotPropagateChangeUp = false;
         fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
     }
 
     public double getParameterValue(int dim) {
-        return parameters.get(dim).getParameterValue(pindex.get(dim));
-    }
-
-    public double[] inspectParametersValues() {
-        return getParameterValues();
+        return parameters.get(dim).getParameterValue(pIndex.get(dim));
     }
 
     public void setParameterValue(int dim, double value) {
-        parameters.get(dim).setParameterValue(pindex.get(dim), value);
+        parameters.get(dim).setParameterValue(pIndex.get(dim), value);
     }
 
 //    public void setParameterValue(int row, int column, double a)
@@ -212,7 +208,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 //    }
 
     public void setParameterValueQuietly(int dim, double value) {
-        parameters.get(dim).setParameterValueQuietly(pindex.get(dim), value);
+        parameters.get(dim).setParameterValueQuietly(pIndex.get(dim), value);
     }
 
 //    public void setParameterValueQuietly(int row, int column, double a){
@@ -220,7 +216,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 //    }
 
     public void setParameterValueNotifyChangedAll(int dim, double value) {
-        parameters.get(dim).setParameterValueNotifyChangedAll(pindex.get(dim), value);
+        parameters.get(dim).setParameterValueNotifyChangedAll(pIndex.get(dim), value);
     }
 
 //    public void setParameterValueNotifyChangedAll(int row, int column, double val){
@@ -252,7 +248,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public String toString() {
-        StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
+        StringBuilder buffer = new StringBuilder(String.valueOf(getParameterValue(0)));
         final Bounds bounds = getBounds();
         buffer.append("[").append(String.valueOf(bounds.getLowerLimit(0)));
         buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
@@ -274,7 +270,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         int dim = 0;
         for (Parameter parameter1 : uniqueParameters) {
             if (variable == parameter1) {
-                if (!doNotPropogateChangeUp) {
+                if (!doNotPropagateChangeUp) {
                     int subparameterIndex = (index == -1) ? -1 : dim + index;
                     fireParameterChangedEvent(subparameterIndex, type);
                 }
@@ -295,11 +291,11 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     private class CompoundBounds implements Bounds<Double> {
 
         public Double getUpperLimit(int dim) {
-            return parameters.get(dim).getBounds().getUpperLimit(pindex.get(dim));
+            return parameters.get(dim).getBounds().getUpperLimit(pIndex.get(dim));
         }
 
         public Double getLowerLimit(int dim) {
-            return parameters.get(dim).getBounds().getLowerLimit(pindex.get(dim));
+            return parameters.get(dim).getBounds().getLowerLimit(pIndex.get(dim));
         }
 
         public int getBoundsDimension() {
@@ -314,12 +310,12 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     private final List<Parameter> uniqueParameters = new ArrayList<Parameter>();
 
     private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-    private final ArrayList<Integer> pindex = new ArrayList<Integer>();
-    private Bounds bounds = null;
+    private final ArrayList<Integer> pIndex = new ArrayList<Integer>();
+    private Bounds<Double> bounds = null;
     private int dimension;
     private String name;
 
-    private boolean doNotPropogateChangeUp = false;
+    private boolean doNotPropagateChangeUp = false;
 
     public static void main(String[] args) {
 

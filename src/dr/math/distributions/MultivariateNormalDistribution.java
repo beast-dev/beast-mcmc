@@ -339,8 +339,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
     }
 
-    public static void nextMultivariateNormalCholesky(final WrappedVector mean, final double[][] cholesky,
-                                                      final double sqrtScale, final WrappedVector result,
+    public static void nextMultivariateNormalCholesky(final ReadableVector mean,
+                                                      final ReadableMatrix cholesky, final double sqrtScale,
+                                                      final WritableVector result,
                                                       final double[] epsilon) {
 
         final int dim = mean.getDim();
@@ -351,7 +352,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         for (int i = 0; i < dim; i++) {
             double x = mean.get(i);
             for (int j = 0; j <= i; j++) {
-                x += cholesky[i][j] * epsilon[j];
+                x += cholesky.get(i,j) * epsilon[j];
                 // caution: decomposition returns lower triangular
             }
             result.set(i, x);
@@ -433,7 +434,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         System.err.println("TRUE: -0.286");
     }
 
-    public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
+    private static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
 
     // RandomGenerator interface
     public Object nextRandom() {

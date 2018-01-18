@@ -7,6 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 
 /**
@@ -46,7 +47,7 @@ public class TipRealizedValuesViaFullConditionalDelegate extends AbstractValuesV
                                            final double[] buffer) {
         MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                 mean, // input mean
-                cholesky, 1.0, // input variance
+                new WrappedMatrix.ArrayOfArray(cholesky), 1.0, // input variance
                 output, // output sample
                 buffer);
     }

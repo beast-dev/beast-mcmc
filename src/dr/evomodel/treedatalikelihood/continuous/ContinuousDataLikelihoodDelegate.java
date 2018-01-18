@@ -116,8 +116,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         this.numTraits = dataModel.getTraitCount();
         this.dimTrait = dataModel.getTraitDimension();
 
-        this.precisionType = diffusionProcessDelegate.hasDrift() ? // TODO Handle drift in Basic/SCALAR integrator
-                PrecisionType.FULL :
+        this.precisionType =
+//                diffusionProcessDelegate.hasDrift() ? // TODO Handle drift in Basic/SCALAR integrator
+//                PrecisionType.FULL :
                 forceCompletelyObserved ?
                         PrecisionType.SCALAR :
                         dataModel.getPrecisionType();
@@ -869,7 +870,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 likelihoodDelegate.rateTransformation,
                 likelihoodDelegate.rateModel,
                 true,
-                likelihoodDelegate.allowSingular);
+                false);
     }
 
     static ContinuousDataLikelihoodDelegate createWithMissingData(ContinuousDataLikelihoodDelegate likelihoodDelegate) {

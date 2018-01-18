@@ -101,4 +101,6 @@ public interface MultiDimensionalScalingCore {
      */
     @SuppressWarnings("unused")
     double[] getPairwiseData();
+
+    int getInternalDimension();
 }

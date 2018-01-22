@@ -32,12 +32,8 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.Model;
-import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.factory.DecompositionFactory;
-import org.ejml.interfaces.decomposition.EigenDecomposition;
 import org.ejml.ops.CommonOps;
-import org.ejml.ops.EigenOps;
 
 import java.util.List;
 
@@ -48,9 +44,6 @@ import java.util.List;
  * @version $Id$
  */
 public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
-
-    // QUESTION: would it be better to nest this under DriftDiffusionModelDelegate ?
-    // it was declared final, so I didn't dare to do it...
 
     // Here, branchRateModels represents optimal values
 
@@ -112,8 +105,8 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
 //        stationaryPrecisionMatrix = computeStationaryVariance(strengthOfSelectionMatrix, diffusionModel.getPrecisionParameter())
     }
 
-    public double[][] getStrengthOfSelection() {
-        return strengthOfSelectionMatrixParameter.getParameterAsMatrix();
+    public double[] getStrengthOfSelection() {
+        return strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues();
     }
 
     @Override
@@ -201,40 +194,27 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
 
             final double length = tree.getBranchLength(node);
 
-            DenseMatrix64F alphaMatrix = new DenseMatrix64F(strengthOfSelectionMatrixParameter.getParameterAsMatrix());
-
-            DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
+            double[] actualization = new double[dim];
             computeActualizationBranch(-length, actualization);
 
-            DenseMatrix64F temp = new DenseMatrix64F(dim, 1);
-            CommonOps.mult(actualization, drift, temp);
-            CommonOps.scale(1.0, temp, drift);
+            for (int p = 0; p < dim; ++p) {
+                drift.set(p, 0, actualization[p] * drift.get(p, 0));
+            }
 
             // Add optimal value
-            DenseMatrix64F idMinusAct = CommonOps.identity(dim);
-            CommonOps.addEquals(idMinusAct, -1.0, actualization);
+            double[] optVal = getDriftRates(branchIndice, 1);
 
-            DenseMatrix64F optVal = new DenseMatrix64F(dim, 1, true, getDriftRates(branchIndice, 1));
-
-            CommonOps.multAdd(idMinusAct, optVal, drift);
+            for (int p = 0; p < dim; ++p) {
+                drift.set(p, 0, drift.get(p, 0) + (1 - actualization[p]) *  optVal[p]);
+            }
 
         }
     }
 
-    private void computeActualizationBranch(double lambda, DenseMatrix64F C){
-        DenseMatrix64F A = new DenseMatrix64F(strengthOfSelectionMatrixParameter.getParameterAsMatrix());
-        EigenDecomposition eigA = DecompositionFactory.eig(dim, true);
-        if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
-        DenseMatrix64F expDiag = CommonOps.identity(dim);
+    private void computeActualizationBranch(double lambda, double[] C){
+        double[] A = strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues();
         for (int p = 0; p < dim; ++p) {
-            Complex64F ev = eigA.getEigenvalue(p);
-            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
-            expDiag.set(p, p, Math.exp(lambda * ev.real));
+            C[p] = Math.exp(lambda * A[p]);
         }
-        DenseMatrix64F V = EigenOps.createMatrixV(eigA);
-        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
-        CommonOps.mult(V, expDiag, tmp);
-        CommonOps.invert(V);
-        CommonOps.mult(tmp, V, C);
     }
 }

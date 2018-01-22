@@ -151,43 +151,14 @@ public class MultivariateTraitDebugUtilities {
                                               final double priorSampleSize, final TreeDataLikelihood callbackLikelihood,
                                               Matrix traitVariance, StringBuilder sb, DiffusionProcessDelegate diffusionProcessDelegate) {
 
-        if (diffusionProcessDelegate instanceof OrnsteinUhlenbeckDiffusionModelDelegate) {
+        if (diffusionProcessDelegate instanceof DiagonalOrnsteinUhlenbeckDiffusionModelDelegate) {
             // Eigen of strength of selection matrix
-            double[][] alphaMat = ((OrnsteinUhlenbeckDiffusionModelDelegate) diffusionProcessDelegate).getStrengthOfSelection();
-            DenseMatrix64F A = new DenseMatrix64F(alphaMat);
-            int n = A.numCols;
-            if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
-            EigenDecomposition eigA = DecompositionFactory.eig(n, true);
-            if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
-
-            // Transformed variance
-            DenseMatrix64F V = EigenOps.createMatrixV(eigA);
-            DenseMatrix64F Vinv = new DenseMatrix64F(n,n);
-            CommonOps.invert(V, Vinv);
-
-            DenseMatrix64F transTraitVariance = new DenseMatrix64F(traitVariance.toComponents());
-
-            DenseMatrix64F tmp = new DenseMatrix64F(n, n);
-            CommonOps.mult(Vinv, transTraitVariance, tmp);
-            CommonOps.multTransB(tmp, Vinv, transTraitVariance);
-
-            // Eigenvalues
-            double[] eigVals = new double[n];
-            for (int p = 0; p < n; ++p) {
-                Complex64F ev = eigA.getEigenvalue(p);
-                if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
-                eigVals[p] = ev.real;
-            }
-
-            // inverse of eigenvalues
-            double[][] invEigVals = new double[n][n];
-            for (int p = 0; p < n; ++p) {
-                for (int q = 0; q < n; ++q) {
-                    invEigVals[p][q] = 1 / (eigVals[p] + eigVals[q]);
-                }
-            }
+            double[] eigVals = ((DiagonalOrnsteinUhlenbeckDiffusionModelDelegate) diffusionProcessDelegate).getStrengthOfSelection();
+            int n = eigVals.length;
 
             // Computation of matrix
+            DenseMatrix64F transTraitVariance = new DenseMatrix64F(traitVariance.toComponents());
+
             double[][] treeSharedLengths = getTreeVariance(tree, callbackLikelihood.getBranchRateModel(), normalization, Double.POSITIVE_INFINITY);
             int ntaxa = tree.getExternalNodeCount();
             double ti; double tj; double tij; double ep; double eq;
@@ -202,11 +173,9 @@ public class MultivariateTraitDebugUtilities {
                         for (int q = 0; q < n; ++q) {
                             ep = eigVals[p];
                             eq = eigVals[q];
-                            varTemp.set(p, q, Math.exp(-ep * ti) * Math.exp(-eq * tj) * (invEigVals[p][q] * (Math.exp((ep + eq) * tij) - 1) + 1/priorSampleSize) * transTraitVariance.get(p, q));
+                            varTemp.set(p, q, Math.exp(-ep * ti) * Math.exp(-eq * tj) * ((Math.exp((ep + eq) * tij) - 1)/(ep + eq) + 1/priorSampleSize) * transTraitVariance.get(p, q));
                         }
                     }
-                    CommonOps.mult(V, varTemp, tmp);
-                    CommonOps.multTransB(tmp, V, varTemp);
                     for (int p = 0; p < n; ++p) {
                         for (int q = 0; q < n; ++q) {
                             jointVariance[i * n + p][j * n + q] = varTemp.get(p, q);
@@ -226,28 +195,109 @@ public class MultivariateTraitDebugUtilities {
             return jointVariance;
 
         } else {
-            double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(), normalization, priorSampleSize);
+            if (diffusionProcessDelegate instanceof OrnsteinUhlenbeckDiffusionModelDelegate) {
+                // Eigen of strength of selection matrix
+                double[][] alphaMat = ((OrnsteinUhlenbeckDiffusionModelDelegate) diffusionProcessDelegate).getStrengthOfSelection();
+                DenseMatrix64F A = new DenseMatrix64F(alphaMat);
+                int n = A.numCols;
+                if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
+                EigenDecomposition eigA = DecompositionFactory.eig(n, true);
+                if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
 
-            double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+                // Transformed variance
+                DenseMatrix64F V = EigenOps.createMatrixV(eigA);
+                DenseMatrix64F Vinv = new DenseMatrix64F(n, n);
+                CommonOps.invert(V, Vinv);
 
-            Matrix treeV = new Matrix(treeVariance);
-            Matrix treeP = treeV.inverse();
+                DenseMatrix64F transTraitVariance = new DenseMatrix64F(traitVariance.toComponents());
 
-            sb.append("Tree variance:\n");
-            sb.append(treeV);
-            sb.append("Tree precision:\n");
-            sb.append(treeP);
-            sb.append("\n\n");
+                DenseMatrix64F tmp = new DenseMatrix64F(n, n);
+                CommonOps.mult(Vinv, transTraitVariance, tmp);
+                CommonOps.multTransB(tmp, Vinv, transTraitVariance);
 
-            sb.append("Trait variance:\n");
-            sb.append(traitVariance);
-            sb.append("\n\n");
+                // Eigenvalues
+                double[] eigVals = new double[n];
+                for (int p = 0; p < n; ++p) {
+                    Complex64F ev = eigA.getEigenvalue(p);
+                    if (!ev.isReal())
+                        throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+                    eigVals[p] = ev.real;
+                }
 
-            sb.append("Joint variance:\n");
-            sb.append(new Matrix(jointVariance));
-            sb.append("\n\n");
+                // inverse of eigenvalues
+                double[][] invEigVals = new double[n][n];
+                for (int p = 0; p < n; ++p) {
+                    for (int q = 0; q < n; ++q) {
+                        invEigVals[p][q] = 1 / (eigVals[p] + eigVals[q]);
+                    }
+                }
 
-            return jointVariance;
+                // Computation of matrix
+                double[][] treeSharedLengths = getTreeVariance(tree, callbackLikelihood.getBranchRateModel(), normalization, Double.POSITIVE_INFINITY);
+                int ntaxa = tree.getExternalNodeCount();
+                double ti;
+                double tj;
+                double tij;
+                double ep;
+                double eq;
+                DenseMatrix64F varTemp = new DenseMatrix64F(n, n);
+                double[][] jointVariance = new double[n * ntaxa][n * ntaxa];
+                for (int i = 0; i < ntaxa; ++i) {
+                    for (int j = 0; j < ntaxa; ++j) {
+                        ti = treeSharedLengths[i][i];
+                        tj = treeSharedLengths[j][j];
+                        tij = treeSharedLengths[i][j];
+                        for (int p = 0; p < n; ++p) {
+                            for (int q = 0; q < n; ++q) {
+                                ep = eigVals[p];
+                                eq = eigVals[q];
+                                varTemp.set(p, q, Math.exp(-ep * ti) * Math.exp(-eq * tj) * (invEigVals[p][q] * (Math.exp((ep + eq) * tij) - 1) + 1 / priorSampleSize) * transTraitVariance.get(p, q));
+                            }
+                        }
+                        CommonOps.mult(V, varTemp, tmp);
+                        CommonOps.multTransB(tmp, V, varTemp);
+                        for (int p = 0; p < n; ++p) {
+                            for (int q = 0; q < n; ++q) {
+                                jointVariance[i * n + p][j * n + q] = varTemp.get(p, q);
+                            }
+                        }
+                    }
+                }
+
+                sb.append("Trait variance:\n");
+                sb.append(traitVariance);
+                sb.append("\n\n");
+
+                sb.append("Joint variance:\n");
+                sb.append(new Matrix(jointVariance));
+                sb.append("\n\n");
+
+                return jointVariance;
+
+            } else {
+                double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(), normalization, priorSampleSize);
+
+                double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+
+                Matrix treeV = new Matrix(treeVariance);
+                Matrix treeP = treeV.inverse();
+
+                sb.append("Tree variance:\n");
+                sb.append(treeV);
+                sb.append("Tree precision:\n");
+                sb.append(treeP);
+                sb.append("\n\n");
+
+                sb.append("Trait variance:\n");
+                sb.append(traitVariance);
+                sb.append("\n\n");
+
+                sb.append("Joint variance:\n");
+                sb.append(new Matrix(jointVariance));
+                sb.append("\n\n");
+
+                return jointVariance;
+            }
         }
     }
 
@@ -276,6 +326,13 @@ public class MultivariateTraitDebugUtilities {
         if (diffusion instanceof OrnsteinUhlenbeckDiffusionModelDelegate) {
             for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
                 drift[tip] = ((OrnsteinUhlenbeckDiffusionModelDelegate) diffusion).getAccumulativeDrift(
+                        tree.getExternalNode(tip), priorMean);
+            }
+        }
+
+        if (diffusion instanceof DiagonalOrnsteinUhlenbeckDiffusionModelDelegate) {
+            for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
+                drift[tip] = ((DiagonalOrnsteinUhlenbeckDiffusionModelDelegate) diffusion).getAccumulativeDrift(
                         tree.getExternalNode(tip), priorMean);
             }
         }

@@ -212,7 +212,7 @@ public class TopologyTracer {
                 writer.write("# BEAST " + version.getVersionString() + "\n");
                 writer.write(STATE);
                 for (TreeMetric treeMetric : treeMetrics) {
-                    writer.write("\t" + treeMetric.getType().getShortName());
+                    writer.write("\t" + treeMetric.toString());
                 }
                 writer.write("\n");
 

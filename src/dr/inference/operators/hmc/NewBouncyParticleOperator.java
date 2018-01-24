@@ -85,13 +85,8 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         this.treeDataLikelihood  = likelihoodDelegate.callbackLikelihood;
         this.likelihoodDelegate = likelihoodDelegate;
-
         this.parameter = parameter;
-
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
-        
-
-
 
         String gradientName = TipGradientViaFullConditionalDelegate.getName(traitName);
         if (treeDataLikelihood.getTreeTrait(gradientName) == null) {

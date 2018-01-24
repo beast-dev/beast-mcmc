@@ -77,7 +77,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private boolean allowSingular = false;
 
-    private TreeDataLikelihood callbackLikelihood = null;
+    public TreeDataLikelihood callbackLikelihood = null;
 
     public ContinuousDataLikelihoodDelegate(Tree tree,
                                             DiffusionProcessDelegate diffusionProcessDelegate,

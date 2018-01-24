@@ -77,22 +77,20 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
 
     public NewBouncyParticleOperator(CoercionMode mode, double weight,
-                                     TreeDataLikelihood treeDataLikelihood,
+                                     //TreeDataLikelihood treeDataLikelihood,
                                      ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                      String traitName,Parameter parameter, double drawVariance) {
 
         setWeight(weight);
 
-        this.treeDataLikelihood  = treeDataLikelihood;
+        this.treeDataLikelihood  = likelihoodDelegate.callbackLikelihood;
         this.likelihoodDelegate = likelihoodDelegate;
 
         this.parameter = parameter;
 
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
         
-        location = getInitialPosition();
-        phi_w = getPhiw();
-        mu = getMU();
+
 
 
         String gradientName = TipGradientViaFullConditionalDelegate.getName(traitName);
@@ -114,6 +112,10 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
         this.tree = treeDataLikelihood.getTree();
         this.precisionMatrix = likelihoodDelegate.getPrecisionParameter().getParameterAsMatrix();//todo: precison matrix for each species? (25*25?) not taking a taxon name?
         this.sigma0 = getTreeVariance(); // //todo you only need the largest eigenvalue "Only ever call a very few # of times"
+
+        location = getInitialPosition();
+        phi_w = getPhiw();
+        mu = getMU();
 
     }
 

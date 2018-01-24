@@ -191,7 +191,7 @@
 		<parameter value="1"/>
 	</compoundParameter>
 
-    <orderedLatentLiabilityLikelihood id="liabilityLikelihood">
+    <orderedLatentLiabilityLikelihood id="liabilityLikelihood" NData = "1" NTraits = "3">
         <patterns idref="patterns"/>
         <treeModel idref="treeModel"/>
         <traitDataLikelihood idref="scalarLikelihood"/>
@@ -218,8 +218,9 @@
 
     <operators id="operators" optimizationSchedule="log">
 
-  		<bouncyParticleOperator mode="nuts" chainLength="1000000" drawVariance = "1" weight="5" autoOptimize="false">
- 			<maskedGradient>
+  		<bouncyParticleOperator mode="nuts" traitchainLength="1000000" traitName="latent" drawVariance = "1" weight="5" autoOptimize="false">
+			<traitDataLikelihood idref="scalarLikelihood"/>
+			<maskedGradient>
 				<traitGradientOnTree>
 					<traitDataLikelihood idref="scalarLikelihood"/>
 				</traitGradientOnTree>

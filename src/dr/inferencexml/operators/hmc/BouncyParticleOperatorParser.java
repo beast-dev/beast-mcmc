@@ -25,8 +25,10 @@
 
 package dr.inferencexml.operators.hmc;
 
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
@@ -40,6 +42,8 @@ import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 import dr.xml.*;
 
+import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+
 /**
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
@@ -47,7 +51,7 @@ import dr.xml.*;
 
 public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     public final static String BPO_OPERATOR = "bouncyParticleOperator";
-
+    public final static String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     public final static String DRAW_VARIANCE = "drawVariance";
     public static final String MODE = "mode";
 
@@ -60,7 +64,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         System.err.println("HERE?");
-        System.exit(-1);
+        //System.exit(-1);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
 
@@ -72,10 +76,11 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         TreeDataLikelihood treeDataLikelihood =
                 (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
-        ContinuousDataLikelihoodDelegate likelihoodDelegate =
-                (ContinuousDataLikelihoodDelegate) xo.getChild(ContinuousDataLikelihoodDelegate.class);
+        DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
-        String traitName = (String) xo.getChild(String.class);
+        final ContinuousDataLikelihoodDelegate continuousDataLikelihoodDelegate = (ContinuousDataLikelihoodDelegate) likelihoodDelegate;
+
+        String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
@@ -88,7 +93,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         }
 
 
-        return new NewBouncyParticleOperator(coercionMode, weight, treeDataLikelihood, likelihoodDelegate, traitName,
+        return new NewBouncyParticleOperator(coercionMode, weight, continuousDataLikelihoodDelegate, traitName,
                     parameter, drawVariance);
 
     }

@@ -77,6 +77,10 @@ public interface WrappedVector extends ReadableVector, WritableVector {
             super(buffer, offset, dim);
         }
 
+        public Raw(double[] buffer) {
+            this(buffer, 0, buffer.length);
+        }
+
         @Override
         final public double get(final int i) {
             return buffer[offset + i];

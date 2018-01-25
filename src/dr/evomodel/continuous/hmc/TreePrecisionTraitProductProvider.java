@@ -33,19 +33,23 @@ import dr.evomodel.treedatalikelihood.preorder.NewTipFullConditionalDistribution
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.PrecisionVectorProductProvider;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
 import java.util.List;
 
 /**
- * @author Max Tolkoff
+ * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 public class TreePrecisionTraitProductProvider implements PrecisionVectorProductProvider, Reportable {
 
     private final TreeTrait<List<NormalSufficientStatistics>> fullConditionalDensity;
     private final Tree tree;
-    private final int nTaxa;
+    private final Parameter dataParameter;
+
+    private final static boolean DEBUG = true;
+    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
     public TreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -56,27 +60,53 @@ public class TreePrecisionTraitProductProvider implements PrecisionVectorProduct
             likelihoodDelegate.addNewFullConditionalDensityTrait(traitName);
         }
 
-        this.fullConditionalDensity = treeDataLikelihood.getTreeTrait(fcdName);
+        this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
         this.tree = treeDataLikelihood.getTree();
-        this.nTaxa = tree.getExternalNodeCount();
+        this.dataParameter = likelihoodDelegate.getDataModel().getParameter();
+        this.likelihoodDelegate = likelihoodDelegate;
     }
 
     @Override
     public double[] getMultiplicationResultant(Parameter vector) {
 
-        // TODO ensure that vector == underlying data parameter for likelihoodDelegate
+        if (vector != dataParameter) {
+            throw new IllegalArgumentException("May only compute for trait data vector");
+        }
 
         double[] result = new double[vector.getDimension()];
 
         List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, null);
 
-        // TODO Fill in values
+        // TODO Fill in values in result
+
+        if (DEBUG) {
+
+            double[][] treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
+            double[] result2 = new double[result.length];
+            for (int row = 0; row < result.length; ++row) {
+                double sum = 0.0;
+                for (int col = 0; col < treeTraitPrecision[row].length; ++col) {
+                    sum += treeTraitPrecision[row][col] * vector.getParameterValue(col);
+                }
+                result2[row] = sum;
+            }
+
+            System.err.println("via FCD: " + new WrappedVector.Raw(result));
+            System.err.println("direct : " + new WrappedVector.Raw(result2));
+            System.err.println();
+        }
 
         return result;
     }
 
     @Override
     public String getReport() {
-        return (new dr.math.matrixAlgebra.Vector(getMultiplicationResultant(null))).toString();
+        double[] result = getMultiplicationResultant(dataParameter);
+        return (new WrappedVector.Raw(result, 0, result.length)).toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private TreeTrait<List<NormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
+        return trait;
     }
 }

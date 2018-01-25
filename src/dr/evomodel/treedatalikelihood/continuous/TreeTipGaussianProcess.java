@@ -154,12 +154,8 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
 
             final NodeRef root = treeDataLikelihood.getTree().getRoot();
 
-            try {
-                likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+            likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
 
-            } catch (DataLikelihoodDelegate.LikelihoodException e) {
-                throw new RuntimeException("Unhandled exception");
-            }
         } else {
             treeDataLikelihood.fireModelChanged();
         }

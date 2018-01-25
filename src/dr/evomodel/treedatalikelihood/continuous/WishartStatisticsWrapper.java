@@ -166,14 +166,9 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         final NodeRef root = dataLikelihood.getTree().getRoot();
 
-        try {
-            outerProductDelegate.setComputeWishartStatistics(true);
-            outerProductDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
-            outerProductDelegate.setComputeWishartStatistics(false);
-
-        } catch (DataLikelihoodDelegate.LikelihoodException e) {
-            throw new RuntimeException("Unhandled exception");
-        }
+        outerProductDelegate.setComputeWishartStatistics(true);
+        outerProductDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+        outerProductDelegate.setComputeWishartStatistics(false);
 
         wishartStatistics = outerProductDelegate.getWishartStatistics();
 

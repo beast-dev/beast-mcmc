@@ -28,29 +28,28 @@ import java.util.Arrays;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.MatrixParameterInterface;
+import dr.inference.hmc.PrecisionVectorProductProvider;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
+import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.KroneckerOperation;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
-import dr.util.Transform;
 
 /**
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 
-public class NewBouncyParticleOperator extends SimpleMCMCOperator {
+public class NewBouncyParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     private double t = 0.05; //todo randomize the length a little bit.
 //    private double[] v;
@@ -87,7 +86,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         setWeight(weight);
 
-        this.treeDataLikelihood  = likelihoodDelegate.callbackLikelihood;
+        this.treeDataLikelihood  = likelihoodDelegate.getCallbackLikelihood();
         this.likelihoodDelegate = likelihoodDelegate;
         this.parameter = parameter;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
@@ -105,7 +104,6 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
             likelihoodDelegate.addFullConditionalDensityTrait(traitName);
         }
         densityProvider = treeDataLikelihood.getTreeTrait(fcdName);
-
 
         assert (densityProvider != null);
 
@@ -438,5 +436,40 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         return 1.0;
     }
+
+    // Some draft functions by MAS
+
+    public NewBouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
+                                     PrecisionVectorProductProvider multiplicationProvider,
+                                     double weight) {
+
+        this.newGradientProvider = gradientProvider;
+        this.multiplicationProvider = multiplicationProvider;
+        this.likelihood = gradientProvider.getLikelihood();
+        this.parameter = gradientProvider.getParameter();
+
+        // TODO Remove
+        this.drawDistribution = new NormalDistribution(0, 1);
+        this.precisionMatrix = null;
+        this.sigma0 = null;
+        this.treeDataLikelihood = null;
+        this.likelihoodDelegate = null;
+
+        this.gradientProvider = null;
+        this.densityProvider = null;
+        this.tree = null;
+        // End Remove
+
+        setWeight(weight);
+        checkParameterBounds(parameter);
+    }
+
+    private static void checkParameterBounds(Parameter parameter) {
+        // TODO
+    }
+
+    private GradientWrtParameterProvider newGradientProvider;
+    private PrecisionVectorProductProvider multiplicationProvider;
+    private Likelihood likelihood;
 
 }

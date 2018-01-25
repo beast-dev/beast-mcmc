@@ -73,7 +73,7 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
     public double[] getGradientLogDensity() {
 
         final int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
-        final int ntaxa = traitParameter.getDimension() / dimTraits;
+        final int nTaxa = traitParameter.getDimension() / dimTraits;
 
         final double[] derivative = new double[traitParameter.getDimension()];
 
@@ -81,7 +81,7 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
         final double[] allScalars = treeLikelihood.getPrecisionFactors();
         final double[][] precisionMatrix = treeLikelihood.getDiffusionModel().getPrecisionmatrix();
 
-        for (int i = 0; i < ntaxa; ++i) { //todo: add the correct pivoting inside one tip
+        for (int i = 0; i < nTaxa; ++i) {
 
             final double[] mean = allMeans[i];
             final double scale = allScalars[i];

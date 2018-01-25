@@ -65,18 +65,24 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
         this.precisionType = precisionType;
     }
 
+    @Override
     public boolean bufferTips() { return true; }
 
+    @Override
     public int getTraitCount() {  return numTraits; }
 
+    @Override
     public int getTraitDimension() { return dimTrait; }
 
+    @Override
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
 
+    @Override
     public CompoundParameter getParameter() { return traitParameter; }
 
+    @Override
     public List<Integer> getMissingIndices() { return noMissingIndices; }
 
     @Override
@@ -101,6 +107,7 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     @Override
     protected void acceptState() { }
 
+    @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
         final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);

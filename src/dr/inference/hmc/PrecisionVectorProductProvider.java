@@ -40,11 +40,11 @@ import java.util.List;
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
-public interface PrecisionVectorMultiplicationProvider {
+public interface PrecisionVectorProductProvider {
 
     double[] getMultiplicationResultant(Parameter vector);
 
-    class Generic implements PrecisionVectorMultiplicationProvider {
+    class Generic implements PrecisionVectorProductProvider {
 
         private final MatrixParameterInterface matrix;
 
@@ -75,38 +75,5 @@ public interface PrecisionVectorMultiplicationProvider {
     }
 
     // TODO Depends on evomodel objects, should move into evomodel package (limit cyclic dependencies)
-    class ViaFullConditionalDistribution implements PrecisionVectorMultiplicationProvider {
 
-        private final TreeTrait<List<NormalSufficientStatistics>> fullConditionalDensity;
-        private final Tree tree;
-        private final int nTaxa;
-
-        public ViaFullConditionalDistribution(TreeDataLikelihood treeDataLikelihood,
-                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                              String traitName) {
-
-            String fcdName = NewTipFullConditionalDistributionDelegate.getName(traitName);
-            if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
-                likelihoodDelegate.addNewFullConditionalDensityTrait(traitName);
-            }
-
-            this.fullConditionalDensity = treeDataLikelihood.getTreeTrait(fcdName);
-            this.tree = treeDataLikelihood.getTree();
-            this.nTaxa = tree.getExternalNodeCount();
-        }
-
-        @Override
-        public double[] getMultiplicationResultant(Parameter vector) {
-
-            // TODO ensure that vector == underlying data parameter for likelihoodDelegate
-
-            double[] result = new double[vector.getDimension()];
-
-            List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, null);
-
-            // TODO Fill in values
-
-            return result;
-        }
-    }
 }

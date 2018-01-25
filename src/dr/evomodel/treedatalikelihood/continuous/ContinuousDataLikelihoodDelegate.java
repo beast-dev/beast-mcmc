@@ -77,7 +77,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private boolean allowSingular = false;
 
-    public TreeDataLikelihood callbackLikelihood = null;
+    private TreeDataLikelihood callbackLikelihood = null;
 
     public ContinuousDataLikelihoodDelegate(Tree tree,
                                             DiffusionProcessDelegate diffusionProcessDelegate,
@@ -259,7 +259,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
-    TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
+    public TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
 
     public PrecisionType getPrecisionType() {
         return precisionType;

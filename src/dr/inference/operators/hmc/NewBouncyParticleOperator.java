@@ -82,7 +82,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
         setWeight(weight);
 
-        this.treeDataLikelihood  = likelihoodDelegate.callbackLikelihood;
+        this.treeDataLikelihood  = likelihoodDelegate.getCallbackLikelihood();
         this.likelihoodDelegate = likelihoodDelegate;
         this.parameter = parameter;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));

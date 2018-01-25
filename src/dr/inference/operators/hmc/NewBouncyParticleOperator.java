@@ -24,6 +24,7 @@
  */
 
 package dr.inference.operators.hmc;
+import java.util.Arrays;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -39,6 +40,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.math.KroneckerOperation;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
@@ -50,26 +52,28 @@ import dr.util.Transform;
 
 public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
-    private double t; //todo randomize the length a little bit.
-    private double[] v;
-    private double[] location;
-    private double[] phi_w;
-    private double[] mu;
+    private double t = 0.05; //todo randomize the length a little bit.
+//    private double[] v;
+//    private double[] location;
+//    private double[] phi_w;
+//    private double[] mu;
 
     final NormalDistribution drawDistribution;
 
 //    final GradientWrtParameterProvider gradientProvider;
-    final double[][] precisionMatrix;
+     double[][] precisionMatrix;
+     double[][] pMatrix;
+     double[][] sigma0; //np*np
+
     // Something that returns the conditional distribution
     protected Parameter parameter;
-    final double[][] sigma0; //np*np
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
     private final TreeTrait gradientProvider; //already the gradient, not really a provider.
     private final TreeTrait densityProvider;
-    private final Tree tree;
+    private  Tree tree;
 
     //gradient/densityprovider is for each taxa? so precisionMatrix not necessary?( densityprovider is enough)  divide mu and p matrix from the compact form?
     // sigma0 is matrix np by np?
@@ -87,6 +91,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
         this.likelihoodDelegate = likelihoodDelegate;
         this.parameter = parameter;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
+        this.tree = treeDataLikelihood.getTree();
 
         String gradientName = TipGradientViaFullConditionalDelegate.getName(traitName);
         if (treeDataLikelihood.getTreeTrait(gradientName) == null) {
@@ -104,13 +109,9 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         assert (densityProvider != null);
 
-        this.tree = treeDataLikelihood.getTree();
-        this.precisionMatrix = likelihoodDelegate.getPrecisionParameter().getParameterAsMatrix();//todo: precison matrix for each species? (25*25?) not taking a taxon name?
-        this.sigma0 = getTreeVariance(); // //todo you only need the largest eigenvalue "Only ever call a very few # of times"
 
-        location = getInitialPosition();
-        phi_w = getPhiw();
-        mu = getMU();
+//        phi_w = getPhiw();
+//        mu = getMU();
 
     }
 
@@ -133,28 +134,12 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
         return "Bouncy Particle operator";
     }
 
-    @Override
-    public double doOperation() {
-
-//         Get all gradients; // in treeTipGradient why there is a "nTrait" that must be 1...??
-//
-//         int offsetOutput = 0;
-//
-//        for (int taxon = 0; taxon < nTaxa; ++taxon) {
-//            double[] taxonGradient = (double[]) gradientProvider.getTrait(tree, tree.getExternalNode(taxon));
-//            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
-//            offsetOutput += taxonGradient.length;
-//        }
-
-        return 0.0;
-    }
-
     private long count = 0;
 
     private static final boolean DEBUG = false;
 
-
-    public double doOperation(double[] location, double[] v, double t, double[] phi_w) {
+    @Override
+    public double doOperation() {
 
 
         bpsOneStep();
@@ -162,10 +147,31 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
+    public void setParameter(double[] position) {
+
+        final int dim = position.length;
+        for (int j = 0; j < dim; ++j) {
+            parameter.setParameterValueQuietly(j, position[j]);
+        }
+        parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
+//                parameter.setParameterValueNotifyChangedAll(0, position[0]);
+    }
+
     public void bpsOneStep() {
 
 
-        v = drawV(drawDistribution, location.length);
+        double[] location = getInitialPosition();
+        //System.err.println("getInitialPosition +  " + Arrays.toString(location));
+
+        double[][] pMatrix = likelihoodDelegate.getPrecisionParameter().getParameterAsMatrix();
+        double[][] sigma0 = getTreeVariance();
+        double[][] precisionMatrix = KroneckerOperation.product(pMatrix, sigma0);
+        double[] phi_w = getPhiw();
+        double[] mu = getMU();
+
+        double[] v = drawV(drawDistribution, location.length);
+
+        t = 0.05;
 
 
         while (t > 0) {
@@ -178,7 +184,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
             double tMin = Math.max(0.0, - v_phi_w/v_phi_v);
 
-            double U_min = energyProvider(phi_w, phi_v, w, tMin);
+            double U_min = energyProvider(v, phi_w, phi_v, w, tMin);
 
 
             if( Double.isNaN(v_phi_w)){
@@ -189,32 +195,33 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
             NewBouncyParticleOperator.TravelTime time_to_bdry = getTimeToBoundary(location, v);
 
-            bpsUpdate(time_to_bdry, bounceTime, t);
+            bpsUpdate(mu, v, phi_w, location,time_to_bdry, bounceTime, t, precisionMatrix);
 
-
-        }
-
-
-    }
-
-    public double[][] getVectorizedPrecisionMatrix(){
-
-        int nTaxa = tree.getExternalNodeCount();
-        int dimTaxa = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-
-        double[][] vectorizedPrecisionMatrix = new double[nTaxa][dimTaxa];
-
-        int offsetOutput = 0;
-
-        for (int taxon = 0; taxon < nTaxa; ++taxon) { //todo to finish. from online.
-
-            System.arraycopy(precisionMatrix, 0,vectorizedPrecisionMatrix,offsetOutput,dimTaxa);
-            offsetOutput += dimTaxa;
+            //System.err.println("location is (inside) +  " + Arrays.toString(location));
 
         }
 
-        return vectorizedPrecisionMatrix;
+        //System.err.println("location is (outside) +  " + Arrays.toString(location));
     }
+//
+//    public double[][] getVectorizedPrecisionMatrix(){
+//
+//        int nTaxa = tree.getExternalNodeCount();
+//        int dimTaxa = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+//
+//        double[][] vectorizedPrecisionMatrix = new double[nTaxa][dimTaxa];
+//
+//        int offsetOutput = 0;
+//
+//        for (int taxon = 0; taxon < nTaxa; ++taxon) { //todo to finish. from online.
+//
+//            System.arraycopy(precisionMatrix, 0,vectorizedPrecisionMatrix,offsetOutput,dimTaxa);
+//            offsetOutput += dimTaxa;
+//
+//        }
+//
+//        return vectorizedPrecisionMatrix;
+//    }
 
     public double[] getMU() { //todo combine getMU and getphiw and getVectorizedPrecisionMatrix
 
@@ -255,7 +262,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
         return gradient;
     }
 
-    public void bpsUpdate(NewBouncyParticleOperator.TravelTime traveltime, double bouncetime, double timeRemain) {
+    public void bpsUpdate(double[] mu, double[] v, double[] phi_w, double[] location, NewBouncyParticleOperator.TravelTime traveltime, double bouncetime, double timeRemain,double[][] precisionMatrix) {
 
         if (timeRemain < Math.min(traveltime.minTime, bouncetime)) { //no event
 
@@ -280,7 +287,8 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
             t -= bouncetime;
 
         }
-
+        //System.err.println("location is (inside bpsupdate) +  " + Arrays.toString(location));
+        setParameter(location);
     }
 
     public double[] bounceAgainst(double[] v, double[] minusGrad) {
@@ -305,7 +313,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
     }
 
-    public double energyProvider(double[] phi_w, double[] phi_v, double[] w, double t){
+    public double energyProvider(double[] v, double[] phi_w, double[] phi_v, double[] w, double t){
 
         return getDotProduct(addArray(w, getConstantVector(v, t), false),
                 addArray(phi_w, getConstantVector(phi_v, t), false));
@@ -370,6 +378,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         assert (a.length == b.length);
         final int dim = a.length;
+
 
         double result[] = new double[dim];
         for (int i = 0; i < dim; i++) {

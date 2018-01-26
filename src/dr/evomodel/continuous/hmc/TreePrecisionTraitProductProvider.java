@@ -136,7 +136,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
                 max = Math.max(max, treeTraitVariance[i][i]);
             }
 
-            return max;
+            return Math.sqrt(max);
 
         } else {
             throw new RuntimeException("Not yet implemented");

@@ -90,7 +90,7 @@ public interface PrecisionMatrixVectorProductProvider {
                 max = Math.max(max, matrix.getParameterValue(i,i));
             }
 
-            return max;
+            return Math.sqrt(max);
         }
     }
 }

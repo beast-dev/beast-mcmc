@@ -43,6 +43,8 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.KroneckerOperation;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
+import dr.math.matrixAlgebra.Matrix;
+import org.ejml.data.DenseMatrix64F;
 
 /**
  * @author Zhenyu Zhang
@@ -60,9 +62,9 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
     final NormalDistribution drawDistribution;
 
 //    final GradientWrtParameterProvider gradientProvider;
-     double[][] precisionMatrix;
-     double[][] pMatrix;
-     double[][] sigma0; //np*np
+//     double[][] precisionMatrix;
+//     double[][] pMatrix;
+//     double[][] sigma0; //np*np
 
     // Something that returns the conditional distribution
     protected Parameter parameter;
@@ -163,9 +165,18 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
         double[][] pMatrix = likelihoodDelegate.getPrecisionParameter().getParameterAsMatrix();
         double[][] sigma0 = getTreeVariance();
-        double[][] precisionMatrix = KroneckerOperation.product(pMatrix, sigma0);
-        double[] phi_w = getPhiw();
-        double[] mu = getMU();
+//        double[][] precisionMatrix = KroneckerOperation.product(pMatrix, sigma0);
+
+        Matrix treeV = new Matrix(sigma0);
+        double[][] treePrecision = (treeV.inverse()).toComponents();
+
+//        DenseMatrix64F
+
+        double[][] precisionMatrix = KroneckerOperation.product(treePrecision, pMatrix);
+
+
+
+
 
         double[] v = drawV(drawDistribution, location.length);
 
@@ -173,7 +184,8 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
 
         while (t > 0) {
-
+            double[] phi_w = getPhiw();
+            double[] mu = getMU();
             double[] w = addArray(location, mu, true);
             double[] phi_v = matrixMultiplier(precisionMatrix, v);
             double w_phi_w = getDotProduct(w, phi_w);//todo multiple precision matrix should be a class.
@@ -450,8 +462,8 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
         // TODO Remove
         this.drawDistribution = new NormalDistribution(0, 1);
-        this.precisionMatrix = null;
-        this.sigma0 = null;
+//        this.precisionMatrix = null;
+//        this.sigma0 = null;
         this.treeDataLikelihood = null;
         this.likelihoodDelegate = null;
 

@@ -218,7 +218,7 @@
 
     <operators id="operators" optimizationSchedule="log">
 
-  		<bouncyParticleOperator mode="nuts" traitchainLength="1000000" traitName="latent" drawVariance = "1" weight="5" autoOptimize="false">
+  		<bouncyParticleOperator mode="nuts" traitName="latent" drawVariance = "1" weight="5" autoOptimize="false">
 			<traitDataLikelihood idref="scalarLikelihood"/>
 			<maskedGradient>
 				<traitGradientOnTree>
@@ -238,11 +238,19 @@
  		</bouncyParticleOperator>
 
 
-		<precisionGibbsOperator weight="1">
-            <traitDataLikelihood idref="scalarLikelihood"/>
-            <multivariateWishartPrior idref="precisionPrior"/>
-            <matrixParameter idref="precision"/>
-		</precisionGibbsOperator>
+		<!--<precisionGibbsOperator weight="1">-->
+            <!--<traitDataLikelihood idref="scalarLikelihood"/>-->
+            <!--<multivariateWishartPrior idref="precisionPrior"/>-->
+            <!--<matrixParameter idref="precision"/>-->
+		<!--</precisionGibbsOperator>-->
+
+		<!--<precisionGibbsOperator weight="2">-->
+			<!--<wishartStatistics  traitName="trait">-->
+				<!--<traitDataLikelihood idref="scalarLikelihood"/>-->
+			<!--</wishartStatistics>-->
+			<!--<multivariateWishartPrior idref="precisionPrior"/>-->
+            <!--<matrixParameter idref="precision"/>-->
+		<!--</precisionGibbsOperator>-->
 
 
 
@@ -262,7 +270,7 @@
 
 		<operators idref="operators"/>
 
-		<log id="screenLog" logEvery="100">
+		<log id="screenLog" logEvery="1000">
 			<column label="Posteriorrrr" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -277,7 +285,7 @@
 			</column>
 		</log>
 
-		<log id="fileLog1" logEvery="100" fileName="small_nuts_checkstepsize.log">
+		<log id="fileLog1" logEvery="100" fileName="BPO_small_latentOnly.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>

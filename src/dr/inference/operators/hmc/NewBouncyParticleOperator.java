@@ -117,25 +117,27 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
         //System.err.println("location is (outside) +  " + Arrays.toString(location));
     }
 
-    private double doBounce(double remainingTime, double bounceTime, TravelTime timeToBoundary,
+    private double doBounce(double remainingTime, double bounceTime, TravelTime travelTime,
                             WrappedVector position, WrappedVector velocity,
                             WrappedVector negativeGradient, ReadableVector Phi_v) {
 
-        if (remainingTime < Math.min(timeToBoundary.minTime, bounceTime)) { // No event during remaining time
+        double timeToBoundary = travelTime.minTime;
+        int boundaryIndex = travelTime.minIndex;
+
+        if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
 
             updatePosition(position, velocity, remainingTime);
             remainingTime = 0.0;
 
+        } else if (timeToBoundary < bounceTime) { // Bounce against the boundary
 
-        } else if (timeToBoundary.minTime < bounceTime) { // Bounce against the boundary
+            updatePosition(position, velocity, timeToBoundary);
+            updateNegativeGradient(negativeGradient, timeToBoundary, Phi_v);
 
-            updatePosition(position, velocity, timeToBoundary.minTime);
-            updateNegativeGradient(negativeGradient, timeToBoundary.minTime, Phi_v);
+            position.set(boundaryIndex, 0.0);
+            velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
 
-            position.set(timeToBoundary.minIndex, 0.0);
-            velocity.set(timeToBoundary.minIndex, -1 * velocity.get(timeToBoundary.minIndex));
-
-            remainingTime -= timeToBoundary.minTime;
+            remainingTime -= timeToBoundary;
 
         } else { // Bounce caused by the gradient
 
@@ -165,7 +167,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
             velocity.set(i,
-                    velocity.get(i) + 2 * vg / gg * negativeGradient.get(i));
+                    velocity.get(i) - 2 * vg / gg * negativeGradient.get(i));
         }
     }
 
@@ -184,8 +186,8 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
     private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
         double a = v_phi_v / 2;
         double b = v_phi_x;
-        double c = MathUtils.nextExponential(1) - u_min;
-        return (-b + Math.sqrt(b * b - 4 * a * c));
+        double c = u_min - MathUtils.nextExponential(1);
+        return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
 
     private WrappedVector getNegativeGradient(ReadableVector position) {

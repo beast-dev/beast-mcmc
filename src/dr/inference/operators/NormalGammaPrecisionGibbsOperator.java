@@ -89,6 +89,24 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         return OPERATOR_NAME;
     }
 
+    static class GammaParametrization {
+        private double rate;
+        private double shape;
+
+        GammaParametrization(double mean, double variance) {
+            if (mean == 0) {
+                rate = 0;
+                shape = -0.5; // Uninformative prior
+            } else {
+                rate = mean / variance;
+                shape = mean * rate;
+            }
+        }
+
+        double getRate() { return rate; }
+        double getShape() { return shape; }
+    }
+
     /**
      * Called by operate(), does the actual operation.
      *
@@ -96,19 +114,9 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
      */
     public double doOperation() {
 
-        final double priorMean = prior.mean();
-        final double priorVariance = prior.variance();
-
-        double priorRate;
-        double priorShape;
-
-        if (priorMean == 0) {
-            priorRate = 0;
-            priorShape = -0.5; // Uninformative prior
-        } else {
-            priorRate = priorMean / priorVariance;
-            priorShape = priorMean * priorRate;
-        }
+        GammaParametrization priorParametrization = new GammaParametrization(
+                prior.mean(),
+                prior.variance());
 
         // Calculate weighted sum-of-squares
         final double mu = meanParameter.getParameterValue(0);
@@ -126,13 +134,22 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
-        final double shape = priorShape + n / 2.0;
-        final double rate = priorRate + 0.5 * SSE;
+        final double shape = priorParametrization.getShape() + pathParameter * n / 2.0;
+        final double rate = priorParametrization.getRate() + pathParameter * 0.5 * SSE;
 
         final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
         precisionParameter.setParameterValue(0, draw);
 
         return 0;
+    }
+
+    @Override
+    public void setPathParameter(double beta) {
+        if (beta < 0.0 || beta > 1.0) {
+            throw new IllegalArgumentException("Invalid pathParameter value");
+        }
+
+        this.pathParameter = beta;
     }
 
     /**
@@ -152,8 +169,10 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
-            DistributionLikelihood likelihood = (DistributionLikelihood) ((XMLObject) xo.getChild(LIKELIHOOD)).getChild(DistributionLikelihood.class);
-            DistributionLikelihood prior = (DistributionLikelihood) ((XMLObject) xo.getChild(PRIOR)).getChild(DistributionLikelihood.class);
+            DistributionLikelihood likelihood = (DistributionLikelihood)
+                    xo.getChild(LIKELIHOOD).getChild(DistributionLikelihood.class);
+            DistributionLikelihood prior = (DistributionLikelihood)
+                    xo.getChild(PRIOR).getChild(DistributionLikelihood.class);
 
 //            System.err.println("class: " + prior.getDistribution().getClass());
 
@@ -204,4 +223,6 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     private final List<Attribute<double[]>> dataList;
     private final Parameter meanParameter;
     private final Parameter precisionParameter;
+
+    private double pathParameter = 1.0;
 }

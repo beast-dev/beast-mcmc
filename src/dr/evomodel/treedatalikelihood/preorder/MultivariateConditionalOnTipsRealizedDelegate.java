@@ -4,8 +4,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -28,7 +28,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                                          ContinuousRateTransformation rateTransformation,
                                                          ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
-        missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
+        missingInformation = new PartiallyMissingInformation(tree, dataModel);
     }
 
     @Override
@@ -129,7 +129,10 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 //        return parent;
 //    }
 //
-    private void  simulateTraitForExternalNode(final int nodeIndex,
+
+    private final static boolean NEW_TIP_WITH_NO_DATA = true;
+
+    private void simulateTraitForExternalNode(final int nodeIndex,
                                               final int traitIndex,
                                               final int offsetSample,
                                               final int offsetParent,
@@ -150,14 +153,35 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
                 final double sqrtScale = Math.sqrt(1.0 / branchPrecision);
 
-                // TODO Drift?
-                assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
+                if (NEW_TIP_WITH_NO_DATA) {
 
-                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                        sample, offsetParent, // input mean
-                        cholesky, sqrtScale, // input variance
-                        sample, offsetSample, // output sample
-                        tmpEpsilon);
+                    final ReadableVector parentSample = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+
+                    final ReadableVector M;
+                    if (hasNoDrift) {
+                        M = parentSample;
+                    } else {
+                        M = getMeanWithDrift(parentSample,
+                                new WrappedVector.Raw(displacementBuffer, 0, dimTrait));
+                    }
+
+                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                            M, // input mean
+                            new WrappedMatrix.ArrayOfArray(cholesky), sqrtScale, // input variance
+                            new WrappedVector.Raw(sample, offsetSample, dimTrait),
+                            tmpEpsilon);
+                    
+                } else {
+
+                    // TODO Drift?
+                    assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
+
+                    MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                            sample, offsetParent, // input mean
+                            cholesky, sqrtScale, // input variance
+                            sample, offsetSample, // output sample
+                            tmpEpsilon);
+                }
 
             } else {
 
@@ -250,7 +274,6 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
     private final static boolean NEW_CHOLESKY = false;
 
-    // TODO Expression try
     private ReadableVector getMeanWithDrift(final ReadableVector mean,
                                             final ReadableVector drift) {
         return new ReadableVector.Sum(mean, drift);

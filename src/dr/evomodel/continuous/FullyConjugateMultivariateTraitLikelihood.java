@@ -51,60 +51,6 @@ import java.util.*;
 public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood
         implements ConjugateWishartStatisticsProvider, GibbsSampleFromTreeInterface, Reportable {
 
-//    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-//                                                     MutableTreeModel treeModel,
-//                                                     MultivariateDiffusionModel diffusionModel,
-//                                                     CompoundParameter traitParameter,
-//                                                     Parameter deltaParameter,
-//                                                     List<Integer> missingIndices,
-//                                                     boolean cacheBranches,
-//                                                     boolean scaleByTime,
-//                                                     boolean useTreeLength,
-//                                                     BranchRateModel rateModel,
-//                                                     Model samplingDensity,
-//                                                     boolean reportAsMultivariate,
-//                                                     double[] rootPriorMean,
-//                                                     double rootPriorSampleSize,
-//                                                     boolean reciprocalRates) {
-//
-//        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-//                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
-//
-//        // fully-conjugate multivariate normal with own mean and prior sample size
-//        this.rootPriorMean = rootPriorMean;
-//        this.rootPriorSampleSize = rootPriorSampleSize;
-//
-//        priorInformationKnown = false;
-//    }
-//
-//
-//    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-//                                                     MutableTreeModel treeModel,
-//                                                     MultivariateDiffusionModel diffusionModel,
-//                                                     CompoundParameter traitParameter,
-//                                                     Parameter deltaParameter,
-//                                                     List<Integer> missingIndices,
-//                                                     boolean cacheBranches,
-//                                                     boolean scaleByTime,
-//                                                     boolean useTreeLength,
-//                                                     BranchRateModel rateModel,
-//                                                     List<BranchRateModel> driftModels,
-//                                                     Model samplingDensity,
-//                                                     boolean reportAsMultivariate,
-//                                                     double[] rootPriorMean,
-//                                                     double rootPriorSampleSize,
-//                                                     boolean reciprocalRates) {
-//
-//        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-//                useTreeLength, rateModel, driftModels, samplingDensity, reportAsMultivariate, reciprocalRates);
-//
-//        // fully-conjugate multivariate normal with own mean and prior sample size
-//        this.rootPriorMean = rootPriorMean;
-//        this.rootPriorSampleSize = rootPriorSampleSize;
-//
-//        priorInformationKnown = false;
-//    }
-
     public FullyConjugateMultivariateTraitLikelihood(String traitName,
                                                      MutableTreeModel treeModel,
                                                      MultivariateDiffusionModel diffusionModel,
@@ -135,20 +81,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         priorInformationKnown = false;
     }
 
-
-    //TODO temporary function so everything will compile. Need to actually write this.
-    public FullyConjugateMultivariateTraitLikelihood semiClone(CompoundParameter traitParameter){
-        return this;
-    }
-
-//    public FullyConjugateMultivariateTraitLikelihood semiClone(CompoundParameter traitParameter){
-//        return new FullyConjugateMultivariateTraitLikelihood(this.traitName, this.treeModel, this.diffusionModel, traitParameter,
-//                this.deltaParameter, this.missingIndices, this.cacheBranches, this.scaleByTime, this.useTreeLength, this.getBranchRateModel(),
-//                this.optimalValues, this.strengthOfSelection, this.samplingDensity, this.reportAsMultivariate, this.rootPriorMean,
-//                this.rootPriorSampleSize, this.reciprocalRates);
-//    }
-
-    public double getRescaledLengthToRoot(NodeRef nodeRef) {
+    double getRescaledLengthToRoot(NodeRef nodeRef) {
 
         double length = 0;
 
@@ -313,7 +246,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return computeWishartStatistics;
     }
 
-    public void doPreOrderTraversal(NodeRef node) {
+    private void doPreOrderTraversal(NodeRef node) {
 
         if(preP==null){
             preP=new double[treeModel.getNodeCount()];
@@ -378,9 +311,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             }
         }
 
-        if (treeModel.isExternal(node)) {
-            return;
-        } else {
+        if (!treeModel.isExternal(node)) {
             doPreOrderTraversal(treeModel.getChild(node, 0));
             doPreOrderTraversal(treeModel.getChild(node, 1));
 
@@ -388,7 +319,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     }
 
-    public NodeRef getSisterNode(NodeRef node) {
+    private NodeRef getSisterNode(NodeRef node) {
         NodeRef sib0 = treeModel.getChild(treeModel.getParent(node), 0);
         NodeRef sib1 = treeModel.getChild(treeModel.getParent(node), 1);
 
@@ -402,13 +333,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     public double[] getConditionalMean(int taxa){
         setup();
 
-
-//            double[] answer=new double[getRootNodeTrait().length];
-
         double[] mean = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            mean[i] = preMeans[taxa][i];
-        }
+        System.arraycopy(preMeans[taxa], 0, mean, 0, dim);
 
         return mean;
     }
@@ -460,7 +386,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
     private void setup(){
-        if(!PostPreKnown){
+        if (!PostPreKnown) {
             double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
             double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
 
@@ -473,25 +399,26 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             // Use dynamic programming to compute conditional likelihoods at each internal node
             postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, computeWishartStatistics);
 
-            doPreOrderTraversal(treeModel.getRoot());}
+            doPreOrderTraversal(treeModel.getRoot());
+        }
         PostPreKnown=true;
 
     }
 
 
-    protected void checkLogLikelihood(double loglikelihood, double logRemainders,
+    protected void checkLogLikelihood(double logLikelihood, double logRemainders,
                                       double[] conditionalRootMean, double conditionalRootPrecision,
                                       double[][] traitPrecision) {
 
-//        System.err.println("root cmean    : " + new Vector(conditionalRootMean));
-//        System.err.println("root cprec    : " + conditionalRootPrecision);
+//        System.err.println("root cMean    : " + new Vector(conditionalRootMean));
+//        System.err.println("root cPrec    : " + conditionalRootPrecision);
 //        System.err.println("diffusion prec: " + new Matrix(traitPrecision));
 //
 //        System.err.println("prior mean    : " + new Vector(rootPriorMean));
 //        System.err.println("prior prec    : " + rootPriorSampleSize);
 
         double upperPrecision = conditionalRootPrecision * rootPriorSampleSize / (conditionalRootPrecision + rootPriorSampleSize);
-//        System.err.println("root cprec    : " + upperPrecision);
+//        System.err.println("root cPrec    : " + upperPrecision);
 
         double[][] newPrec = new double[traitPrecision.length][traitPrecision.length];
 
@@ -503,9 +430,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(rootPriorMean, newPrec);
         double logPdf = mvn.logPdf(conditionalRootMean);
 
-        if (Math.abs(loglikelihood - logRemainders - logPdf) > 1E-3) {
+        if (Math.abs(logLikelihood - logRemainders - logPdf) > 1E-3) {
 
-            System.err.println("Got here subclass: " + loglikelihood);
+            System.err.println("Got here subclass: " + logLikelihood);
             System.err.println("logValue         : " + (logRemainders + logPdf));
             System.err.println("logRemainder = " + logRemainders);
             System.err.println("");
@@ -542,9 +469,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
                 final double weight = conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
                 for (int i = 0; i < dimTrait; i++) {
-                    final double diffi = conditionalRootMean[i] - rootPriorMean[i];
+                    final double diffI = conditionalRootMean[i] - rootPriorMean[i];
                     for (int j = 0; j < dimTrait; j++) {
-                        outerProducts[i * dimTrait + j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
+                        outerProducts[i * dimTrait + j] += diffI * weight * (conditionalRootMean[j] - rootPriorMean[j]);
                     }
                 }
                 wishartStatistics.incrementDf(1);
@@ -603,72 +530,72 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return outVariance;
     }
 
-    protected double[] rootPriorMean;
-    protected double rootPriorSampleSize;
+    double[] rootPriorMean;
+    double rootPriorSampleSize;
 
-    double[] preP;
-    double[][] preMeans;
+    private double[] preP;
+    private double[][] preMeans;
 
-    double[] storedPreP;
-    double[][] storedPreMeans;
+    private double[] storedPreP;
+    private double[][] storedPreMeans;
 
-    Boolean PostPreKnown=false;
-    Boolean storedPostPreKnown=false;
+    private Boolean PostPreKnown = false;
+    private Boolean storedPostPreKnown = false;
 
-    private boolean priorInformationKnown = false;
+    private boolean priorInformationKnown;
     private double zBz; // Prior sum-of-squares contribution
 
     private boolean dimKnown=false;
     private boolean storedDimKnown=false;
 
-    protected boolean computeWishartStatistics = false;
+    boolean computeWishartStatistics = false;
     private double[] ascertainedData = null;
     private static final boolean DEBUG_ASCERTAINMENT = false;
 
     private double vectorMin(double[] vec) {
         double min = Double.MAX_VALUE;
-        for (int i = 0; i < vec.length; ++i) {
-            min = Math.min(min, vec[i]);
+        for (double aVec : vec) {
+            min = Math.min(min, aVec);
         }
         return min;
     }
 
     private double matrixMin(double[][] mat) {
         double min = Double.MAX_VALUE;
-        for (int i = 0; i < mat.length; ++i) {
-            min = Math.min(min, vectorMin(mat[i]));
+        for (double[] aMat : mat) {
+            min = Math.min(min, vectorMin(aMat));
         }
         return min;
     }
 
     private double vectorMax(double[] vec) {
         double max = - Double.MAX_VALUE;
-        for (int i = 0; i < vec.length; ++i) {
-            max = Math.max(max, vec[i]);
+        for (double aVec : vec) {
+            max = Math.max(max, aVec);
         }
         return max;
     }
 
     private double matrixMax(double[][] mat) {
         double max = -Double.MAX_VALUE;
-        for (int i = 0; i < mat.length; ++i) {
-            max = Math.max(max, vectorMax(mat[i]));
+        for (double[] aMat : mat) {
+            max = Math.max(max, vectorMax(aMat));
         }
         return max;
     }
 
     private double vectorSum(double[] vec) {
         double sum = 0.0;
-        for (int i = 0; i < vec.length; ++i) {
-            sum += vec[i];
+        for (double aVec : vec) {
+            sum += aVec;
         }
         return sum;
     }
 
     private double matrixSum(double[][] mat) {
         double sum = 0.0;
-        for (int i = 0; i < mat.length; ++i) {
-            sum += vectorSum(mat[i]);
+        for (double[] aMat : mat) {
+            sum += vectorSum(aMat);
         }
         return sum;
     }
@@ -683,7 +610,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         sb.append(treeModel.toString());
         sb.append("\n\n");
 
-        double[][] treeVariance = computeTreeVariance(true);
+        double[][] treeVariance = computeTreeVariance();
         double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
@@ -700,8 +627,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //        sb.append(new Matrix(jointVariance));
 //        sb.append("\n\n");
 
-        sb.append("Tree dim: " + treeVariance.length + "\n");
-        sb.append("data dim: " + jointVariance.length);
+        sb.append("Tree dim: ").append(treeVariance.length).append("\n");
+        sb.append("data dim: ").append(jointVariance.length);
         sb.append("\n\n");
 
         double[] data = new double[jointVariance.length];
@@ -711,8 +638,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             int offset = treeModel.getExternalNodeCount() * getDimTrait();
             for(Map.Entry<NodeRef, RestrictedPartials> clamps : nodeToClampMap.entrySet()) {
                 double[] partials = clamps.getValue().getPartials();
-                for (int i = 0; i < partials.length; ++i) {
-                    data[offset] = partials[i];
+                for (double partial : partials) {
+                    data[offset] = partial;
                     ++offset;
                 }
             }
@@ -726,14 +653,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
         MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[data.length], new Matrix(jointVariance).inverse().toComponents());
         double logDensity = mvn.logPdf(data);
-        sb.append("logLikelihood: " + getLogLikelihood() + " == " + logDensity + "\n\n");
+        sb.append("logLikelihood: ").append(getLogLikelihood()).append(" == ").append(logDensity).append("\n\n");
 
         final WishartSufficientStatistics sufficientStatistics = getWishartStatistics();
         final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         sb.append("Outer-products (DP):\n");
         sb.append(new Vector(outerProducts));
-        sb.append(sufficientStatistics.getDf() + "\n");
+        sb.append(sufficientStatistics.getDf()).append("\n");
 
         Matrix treePrecision = new Matrix(treeVariance).inverse();
         final int n = data.length / traitPrecision.length;
@@ -741,9 +668,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         double[][] tmp = new double[n][p];
 
         for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < p; ++j) {
-                tmp[i][j] = data[i * p + j];
-            }
+            System.arraycopy(data, i * p, tmp[i], 0, p);
         }
         Matrix y = new Matrix(tmp);
 
@@ -813,7 +738,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return x.get(index - 1).distance;
     }
 
-    public double[][] computeTreeVariance2(boolean includeRoot) {
+    double[][] computeTreeVariance2(boolean includeRoot) {
 
         final int tipCount = treeModel.getExternalNodeCount();
         double[][] variance = new double[tipCount][tipCount];
@@ -856,11 +781,12 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     }
 
-    public double[][] computeTreeVariance(boolean includeRoot) {
+    private static final boolean DO_CLAMP = true;
+
+    private double[][] computeTreeVariance() {
         final int tipCount = treeModel.getExternalNodeCount();
         int length = tipCount;
 
-        boolean DO_CLAMP = true;
         if (DO_CLAMP && nodeToClampMap != null) {
             length += nodeToClampMap.size();
         }
@@ -929,13 +855,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
 //        }
 
-        if (includeRoot) {
+//        if (includeRoot) {
             for (int i = 0; i < variance.length; ++i) {
                 for (int j = 0; j < variance[i].length; ++j) {
                     variance[i][j] += 1.0 / getPriorSampleSize();
                 }
             }
-        }
+//        }
 
         return variance;
     }

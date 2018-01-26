@@ -35,6 +35,7 @@ import dr.xml.Reportable;
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
+@Deprecated
 public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider, Reportable {
 
     private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;

@@ -26,13 +26,13 @@
 package dr.inference.operators;
 
 /**
- * Created by Guy Baele on 13/01/16.
+ * @author Guy Baele
  */
 public interface PathDependentOperator {
 
     /**
      * Set the path parameter for sampling from power-posterior
      */
-    public void setPathParameter(double beta);
+    void setPathParameter(double beta);
 
 }

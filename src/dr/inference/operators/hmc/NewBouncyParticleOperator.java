@@ -34,7 +34,7 @@ import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities
 import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.PrecisionVectorProductProvider;
+import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
@@ -452,7 +452,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
     // Some draft functions by MAS
 
     public NewBouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
-                                     PrecisionVectorProductProvider multiplicationProvider,
+                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
                                      double weight) {
 
         this.newGradientProvider = gradientProvider;
@@ -481,7 +481,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
     }
 
     private GradientWrtParameterProvider newGradientProvider;
-    private PrecisionVectorProductProvider multiplicationProvider;
+    private PrecisionMatrixVectorProductProvider multiplicationProvider;
     private Likelihood likelihood;
 
 }

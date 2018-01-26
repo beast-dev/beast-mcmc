@@ -31,7 +31,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.NewTipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
-import dr.inference.hmc.PrecisionVectorProductProvider;
+import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
@@ -42,7 +42,7 @@ import java.util.List;
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
-public class TreePrecisionTraitProductProvider implements PrecisionVectorProductProvider, Reportable {
+public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorProductProvider, Reportable {
 
     private final TreeTrait<List<NormalSufficientStatistics>> fullConditionalDensity;
     private final Tree tree;
@@ -67,7 +67,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionVectorProduct
     }
 
     @Override
-    public double[] getMultiplicationResultant(Parameter vector) {
+    public double[] getProduct(Parameter vector) {
 
         if (vector != dataParameter) {
             throw new IllegalArgumentException("May only compute for trait data vector");
@@ -76,6 +76,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionVectorProduct
         double[] result = new double[vector.getDimension()];
 
         List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, null);
+        statistics.size();
 
         // TODO Fill in values in result
 
@@ -101,7 +102,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionVectorProduct
 
     @Override
     public String getReport() {
-        double[] result = getMultiplicationResultant(dataParameter);
+        double[] result = getProduct(dataParameter);
         return (new WrappedVector.Raw(result, 0, result.length)).toString();
     }
 

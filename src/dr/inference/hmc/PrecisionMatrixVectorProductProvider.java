@@ -25,26 +25,18 @@
 
 package dr.inference.hmc;
 
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.preorder.NewTipFullConditionalDistributionDelegate;
-import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-
-import java.util.List;
 
 /**
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
-public interface PrecisionVectorProductProvider {
+public interface PrecisionMatrixVectorProductProvider {
 
-    double[] getMultiplicationResultant(Parameter vector);
+    double[] getProduct(Parameter vector);
 
-    class Generic implements PrecisionVectorProductProvider {
+    class Generic implements PrecisionMatrixVectorProductProvider {
 
         private final MatrixParameterInterface matrix;
 
@@ -53,7 +45,7 @@ public interface PrecisionVectorProductProvider {
         }
 
         @Override
-        public double[] getMultiplicationResultant(Parameter vector) {
+        public double[] getProduct(Parameter vector) {
 
             final int nRows = matrix.getRowDimension();
             final int nCols = matrix.getColumnDimension();
@@ -73,7 +65,4 @@ public interface PrecisionVectorProductProvider {
             return result;
         }
     }
-
-    // TODO Depends on evomodel objects, should move into evomodel package (limit cyclic dependencies)
-
 }

@@ -36,10 +36,8 @@ import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
-import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionInner_D64;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
-import org.ejml.interfaces.decomposition.*;
 
 import java.util.List;
 import java.util.Map;

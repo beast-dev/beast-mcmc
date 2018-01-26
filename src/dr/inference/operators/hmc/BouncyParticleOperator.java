@@ -46,7 +46,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                  double weight) {
+                                  double weight,
+                                  double randomTimeWidth) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -58,17 +59,18 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         masses = setupPreconditionedMatrix();
 
-        totalTravelTime = 0.05; // TODO Determine totalTravelTime
+        this.totalTravelTime = 0.05; // TODO Determine totalTravelTime
+        this.randomTimeWidth = randomTimeWidth;
     }
 
     @Override
     public double doOperation() {
 
         WrappedVector position = getInitialPosition();
-        WrappedVector velocity = drawVelocity(drawDistribution, masses);
-        WrappedVector negativeGradient = getNegativeGradient(position);
+        WrappedVector velocity = drawInitialVelocity();
+        WrappedVector negativeGradient = getInitialNegativeGradient();
 
-        double remainingTime = totalTravelTime;
+        double remainingTime = drawTotalTravelTime(); //totalTravelTime;
         while (remainingTime > 0) {
 
             ReadableVector Phi_v = getPrecisionProduct(velocity);
@@ -91,6 +93,11 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         setParameter(position);
 
         return 0.0;
+    }
+
+    private double drawTotalTravelTime() {
+        double randomFraction = 1.0 + randomTimeWidth * (MathUtils.nextDouble() - 0.5);
+        return totalTravelTime * randomFraction;
     }
 
     @Override
@@ -179,9 +186,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
 
-    private WrappedVector getNegativeGradient(ReadableVector position) {
-
-        setParameter(position);
+    private WrappedVector getInitialNegativeGradient() {
 
         double[] gradient = gradientProvider.getGradientLogDensity();
         for (int i = 0, len = gradient.length; i < len; ++i) {
@@ -212,12 +217,12 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return new WrappedVector.Raw(product);
     }
 
-    private WrappedVector drawVelocity(final NormalDistribution distribution, ReadableVector masses) {
+    private WrappedVector drawInitialVelocity() {
 
         double[] velocity = new double[masses.getDim()];
 
         for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = (Double) distribution.nextRandom() / Math.sqrt(masses.get(i));
+            velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(masses.get(i));
         }
         return new WrappedVector.Raw(velocity);
     }
@@ -287,6 +292,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private final NormalDistribution drawDistribution;
 
     private double totalTravelTime;
+    private double randomTimeWidth;
 
     private final WrappedVector masses;
 }

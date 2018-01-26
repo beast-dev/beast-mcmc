@@ -57,6 +57,27 @@ public interface ReadableVector {
         }
     }
 
+    class Quotient implements ReadableVector {
+
+        private final ReadableVector numerator;
+        private final ReadableVector denominator;
+
+        public Quotient(final ReadableVector numerator, final ReadableVector denominator) {
+            this.numerator = numerator;
+            this.denominator = denominator;
+        }
+
+        @Override
+        public double get(int i) {
+            return numerator.get(i) / denominator.get(i);
+        }
+
+        @Override
+        public int getDim() {
+            return Math.min(numerator.getDim(), denominator.getDim());
+        }
+    }
+
     class Scale implements ReadableVector {
 
         private final ReadableVector vector;

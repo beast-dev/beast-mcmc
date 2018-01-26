@@ -44,8 +44,54 @@ import java.util.Arrays;
 
 public class NewBouncyParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    private final NormalDistribution drawDistribution;
-    private final Parameter parameter;
+    public NewBouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
+                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
+                                     double weight) {
+
+        this.gradientProvider = gradientProvider;
+        this.productProvider = multiplicationProvider;
+        this.parameter = gradientProvider.getParameter();
+        this.drawDistribution = new NormalDistribution(0, 1);
+
+        setWeight(weight);
+        checkParameterBounds(parameter);
+
+        masses = setupPreconditionedMatrix();
+
+        totalTravelTime = 0.05; // TODO Determine totalTravelTime
+    }
+
+    @Override
+    public double doOperation() {
+
+        WrappedVector position = getInitialPosition();
+        WrappedVector velocity = drawVelocity(drawDistribution, masses);
+        WrappedVector negativeGradient = getNegativeGradient(position);
+
+        double remainingTime = totalTravelTime;
+        while (remainingTime > 0) {
+
+            ReadableVector Phi_v = getPrecisionProduct(velocity);
+
+            double v_Phi_x = innerProduct(velocity, negativeGradient);
+            double v_Phi_v = innerProduct(velocity, Phi_v);
+
+            double tMin = Math.max(0.0, - v_Phi_x / v_Phi_v);
+            double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
+
+            double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
+            MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
+
+            remainingTime = doBounce(
+                    remainingTime, bounceTime, travelInfo,
+                    position, velocity, negativeGradient, Phi_v
+            );
+        }
+
+        setParameter(position);
+
+        return 0.0;
+    }
 
     @Override
     public String getPerformanceSuggestion() {
@@ -57,72 +103,13 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
         return "Bouncy Particle operator";
     }
 
-    private static final boolean DEBUG = false;
-
-    @Override
-    public double doOperation() {
-        bpsOneStep();
-        return 0.0;
-    }
-
-    private void bpsOneStep() {
-
-        WrappedVector position = new WrappedVector.Raw(getInitialPosition());
-
-        WrappedVector velocity = new WrappedVector.Raw(drawVelocity(drawDistribution, masses));
-
-        WrappedVector negativeGradient = getNegativeGradient(position);
-
-        double remainingTime = travelTime;
-        while (remainingTime > 0) {
-
-            ReadableVector Phi_v = getPrecisionProduct(velocity);
-
-//            double[] mu = getMU();
-//            double[] w = addArray(location, mu, true);
-//            double[] phi_v = matrixMultiplier(precisionMatrix, velocity);
-
-            double v_Phi_x = innerProduct(velocity, negativeGradient);
-            double v_Phi_v = innerProduct(velocity, Phi_v);
-
-
-
-//            double w_phi_w = getDotProduct(w, phi_w);//todo multiple precision matrix should be a class.
-//            double v_phi_w = getDotProduct(velocity, phi_w);//todo use a construct to store all of the temporary values.
-//            double v_phi_v = getDotProduct(velocity, phi_v);
-
-            double tMin = Math.max(0.0, - v_Phi_x / v_Phi_v);
-            double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
-//            double U_min = energyProvider(velocity, phi_w, phi_v, w, tMin);
-
-//            if( Double.isNaN(v_phi_w)){
-//
-//                System.exit(-99);
-//            }
-
-            double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
-            TravelTime time_to_bdry = getTimeToBoundary(position, velocity);
-
-            remainingTime = doBounce(
-                    remainingTime, bounceTime, time_to_bdry,
-                    position, velocity, negativeGradient, Phi_v
-            );
-
-            //System.err.println("location is (inside) +  " + Arrays.toString(location));
-
-        }
-
-        setParameter(position);
-
-        //System.err.println("location is (outside) +  " + Arrays.toString(location));
-    }
-
-    private double doBounce(double remainingTime, double bounceTime, TravelTime travelTime,
+    private double doBounce(double remainingTime, double bounceTime,
+                            MinimumTravelInformation travelInfo,
                             WrappedVector position, WrappedVector velocity,
                             WrappedVector negativeGradient, ReadableVector Phi_v) {
 
-        double timeToBoundary = travelTime.minTime;
-        int boundaryIndex = travelTime.minIndex;
+        double timeToBoundary = travelInfo.minTime;
+        int boundaryIndex = travelInfo.minIndex;
 
         if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
 
@@ -143,7 +130,7 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
             updatePosition(position, velocity, bounceTime);
             updateNegativeGradient(negativeGradient, bounceTime, Phi_v);
-            updateVelocity(velocity, negativeGradient, new WrappedVector.Raw(masses));
+            updateVelocity(velocity, negativeGradient, masses);
 
             remainingTime -= bounceTime;
 
@@ -160,14 +147,15 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
     }
 
     private void updateVelocity(WrappedVector velocity, WrappedVector negativeGradient, ReadableVector masses) {
-        // TODO Handle masses
+
+        ReadableVector gDivM = new ReadableVector.Quotient(negativeGradient, masses);
 
         double vg = innerProduct(velocity, negativeGradient); // TODO Isn't this already computed
-        double gg = innerProduct(negativeGradient, negativeGradient);
+        double ggDivM = innerProduct(negativeGradient, gDivM);
 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
             velocity.set(i,
-                    velocity.get(i) - 2 * vg / gg * negativeGradient.get(i));
+                    velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
         }
     }
 
@@ -182,7 +170,8 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
             position.set(i, position.get(i) + time * velocity.get(i));
         }
     }
-    
+
+    @SuppressWarnings("all")
     private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
         double a = v_phi_v / 2;
         double b = v_phi_x;
@@ -218,22 +207,22 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
         setParameter(velocity);
 
-        double[] product = multiplicationProvider.getProduct(parameter);
+        double[] product = productProvider.getProduct(parameter);
 
         return new WrappedVector.Raw(product);
     }
 
-    private static double[] drawVelocity(final NormalDistribution distribution, double[] masses) {
+    private WrappedVector drawVelocity(final NormalDistribution distribution, ReadableVector masses) {
 
-        double[] velocity = new double[masses.length];
+        double[] velocity = new double[masses.getDim()];
 
-        for (int i = 0; i < masses.length; i++) {
-            velocity[i] = (Double) distribution.nextRandom() / Math.sqrt(masses[i]);
+        for (int i = 0, len = velocity.length; i < len; i++) {
+            velocity[i] = (Double) distribution.nextRandom() / Math.sqrt(masses.get(i));
         }
-        return velocity;
+        return new WrappedVector.Raw(velocity);
     }
 
-    private TravelTime getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
+    private MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
 
         assert (position.getDim() == velocity.getDim());
 
@@ -253,64 +242,51 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
             }
         }
 
-        return new TravelTime(minTime, index);
-
+        return new MinimumTravelInformation(minTime, index);
     }
 
     private boolean headingAwayFromBoundary(double position, double velocity) {
         return position * velocity < 0.0;
     }
 
-    private class TravelTime {
+    private class MinimumTravelInformation {
 
-//        double[] traveltime;
         double minTime;
         int minIndex;
 
-        private TravelTime (//double[] traveltime,
-                           double minTime, int minIndex){
-//            this.traveltime = traveltime;
+        private MinimumTravelInformation(double minTime, int minIndex) {
             this.minTime = minTime;
             this.minIndex = minIndex;
         }
     }
 
-    private double[] getInitialPosition() {
-        return parameter.getParameterValues();
+    private WrappedVector getInitialPosition() {
+        return new WrappedVector.Raw(parameter.getParameterValues());
     }
 
-    public NewBouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
-                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                     double weight) {
+    private void checkParameterBounds(Parameter parameter) {
 
-        this.gradientProvider = gradientProvider;
-        this.multiplicationProvider = multiplicationProvider;
-        this.parameter = gradientProvider.getParameter();
-        this.drawDistribution = new NormalDistribution(0, 1);
-
-        setWeight(weight);
-        checkParameterBounds(parameter);
-
-        masses = setupPreconditionedMatrix();
-
-        // TODO Determine travelTime
-        travelTime = 0.05;
+        for (int i = 0, len = parameter.getDimension(); i < len; ++i) {
+            double value = parameter.getParameterValue(i);
+            if (value < parameter.getBounds().getLowerLimit(i) ||
+                    value > parameter.getBounds().getUpperLimit(i)) {
+                throw new IllegalArgumentException("Parameter '" + parameter.getId() + "' is out-of-bounds");
+            }
+        }
     }
 
-    private static void checkParameterBounds(Parameter parameter) {
-        // TODO
-    }
-
-    private double[] setupPreconditionedMatrix() {
+    private WrappedVector setupPreconditionedMatrix() {
         double[] masses = new double[parameter.getDimension()];
         Arrays.fill(masses, 1.0); // TODO
-        return masses;
+        return new WrappedVector.Raw(masses);
     }
 
-    private double travelTime;
+    private final GradientWrtParameterProvider gradientProvider;
+    private final PrecisionMatrixVectorProductProvider productProvider;
+    private final Parameter parameter;
+    private final NormalDistribution drawDistribution;
 
-    private final double[] masses;
+    private double totalTravelTime;
 
-    private GradientWrtParameterProvider gradientProvider;
-    private PrecisionMatrixVectorProductProvider multiplicationProvider;
+    private final WrappedVector masses;
 }

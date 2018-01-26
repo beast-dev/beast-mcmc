@@ -49,6 +49,9 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
     private final Parameter dataParameter;
 
     private final static boolean DEBUG = true;
+    private final static boolean OLD_EXPENSIVE_APPROACH = true;
+
+
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
     public TreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
@@ -69,36 +72,48 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
     @Override
     public double[] getProduct(Parameter vector) {
 
-        if (vector != dataParameter) {
-            throw new IllegalArgumentException("May only compute for trait data vector");
-        }
+        double[] result;
+        if (OLD_EXPENSIVE_APPROACH) {
 
-        double[] result = new double[vector.getDimension()];
+            result = expensiveProduct(vector);
 
-        List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, null);
-        statistics.size();
+        } else {
 
-        // TODO Fill in values in result
-
-        if (DEBUG) {
-
-            double[][] treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
-            double[] result2 = new double[result.length];
-            for (int row = 0; row < result.length; ++row) {
-                double sum = 0.0;
-                for (int col = 0; col < treeTraitPrecision[row].length; ++col) {
-                    sum += treeTraitPrecision[row][col] * vector.getParameterValue(col);
-                }
-                result2[row] = sum;
+            if (vector != dataParameter) {
+                throw new IllegalArgumentException("May only compute for trait data vector");
             }
 
-            System.err.println("via FCD: " + new WrappedVector.Raw(result));
-            System.err.println("direct : " + new WrappedVector.Raw(result2));
-            System.err.println();
+            result = new double[vector.getDimension()];
 
-            result = result2;
+            List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, null);
+            statistics.size();
+
+            // TODO Fill in values in result
+
+            if (DEBUG) {
+
+                double[] result2 = expensiveProduct(vector);
+
+                System.err.println("via FCD: " + new WrappedVector.Raw(result));
+                System.err.println("direct : " + new WrappedVector.Raw(result2));
+                System.err.println();
+            }
         }
 
+        return result;
+    }
+
+    private double[] expensiveProduct(Parameter vector) {
+        double[][] treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
+        int dim = treeTraitPrecision.length;
+        double[] result = new double[dim];
+        for (int row = 0; row < dim; ++row) {
+            double sum = 0.0;
+            for (int col = 0; col < treeTraitPrecision[row].length; ++col) {
+                sum += treeTraitPrecision[row][col] * vector.getParameterValue(col);
+            }
+            result[row] = sum;
+        }
         return result;
     }
 

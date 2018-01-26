@@ -219,22 +219,27 @@
     <operators id="operators" optimizationSchedule="log">
 
   		<bouncyParticleOperator mode="nuts" traitName="latent" drawVariance = "1" weight="5" autoOptimize="false">
-			<traitDataLikelihood idref="scalarLikelihood"/>
-			<maskedGradient>
-				<traitGradientOnTree>
+<!-- 			<traitDataLikelihood idref="scalarLikelihood"/> -->
+<!-- 			<maskedGradient> -->
+				<traitGradientOnTree id="gradient">
 					<traitDataLikelihood idref="scalarLikelihood"/>
 				</traitGradientOnTree>
-				<mask>
-					<parameter idref="mask"/>
-				</mask>
-			</maskedGradient>
-			<maskedParameter idref="latentParameters"/>
+				<precisionTraitProductOnTree id="product" traitName="latent">
+					<traitDataLikelihood idref="scalarLikelihood"/>
+				</precisionTraitProductOnTree>
+<!-- 				<mask> -->
+<!-- 					<parameter idref="mask"/> -->
+<!-- 				</mask> -->
+<!-- 			</maskedGradient> -->
+<!-- 			<maskedParameter idref="latentParameters"/> -->
+<!-- 
 			<orderedLatentLiabilityTransform>
 				<orderedLatentLiabilityLikelihood idref="liabilityLikelihood"/>
 				<mask>
 					<parameter idref="mask"/>
 				</mask>
 			</orderedLatentLiabilityTransform>
+ -->
  		</bouncyParticleOperator>
 
 

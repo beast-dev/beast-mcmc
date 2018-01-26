@@ -38,8 +38,8 @@ public interface ReadableVector {
 
     class Sum implements ReadableVector {
 
-        private ReadableVector lhs;
-        private ReadableVector rhs;
+        private final ReadableVector lhs;
+        private final ReadableVector rhs;
 
         public Sum(final ReadableVector lhs, final ReadableVector rhs) {
             this.lhs = lhs;
@@ -55,5 +55,22 @@ public interface ReadableVector {
         public int getDim() {
             return Math.min(lhs.getDim(), rhs.getDim());
         }
+    }
+
+    class Scale implements ReadableVector {
+
+        private final ReadableVector vector;
+        private final double scalar;
+
+        public Scale(final double scalar, final ReadableVector vector) {
+            this.vector = vector;
+            this.scalar = scalar;
+        }
+
+        @Override
+        public double get(int i) { return scalar * vector.get(i); }
+
+        @Override
+        public int getDim() { return vector.getDim(); }
     }
 }

@@ -95,6 +95,8 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
             System.err.println("via FCD: " + new WrappedVector.Raw(result));
             System.err.println("direct : " + new WrappedVector.Raw(result2));
             System.err.println();
+
+            result = result2;
         }
 
         return result;

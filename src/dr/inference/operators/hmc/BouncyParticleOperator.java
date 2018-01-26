@@ -70,7 +70,7 @@ public class BouncyParticleOperator {
 //        this.t = t;
 //        this.precisionmatrix = precisionmatrix;
 //        this.drawDistribution = new NormalDistribution(0, Math.sqrt(1));
-//        this.v = drawV(drawDistribution, location.length);
+//        this.v = drawVelocity(drawDistribution, location.length);
 //    }
 
         public BouncyParticleOperator () {

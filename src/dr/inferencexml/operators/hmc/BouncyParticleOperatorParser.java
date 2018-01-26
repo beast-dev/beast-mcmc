@@ -25,11 +25,13 @@
 
 package dr.inferencexml.operators.hmc;
 
+import dr.evomodel.continuous.hmc.TreePrecisionTraitProductProvider;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
@@ -76,9 +78,10 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         TreeDataLikelihood treeDataLikelihood =
                 (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
-        DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
-
-        final ContinuousDataLikelihoodDelegate continuousDataLikelihoodDelegate = (ContinuousDataLikelihoodDelegate) likelihoodDelegate;
+//        DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
+//
+//        final ContinuousDataLikelihoodDelegate continuousDataLikelihoodDelegate =
+//                (ContinuousDataLikelihoodDelegate) likelihoodDelegate;
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
 
@@ -87,14 +90,20 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         Transform transform = (Transform.MultivariableTransformWithParameter)
                 xo.getChild(Transform.MultivariableTransformWithParameter.class);
 
-        if (derivative.getDimension() != parameter.getDimension()) {
-            throw new XMLParseException("Gradient (" + derivative.getDimension() +
-                    ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
-        }
+//        if (derivative.getDimension() != parameter.getDimension()) {
+//            throw new XMLParseException("Gradient (" + derivative.getDimension() +
+//                    ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
+//        }
 
+        PrecisionMatrixVectorProductProvider productProvider = (PrecisionMatrixVectorProductProvider)
+                xo.getChild(PrecisionMatrixVectorProductProvider.class);
 
-        return new NewBouncyParticleOperator(coercionMode, weight, continuousDataLikelihoodDelegate, traitName,
-                    parameter, drawVariance);
+//        PrecisionMatrixVectorProductProvider productProvider = new TreePrecisionTraitProductProvider()
+
+        return new NewBouncyParticleOperator(derivative, productProvider, weight);
+
+//        return new NewBouncyParticleOperator(coercionMode, weight, continuousDataLikelihoodDelegate, traitName,
+//                    parameter, drawVariance);
 
     }
 
@@ -108,9 +117,10 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(MODE, true),
-            new ElementRule(Parameter.class),
-            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
+//            new ElementRule(Parameter.class),
+//            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
+            new ElementRule(PrecisionMatrixVectorProductProvider.class),
     };
 
     @Override

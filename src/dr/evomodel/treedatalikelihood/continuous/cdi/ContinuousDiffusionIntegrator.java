@@ -218,6 +218,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         @Override
         public void getPreOrderPartial(int bufferIndex, final double[] partial) {
 
+            if (bufferIndex == -1) {
+                System.err.println("choke");
+            }
+
             System.arraycopy(preOrderPartials, getArrayStart(bufferIndex),
                     partial, 0,
                     getArrayLength(bufferIndex));

@@ -208,6 +208,8 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator implements Gib
 
         }
 
+        setParameter(position);
+
         //System.err.println("location is (outside) +  " + Arrays.toString(location));
     }
 

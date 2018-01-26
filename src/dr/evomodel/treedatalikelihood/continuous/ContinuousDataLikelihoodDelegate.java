@@ -289,10 +289,22 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return precision.toComponents();
     }
 
+    private double[][] getTraitVariance() {
+        Matrix variance = new Matrix(getDiffusionModel().getPrecisionmatrix()).inverse();
+        return variance.toComponents();
+    }
+
     public double[][] getTreeTraitPrecision() {
         return KroneckerOperation.product(
                 getTreePrecision(),
                 getDiffusionModel().getPrecisionmatrix());
+    }
+
+    public double[][] getTreeTraitVariance() {
+        return KroneckerOperation.product(
+                getTreeVariance(),
+                getTraitVariance()
+        );
     }
 
     @Override

@@ -36,6 +36,10 @@ public interface PrecisionMatrixVectorProductProvider {
 
     double[] getProduct(Parameter vector);
 
+    double[] getMassVector();
+
+    double getTimeScale();
+
     class Generic implements PrecisionMatrixVectorProductProvider {
 
         private final MatrixParameterInterface matrix;
@@ -63,6 +67,30 @@ public interface PrecisionMatrixVectorProductProvider {
             }
 
             return result;
+        }
+
+        @Override
+        public double[] getMassVector() {
+            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
+
+            double[] mass = new double[dim];
+            for (int i = 0; i < dim; ++i) {
+                mass[i] = matrix.getParameterValue(i, i);
+            }
+
+            return mass;
+        }
+
+        @Override
+        public double getTimeScale() {
+            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
+
+            double max = Double.MIN_VALUE;
+            for (int i = 0; i < dim; ++i) {
+                max = Math.max(max, matrix.getParameterValue(i,i));
+            }
+
+            return max;
         }
     }
 }

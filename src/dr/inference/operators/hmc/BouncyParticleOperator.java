@@ -57,9 +57,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         setWeight(weight);
         checkParameterBounds(parameter);
 
-        masses = setupPreconditionedMatrix();
+        preconditioningOptions = setupPreconditioning();
 
-        this.totalTravelTime = 0.05; // TODO Determine totalTravelTime
         this.randomTimeWidth = randomTimeWidth;
     }
 
@@ -97,7 +96,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     private double drawTotalTravelTime() {
         double randomFraction = 1.0 + randomTimeWidth * (MathUtils.nextDouble() - 0.5);
-        return totalTravelTime * randomFraction;
+        return preconditioningOptions.totalTravelTime * randomFraction;
     }
 
     @Override
@@ -137,7 +136,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
             updatePosition(position, velocity, bounceTime);
             updateNegativeGradient(negativeGradient, bounceTime, Phi_v);
-            updateVelocity(velocity, negativeGradient, masses);
+            updateVelocity(velocity, negativeGradient, preconditioningOptions.mass);
 
             remainingTime -= bounceTime;
 
@@ -153,9 +152,9 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         parameter.fireParameterChangedEvent();
     }
 
-    private void updateVelocity(WrappedVector velocity, WrappedVector negativeGradient, ReadableVector masses) {
+    private void updateVelocity(WrappedVector velocity, WrappedVector negativeGradient, ReadableVector mass) {
 
-        ReadableVector gDivM = new ReadableVector.Quotient(negativeGradient, masses);
+        ReadableVector gDivM = new ReadableVector.Quotient(negativeGradient, mass);
 
         double vg = innerProduct(velocity, negativeGradient); // TODO Isn't this already computed
         double ggDivM = innerProduct(negativeGradient, gDivM);
@@ -219,10 +218,11 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     private WrappedVector drawInitialVelocity() {
 
-        double[] velocity = new double[masses.getDim()];
+        ReadableVector mass = preconditioningOptions.mass;
+        double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(masses.get(i));
+            velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
         }
         return new WrappedVector.Raw(velocity);
     }
@@ -254,17 +254,6 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return position * velocity < 0.0;
     }
 
-    private class MinimumTravelInformation {
-
-        double minTime;
-        int minIndex;
-
-        private MinimumTravelInformation(double minTime, int minIndex) {
-            this.minTime = minTime;
-            this.minIndex = minIndex;
-        }
-    }
-
     private WrappedVector getInitialPosition() {
         return new WrappedVector.Raw(parameter.getParameterValues());
     }
@@ -280,19 +269,47 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         }
     }
 
-    private WrappedVector setupPreconditionedMatrix() {
-        double[] masses = new double[parameter.getDimension()];
-        Arrays.fill(masses, 1.0); // TODO
-        return new WrappedVector.Raw(masses);
+    private PreconditioningOptions setupPreconditioning() {
+
+        double[] mass = new double[parameter.getDimension()];
+        Arrays.fill(mass, 1.0);
+
+        // TODO Should use:
+        productProvider.getMassVector();
+        productProvider.getTimeScale();
+
+        return new PreconditioningOptions(
+                new WrappedVector.Raw(mass),
+                0.05
+        );
+    }
+
+    private class MinimumTravelInformation {
+
+        double minTime;
+        int minIndex;
+
+        private MinimumTravelInformation(double minTime, int minIndex) {
+            this.minTime = minTime;
+            this.minIndex = minIndex;
+        }
+    }
+
+    private class PreconditioningOptions {
+        WrappedVector mass;
+        double totalTravelTime;
+
+        private PreconditioningOptions(WrappedVector mass, double totalTravelTime) {
+            this.mass = mass;
+            this.totalTravelTime = totalTravelTime;
+        }
     }
 
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
     private final Parameter parameter;
     private final NormalDistribution drawDistribution;
+    private final PreconditioningOptions preconditioningOptions;
 
-    private double totalTravelTime;
     private double randomTimeWidth;
-
-    private final WrappedVector masses;
 }

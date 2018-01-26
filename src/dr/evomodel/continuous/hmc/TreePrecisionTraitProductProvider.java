@@ -103,6 +103,46 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
         return result;
     }
 
+    @Override
+    public double[] getMassVector() {
+
+        if (OLD_EXPENSIVE_APPROACH) {
+
+            double[][] treeTraitVariance = likelihoodDelegate.getTreeTraitVariance();
+            final int dim = treeTraitVariance.length;
+
+            double[] mass = new double[dim];
+            for (int i = 0; i < dim; ++i) {
+                mass[i] =treeTraitVariance[i][i];
+            }
+
+            return mass;
+
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
+    @Override
+    public double getTimeScale() {
+
+        if (OLD_EXPENSIVE_APPROACH) {
+
+            double[][] treeTraitVariance = likelihoodDelegate.getTreeTraitVariance();
+            final int dim = treeTraitVariance.length;
+
+            double max = Double.MIN_VALUE;
+            for (int i = 0; i < dim; ++i) {
+                max = Math.max(max, treeTraitVariance[i][i]);
+            }
+
+            return max;
+
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
     private double[] expensiveProduct(Parameter vector) {
         double[][] treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
         int dim = treeTraitPrecision.length;

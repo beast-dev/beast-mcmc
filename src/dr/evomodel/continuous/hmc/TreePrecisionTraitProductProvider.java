@@ -48,8 +48,10 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
     private final Tree tree;
     private final Parameter dataParameter;
 
-    private final static boolean DEBUG = true;
-    private final static boolean OLD_EXPENSIVE_APPROACH = true;
+    private final int dimTrait;
+
+    private final static boolean DEBUG = false;
+    private final static boolean OLD_EXPENSIVE_APPROACH = false;
 
 
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
@@ -67,6 +69,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
         this.tree = treeDataLikelihood.getTree();
         this.dataParameter = likelihoodDelegate.getDataModel().getParameter();
         this.likelihoodDelegate = likelihoodDelegate;
+        this.dimTrait = likelihoodDelegate.getTraitDim();
     }
 
     @Override
@@ -85,10 +88,24 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
 
             result = new double[vector.getDimension()];
 
-            List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, null);
-            statistics.size();
+            int offset = 0;
+            for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
+                List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(
+                        tree, tree.getExternalNode(taxon));
 
-            // TODO Fill in values in result
+                assert (statistics.size() == 1);
+
+                NormalSufficientStatistics statistic = statistics.get(0);
+                for (int i = 0; i < dimTrait; ++i) {
+                    double sum = 0.0;
+                    for (int j = 0; j < dimTrait; ++j) {
+                        sum += statistic.getPrecision(i, j) *
+                                (dataParameter.getParameterValue(taxon * dimTrait + j) - statistic.getMean(j));
+                    }
+                    result[offset] = sum;
+                    ++offset;
+                }
+            }
 
             if (DEBUG) {
 
@@ -97,6 +114,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
                 System.err.println("via FCD: " + new WrappedVector.Raw(result));
                 System.err.println("direct : " + new WrappedVector.Raw(result2));
                 System.err.println();
+
             }
         }
 
@@ -119,7 +137,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
             return mass;
 
         } else {
-            throw new RuntimeException("Not yet implemented");
+            return null;
         }
     }
 
@@ -139,7 +157,7 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
             return Math.sqrt(max);
 
         } else {
-            throw new RuntimeException("Not yet implemented");
+            return 0.0;
         }
     }
 

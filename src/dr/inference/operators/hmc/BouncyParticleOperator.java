@@ -57,8 +57,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         setWeight(weight);
         checkParameterBounds(parameter);
 
-        preconditioningOptions = setupPreconditioning();
-
+        this.preconditioningOptions = setupPreconditioning();
         this.randomTimeWidth = randomTimeWidth;
     }
 
@@ -69,7 +68,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         WrappedVector velocity = drawInitialVelocity();
         WrappedVector negativeGradient = getInitialNegativeGradient();
 
-        double remainingTime = drawTotalTravelTime(); //totalTravelTime;
+        double remainingTime = drawTotalTravelTime();
         while (remainingTime > 0) {
 
             ReadableVector Phi_v = getPrecisionProduct(velocity);
@@ -106,7 +105,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     @Override
     public String getOperatorName() {
-        return "Bouncy Particle operator";
+        return "Bouncy particle operator";
     }
 
     private double doBounce(double remainingTime, double bounceTime,
@@ -310,6 +309,5 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private final Parameter parameter;
     private final NormalDistribution drawDistribution;
     private final PreconditioningOptions preconditioningOptions;
-
-    private double randomTimeWidth;
+    private final double randomTimeWidth;
 }

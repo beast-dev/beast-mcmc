@@ -46,23 +46,26 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                  double weight,
-                                  double randomTimeWidth) {
+                                  double weight, Options runtimeOptions) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
         this.parameter = gradientProvider.getParameter();
         this.drawDistribution = new NormalDistribution(0, 1);
 
+        this.runtimeOptions = runtimeOptions;
+        this.preconditioning = setupPreconditioning();
+
         setWeight(weight);
         checkParameterBounds(parameter);
-
-        this.preconditioningOptions = setupPreconditioning();
-        this.randomTimeWidth = randomTimeWidth;
     }
 
     @Override
     public double doOperation() {
+
+        if (shouldUpdatePreconditioning()) {
+            preconditioning = setupPreconditioning();
+        }
 
         WrappedVector position = getInitialPosition();
         WrappedVector velocity = drawInitialVelocity();
@@ -94,8 +97,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     }
 
     private double drawTotalTravelTime() {
-        double randomFraction = 1.0 + randomTimeWidth * (MathUtils.nextDouble() - 0.5);
-        return preconditioningOptions.totalTravelTime * randomFraction;
+        double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
+        return preconditioning.totalTravelTime * randomFraction;
     }
 
     @Override
@@ -135,7 +138,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
             updatePosition(position, velocity, bounceTime);
             updateNegativeGradient(negativeGradient, bounceTime, Phi_v);
-            updateVelocity(velocity, negativeGradient, preconditioningOptions.mass);
+            updateVelocity(velocity, negativeGradient, preconditioning.mass);
 
             remainingTime -= bounceTime;
 
@@ -217,7 +220,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     private WrappedVector drawInitialVelocity() {
 
-        ReadableVector mass = preconditioningOptions.mass;
+        ReadableVector mass = preconditioning.mass;
         double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = velocity.length; i < len; i++) {
@@ -268,7 +271,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         }
     }
 
-    private PreconditioningOptions setupPreconditioning() {
+    private Preconditioning setupPreconditioning() {
 
         double[] mass = new double[parameter.getDimension()];
         Arrays.fill(mass, 1.0);
@@ -277,10 +280,17 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         productProvider.getMassVector();
         productProvider.getTimeScale();
 
-        return new PreconditioningOptions(
+        return new Preconditioning(
                 new WrappedVector.Raw(mass),
                 0.05
         );
+    }
+
+    private boolean shouldUpdatePreconditioning() {
+        ++operationCount;
+
+        return runtimeOptions.preconditioningUpdateFrequency > 0
+                && (operationCount % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
     private class MinimumTravelInformation {
@@ -294,11 +304,22 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         }
     }
 
-    private class PreconditioningOptions {
+    public static class Options {
+
+        double randomTimeWidth;
+        int preconditioningUpdateFrequency;
+
+        public Options(double randomTimeWidth, int preconditioningUpdateFrequency) {
+            this.randomTimeWidth = randomTimeWidth;
+            this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+        }
+    }
+
+    private class Preconditioning {
         WrappedVector mass;
         double totalTravelTime;
 
-        private PreconditioningOptions(WrappedVector mass, double totalTravelTime) {
+        private Preconditioning(WrappedVector mass, double totalTravelTime) {
             this.mass = mass;
             this.totalTravelTime = totalTravelTime;
         }
@@ -308,6 +329,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private final PrecisionMatrixVectorProductProvider productProvider;
     private final Parameter parameter;
     private final NormalDistribution drawDistribution;
-    private final PreconditioningOptions preconditioningOptions;
-    private final double randomTimeWidth;
+    private final Options runtimeOptions;
+    private Preconditioning preconditioning;
+
+    private long operationCount = 0;
 }

@@ -42,6 +42,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
     private final static String BPO_OPERATOR = "bouncyParticleOperator";
     private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";
+    private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
 
     @Override
     public String getParserName() {
@@ -52,7 +53,6 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
 
         @SuppressWarnings("unused") CoercionMode coercionMode = CoercionMode.parseMode(xo);
 
@@ -62,8 +62,17 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         PrecisionMatrixVectorProductProvider productProvider = (PrecisionMatrixVectorProductProvider)
                 xo.getChild(PrecisionMatrixVectorProductProvider.class);
 
-        return new BouncyParticleOperator(derivative, productProvider, weight,
-                randomTimeWidth);
+        BouncyParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
+
+        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions);
+    }
+
+    private BouncyParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {
+
+        double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
+        int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
+
+        return new BouncyParticleOperator.Options(randomTimeWidth, updateFrequency);
     }
 
     @Override
@@ -75,6 +84,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newDoubleRule(RANDOM_TIME_WIDTH, true),
+            AttributeRule.newIntegerRule(UPDATE_FREQUENCY, true),
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(PrecisionMatrixVectorProductProvider.class),
     };

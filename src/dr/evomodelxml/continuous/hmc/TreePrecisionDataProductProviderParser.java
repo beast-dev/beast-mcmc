@@ -25,6 +25,8 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.continuous.hmc.CubicOrderTreePrecisionTraitProductProvider;
+import dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider;
 import dr.evomodel.continuous.hmc.TreePrecisionTraitProductProvider;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -43,9 +45,10 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectParser {
 
-    private final static String PRODUCT_PROVIDER = "precisionTraitProductOnTree";
-    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String PRODUCT_PROVIDER = "precisionTraitProductOnTree";
+    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String MASKING = MaskedParameterParser.MASKING;
+    private static final String MODE = "mode";
 
     @Override
     public String getParserName() {
@@ -72,8 +75,20 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
 
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
 
-        return new TreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
+        return parseComputeModel(xo, treeDataLikelihood, continuousData, traitName);
 
+    }
+
+    private TreePrecisionTraitProductProvider parseComputeModel(XMLObject xo,
+                                                                TreeDataLikelihood treeDataLikelihood,
+                                                                ContinuousDataLikelihoodDelegate continuousData,
+                                                                String traitName) throws XMLParseException {
+        String mode = xo.getAttribute(MODE, "linear");
+        if (mode.toLowerCase().compareTo("cubic") == 0) {
+            return new CubicOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData);
+        } else {
+            return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
+        }
     }
 
     @Override
@@ -83,6 +98,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
+            AttributeRule.newStringRule(MODE, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(MASKING,
                     new XMLSyntaxRule[]{

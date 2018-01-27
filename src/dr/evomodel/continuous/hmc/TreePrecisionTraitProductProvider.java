@@ -26,142 +26,34 @@
 package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.preorder.NewTipFullConditionalDistributionDelegate;
-import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
-import java.util.List;
-
 /**
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
-public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorProductProvider, Reportable {
+public abstract class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorProductProvider, Reportable {
 
-    private final TreeTrait<List<NormalSufficientStatistics>> fullConditionalDensity;
-    private final Tree tree;
-    private final Parameter dataParameter;
+    final Tree tree;
+    final Parameter dataParameter;
+    protected final int dimTrait;
+    protected final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
-    private final int dimTrait;
+    TreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
+                                             ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 
-    private final static boolean DEBUG = false;
-    private final static boolean OLD_EXPENSIVE_APPROACH = false;
-
-
-    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
-
-    public TreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
-                                             ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                             String traitName) {
-
-        String fcdName = NewTipFullConditionalDistributionDelegate.getName(traitName);
-        if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
-            likelihoodDelegate.addNewFullConditionalDensityTrait(traitName);
-        }
-
-        this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
         this.tree = treeDataLikelihood.getTree();
         this.dataParameter = likelihoodDelegate.getDataModel().getParameter();
         this.likelihoodDelegate = likelihoodDelegate;
         this.dimTrait = likelihoodDelegate.getTraitDim();
     }
 
-    @Override
-    public double[] getProduct(Parameter vector) {
-
-        double[] result;
-        if (OLD_EXPENSIVE_APPROACH) {
-
-            result = expensiveProduct(vector);
-
-        } else {
-
-            if (vector != dataParameter) {
-                throw new IllegalArgumentException("May only compute for trait data vector");
-            }
-
-            result = new double[vector.getDimension()];
-
-            int offset = 0;
-            for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
-                List<NormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(
-                        tree, tree.getExternalNode(taxon));
-
-                assert (statistics.size() == 1);
-
-                NormalSufficientStatistics statistic = statistics.get(0);
-                for (int i = 0; i < dimTrait; ++i) {
-                    double sum = 0.0;
-                    for (int j = 0; j < dimTrait; ++j) {
-                        sum += statistic.getPrecision(i, j) *
-                                (dataParameter.getParameterValue(taxon * dimTrait + j) - statistic.getMean(j));
-                    }
-                    result[offset] = sum;
-                    ++offset;
-                }
-            }
-
-            if (DEBUG) {
-
-                double[] result2 = expensiveProduct(vector);
-
-                System.err.println("via FCD: " + new WrappedVector.Raw(result));
-                System.err.println("direct : " + new WrappedVector.Raw(result2));
-                System.err.println();
-
-            }
-        }
-
-        return result;
-    }
-
-    @Override
-    public double[] getMassVector() {
-
-        if (OLD_EXPENSIVE_APPROACH) {
-
-            double[][] treeTraitVariance = likelihoodDelegate.getTreeTraitVariance();
-            final int dim = treeTraitVariance.length;
-
-            double[] mass = new double[dim];
-            for (int i = 0; i < dim; ++i) {
-                mass[i] =treeTraitVariance[i][i];
-            }
-
-            return mass;
-
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public double getTimeScale() {
-
-        if (OLD_EXPENSIVE_APPROACH) {
-
-            double[][] treeTraitVariance = likelihoodDelegate.getTreeTraitVariance();
-            final int dim = treeTraitVariance.length;
-
-            double max = Double.MIN_VALUE;
-            for (int i = 0; i < dim; ++i) {
-                max = Math.max(max, treeTraitVariance[i][i]);
-            }
-
-            return Math.sqrt(max);
-
-        } else {
-            return 0.0;
-        }
-    }
-
-    private double[] expensiveProduct(Parameter vector) {
+    double[] expensiveProduct(Parameter vector) {
         double[][] treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
         int dim = treeTraitPrecision.length;
         double[] result = new double[dim];
@@ -179,10 +71,5 @@ public class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorP
     public String getReport() {
         double[] result = getProduct(dataParameter);
         return (new WrappedVector.Raw(result, 0, result.length)).toString();
-    }
-
-    @SuppressWarnings("unchecked")
-    private TreeTrait<List<NormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
-        return trait;
     }
 }

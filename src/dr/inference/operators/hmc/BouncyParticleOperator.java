@@ -69,14 +69,14 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         WrappedVector position = getInitialPosition();
         WrappedVector velocity = drawInitialVelocity();
-        WrappedVector negativeGradient = getInitialNegativeGradient();
+        WrappedVector gradient = getInitialGradient();
 
         double remainingTime = drawTotalTravelTime();
         while (remainingTime > 0) {
 
             ReadableVector Phi_v = getPrecisionProduct(velocity);
 
-            double v_Phi_x = innerProduct(velocity, negativeGradient);
+            double v_Phi_x = - innerProduct(velocity, gradient);
             double v_Phi_v = innerProduct(velocity, Phi_v);
 
             double tMin = Math.max(0.0, - v_Phi_x / v_Phi_v);
@@ -87,7 +87,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
             remainingTime = doBounce(
                     remainingTime, bounceTime, travelInfo,
-                    position, velocity, negativeGradient, Phi_v
+                    position, velocity, gradient, Phi_v
             );
         }
 
@@ -114,7 +114,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private double doBounce(double remainingTime, double bounceTime,
                             MinimumTravelInformation travelInfo,
                             WrappedVector position, WrappedVector velocity,
-                            WrappedVector negativeGradient, ReadableVector Phi_v) {
+                            WrappedVector gradient, ReadableVector Phi_v) {
 
         double timeToBoundary = travelInfo.minTime;
         int boundaryIndex = travelInfo.minIndex;
@@ -127,7 +127,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         } else if (timeToBoundary < bounceTime) { // Bounce against the boundary
 
             updatePosition(position, velocity, timeToBoundary);
-            updateNegativeGradient(negativeGradient, timeToBoundary, Phi_v);
+            updateGradient(gradient, timeToBoundary, Phi_v);
 
             position.set(boundaryIndex, 0.0);
             velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
@@ -137,8 +137,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         } else { // Bounce caused by the gradient
 
             updatePosition(position, velocity, bounceTime);
-            updateNegativeGradient(negativeGradient, bounceTime, Phi_v);
-            updateVelocity(velocity, negativeGradient, preconditioning.mass);
+            updateGradient(gradient, bounceTime, Phi_v);
+            updateVelocity(velocity, gradient, preconditioning.mass);
 
             remainingTime -= bounceTime;
 
@@ -154,12 +154,12 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         parameter.fireParameterChangedEvent();
     }
 
-    private void updateVelocity(WrappedVector velocity, WrappedVector negativeGradient, ReadableVector mass) {
+    private void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
 
-        ReadableVector gDivM = new ReadableVector.Quotient(negativeGradient, mass);
+        ReadableVector gDivM = new ReadableVector.Quotient(gradient, mass);
 
-        double vg = innerProduct(velocity, negativeGradient); // TODO Isn't this already computed
-        double ggDivM = innerProduct(negativeGradient, gDivM);
+        double vg = innerProduct(velocity, gradient);
+        double ggDivM = innerProduct(gradient, gDivM);
 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
             velocity.set(i,
@@ -167,9 +167,9 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         }
     }
 
-    private void updateNegativeGradient(WrappedVector negativeGradient, double time, ReadableVector Phi_v) {
-        for (int i = 0, len = negativeGradient.getDim(); i < len; ++i) {
-            negativeGradient.set(i, negativeGradient.get(i) + time * Phi_v.get(i));
+    private void updateGradient(WrappedVector gradient, double time, ReadableVector Phi_v) {
+        for (int i = 0, len = gradient.getDim(); i < len; ++i) {
+            gradient.set(i, gradient.get(i) - time * Phi_v.get(i));
         }
     }
 
@@ -186,14 +186,10 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double c = u_min - MathUtils.nextExponential(1);
         return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
-
-    private WrappedVector getInitialNegativeGradient() {
+    
+    private WrappedVector getInitialGradient() {
 
         double[] gradient = gradientProvider.getGradientLogDensity();
-        for (int i = 0, len = gradient.length; i < len; ++i) {
-            gradient[i] = -1 * gradient[i];
-        }
-
         return new WrappedVector.Raw(gradient);
     }
 
@@ -287,10 +283,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     }
 
     private boolean shouldUpdatePreconditioning() {
-        ++operationCount;
-
         return runtimeOptions.preconditioningUpdateFrequency > 0
-                && (operationCount % runtimeOptions.preconditioningUpdateFrequency == 0);
+                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
     private class MinimumTravelInformation {
@@ -331,6 +325,4 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private final NormalDistribution drawDistribution;
     private final Options runtimeOptions;
     private Preconditioning preconditioning;
-
-    private long operationCount = 0;
 }

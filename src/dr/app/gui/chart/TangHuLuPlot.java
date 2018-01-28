@@ -97,7 +97,7 @@ public class TangHuLuPlot extends ScatterPlot {
         }
 
         // find unique pairs
-        xyFC = new FrequencyCounter<XY>(xyList);
+        xyFC = new FrequencyCounter<XY>(xyList, 0.95);
 
         List<Double> xUnique = new ArrayList<Double>();
         List<Double> yUnique = new ArrayList<Double>();

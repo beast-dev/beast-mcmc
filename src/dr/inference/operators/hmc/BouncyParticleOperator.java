@@ -52,11 +52,10 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         this.productProvider = multiplicationProvider;
         this.parameter = gradientProvider.getParameter();
         this.drawDistribution = new NormalDistribution(0, 1);
+        this.mask = mask;
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
-
-        this.mask = mask;
 
         setWeight(weight);
         checkParameterBounds(parameter);
@@ -164,8 +163,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double ggDivM = innerProduct(gradient, gDivM);
 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
-            if (mask.getParameterValue(i) == 0.0) return; // leave the velocity to be zero if masked out
-            else {
+            if (mask == null || mask.getParameterValue(i) != 0.0) {
                 velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
             }
         }
@@ -224,11 +222,10 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = velocity.length; i < len; i++) {
-            if (mask != null){
-                velocity[i] = mask.getParameterValue(i)*(Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
-            } else {
-                velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
-            }
+            double draw = (mask != null && mask.getParameterValue(i) == 0.0) ?
+                    0.0 :
+                    (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
+            velocity[i] = draw;
         }
         return new WrappedVector.Raw(velocity);
     }
@@ -332,7 +329,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private final Parameter parameter;
     private final NormalDistribution drawDistribution;
     private final Options runtimeOptions;
-    private Preconditioning preconditioning;
-
     private final Parameter mask;
+
+    private Preconditioning preconditioning;
 }

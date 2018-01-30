@@ -94,6 +94,9 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(UPDATE_FREQUENCY, true),
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(PrecisionMatrixVectorProductProvider.class),
+            new ElementRule(MASKING, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class),
+            }, true),
     };
 
     @Override

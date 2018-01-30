@@ -46,7 +46,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                  double weight, Options runtimeOptions) {
+                                  double weight, Options runtimeOptions, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -55,6 +55,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
+
+        this.mask = mask;
 
         setWeight(weight);
         checkParameterBounds(parameter);
@@ -162,8 +164,10 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double ggDivM = innerProduct(gradient, gDivM);
 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
-            velocity.set(i,
-                    velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
+            if (mask.getParameterValue(i) == 0.0) return; // leave the velocity to be zero if masked out
+            else {
+                velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
+            }
         }
     }
 
@@ -220,7 +224,11 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
+            if (mask != null){
+                velocity[i] = mask.getParameterValue(i)*(Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
+            } else {
+                velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
+            }
         }
         return new WrappedVector.Raw(velocity);
     }
@@ -325,4 +333,6 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private final NormalDistribution drawDistribution;
     private final Options runtimeOptions;
     private Preconditioning preconditioning;
+
+    private final Parameter mask;
 }

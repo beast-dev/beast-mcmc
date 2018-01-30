@@ -27,6 +27,7 @@ package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
+import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
@@ -43,6 +44,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     private final static String BPO_OPERATOR = "bouncyParticleOperator";
     private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";
     private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+    private final static String MASKING = "mask";
 
     @Override
     public String getParserName() {
@@ -62,9 +64,14 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         PrecisionMatrixVectorProductProvider productProvider = (PrecisionMatrixVectorProductProvider)
                 xo.getChild(PrecisionMatrixVectorProductProvider.class);
 
+        Parameter mask = null;
+        if (xo.hasChildNamed(MASKING)) {
+            mask = (Parameter) xo.getElementFirstChild(MASKING);
+        }
+
         BouncyParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
 
-        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions);
+        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions, mask);
     }
 
     private BouncyParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {

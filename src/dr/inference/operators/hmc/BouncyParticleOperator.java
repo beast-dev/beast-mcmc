@@ -124,7 +124,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
             updatePosition(position, velocity, remainingTime);
             remainingTime = 0.0;
 
-        } else if (timeToBoundary < bounceTime) { // Bounce against the boundary
+        } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
 
             updatePosition(position, velocity, timeToBoundary);
             updateGradient(gradient, timeToBoundary, Phi_v);

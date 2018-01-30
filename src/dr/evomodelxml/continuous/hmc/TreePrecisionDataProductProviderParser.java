@@ -75,11 +75,11 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
 
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
 
-        return parseComputeModel(xo, treeDataLikelihood, continuousData, traitName);
+        return parseComputeMode(xo, treeDataLikelihood, continuousData, traitName);
 
     }
 
-    private TreePrecisionTraitProductProvider parseComputeModel(XMLObject xo,
+    private TreePrecisionTraitProductProvider parseComputeMode(XMLObject xo,
                                                                 TreeDataLikelihood treeDataLikelihood,
                                                                 ContinuousDataLikelihoodDelegate continuousData,
                                                                 String traitName) throws XMLParseException {

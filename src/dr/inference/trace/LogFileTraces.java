@@ -459,6 +459,10 @@ public class LogFileTraces extends AbstractTraceList {
         Trace trace = getTrace(id);
         TraceType oldType = trace.getTraceType();
         if (oldType != newType) {
+            if (oldType.isCategorical()) {
+                throw new TraceException("It is not allowed to change categorical type to another type !");
+            }
+
             Trace newTrace = new Trace(trace.getName(), newType);
 
             if (newType.isDiscrete()) {
@@ -468,16 +472,12 @@ public class LogFileTraces extends AbstractTraceList {
                             MAX_UNIQUE_VALUE + ") are found !");
             }
 
-            if (oldType.isCategorical() || newType.isCategorical()) {
+            if (newType.isCategorical()) {
                 try {
-                    if (newType.isNumber()) { // oldType.isCategorical()
-                        for (int i = 0; i < trace.getValueCount(); i++) {
-                            newTrace.add(trace.getValue(i));
-                        }
-                    } else if (oldType.isContinuous()) { // newType.isCategorical()
-                        for (int i = 0; i < trace.getValueCount(); i++) {
-                            newTrace.add(trace.getValue(i));
-                        }
+                    // include integer trace
+                    for (int i = 0; i < trace.getValueCount(); i++) {
+                        // use add(String value) to set categoryLabelMap ...
+                        newTrace.add(Double.toString(trace.getValue(i)));
                     }
                 } catch (Exception e) {
                     throw new TraceException("Type change is failed, when parsing " + oldType +
@@ -493,13 +493,14 @@ public class LogFileTraces extends AbstractTraceList {
                 trace.setTraceType(newType); // change between numeric
             }
 
-            // copy the categorical values across in case it is switched back
-            newTrace.categoryValueList = trace.categoryValueList;
-            newTrace.categoryLabelMap = trace.categoryLabelMap;
-            newTrace.orderType = trace.orderType;
-            newTrace.categoryOrder = trace.categoryOrder;
-            newTrace.uniqueValues = trace.uniqueValues;
-
+            // do not need code below, they are set by 'add(String value)',
+            // and they will overwrite the correct values
+//            // copy the categorical values across in case it is switched back
+//            newTrace.categoryValueList = trace.categoryValueList;
+//            newTrace.categoryLabelMap = trace.categoryLabelMap;
+//            newTrace.orderType = trace.orderType;
+//            newTrace.categoryOrder = trace.categoryOrder;
+//            newTrace.uniqueValues = trace.uniqueValues;
 
 //            System.out.println("Change " + oldType + " to " + newType + " type for trace " + trace.getName() + " at " + id);
             return newTrace;

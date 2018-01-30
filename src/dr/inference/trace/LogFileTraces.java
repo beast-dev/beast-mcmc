@@ -460,7 +460,7 @@ public class LogFileTraces extends AbstractTraceList {
         TraceType oldType = trace.getTraceType();
         if (oldType != newType) {
             if (oldType.isCategorical()) {
-                throw new TraceException("It is not allowed to change categorical type to another type !");
+                throw new TraceException("A categorical type cannot be changed to anything else.");
             }
 
             Trace newTrace = new Trace(trace.getName(), newType);

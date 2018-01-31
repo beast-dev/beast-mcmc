@@ -101,11 +101,13 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             }
         }
 
-        if (from > alignment.getSiteCount())
-            throw new XMLParseException("illegal 'from' attribute in patterns element");
+        if (from > alignment.getSiteCount()) {
+            throw new XMLParseException("illegal 'from' attribute in patterns element (selected attribute = " + from + " vs. actual site count = " + alignment.getSiteCount() + ")");
+        }
 
-        if (to > alignment.getSiteCount())
-            throw new XMLParseException("illegal 'to' attribute in patterns element");
+        if (to > alignment.getSiteCount()) {
+            throw new XMLParseException("illegal 'to' attribute in patterns element (selected attribute = " + to + " vs. actual site count = " + alignment.getSiteCount() + ")");
+        }
 
         SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every, strip, unique, constantPatternCounts);
 

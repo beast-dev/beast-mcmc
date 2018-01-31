@@ -33,7 +33,6 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrat
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.Model;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
@@ -151,7 +150,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
         super.setDiffusionModels(cdi, flip);
 
         cdi.setDiffusionStationaryVariance(getEigenBufferOffsetIndex(0),
-                strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues());
+                strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues(), new double[0]);
     }
 
     @Override
@@ -173,6 +172,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
                 edgeLengths,
                 getDriftRates(branchIndices, updateCount),
                 strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues(),
+                new double[0],
                 updateCount);
     }
 

@@ -1,6 +1,11 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.matrixAlgebra.missingData.MissingOps;
+import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.EigenDecomposition;
+import org.ejml.ops.EigenOps;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -22,6 +27,40 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
         double[] getSelectionStrength();
 
         double[] getStationaryVariance();
+
+        double[] getEigenValuesStrengthOfSelection();
+
+        double[] getEigenVectorsStrengthOfSelection();
+
+        abstract class Basic implements Instance {
+
+            private EigenDecomposition decomposeStrenghtOfSelection(double[] Aparam){
+                int n = getDimTrait();
+                DenseMatrix64F A = MissingOps.wrap(Aparam, 0, n, n);
+                // Decomposition
+                EigenDecomposition eigA = DecompositionFactory.eig(n, true, true);
+                if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
+                return eigA;
+            }
+
+            final EigenDecomposition eigenDecompositionStrengthOfSelection = decomposeStrenghtOfSelection(getSelectionStrength());
+
+            public double[] getEigenValuesStrengthOfSelection() {
+                int dim = getDimTrait();
+                double[] eigA = new double[dim];
+                for (int p = 0; p < dim; ++p) {
+                    Complex64F ev = eigenDecompositionStrengthOfSelection.getEigenvalue(p);
+                    if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+                    eigA[p] = ev.real;
+                }
+                return eigA;
+            }
+
+            public double[] getEigenVectorsStrengthOfSelection() {
+                return EigenOps.createMatrixV(eigenDecompositionStrengthOfSelection).data;
+            }
+
+        }
     }
 
     /**
@@ -33,7 +72,7 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
      *
      */
 
-    Instance test0 = new Instance() {
+    Instance test0 = new Instance.Basic() {
         public int getDimTrait(){ return 2;}
 
         public double[] getPrecision() {
@@ -58,7 +97,7 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
         }
     };
 
-    Instance test1 = new Instance() {
+    Instance test1 = new Instance.Basic() {
         public int getDimTrait(){ return 2;}
 
         public double[] getPrecision() {
@@ -83,7 +122,7 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
         }
     };
 
-    Instance test2 = new Instance() {
+    Instance test2 = new Instance.Basic() {
         public int getDimTrait(){ return 5;}
 
         public double[] getPrecision() {
@@ -139,9 +178,10 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
             double precision[] = test.getPrecision();
             cdi.setDiffusionPrecision(0, precision, 2.0);
 
-            double alpha[] = test.getSelectionStrength();
+            double[] alphaEig = test.getEigenValuesStrengthOfSelection();
+            double[] alphaRot = test.getEigenVectorsStrengthOfSelection();
 
-            cdi.setDiffusionStationaryVariance(0, alpha);
+            cdi.setDiffusionStationaryVariance(0, alphaEig, alphaRot);
 
             double[] stationaryVariance = cdi.getStationaryVariance(0);
 
@@ -154,6 +194,38 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
 
 //    @Test
 //    public void updateOrnsteinUhlenbeckDiffusionMatrices() throws Exception {
+//        for (Instance test : all) {
+//            PrecisionType precisionType = PrecisionType.FULL;
+//            int numTraits = 1;
+//            int dimTrait = test.getDimTrait();
+//            int partialBufferCount = 1;
+//            int matrixBufferCount = 1;
+//
+//            SafeMultivariateActualizedWithDriftIntegrator cdi = new SafeMultivariateActualizedWithDriftIntegrator(
+//                    precisionType,
+//                    numTraits,
+//                    dimTrait,
+//                    partialBufferCount,
+//                    matrixBufferCount
+//            );
+//
+//            double precision[] = test.getPrecision();
+//            cdi.setDiffusionPrecision(0, precision, 2.0);
+//
+//            double alpha[] = test.getSelectionStrength();
+//
+//            cdi.setDiffusionStationaryVariance(0, alpha);
+//
+//            final double[] edgeLengths = test.getEdgeLengths();
+//            final double[] optimalRates = test.getOptimalRates();
+//
+//            cdi.updateOrnsteinUhlenbeckDiffusionMatrices(0, 0,
+//                    edgeLengths,
+//                    optimalRates,
+//                    alpha,
+//                    1)
+//
+//        }
 //    }
 //
 //    @Test

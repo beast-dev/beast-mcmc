@@ -33,12 +33,14 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrat
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateWithDriftIntegrator;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.EigenDecomposition;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.EigenOps;
+import org.ejml.ops.MatrixFeatures;
 
 import java.util.List;
 
@@ -60,7 +62,9 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
     private final List<BranchRateModel> branchRateModels;
 
     protected MatrixParameterInterface strengthOfSelectionMatrixParameter;
-    private double[][] strengthOfSelectionMatrix;
+    protected EigenDecomposition eigenDecompositionStrengthOfSelection;
+
+//    private double[][] strengthOfSelectionMatrix;
 //    private double[][] savedStrengthOfSelectionMatrix;
 
 //    private double[][] stationaryPrecisionMatrix;
@@ -98,20 +102,45 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
 
         // Strength of selection matrix
         this.strengthOfSelectionMatrixParameter = strengthOfSelectionMatrixParam;
-        calculateStrengthOfSelectionInfo(diffusionModel);
+//        calculateStrengthOfSelectionInfo(diffusionModel);
         addVariable(strengthOfSelectionMatrixParameter);
-
-        // two more matrices for each node less the root
-//        matrixActualizationBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, partitionNumber);
+        // Eigen decomposition
+        this.eigenDecompositionStrengthOfSelection = decomposeStrenghtOfSelection(strengthOfSelectionMatrixParam);
     }
 
-    protected void calculateStrengthOfSelectionInfo(MultivariateDiffusionModel diffusionModel) {
-        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
-//        stationaryPrecisionMatrix = computeStationaryVariance(strengthOfSelectionMatrix, diffusionModel.getPrecisionParameter())
+    private EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface Aparam){
+        DenseMatrix64F A = MissingOps.wrap(Aparam);
+        int n = A.numCols;
+        // Checks
+        if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
+        if (!MatrixFeatures.isSymmetric(A)) throw new RuntimeException("Selection strength A matrix must be symmetric."); // TODO : this is not strictly necessary, but might be good to impose the constraint ?
+        // Decomposition
+        EigenDecomposition eigA = DecompositionFactory.eig(n, true, true);
+        if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
+        return eigA;
     }
+
+//    protected void calculateStrengthOfSelectionInfo(MultivariateDiffusionModel diffusionModel) {
+//        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
+////        stationaryPrecisionMatrix = computeStationaryVariance(strengthOfSelectionMatrix, diffusionModel.getPrecisionParameter())
+//    }
 
     public double[][] getStrengthOfSelection() {
         return strengthOfSelectionMatrixParameter.getParameterAsMatrix();
+    }
+
+    public double[] getEigenValuesStrengthOfSelection() {
+        double[] eigA = new double[dim];
+        for (int p = 0; p < dim; ++p) {
+            Complex64F ev = eigenDecompositionStrengthOfSelection.getEigenvalue(p);
+            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+            eigA[p] = ev.real;
+        }
+        return eigA;
+    }
+
+    public double[] getEigenVectorsStrengthOfSelection() {
+        return EigenOps.createMatrixV(eigenDecompositionStrengthOfSelection).data;
     }
 
     @Override
@@ -156,7 +185,7 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
         super.setDiffusionModels(cdi, flip);
 
         cdi.setDiffusionStationaryVariance(getEigenBufferOffsetIndex(0),
-                strengthOfSelectionMatrixParameter.getParameterValues());
+                getEigenValuesStrengthOfSelection(), getEigenVectorsStrengthOfSelection());
     }
 
     @Override
@@ -177,7 +206,8 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
                 probabilityIndices,
                 edgeLengths,
                 getDriftRates(branchIndices, updateCount),
-                strengthOfSelectionMatrixParameter.getParameterValues(),
+                getEigenValuesStrengthOfSelection(),
+                getEigenVectorsStrengthOfSelection(),
                 updateCount);
     }
 
@@ -198,8 +228,6 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
             branchIndice[0] = getMatrixBufferOffsetIndex(node.getNumber());
 
             final double length = tree.getBranchLength(node);
-
-            DenseMatrix64F alphaMatrix = new DenseMatrix64F(strengthOfSelectionMatrixParameter.getParameterAsMatrix());
 
             DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
             computeActualizationBranch(-length, actualization);

@@ -79,7 +79,8 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     }
 
 
-    public void setDiffusionStationaryVariance(int precisionIndex, final double[] diagonalAlpha) {
+    @Override
+    public void setDiffusionStationaryVariance(int precisionIndex, final double[] diagonalAlpha, final double[] rotation) {
 
         assert (stationaryVariances != null);
 
@@ -89,7 +90,30 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         double[] scales = new double[matrixSize];
         scalingMatrix(diagonalAlpha, scales);
 
-        scaleInv(inverseDiffusions, offset, scales, stationaryVariances, offset, matrixSize);
+        if (rotation.length == 0){
+            scaleInv(inverseDiffusions, offset, scales, stationaryVariances, offset, matrixSize);
+        } else {
+            assert(rotation.length == matrixSize);
+            DenseMatrix64F rotMat = wrap(rotation, 0, dimTrait, dimTrait);
+            DenseMatrix64F variance = wrap(inverseDiffusions, offset, dimTrait, dimTrait);
+            transformMatrix(variance, rotMat);
+            double[] transVar = new double[matrixSize];
+            unwrap(variance, transVar, 0);
+            scaleInv(transVar, 0, scales, stationaryVariances, offset, matrixSize);
+        }
+    }
+
+//    private void transformMatrix(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+//        DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
+//        CommonOps.invert(rotation); // Warning: side effect on rotation matrix.
+//        CommonOps.mult(rotation, matrix, tmp);
+//        CommonOps.multTransB(tmp, rotation, matrix);
+//    }
+
+    private void transformMatrix(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.multTransA(rotation, matrix, tmp); // TODO: this is a specialized version for symmetric A (see above general version)
+        CommonOps.mult(tmp, rotation, matrix);
     }
 
     private static void scale(final double[] source,
@@ -123,9 +147,11 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         }
     }
 
+    @Override
     public void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
                                                          final double[] edgeLengths, final double[] optimalRates,
                                                          final double[] diagonalStrengthOfSelectionMatrix,
+                                                         final double[] rotation,
                                                          int updateCount) {
 
         assert (diffusions != null);
@@ -216,7 +242,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         precisionLogDet = determinants[precisionIndex];
     }
 
-    private static void computeDiagonalActualization(final double[] source,
+    protected static void computeDiagonalActualization(final double[] source,
                                                      final double edgeLength,
                                                      final int dim,
                                                      final double[] destination,
@@ -329,6 +355,8 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
             System.err.println("precisionOffset = " + precisionOffset);
             System.err.println("\tVdi: " + Vdi);
             System.err.println("\tVdj: " + Vdj);
+            System.err.println("\tPdi: " + Pdi);
+            System.err.println("\tPdj: " + Pdj);
         }
 
         // For each trait // TODO in parallel
@@ -672,7 +700,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     }
 
     private double[] diagonalActualizations;
-    private double[] stationaryVariances;
+    protected double[] stationaryVariances;
 //    private DenseMatrix64F matrix7;
 //    private DenseMatrix64F matrix8;
     private DenseMatrix64F matrix9;

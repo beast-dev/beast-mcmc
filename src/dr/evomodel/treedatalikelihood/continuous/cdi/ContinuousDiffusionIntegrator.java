@@ -63,7 +63,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void setDiffusionPrecision(int diffusionIndex, final double[] matrix, double logDeterminant);
 
-    void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha);
+    void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation);
 
     void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts);
 
@@ -79,6 +79,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
                                                   final double[] edgeLengths, final double[] optimalRates,
                                                   final double[] strengthOfSelectionMatrix,
+                                                  final double[] rotation,
                                                   int updateCount);
 
 //    void updateOrnsteinUhlenbeckMatrices(int precisionIndex, final int[] probabilityIndices,
@@ -275,7 +276,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha) {
+        public void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation) {
             // Do Nothing.
         }
 
@@ -434,6 +435,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         public void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
                                                              final double[] edgeLengths, final double[] optimalRates,
                                                              final double[] strengthOfSelectionMatrix,
+                                                             final double[] rotation,
                                                              int updateCount){
             throw new RuntimeException("updateOrnsteinUhlenbeckDiffusionMatrices should not be used in Base method for ContinuousDiffusionIntegrator.");
         }

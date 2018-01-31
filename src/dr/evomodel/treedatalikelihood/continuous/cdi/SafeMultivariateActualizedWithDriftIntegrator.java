@@ -18,7 +18,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  * @author Paul Bastide
  */
 
-public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivariateWithDriftIntegrator {
+public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivariateDiagonalActualizedWithDriftIntegrator {
 
     private static boolean DEBUG = false;
 
@@ -70,7 +70,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         vector2 = new double[dimTrait];
 
         actualizations = new double[dimTrait * dimTrait * bufferCount];
-        stationaryVariances = new double[dimTrait * dimTrait * diffusionCount];
+//        stationaryVariances = new double[dimTrait * dimTrait * diffusionCount];
 
         matrix7 = new DenseMatrix64F(dimTrait, dimTrait);
         matrix8 = new DenseMatrix64F(dimTrait, dimTrait);
@@ -78,83 +78,102 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         matrix10 = new DenseMatrix64F(dimTrait, dimTrait);
     }
 
+    @Override
+    public void setDiffusionStationaryVariance(int precisionIndex, final double[] alphaEig, final double[] alphaRot) {
 
-    public void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha) {
+        super.setDiffusionStationaryVariance(precisionIndex, alphaEig, alphaRot);
 
-        assert (stationaryVariances != null);
-
+        // Transform back in original space
         final int offset = dimTrait * dimTrait * precisionIndex;
-        DenseMatrix64F variance = wrap(inverseDiffusions, offset, dimTrait, dimTrait);
-        DenseMatrix64F alphaMatrix = wrap(alpha, 0, dimTrait, dimTrait);
-        DenseMatrix64F stationaryVariance = new DenseMatrix64F(dimTrait, dimTrait);
-
-        computeStationaryVariance(variance, alphaMatrix, stationaryVariance);
-        unwrap(stationaryVariance, stationaryVariances, offset);
+        DenseMatrix64F stationaryVariance = wrap(stationaryVariances, offset, dimTrait, dimTrait);
+        DenseMatrix64F rot = wrap(alphaRot, 0, dimTrait, dimTrait);
+        transformMatrixBack(stationaryVariances, offset, alphaRot, 0);
 
         if (DEBUG) {
             System.err.println("At precision index: " + precisionIndex);
-            System.err.println("variance : " + variance);
+//            System.err.println("variance : " + variance);
             System.err.println("stationary variance: " + stationaryVariance);
         }
     }
 
-
-    private void computeStationaryVariance(DenseMatrix64F diffusion, DenseMatrix64F alphaMatrix, DenseMatrix64F stationaryVariance){
-        DenseMatrix64F variance_vec = vectorize(diffusion);
-        DenseMatrix64F kro_sum_A_inv = sumKronecker(alphaMatrix, alphaMatrix);
-        CommonOps.invert(kro_sum_A_inv);
-        DenseMatrix64F stationaryVarianceVec = new DenseMatrix64F(dimTrait * dimTrait, 1);
-        CommonOps.mult(kro_sum_A_inv, variance_vec, stationaryVarianceVec);
-        unVectorizeSquare(stationaryVarianceVec, stationaryVariance);
+    private void transformMatrixBack(double[] matrixDouble, int matrixOffset, double[] rotationDouble, int rotationOffset) {
+        DenseMatrix64F matrix = wrap(matrixDouble, matrixOffset, dimTrait, dimTrait);
+        DenseMatrix64F rotation = wrap(rotationDouble, rotationOffset, dimTrait, dimTrait);
+        transformMatrixBack(matrix, rotation);
+        unwrap(matrix, matrixDouble, matrixOffset);
     }
 
-    private DenseMatrix64F vectorize(DenseMatrix64F A){
-        int m = A.numRows;
-        int n = A.numCols;
-        DenseMatrix64F B = new DenseMatrix64F(m * n, 1);
-
-        for (int i = 0; i < n; ++i){
-            CommonOps.extract(A, 0, m, i, i+1, B, i * m, 0);
-        }
-
-        return B;
+    private void transformDiagonalMatrixBack(double[] diagonalMatrix, double[] matrixDestination, int matrixOffset, double[] rotationDouble, int rotationOffset) {
+        DenseMatrix64F matrix = wrapDiagonal(diagonalMatrix, matrixOffset, dimTrait);
+        DenseMatrix64F rotation = wrap(rotationDouble, rotationOffset, dimTrait, dimTrait);
+        transformMatrixBack(matrix, rotation);
+        unwrap(matrix, matrixDestination, matrixOffset);
     }
 
-    private DenseMatrix64F sumKronecker(DenseMatrix64F A, DenseMatrix64F B){
-        int m = A.numCols;
-        int n = B.numCols;
-
-        if (m != A.numRows || n != B.numRows){
-            throw new RuntimeException("Wrong dimensions in Kronecker sum");
-        }
-
-        DenseMatrix64F C1 = new DenseMatrix64F(m * n, m * n);
-        DenseMatrix64F C2 = new DenseMatrix64F(m * n, m * n);
-
-        DenseMatrix64F I_m = CommonOps.identity(m);
-        DenseMatrix64F I_n = CommonOps.identity(n);
-
-        CommonOps.kron(A, I_n, C1);
-        CommonOps.kron(I_m, B, C2);
-        CommonOps.addEquals(C1, C2);
-
-        return C1;
+    private void transformMatrixBack(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.multTransB(matrix, rotation, tmp);
+        CommonOps.mult(rotation, tmp, matrix);
     }
 
-    private void unVectorizeSquare(DenseMatrix64F vector, DenseMatrix64F matrix){
-        int n = matrix.numRows;
-        if (1 != vector.numCols || n * n != vector.numRows || n != matrix.numCols){
-            throw new RuntimeException("Wrong dimensions in unVectorizeSquare");
-        }
+//    private void computeStationaryVariance(DenseMatrix64F diffusion, DenseMatrix64F alphaMatrix, DenseMatrix64F stationaryVariance){
+//        DenseMatrix64F variance_vec = vectorize(diffusion);
+//        DenseMatrix64F kro_sum_A_inv = sumKronecker(alphaMatrix, alphaMatrix);
+//        CommonOps.invert(kro_sum_A_inv);
+//        DenseMatrix64F stationaryVarianceVec = new DenseMatrix64F(dimTrait * dimTrait, 1);
+//        CommonOps.mult(kro_sum_A_inv, variance_vec, stationaryVarianceVec);
+//        unVectorizeSquare(stationaryVarianceVec, stationaryVariance);
+//    }
 
-        for (int i = 0; i < n; ++i){
-            CommonOps.extract(vector, i * n, (i+1) * n, 0, 1, matrix, 0, i);
-        }
-    }
+//    private DenseMatrix64F vectorize(DenseMatrix64F A){
+//        int m = A.numRows;
+//        int n = A.numCols;
+//        DenseMatrix64F B = new DenseMatrix64F(m * n, 1);
+//
+//        for (int i = 0; i < n; ++i){
+//            CommonOps.extract(A, 0, m, i, i+1, B, i * m, 0);
+//        }
+//
+//        return B;
+//    }
 
+//    private DenseMatrix64F sumKronecker(DenseMatrix64F A, DenseMatrix64F B){
+//        int m = A.numCols;
+//        int n = B.numCols;
+//
+//        if (m != A.numRows || n != B.numRows){
+//            throw new RuntimeException("Wrong dimensions in Kronecker sum");
+//        }
+//
+//        DenseMatrix64F C1 = new DenseMatrix64F(m * n, m * n);
+//        DenseMatrix64F C2 = new DenseMatrix64F(m * n, m * n);
+//
+//        DenseMatrix64F I_m = CommonOps.identity(m);
+//        DenseMatrix64F I_n = CommonOps.identity(n);
+//
+//        CommonOps.kron(A, I_n, C1);
+//        CommonOps.kron(I_m, B, C2);
+//        CommonOps.addEquals(C1, C2);
+//
+//        return C1;
+//    }
+
+//    private void unVectorizeSquare(DenseMatrix64F vector, DenseMatrix64F matrix){
+//        int n = matrix.numRows;
+//        if (1 != vector.numCols || n * n != vector.numRows || n != matrix.numCols){
+//            throw new RuntimeException("Wrong dimensions in unVectorizeSquare");
+//        }
+//
+//        for (int i = 0; i < n; ++i){
+//            CommonOps.extract(vector, i * n, (i+1) * n, 0, 1, matrix, 0, i);
+//        }
+//    }
+
+    @Override
     public void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
                                                          final double[] edgeLengths, final double[] optimalRates,
-                                                         final double[] strengthOfSelectionMatrix,
+                                                         final double[] diagonalStrengthOfSelectionMatrix,
+                                                         final double[] rotation,
                                                          int updateCount) {
 
         assert (diffusions != null);
@@ -184,7 +203,10 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
             final int scaledOffset = matrixSize * probabilityIndices[up];
 
-            computeActualization(strengthOfSelectionMatrix, edgeLength, dimTrait, actualizations, scaledOffset);
+
+            double[] diagonalActualizations = new double[matrixSize];
+            computeDiagonalActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait, diagonalActualizations, 0);
+            transformDiagonalMatrixBack(diagonalActualizations, actualizations, scaledOffset, rotation, 0);
         }
 
         if (TIMING) {
@@ -238,16 +260,16 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         precisionLogDet = determinants[precisionIndex];
     }
 
-    private static void computeActualization(final double[] source,
-                                             final double edgeLength,
-                                             final int dim,
-                                             final double[] destination,
-                                             final int destinationOffset) {
-        DenseMatrix64F alphaMatrix = wrap(source, 0, dim, dim);
-        DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
-        scaledMatrixExponential(alphaMatrix, -edgeLength, actualization); // QUESTION: Does this already exist ?
-        unwrap(actualization, destination, destinationOffset);
-    }
+//    private static void computeActualization(final double[] source,
+//                                             final double edgeLength,
+//                                             final int dim,
+//                                             final double[] destination,
+//                                             final int destinationOffset) {
+//        DenseMatrix64F alphaMatrix = wrap(source, 0, dim, dim);
+//        DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
+//        scaledMatrixExponential(alphaMatrix, -edgeLength, actualization); // QUESTION: Does this already exist ?
+//        unwrap(actualization, destination, destinationOffset);
+//    }
 
     private static void computeVarianceBranch(final double[] source,
                                               final int sourceOffset,
@@ -296,23 +318,33 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         unwrap(displacement, destination, destinationOffset);
     }
 
-    private static void scaledMatrixExponential(DenseMatrix64F A, double lambda, DenseMatrix64F C){
-        int n = A.numCols;
-        if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
-        EigenDecomposition eigA = DecompositionFactory.eig(n, true);
-        if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
-        DenseMatrix64F expDiag = CommonOps.identity(n);
-        for (int p = 0; p < n; ++p) {
-            Complex64F ev = eigA.getEigenvalue(p);
-            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
-            expDiag.set(p, p, Math.exp(lambda * ev.real));
-        }
-        DenseMatrix64F V = EigenOps.createMatrixV(eigA);
-        DenseMatrix64F tmp = new DenseMatrix64F(n, n);
-        CommonOps.mult(V, expDiag, tmp);
-        CommonOps.invert(V);
-        CommonOps.mult(tmp, V, C);
-    }
+//    private static void eigenStrengthOfSelectionMatrix(DenseMatrix64F A, EigenDecomposition eigA){
+//        int n = A.numCols;
+//        if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
+////        EigenDecomposition eigA = DecompositionFactory.eig(n, true);
+//        if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
+//        for (int p = 0; p < n; ++p) {
+//            if (!eigA.getEigenvalue(p).isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+//        }
+//    }
+
+//    private static void scaledMatrixExponential(DenseMatrix64F A, double lambda, DenseMatrix64F C){
+//        int n = A.numCols;
+//        if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
+//        EigenDecomposition eigA = DecompositionFactory.eig(n, true);
+//        if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
+//        DenseMatrix64F expDiag = CommonOps.identity(n);
+//        for (int p = 0; p < n; ++p) {
+//            Complex64F ev = eigA.getEigenvalue(p);
+//            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+//            expDiag.set(p, p, Math.exp(lambda * ev.real));
+//        }
+//        DenseMatrix64F V = EigenOps.createMatrixV(eigA);
+//        DenseMatrix64F tmp = new DenseMatrix64F(n, n);
+//        CommonOps.mult(V, expDiag, tmp);
+//        CommonOps.invert(V);
+//        CommonOps.mult(tmp, V, C);
+//    }
 
     @Override
     public void updatePreOrderPartial(
@@ -378,6 +410,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
             System.err.println("precisionOffset = " + precisionOffset);
             System.err.println("\tVdi: " + Vdi);
             System.err.println("\tVdj: " + Vdj);
+            System.err.println("\tPdi: " + Pdi);
+            System.err.println("\tPdj: " + Pdj);
         }
 
         // For each trait // TODO in parallel
@@ -488,6 +522,15 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
             CommonOps.mult(QdiPip, Qdi, QdiPipQdi);
             CommonOps.mult(QdjPjp, Qdj, QdjPjpQdj);
             CommonOps.add(QdiPipQdi, QdjPjpQdj, Pk);
+
+            if (DEBUG) {
+                System.err.println("Qdi: " + Qdi);
+                System.err.println("\tQdiPip: " + QdiPip);
+                System.err.println("\tQdiPipQdi: " + QdiPipQdi);
+                System.err.println("\tQdj: " + Qdj);
+                System.err.println("\tQdjPjp: " + QdjPjp);
+                System.err.println("\tQdjPjpQdj: " + QdjPjpQdj);
+            }
 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
 //            final DenseMatrix64F Vk = matrix5;
@@ -679,8 +722,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
             if (DEBUG) {
                 System.err.println("\t\t\tdeti = " + Math.log(ci.getDeterminant()));
-                System.err.println("\t\t\tdetj = " + Math.log(ci.getDeterminant()));
-                System.err.println("\t\t\tdetk = " + Math.log(ci.getDeterminant()));
+                System.err.println("\t\t\tdetj = " + Math.log(cj.getDeterminant()));
+                System.err.println("\t\t\tdetk = " + Math.log(ck.getDeterminant()));
                 System.err.println("\t\tremainder: " + remainder);
 //                        System.exit(-1);
             }
@@ -707,22 +750,22 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     }
 
     private double[] actualizations;
-    private double[] stationaryVariances;
+//    private double[] stationaryVariances;
     private DenseMatrix64F matrix7;
     private DenseMatrix64F matrix8;
     private DenseMatrix64F matrix9;
     private DenseMatrix64F matrix10;
 
-    public double[] getStationaryVariance(int precisionIndex) {
-
-        assert (stationaryVariances != null);
-
-        final int offset = dimTrait * dimTrait * precisionIndex;
-
-        double[] buffer = new double[dimTrait * dimTrait];
-
-        System.arraycopy(stationaryVariances, offset, buffer, 0, dimTrait * dimTrait);
-
-        return buffer;
-    }
+//    public double[] getStationaryVariance(int precisionIndex) {
+//
+//        assert (stationaryVariances != null);
+//
+//        final int offset = dimTrait * dimTrait * precisionIndex;
+//
+//        double[] buffer = new double[dimTrait * dimTrait];
+//
+//        System.arraycopy(stationaryVariances, offset, buffer, 0, dimTrait * dimTrait);
+//
+//        return buffer;
+//    }
 }

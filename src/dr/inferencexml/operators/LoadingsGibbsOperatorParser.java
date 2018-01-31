@@ -59,7 +59,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String weightTemp = (String) xo.getAttribute(WEIGHT);
         double weight = Double.parseDouble(weightTemp);
-        LatentFactorModelInterface LFM = (LatentFactorModelInterface) xo.getChild(LatentFactorModelInterface.class);
+        LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
         IndependentNormalDistributionModel prior3 = (IndependentNormalDistributionModel) xo.getChild(IndependentNormalDistributionModel.class);

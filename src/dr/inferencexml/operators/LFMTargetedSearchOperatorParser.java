@@ -1,6 +1,5 @@
 package dr.inferencexml.operators;
 
-import com.sun.xml.internal.xsom.impl.scd.Iterators;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;

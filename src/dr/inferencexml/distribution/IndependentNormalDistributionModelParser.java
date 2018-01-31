@@ -1,6 +1,5 @@
 package dr.inferencexml.distribution;
 
-import com.sun.xml.internal.rngom.digested.DDataPattern;
 import dr.inference.distribution.IndependentNormalDistributionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;

@@ -25,7 +25,6 @@
 
 package dr.math.distributions;
 
-import com.sun.tools.doclets.formats.html.NestedClassWriterImpl;
 import dr.math.UnivariateFunction;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MaxIterationsExceededException;

@@ -128,8 +128,8 @@ public class TangHuLuPlot extends ScatterPlot {
 
         int n = xData.getCount();
 
-        double cellWidth = Math.abs(xAxis.getMajorTickSpacing() * xScale);
-        double cellHeight = Math.abs(yAxis.getMajorTickSpacing() * yScale);
+        double cellWidth = Math.abs(xAxis.getMinorTickSpacing() * xScale);
+        double cellHeight = Math.abs(yAxis.getMinorTickSpacing() * yScale);
         double maxDiameter = MIN_CIRCLE_SIZE * 2;
 
         if (n > 1) {

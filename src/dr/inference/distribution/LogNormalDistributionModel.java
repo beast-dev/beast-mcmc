@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.NormalDistribution;
@@ -43,7 +40,8 @@ import org.w3c.dom.Element;
  * @version $Id: LogNormalDistributionModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class LogNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class LogNormalDistributionModel extends AbstractModel implements
+        ParametricDistributionModel, GradientProvider {
 
     public enum Parameterization {
         MU_SIGMA,
@@ -319,7 +317,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
     public double logPdf(double x) {
         if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
-        return NormalDistribution.logPdf(Math.log(x - offset), getMu(), getSigma()) - Math.log(x - offset);
+        double lp = NormalDistribution.logPdf(Math.log(x - offset), getMu(), getSigma()) - Math.log(x - offset);
+        return lp;
     }
 
     public double cdf(double x) {
@@ -364,12 +363,34 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         }
     };
 
+    @Override
+    public int getDimension() { return 1; }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        
+        double[] x;
+        if (obj instanceof double[]) {
+            x = (double[]) obj;
+        } else {
+            x = new double[1];
+            x[0] = (Double) obj;
+        }
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = (NormalDistribution.gradLogPdf(Math.log(x[i]), getMu(), getSigma()) - 1) / x[i];
+        }
+        return result;
+    }
+    
     // *****************************************************************
     // Interface DensityModel
     // *****************************************************************
 
     @Override
     public double logPdf(double[] x) {
+
         return logPdf(x[0]);
     }
 

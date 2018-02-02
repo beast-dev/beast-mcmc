@@ -63,7 +63,12 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Not a gradient provider");
             }
 
-            throw new RuntimeException("Not yet implemented");
+            final GradientProvider provider = (GradientProvider) dl.getDistribution();
+            final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
+            // TODO Ensure that parameter and data inside provider are the same
+
+            return new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, dl);
         }
     }
 
@@ -71,9 +76,12 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
                 new XORRule(
-                        new ElementRule(DistributionLikelihood.class),
-                        new ElementRule(MultivariateDistributionLikelihood.class)
+                        new ElementRule(MultivariateDistributionLikelihood.class),
+                        new AndRule(
+                                new ElementRule(DistributionLikelihood.class),
+                                new ElementRule(Parameter.class)
                         )
+                )
         };
     }
 

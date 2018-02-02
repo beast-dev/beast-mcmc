@@ -42,12 +42,21 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="true">
-		<multivariateDiffusionModel idref="diffusionModel"/>
+	<repeatedMeasuresModel id="repeatedMeasures" traitName="X">
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
+		<samplingPrecision>
+			<parameter id="gamma" value="1 1"/>
+		</samplingPrecision>
+		<multivariateDiffusionModel idref="diffusionModel"/>
+	</repeatedMeasuresModel>
+
+	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="true">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<repeatedMeasuresModel idref="repeatedMeasures"/>
      	<conjugateRootPrior>
             <meanParameter>
                 <parameter value="-3.0 -1.0"/>

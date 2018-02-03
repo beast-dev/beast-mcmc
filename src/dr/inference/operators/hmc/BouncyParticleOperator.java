@@ -70,12 +70,12 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         WrappedVector position = getInitialPosition();
         WrappedVector velocity = drawInitialVelocity();
-        WrappedVector gradient = getInitialGradient();
+        WrappedVector gradient = getInitialGradient(mask);
 
         double remainingTime = drawTotalTravelTime();
         while (remainingTime > 0) {
 
-            ReadableVector Phi_v = getPrecisionProduct(velocity);
+            ReadableVector Phi_v = getPrecisionProduct(velocity,mask);
 
             double v_Phi_x = - innerProduct(velocity, gradient);
             double v_Phi_v = innerProduct(velocity, Phi_v);
@@ -163,9 +163,9 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double ggDivM = innerProduct(gradient, gDivM);
 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
-            if (mask == null || mask.getParameterValue(i) != 0.0) {
+            //if (mask == null || mask.getParameterValue(i) != 0.0) {
                 velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
-            }
+            //}
         }
     }
 
@@ -189,9 +189,15 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
     
-    private WrappedVector getInitialGradient() {
+    private WrappedVector getInitialGradient(Parameter mask) {
 
         double[] gradient = gradientProvider.getGradientLogDensity();
+
+        for (int i = 0, len = gradient.length; i < len; i++) {
+            if (mask != null && mask.getParameterValue(i) == 0.0) {
+                gradient[i] = 0.0;
+            }
+        }
         return new WrappedVector.Raw(gradient);
     }
 
@@ -207,11 +213,17 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return sum;
     }
 
-    private ReadableVector getPrecisionProduct(ReadableVector velocity) {
+    private ReadableVector getPrecisionProduct(ReadableVector velocity, Parameter mask) {
 
         setParameter(velocity);
 
         double[] product = productProvider.getProduct(parameter);
+
+        for (int i = 0, len = product.length; i < len; i++) {
+            if (mask != null && mask.getParameterValue(i) == 0.0) {
+                product[i] = 0.0;
+            }
+        }
 
         return new WrappedVector.Raw(product);
     }

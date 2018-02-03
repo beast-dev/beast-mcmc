@@ -31,6 +31,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
+import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
 import java.util.List;
@@ -48,9 +50,8 @@ public class RepeatedMeasuresTraitDataModel extends
                                           List<Integer> missingIndices,
                                           boolean useMissingIndices,
                                           final int dimTrait,
-                                          PrecisionType precisionType,
                                           Parameter samplingPrecision) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, precisionType);
+        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.samplingPrecision = samplingPrecision;
 
         if (samplingPrecision.getDimension() != dimTrait) {
@@ -60,12 +61,15 @@ public class RepeatedMeasuresTraitDataModel extends
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
+
+        assert (numTraits == 1);
+
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
 
-        // TODO Deflate partial precision by samplingPrecision
+        WrappedVector mean = new WrappedVector.Raw(partial, 0, dimTrait);
+        WrappedMatrix precision = new WrappedMatrix.Raw(partial, dimTrait, dimTrait, dimTrait);
 
-        // Notes: partial lay-out:  0, ..., dim - 1 : mean
-        //                          dim, ..., dim * dim + dim - 1 : precision
+        // TODO Deflate partial precision by samplingPrecision
 
         return partial;
     }
@@ -110,7 +114,6 @@ public class RepeatedMeasuresTraitDataModel extends
                     missingIndices,
                     true,
                     diffusionModel.getPrecisionParameter().getRowDimension(),
-                    PrecisionType.FULL,
                     samplingPrecision
             );
         }

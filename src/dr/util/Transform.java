@@ -852,7 +852,7 @@ public interface Transform {
         }
 
         public boolean equivalent(ParsedTransform other) {
-            if (start == other.start && end == other.end && every == other.every && parameters == parameters) {
+            if (start == other.start && end == other.end && every == other.every && parameters == other.parameters) {
                 return true;
             } else {
                 return false;

@@ -478,7 +478,7 @@ public interface Plot {
          */
         protected double transformX(double value) {
             double tx = xAxis.transform(value + xLocation);
-            if (tx == Double.NaN || tx == Double.NEGATIVE_INFINITY) {
+            if (Double.isNaN(tx) || tx == Double.NEGATIVE_INFINITY) {
                 return Double.NEGATIVE_INFINITY;
             }
             return ((tx - xAxis.transform(xAxis.getMinAxis())) * xScale) + xOffset;
@@ -489,7 +489,7 @@ public interface Plot {
          */
         protected double transformY(double value) {
             double ty = yAxis.transform(value + yLocation);
-            if (ty == Double.NaN || ty == Double.NEGATIVE_INFINITY) {
+            if (Double.isNaN(ty) || ty == Double.NEGATIVE_INFINITY) {
                 return Double.NEGATIVE_INFINITY;
             }
             return ((ty - yAxis.transform(yAxis.getMinAxis())) * yScale) + yOffset;

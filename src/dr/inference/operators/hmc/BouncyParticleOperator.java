@@ -70,12 +70,12 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         WrappedVector position = getInitialPosition();
         WrappedVector velocity = drawInitialVelocity();
-        WrappedVector gradient = getInitialGradient(mask);
+        WrappedVector gradient = getInitialGradient();
 
         double remainingTime = drawTotalTravelTime();
         while (remainingTime > 0) {
 
-            ReadableVector Phi_v = getPrecisionProduct(velocity,mask);
+            ReadableVector Phi_v = getPrecisionProduct(velocity);
 
             double v_Phi_x = - innerProduct(velocity, gradient);
             double v_Phi_v = innerProduct(velocity, Phi_v);
@@ -189,7 +189,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
     
-    private WrappedVector getInitialGradient(Parameter mask) {
+    private WrappedVector getInitialGradient() {
 
         double[] gradient = gradientProvider.getGradientLogDensity();
 
@@ -213,7 +213,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return sum;
     }
 
-    private ReadableVector getPrecisionProduct(ReadableVector velocity, Parameter mask) {
+    private ReadableVector getPrecisionProduct(ReadableVector velocity) {
 
         setParameter(velocity);
 

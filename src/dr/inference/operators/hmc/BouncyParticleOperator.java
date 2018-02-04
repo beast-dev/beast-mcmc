@@ -163,9 +163,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double ggDivM = innerProduct(gradient, gDivM);
 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
-            //if (mask == null || mask.getParameterValue(i) != 0.0) {
-                velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
-            //}
+            velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
         }
     }
 
@@ -193,12 +191,20 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         double[] gradient = gradientProvider.getGradientLogDensity();
 
-        for (int i = 0, len = gradient.length; i < len; i++) {
-            if (mask != null && mask.getParameterValue(i) == 0.0) {
-                gradient[i] = 0.0;
-            }
+        if (mask != null) {
+            applyMask(gradient);
         }
+
         return new WrappedVector.Raw(gradient);
+    }
+
+    private void applyMask(double[] vector) {
+
+        assert (vector.length == mask.getDimension());
+
+        for (int i = 0, len = vector.length; i < len; ++i) {
+            vector[i] *= mask.getParameterValue(i);
+        }
     }
 
     private double innerProduct(ReadableVector x, ReadableVector y) {
@@ -219,10 +225,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         double[] product = productProvider.getProduct(parameter);
 
-        for (int i = 0, len = product.length; i < len; i++) {
-            if (mask != null && mask.getParameterValue(i) == 0.0) {
-                product[i] = 0.0;
-            }
+        if (mask != null) {
+            applyMask(product);
         }
 
         return new WrappedVector.Raw(product);
@@ -234,11 +238,13 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = velocity.length; i < len; i++) {
-            double draw = (mask != null && mask.getParameterValue(i) == 0.0) ?
-                    0.0 :
-                    (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
-            velocity[i] = draw;
+            velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
         }
+
+        if (mask != null) {
+            applyMask(velocity);
+        }
+
         return new WrappedVector.Raw(velocity);
     }
 

@@ -295,7 +295,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         return new Preconditioning(
                 new WrappedVector.Raw(mass),
-                0.05
+                20
         );
     }
 

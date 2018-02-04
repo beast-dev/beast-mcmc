@@ -236,13 +236,13 @@
         <!--<matrixParameter idref="precision"/>-->
         <!--</precisionGibbsOperator>-->
 
-        <!--<precisionGibbsOperator weight="1">-->
-            <!--<wishartStatistics  traitName="trait">-->
-                <!--<traitDataLikelihood idref="scalarLikelihood"/>-->
-            <!--</wishartStatistics>-->
-            <!--<multivariateWishartPrior idref="precisionPrior"/>-->
-            <!--<matrixParameter idref="precision"/>-->
-        <!--</precisionGibbsOperator>-->
+        <precisionGibbsOperator weight="1">
+            <wishartStatistics  traitName="trait">
+                <traitDataLikelihood idref="scalarLikelihood"/>
+            </wishartStatistics>
+            <multivariateWishartPrior idref="precisionPrior"/>
+            <matrixParameter idref="precision"/>
+        </precisionGibbsOperator>
 
 
 

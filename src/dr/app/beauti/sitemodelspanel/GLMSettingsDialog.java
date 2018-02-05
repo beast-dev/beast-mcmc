@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.TraitData;
@@ -40,13 +40,13 @@ public class GLMSettingsDialog  {
 
     private final BeautiFrame frame;
 
-//    private final GLMSettingsPanel glmSettingsPanel;
+    private final GLMSettingsPanel glmSettingsPanel;
     private TraitData trait;
 
     public GLMSettingsDialog(BeautiFrame frame) {
         this.frame = frame;
 
-//        glmSettingsPanel = new GLMSettingsPanel(frame);
+        glmSettingsPanel = new GLMSettingsPanel(frame);
 
     }
 
@@ -57,14 +57,14 @@ public class GLMSettingsDialog  {
      */
     public void setTrait(final TraitData trait) {
         this.trait = trait;
-//        glmSettingsPanel.setTrait(trait);
+        glmSettingsPanel.setTrait(trait);
     }
 
     public int showDialog() {
 
         JPanel panel = new JPanel(new BorderLayout(0, 6));
         panel.add(new JLabel("Set GLM design for " + trait), BorderLayout.NORTH);
-//        panel.add(glmSettingsPanel, BorderLayout.CENTER);
+        panel.add(glmSettingsPanel, BorderLayout.CENTER);
 
         JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
@@ -83,19 +83,19 @@ public class GLMSettingsDialog  {
 
         final JDialog dialog = optionPane.createDialog(frame, "GLM settings for " + trait);
 
-//        glmSettingsPanel.setDialog(dialog);
+        glmSettingsPanel.setDialog(dialog);
 
         if (OSType.isMac()) {
             dialog.setMinimumSize(new Dimension(dialog.getBounds().width, 300));
         } else {
             Toolkit tk = Toolkit.getDefaultToolkit();
             Dimension d = tk.getScreenSize();
-//            if (d.height < 700 && glmSettingsPanel.getHeight() > 450) {
-//                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, 550));
-//            } else {
-//                // setSize because optionsPanel is shrunk in dialog
-//                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, glmSettingsPanel.getHeight() + 100));
-//            }
+            if (d.height < 700 && glmSettingsPanel.getHeight() > 450) {
+                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, 550));
+            } else {
+                // setSize because optionsPanel is shrunk in dialog
+                dialog.setSize(new Dimension(glmSettingsPanel.getWidth() + 100, glmSettingsPanel.getHeight() + 100));
+            }
 
 //            System.out.println("panel width = " + panel.getWidth());
 //            System.out.println("panel height = " + panel.getHeight());

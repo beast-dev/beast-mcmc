@@ -56,7 +56,7 @@ import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.priorspanel.DefaultPriorTableDialog;
 import dr.app.beauti.priorspanel.PriorsPanel;
-//import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
+import dr.app.beauti.sitemodelspanel.SiteModelsPanel;
 import dr.app.beauti.taxonsetspanel.SpeciesSetPanel;
 import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
@@ -120,7 +120,7 @@ public class BeautiFrame extends DocumentFrame {
     private TraitsPanel traitsPanel;
     private TaxonSetPanel taxonSetPanel;
     private SpeciesSetPanel speciesSetPanel;
-//    private SiteModelsPanel siteModelsPanel;
+    private SiteModelsPanel siteModelsPanel;
     private AncestralStatesPanel ancestralStatesPanel;
     private ClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
@@ -184,7 +184,7 @@ public class BeautiFrame extends DocumentFrame {
         traitsPanel = new TraitsPanel(this, dataPanel, getImportTraitsAction());
         taxonSetPanel = new TaxonSetPanel(this);
         speciesSetPanel = new SpeciesSetPanel(this);
-//        siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
+        siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         ancestralStatesPanel = new AncestralStatesPanel(this);
         clockModelsPanel = new ClockModelsPanel(this);
 //        clockmodelspanel = new OldClockModelsPanel(this);
@@ -216,7 +216,7 @@ public class BeautiFrame extends DocumentFrame {
                 "Import and organize continuous and discrete traits <br>" +
                 "for taxa, convert them into data partitions for evolutionary<br>" +
                 "analysis.</html>");
-//        tabbedPane.addTab(SITE_MODELS, siteModelsPanel);
+        tabbedPane.addTab(SITE_MODELS, siteModelsPanel);
         tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Select evolutionary models to be used for each data <br>" +
                 "partition including substitution models, codon partitioning<br>" +
@@ -331,7 +331,7 @@ public class BeautiFrame extends DocumentFrame {
             } else {
                 taxonSetPanel.setOptions(options);
             }
-//            siteModelsPanel.setOptions(options);
+            siteModelsPanel.setOptions(options);
             clockModelsPanel.setOptions(options);
             treesPanel.setOptions(options);
             ancestralStatesPanel.setOptions(options);
@@ -368,7 +368,7 @@ public class BeautiFrame extends DocumentFrame {
             } else {
                 taxonSetPanel.getOptions(options);
             }
-//            siteModelsPanel.getOptions(options);
+            siteModelsPanel.getOptions(options);
             clockModelsPanel.getOptions(options);
             treesPanel.getOptions(options);
             ancestralStatesPanel.getOptions(options);

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
@@ -511,11 +511,11 @@ public class PartitionModelPanel extends OptionsPanel {
      */
     public void setOptions() {
 
-//        if (SiteModelsPanel.DEBUG) {
-//            String modelName = (model == null) ? "null" : model.getName();
-//            Logger.getLogger("dr.app.beauti").info(
-//                    "ModelsPanel.setModelOptions(" + modelName + ")");
-//        }
+        if (SiteModelsPanel.DEBUG) {
+            String modelName = (model == null) ? "null" : model.getName();
+            Logger.getLogger("dr.app.beauti").info(
+                    "ModelsPanel.setModelOptions(" + modelName + ")");
+        }
 
         if (model == null) {
             return;

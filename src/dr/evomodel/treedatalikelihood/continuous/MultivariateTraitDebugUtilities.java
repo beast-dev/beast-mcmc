@@ -30,9 +30,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
 import dr.math.KroneckerOperation;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
@@ -361,5 +360,46 @@ public class MultivariateTraitDebugUtilities {
         }
 
         return drift;
+    }
+
+    public static Matrix getJointVarianceFactor(final Tree tree, final double normalization,
+                                                final double priorSampleSize, final TreeDataLikelihood callbackLikelihood,
+                                                Matrix diffusionVariance, StringBuilder sb, DiffusionProcessDelegate diffusionProcessDelegate,
+                                                Matrix Lt) {
+        if (diffusionProcessDelegate instanceof OrnsteinUhlenbeckDiffusionModelDelegate
+                || diffusionProcessDelegate instanceof DiagonalOrnsteinUhlenbeckDiffusionModelDelegate) {
+
+            double[][] jointVariance = MultivariateTraitDebugUtilities.getJointVariance(tree, normalization,
+                    priorSampleSize, callbackLikelihood, diffusionVariance, sb, diffusionProcessDelegate);
+            Matrix jointVarianceMatrix = new Matrix(jointVariance);
+
+            double[][] identity = KroneckerOperation.makeIdentityMatrixArray(tree.getExternalNodeCount());
+            Matrix loadingsTree = new Matrix(KroneckerOperation.product(identity, Lt.toComponents()));
+
+            Matrix loadingsFactorsVariance = null;
+            try {
+                loadingsFactorsVariance = loadingsTree.product(jointVarianceMatrix.product(loadingsTree.transpose()));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+            return loadingsFactorsVariance;
+
+        } else {
+            Matrix loadingsVariance = null;
+            try {
+                loadingsVariance = Lt.product(diffusionVariance.product(Lt.transpose()));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+            sb.append("Loadings variance:\n");
+            sb.append(loadingsVariance);
+            sb.append("\n\n");
+
+            assert loadingsVariance != null;
+            double[][] jointVariance = MultivariateTraitDebugUtilities.getJointVariance(tree, normalization,
+                    priorSampleSize, callbackLikelihood, loadingsVariance, sb, diffusionProcessDelegate);
+            Matrix loadingsFactorsVariance = new Matrix(jointVariance);
+            return loadingsFactorsVariance;
+        }
     }
 }

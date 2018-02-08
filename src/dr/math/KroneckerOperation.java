@@ -120,7 +120,7 @@ public class KroneckerOperation {
         }
     }
 
-    private static double[][] makeIdentityMatrixArray(int dim) {
+    public static double[][] makeIdentityMatrixArray(int dim) {
         double[][] out = new double[dim][dim];
         for (int i = 0; i < dim; i++) {
             out[i][i] = 1.0;

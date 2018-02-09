@@ -315,6 +315,12 @@ public class MultivariateTraitDebugUtilities {
         final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
         final double[][] drift = new double[tree.getExternalNodeCount()][dim];
 
+        if (diffusion instanceof HomogeneousDiffusionModelDelegate) {
+            for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
+                drift[tip] = priorMean;
+            }
+        }
+
         if (diffusion instanceof DriftDiffusionModelDelegate) {
             for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
                 drift[tip] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(

@@ -900,6 +900,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
+    public void addWrappedFullConditionalDensityTrait(String traitName) {
+
+        ProcessSimulationDelegate gradientDelegate = new WrappedTipFullConditionalDistributionDelegate(traitName,
+                getCallbackLikelihood().getTree(),
+                getDiffusionModel(),
+                getDataModel(), getRootPrior(),
+                getRateTransformation(), this);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
+
+        getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
+    }
+
     void addBranchConditionalDensityTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new BranchConditionalDistributionDelegate(traitName,

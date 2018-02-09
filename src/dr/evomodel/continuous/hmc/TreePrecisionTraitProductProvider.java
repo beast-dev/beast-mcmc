@@ -67,6 +67,13 @@ public abstract class TreePrecisionTraitProductProvider implements PrecisionMatr
         return result;
     }
 
+    void debug(double[] result, Parameter vector) {
+        double[] result2 = expensiveProduct(vector);
+        System.err.println("via FCD: " + new WrappedVector.Raw(result));
+        System.err.println("direct : " + new WrappedVector.Raw(result2));
+        System.err.println();
+    }
+
     @Override
     public String getReport() {
         double[] result = getProduct(dataParameter);

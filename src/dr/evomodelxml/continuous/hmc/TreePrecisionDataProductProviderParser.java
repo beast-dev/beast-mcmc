@@ -26,8 +26,8 @@
 package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.continuous.hmc.CubicOrderTreePrecisionTraitProductProvider;
+import dr.evomodel.continuous.hmc.OldLinearOrderTreePrecisionTraitProductProvider;
 import dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider;
-import dr.evomodel.continuous.hmc.NewLinearOrderTreePrecisionTraitProductProvider;
 import dr.evomodel.continuous.hmc.TreePrecisionTraitProductProvider;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -87,8 +87,8 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
         String mode = xo.getAttribute(MODE, "linear");
         if (mode.toLowerCase().compareTo("cubic") == 0) {
             return new CubicOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData);
-        } else if (mode.toLowerCase().compareTo("new") == 0) {
-            return new NewLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
+        } else if (mode.toLowerCase().compareTo("old") == 0) {
+            return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
             return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         }

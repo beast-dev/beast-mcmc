@@ -64,6 +64,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String FIRE_TREE_EVENTS = "fireTreeEvents";
     public static final String FIX_HEIGHTS = "fixHeights";
     public static final String FIX_TREE = "fixTree";
+    private static final String SIGNAL_COMPONENTS = "signalComponents";
 
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
@@ -77,6 +78,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
                     AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
                     AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
+                    AttributeRule.newBooleanRule(SIGNAL_COMPONENTS, true, "Whether to fire matrix element change events"),
                     AttributeRule.newBooleanRule(AS_MATRIX, true, "Whether to return parameter as a matrix"),
                     new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
             }, 0, Integer.MAX_VALUE);
@@ -274,6 +276,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
         boolean fireTreeEvents = cxo.getAttribute(FIRE_TREE_EVENTS, false);
         boolean asMatrix = cxo.getAttribute(AS_MATRIX, false);
+        boolean signalComponents = cxo.getAttribute(SIGNAL_COMPONENTS, true);
         String name = cxo.getAttribute(NAME, "trait");
         int dim = cxo.getAttribute(MULTIVARIATE_TRAIT, 1);
 
@@ -287,7 +290,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         }
 
         Parameter newParameter = asMatrix ?
-                treeModel.createNodeTraitsParameterAsMatrix(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents) :
+                treeModel.createNodeTraitsParameterAsMatrix(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents, signalComponents) :
                 treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents);
 
         ParameterParser.replaceParameter(cxo, newParameter);

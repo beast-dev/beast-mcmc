@@ -3,7 +3,7 @@
 
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">10 11</attr>
+			<attr name="X">10 NA</attr>
 		</taxon>
 		<taxon id="B">
 			<attr name="X">2 3</attr>
@@ -48,7 +48,7 @@
 			<parameter idref="leafTraits"/>
 		</traitParameter>
 		<samplingPrecision>
-			<parameter id="gamma" value="1 1"/>
+			<parameter id="gamma" value="2 3"/>
 		</samplingPrecision>
 		<multivariateDiffusionModel idref="diffusionModel"/>
 	</repeatedMeasuresModel>

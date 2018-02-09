@@ -68,6 +68,7 @@ public class RepeatedMeasuresTraitDataModel extends
 
         WrappedVector mean = new WrappedVector.Raw(partial, 0, dimTrait);
         WrappedMatrix precision = new WrappedMatrix.Raw(partial, dimTrait, dimTrait, dimTrait);
+        WrappedMatrix variance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
         // TODO Deflate partial precision by samplingPrecision
 

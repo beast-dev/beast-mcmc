@@ -63,11 +63,6 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
 
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
-//        Parameter mask = null;
-//        if (xo.hasChildNamed(MASKING)) {
-//            mask = (Parameter) xo.getElementFirstChild(MASKING);
-//        }
-
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
         if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {

@@ -26,10 +26,14 @@
 package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
@@ -37,7 +41,8 @@ import dr.xml.Reportable;
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
-public abstract class TreePrecisionTraitProductProvider implements PrecisionMatrixVectorProductProvider, Reportable {
+public abstract class TreePrecisionTraitProductProvider extends AbstractModel
+        implements PrecisionMatrixVectorProductProvider, Reportable {
 
     final Tree tree;
     final Parameter dataParameter;
@@ -47,14 +52,45 @@ public abstract class TreePrecisionTraitProductProvider implements PrecisionMatr
     TreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
                                              ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 
+        super("treePrecisionTraitProductProvider");
+
         this.tree = treeDataLikelihood.getTree();
         this.dataParameter = likelihoodDelegate.getDataModel().getParameter();
         this.likelihoodDelegate = likelihoodDelegate;
         this.dimTrait = likelihoodDelegate.getTraitDim();
+
+        if (tree instanceof TreeModel) {
+            addModel((TreeModel) tree);
+        }
     }
 
-    double[] expensiveProduct(Parameter vector) {
-        double[][] treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // Do nothing
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        // Do nothing
+    }
+
+    @Override
+    protected void storeState() {
+        // Do nothing
+    }
+
+    @Override
+    protected void restoreState() {
+        // Do nothing
+    }
+
+    @Override
+    protected void acceptState() {
+        // Do nothing
+    }
+
+    double[] expensiveProduct(Parameter vector, double[][] treeTraitPrecision) {
+
         int dim = treeTraitPrecision.length;
         double[] result = new double[dim];
         for (int row = 0; row < dim; ++row) {
@@ -68,7 +104,7 @@ public abstract class TreePrecisionTraitProductProvider implements PrecisionMatr
     }
 
     void debug(double[] result, Parameter vector) {
-        double[] result2 = expensiveProduct(vector);
+        double[] result2 = expensiveProduct(vector, likelihoodDelegate.getTreeTraitPrecision());
         System.err.println("via FCD: " + new WrappedVector.Raw(result));
         System.err.println("direct : " + new WrappedVector.Raw(result2));
         System.err.println();

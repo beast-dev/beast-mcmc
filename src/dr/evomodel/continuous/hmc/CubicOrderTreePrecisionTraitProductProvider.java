@@ -2,6 +2,7 @@ package dr.evomodel.continuous.hmc;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 /**
@@ -12,11 +13,12 @@ public class CubicOrderTreePrecisionTraitProductProvider extends TreePrecisionTr
     public CubicOrderTreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
                                                        ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(treeDataLikelihood, likelihoodDelegate);
+        this.isPrecisionKnown = false;
     }
 
     @Override
     public double[] getProduct(Parameter vector) {
-        return expensiveProduct(vector);
+        return expensiveProduct(vector, getTreeTraitPrecision());
     }
 
     @Override
@@ -31,7 +33,6 @@ public class CubicOrderTreePrecisionTraitProductProvider extends TreePrecisionTr
         }
 
         return mass;
-
     }
 
     @Override
@@ -48,4 +49,57 @@ public class CubicOrderTreePrecisionTraitProductProvider extends TreePrecisionTr
 
         return Math.sqrt(max);
     }
+
+    private double[][] getTreeTraitPrecision() {
+
+        if (!DO_CACHE) {
+            treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
+        } else if (!isPrecisionKnown) {
+            treeTraitPrecision = likelihoodDelegate.getTreeTraitPrecision();
+            isPrecisionKnown = true;
+        }
+
+        return treeTraitPrecision;
+    }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == tree) {
+            isPrecisionKnown = false;
+        }
+    }
+
+    @Override
+    protected void storeState() {
+        if (DO_CACHE) {
+            final int dim = treeTraitPrecision.length;
+            if (savedTreeTraitPrecision == null) {
+                savedTreeTraitPrecision = new double[dim][dim];
+            }
+
+            for (int i = 0; i < dim; ++i) {
+                System.arraycopy(treeTraitPrecision[i], 0, savedTreeTraitPrecision[i], 0, dim);
+            }
+
+            savedIsPrecisionKnown = isPrecisionKnown;
+        }
+    }
+
+    @Override
+    protected void restoreState() {
+        if (DO_CACHE) {
+            double[][] tmp = treeTraitPrecision;
+            treeTraitPrecision = savedTreeTraitPrecision;
+            savedTreeTraitPrecision = tmp;
+
+            isPrecisionKnown = savedIsPrecisionKnown;
+        }
+    }
+
+    private static final boolean DO_CACHE = true;
+
+    private boolean isPrecisionKnown;
+    private boolean savedIsPrecisionKnown;
+    private double[][] treeTraitPrecision;
+    private double[][] savedTreeTraitPrecision;
 }

@@ -71,10 +71,10 @@ public class RepeatedMeasuresTraitDataModel extends
         WrappedMatrix variance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
         // TODO Deflate partial precision by samplingPrecision
-        variance.set(0, 0, variance.get(0, 0) + samplingPrecision.getParameterValue(0));
-        variance.set(1, 1, variance.get(1, 1) + samplingPrecision.getParameterValue(1));
-        precision.set(0, 0, 1.0 / variance.get(0));
-        precision.set(1, 1, 1.0 / variance.get(3));
+        for (int i = 0; i< dimTrait; i++){
+            variance.set(i, i, variance.get(i, i) + samplingPrecision.getParameterValue(i));
+            precision.set(i, i, 1.0 / variance.get(i, i));
+        }
 
         return partial;
     }

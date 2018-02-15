@@ -50,6 +50,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String MASKING = MaskedParameterParser.MASKING;
     private static final String MODE = "mode";
+    private static final String THREAD_COUNT = "threadCount";
 
     @Override
     public String getParserName() {
@@ -80,12 +81,15 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
                                                                 ContinuousDataLikelihoodDelegate continuousData,
                                                                 String traitName) throws XMLParseException {
         String mode = xo.getAttribute(MODE, "linear");
+        int threadCount = xo.getAttribute(THREAD_COUNT, 0);
+
         if (mode.toLowerCase().compareTo("cubic") == 0) {
             return new CubicOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData);
         } else if (mode.toLowerCase().compareTo("old") == 0) {
             return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
-            return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
+            return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName,
+                    threadCount);
         }
     }
 
@@ -97,6 +101,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
             AttributeRule.newStringRule(MODE, true),
+            AttributeRule.newIntegerRule(THREAD_COUNT, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(MASKING,
                     new XMLSyntaxRule[]{

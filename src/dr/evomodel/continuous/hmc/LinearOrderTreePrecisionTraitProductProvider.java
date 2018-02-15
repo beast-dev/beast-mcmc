@@ -9,6 +9,7 @@ import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -18,11 +19,15 @@ import java.util.concurrent.*;
 public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionTraitProductProvider {
 
     private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
+
     private static final boolean DEBUG = false;
+    private static final boolean NEW_DATA = false; // Maybe not useful
+    private static final boolean SMART_POOL = true;
 
     public LinearOrderTreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                                        String traitName) {
+                                                        String traitName,
+                                                        int threadCount) {
         super(treeDataLikelihood, likelihoodDelegate);
 
         String fcdName = WrappedTipFullConditionalDistributionDelegate.getName(traitName);
@@ -34,23 +39,9 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         this.delta = new double[tree.getExternalNodeCount()][dimTrait];
 
-
-//        int threadCount = 0;
-//        if (threadCount > 0) {
-//            pool = Executors.newFixedThreadPool(threadCount);
-//        } else if (threadCount < 0) {
-//            // create a cached thread pool which should create one thread per likelihood...
-//            pool = Executors.newCachedThreadPool();
-//        } else {
-//            // don't use a threadpool (i.e., compute serially)
-//            pool = null;
-//        }
-
-        this.doParallel = false;
-
+        setupParallelServices(tree.getExternalNodeCount(), threadCount);
     }
 
-    private static final boolean NEW_DATA = false; // Maybe not useful
 
     @Override
     public double[] getProduct(Parameter vector) {
@@ -61,7 +52,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         final double[] result = new double[vector.getDimension()];
 
-        if (!doParallel) { // single-threaded
+        if (pool == null) { // single-threaded
 
             final List<WrappedMeanPrecision> allStatistics;
             if (NEW_DATA) {
@@ -88,47 +79,42 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
             final List<WrappedMeanPrecision> allStatistics = fullConditionalDensity.getTrait(tree, null);
             assert (allStatistics.size() == tree.getExternalNodeCount());
 
+            List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
-//            try {
-//                List<Future<Integer>> results = pool.invokeAll(likelihoodCallers);
-//
-//                for (Future<Double> result : results) {
-//                    double logL = result.get();
-//                    logLikelihood += logL;
-//                }
-//
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            } catch (ExecutionException e) {
-//                e.printStackTrace();
-//            }
+            if (SMART_POOL) {
 
+                for (final TaskIndices indices : taskIndices) {
+                    calls.add(Executors.callable(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    for (int taxon = indices.start; taxon < indices.stop; ++taxon) {
+                                        computeProductForOneTaxon(taxon, allStatistics.get(taxon), result);
+                                    }
+                                }
+                            }
+                    ));
+                }
 
-            int threadCount = 4;
+            } else {
 
-            ExecutorService es = Executors.newFixedThreadPool(threadCount);
+                for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
 
-            for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
+                    final int t = taxon;
+                    calls.add(Executors.callable(
+                            new Runnable() {
+                                public void run() {
+                                    computeProductForOneTaxon(t, allStatistics.get(t), result);
+                                }
+                            }
+                    ));
+                }
+            }
 
-                final int t = taxon;
-//
-//                    es.execute(new Runnable() {
-//                        public void run() {
-                            computeProductForOneTaxon(t, allStatistics.get(t), result);
-//                        }
-//                    });
-
-//                try {
-//                    es.submit(new Callable<Integer>() {
-//                        public Integer call() {
-//                            return computeProductForOneTaxon(t, allStatistics.get(t), result);
-//                        }
-//                    }).get();
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                } catch (ExecutionException e) {
-//                    e.printStackTrace();
-//                }
+            try {
+                pool.invokeAll(calls);
+            } catch (InterruptedException exception) {
+                exception.printStackTrace();
             }
         }
 
@@ -139,7 +125,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         return result;
     }
 
-    private int computeProductForOneTaxon(final int taxon,
+    private void computeProductForOneTaxon(final int taxon,
                                           final WrappedMeanPrecision statistic,
                                           final double[] result) {
 
@@ -150,8 +136,6 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         computeDelta(taxon, delta[taxon], dataParameter, mean);
         computePrecisionDeltaProduct(result, resultOffset, precision, delta[taxon], scalar);
-
-        return 1;
     }
 
     private static void computeDelta(final int taxon,
@@ -173,7 +157,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         for (int i = 0; i < dim; ++i) {
             double sum = 0.0;
             for (int j = 0; j < dim; ++j) {
-                sum +=  precision.get(i, j) * delta[j];
+                sum += precision.get(i, j) * delta[j];
             }
             result[offset] = sum * scalar;
             ++offset;
@@ -195,7 +179,51 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         return trait;
     }
 
-    private final boolean doParallel;
-//    private final ExecutorService pool;
+    private void setupParallelServices(int taxonCount, int threadCount) {
+        if (threadCount > 0) {
+            pool = Executors.newFixedThreadPool(threadCount);
+        } else if (threadCount < 0) {
+            pool = Executors.newCachedThreadPool();
+        } else {
+            pool = null;
+        }
+
+        taskIndices = (pool != null) ? setupTasks(taxonCount, threadCount) : null;
+    }
+
+    private List<TaskIndices> setupTasks(int taxonCount, int threadCount) {
+        List<TaskIndices> tasks = new ArrayList<TaskIndices>(threadCount);
+
+        int length = taxonCount / threadCount;
+        if (taxonCount % threadCount != 0) ++length;
+
+        int start = 0;
+
+        for (int task = 0; task < threadCount && start < taxonCount; ++task) {
+            tasks.add(new TaskIndices(start, Math.min(start + length, taxonCount)));
+            start += length;
+        }
+
+        return tasks;
+    }
+
+    private class TaskIndices {
+        int start;
+        int stop;
+
+        TaskIndices(int start, int stop) {
+            this.start = start;
+            this.stop = stop;
+        }
+
+        public String toString() {
+            return start + " " + stop;
+        }
+    }
+
+    private ExecutorService pool = null;
+    private List<TaskIndices> taskIndices = null;
+
     private final double[][] delta;
+
 }

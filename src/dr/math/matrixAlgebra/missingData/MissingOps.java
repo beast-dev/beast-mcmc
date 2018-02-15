@@ -1,8 +1,6 @@
 package dr.math.matrixAlgebra.missingData;
 
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.WritableVector;
+import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
@@ -37,6 +35,21 @@ public class MissingOps {
         return DenseMatrix64F.wrap(numRows, numCols, buffer);
     }
 
+    public static DenseMatrix64F copy(ReadableMatrix source) {
+        final int len = source.getDim();
+        double[] buffer = new double[len];
+        for (int i = 0; i < len; ++i) {
+            buffer[i] = source.get(i);
+        }
+        return DenseMatrix64F.wrap(source.getMinorDim(), source.getMajorDim(), buffer);
+    }
+
+    public static void copy(DenseMatrix64F source, WritableMatrix destination) {
+        final int len = destination.getDim();
+        for (int i = 0; i < len; ++i) {
+            destination.set(i, source.get(i));
+        }
+    }
 
     public static void gatherRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
                                                       final int[] rowIndices, final int[] colIndices) {
@@ -136,6 +149,19 @@ public class MissingOps {
                 ++index;
             }
         }
+    }
+
+    public static int countFiniteNonZeroDiagonals(ReadableMatrix source) {
+        final int length = source.getMajorDim();
+
+        int count = 0;
+        for (int i = 0; i < length; ++i) {
+            final double d = source.get(i, i);
+            if (!Double.isInfinite(d) && d != 0.0) {
+                ++count;
+            }
+        }
+        return count;
     }
 
     public static int countFiniteNonZeroDiagonals(DenseMatrix64F source) {
@@ -322,6 +348,29 @@ public class MissingOps {
         return result;
     }
 
+    public static InversionResult safeInvert(ReadableMatrix source, WritableMatrix destination, boolean getDeterminant) {
+
+        final int dim = source.getMajorDim();
+        final int finiteCount = countFiniteNonZeroDiagonals(source);
+        double det = 0;
+
+        if (finiteCount == dim) {
+
+            DenseMatrix64F result = new DenseMatrix64F(dim, dim);
+            DenseMatrix64F copyOfSource = copy(source);
+            if (getDeterminant) {
+                det = invertAndGetDeterminant(copyOfSource, result);
+            } else {
+                CommonOps.invert(copyOfSource, result);
+            }
+
+            copy(result, destination);
+
+            return new InversionResult(FULLY_OBSERVED, dim, det);
+        }
+
+        return null;
+    }
 
     public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 

@@ -52,18 +52,27 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     }
 
     @Override
-    public void setupStatistics() {
+    public void simulate(final int[] operations, final int operationCount,
+                         final int rootNodeNumber) {
+
+        super.simulate(operations, operationCount, rootNodeNumber); // TODO Should override this to compute pre-order partials
+
         // TODO
+    }
+
+    @Override
+    public void setupStatistics() {
+        throw new RuntimeException("Not used (?) with BEAGLE");
     }
 
     @Override
     protected void simulateRoot(int rootNumber) {
-        // TODO
+        throw new RuntimeException("Not used with BEAGLE");
     }
 
     @Override
     protected void simulateNode(int v0, int v1, int v2, int v3, int v4) {
-        // TODO
+        throw new RuntimeException("Not used with BEAGLE");
     }
 
     @Override
@@ -91,9 +100,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     public double[] getTrait(Tree tree, NodeRef node) {
 
         assert (tree == this.tree);
-        assert (node != null);
+        assert (node == null); // Implies: get trait for all nodes at same time
 
-        // TODO
+        // TODO See TipGradientViaFullConditionalDelegate.getTrait() as an example of using post- and pre-order partials together
+
         return null;
     }
 

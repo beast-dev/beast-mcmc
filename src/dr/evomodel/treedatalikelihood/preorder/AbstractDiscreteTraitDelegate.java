@@ -31,13 +31,16 @@ import dr.inference.model.Model;
 
 import java.util.List;
 
+import static dr.evolution.tree.TreeTrait.DA.factory;
+
 /**
  * AbstractDiscreteTraitDelegate - interface for a plugin delegate for data simulation on a tree.
  *
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate {
+public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate
+        implements TreeTrait.TraitInfo<double[]> {
 
     private final BeagleDataLikelihoodDelegate likelihoodDelegate;
 
@@ -46,79 +49,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                                   BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree);
         this.likelihoodDelegate = likelihoodDelegate;
-    }
-
-    protected boolean isLoggable() {
-        return true;
-    }
-
-    @Override
-    public void modelChangedEvent(Model model, Object object, int index) {
-        // TODO
-    }
-
-    @Override
-    public void modelRestored(Model model) {
-
-    }
-
-    public static String getName(String name) {
-        return "derivative." + name;
-    }
-
-    public String getTraitName(String name) {
-        return getName(name);
-    }
-
-    private String delegateGetTraitName() {
-        return getTraitName(name);
-    }
-
-    private Class delegateGetTraitClass() {
-        return double[].class;
-    }
-
-    @Override
-    protected void constructTraits(Helper treeTraitHelper) {
-
-        TreeTrait.DA baseTrait = new TreeTrait.DA() {
-
-            public String getTraitName() {
-                return delegateGetTraitName();
-            }
-
-            public Intent getIntent() {
-                return Intent.NODE;
-            }
-
-            public Class getTraitClass() {
-                return delegateGetTraitClass();
-            }
-
-            public double[] getTrait(Tree t, NodeRef node) {
-                assert (tree == t);
-
-                return getTraitForNode(node);
-            }
-
-            public String getTraitString(Tree tree, NodeRef node) {
-                return formatted(getTrait(tree, node));
-            }
-
-            public boolean getLoggable() {
-                return isLoggable();
-            }
-        };
-
-        treeTraitHelper.addTrait(baseTrait);
-    }
-
-    protected double[] getTraitForNode(NodeRef node) {
-
-        assert (node != null);
-
-        // TODO
-        return null;
     }
 
     @Override
@@ -136,30 +66,55 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         // TODO
     }
 
+    @Override
+    protected void constructTraits(Helper treeTraitHelper) {
+        treeTraitHelper.addTrait(factory(this));
+    }
+
+
+    @Override
+    public String getTraitName() {
+        return "derivative." + name;
+    }
+
+    @Override
+    public TreeTrait.Intent getTraitIntent() {
+        return TreeTrait.Intent.NODE;
+    }
+
+    @Override
+    public Class getTraitClass() {
+        return double[].class;
+    }
+
+    @Override
+    public double[] getTrait(Tree tree, NodeRef node) {
+
+        assert (tree == this.tree);
+        assert (node != null);
+
+        // TODO
+        return null;
+    }
+
+    @Override
+    public boolean isTraitLoggable() {
+        return false;
+    }
+
+    @Override
+    public void modelChangedEvent(Model model, Object object, int index) {
+        // TODO
+    }
+
+    @Override
+    public void modelRestored(Model model) {
+
+    }
 
     @Override
     public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
         return likelihoodDelegate.vectorizeNodeOperations(nodeOperations, operations);
-    }
-
-    private static String formatted(double[] values) {
-
-        if (values.length == 1) {
-            return Double.toString(values[0]);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-
-        for (int i = 0; i < values.length; ++i) {
-            sb.append(Double.toString(values[i]));
-            if (i < (values.length - 1)) {
-                sb.append(",");
-            }
-        }
-
-        sb.append("}");
-        return sb.toString();
     }
 }
 

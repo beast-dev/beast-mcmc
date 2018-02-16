@@ -6,7 +6,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.Parameter;
-import dr.math.distributions.NormalDistribution;
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -23,7 +23,6 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
 
     private static final boolean DEBUG = false;
-     NormalDistribution drawDistribution = new NormalDistribution(0, 1);
     private static final boolean NEW_DATA = false; // Maybe not useful
     private static final boolean SMART_POOL = true;
 
@@ -189,12 +188,12 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         ReadableVector savedDataParameter = new WrappedVector.Raw(dataParameter.getParameterValues());
         ReadableVector x = drawUniformSphere();
-        ReadableVector.setParameter(x, dataParameter);
+        ReadableVector.Utils.setParameter(x, dataParameter);
 
         ReadableVector Phi_x = new WrappedVector.Raw(getProduct(dataParameter));
-        ReadableVector.setParameter(savedDataParameter, dataParameter);
+        ReadableVector.Utils.setParameter(savedDataParameter, dataParameter);
 
-        double precisionMinEigenvalueLowerBound = ReadableVector.innerProduct(x, Phi_x);
+        double precisionMinEigenvalueLowerBound = ReadableVector.Utils.innerProduct(x, Phi_x);
         return Math.sqrt(1 / precisionMinEigenvalueLowerBound);
     }
 
@@ -206,7 +205,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         double normSquare = 0.0;
 
         for (int i = 0; i < len; i++) {
-            x[i] = (Double) drawDistribution.nextRandom();
+            x[i] = MathUtils.nextGaussian();
             normSquare += x[i] * x[i];
         }
 

@@ -97,22 +97,25 @@ public interface ReadableVector {
         public int getDim() { return vector.getDim(); }
     }
 
-    static void setParameter(ReadableVector position, Parameter parameter) {
-        for (int j = 0, dim = position.getDim(); j < dim; ++j) {
-            parameter.setParameterValueQuietly(j, position.get(j));
+    class Utils {
+        
+        public static void setParameter(ReadableVector position, Parameter parameter) {
+            for (int j = 0, dim = position.getDim(); j < dim; ++j) {
+                parameter.setParameterValueQuietly(j, position.get(j));
+            }
+            parameter.fireParameterChangedEvent();
         }
-        parameter.fireParameterChangedEvent();
+
+        public static double innerProduct(ReadableVector lhs, ReadableVector rhs) {
+
+            assert (lhs.getDim() == rhs.getDim());
+
+            double sum = 0;
+            for (int i = 0, dim = lhs.getDim(); i < dim; ++i) {
+                sum += lhs.get(i) * rhs.get(i);
+            }
+
+            return sum;
+        }
     }
-
-    static double innerProduct(ReadableVector x, ReadableVector y) {
-
-        assert (x.getDim() == y.getDim());
-
-        double sum = 0;
-        for (int i = 0, dim = x.getDim(); i < dim; ++i) {
-            sum += x.get(i) * y.get(i);
-        }
-
-        return sum;
-    }    
 }

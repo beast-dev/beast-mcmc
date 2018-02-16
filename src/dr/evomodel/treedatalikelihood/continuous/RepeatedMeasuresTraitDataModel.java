@@ -29,11 +29,14 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -70,11 +73,19 @@ public class RepeatedMeasuresTraitDataModel extends
         WrappedMatrix precision = new WrappedMatrix.Raw(partial, dimTrait, dimTrait, dimTrait);
         WrappedMatrix variance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
+        DenseMatrix64F V = MissingOps.wrap(partial,dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+
         // TODO Deflate partial precision by samplingPrecision
         for (int index = 0; index< dimTrait; index++){
-            variance.set(index, index, variance.get(index, index) + samplingPrecision.getParameterValue(index));
-            precision.set(index, index, 1.0 / variance.get(index, index));
+            V.set(index, index, V.get(index, index) + samplingPrecision.getParameterValue(index));
         }
+
+        DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
+
+        MissingOps.safeInvert(V, P, false);
+
+        MissingOps.unwrap(P, partial, dimTrait);
+        MissingOps.unwrap(V, partial, dimTrait + dimTrait * dimTrait);
 
         return partial;
     }

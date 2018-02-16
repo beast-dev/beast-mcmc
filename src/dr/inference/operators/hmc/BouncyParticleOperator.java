@@ -31,7 +31,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
@@ -51,7 +50,6 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
         this.parameter = gradientProvider.getParameter();
-        this.drawDistribution = new NormalDistribution(0, 1);
         this.mask = mask;
 
         this.runtimeOptions = runtimeOptions;
@@ -238,7 +236,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
+            velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
         }
 
         if (mask != null) {
@@ -345,7 +343,6 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
     private final Parameter parameter;
-    private final NormalDistribution drawDistribution;
     private final Options runtimeOptions;
     private final Parameter mask;
 

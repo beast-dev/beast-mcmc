@@ -30,7 +30,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                                         String traitName,
                                                         int threadCount,
-                                                        double roughTimeGuess) {
+                                                        double roughTimeGuess,
+                                                        int eigenvalueReplicates) {
         super(treeDataLikelihood, likelihoodDelegate);
 
         String fcdName = WrappedTipFullConditionalDistributionDelegate.getName(traitName);
@@ -42,7 +43,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         this.delta = new double[tree.getExternalNodeCount()][dimTrait];
 		
-		this.roughTimeGuess = roughTimeGuess;
+        this.roughTimeGuess = roughTimeGuess;
+        this.eigenvalueReplicates = eigenvalueReplicates;
         
         setupParallelServices(tree.getExternalNodeCount(), threadCount);
     }
@@ -184,22 +186,29 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         return getTimeScaleFromPrecisionMatrix();
     }
     
-        private double getTimeScaleFromPrecisionMatrix() {
+    private double getTimeScaleFromPrecisionMatrix() {
 
         ReadableVector savedDataParameter = new WrappedVector.Raw(dataParameter.getParameterValues());
-        ReadableVector x = drawUniformSphere();
-        ReadableVector.Utils.setParameter(x, dataParameter);
 
-        ReadableVector Phi_x = new WrappedVector.Raw(getProduct(dataParameter));
+        double precisionMinEigenvalueLowerBound = 0.0;
+        for (int i = 0; i < eigenvalueReplicates; ++i) {
+
+            ReadableVector x = drawUniformSphere(dataParameter.getDimension());
+            ReadableVector.Utils.setParameter(x, dataParameter);
+
+            ReadableVector Phi_x = new WrappedVector.Raw(getProduct(dataParameter));
+
+            precisionMinEigenvalueLowerBound += ReadableVector.Utils.innerProduct(x, Phi_x);
+
+        }
+        precisionMinEigenvalueLowerBound /= eigenvalueReplicates; // TODO Could compute average on sqrt(1/bound) scale
+
         ReadableVector.Utils.setParameter(savedDataParameter, dataParameter);
 
-        double precisionMinEigenvalueLowerBound = ReadableVector.Utils.innerProduct(x, Phi_x);
         return Math.sqrt(1 / precisionMinEigenvalueLowerBound);
     }
 
-    private WrappedVector drawUniformSphere() {
-
-        final int len = dataParameter.getDimension();
+    private static WrappedVector drawUniformSphere(final int len) {
 
         double[] x = new double[len];
         double normSquare = 0.0;
@@ -270,4 +279,5 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
     private final double[][] delta;
     private final double roughTimeGuess;
+    private final int eigenvalueReplicates;
 }

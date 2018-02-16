@@ -49,7 +49,8 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     private static final String PRODUCT_PROVIDER = "precisionTraitProductOnTree";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String MASKING = MaskedParameterParser.MASKING;
-    private final static String TIME_GUESS = "roughTravelTimeGuess";
+    private static final String TIME_GUESS = "roughTravelTimeGuess";
+    private static final String EIGENVALUE_REPLICATES = "eigenvalueReplicates";
     private static final String MODE = "mode";
     private static final String THREAD_COUNT = "threadCount";
 
@@ -83,6 +84,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
                                                                 String traitName) throws XMLParseException {
 
         double roughTimeGuess = xo.getAttribute(TIME_GUESS, -1); // TODO This is bad; magic number, not checking
+        int eigenvalueReplicates = xo.getAttribute(EIGENVALUE_REPLICATES, 1);
 
         String mode = xo.getAttribute(MODE, "linear");
         int threadCount = xo.getAttribute(THREAD_COUNT, 0);
@@ -93,7 +95,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
             return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
             return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName,
-                    threadCount, roughTimeGuess);
+                    threadCount, roughTimeGuess, eigenvalueReplicates);
         }
     }
 
@@ -106,6 +108,8 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
             AttributeRule.newStringRule(TRAIT_NAME),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newIntegerRule(THREAD_COUNT, true),
+            AttributeRule.newDoubleRule(TIME_GUESS, true),
+            AttributeRule.newIntegerRule(EIGENVALUE_REPLICATES, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(MASKING,
                     new XMLSyntaxRule[]{

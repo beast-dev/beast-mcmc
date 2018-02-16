@@ -430,6 +430,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return order;
     }
 
+    public Beagle getBeagleInstance() { return beagle; }
+
     private static List<String> parseSystemPropertyStringArray(String propertyName) {
 
         List<String> order = new ArrayList<String>();

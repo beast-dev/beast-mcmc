@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.preorder;
 
+import beagle.Beagle;
 import dr.evolution.tree.*;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.inference.model.Model;
@@ -43,12 +44,14 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         implements TreeTrait.TraitInfo<double[]> {
 
     private final BeagleDataLikelihoodDelegate likelihoodDelegate;
+    private final Beagle beagle;
 
-    AbstractDiscreteTraitDelegate(String name,
+    public AbstractDiscreteTraitDelegate(String name,
                                   Tree tree,
                                   BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree);
         this.likelihoodDelegate = likelihoodDelegate;
+        this.beagle = likelihoodDelegate.getBeagleInstance();
     }
 
     @Override
@@ -80,10 +83,13 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         treeTraitHelper.addTrait(factory(this));
     }
 
+    public static String getName(String name) {
+        return "derivative." + name;
+    }
 
     @Override
     public String getTraitName() {
-        return "derivative." + name;
+        return getName(name);
     }
 
     @Override

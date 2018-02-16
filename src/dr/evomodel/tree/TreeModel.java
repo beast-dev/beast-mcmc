@@ -1157,7 +1157,8 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
 
     public Parameter createNodeTraitsParameterAsMatrix(String name, int dim, double[] initialValues,
                                                boolean rootNode, boolean internalNodes,
-                                               boolean leafNodes, boolean firesTreeEvents) {
+                                               boolean leafNodes, boolean firesTreeEvents,
+                                                       boolean signalComponents) {
 
         checkValidFlags(rootNode, internalNodes, leafNodes);
 
@@ -1166,7 +1167,7 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
                 + (internalNodes ? internalNodeCount - 1 : 0)
                 + (leafNodes ? externalNodeCount : 0);
 
-        FastMatrixParameter parameter = new FastMatrixParameter(name, rowDim, colDim, 0.0);
+        FastMatrixParameter parameter = new FastMatrixParameter(name, rowDim, colDim, 0.0, signalComponents);
         parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
                 rowDim * colDim));
 

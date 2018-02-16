@@ -127,7 +127,7 @@ public class ConditionalVarianceAndTransform {
         return cholesky;
     }
 
-    Matrix getVariance() {
+    public Matrix getConditionalVariance() {
         return sBar;
     }
 

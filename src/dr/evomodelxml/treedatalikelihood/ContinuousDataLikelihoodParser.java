@@ -66,6 +66,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
+    public static final String FACTOR_NAME = "factors";
+
     public String getParserName() {
         return CONTINUOUS_DATA_LIKELIHOOD;
     }
@@ -118,6 +120,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                 precisionType = PrecisionType.FULL;
             }
 
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                 utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+             }
+
 //            System.err.println("Using precisionType == " + precisionType + " for data model.");
 
             dataModel = new ContinuousTraitDataModel(traitName,
@@ -130,6 +136,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         final boolean allowSingular;
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
+
+            if (traitName == TreeTraitParserUtilities.DEFAULT_TRAIT_NAME) {
+                traitName = FACTOR_NAME;
+            }
+
             if (xo.hasAttribute(ALLOW_SINGULAR)) {
                 allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
             } else {
@@ -241,6 +252,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
             AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
+            TreeTraitParserUtilities.jitterRules(true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

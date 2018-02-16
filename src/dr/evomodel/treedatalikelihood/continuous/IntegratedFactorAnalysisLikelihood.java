@@ -1,7 +1,7 @@
 /*
  * IntegratedFactorTraitDataModel.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -40,11 +41,8 @@ import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
 import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
 
@@ -65,7 +63,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         this.traitParameter = traitParameter;
         this.loadings = loadings;
-        this.traitPrecision = traitPrecision; // TODO Generalize for non-diagonal precision
+        this.traitPrecision = traitPrecision;
 
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
@@ -149,6 +147,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+        statisticsKnown = false;
     }
 
     @Override
@@ -202,6 +201,20 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         // Do nothing
     }
 
+    // Access for FactorAnalysisOperatorAdaptor
+
+    public int getNumberOfFactors() { return numFactors; }
+
+    public int getNumberOfTaxa() {  return numTaxa; }
+
+    public int getNumberOfTraits() { return dimTrait; }
+
+    public MatrixParameterInterface getLoadings() { return loadings; }
+
+    public Parameter getPrecision() { return traitPrecision; }
+
+    // Private class functions
+
     private double calculateLogLikelihood() {
 
         checkStatistics();
@@ -229,27 +242,91 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private final double nuggetPrecision;
 
+    private class HashedMissingArray {
+
+        final private double[] array;
+
+        HashedMissingArray(final double[] array) {
+            this.array = array;
+        }
+
+        public double[] getArray() {
+            return array;
+        }
+
+        public double get(int index) {
+            return array[index];
+        }
+
+        public int getLength() {
+            return array.length;
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(array);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof HashedMissingArray && Arrays.equals(array,
+                    ((HashedMissingArray) obj).array);
+        }
+
+        public String toString() {
+            return new Vector(array).toString();
+        }
+    }
+
     private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
                                            final int numFactors) {
 
         final double[] observed = observedIndicators[taxon];
 
-        // Compute L D_i \Gamma D_i^t L^t   // TODO Generalize for non-diagonal \Gamma
-        for (int row = 0; row < numFactors; ++row) {
-            for (int col = 0; col < numFactors; ++col) {
-                double sum = 0;
-                for (int k = 0; k < dimTrait; ++k) {
-                    double thisPrecision = (observed[k] == 1.0) ? traitPrecision.getParameterValue(k) : nuggetPrecision;
-                    sum += loadings.getParameterValue(k, row) *
-                            thisPrecision *
-                            loadings.getParameterValue(k, col);
+        final HashedMissingArray observedArray;
+        DenseMatrix64F hashedPrecision;
+
+        if (USE_CACHE) {
+            observedArray = new HashedMissingArray(observed);
+            hashedPrecision = precisionMatrixMap.get(observedArray);
+        }
+        
+        // TODO Only need to compute for each unique set of observed[] << numTaxa
+
+        if (!USE_CACHE || hashedPrecision == null) {
+
+            // Compute L D_i \Gamma D_i^t L^t
+            for (int row = 0; row < numFactors; ++row) {
+                for (int col = 0; col < numFactors; ++col) {
+                    double sum = 0;
+                    for (int k = 0; k < dimTrait; ++k) {
+                        double thisPrecision = (observed[k] == 1.0) ?
+                                traitPrecision.getParameterValue(k) : nuggetPrecision;
+                        sum += loadings.getParameterValue(k, row) *
+                                thisPrecision *
+                                loadings.getParameterValue(k, col);
+                    }
+                    precision.unsafe_set(row, col, sum);
                 }
-                precision.unsafe_set(row, col, sum);
             }
+
+            if (USE_CACHE) {
+                precisionMatrixMap.put(observedArray, precision);
+            }
+
+        } else {
+            System.arraycopy(hashedPrecision.getData(), 0,
+                    precision.getData(), 0, numFactors * numFactors);
         }
     }
 
-    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision, final int taxon) {
+    private static final boolean USE_CACHE = false;
+
+    private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap =
+            new HashMap<HashedMissingArray, DenseMatrix64F>();
+
+    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision,
+                                               final int taxon) {
 
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
@@ -285,7 +362,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
 
-        // Compute Y_i^t D_i^t \Gamma D_i Y_i // TODO Generalize for non-diagonal \Gamma
+        // Compute Y_i^t D_i^t \Gamma D_i Y_i
         double sum = 0;
         for (int k = 0; k < dimTrait; ++k) {
             sum += Y.getParameterValue(k) * Y.getParameterValue(k) *
@@ -324,7 +401,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         final double[] observed = observedIndicators[taxon];
 
-        // Compute det( D_i \Gamma D_i^t) // TODO Generalize for non-diagonal \Gamma
+        // Compute det( D_i \Gamma D_i^t)
         double logDet = 0.0;
         for (int k = 0; k < dimTrait; ++k) {
             if (observed[k] == 1.0) {
@@ -347,6 +424,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         
         final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
         final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
+
+        if (USE_CACHE) {
+            precisionMatrixMap.clear();
+            if (DEBUG) {
+                System.err.println("Hash CLEARED");
+            }
+        }
 
         int partialsOffset = 0;
         for (int taxon = 0; taxon < numTaxa; ++taxon) {
@@ -411,12 +495,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
             
             // store in precision, variance and normalization constant
-            unwrap(precision, partials, partialsOffset + numFactors); // TODO PrecisionType should do this offset math
+            unwrap(precision, partials, partialsOffset + numFactors);
 
-            if (STORE_VARIANCE) { // TODO Remove
-                safeInvert(precision, variance, true);
-                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
-            }
+//            if (STORE_VARIANCE) {
+//                safeInvert(precision, variance, true);
+//                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
+//            }
 
             normalizationConstants[taxon] = constant;
 
@@ -424,7 +508,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
     }
 
-    private static final boolean STORE_VARIANCE = false;
+//    private static final boolean STORE_VARIANCE = false;
     private static final boolean DEBUG = false;
 
     private void checkStatistics() {
@@ -587,18 +671,19 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (delegate != null) {
 
             final Tree tree = delegate.getCallbackLikelihood().getTree();
+            final BranchRates branchRates = delegate.getCallbackLikelihood().getBranchRateModel();
             sb.append(tree.toString());
             sb.append("\n\n");
 
             final double normalization = delegate.getRateTransformation().getNormalization();
             final double priorSampleSize = delegate.getRootProcessDelegate().getPseudoObservations();
 
-            double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0, Double.POSITIVE_INFINITY);
+            double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, 1.0, Double.POSITIVE_INFINITY);
             sb.append("Tree structure:\n");
             sb.append(new Matrix(treeStructure));
             sb.append("\n\n");
 
-            double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, normalization, priorSampleSize);
+            double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, normalization, priorSampleSize);
 
             Matrix treeV = new Matrix(treeVariance);
             Matrix treeP = treeV.inverse();

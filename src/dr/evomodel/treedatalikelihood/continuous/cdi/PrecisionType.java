@@ -29,7 +29,36 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
  * @author Marc A. Suchard
  */
 public enum PrecisionType {
-    SCALAR("proportional scaling per branch", 0) {
+    ELEMENTARY("elementary data vector", "elementary", 0) {
+        @Override
+        public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
+                                            int dimTrait) {
+            partial[offset + dimTrait] = precision;
+        }
+
+        @Override
+        public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
+            data[dOffset] = partial[pOffset];
+        }
+
+        @Override
+        public int getPrecisionOffset(int dimTrait) {
+            return dimTrait;
+        }
+
+        @Override
+        public int getVarianceOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
+        public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
+            double scalar = partial[offset + getPrecisionOffset(dimTrait)];
+            return PrecisionType.scale(diffusionPrecision, scalar);
+        }
+    },
+
+    SCALAR("proportional scaling per branch", "scalar", 0) {
         @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
@@ -49,8 +78,25 @@ public enum PrecisionType {
                         partial[pOffset + i] : Double.NaN;
             }
         }
+
+        @Override
+        public int getPrecisionOffset(int dimTrait) {
+            return dimTrait;
+        }
+
+        @Override
+        public int getVarianceOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
+        public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
+            double scalar = partial[offset + getPrecisionOffset(dimTrait)];
+            return PrecisionType.scale(diffusionPrecision, scalar);
+        }
     },
-    MIXED("mixed method", 1) {
+
+    MIXED("mixed method", "mixed", 1) {
         @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
@@ -64,8 +110,24 @@ public enum PrecisionType {
                         partial[pOffset + i] : Double.NaN;
             }
         }
+
+        @Override
+        public int getPrecisionOffset(int dimTrait) {
+            return dimTrait;
+        }
+
+        @Override
+        public int getVarianceOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
+        public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
+            throw new RuntimeException("Not yet implemented");
+        }
     },
-    FULL("full precision matrix per branch", 2) {
+
+    FULL("full precision matrix per branch", "full", 2) {
         @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
@@ -87,13 +149,36 @@ public enum PrecisionType {
         public int getMatrixLength(int dimTrait) {
             return 2 * super.getMatrixLength(dimTrait) + 1;
         }
+
+        @Override
+        public int getPrecisionOffset(int dimTrait) {
+            return dimTrait;
+        }
+
+        @Override
+        public int getVarianceOffset(int dimTrait) {
+            return dimTrait + dimTrait * dimTrait;
+        }
+
+        @Override
+        public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
+
+            double[] precision = new double[dimTrait * dimTrait];
+            System.arraycopy(partial, offset + getPrecisionOffset(dimTrait),
+                    precision, 0,
+                    dimTrait * dimTrait);
+
+            return precision;
+        }
     };
 
     private final int power;
     private final String name;
+    private final String tag;
 
-    PrecisionType(String name, int power) {
+    PrecisionType(String name, String tag, int power) {
         this.name = name;
+        this.tag = tag;
         this.power = power;
     }
 
@@ -123,4 +208,24 @@ public enum PrecisionType {
 
     abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
 
+    @SuppressWarnings("unused")
+    abstract public int getPrecisionOffset(int dimTrait);
+
+    @SuppressWarnings("unused")
+    abstract public int getVarianceOffset(int dimTrait);
+
+    abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
+
+    private static double[] scale(double[] in, double scalar) {
+
+        double[] out = new double[in.length];
+        for (int i = 0; i < in.length; ++i) {
+            out[i] = scalar * in[i];
+        }
+        return out;
+    }
+
+    public String getTag() {
+        return tag;
+    }
 }

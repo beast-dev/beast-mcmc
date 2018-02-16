@@ -26,21 +26,23 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
     }
 
     @Override
-    public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
+    public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         assert (precision != null);
         assert (precision.length >= dimTrait * dimTrait);
 
         assert (displacement != null);
-        assert (displacement.length >- dimTrait);
+        assert (displacement.length >= dimTrait);
 
         System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
                 precision, 0, dimTrait * dimTrait);
 
         System.arraycopy(displacements, bufferIndex * dimTrait,
                 displacement, 0, dimTrait);
-
-        return super.getBranchMatrices(bufferIndex, precision, displacement);
     }
 
     private static final boolean TIMING = false;
@@ -350,14 +352,15 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
 
 //                final double[] tmp = new double[dimTrait];
             final double[] tmp = vector0;
-            for (int g = 0; g < dimTrait; ++g) {
-                double sum = 0.0;
-                for (int h = 0; h < dimTrait; ++h) {
-                    sum += Pip.unsafe_get(g, h) * displacementi[h];
-                    sum += Pjp.unsafe_get(g, h) * displacementj[h];
-                }
-                tmp[g] = sum;
-            }
+//            for (int g = 0; g < dimTrait; ++g) {
+//                double sum = 0.0;
+//                for (int h = 0; h < dimTrait; ++h) {
+//                    sum += Pip.unsafe_get(g, h) * displacementi[h];
+//                    sum += Pjp.unsafe_get(g, h) * displacementj[h];
+//                }
+//                tmp[g] = sum;
+//            }
+            weightedSum(displacementi, 0, Pip, displacementj, 0, Pjp, dimTrait, tmp);
 
 //            for (int g = 0; g < dimTrait; ++g) {
 //                double sum = 0.0;
@@ -398,53 +401,52 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
             }
 
             if (DEBUG) {
-                System.err.println("\ttrait: " + trait);
-                System.err.println("Pi: " + Pi);
-                System.err.println("Pj: " + Pj);
-                System.err.println("Pk: " + Pk);
-                System.err.print("\t\tmean i:");
-                for (int e = 0; e < dimTrait; ++e) {
-                    System.err.print(" " + partials[ibo + e]);
-                }
+                reportMeansAndPrecisions(trait, ibo, jbo, kbo, Pi, Pj, Pk);
+//                System.err.println("\ttrait: " + trait);
+//                System.err.println("Pi: " + Pi);
+//                System.err.println("Pj: " + Pj);
+//                System.err.println("Pk: " + Pk);
+//                System.err.print("\t\tmean i:");
+//                for (int e = 0; e < dimTrait; ++e) {
+//                    System.err.print(" " + partials[ibo + e]);
+//                }
                 System.err.print("\t\tdisp i:");
                 for (int e = 0; e < dimTrait; ++e) {
                     System.err.print(" " + displacements[ido + e]);
                 }
                 System.err.println("");
-                System.err.print("\t\tmean j:");
-                for (int e = 0; e < dimTrait; ++e) {
-                    System.err.print(" " + partials[jbo + e]);
-                }
+//                System.err.print("\t\tmean j:");
+//                for (int e = 0; e < dimTrait; ++e) {
+//                    System.err.print(" " + partials[jbo + e]);
+//                }
                 System.err.print("\t\tdisp j:");
                 for (int e = 0; e < dimTrait; ++e) {
                     System.err.print(" " + displacements[jdo + e]);
                 }
-                System.err.println("");
-                System.err.print("\t\tmean k:");
-                for (int e = 0; e < dimTrait; ++e) {
-                    System.err.print(" " + partials[kbo + e]);
-                }
-                System.err.println("");
+//                System.err.println("");
+//                System.err.print("\t\tmean k:");
+//                for (int e = 0; e < dimTrait; ++e) {
+//                    System.err.print(" " + partials[kbo + e]);
+//                }
+//                System.err.println("");
             }
 
             // Computer remainder at node k
             double remainder = 0.0;
 
             if (DEBUG) {
-                System.err.println("i status: " + ci);
-                System.err.println("j status: " + cj);
-                System.err.println("k status: " + ck);
-                System.err.println("Pip: " + Pip);
-//                System.err.println("Vip: " + Vip);
-                System.err.println("Pjp: " + Pjp);
-//                System.err.println("Vjp: " + Vjp);
+                reportInversions(ci, cj, ck, Pip, Pjp);
+//                System.err.println("i status: " + ci);
+//                System.err.println("j status: " + cj);
+//                System.err.println("k status: " + ck);
+//                System.err.println("Pip: " + Pip);
+////                System.err.println("Vip: " + Vip);
+//                System.err.println("Pjp: " + Pjp);
+////                System.err.println("Vjp: " + Vjp);
             }
 
             if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
-//                if (ci == InversionReturnCode.FULLY_OBSERVED && cj == InversionReturnCode.FULLY_OBSERVED) {
-                // TODO Fix for partially observed
-//                if (pi != 0 && pj != 0) {
-//
+
                 if (TIMING) {
                     startTime("remain");
                 }

@@ -248,6 +248,10 @@ public class TreeTraitParserUtilities {
         }
     }
 
+    public static boolean isMissing(String oneValue) {
+        return oneValue.equals("NA") || oneValue.equals("?");
+    }
+
     public TraitsAndMissingIndices parseTraitsFromTaxonAttributes(
             XMLObject xo,
             String inTraitName,
@@ -352,7 +356,8 @@ public class TreeTraitParserUtilities {
                         String oneValue = st.nextToken();
                         if (randomSampleSizeFlag == -1 || randomSample.containsKey(j)) {
                             double value = Double.NaN;
-                            if (oneValue.equals("NA") || oneValue.equals("?") ) {
+                            if (isMissing(oneValue)) {
+//                            if (oneValue.equals("NA") || oneValue.equals("?") ) {
                                 if (warningLength < maxWarnings) {
                                     warnings.append(
                                             "Warning: Missing value in tip for taxon " + taxonName +

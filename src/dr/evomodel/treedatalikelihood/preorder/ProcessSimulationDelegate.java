@@ -35,7 +35,9 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrat
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -249,6 +251,19 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
             return CholeskyDecomposition.execute(variance, 0, dim);
         }
+
+        static DenseMatrix64F getCholeskyOfVariance(DenseMatrix64F variance, final int dim) {
+
+            org.ejml.interfaces.decomposition.CholeskyDecomposition<DenseMatrix64F> engine =
+                    DecompositionFactory.chol(dim, true);
+            engine.decompose(variance);
+
+            return engine.getT(null);
+        }
+
+//        static WrappedMatrix getCholeskyOfVariance(final ReadableMatrix variance, final int dim) {
+//            return CholeskyDecomposition.execute(variance, dim);
+//        }
 
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
             return new SymmetricMatrix(precision).inverse().toVectorizedComponents();

@@ -1,5 +1,5 @@
 /*
- * PartiallyMissingContinuousTraitDataModel.java
+ * WrappedMatrix.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,20 +23,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.math.matrixAlgebra;
 
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.inference.model.CompoundParameter;
-
-import java.util.List;
+import java.util.Arrays;
 
 /**
- * Created by msuchard on 1/2/17.
+ * @author Marc A. Suchard
  */
-public class PartiallyMissingContinuousTraitDataModel extends ContinuousTraitDataModel {
 
-    public PartiallyMissingContinuousTraitDataModel(String name, CompoundParameter parameter,
-                                                    List<Integer> missingIndices, boolean useMissingIndices, int dimTrait) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.MIXED);
-    }
+public interface ReadableMatrix extends ReadableVector {
+
+    double get(final int i, final int j);
+
+    int getMajorDim();
+
+    int getMinorDim();
 }

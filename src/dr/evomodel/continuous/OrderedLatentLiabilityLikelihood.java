@@ -472,7 +472,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
         private final XMLSyntaxRule[] rules = {
                 new XORRule(
-                        new ElementRule(AbstractMultivariateTraitLikelihood.class, true),
+                        new ElementRule(AbstractMultivariateTraitLikelihood.class),
                         new AndRule(AttributeRule.newIntegerRule(N_DATA),
                                 AttributeRule.newIntegerRule(N_TRAITS))
                 ),

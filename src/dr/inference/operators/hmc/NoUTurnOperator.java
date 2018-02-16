@@ -299,7 +299,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
 
             if (count > options.findMax) {
-                throw new RuntimeException("Cannot find a reasonable step size in " + options.findMax + " iterations");
+                throw new RuntimeException("Cannot find a reasonable step-size in " + options.findMax + " iterations");
             }
         }
 

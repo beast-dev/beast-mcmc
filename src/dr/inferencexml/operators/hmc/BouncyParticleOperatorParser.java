@@ -44,7 +44,6 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     private final static String BPO_OPERATOR = "bouncyParticleOperator";
     private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";
     private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
-    private final static String TIME_GUESS = "roughTravelTimeGuess";
     private final static String MASKING = "mask";
 
     @Override
@@ -79,9 +78,8 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
         double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
         int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
-        boolean runTimeGuess = xo.getAttribute(TIME_GUESS, false);
 
-        return new BouncyParticleOperator.Options(randomTimeWidth, updateFrequency, runTimeGuess);
+        return new BouncyParticleOperator.Options(randomTimeWidth, updateFrequency);
     }
 
     @Override

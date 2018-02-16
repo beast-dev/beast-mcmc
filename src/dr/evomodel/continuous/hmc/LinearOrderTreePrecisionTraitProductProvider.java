@@ -6,8 +6,10 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.Parameter;
+import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +23,15 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
 
     private static final boolean DEBUG = false;
+     NormalDistribution drawDistribution = new NormalDistribution(0, 1);
     private static final boolean NEW_DATA = false; // Maybe not useful
     private static final boolean SMART_POOL = true;
 
     public LinearOrderTreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                                         String traitName,
-                                                        int threadCount) {
+                                                        int threadCount,
+                                                        double roughTimeGuess) {
         super(treeDataLikelihood, likelihoodDelegate);
 
         String fcdName = WrappedTipFullConditionalDistributionDelegate.getName(traitName);
@@ -38,7 +42,9 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
 
         this.delta = new double[tree.getExternalNodeCount()][dimTrait];
-
+		
+		this.roughTimeGuess = roughTimeGuess;
+        
         setupParallelServices(tree.getExternalNodeCount(), threadCount);
     }
 
@@ -171,7 +177,46 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
     @Override
     public double getTimeScale() {
-        return 0.0; // TODO
+
+        if (roughTimeGuess > 0.0) { // TODO Super bad, some delegate for re-use with other Providers
+            return roughTimeGuess;
+        }
+
+        return getTimeScaleFromPrecisionMatrix();
+    }
+    
+        private double getTimeScaleFromPrecisionMatrix() {
+
+        ReadableVector savedDataParameter = new WrappedVector.Raw(dataParameter.getParameterValues());
+        ReadableVector x = drawUniformSphere();
+        ReadableVector.setParameter(x, dataParameter);
+
+        ReadableVector Phi_x = new WrappedVector.Raw(getProduct(dataParameter));
+        ReadableVector.setParameter(savedDataParameter, dataParameter);
+
+        double precisionMinEigenvalueLowerBound = ReadableVector.innerProduct(x, Phi_x);
+        return Math.sqrt(1 / precisionMinEigenvalueLowerBound);
+    }
+
+    private WrappedVector drawUniformSphere() {
+
+        final int len = dataParameter.getDimension();
+
+        double[] x = new double[len];
+        double normSquare = 0.0;
+
+        for (int i = 0; i < len; i++) {
+            x[i] = (Double) drawDistribution.nextRandom();
+            normSquare += x[i] * x[i];
+        }
+
+        double norm = Math.sqrt(normSquare);
+
+        for (int i = 0; i < len; i++) {
+            x[i] = x[i] / norm;
+        }
+
+        return new WrappedVector.Raw(x);
     }
 
     @SuppressWarnings("unchecked")
@@ -225,5 +270,5 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     private List<TaskIndices> taskIndices = null;
 
     private final double[][] delta;
-
+    private final double roughTimeGuess;
 }

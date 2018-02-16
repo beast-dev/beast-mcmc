@@ -49,6 +49,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     private static final String PRODUCT_PROVIDER = "precisionTraitProductOnTree";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String MASKING = MaskedParameterParser.MASKING;
+    private final static String TIME_GUESS = "roughTravelTimeGuess";
     private static final String MODE = "mode";
     private static final String THREAD_COUNT = "threadCount";
 
@@ -80,6 +81,9 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
                                                                 TreeDataLikelihood treeDataLikelihood,
                                                                 ContinuousDataLikelihoodDelegate continuousData,
                                                                 String traitName) throws XMLParseException {
+
+        double roughTimeGuess = xo.getAttribute(TIME_GUESS, -1); // TODO This is bad; magic number, not checking
+
         String mode = xo.getAttribute(MODE, "linear");
         int threadCount = xo.getAttribute(THREAD_COUNT, 0);
 
@@ -89,7 +93,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
             return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
             return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName,
-                    threadCount);
+                    threadCount, roughTimeGuess);
         }
     }
 

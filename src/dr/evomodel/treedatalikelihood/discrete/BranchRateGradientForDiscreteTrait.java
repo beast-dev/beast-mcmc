@@ -31,27 +31,12 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
-import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
-import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
-
-import java.util.List;
-
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
 
 /**
  * @author Xiang Ji
@@ -125,7 +110,7 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         double[] result = new double[rateParameter.getDimension()];
 
         // TODO Do single call to traitProvider with node == null (get full tree)
-//        List<BranchSufficientStatistics> statisticsForTree = (List<BranchSufficientStatistics>)
+//        List<double[]> statisticsForTree = (List<double[]>)
 //                treeTraitProvider.getTrait(tree, null);
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
@@ -206,87 +191,6 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 //    }
 
     private static final boolean DEBUG = false;
-
-//    public BranchRateGradientForDiscreteTrait(String traitName,
-//                                              TreeDataLikelihood treeDataLikelihood,
-//                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
-//                                              BranchRateModel branchRates,
-//                                              Parameter maskParameter) {
-//        // TODO Merge with TreeTipGradient
-//        assert(treeDataLikelihood != null);
-//
-//        this.treeDataLikelihood = treeDataLikelihood;
-//        this.branchRateModel = branchRates;
-//        this.tree = treeDataLikelihood.getTree();
-//        this.maskParameter = maskParameter;
-//
-//        String name = AbstractDiscreteTraitDelegate.getName(traitName);
-//        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
-//
-//        if (test == null) {
-//            ProcessSimulationDelegate gradientDelegate = new AbstractDiscreteTraitDelegate(traitName,
-//                     treeDataLikelihood.getTree(),
-//                     likelihoodDelegate);
-//
-//             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
-//             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
-//        }
-//
-//        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
-//
-//        assert (treeTraitProvider != null);
-//
-//        nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
-//        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
-//        dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-//
-////        if (nTraits != 1) {
-////            throw new RuntimeException("Not yet implemented for >1 traits");
-////        }
-////
-////        if (maskParameter != null &&
-////                (maskParameter.getDimension() != traitParameter.getDimension())) {
-////            throw new RuntimeException("Trait and mask parameters must be the same size");
-////        }
-//    }
-//
-//    @Override
-//    public Likelihood getLikelihood() {
-//        return treeDataLikelihood;
-//    }
-//
-//    @Override
-//    public Parameter getParameter() {
-//        return null; // TODO
-//    }
-//
-//    @Override
-//    public int getDimension() {
-//        return getParameter().getDimension();
-//    }
-//
-//    @Override
-//    public double[] getGradientLogDensity() {
-//
-//        double[] gradient = new double[nTaxa  * dimTrait * nTraits];
-//
-////        int offsetOutput = 0;
-////        for (int taxon = 0; taxon < nTaxa; ++taxon) {
-////            double[] taxonGradient = (double[]) treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
-////            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
-////            offsetOutput += taxonGradient.length;
-////        }
-////
-////        if (maskParameter != null) {
-////            for (int i = 0; i < maskParameter.getDimension(); ++i) {
-////                if (maskParameter.getParameterValue(i) == 0.0) {
-////                    gradient[i] = 0.0;
-////                }
-////            }
-////        }
-//
-//        return gradient;
-//    }
 
     @Override
     public String getReport() {

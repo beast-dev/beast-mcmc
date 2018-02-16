@@ -36,6 +36,9 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
+import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
+import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
+
 /**
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
@@ -90,7 +93,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
             );
         }
 
-        setParameter(position);
+        setParameter(position, parameter);
 
         return 0.0;
     }
@@ -146,13 +149,6 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         return remainingTime;
     }
 
-    private void setParameter(ReadableVector position) {
-        for (int j = 0, dim = position.getDim(); j < dim; ++j) {
-            parameter.setParameterValueQuietly(j, position.get(j));
-        }
-        parameter.fireParameterChangedEvent();
-    }
-
     private void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
 
         ReadableVector gDivM = new ReadableVector.Quotient(gradient, mass);
@@ -205,21 +201,9 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
         }
     }
 
-    private double innerProduct(ReadableVector x, ReadableVector y) {
-
-        assert (x.getDim() == y.getDim());
-
-        double sum = 0;
-        for (int i = 0, dim = x.getDim(); i < dim; ++i) {
-            sum += x.get(i) * y.get(i);
-        }
-
-        return sum;
-    }
-
     private ReadableVector getPrecisionProduct(ReadableVector velocity) {
 
-        setParameter(velocity);
+        setParameter(velocity, parameter);
 
         double[] product = productProvider.getProduct(parameter);
 
@@ -310,8 +294,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     private class MinimumTravelInformation {
 
-        double minTime;
-        int minIndex;
+        final double minTime;
+        final int minIndex;
 
         private MinimumTravelInformation(double minTime, int minIndex) {
             this.minTime = minTime;
@@ -321,8 +305,8 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
     public static class Options {
 
-        double randomTimeWidth;
-        int preconditioningUpdateFrequency;
+        final double randomTimeWidth;
+        final int preconditioningUpdateFrequency;
 
         public Options(double randomTimeWidth, int preconditioningUpdateFrequency) {
             this.randomTimeWidth = randomTimeWidth;
@@ -331,8 +315,9 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
     }
 
     private class Preconditioning {
-        WrappedVector mass;
-        double totalTravelTime;
+
+        final WrappedVector mass;
+        final double totalTravelTime;
 
         private Preconditioning(WrappedVector mass, double totalTravelTime) {
             this.mass = mass;

@@ -91,6 +91,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex);
 
+    int getBufferCount();
+
     class Basic implements ContinuousDiffusionIntegrator {
 
 //        private int instance = -1;
@@ -105,6 +107,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         final int dimMatrix;
         final int dimPartialForTrait;
         final int dimPartial;
+
+        @Override
+        public int getBufferCount() { return bufferCount; }
 
         @Override
         public String getReport() {

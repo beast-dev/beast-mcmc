@@ -40,6 +40,10 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     private static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
 
     public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue) {
+        this(id, rowDimension, colDimension, startingValue, true);
+    }
+
+    public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue, boolean signalComponents) {
         super(id);
         singleParameter = new Parameter.Default(rowDimension * colDimension);
         addParameter(singleParameter);
@@ -50,6 +54,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         this.colDimension = colDimension;
         DefaultBounds bounds = new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, singleParameter.getDimension());
         addBounds(bounds);
+
+        this.signalComponents = signalComponents;
     }
 
     public Parameter getParameter(int index) {
@@ -60,6 +66,14 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
             }
         }
         return proxyList.get(index);
+    }
+
+    public void fireParameterChangedEvent() {
+        if (signalComponents) {
+            super.fireParameterChangedEvent();
+        } else {
+            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+        }
     }
 
     class ParameterProxy extends Parameter.Abstract {
@@ -266,6 +280,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     private final int rowDimension;
     private final int colDimension;
     private final Parameter singleParameter;
+    private final boolean signalComponents;
 
     private List<ParameterProxy> proxyList = null;
 

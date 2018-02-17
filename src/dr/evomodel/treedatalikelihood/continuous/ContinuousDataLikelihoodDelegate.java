@@ -259,7 +259,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
-    TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
+    public TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
 
     public PrecisionType getPrecisionType() {
         return precisionType;
@@ -274,6 +274,38 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     public ConjugateRootTraitPrior getRootPrior() { return rootPrior; }
 
     public int getPartialBufferCount() { return partialBufferHelper.getBufferCount(); }
+
+    private double[][] getTreeVariance() {
+
+        final double normalization = rateTransformation.getNormalization();
+        final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
+
+        return MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(),
+                normalization, priorSampleSize);
+    }
+
+    private double[][] getTreePrecision() {
+        Matrix precision = new Matrix(getTreeVariance()).inverse();
+        return precision.toComponents();
+    }
+
+    private double[][] getTraitVariance() {
+        Matrix variance = new Matrix(getDiffusionModel().getPrecisionmatrix()).inverse();
+        return variance.toComponents();
+    }
+
+    public double[][] getTreeTraitPrecision() {
+        return KroneckerOperation.product(
+                getTreePrecision(),
+                getDiffusionModel().getPrecisionmatrix());
+    }
+
+    public double[][] getTreeTraitVariance() {
+        return KroneckerOperation.product(
+                getTreeVariance(),
+                getTraitVariance()
+        );
+    }
 
     @Override
     public String getReport() {
@@ -297,7 +329,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append(new Matrix(treeStructure));
         sb.append("\n\n");
 
-        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(), normalization, priorSampleSize);
+        double[][] treeVariance = getTreeVariance();
         double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
@@ -349,8 +381,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append("data: ").append(new dr.math.matrixAlgebra.Vector(data));
         sb.append("\n\n");
 
-        double[][] graphStructure = MultivariateTraitDebugUtilities.getGraphVariance(tree, callbackLikelihood.getBranchRateModel(), 1.0,
-                priorSampleSize);
+        double[][] graphStructure = MultivariateTraitDebugUtilities.getGraphVariance(tree,
+                callbackLikelihood.getBranchRateModel(), normalization, priorSampleSize);
         double[][] jointGraphVariance = KroneckerOperation.product(graphStructure, traitVariance.toComponents());
 
         sb.append("graph structure:\n");
@@ -581,9 +613,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
         int index = node.getNumber();
-        String name1 = dataModel.getParameter().getParameter(index).getParameterName();
-        Taxon taxon = tree.getNodeTaxon(node);
-        return name1.contains(taxon.getId());
+        Parameter traitParameter = dataModel.getParameter().getParameter(index);
+        if (traitParameter == null) {
+            return true;
+        } else {
+            String name1 = traitParameter.getParameterName();
+            Taxon taxon = tree.getNodeTaxon(node);
+            return name1.contains(taxon.getId());
+        }
     }
 
     @Override
@@ -598,7 +635,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
      */
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
-                                      int rootNodeNumber) throws LikelihoodException {
+                                      int rootNodeNumber) {
 
         branchNormalization = rateTransformation.getNormalization();
 
@@ -850,9 +887,22 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    void addNewFullConditionalDensityTrait(String traitName) {
+    public void addNewFullConditionalDensityTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new NewTipFullConditionalDistributionDelegate(traitName,
+                getCallbackLikelihood().getTree(),
+                getDiffusionModel(),
+                getDataModel(), getRootPrior(),
+                getRateTransformation(), this);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
+
+        getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
+    }
+
+    public void addWrappedFullConditionalDensityTrait(String traitName) {
+
+        ProcessSimulationDelegate gradientDelegate = new WrappedTipFullConditionalDistributionDelegate(traitName,
                 getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
                 getDataModel(), getRootPrior(),

@@ -57,8 +57,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.nSteps = nSteps;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
         this.leapFrogEngine = (transform != null ?
-                new LeapFrogEngine.WithTransform(parameter, transform) :
-                new LeapFrogEngine.Default(parameter));
+                new LeapFrogEngine.WithTransform(parameter, transform, getDefaultInstabilityHandler()) :
+                new LeapFrogEngine.Default(parameter, getDefaultInstabilityHandler()));
 
     }
 
@@ -168,6 +168,29 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return stepSize;
     }
 
+    enum InstabilityHandler {
+
+        REJECT {
+            @Override
+            void checkValue(double x) throws NumericInstabilityException {
+                if (Double.isNaN(x)) throw new NumericInstabilityException();
+            }
+        },
+
+        IGNORE {
+            @Override
+            void checkValue(double x) {
+                // Do nothing
+            }
+        };
+
+        abstract void checkValue(double x) throws NumericInstabilityException;
+    }
+
+    protected InstabilityHandler getDefaultInstabilityHandler() {
+        return InstabilityHandler.REJECT;
+    }
+
     interface LeapFrogEngine {
 
         double[] getInitialPosition();
@@ -189,9 +212,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
+            final private InstabilityHandler instabilityHandler;
 
-            protected Default(Parameter parameter) {
+            protected Default(Parameter parameter, InstabilityHandler instabilityHandler) {
                 this.parameter = parameter;
+                this.instabilityHandler = instabilityHandler;
             }
 
             @Override
@@ -211,7 +236,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 final int dim = momentum.length;
                 for (int i = 0; i < dim; ++i) {
                     momentum[i] += functionalStepSize  * gradient[i];
-                    if (Double.isNaN(momentum[i])) throw new NumericInstabilityException();
+                    instabilityHandler.checkValue(momentum[i]);
                 }
             }
 
@@ -227,16 +252,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 setParameter(position);
             }
 
-
             public void setParameter(double[] position) {
 
                 final int dim = position.length;
                 for (int j = 0; j < dim; ++j) {
                     parameter.setParameterValueQuietly(j, position[j]);
-
-                    if (Double.isNaN(position[j])) {
-                        System.err.println("Doh");
-                    }
                 }
                 parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
 //                parameter.setParameterValueNotifyChangedAll(0, position[0]);
@@ -248,8 +268,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             final private Transform transform;
             double[] unTransformedPosition;
 
-            private WithTransform(Parameter parameter, Transform transform) {
-                super(parameter);
+            private WithTransform(Parameter parameter, Transform transform, InstabilityHandler instabilityHandler) {
+                super(parameter, instabilityHandler);
                 this.transform = transform;
             }
 

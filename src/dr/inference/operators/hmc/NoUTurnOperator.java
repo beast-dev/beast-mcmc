@@ -66,6 +66,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         super(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, drawVariance);
     }
 
+    @Override
+    protected InstabilityHandler getDefaultInstabilityHandler() {
+        return InstabilityHandler.IGNORE;
+    }
+
     private class StepSize {
         final double initialStepSize;
         double stepSize;

@@ -97,6 +97,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private static final boolean DEBUG = false;
 
+    private boolean numericallyUnstable(final double[] vector) {
+        for (double v :vector) {
+            if (Double.isNaN(v)) return true;
+        }
+        return false;
+    }
+
     private double leapFrog() {
 
         if (DEBUG) {
@@ -119,6 +126,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
+        if (numericallyUnstable(momentum)) {
+            return Double.NEGATIVE_INFINITY;
+        }
 
         if (DEBUG) {
             System.err.println("nSteps = " + nSteps);
@@ -131,11 +141,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             if (i < (nSteps - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum,
                         gradientProvider.getGradientLogDensity(), stepSize);
+
+                if (numericallyUnstable(momentum)) {
+                    return Double.NEGATIVE_INFINITY;
+                }
             }
         }
 
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
+
+        if (numericallyUnstable(momentum)) {
+            return Double.NEGATIVE_INFINITY;
+        }
 
         final double res = getScaledDotProduct(momentum, sigmaSquared) +
                 leapFrogEngine.getParameterLogJacobian();
@@ -225,6 +243,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 final int dim = position.length;
                 for (int j = 0; j < dim; ++j) {
                     parameter.setParameterValueQuietly(j, position[j]);
+
+                    if (Double.isNaN(position[j])) {
+                        System.err.println("Doh");
+                    }
                 }
                 parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
 //                parameter.setParameterValueNotifyChangedAll(0, position[0]);

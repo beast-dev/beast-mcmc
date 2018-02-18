@@ -91,20 +91,21 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public double doOperation() { return leapFrog(); }
+    public double doOperation() {
+        try {
+            return leapFrog();
+        } catch (NumericInstabilityException e) {
+            return Double.NEGATIVE_INFINITY;
+        }
+    }
 
     private long count = 0;
 
     private static final boolean DEBUG = false;
+    
+    static class NumericInstabilityException extends Exception { }
 
-    private boolean numericallyUnstable(final double[] vector) {
-        for (double v :vector) {
-            if (Double.isNaN(v)) return true;
-        }
-        return false;
-    }
-
-    private double leapFrog() {
+    private double leapFrog() throws NumericInstabilityException {
 
         if (DEBUG) {
             if (count % 5 == 0) {
@@ -126,10 +127,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-        if (numericallyUnstable(momentum)) {
-            return Double.NEGATIVE_INFINITY;
-        }
-
         if (DEBUG) {
             System.err.println("nSteps = " + nSteps);
         }
@@ -141,19 +138,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             if (i < (nSteps - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum,
                         gradientProvider.getGradientLogDensity(), stepSize);
-
-                if (numericallyUnstable(momentum)) {
-                    return Double.NEGATIVE_INFINITY;
-                }
             }
         }
 
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
-
-        if (numericallyUnstable(momentum)) {
-            return Double.NEGATIVE_INFINITY;
-        }
 
         final double res = getScaledDotProduct(momentum, sigmaSquared) +
                 leapFrogEngine.getParameterLogJacobian();
@@ -188,7 +177,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         void updateMomentum(final double[] position,
                             final double[] momentum,
                             final double[] gradient,
-                            final double functionalStepSize);
+                            final double functionalStepSize) throws NumericInstabilityException;
 
         void updatePosition(final double[] position,
                             final double[] momentum,
@@ -217,11 +206,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
             @Override
             public void updateMomentum(double[] position, double[] momentum, double[] gradient,
-                                       double functionalStepSize) {
+                                       double functionalStepSize) throws NumericInstabilityException {
 
                 final int dim = momentum.length;
                 for (int i = 0; i < dim; ++i) {
                     momentum[i] += functionalStepSize  * gradient[i];
+                    if (Double.isNaN(momentum[i])) throw new NumericInstabilityException();
                 }
             }
 
@@ -276,7 +266,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
             @Override
             public void updateMomentum(double[] position, double[] momentum, double[] gradient,
-                                       double functionalStepSize) {
+                                       double functionalStepSize) throws NumericInstabilityException {
 
                 gradient = transform.updateGradientLogDensity(gradient, unTransformedPosition,
                         0, unTransformedPosition.length);

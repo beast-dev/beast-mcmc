@@ -260,12 +260,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
             System.err.println("grad2 = " + grad2);
         }
 
-        double grad = grad1 + grad2;
-
-        if (Double.isNaN(grad)) {
-            System.err.println("Doh");
-        }
-
         return grad1 + grad2;
     }
 

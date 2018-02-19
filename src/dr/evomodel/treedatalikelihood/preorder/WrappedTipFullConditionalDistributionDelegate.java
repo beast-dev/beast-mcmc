@@ -15,17 +15,17 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class NewTipFullConditionalDistributionDelegate extends
+public class WrappedTipFullConditionalDistributionDelegate extends
         AbstractFullConditionalDistributionDelegate {
 
-    private static final String NAME_PREFIX = "nFcd";
+    private static final String NAME_PREFIX = "wFcd";
 
-    public NewTipFullConditionalDistributionDelegate(String name, Tree tree,
-                                                     MultivariateDiffusionModel diffusionModel,
-                                                     ContinuousTraitPartialsProvider dataModel,
-                                                     ConjugateRootTraitPrior rootPrior,
-                                                     ContinuousRateTransformation rateTransformation,
-                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+    public WrappedTipFullConditionalDistributionDelegate(String name, Tree tree,
+                                                         MultivariateDiffusionModel diffusionModel,
+                                                         ContinuousTraitPartialsProvider dataModel,
+                                                         ConjugateRootTraitPrior rootPrior,
+                                                         ContinuousRateTransformation rateTransformation,
+                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
     }
 
@@ -36,8 +36,8 @@ public class NewTipFullConditionalDistributionDelegate extends
     @Override
     protected void constructTraits(Helper treeTraitHelper) {
 
-        TreeTrait<List<NormalSufficientStatistics>> baseTrait =
-                new TreeTrait<List<NormalSufficientStatistics>>() {
+        TreeTrait<List<WrappedMeanPrecision>> baseTrait =
+                new TreeTrait<List<WrappedMeanPrecision>>() {
 
             public String getTraitName() {
                 return getName(name);
@@ -49,7 +49,7 @@ public class NewTipFullConditionalDistributionDelegate extends
 
             public Class getTraitClass() { return List.class; }
 
-            public List<NormalSufficientStatistics> getTrait(Tree t, NodeRef node) {
+            public List<WrappedMeanPrecision> getTrait(Tree t, NodeRef node) {
                 assert (tree == t);
 
                 return getTraitForNode(node);
@@ -67,17 +67,17 @@ public class NewTipFullConditionalDistributionDelegate extends
         treeTraitHelper.addTrait(baseTrait);
     }
 
-    private static String formatted(List<NormalSufficientStatistics> statistics) {
+    private static String formatted(List<WrappedMeanPrecision> statistics) {
 
         StringBuilder sb = new StringBuilder();
-        for (NormalSufficientStatistics stat : statistics) {
-            sb.append(stat.toVectorizedString()).append(";\t");
+        for (WrappedMeanPrecision stat : statistics) {
+            sb.append(stat.toString()).append(";\t");
         }
 
         return sb.toString();
     }
 
-    protected List<NormalSufficientStatistics> getTraitForNode(NodeRef node) {
+    protected List<WrappedMeanPrecision> getTraitForNode(NodeRef node) {
 
         assert simulationProcess != null;
         assert dimPartial > 0;
@@ -85,25 +85,25 @@ public class NewTipFullConditionalDistributionDelegate extends
 
         simulationProcess.cacheSimulatedTraits(node);
 
-        final int numberOfNodes = (node == null) ? tree.getNodeCount() : 1;
+        final int numberOfNodes = (node == null) ? tree.getExternalNodeCount() : 1;
         final int numberOfBuffers = (node == null) ? cdi.getBufferCount() : 1;
         double[] partial = new double[dimPartial * numTraits * numberOfBuffers];
 
         final int index = (node == null) ? -1 : likelihoodDelegate.getActiveNodeIndex(node.getNumber());
         cdi.getPreOrderPartial(index, partial);
 
-        List<NormalSufficientStatistics> statistics = new ArrayList<NormalSufficientStatistics>();
+        List<WrappedMeanPrecision> statistics = new ArrayList<WrappedMeanPrecision>();
 
         for (int n = 0; n < numberOfNodes; ++n) {
-            // TODO Re-map all statistics using getActiveNodeIndex() if index == -1
-            int mapped = (node == null) ? likelihoodDelegate.getActiveMatrixIndex(n) : n;
+
+            int mapped = (node == null) ?
+                    likelihoodDelegate.getActiveNodeIndex(tree.getExternalNode(n).getNumber()) : n;
 
             assert (numTraits == 1); // TODO Generalize
-
-            for (int i = 0; i < numTraits; ++i) {
-                statistics.add(new NormalSufficientStatistics(partial, mapped * dimPartial, dimTrait,
-                        Pd, likelihoodDelegate.getPrecisionType()));
-            }
+            
+            statistics.add(new WrappedMeanPrecision(
+                    partial, mapped, dimTrait, Pd, likelihoodDelegate.getPrecisionType())
+            );
         }
 
         return statistics;

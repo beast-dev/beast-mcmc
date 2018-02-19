@@ -198,9 +198,19 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     public int getDimension() { return 1; }
 
     @Override
-    public double[] getGradientLogDensity(Object x) {
-        double[] result = new double[1];
-        result[0] = NormalDistribution.gradLogPdf((Double) x, mean(), getScale());
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x;
+        if (obj instanceof double[]) {
+            x = (double[]) obj;
+        } else {
+            x = new double[1];
+            x[0] = (Double) obj;
+        }
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = NormalDistribution.gradLogPdf(x[i], mean(), getScale());
+        }
         return result;
     }
 

@@ -91,6 +91,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
         }
 
         // Strength of selection matrix
+        strengthOfSelectionMatrixParam.getDiagonalParameter().addBounds(new DiagonalMatrix.DefaultBounds(Math.log(Double.MAX_VALUE) / tree.getNodeHeight(tree.getRoot()) / 2 * Math.log(2), 0, dim));
         this.strengthOfSelectionMatrixParameter = strengthOfSelectionMatrixParam;
         calculateStrengthOfSelectionInfo(diffusionModel);
         addVariable(strengthOfSelectionMatrixParameter);

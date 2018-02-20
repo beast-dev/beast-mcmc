@@ -45,7 +45,7 @@ import java.util.logging.Logger;
  */
 public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
-    private static boolean FAIL_SILENTLY = false;
+    private static boolean FAIL_SILENTLY = true;
 
     private double scaleFactor;
     private double lambdaScaleFactor;

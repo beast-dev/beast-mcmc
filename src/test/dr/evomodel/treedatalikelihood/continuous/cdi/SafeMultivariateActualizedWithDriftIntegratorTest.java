@@ -187,7 +187,10 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
 
             double expectedStationaryVariance[] = test.getStationaryVariance();
 
-            assertArrayEquals(stationaryVariance, expectedStationaryVariance, 1e-6);
+            assertEquals(stationaryVariance.length, expectedStationaryVariance.length, 1e-6);
+            for (int i = 0; i < expectedStationaryVariance.length; ++i) {
+                assertEquals(stationaryVariance[i], expectedStationaryVariance[i], 1e-6);
+            }
         }
     }
 

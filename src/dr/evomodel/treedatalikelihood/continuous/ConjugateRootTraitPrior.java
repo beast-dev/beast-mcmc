@@ -79,4 +79,12 @@ public class ConjugateRootTraitPrior {
             new ElementRule(PRIOR_SAMPLE_SIZE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
     };
+
+    public ConjugateRootTraitPrior(double[] mean, double pseudoObservations, boolean test) {
+        if (!test) {
+            throw new RuntimeException("This constructor should only be called in a testing environement.");
+        }
+        this.mean = mean;
+        this.pseudoObservations = pseudoObservations;
+    }
 }

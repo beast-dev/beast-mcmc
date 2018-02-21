@@ -147,11 +147,22 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 //the translation table is constructed upon loading the initial tree for the analysis
                 //if that tree is user-defined or a UPGMA starting tree, the starting seed won't matter
                 //if that tree is constructed at random, we currently don't provide a way to retrieve the original translation table
+
                 if (digits < 15) {
-                    throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
-                            ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
-                            "\nYour XML may require the construction of a randomly generated starting tree. " +
-                            "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
+
+                    //currently use the general BEAST -threshold argument
+                    //TODO Evaluate whether a checkpoint-specific threshold option is required or useful
+                    double threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
+                    if (Math.abs(lnL - savedLnL) > threshold) {
+                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                                "\nYour XML may require the construction of a randomly generated starting tree. " +
+                                "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
+                    } else {
+                        System.out.println("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                        ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                        "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
+                    }
                 }
 
             } else {

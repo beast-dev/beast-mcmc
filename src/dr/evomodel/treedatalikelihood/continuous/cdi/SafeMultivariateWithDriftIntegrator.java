@@ -1,9 +1,12 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
+
+import java.util.Arrays;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
@@ -26,7 +29,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
     }
 
     @Override
-    public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
+    public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement, double[] actualization) {
 
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
@@ -43,6 +46,12 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
 
         System.arraycopy(displacements, bufferIndex * dimTrait,
                 displacement, 0, dimTrait);
+
+        // Fill in actualization
+        assert (actualization != null);
+        assert (actualization.length >= dimTrait * dimTrait);
+
+        KroneckerOperation.makeIdentityMatrix(dimTrait, actualization);
     }
 
     private static final boolean TIMING = false;
@@ -538,5 +547,5 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         }
     }
 
-    private double[] displacements;
+    protected double[] displacements;
 }

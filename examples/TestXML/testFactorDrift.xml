@@ -1,0 +1,249 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+<!--
+	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="X">10 11 11 12</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="X">1 2 1 NA</attr> <!~~ 1 2 1 2 ~~>
+		</taxon>
+		<taxon id="C">
+			<attr name="X">3 3 3 3</attr>
+		</taxon>
+	</taxa>
+ -->
+
+
+
+
+	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="X">10 11</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="X">NA 3</attr> <!-- 1 2 1 2 -->
+		</taxon>
+		<taxon id="C">
+			<attr name="X">2 4</attr>
+		</taxon>
+	</taxa>
+
+
+
+
+
+
+<!--
+ 	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="X">10 11</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="X">NA 2</attr> <!~~ 1 2 1 2 ~~>
+		</taxon>
+		<taxon id="C">
+			<attr name="X">3 3</attr>
+		</taxon>
+	</taxa>
+ -->
+
+
+	<newick id="tree">
+		((A:1.1,B:1.1):1,C:2.1);
+<!-- 		(A:1,B:1); -->
+
+
+	</newick>
+
+	<treeModel id="treeModel">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+		<precisionMatrix>
+			<!-- <matrixParameter id="precisionMatrix"> -->
+			<!-- 	<parameter id="col1" value="1.0 0.1"/> -->
+			<!-- 	<parameter id="col2" value="0.1 2.0"/> -->
+			<!-- </matrixParameter> -->
+			<matrixParameter id="precisionMatrix">
+				<parameter id="col1" value="1.00"/>
+			</matrixParameter>
+		</precisionMatrix>
+	</multivariateDiffusionModel>
+
+<!--
+	<multivariateWishartPrior id="precisionPrior" df="2">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="1.00 0.00"/>
+				<parameter value="0.00 1.00"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<matrixParameter idref="precisionMatrix"/>
+		</data>
+	</multivariateWishartPrior>
+ -->
+
+	<integratedFactorModel id="factorModel" traitName="X" nugget="0">
+		<loadings>
+			<!-- <matrixParameter id="loadings"> -->
+			<!-- 	<parameter value="1.0 0.0"/> -->
+			<!-- 	<parameter value="0.0 1.0"/> -->
+				<!-- <parameter value="-0.07088812 0.70888121"/> -->
+			<!-- </matrixParameter> -->
+			<matrixParameter id="loadings">
+				<parameter value="1 0.5"/>
+			</matrixParameter>
+		</loadings>
+		<precision>
+			<parameter id="precision" value="1.0 2.0"/>
+		</precision>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+	</integratedFactorModel>
+
+	<traitDataLikelihood id="traitLikelihood" traitName="latent">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<integratedFactorModel idref="factorModel"/>
+		<!-- <driftModels> -->
+		<optimalTraits>
+			<strictClockBranchRates>
+				<rate>
+					<!-- <parameter id="rate.1" value="1.2"/> -->
+					<parameter id="rate.1" value="1.0"/>
+				</rate>
+			</strictClockBranchRates>
+			<!-- <strictClockBranchRates> -->
+			<!-- 	<rate> -->
+					<!-- <parameter id="rate.2" value="2.821347"/> -->
+					<!-- <parameter id="rate.2" value="2.0"/> -->
+				<!-- </rate> -->
+			<!-- </strictClockBranchRates> -->
+		<!-- </driftModels> -->
+		</optimalTraits>
+        <!-- <strengthOfSelectionMatrix> -->
+        <!--     <matrixParameter id="strengthOfSelectionMatrix"> -->
+				<!-- <parameter id="alpha.col1" value="1.0 0.1"/> -->
+				<!-- <parameter id="alpha.col2" value="0.1 2.0"/> -->
+        <!--     </matrixParameter> -->
+        <!-- </strengthOfSelectionMatrix> -->
+        <strengthOfSelectionMatrix>
+            <matrixParameter id="strengthOfSelectionMatrix">
+				<parameter id="alpha.col1" value="1.0"/>
+            </matrixParameter>
+        </strengthOfSelectionMatrix>
+<!--
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+ -->
+        <conjugateRootPrior>
+            <meanParameter>
+                <!-- <parameter value="-3.1 -1.410674"/> -->
+                <!-- <parameter value="-3.0 -1.0"/> -->
+                <parameter value="0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+<!--
+        <missingIndicator>
+        	<parameter id="missingMask"/>
+        </missingIndicator>
+ -->
+
+	</traitDataLikelihood>
+
+	<operators id="operators">
+
+<!--
+		<randomWalkOperator windowSize="1" weight="1">
+			<maskedParameter>
+				<parameter idref="leafTraits"/>
+				<mask>
+					<parameter value="0 0 0 0 0 0 0 0 0 0 1 0"/>
+				</mask>
+			</maskedParameter>
+		</randomWalkOperator>
+ -->
+
+
+
+<!--
+		<scaleOperator scaleFactor="0.75" weight="1" autoOptimize="true">
+			<maskedParameter>
+				<parameter idref="col1"/>
+				<mask>
+					<parameter value="1 0"/>
+				</mask>
+			</maskedParameter>
+		</scaleOperator>
+ -->
+
+
+
+<!--
+        <dirtyLikelihood weight="1">
+            <traitDataLikelihood idref="traitLikelihood"/>
+        </dirtyLikelihood>
+ -->
+
+
+        <fireParameterChanged weight="1">
+            <parameter idref="leafTraits"/>
+        </fireParameterChanged>
+
+
+
+	</operators>
+
+	<report>
+<!-- 		logL = <multivariateTraitLikelihood idref="traitLikelihood"/> -->
+		<integratedFactorModel idref="factorModel"/>
+<!-- 		<traitDataLikelihood idref="traitLikelihood"/> -->
+	</report>
+
+
+	<mcmc id="mcmc" chainLength="2">
+		<posterior id="posterior">
+			<integratedFactorModel idref="factorModel"/>
+			<traitDataLikelihood idref="traitLikelihood"/>
+		</posterior>
+		<operators idref="operators"/>
+		<log logEvery="1">
+			<integratedFactorModel idref="factorModel"/>
+			<traitDataLikelihood idref="traitLikelihood"/>
+			<matrixParameter idref="loadings"/>
+		</log>
+		<log logEvery="1" fileName="testIntegratedTraitLikelihood.log">
+			<integratedFactorModel idref="factorModel"/>
+			<traitDataLikelihood idref="traitLikelihood"/>
+		</log>
+		<logTree logEvery="1" nexusFormat="true" fileName="testIntegratedTraitLikelihood.trees">
+			<traitDataLikelihood idref="traitLikelihood"/>
+			<treeModel idref="treeModel"/>
+		</logTree>
+	</mcmc>
+
+
+</beast>
+

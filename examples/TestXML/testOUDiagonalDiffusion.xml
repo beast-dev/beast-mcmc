@@ -9,7 +9,7 @@
 			<attr name="X">NA 3</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">2 4</attr>
+			<attr name="X">NA 4</attr>
 		</taxon>
 	</taxa>
 
@@ -42,14 +42,14 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="true">
+	<traitDataLikelihood id="ouLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 <!-- 		<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/> -->
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
-		<driftModels>
+		<optimalTraits>
 			<strictClockBranchRates>
 				<rate>
 					<parameter id="rate.1" value="1.0"/>
@@ -60,7 +60,12 @@
 					<parameter id="rate.2" value="2.0"/>
 				</rate>
 			</strictClockBranchRates>
-		</driftModels>
+		</optimalTraits>
+        <strengthOfSelectionMatrix>
+            <diagonalMatrix id="strengthOfSelectionMatrix">
+                <parameter id="alpha.diag" value="1.0 2.0" lower="0.0 0.0"/>
+            </diagonalMatrix>
+        </strengthOfSelectionMatrix>
      	<conjugateRootPrior>
             <meanParameter>
                 <parameter id="meanRoot"  value="-3.0 -1.0"/>
@@ -72,59 +77,60 @@
 	</traitDataLikelihood>
 
 	<report>
-		With drift likelihood =
-		<traitDataLikelihood idref="driftLikelihood"/>
+		With OU likelihood =
+		<traitDataLikelihood idref="ouLikelihood"/>
 	</report>
 
 <!--
 	<traitGradientOnTree traitName="X">
-		<traitDataLikelihood idref="driftLikelihood"/>
+		<traitDataLikelihood idref="ouLikelihood"/>
 	</traitGradientOnTree>
 
 	<report>
 		<traitLogger traitName="fcd.X" nodes="external">
-			<traitDataLikelihood idref="driftLikelihood"/>
+			<traitDataLikelihood idref="ouLikelihood"/>
 			<treeModel idref="treeModel"/>
 		</traitLogger>
 	</report>
  -->
 
-	<operators id="driftOperators">
+	<operators id="ouOperators">
        <dirtyLikelihood weight="1">
-            <traitDataLikelihood idref="driftLikelihood"/>
+            <traitDataLikelihood idref="ouLikelihood"/>
         </dirtyLikelihood>
 	</operators>
 
-	<mcmc id="driftMcmc" chainLength="10">
-		<posterior id="driftPosterior">
-			<traitDataLikelihood idref="driftLikelihood"/>
+	<mcmc id="ouMcmc" chainLength="10">
+		<posterior id="ouPosterior">
+			<traitDataLikelihood idref="ouLikelihood"/>
 		</posterior>
-		<operators idref="driftOperators"/>
+		<operators idref="ouOperators"/>
 		<log logEvery="10">
-			<posterior idref="driftPosterior"/>
+			<posterior idref="ouPosterior"/>
 		</log>
 
-		<log logEvery="1" fileName="testDrift.log">
+		<log logEvery="1" fileName="testOU.log">
 			<traitLogger traitName="X" nodes="all">
-				<traitDataLikelihood idref="driftLikelihood"/>
+				<traitDataLikelihood idref="ouLikelihood"/>
 <!-- 				<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/> -->
 				<treeModel idref="treeModel"/>
 			</traitLogger>
 			<parameter idref="rate.1"/>
 			<parameter idref="rate.2"/>
-			<traitDataLikelihood idref="driftLikelihood"/>
+			<traitDataLikelihood idref="ouLikelihood"/>
             <matrixParameter idref="precisionMatrix"/>
 			<parameter idref="meanRoot"/>
 			<parameter idref="sampleSizeRoot"/>
+            <matrixParameter idref="strengthOfSelectionMatrix"/>
 		</log>
 
-		<logTree logEvery="1" nexusFormat="true" fileName="testDrift.trees">
-			<traitDataLikelihood idref="driftLikelihood"/>
+		<logTree logEvery="1" nexusFormat="true" fileName="testOU.trees">
+			<traitDataLikelihood idref="ouLikelihood"/>
 			<treeModel idref="treeModel"/>
 		</logTree>
 	</mcmc>
     <!--
-	<traceAnalysis fileName="testDrift.log" stdError="true">
+	<traceAnalysis fileName="testOU.log" stdError="true">
 		<expectation name="X.4.1" value="2.87"/>
 		<expectation name="X.4.2" value="3.76"/>
 		<expectation name="X.5.1" value="-2.40"/>
@@ -132,7 +138,7 @@
 	</traceAnalysis>
 -->
 <!--
-	<operators id="sampleDriftOperators">
+	<operators id="sampleOUOperators">
 		<randomWalkOperator windowSize="0.1" weight="1">
 			<parameter idref="rate.1"/>
 		</randomWalkOperator>
@@ -141,9 +147,9 @@
 		</randomWalkOperator>
 	</operators>
 
-	<mcmc id="sampleDriftMcmc" chainLength="1000">
-		<posterior id="sampleDriftPosterior">
-			<traitDataLikelihood idref="driftLikelihood"/>
+	<mcmc id="sampleOUMcmc" chainLength="1000">
+		<posterior id="sampleOUPosterior">
+			<traitDataLikelihood idref="ouLikelihood"/>
 			<normalPrior mean="0.0" stdev="1">
 				<parameter idref="rate.1"/>
 			</normalPrior>
@@ -151,12 +157,12 @@
 				<parameter idref="rate.2"/>
 			</normalPrior>
 		</posterior>
-		<operators idref="sampleDriftOperators"/>
+		<operators idref="sampleOUOperators"/>
 		<log logEvery="100">
-			<posterior idref="sampleDriftPosterior"/>
+			<posterior idref="sampleOUPosterior"/>
 		</log>
 
-		<log logEvery="1" fileName="testDriftSample.log">
+		<log logEvery="1" fileName="testOUSample.log">
 			<parameter idref="rate.1"/>
 			<parameter idref="rate.2"/>
 		</log>

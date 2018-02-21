@@ -90,6 +90,7 @@ public class BranchConditionalDistributionDelegate extends
         double[] parentPartial = new double[dimPartial * numTraits * numberOfNodes];
         double[] branchPrecision = new double[dimTrait * dimTrait * numTraits * numberOfNodes];
         double[] branchDisplacement = new double[dimTrait * numberOfNodes];
+        double[] branchActualization = new double[dimTrait * dimTrait * numTraits * numberOfNodes];
 
         int nodeNumber = (node == null) ? -1 : likelihoodDelegate.getActiveNodeIndex(node.getNumber());
         int branchNumber = (node == null) ? -1 : likelihoodDelegate.getActiveMatrixIndex(node.getNumber());
@@ -97,7 +98,7 @@ public class BranchConditionalDistributionDelegate extends
         List<BranchSufficientStatistics> statistics = new ArrayList<BranchSufficientStatistics>();
 
         cdi.getPostOrderPartial(nodeNumber, childPartial);
-        cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement);
+        cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
         cdi.getPreOrderPartial(nodeNumber, parentPartial);
 
 

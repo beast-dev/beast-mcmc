@@ -74,8 +74,23 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
+    public int getEigenBufferOffsetIndex(int i) {
+        return eigenBufferHelper.getOffsetIndex(i);
+    }
+
+    @Override
     public int getMatrixBufferCount() {
         return matrixBufferHelper.getBufferCount();
+    }
+
+    @Override
+    public int getMatrixBufferOffsetIndex(int i) {
+        return matrixBufferHelper.getOffsetIndex(i);
+    }
+
+    @Override
+    public void flipMatrixBufferOffset(int i) {
+        matrixBufferHelper.flipOffset(i);
     }
 
     @Override
@@ -132,6 +147,9 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
 
     @Override
     public boolean hasDrift() { return false; }
+
+    @Override
+    public boolean hasActualization() { return false; }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {

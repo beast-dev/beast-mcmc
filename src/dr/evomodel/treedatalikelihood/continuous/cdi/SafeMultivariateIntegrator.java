@@ -468,13 +468,25 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F PTotal = new DenseMatrix64F(dimTrait, dimTrait);
             CommonOps.invert(VTotal, PTotal);  // TODO Does this do anything?
 
-            final DenseMatrix64F tmp1 = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
-            CommonOps.add(PRoot, PPrior, PTotal);
-            CommonOps.invert(PTotal, VTotal);
-            CommonOps.mult(VTotal, PRoot, tmp1);
-            CommonOps.mult(PRoot, tmp1, tmp2);
-            CommonOps.add(PRoot, -1.0, tmp2, PTotal);
+            final boolean useVariance = anyDiagonalInfinities(PRoot);
+            InversionResult ctot;
+
+            if (useVariance) {
+                final DenseMatrix64F Vroot = wrap(partials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+                final DenseMatrix64F VPrior = wrap(partials, priorOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+                CommonOps.add(Vroot, VPrior, VTotal);
+                ctot = safeInvert(VTotal, PTotal, true);
+            } else {
+                final DenseMatrix64F tmp1 = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.add(PRoot, PPrior, PTotal);
+                safeInvert(PTotal, VTotal, false);
+                CommonOps.mult(VTotal, PRoot, tmp1);
+                CommonOps.mult(PRoot, tmp1, tmp2);
+                CommonOps.add(PRoot, -1.0, tmp2, PTotal);
+                ctot = safeDeterminant(PTotal, false);
+            }
+
 
 //            double SS = 0;
 //            for (int g = 0; g < dimTrait; ++g) {
@@ -491,9 +503,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                     partials, priorOffset,
                     PTotal, dimTrait);
 
-            final double logLike = -dimTrait * LOG_SQRT_2_PI
+            final double logLike = -ctot.getEffectiveDimension() * LOG_SQRT_2_PI
 //                    - 0.5 * Math.log(CommonOps.det(VTotal))
-                    + 0.5 * Math.log(CommonOps.det(PTotal))
+//                    + 0.5 * Math.log(CommonOps.det(PTotal))
+                    - 0.5 * Math.log(ctot.getDeterminant())
                     - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];

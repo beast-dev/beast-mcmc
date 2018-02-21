@@ -43,9 +43,11 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         if (hasNoDrift) {
             this.precisionBuffer = null;
             this.displacementBuffer = null;
+            this.actualizationBuffer = null;
         } else {
             this.precisionBuffer = new double[dimTrait * dimTrait];
             this.displacementBuffer = new double[dimTrait];
+            this.actualizationBuffer = new double[dimTrait * dimTrait];
         }
     }
 
@@ -137,7 +139,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         }
 
         if (!hasNoDrift) {
-            cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
+            cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer, actualizationBuffer);
         }
 
         for (int trait = 0; trait < numTraits; ++trait) {
@@ -205,5 +207,6 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     final double[] partialPriorBuffer;
     final double[] precisionBuffer;
     final double[] displacementBuffer;
+    final double[] actualizationBuffer;
     final double[] tmpMean;
 }

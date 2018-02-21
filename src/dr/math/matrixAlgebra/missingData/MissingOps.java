@@ -1,5 +1,6 @@
 package dr.math.matrixAlgebra.missingData;
 
+import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.WritableVector;
@@ -35,6 +36,25 @@ public class MissingOps {
                                               final double[] buffer) {
         System.arraycopy(source, offset, buffer, 0, numRows * numCols);
         return DenseMatrix64F.wrap(numRows, numCols, buffer);
+    }
+
+    public static DenseMatrix64F wrap(MatrixParameterInterface A) {
+        return wrap(A.getParameterValues(), 0, A.getRowDimension(), A.getColumnDimension());
+    }
+
+    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
+                                              final int dim) {
+        double[] buffer = new double[dim * dim];
+        return wrapDiagonal(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
+                                              final int dim,
+                                              final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
     }
 
 

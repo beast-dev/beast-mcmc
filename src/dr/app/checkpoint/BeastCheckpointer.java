@@ -152,7 +152,10 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
 
                     //currently use the general BEAST -threshold argument
                     //TODO Evaluate whether a checkpoint-specific threshold option is required or useful
-                    double threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
+                    double threshold = 0.0;
+                    if (System.getProperty("mcmc.evaluation.threshold") != null) {
+                        threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
+                    }
                     if (Math.abs(lnL - savedLnL) > threshold) {
                         throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
                                 ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +

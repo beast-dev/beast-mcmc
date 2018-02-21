@@ -3,12 +3,8 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 
-import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.factory.DecompositionFactory;
-import org.ejml.interfaces.decomposition.EigenDecomposition;
 import org.ejml.ops.CommonOps;
-import org.ejml.ops.EigenOps;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
@@ -70,7 +66,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         vector2 = new double[dimTrait];
 
         actualizations = new double[dimTrait * dimTrait * bufferCount];
-//        stationaryVariances = new double[dimTrait * dimTrait * diffusionCount];
+        stationaryVariances = new double[dimTrait * dimTrait * diffusionCount];
 
         matrix7 = new DenseMatrix64F(dimTrait, dimTrait);
         matrix8 = new DenseMatrix64F(dimTrait, dimTrait);

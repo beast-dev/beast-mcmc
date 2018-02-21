@@ -444,7 +444,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                                              final double[] strengthOfSelectionMatrix,
                                                              final double[] rotation,
                                                              int updateCount){
-            throw new RuntimeException("updateOrnsteinUhlenbeckDiffusionMatrices should not be used in Base method for ContinuousDiffusionIntegrator.");
+//            throw new RuntimeException("updateOrnsteinUhlenbeckDiffusionMatrices should not be used in Base method for ContinuousDiffusionIntegrator.");
+            // For wishart stat computations
+            updateBrownianDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, optimalRates, updateCount);
         }
 
         @Override

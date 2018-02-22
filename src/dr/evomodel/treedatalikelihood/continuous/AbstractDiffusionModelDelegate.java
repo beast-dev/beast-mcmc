@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
@@ -33,6 +34,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.KroneckerOperation;
 
 import java.io.Serializable;
 
@@ -180,5 +182,16 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     @Override
     protected void acceptState() {
 
+    }
+
+    @Override
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean){
+        return priorMean;
+    }
+
+    @Override
+    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance){
+        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance);
+        return jointVariance;
     }
 }

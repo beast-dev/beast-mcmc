@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 
@@ -43,5 +44,10 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
     @Override
     protected double[] getDriftRates(int[] branchIndices, int updateCount) {
         return null;
+    }
+
+    @Override
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean){
+        return priorMean;
     }
 }

@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateWithDriftIntegrator;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
 import dr.math.matrixAlgebra.missingData.MissingOps;
@@ -43,6 +42,8 @@ import org.ejml.ops.EigenOps;
 import org.ejml.ops.MatrixFeatures;
 
 import java.util.List;
+
+import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
 /**
  * A simple OU diffusion model delegate with branch-specific drift and constant diffusion
@@ -211,7 +212,8 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
                 updateCount);
     }
 
-    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
+    @Override
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
         final DenseMatrix64F drift = new DenseMatrix64F(dim, 1, true, priorMean);
         recursivelyAccumulateDrift(node, drift);
         return drift.data;
@@ -262,5 +264,56 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
         CommonOps.mult(V, expDiag, tmp);
         CommonOps.invert(V);
         CommonOps.mult(tmp, V, C);
+    }
+
+    @Override
+    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
+
+        double[] eigVals = this.getEigenValuesStrengthOfSelection();
+        DenseMatrix64F V = wrap(this.getEigenVectorsStrengthOfSelection(), 0, dim, dim);
+        DenseMatrix64F Vinv = new DenseMatrix64F(dim, dim);
+        CommonOps.invert(V, Vinv);
+
+        DenseMatrix64F transTraitVariance = new DenseMatrix64F(traitVariance);
+
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
+        CommonOps.mult(Vinv, transTraitVariance, tmp);
+        CommonOps.multTransB(tmp, Vinv, transTraitVariance);
+
+        // inverse of eigenvalues
+        double[][] invEigVals = new double[dim][dim];
+        for (int p = 0; p < dim; ++p) {
+            for (int q = 0; q < dim; ++q) {
+                invEigVals[p][q] = 1 / (eigVals[p] + eigVals[q]);
+            }
+        }
+
+        // Computation of matrix
+        int ntaxa = tree.getExternalNodeCount();
+        double ti; double tj; double tij; double ep; double eq;
+        DenseMatrix64F varTemp = new DenseMatrix64F(dim, dim);
+        double[][] jointVariance = new double[dim * ntaxa][dim * ntaxa];
+        for (int i = 0; i < ntaxa; ++i) {
+            for (int j = 0; j < ntaxa; ++j) {
+                ti = treeSharedLengths[i][i];
+                tj = treeSharedLengths[j][j];
+                tij = treeSharedLengths[i][j];
+                for (int p = 0; p < dim; ++p) {
+                    for (int q = 0; q < dim; ++q) {
+                        ep = eigVals[p];
+                        eq = eigVals[q];
+                        varTemp.set(p, q, Math.exp(-ep * ti) * Math.exp(-eq * tj) * (invEigVals[p][q] * (Math.exp((ep + eq) * tij) - 1) + 1 / priorSampleSize) * transTraitVariance.get(p, q));
+                    }
+                }
+                CommonOps.mult(V, varTemp, tmp);
+                CommonOps.multTransB(tmp, V, varTemp);
+                for (int p = 0; p < dim; ++p) {
+                    for (int q = 0; q < dim; ++q) {
+                        jointVariance[i * dim + p][j * dim + q] = varTemp.get(p, q);
+                    }
+                }
+            }
+        }
+        return jointVariance;
     }
 }

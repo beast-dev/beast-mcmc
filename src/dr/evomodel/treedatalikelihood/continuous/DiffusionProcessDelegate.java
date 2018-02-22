@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
@@ -67,4 +68,8 @@ public interface DiffusionProcessDelegate extends Model {
     void storeState();
 
     void restoreState();
+
+    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean);
+
+    double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance);
 }

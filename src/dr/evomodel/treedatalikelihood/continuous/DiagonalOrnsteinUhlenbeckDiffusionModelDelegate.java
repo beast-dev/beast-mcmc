@@ -52,7 +52,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
 
     //    protected MatrixParameterInterface strengthOfSelectionMatrixParameter;
     protected DiagonalMatrix strengthOfSelectionMatrixParameter;
-    private double[][] strengthOfSelectionMatrix;
+//    private double[][] strengthOfSelectionMatrix;
 //    private double[][] savedStrengthOfSelectionMatrix;
 
 //    private double[][] stationaryPrecisionMatrix;
@@ -93,17 +93,17 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
         // Strength of selection matrix
         strengthOfSelectionMatrixParam.getDiagonalParameter().addBounds(new DiagonalMatrix.DefaultBounds(Math.log(Double.MAX_VALUE) / tree.getNodeHeight(tree.getRoot()) / 2 * Math.log(2), 0, dim));
         this.strengthOfSelectionMatrixParameter = strengthOfSelectionMatrixParam;
-        calculateStrengthOfSelectionInfo(diffusionModel);
+//        calculateStrengthOfSelectionInfo();
         addVariable(strengthOfSelectionMatrixParameter);
 
         // two more matrices for each node less the root
 //        matrixActualizationBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, partitionNumber);
     }
 
-    protected void calculateStrengthOfSelectionInfo(MultivariateDiffusionModel diffusionModel) {
-        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
-//        stationaryPrecisionMatrix = computeStationaryVariance(strengthOfSelectionMatrix, diffusionModel.getPrecisionParameter())
-    }
+//    protected void calculateStrengthOfSelectionInfo() {
+//        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
+////        stationaryPrecisionMatrix = computeStationaryVariance(strengthOfSelectionMatrix, diffusionModel.getPrecisionParameter())
+//    }
 
     public double[] getStrengthOfSelection() {
         return strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues();
@@ -177,7 +177,8 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
                 updateCount);
     }
 
-    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
+    @Override
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
         final DenseMatrix64F drift = new DenseMatrix64F(dim, 1, true, priorMean);
         recursivelyAccumulateDrift(node, drift);
         return drift.data;
@@ -217,5 +218,40 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
         for (int p = 0; p < dim; ++p) {
             C[p] = Math.exp(lambda * A[p]);
         }
+    }
+
+    @Override
+    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
+
+        // Eigen of strength of selection matrix
+        double[] eigVals = this.getStrengthOfSelection();
+        int ntaxa = tree.getExternalNodeCount();
+        double ti;
+        double tj;
+        double tij;
+        double ep;
+        double eq;
+        DenseMatrix64F varTemp = new DenseMatrix64F(dim, dim);
+        double[][] jointVariance = new double[dim * ntaxa][dim * ntaxa];
+        for (int i = 0; i < ntaxa; ++i) {
+            for (int j = 0; j < ntaxa; ++j) {
+                ti = treeSharedLengths[i][i];
+                tj = treeSharedLengths[j][j];
+                tij = treeSharedLengths[i][j];
+                for (int p = 0; p < dim; ++p) {
+                    for (int q = 0; q < dim; ++q) {
+                        ep = eigVals[p];
+                        eq = eigVals[q];
+                        varTemp.set(p, q, Math.exp(-ep * ti) * Math.exp(-eq * tj) * ((Math.exp((ep + eq) * tij) - 1) / (ep + eq) + 1 / priorSampleSize) * traitVariance[p][q]);
+                    }
+                }
+                for (int p = 0; p < dim; ++p) {
+                    for (int q = 0; q < dim; ++q) {
+                        jointVariance[i * dim + p][j * dim + q] = varTemp.get(p, q);
+                    }
+                }
+            }
+        }
+        return jointVariance;
     }
 }

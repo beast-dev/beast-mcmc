@@ -683,6 +683,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append(new Matrix(treeStructure));
             sb.append("\n\n");
 
+            double[][] treeSharedLengths = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, normalization, Double.POSITIVE_INFINITY);
+
             double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, normalization, priorSampleSize);
 
             Matrix treeV = new Matrix(treeVariance);
@@ -702,8 +704,20 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             double[][] diffusionPrecision = delegate.getDiffusionModel().getPrecisionmatrix();
             Matrix diffusionVariance = new Matrix(diffusionPrecision).inverse();
 
-            Matrix loadingsFactorsVariance = MultivariateTraitDebugUtilities.getJointVarianceFactor(tree, normalization,
-                    priorSampleSize, delegate.getCallbackLikelihood(), diffusionVariance, sb, delegate.getDiffusionProcessDelegate(), Lt);
+            Matrix loadingsVariance = null;
+            try {
+                loadingsVariance = Lt.product(diffusionVariance.product(Lt.transpose()));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+            sb.append("Loadings variance:\n");
+            sb.append(loadingsVariance);
+            sb.append("\n\n");
+
+
+            Matrix loadingsFactorsVariance = MultivariateTraitDebugUtilities.getJointVarianceFactor(priorSampleSize,
+                    treeVariance, treeSharedLengths, loadingsVariance.toComponents(), diffusionVariance.toComponents(),
+                    delegate.getDiffusionProcessDelegate(), Lt);
 
             Matrix gamma = buildDiagonalMatrix(traitPrecision.getParameterValues());
             sb.append("Trait precision:\n");
@@ -746,8 +760,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
 
             double[] priorMean = delegate.getRootPrior().getMean();
-            Matrix treeDrift = new Matrix(MultivariateTraitDebugUtilities.getTreeDrift(tree, delegate.getDiffusionProcessDelegate(), priorMean, sb));
-            Matrix driftLoading = null;
+            Matrix treeDrift = new Matrix(MultivariateTraitDebugUtilities.getTreeDrift(tree, delegate.getDiffusionProcessDelegate(), priorMean));
+
+            if (delegate.getDiffusionProcessDelegate().hasDrift()) {
+                sb.append("Tree drift (including root mean):\n");
+                sb.append(new Matrix(treeDrift.toComponents()));
+                sb.append("\n\n");
+            }
+
             try {
                 loadingsFactorsVariance = treeDrift.product(Lt.transpose());
             } catch (IllegalDimension illegalDimension) {

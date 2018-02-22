@@ -27,6 +27,8 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         System.err.println("Trying SafeMultivariateDiagonalActualizedWithDriftIntegrator");
     }
 
+    // NOTE TO PB: need to merge all SafeMultivariate* together and then delegate specialized work ... avoid massive code duplication
+
     @Override
     public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement, double[] diagonalActualization) {
         if (bufferIndex == -1) {
@@ -233,6 +235,8 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         if (TIMING) {
             endTime("drift1");
         }
+
+        // NOTE TO PB: very complex function, why multiple for (up = 0; up < updateCount; ++up) ?
 
         precisionOffset = dimTrait * dimTrait * precisionIndex;
         precisionLogDet = determinants[precisionIndex];

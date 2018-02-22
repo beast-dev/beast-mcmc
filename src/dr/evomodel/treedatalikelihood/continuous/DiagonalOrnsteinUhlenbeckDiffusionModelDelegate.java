@@ -32,6 +32,7 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
@@ -142,7 +143,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
                     ++offset;
                 }
             }
-        }
+        } // NOTE TO PB: code duplication
         return drift;
     }
 
@@ -189,6 +190,11 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
             // Compute parent
             recursivelyAccumulateDrift(tree.getParent(node), drift);
 
+
+            // NOTE TO PB: Massive code duplication with work in SafeMultivariateDiagonalActualizedWithDriftIntegrator
+            // Please only compute once (in SafeMultivariateDiagonalActualizedWithDriftIntegrator) and get information from cdi
+            // here to accumulate
+
             // Actualize
             int[] branchIndice = new int[1];
             branchIndice[0] = getMatrixBufferOffsetIndex(node.getNumber());
@@ -212,10 +218,11 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
         }
     }
 
-    private void computeActualizationBranch(double lambda, double[] C){
-        double[] A = strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues();
+    private void computeActualizationBranch(double lambda, double[] C) { // NOTE TO PB: Use IntelliJ auto-formatting for consistency
+
+        Parameter diagonals = strengthOfSelectionMatrixParameter.getDiagonalParameter(); // NOTE TO PB: avoid unnecessary copies
         for (int p = 0; p < dim; ++p) {
-            C[p] = Math.exp(lambda * A[p]);
+            C[p] = Math.exp(lambda * diagonals.getParameterValue(p));
         }
     }
 }

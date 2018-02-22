@@ -55,6 +55,8 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffu
     // QUESTION: would it be better to nest this under DriftDiffusionModelDelegate ?
     // it was declared final, so I didn't dare to do it...
 
+    // NOTE TO PB: Need to merge DriftDiffusion*, OrnsteinUhlenbeck* into single class and then delegate specialized work
+
     // Here, branchRateModels represents optimal values
 
 

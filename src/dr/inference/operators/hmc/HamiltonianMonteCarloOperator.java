@@ -101,7 +101,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private long count = 0;
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     
     static class NumericInstabilityException extends Exception { }
 
@@ -109,7 +109,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         if (DEBUG) {
             if (count % 5 == 0) {
-                System.err.println(stepSize);
+                System.err.println("HMC step size: " + stepSize);
             }
             ++count;
         }
@@ -127,10 +127,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-        if (DEBUG) {
-            System.err.println("nSteps = " + nSteps);
-        }
-
+        // TODO Randomize number of steps
         for (int i = 0; i < nSteps; i++) { // Leap-frog
 
             leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
@@ -157,9 +154,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     @Override
     public void setCoercableParameter(double value) {
-        if (DEBUG) {
-            System.err.println("Setting coercable paramter: " + getCoercableParameter() + " -> " + value);
-        }
         stepSize = Math.exp(value);
     }
 
@@ -177,6 +171,16 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             }
         },
 
+        DEBUG {
+            @Override
+            void checkValue(double x) throws NumericInstabilityException {
+                if (Double.isNaN(x)) {
+                    System.err.println("Numerical instability in HMC momentum; throwing exception");
+                    throw new NumericInstabilityException();
+                }
+            }
+        },
+
         IGNORE {
             @Override
             void checkValue(double x) {
@@ -188,7 +192,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     protected InstabilityHandler getDefaultInstabilityHandler() {
-        return InstabilityHandler.REJECT;
+        if (DEBUG) {
+            return InstabilityHandler.DEBUG;
+        } else {
+            return InstabilityHandler.REJECT;
+        }
     }
 
     interface LeapFrogEngine {

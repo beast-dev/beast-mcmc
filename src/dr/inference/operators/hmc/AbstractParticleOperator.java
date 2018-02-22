@@ -63,92 +63,33 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         checkParameterBounds(parameter);
     }
 
-//    @Override
-//    public double doOperation() {
-//
-//        if (shouldUpdatePreconditioning()) {
-//            preconditioning = setupPreconditioning();
-//        }
-//
-//        WrappedVector position = getInitialPosition();
-//        WrappedVector velocity = drawInitialVelocity();
-//        WrappedVector gradient = getInitialGradient();
-//
-//        double remainingTime = drawTotalTravelTime();
-//        while (remainingTime > 0) {
-//
-//            ReadableVector Phi_v = getPrecisionProduct(velocity);
-//
-//            double v_Phi_x = - innerProduct(velocity, gradient);
-//            double v_Phi_v = innerProduct(velocity, Phi_v);
-//
-//            double tMin = Math.max(0.0, - v_Phi_x / v_Phi_v);
-//            double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
-//
-//            double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
-//            MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
-//
-//            remainingTime = doBounce(
-//                    remainingTime, bounceTime, travelInfo,
-//                    position, velocity, gradient, Phi_v
-//            );
-//        }
-//
-//        setParameter(position, parameter);
-//
-//        return 0.0;
-//    }
+    @Override
+    public double doOperation() {
 
-    double drawTotalTravelTime() {
-        double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
-        return preconditioning.totalTravelTime * randomFraction;
+        if (shouldUpdatePreconditioning()) {
+            preconditioning = setupPreconditioning();
+        }
+
+        WrappedVector position = getInitialPosition();
+
+        double hastingsRatio = integrateTrajectory(position);
+
+        setParameter(position, parameter);
+
+        return hastingsRatio;
     }
 
     @Override
     public String getPerformanceSuggestion() {
         return null;
     }
-//
-//    @Override
-//    public String getOperatorName() {
-//        return "Bouncy particle operator";
-//    }
 
-//    private double doBounce(double remainingTime, double bounceTime,
-//                            MinimumTravelInformation travelInfo,
-//                            WrappedVector position, WrappedVector velocity,
-//                            WrappedVector gradient, ReadableVector Phi_v) {
-//
-//        double timeToBoundary = travelInfo.minTime;
-//        int boundaryIndex = travelInfo.minIndex;
-//
-//        if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
-//
-//            updatePosition(position, velocity, remainingTime);
-//            remainingTime = 0.0;
-//
-//        } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
-//
-//            updatePosition(position, velocity, timeToBoundary);
-//            updateGradient(gradient, timeToBoundary, Phi_v);
-//
-//            position.set(boundaryIndex, 0.0);
-//            velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
-//
-//            remainingTime -= timeToBoundary;
-//
-//        } else { // Bounce caused by the gradient
-//
-//            updatePosition(position, velocity, bounceTime);
-//            updateGradient(gradient, bounceTime, Phi_v);
-//            updateVelocity(velocity, gradient, preconditioning.mass);
-//
-//            remainingTime -= bounceTime;
-//
-//        }
-//
-//        return remainingTime;
-//    }
+    abstract double integrateTrajectory(WrappedVector position);
+
+    double drawTotalTravelTime() {
+        double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
+        return preconditioning.totalTravelTime * randomFraction;
+    }
 
     void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
 

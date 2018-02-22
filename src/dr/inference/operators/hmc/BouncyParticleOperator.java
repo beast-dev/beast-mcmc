@@ -32,7 +32,6 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
 import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
-import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
  * @author Zhenyu Zhang
@@ -53,13 +52,8 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
     }
 
     @Override
-    public double doOperation() {
+    double integrateTrajectory(WrappedVector position) {
 
-        if (shouldUpdatePreconditioning()) {
-            preconditioning = setupPreconditioning();
-        }
-
-        WrappedVector position = getInitialPosition();
         WrappedVector velocity = drawInitialVelocity();
         WrappedVector gradient = getInitialGradient();
 
@@ -82,8 +76,6 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
                     position, velocity, gradient, Phi_v
             );
         }
-
-        setParameter(position, parameter);
 
         return 0.0;
     }

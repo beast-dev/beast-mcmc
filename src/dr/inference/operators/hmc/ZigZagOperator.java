@@ -34,7 +34,6 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
 import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
-import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
  * @author Aki Nishimura
@@ -58,21 +57,54 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return "Zig-zag particle operator";
     }
 
-    WrappedVector drawInitialMomentum() {
+    @Override
+    double integrateTrajectory(WrappedVector position) {
 
-            ReadableVector mass = preconditioning.mass;
-            double[] momentum = new double[mass.getDim()];
+        WrappedVector momentum = drawInitialMomentum();
+        WrappedVector velocity = drawInitialVelocity(momentum);
+        WrappedVector gradient = getInitialGradient();
 
-            for (int i = 0, len = momentum.length; i < len; i++) {
-                int sign = (MathUtils.nextDouble() > 0.5) ? 1 : -1;
-                momentum[i] = sign *  MathUtils.nextExponential(1) * Math.sqrt(mass.get(i));
-            }
+        ReadableVector Phi_v = getPrecisionProduct(velocity);
 
-            if (mask != null) {
-                applyMask(momentum);
-            }
+        double remainingTime = drawTotalTravelTime();
+        while (remainingTime > 0) {
 
-            return new WrappedVector.Raw(momentum);
+            int index = 0;
+            ReadableVector precisionColumn = getPrecisionColumn(index);
+
+//            double v_Phi_x = -innerProduct(velocity, gradient);
+//            double v_Phi_v = innerProduct(velocity, Phi_v);
+//
+//            double tMin = Math.max(0.0, -v_Phi_x / v_Phi_v);
+//            double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
+//
+//            double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
+//            AbstractParticleOperator.MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
+//
+//            remainingTime = doBounce(
+//                    remainingTime, bounceTime, travelInfo,
+//                    position, velocity, gradient, Phi_v
+//            );
+        }
+
+        return 0.0;
+    }
+
+    private WrappedVector drawInitialMomentum() {
+
+        ReadableVector mass = preconditioning.mass;
+        double[] momentum = new double[mass.getDim()];
+
+        for (int i = 0, len = momentum.length; i < len; i++) {
+            int sign = (MathUtils.nextDouble() > 0.5) ? 1 : -1;
+            momentum[i] = sign *  MathUtils.nextExponential(1) * Math.sqrt(mass.get(i));
+        }
+
+        if (mask != null) {
+            applyMask(momentum);
+        }
+
+        return new WrappedVector.Raw(momentum);
 
     }
 
@@ -96,51 +128,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
 
         return new WrappedVector.Raw(velocity);
-    }
-
-    @Override
-    public double doOperation() {
-
-        if (shouldUpdatePreconditioning()) {
-            preconditioning = setupPreconditioning();
-        }
-
-        // start execute
-        WrappedVector position = getInitialPosition();
-        WrappedVector momentum = drawInitialMomentum();
-        WrappedVector velocity = drawInitialVelocity(momentum);
-        WrappedVector gradient = getInitialGradient();
-
-        ReadableVector Phi_v = getPrecisionProduct(velocity);
-        
-        double remainingTime = drawTotalTravelTime();
-        while (remainingTime > 0) {
-
-            ReadableVector Phi_v2 = getPrecisionProduct(velocity);
-
-
-            int index = 0;
-            ReadableVector precisionColumn = getPrecisionColumn(index);
-
-            double v_Phi_x = -innerProduct(velocity, gradient);
-            double v_Phi_v = innerProduct(velocity, Phi_v);
-
-            double tMin = Math.max(0.0, -v_Phi_x / v_Phi_v);
-            double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
-
-            double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
-            AbstractParticleOperator.MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
-
-            remainingTime = doBounce(
-                    remainingTime, bounceTime, travelInfo,
-                    position, velocity, gradient, Phi_v
-            );
-        }
-        // end execute
-
-        setParameter(position, parameter);
-
-        return 0.0;
     }
 
     ReadableVector getPrecisionColumn(int index) {

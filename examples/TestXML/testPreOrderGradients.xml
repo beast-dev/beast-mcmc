@@ -150,7 +150,7 @@
         <branchRateGradient idref="branchRateGradientScalar"/>
     </report>
 
-    <arbitraryBranchRates id="branchRatesDiscrete" reciprocal="false" exp="true" centerAtOne="false">
+    <arbitraryBranchRates id="branchRatesDiscrete" reciprocal="false" exp="false" centerAtOne="false">
         <rates>
             <parameter id="strict.clock.rates" value="1.0" lower="0"/>
         </rates>

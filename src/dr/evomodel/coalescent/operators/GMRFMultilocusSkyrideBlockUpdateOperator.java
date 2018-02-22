@@ -225,21 +225,19 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
            try {
                 jacobian(data2, iterateGamma, proposedQ).solve(gradient(data1, data2, iterateGamma, proposedQ, ZBeta), tempValue);
            } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
-                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
                if (FAIL_SILENTLY) {
                    // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
                    return null;
                }
+               Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                        "Try starting BEAST with a more accurate initial tree.");
            } catch (no.uib.cipr.matrix.MatrixSingularException e) {
-                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
                if (FAIL_SILENTLY) {
                    // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
                    return null;
                }
+               Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                        "Try starting BEAST with a more accurate initial tree.");
             }

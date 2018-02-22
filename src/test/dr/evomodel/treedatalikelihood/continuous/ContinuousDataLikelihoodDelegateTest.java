@@ -48,56 +48,60 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Data
         Parameter[] dataTraits = new Parameter[6];
-        dataTraits[0] = new Parameter.Default("human", new double[]{1.0, 2.0});
-        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0});
-        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, 2.0});
-        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0});
-        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0});
-        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5});
+        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
+        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
+        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5});
+        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0});
+        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5});
+        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0});
         CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
 
         List<Integer> missingIndices = new ArrayList<Integer>();
         traitParameter.setParameterValue(2, 0);
-        missingIndices.add(2);
         missingIndices.add(3);
+        missingIndices.add(4);
+        missingIndices.add(5);
         missingIndices.add(7);
 
         //// Standard Model //// ***************************************************************************************
 
         // Diffusion
-        Parameter[] precisionParameters = new Parameter[2];
-        precisionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1});
-        precisionParameters[1] = new Parameter.Default(new double[]{0.1, 2.0});
+        Parameter[] precisionParameters = new Parameter[3];
+        precisionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1, 0.2});
+        precisionParameters[1] = new Parameter.Default(new double[]{0.1, 2.0, 0.0});
+        precisionParameters[2] = new Parameter.Default(new double[]{0.2, 0.0, 3.0});
         MatrixParameterInterface diffusionPrecisionMatrixParameter = new MatrixParameter("precisionMatrix", precisionParameters);
         diffusionModel = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameter);
 
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
-        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0}, 10.0, true);
+        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
 
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
                 missingIndices, true,
-                2, precisionType);
+                3, precisionType);
 
         //// Factor Model //// *****************************************************************************************
         // Diffusion
-        Parameter[] precisionParametersFactor = new Parameter[1];
-        precisionParametersFactor[0] = new Parameter.Default(new double[]{1.0});
+        Parameter[] precisionParametersFactor = new Parameter[2];
+        precisionParametersFactor[0] = new Parameter.Default(new double[]{1.0, 0.1});
+        precisionParametersFactor[1] = new Parameter.Default(new double[]{0.1, 1.5});
         MatrixParameterInterface diffusionPrecisionMatrixParameterFactor = new MatrixParameter("precisionMatrixFactor", precisionParametersFactor);
         diffusionModelFactor = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameterFactor);
 
         // Root prior
-        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0}, 10.0, true);
+        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
 
         // Error model
-        Parameter factorPrecisionParameters = new Parameter.Default("factorPrecision", new double[]{1.0, 5.0});
+        Parameter factorPrecisionParameters = new Parameter.Default("factorPrecision", new double[]{1.0, 5.0, 0.5});
 
         // Loadings
-        Parameter[] loadingsParameters = new Parameter[1];
-        loadingsParameters[0] = new Parameter.Default(new double[]{1.0, 2.0});
+        Parameter[] loadingsParameters = new Parameter[2];
+        loadingsParameters[0] = new Parameter.Default(new double[]{1.0, 2.0, 3.0});
+        loadingsParameters[1] = new Parameter.Default(new double[]{0.0, 0.5, 1.0});
         MatrixParameterInterface loadingsMatrixParameters = new MatrixParameter("loadings", loadingsParameters);
 
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
@@ -146,6 +150,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
         driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
         driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
         DiffusionProcessDelegate diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
 
         // Rates
@@ -179,8 +184,9 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
 
-        DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{1.0, 2.0}));
+        DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{1.0, 2.0, 3.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, strengthOfSelectionMatrixParam);
 
@@ -215,10 +221,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
 
-        Parameter[] strengthOfSelectionParameters = new Parameter[2];
-        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.2});
-        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 2.0});
+        Parameter[] strengthOfSelectionParameters = new Parameter[3];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.2, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 2.0, 0.1});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{0.0, 0.1, 5.5});
         MatrixParameter strengthOfSelectionMatrixParam = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, strengthOfSelectionMatrixParam);
@@ -289,6 +297,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Diffusion
         List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
         driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{0.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{-1.0})));
         DiffusionProcessDelegate diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModelFactor, driftModels);
 
         // Rates
@@ -325,8 +334,9 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{-1.5})));
 
-        DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{1.5}));
+        DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{1.5, 2.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor, optimalTraitsModels, strengthOfSelectionMatrixParam);
 
@@ -364,9 +374,11 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{2.0})));
 
-        Parameter[] strengthOfSelectionParameters = new Parameter[1];
-        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5});
+        Parameter[] strengthOfSelectionParameters = new Parameter[2];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.05});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.05, 1.5});
         MatrixParameter strengthOfSelectionMatrixParam = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor, optimalTraitsModels, strengthOfSelectionMatrixParam);

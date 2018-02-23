@@ -143,7 +143,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    ReadableVector getPrecisionProduct(ReadableVector velocity) {
+    WrappedVector getPrecisionProduct(ReadableVector velocity) {
 
         setParameter(velocity, parameter);
 
@@ -195,7 +195,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new MinimumTravelInformation(minTime, index);
     }
 
-    private boolean headingAwayFromBoundary(double position, double velocity) {
+    boolean headingAwayFromBoundary(double position, double velocity) {
         return position * velocity < 0.0;
     }
 

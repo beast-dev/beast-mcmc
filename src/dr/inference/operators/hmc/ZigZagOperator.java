@@ -33,8 +33,6 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
-import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
-
 /**
  * @author Aki Nishimura
  * @author Zhenyu Zhang
@@ -64,30 +62,126 @@ public class ZigZagOperator extends AbstractParticleOperator {
         WrappedVector velocity = drawInitialVelocity(momentum);
         WrappedVector gradient = getInitialGradient();
 
-        ReadableVector Phi_v = getPrecisionProduct(velocity);
+        WrappedVector Phi_v = getPrecisionProduct(velocity);
 
-        double remainingTime = drawTotalTravelTime();
-        while (remainingTime > 0) {
+        BounceState bounceState = new BounceState(drawTotalTravelTime());
 
-            int index = 0;
-            ReadableVector precisionColumn = getPrecisionColumn(index);
+        while (bounceState.isTimeRemaining()) {
 
-//            double v_Phi_x = -innerProduct(velocity, gradient);
-//            double v_Phi_v = innerProduct(velocity, Phi_v);
-//
-//            double tMin = Math.max(0.0, -v_Phi_x / v_Phi_v);
-//            double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
-//
-//            double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
-//            AbstractParticleOperator.MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
-//
-//            remainingTime = doBounce(
-//                    remainingTime, bounceTime, travelInfo,
-//                    position, velocity, gradient, Phi_v
-//            );
+            Bounce boundaryBounce = getNextBoundaryBounce(position, velocity, bounceState);
+            Bounce gradientBounce = getNextGradientBounce(Phi_v, gradient, momentum);
+
+            bounceState = doBounce(bounceState, boundaryBounce, gradientBounce,
+                    position, velocity, momentum, gradient, Phi_v);
         }
 
         return 0.0;
+    }
+
+    class Bounce {
+        final double time;
+        final int index;
+
+        Bounce(double time, int index) {
+            this.time = time;
+            this.index = index;
+        }
+    }
+
+    enum Type {
+        NONE,
+        BOUNDARY,
+        GRADIENT
+    }
+
+    class BounceState {
+        final Type type;
+        final int index;
+        final double remainingTime;
+
+        BounceState(Type type, int index, double remainingTime) {
+            this.type = type;
+            this.index = index;
+            this.remainingTime = remainingTime;
+        }
+
+        BounceState(double remainingTime) {
+            this.type = Type.NONE;
+            this.index = -1;
+            this.remainingTime = remainingTime;
+        }
+
+        boolean isTimeRemaining() { return remainingTime > 0.0; }
+    }
+
+    private Bounce getNextGradientBounce(ReadableVector Phi_v,
+                                 ReadableVector gradient,
+                                 ReadableVector momentum) {
+
+        double minimumRoot = Double.POSITIVE_INFINITY;
+        int index = -1;
+
+        for (int i = 0, len = Phi_v.getDim(); i < len; ++i) {
+            double root = minimumPositiveRoot(Phi_v.get(i) / 2, -gradient.get(i), -momentum.get(i));
+            if (root < minimumRoot) {
+                minimumRoot = root;
+                index = i;
+                // TODO double-check dependence on lastBounce
+            }
+        }
+
+        return new Bounce(minimumRoot, index);
+    }
+
+    private Bounce getNextBoundaryBounce(ReadableVector position,
+                                         ReadableVector velocity,
+                                         BounceState lastBounce) {
+
+        final boolean checkIndex = lastBounce.type == Type.BOUNDARY;
+
+        double minimumTime = Double.POSITIVE_INFINITY;
+        int index = -1;
+
+        for (int i = 0, len = position.getDim(); i < len; ++i) {
+
+            if (checkIndex && i == lastBounce.index) break;
+
+            double x = position.get(i);
+            double v = velocity.get(i);
+
+            if (headingAwayFromBoundary(x, v)) {
+                double time = Math.abs(x / v);
+                if (time < minimumTime) {
+                    minimumTime = time;
+                    index = i;
+                }
+            }
+        }
+
+        return new Bounce(minimumTime, index);
+    }
+
+
+    private static double minimumPositiveRoot(double a,
+                                              double b,
+                                              double c) {
+
+        double discriminant = b * b - 4 * a * c;
+        if (discriminant < 0.0) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        double sqrtDiscriminant = Math.sqrt(discriminant);
+
+        double root = (-b - sqrtDiscriminant) / 2 / a;
+        if (root < 0.0) {
+            root = (-b + sqrtDiscriminant) / 2 / a;
+        }
+        if (root < 0.0) {
+            root = Double.POSITIVE_INFINITY;
+        }
+
+        return root;
     }
 
     private WrappedVector drawInitialMomentum() {
@@ -118,7 +212,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return sign;
     }
 
-    WrappedVector drawInitialVelocity(WrappedVector momentum) {
+    private WrappedVector drawInitialVelocity(WrappedVector momentum) {
 
         ReadableVector mass = preconditioning.mass;
         double[] velocity = new double[momentum.getDim()];
@@ -130,7 +224,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return new WrappedVector.Raw(velocity);
     }
 
-    ReadableVector getPrecisionColumn(int index) {
+    private ReadableVector getPrecisionColumn(int index) {
 
         double[] precisionColumn = columnProvider.getColumn(index);
 
@@ -141,40 +235,77 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return new WrappedVector.Raw(precisionColumn);
     }
 
-    private double doBounce(double remainingTime, double bounceTime,
-                            AbstractParticleOperator.MinimumTravelInformation travelInfo,
+    private BounceState doBounce(BounceState initialBounceState,
+                            Bounce boundaryBounce,
+                            Bounce gradientBounce,
                             WrappedVector position, WrappedVector velocity,
-                            WrappedVector gradient, ReadableVector Phi_v) {
+                            WrappedVector momentum,
+                            WrappedVector gradient, WrappedVector Phi_v) {
 
-        double timeToBoundary = travelInfo.minTime;
-        int boundaryIndex = travelInfo.minIndex;
+        double remainingTime = initialBounceState.remainingTime;
+        double eventTime = Math.min(boundaryBounce.time, gradientBounce.time);
 
-//    if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
-//
-//        updatePosition(position, velocity, remainingTime);
-//        remainingTime = 0.0;
-//
-//    } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
-//
-//        updatePosition(position, velocity, timeToBoundary);
-//        updateGradient(gradient, timeToBoundary, Phi_v);
-//
-//        position.set(boundaryIndex, 0.0);
-//        velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
-//
-//        remainingTime -= timeToBoundary;
-//
-//    } else { // Bounce caused by the gradient
-//
-//        updatePosition(position, velocity, bounceTime);
-//        updateGradient(gradient, bounceTime, Phi_v);
-//        updateVelocity(velocity, gradient, preconditioning.mass);
-//
-//        remainingTime -= bounceTime;
+        final BounceState finalBounceState;
+        if (remainingTime < eventTime) { // No event during remaining time
 
-//    }
+            updatePosition(position, velocity, remainingTime);
 
-        return remainingTime;
+            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
+
+        } else {
+
+            updatePosition(position, velocity, eventTime);
+            updateMomentum(momentum, gradient, Phi_v, eventTime);
+
+            final Type eventType;
+            final int eventIndex;
+            if (boundaryBounce.time < gradientBounce.time) { // Reflect against the boundary
+
+                eventType = Type.BOUNDARY;
+                eventIndex = boundaryBounce.index;
+
+                momentum.set(eventIndex, -momentum.get(eventIndex));
+
+            } else { // Bounce caused by the gradient
+
+                eventType = Type.GRADIENT;
+                eventIndex = gradientBounce.index;
+
+            }
+
+            velocity.set(eventIndex, -velocity.get(eventIndex));
+
+            updateGradient(gradient, eventTime, Phi_v);
+            updatePhiV(Phi_v, velocity, eventIndex);
+
+            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+        }
+
+        return finalBounceState;
+    }
+
+    private void updatePhiV(WrappedVector Phi_v, ReadableVector velocity, int eventIndex) {
+
+        ReadableVector column = getPrecisionColumn(eventIndex);
+
+        double v = velocity.get(eventIndex);
+        for (int i = 0, len = Phi_v.getDim(); i < len; ++i) {
+            Phi_v.set(i,
+                    Phi_v.get(i) + 2 * v * column.get(i)
+            );
+        }
+    }
+
+    private void updateMomentum(WrappedVector momentum,
+                                ReadableVector gradient,
+                                ReadableVector Phi_v,
+                                double eventTime) {
+
+        for (int i = 0, len = momentum.getDim(); i < len; ++i) {
+            momentum.set(i,
+                    momentum.get(i) + eventTime * gradient.get(i) - eventTime * eventTime * Phi_v.get(i) / 2
+            );
+        }
     }
 
     private final PrecisionColumnProvider columnProvider;

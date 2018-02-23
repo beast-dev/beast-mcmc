@@ -28,9 +28,11 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.math.KroneckerOperation;
 
 /**
  * A simple diffusion model delegate with the same diffusion model over the whole tree
+ *
  * @author Marc A. Suchard
  * @author Andrew Rambaut
  * @version $Id$
@@ -47,7 +49,13 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
     }
 
     @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean){
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
         return priorMean;
+    }
+
+    @Override
+    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
+        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance);
+        return jointVariance;
     }
 }

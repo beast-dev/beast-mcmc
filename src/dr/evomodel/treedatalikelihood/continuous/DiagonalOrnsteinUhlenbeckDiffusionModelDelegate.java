@@ -1,5 +1,5 @@
 /*
- * HomogenousDiffusionModelDelegate.java
+ * DiagonalOrnsteinUhlenbeckDiffusionModelDelegate.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -29,9 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.DiagonalMatrix;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import org.ejml.data.DenseMatrix64F;
 
@@ -39,143 +37,50 @@ import java.util.List;
 
 /**
  * A simple OU diffusion model delegate with branch-specific drift and constant diffusion
+ *
  * @author Marc A. Suchard
  * @author Paul Bastide
  * @version $Id$
  */
-public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
+public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDiffusionModelDelegate {
 
     // Here, branchRateModels represents optimal values
 
-
-    private final int dim;
-    private final List<BranchRateModel> branchRateModels;
-
-    //    protected MatrixParameterInterface strengthOfSelectionMatrixParameter;
-    protected DiagonalMatrix strengthOfSelectionMatrixParameter;
-//    private double[][] strengthOfSelectionMatrix;
-//    private double[][] savedStrengthOfSelectionMatrix;
-
-//    private double[][] stationaryPrecisionMatrix;
-//    private double[][] savedStationaryPrecisionMatrix;
-
-//    private final BufferIndexHelper matrixActualizationBufferHelper;
+    private DiagonalMatrix strengthOfSelectionMatrixParameter;
 
     public DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(Tree tree,
-                                                   MultivariateDiffusionModel diffusionModel,
-                                                   List<BranchRateModel> branchRateModels,
-//                                                   MatrixParameterInterface strengthOfSelectionMatrixParam,
-                                                   DiagonalMatrix strengthOfSelectionMatrixParam) {
+                                                           MultivariateDiffusionModel diffusionModel,
+                                                           List<BranchRateModel> branchRateModels,
+                                                           DiagonalMatrix strengthOfSelectionMatrixParam) {
         this(tree, diffusionModel, branchRateModels, strengthOfSelectionMatrixParam, 0);
     }
 
     private DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(Tree tree,
-                                                    MultivariateDiffusionModel diffusionModel,
-                                                    List<BranchRateModel> branchRateModels,
-//                                                    MatrixParameterInterface strengthOfSelectionMatrixParam,
-                                                    DiagonalMatrix strengthOfSelectionMatrixParam,
-                                                    int partitionNumber) {
-        super(tree, diffusionModel, partitionNumber);
-        this.branchRateModels = branchRateModels;
-
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
-
-        if (branchRateModels != null) {
-
-            for (BranchRateModel rateModel : branchRateModels) {
-                addModel(rateModel);
-            }
-
-            if (branchRateModels.size() != dim) {
-                throw new IllegalArgumentException("Invalid dimensions");
-            }
-        }
+                                                            MultivariateDiffusionModel diffusionModel,
+                                                            List<BranchRateModel> branchRateModels,
+                                                            DiagonalMatrix strengthOfSelectionMatrixParam,
+                                                            int partitionNumber) {
+        super(tree, diffusionModel, branchRateModels, partitionNumber);
 
         // Strength of selection matrix
         strengthOfSelectionMatrixParam.getDiagonalParameter().addBounds(new DiagonalMatrix.DefaultBounds(Math.log(Double.MAX_VALUE) / tree.getNodeHeight(tree.getRoot()) / 2 * Math.log(2), 0, dim));
         this.strengthOfSelectionMatrixParameter = strengthOfSelectionMatrixParam;
-//        calculateStrengthOfSelectionInfo();
         addVariable(strengthOfSelectionMatrixParameter);
-
-        // two more matrices for each node less the root
-//        matrixActualizationBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, partitionNumber);
     }
 
-//    protected void calculateStrengthOfSelectionInfo() {
-//        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
-////        stationaryPrecisionMatrix = computeStationaryVariance(strengthOfSelectionMatrix, diffusionModel.getPrecisionParameter())
-//    }
+    @Override
+    public double[][] getStrengthOfSelection() {
+        return strengthOfSelectionMatrixParameter.getParameterAsMatrix();
+    }
 
-    public double[] getStrengthOfSelection() {
+    @Override
+    public double[] getEigenValuesStrengthOfSelection() {
         return strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues();
     }
 
     @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-
-        if (branchRateModels.contains(model)) {
-            fireModelChanged(model);
-        } else {
-            super.handleModelChangedEvent(model, object, index);
-        }
-    }
-
-    @Override
-    public boolean hasDrift() { return true; }
-
-    @Override
-    public boolean hasActualization() { return true; }
-
-    @Override
-    protected double[] getDriftRates(int[] branchIndices, int updateCount) {
-
-        final double[] drift = new double[updateCount * dim];  // TODO Reuse?
-
-        if (branchRateModels != null) {
-
-            int offset = 0;
-            for (int i = 0; i < updateCount; ++i) {
-
-                final NodeRef node = tree.getNode(branchIndices[i]); // TODO Check if correct node
-
-                for (int model = 0; model < dim; ++model) {
-                    drift[offset] = branchRateModels.get(model).getBranchRate(tree, node);
-                    ++offset;
-                }
-            }
-        } // NOTE TO PB: code duplication
-        return drift;
-    }
-
-    @Override
-    public void setDiffusionModels(ContinuousDiffusionIntegrator cdi, boolean flip) {
-        super.setDiffusionModels(cdi, flip);
-
-        cdi.setDiffusionStationaryVariance(getEigenBufferOffsetIndex(0),
-                strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues(), new double[0]);
-    }
-
-    @Override
-    public void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
-                                        int updateCount, boolean flip) {
-
-        int[] probabilityIndices = new int[updateCount];
-
-        for (int i = 0; i < updateCount; i++) {
-            if (flip) {
-                flipMatrixBufferOffset(branchIndices[i]);
-            }
-            probabilityIndices[i] = getMatrixBufferOffsetIndex(branchIndices[i]);
-        }
-
-        cdi.updateOrnsteinUhlenbeckDiffusionMatrices(
-                getEigenBufferOffsetIndex(0),
-                probabilityIndices,
-                edgeLengths,
-                getDriftRates(branchIndices, updateCount),
-                strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues(),
-                new double[0],
-                updateCount);
+    public double[] getEigenVectorsStrengthOfSelection() {
+        return new double[0];
     }
 
     @Override
@@ -213,7 +118,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
             double[] optVal = getDriftRates(branchIndice, 1);
 
             for (int p = 0; p < dim; ++p) {
-                drift.set(p, 0, drift.get(p, 0) + (1 - actualization[p]) *  optVal[p]);
+                drift.set(p, 0, drift.get(p, 0) + (1 - actualization[p]) * optVal[p]);
             }
 
         }
@@ -231,7 +136,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
     public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
 
         // Eigen of strength of selection matrix
-        double[] eigVals = this.getStrengthOfSelection();
+        double[] eigVals = this.getEigenValuesStrengthOfSelection();
         int ntaxa = tree.getExternalNodeCount();
         double ti;
         double tj;

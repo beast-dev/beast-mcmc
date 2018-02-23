@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.math.KroneckerOperation;
 
 /**
@@ -49,7 +50,7 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
     }
 
     @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi) {
         return priorMean;
     }
 

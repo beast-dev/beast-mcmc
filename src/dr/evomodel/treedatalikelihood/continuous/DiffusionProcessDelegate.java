@@ -69,7 +69,7 @@ public interface DiffusionProcessDelegate extends Model {
 
     void restoreState();
 
-    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean);
+    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi);
 
     double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance);
 }

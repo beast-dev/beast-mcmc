@@ -290,7 +290,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             observedArray = new HashedMissingArray(observed);
             hashedPrecision = precisionMatrixMap.get(observedArray);
         }
-        
+
         // TODO Only need to compute for each unique set of observed[] << numTaxa
 
         if (!USE_CACHE || hashedPrecision == null) {
@@ -421,7 +421,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private void computePartialsAndRemainders() {
-        
+
         final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
         final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
 
@@ -493,7 +493,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                         nuggetDensity;
 
             }
-            
+
             // store in precision, variance and normalization constant
             unwrap(precision, partials, partialsOffset + numFactors);
 
@@ -670,6 +670,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         if (delegate != null) {
 
+            double logInc = delegate.getCallbackLikelihood().getLogLikelihood();
+
             final Tree tree = delegate.getCallbackLikelihood().getTree();
             final BranchRates branchRates = delegate.getCallbackLikelihood().getBranchRateModel();
             sb.append(tree.toString());
@@ -760,7 +762,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
 
             double[] priorMean = delegate.getRootPrior().getMean();
-            Matrix treeDrift = new Matrix(MultivariateTraitDebugUtilities.getTreeDrift(tree, delegate.getDiffusionProcessDelegate(), priorMean));
+            Matrix treeDrift = new Matrix(MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, delegate.getIntegrator(), delegate.getDiffusionProcessDelegate()));
 
             if (delegate.getDiffusionProcessDelegate().hasDrift()) {
                 sb.append("Tree drift (including root mean):\n");
@@ -819,7 +821,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
             sb.append("logMultiVariateNormalDensity = ").append(logDensity).append("\n\n");
 
-            double logInc = delegate.getCallbackLikelihood().getLogLikelihood();
             sb.append("traitDataLikelihood = ").append(logInc).append("\n");
             logComponents += logInc;
         }
@@ -829,7 +830,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (logComponents != 0.0) {
             sb.append("total likelihood = ").append((getLogLikelihood() + logComponents)).append("\n");
         }
-        
+
         return sb.toString();
     }
 }

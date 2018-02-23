@@ -29,7 +29,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
     }
 
     @Override
-    public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement, double[] actualization) {
+    public void getBranchPrecision(int bufferIndex, double[] precision) {
 
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
@@ -38,20 +38,22 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         assert (precision != null);
         assert (precision.length >= dimTrait * dimTrait);
 
+        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
+                precision, 0, dimTrait * dimTrait);
+    }
+
+    @Override
+    public void getBranchDisplacement(int bufferIndex, double[] displacement) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         assert (displacement != null);
         assert (displacement.length >= dimTrait);
 
-        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
-                precision, 0, dimTrait * dimTrait);
-
         System.arraycopy(displacements, bufferIndex * dimTrait,
                 displacement, 0, dimTrait);
-
-        // Fill in actualization
-        assert (actualization != null);
-        assert (actualization.length >= dimTrait * dimTrait);
-
-        KroneckerOperation.makeIdentityMatrix(dimTrait, actualization);
     }
 
     private static final boolean TIMING = false;

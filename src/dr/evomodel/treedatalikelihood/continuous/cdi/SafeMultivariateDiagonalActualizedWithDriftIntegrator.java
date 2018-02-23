@@ -29,26 +29,16 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
     // NOTE TO PB: need to merge all SafeMultivariate* together and then delegate specialized work ... avoid massive code duplication
 
+
     @Override
-    public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement, double[] diagonalActualization) {
+    public void getBranchActualization(int bufferIndex, double[] diagonalActualization) {
+
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
         }
 
-        assert (precision != null);
-        assert (precision.length >= dimTrait * dimTrait);
-
-        assert (displacement != null);
-        assert (displacement.length >= dimTrait);
-
         assert (diagonalActualization != null);
         assert (diagonalActualization.length >= dimTrait);
-
-        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
-                precision, 0, dimTrait * dimTrait);
-
-        System.arraycopy(displacements, bufferIndex * dimTrait,
-                displacement, 0, dimTrait);
 
         System.arraycopy(diagonalActualizations, bufferIndex * dimTrait,
                 diagonalActualization, 0, dimTrait);

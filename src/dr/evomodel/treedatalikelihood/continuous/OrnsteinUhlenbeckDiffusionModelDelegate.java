@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.Complex64F;
@@ -116,57 +117,29 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
 
 
     @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi) {
         final DenseMatrix64F drift = new DenseMatrix64F(dim, 1, true, priorMean);
-        recursivelyAccumulateDrift(node, drift);
+        double[] displacement = new double[dim];
+        double[] actualization = new double[dim * dim];
+        recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization);
         return drift.data;
     }
 
-    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift) {
+    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift, ContinuousDiffusionIntegrator cdi, double[] displacement, double[] actualization) {
         if (!tree.isRoot(node)) {
 
             // Compute parent
-            recursivelyAccumulateDrift(tree.getParent(node), drift);
+            recursivelyAccumulateDrift(tree.getParent(node), drift, cdi, displacement, actualization);
 
-            // Actualize
-            int[] branchIndice = new int[1];
-            branchIndice[0] = getMatrixBufferOffsetIndex(node.getNumber());
-
-            final double length = tree.getBranchLength(node);
-
-            DenseMatrix64F actualization = new DenseMatrix64F(dim, dim);
-            computeActualizationBranch(-length, actualization);
+            // Node
+            cdi.getBranchDisplacement(getMatrixBufferOffsetIndex(node.getNumber()), displacement);
+            cdi.getBranchActualization(getMatrixBufferOffsetIndex(node.getNumber()), actualization);
 
             DenseMatrix64F temp = new DenseMatrix64F(dim, 1);
-            CommonOps.mult(actualization, drift, temp);
-            CommonOps.scale(1.0, temp, drift);
-
-            // Add optimal value
-            DenseMatrix64F idMinusAct = CommonOps.identity(dim);
-            CommonOps.addEquals(idMinusAct, -1.0, actualization);
-
-            DenseMatrix64F optVal = new DenseMatrix64F(dim, 1, true, getDriftRates(branchIndice, 1));
-
-            CommonOps.multAdd(idMinusAct, optVal, drift);
+            CommonOps.mult(new DenseMatrix64F(dim, dim, true, actualization), drift, temp);
+            CommonOps.add(temp, new DenseMatrix64F(dim, 1, true, displacement), drift);
 
         }
-    }
-
-    private void computeActualizationBranch(double lambda, DenseMatrix64F C) {
-        DenseMatrix64F A = new DenseMatrix64F(strengthOfSelectionMatrixParameter.getParameterAsMatrix());
-        EigenDecomposition eigA = DecompositionFactory.eig(dim, true);
-        if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
-        DenseMatrix64F expDiag = CommonOps.identity(dim);
-        for (int p = 0; p < dim; ++p) {
-            Complex64F ev = eigA.getEigenvalue(p);
-            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
-            expDiag.set(p, p, Math.exp(lambda * ev.real));
-        }
-        DenseMatrix64F V = EigenOps.createMatrixV(eigA);
-        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
-        CommonOps.mult(V, expDiag, tmp);
-        CommonOps.invert(V);
-        CommonOps.mult(tmp, V, C);
     }
 
     @Override

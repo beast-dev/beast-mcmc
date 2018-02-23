@@ -122,7 +122,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 forceCompletelyObserved ?
                         PrecisionType.SCALAR :
                         dataModel.getPrecisionType();
-        
+
         this.rateTransformation = rateTransformation;
         this.tree = tree;
         this.rateModel = rateModel;
@@ -262,14 +262,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 if (!checkDataAlignment(node, tree)) {
                     throw new TaxonList.MissingTaxonException("Missing taxon");
                 }
-            }            
+            }
 
             setAllTipData(dataModel.bufferTips());
 
             rootProcessDelegate.setRootPartial(cdi);
 
             updateDiffusionModel = true;
-            
+
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
@@ -381,7 +381,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //            }
 //        }
 
-        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, diffusionProcessDelegate, priorMean);
+        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, cdi, diffusionProcessDelegate);
 
         if (diffusionProcessDelegate.hasDrift()) {
             sb.append("Tree drift (including root mean):\n");
@@ -442,7 +442,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double[] datum = rawDatum;
 
             double[] driftDatum = drift;
-            
+
             int[] notMissingIndices;
             if (missing.size() > 0) {
                 notMissingIndices = new int[datumLength - missing.size()];
@@ -485,13 +485,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             for (int tipTrait = dimTrait * tipCount; tipTrait < dimTrait * (2 * tipCount - 1); ++tipTrait) {
                 cMissingJoint[tipTrait - dimTrait * tipCount] = tipTrait;
             }
-            
+
             double[] rawDatumJoint = new double[dimTrait * (2 * tipCount - 1)];
             System.arraycopy(rawDatum, 0, rawDatumJoint, 0, rawDatum.length);
 
-            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, diffusionProcessDelegate);
+            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, cdi, diffusionProcessDelegate);
             double[] driftJoint = KroneckerOperation.vectorize(driftJointMatrix);
-            
+
             for (int idx = 0; idx < driftJoint.length / dimTrait; ++idx) {
                 for (int dim = 0; dim < dimTrait; ++dim) {
                     driftJoint[idx * dimTrait + dim] += priorMean[dim];
@@ -617,7 +617,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
         updateTipData.clear();
     }
-    
+
     private void setTipData(int tipIndex, boolean flip) {
         if (flip) {
             partialBufferHelper.flipOffset(tipIndex);
@@ -631,7 +631,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         cdi.setPostOrderPartial(partialBufferHelper.getOffsetIndex(tipIndex),
                 tipPartial);
     }
-    
+
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
         int index = node.getNumber();
         Parameter traitParameter = dataModel.getParameter().getParameter(index);

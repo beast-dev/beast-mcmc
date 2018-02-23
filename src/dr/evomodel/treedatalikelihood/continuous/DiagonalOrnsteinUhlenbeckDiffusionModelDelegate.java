@@ -83,54 +83,54 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
         return new double[0];
     }
 
-    @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
-        final DenseMatrix64F drift = new DenseMatrix64F(dim, 1, true, priorMean);
-        recursivelyAccumulateDrift(node, drift);
-        return drift.data;
-    }
-
-    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift) {
-        if (!tree.isRoot(node)) {
-
-            // Compute parent
-            recursivelyAccumulateDrift(tree.getParent(node), drift);
-
-
-            // NOTE TO PB: Massive code duplication with work in SafeMultivariateDiagonalActualizedWithDriftIntegrator
-            // Please only compute once (in SafeMultivariateDiagonalActualizedWithDriftIntegrator) and get information from cdi
-            // here to accumulate
-
-            // Actualize
-            int[] branchIndice = new int[1];
-            branchIndice[0] = getMatrixBufferOffsetIndex(node.getNumber());
-
-            final double length = tree.getBranchLength(node);
-
-            double[] actualization = new double[dim];
-            computeActualizationBranch(-length, actualization);
-
-            for (int p = 0; p < dim; ++p) {
-                drift.set(p, 0, actualization[p] * drift.get(p, 0));
-            }
-
-            // Add optimal value
-            double[] optVal = getDriftRates(branchIndice, 1);
-
-            for (int p = 0; p < dim; ++p) {
-                drift.set(p, 0, drift.get(p, 0) + (1 - actualization[p]) * optVal[p]);
-            }
-
-        }
-    }
-
-    private void computeActualizationBranch(double lambda, double[] C) { // NOTE TO PB: Use IntelliJ auto-formatting for consistency
-
-        Parameter diagonals = strengthOfSelectionMatrixParameter.getDiagonalParameter(); // NOTE TO PB: avoid unnecessary copies
-        for (int p = 0; p < dim; ++p) {
-            C[p] = Math.exp(lambda * diagonals.getParameterValue(p));
-        }
-    }
+//    @Override
+//    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
+//        final DenseMatrix64F drift = new DenseMatrix64F(dim, 1, true, priorMean);
+//        recursivelyAccumulateDrift(node, drift);
+//        return drift.data;
+//    }
+//
+//    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift) {
+//        if (!tree.isRoot(node)) {
+//
+//            // Compute parent
+//            recursivelyAccumulateDrift(tree.getParent(node), drift);
+//
+//
+//            // NOTE TO PB: Massive code duplication with work in SafeMultivariateDiagonalActualizedWithDriftIntegrator
+//            // Please only compute once (in SafeMultivariateDiagonalActualizedWithDriftIntegrator) and get information from cdi
+//            // here to accumulate
+//
+//            // Actualize
+//            int[] branchIndice = new int[1];
+//            branchIndice[0] = getMatrixBufferOffsetIndex(node.getNumber());
+//
+//            final double length = tree.getBranchLength(node);
+//
+//            double[] actualization = new double[dim];
+//            computeActualizationBranch(-length, actualization);
+//
+//            for (int p = 0; p < dim; ++p) {
+//                drift.set(p, 0, actualization[p] * drift.get(p, 0));
+//            }
+//
+//            // Add optimal value
+//            double[] optVal = getDriftRates(branchIndice, 1);
+//
+//            for (int p = 0; p < dim; ++p) {
+//                drift.set(p, 0, drift.get(p, 0) + (1 - actualization[p]) * optVal[p]);
+//            }
+//
+//        }
+//    }
+//
+//    private void computeActualizationBranch(double lambda, double[] C) { // NOTE TO PB: Use IntelliJ auto-formatting for consistency
+//
+//        Parameter diagonals = strengthOfSelectionMatrixParameter.getDiagonalParameter(); // NOTE TO PB: avoid unnecessary copies
+//        for (int p = 0; p < dim; ++p) {
+//            C[p] = Math.exp(lambda * diagonals.getParameterValue(p));
+//        }
+//    }
 
     @Override
     public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {

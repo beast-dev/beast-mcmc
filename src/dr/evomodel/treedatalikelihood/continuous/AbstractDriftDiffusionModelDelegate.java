@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
 
@@ -109,29 +110,34 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     }
 
     @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi) {
         final double[] drift = new double[dim];
         System.arraycopy(priorMean, 0, drift, 0, priorMean.length);
-        recursivelyAccumulateDrift(node, drift);
+        double[] displacement = new double[dim];
+        double[] actualization = new double[dim];
+        recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization);
         return drift;
     }
 
-    private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift) {
+    private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift, ContinuousDiffusionIntegrator cdi, double[] displacement, double[] actualization) {
         if (!tree.isRoot(node)) {
 
-            final double length = tree.getBranchLength(node);
+            // Compute parent
+            recursivelyAccumulateDrift(tree.getParent(node), drift, cdi, displacement, actualization);
+
+            // Node
+            cdi.getBranchDisplacement(getMatrixBufferOffsetIndex(node.getNumber()), displacement);
+            cdi.getBranchActualization(getMatrixBufferOffsetIndex(node.getNumber()), actualization);
 
             for (int model = 0; model < dim; ++model) {
-                drift[model] += branchRateModels.get(model).getBranchRate(tree, node) * length;
+                drift[model] *= actualization[model];
+                drift[model] += displacement[model];
             }
-
-            recursivelyAccumulateDrift(tree.getParent(node), drift);
         }
     }
 
     @Override
     public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
-        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance);
-        return jointVariance;
+        return KroneckerOperation.product(treeVariance, traitVariance);
     }
 }

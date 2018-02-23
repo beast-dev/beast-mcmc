@@ -29,6 +29,7 @@ import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -149,19 +150,19 @@ public class MultivariateTraitDebugUtilities {
         }
     }
 
-    public static double[][] getTreeDrift(Tree tree, DiffusionProcessDelegate diffusion, double[] priorMean) {
+    public static double[][] getTreeDrift(Tree tree, double[] priorMean, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
         final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
         final double[][] drift = new double[tree.getExternalNodeCount()][dim];
 
         for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
-            drift[tip] = diffusion.getAccumulativeDrift(tree.getExternalNode(tip), priorMean);
+            drift[tip] = diffusion.getAccumulativeDrift(tree.getExternalNode(tip), priorMean, cdi);
         }
 
         return drift;
     }
 
-    public static double[][] getGraphDrift(Tree tree, DiffusionProcessDelegate diffusion) {
+    public static double[][] getGraphDrift(Tree tree, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
         final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
         final double[][] drift = new double[tree.getNodeCount()][dim];
@@ -169,7 +170,7 @@ public class MultivariateTraitDebugUtilities {
         final double[] temp = new double[dim];
 
         for (int node = 0; node < tree.getNodeCount(); ++node) {
-            drift[node] = diffusion.getAccumulativeDrift(tree.getNode(node), temp);
+            drift[node] = diffusion.getAccumulativeDrift(tree.getNode(node), temp, cdi);
         }
 
         return drift;

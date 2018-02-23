@@ -28,25 +28,14 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     }
 
     @Override
-    public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement, double[] actualization) {
+    public void getBranchActualization(int bufferIndex, double[] actualization) {
+
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
         }
 
-        assert (precision != null);
-        assert (precision.length >= dimTrait * dimTrait);
-
-        assert (displacement != null);
-        assert (displacement.length >= dimTrait);
-
         assert (actualization != null);
         assert (actualization.length >= dimTrait * dimTrait);
-
-        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
-                precision, 0, dimTrait * dimTrait);
-
-        System.arraycopy(displacements, bufferIndex * dimTrait,
-                displacement, 0, dimTrait);
 
         System.arraycopy(actualizations, bufferIndex * dimTrait * dimTrait,
                 actualization, 0, dimTrait * dimTrait);

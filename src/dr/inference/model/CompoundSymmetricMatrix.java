@@ -59,6 +59,11 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         return stats;
     }
 
+    @Override
+    public int getDimension() {
+        return getColumnDimension() * getRowDimension();
+    }
+
     public double[] getDiagonals() {
         return diagonalParameter.getParameterValues();
     }
@@ -66,6 +71,21 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     public double getOffDiagonal() {
         return offDiagonalParameter.getParameterValue(0);
     }
+
+    @Override
+    public double getParameterValue(int index) {
+        final int dim = getColumnDimension();
+        return getParameterValue(index / dim, index % dim);
+    }
+
+    @Override
+    public String getDimensionName(int index) {
+        int dim = getColumnDimension();
+        String row = new Integer(index / dim).toString();
+        String col = new Integer(index % dim).toString();
+
+        return getId() + row + col;
+}
 
     public double getParameterValue(int row, int col) {
         if (row != col) {

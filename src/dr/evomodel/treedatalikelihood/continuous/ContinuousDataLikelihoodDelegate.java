@@ -340,6 +340,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         sb.append("Tree variance:\n");
         sb.append(treeV);
+        sb.append("\n\n");
+
         sb.append("Tree precision:\n");
         sb.append(treeP);
         sb.append("\n\n");
@@ -350,6 +352,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         sb.append("Joint variance:\n");
         sb.append(new Matrix(jointVariance));
+        sb.append("\n\n");
+
+        sb.append("Joint precision:\n");
+        sb.append(new Matrix(getTreeTraitPrecision()));
         sb.append("\n\n");
 
         double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, diffusionProcessDelegate);

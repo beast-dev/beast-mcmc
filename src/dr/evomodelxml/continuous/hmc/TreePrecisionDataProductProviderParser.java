@@ -105,7 +105,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(TRAIT_NAME),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newIntegerRule(THREAD_COUNT, true),
             AttributeRule.newDoubleRule(TIME_GUESS, true),

@@ -174,10 +174,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
         double sqrtDiscriminant = Math.sqrt(discriminant);
 
         double root = (-b - sqrtDiscriminant) / 2 / a;
-        if (root < 0.0) {
+        if (root <= 0.0) {
             root = (-b + sqrtDiscriminant) / 2 / a;
         }
-        if (root < 0.0) {
+        if (root <= 0.0) {
             root = Double.POSITIVE_INFINITY;
         }
 
@@ -199,7 +199,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
 
         return new WrappedVector.Raw(momentum);
-
     }
 
     private static int sign(double x) {
@@ -236,11 +235,11 @@ public class ZigZagOperator extends AbstractParticleOperator {
     }
 
     private BounceState doBounce(BounceState initialBounceState,
-                            Bounce boundaryBounce,
-                            Bounce gradientBounce,
-                            WrappedVector position, WrappedVector velocity,
-                            WrappedVector momentum,
-                            WrappedVector gradient, WrappedVector Phi_v) {
+                                 Bounce boundaryBounce,
+                                 Bounce gradientBounce,
+                                 WrappedVector position, WrappedVector velocity,
+                                 WrappedVector momentum,
+                                 WrappedVector gradient, WrappedVector Phi_v) {
 
         double remainingTime = initialBounceState.remainingTime;
         double eventTime = Math.min(boundaryBounce.time, gradientBounce.time);
@@ -251,7 +250,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
             updatePosition(position, velocity, remainingTime);
 
             finalBounceState = new BounceState(Type.NONE, -1, 0.0);
-
         } else {
 
             updatePosition(position, velocity, eventTime);

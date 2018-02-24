@@ -139,16 +139,16 @@
         <traitDataLikelihood idref="scalarLikelihood"/>
     </branchRateGradient>
 
-    <report>
-        <traitLogger traitName="bcd.X" nodes="external">
-            <traitDataLikelihood idref="scalarLikelihood"/>
-            <treeModel idref="treeModel"/>
-        </traitLogger>
-    </report>
+    <!--<report>-->
+        <!--<traitLogger traitName="bcd.X" nodes="external">-->
+            <!--<traitDataLikelihood idref="scalarLikelihood"/>-->
+            <!--<treeModel idref="treeModel"/>-->
+        <!--</traitLogger>-->
+    <!--</report>-->
 
-    <report>
-        <branchRateGradient idref="branchRateGradientScalar"/>
-    </report>
+    <!--<report>-->
+        <!--<branchRateGradient idref="branchRateGradientScalar"/>-->
+    <!--</report>-->
 
     <arbitraryBranchRates id="branchRatesDiscrete" reciprocal="false" exp="false" centerAtOne="false">
         <rates>
@@ -158,7 +158,7 @@
     </arbitraryBranchRates>
 
     <!-- Likelihood for tree given sequence data                                 -->
-    <treeDataLikelihood id="treeLikelihood" useAmbiguities="true">
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
         <patterns idref="patterns1"/>
         <treeModel idref="treeModel"/>
         <siteModel idref="siteModel3"/>
@@ -177,8 +177,15 @@
         <treeDataLikelihood idref="treeLikelihood"/>
     </branchRateGradient>
 
+    <!--<report>-->
+        <!--<traitLogger traitName="derivative.Sequence" nodes="external">-->
+            <!--<treeDataLikelihood idref="treeLikelihood"/>-->
+            <!--<treeModel idref="treeModel"/>-->
+        <!--</traitLogger>-->
+    <!--</report>-->
+
     <report>
-        <branchRateGradientForDiscreteTrait idref="branchRateGradientDiscreteTrait"/>
+        <branchRateGradient idref="branchRateGradientDiscreteTrait"/>
     </report>
 
 

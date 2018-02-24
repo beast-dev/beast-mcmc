@@ -97,6 +97,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @param patternList List of patterns
      * @param siteRateModel Specifies rates per site
      * @param useAmbiguities Whether to respect state ambiguities in data
+     * @param usePreOrder Whether to consider pre-order partials
      */
     public BeagleDataLikelihoodDelegate(Tree tree,
                                         PatternList patternList,
@@ -104,7 +105,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                         SiteRateModel siteRateModel,
                                         boolean useAmbiguities,
                                         PartialsRescalingScheme rescalingScheme,
-                                        boolean delayRescalingUntilUnderflow) {
+                                        boolean delayRescalingUntilUnderflow,
+                                        boolean usePreOrder) {
 
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
@@ -281,9 +283,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
+            // double the size of buffers when allow preOrder traversals
+            int partialBufferCountMultiplier = 1;
+            this.usePreOrder = false;
+            if (usePreOrder){
+                partialBufferCountMultiplier = 2;
+                this.usePreOrder = true;
+            }
+
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
-                    partialBufferHelper.getBufferCount(),
+                    partialBufferHelper.getBufferCount() * partialBufferCountMultiplier,
                     compactPartialsCount,
                     stateCount,
                     patternCount,
@@ -326,6 +336,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 useAmbiguities = true;
             }
 
+            //add in logger info for preOrder traversal
+            logger.info("  " + (usePreOrder ? "Using" : "Ignoring") + " preOrder traversals in tree likelihood.");
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
@@ -342,7 +354,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
                             ", is not found in patternList, " + patternList.getId());
                 } else {
-                    if (useAmbiguities) {
+                    if (useAmbiguities || usePreOrder) {
                         setPartials(beagle, patternList, index, i);
                     } else {
                         setStates(beagle, patternList, index, i);
@@ -899,6 +911,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     protected void acceptState() {
     }
 
+    public final boolean isUsePreOrder(){
+        return this.usePreOrder;
+    }
+
+    public final EvolutionaryProcessDelegate getEvolutionaryProcessDelegate(){
+        return this.evolutionaryProcessDelegate;
+    }
+
+    public final SiteRateModel getSiteRateModel(){
+        return this.siteRateModel;
+    }
+
     // **************************************************************
     // INSTANCE CITABLE
     // **************************************************************
@@ -1035,5 +1059,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
      */
     private boolean initialEvaluation = true;
+
+    /**
+     * Flag to specify that the preOrder partials are used
+     */
+    private boolean usePreOrder = true;
 
 }

@@ -138,6 +138,7 @@ public class DataLikelihoodTester {
                 branchModel,
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
+                false,
                 false);
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
@@ -162,6 +163,7 @@ public class DataLikelihoodTester {
                 branchModel2,
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
+                false,
                 false);
 
         treeDataLikelihood = new TreeDataLikelihood(
@@ -440,6 +442,7 @@ public class DataLikelihoodTester {
                 branchModel,
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
+                false,
                 false);
 
         TreeDataLikelihood treeDataLikelihoodOne = new TreeDataLikelihood(
@@ -465,6 +468,7 @@ public class DataLikelihoodTester {
                 branchModel2,
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
+                false,
                 false);
 
         TreeDataLikelihood treeDataLikelihoodTwo = new TreeDataLikelihood(

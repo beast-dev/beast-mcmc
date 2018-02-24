@@ -25,18 +25,20 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import beagle.Beagle;
 import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
+import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
+
+import java.util.List;
 
 /**
  * @author Xiang Ji
@@ -72,11 +74,10 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
         if (test == null) {
             ProcessSimulationDelegate gradientDelegate = new AbstractDiscreteTraitDelegate(traitName,
-                     treeDataLikelihood.getTree(),
-                     likelihoodDelegate);
-
-             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
-             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+                    treeDataLikelihood.getTree(),
+                    likelihoodDelegate);
+            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
+            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }
 
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
@@ -118,11 +119,11 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
             if (!tree.isRoot(node)) {
 
-//                List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
+                double[] statisticsForNode = (double[]) treeTraitProvider.getTrait(tree, node);
 //
 //                assert (statisticsForNode.size() == nTraits);
 //
-//                double differential = branchRateModel.getBranchRateDifferential(tree, node);
+                double differential = branchRateModel.getBranchRateDifferential(tree, node);
 //
                 double gradient = 0.0;
 //                for (int trait = 0; trait < nTraits; ++trait) {
@@ -190,7 +191,7 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 //        return sb.toString();
 //    }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     @Override
     public String getReport() {

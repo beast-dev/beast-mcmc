@@ -30,6 +30,9 @@ import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.WrappedVector;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Aki Nishimura
  * @author Zhenyu Zhang
@@ -40,6 +43,7 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
     private final int precisionDim;
     private final MatrixParameterInterface diffusionPrecision;
     private final double[] buffer;
+    private final Map<Integer, double[]> kroneckerCache = new HashMap<Integer, double[]>();
 
     public TreeKroneckerPrecisionColumnProvider(TreePrecisionTraitProductProvider productProvider,
                                                 MultivariateDiffusionModel diffusionModel) {
@@ -56,11 +60,11 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
     @Override
     public double[] getColumn(int index) {
 
-        double[] column = cache.get(index);
+        double[] column = kroneckerCache.get(index);
         if (column == null) {
 
             if (DEBUG) {
-                System.err.println("TKPCP key " + index + " not found");
+                System.err.println("treeKronecker key " + index + " not found");
             }
 
             int treeIndex = index / precisionDim;
@@ -73,30 +77,30 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
                     treeColumn, 1, treeColumn.length,
                     precisionColumn, 1, precisionColumn.length);
 
-            cache.put(index, column);
-
-            if (DEBUG) {
-                System.err.println("\tlengths = " + treeColumn.length + " " + precisionColumn.length + " " + column.length);
-            }
+            kroneckerCache.put(index, column);
 
         } else {
             if (DEBUG) {
-                System.err.println("TKPCP key " + index + " found");
+                System.err.println("treeKronecker key " + index + " found");
             }
         }
-
-//        if (DEBUG) {
-//            debug(column, index);
-//        }
-
+        
         return column;
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == diffusionPrecision) {
-            cache.clear();
+            kroneckerCache.clear();
         }
+    }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == tree) {
+            kroneckerCache.clear();
+        }
+        super.handleModelChangedEvent(model, object, index);
     }
 
     private double[] getPrecisionColumn(int index) {
@@ -123,5 +127,5 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
         return sb.toString();
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 }

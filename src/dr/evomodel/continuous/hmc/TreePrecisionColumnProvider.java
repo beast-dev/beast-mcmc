@@ -36,7 +36,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
@@ -55,10 +54,10 @@ public class TreePrecisionColumnProvider extends AbstractModel
 
     private final TreePrecisionTraitProductProvider productProvider;
 
-    private final Tree tree;
+    final Tree tree;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final ContinuousTraitPartialsProvider tipData;
-    final Map<Integer, double[]> cache = new HashMap<Integer, double[]>();
+    private final Map<Integer, double[]> treeCache = new HashMap<Integer, double[]>();
 
     private final int numTaxa;
     private final int dimTrait;
@@ -86,23 +85,19 @@ public class TreePrecisionColumnProvider extends AbstractModel
     @Override
     public double[] getColumn(int index) {
 
-        if (!USE_CACHE) {
-            return setDataModelAndGetColumn(index);
-        }
-
-        double[] column = cache.get(index);
+        double[] column = treeCache.get(index);
         if (column == null) {
 
             column = setDataModelAndGetColumn(index);
-            cache.put(index, column);
+            treeCache.put(index, column);
 
             if (DEBUG_CACHE) {
-                System.err.println("TPCP key " + index + " not found " + new WrappedVector.Raw(column));
+                System.err.println("treePrecision key " + index + " not found " + new WrappedVector.Raw(column));
             }
 
         } else {
             if (DEBUG_CACHE) {
-                System.err.println("TPCP key " + index + " found    " + new WrappedVector.Raw(column));
+                System.err.println("treePrecision key " + index + " found    " + new WrappedVector.Raw(column));
             }
         }
 
@@ -116,7 +111,7 @@ public class TreePrecisionColumnProvider extends AbstractModel
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            cache.clear();
+            treeCache.clear();
         }
     }
 
@@ -140,7 +135,7 @@ public class TreePrecisionColumnProvider extends AbstractModel
         // Do nothing
     }
 
-    double[] setDataModelAndGetColumn(int index) {
+    private double[] setDataModelAndGetColumn(int index) {
 
         Parameter parameter = tipData.getParameter();
         WrappedVector savedParameter;
@@ -175,10 +170,6 @@ public class TreePrecisionColumnProvider extends AbstractModel
         return column;
     }
 
-    private WrappedVector makeElementaryVector(int taxon, int trait) {
-        return makeElementaryVector(taxon * dimTrait + trait);
-    }
-
     private WrappedVector makeElementaryVector(int index) {
         double[] vector = new double[numTaxa * dimTrait];
         vector[index] = 1.0;
@@ -190,7 +181,7 @@ public class TreePrecisionColumnProvider extends AbstractModel
         return likelihoodDelegate.getTreeTraitPrecision()[index];
     }
 
-    void debug(double[] result, int index) {
+    private void debug(double[] result, int index) {
         double[] expensiveResult = expensiveColumn(index);
         System.err.println("via FCD: " + new WrappedVector.Raw(result));
         System.err.println("direct : " + new WrappedVector.Raw(expensiveResult));
@@ -209,8 +200,7 @@ public class TreePrecisionColumnProvider extends AbstractModel
         return sb.toString();
     }
 
-    private static final boolean USE_CACHE = false;
     private static final boolean DEBUG = false;
-    private static final boolean DEBUG_CACHE = true;
+    private static final boolean DEBUG_CACHE = false;
     private static final boolean RESET_DATA = false;
 }

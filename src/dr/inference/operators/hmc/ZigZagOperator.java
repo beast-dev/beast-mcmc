@@ -58,6 +58,12 @@ public class ZigZagOperator extends AbstractParticleOperator {
     @Override
     double integrateTrajectory(WrappedVector position) {
 
+        String signString;
+        if (DEBUG_SIGN) {
+            signString = printSign(position);
+            System.err.println(signString);
+        }
+
         WrappedVector momentum = drawInitialMomentum();
         WrappedVector velocity = drawInitialVelocity(momentum);
         WrappedVector gradient = getInitialGradient();
@@ -66,26 +72,70 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
 
+        int count = 0;
+
         while (bounceState.isTimeRemaining()) {
 
-            Bounce boundaryBounce = getNextBoundaryBounce(position, velocity, bounceState);
-            Bounce gradientBounce = getNextGradientBounce(Phi_v, gradient, momentum);
+            if (DEBUG) {
+                debugBefore(position, count);
+                ++count;
+            }
+
+            MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(position, velocity, bounceState);
+            MinimumTravelInformation gradientBounce = getNextGradientBounce(Phi_v, gradient, momentum);
+
+            if (DEBUG) {
+                System.err.println("boundary: " + boundaryBounce);
+                System.err.println("gradient: " + gradientBounce);
+            }
 
             bounceState = doBounce(bounceState, boundaryBounce, gradientBounce,
                     position, velocity, momentum, gradient, Phi_v);
+
+            if (DEBUG) {
+                debugAfter(bounceState, position);
+                String newSignString = printSign(position);
+                System.err.println(newSignString);
+
+                if (bounceState.type != Type.BOUNDARY && signString.compareTo(newSignString) != 0) {
+                    System.err.println("Sign error");
+                    System.err.println("velocity: " + velocity);
+                    System.err.println("momentum: " + momentum);
+                    System.err.println();
+                    System.err.println("Entry 18: " + position.get(18) + " " +  velocity.get(18) + " " + momentum.get(18));
+                    System.exit(-1);
+                }
+            }
+        }
+
+        if (DEBUG_SIGN) {
+            printSign(position);
         }
 
         return 0.0;
     }
 
-    class Bounce {
-        final double time;
-        final int index;
-
-        Bounce(double time, int index) {
-            this.time = time;
-            this.index = index;
+    private String printSign(ReadableVector position) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < position.getDim(); ++i) {
+            double p = position.get(i);
+            if (p < 0.0) sb.append("- ");
+            else if (p > 0.0) sb.append("+ ");
+            else sb.append("0 ");
         }
+        return sb.toString();
+    }
+
+    private void debugAfter(BounceState bounceState, ReadableVector position) {
+        System.err.println("post position: " + position);
+        System.err.println(bounceState);
+        System.err.println();
+    }
+
+
+    private void debugBefore(ReadableVector position, int count) {
+        System.err.println("before number: " + count);
+        System.err.println("init position: " + position);
     }
 
     enum Type {
@@ -112,55 +162,60 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
 
         boolean isTimeRemaining() { return remainingTime > 0.0; }
+
+        public String toString() {
+            return "remainingTime : " + remainingTime + "\n" +
+                    "lastBounceType: " + type + " in dim: " + index;
+        }
     }
 
-    private Bounce getNextGradientBounce(ReadableVector Phi_v,
-                                 ReadableVector gradient,
-                                 ReadableVector momentum) {
+    private MinimumTravelInformation getNextGradientBounce(ReadableVector Phi_v,
+                                                           ReadableVector gradient,
+                                                           ReadableVector momentum) {
 
         double minimumRoot = Double.POSITIVE_INFINITY;
         int index = -1;
 
         for (int i = 0, len = Phi_v.getDim(); i < len; ++i) {
+
             double root = minimumPositiveRoot(Phi_v.get(i) / 2, -gradient.get(i), -momentum.get(i));
             if (root < minimumRoot) {
                 minimumRoot = root;
                 index = i;
-                // TODO double-check dependence on lastBounce
             }
         }
 
-        return new Bounce(minimumRoot, index);
+        return new MinimumTravelInformation(minimumRoot, index);
     }
 
-    private Bounce getNextBoundaryBounce(ReadableVector position,
+    private MinimumTravelInformation getNextBoundaryBounce(ReadableVector position,
                                          ReadableVector velocity,
                                          BounceState lastBounce) {
 
-        final boolean checkIndex = lastBounce.type == Type.BOUNDARY;
+        final boolean noCheck = lastBounce.type != Type.BOUNDARY;
 
         double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;
 
         for (int i = 0, len = position.getDim(); i < len; ++i) {
 
-            if (checkIndex && i == lastBounce.index) break;
+            if (noCheck || i != lastBounce.index) {
 
-            double x = position.get(i);
-            double v = velocity.get(i);
+                double x = position.get(i);
+                double v = velocity.get(i);
 
-            if (headingAwayFromBoundary(x, v)) {
-                double time = Math.abs(x / v);
-                if (time < minimumTime) {
-                    minimumTime = time;
-                    index = i;
+                if (headingTowardsBoundary(x, v)) {
+                    double time = Math.abs(x / v);
+                    if (time < minimumTime) {
+                        minimumTime = time;
+                        index = i;
+                    }
                 }
             }
         }
 
-        return new Bounce(minimumTime, index);
+        return new MinimumTravelInformation(minimumTime, index);
     }
-
 
     private static double minimumPositiveRoot(double a,
                                               double b,
@@ -235,8 +290,8 @@ public class ZigZagOperator extends AbstractParticleOperator {
     }
 
     private BounceState doBounce(BounceState initialBounceState,
-                                 Bounce boundaryBounce,
-                                 Bounce gradientBounce,
+                                 MinimumTravelInformation boundaryBounce,
+                                 MinimumTravelInformation gradientBounce,
                                  WrappedVector position, WrappedVector velocity,
                                  WrappedVector momentum,
                                  WrappedVector gradient, WrappedVector Phi_v) {
@@ -307,4 +362,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
     }
 
     private final PrecisionColumnProvider columnProvider;
+
+    private final static boolean DEBUG = false;
+    private final static boolean DEBUG_SIGN = false;
 }

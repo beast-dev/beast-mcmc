@@ -183,7 +183,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
             double travelTime = Math.abs(position.get(i) / velocity.get(i));
 
-            if (travelTime > 0.0 && headingAwayFromBoundary(position.get(i), velocity.get(i))) {
+            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i))) {
 
                 if (travelTime < minTime) {
                     index = i;
@@ -195,7 +195,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new MinimumTravelInformation(minTime, index);
     }
 
-    boolean headingAwayFromBoundary(double position, double velocity) {
+    static boolean headingTowardsBoundary(double position, double velocity) {
         return position * velocity < 0.0;
     }
 
@@ -236,12 +236,16 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     protected class MinimumTravelInformation {
 
-        final double minTime;
-        final int minIndex;
+        final double time;
+        final int index;
 
-        private MinimumTravelInformation(double minTime, int minIndex) {
-            this.minTime = minTime;
-            this.minIndex = minIndex;
+        MinimumTravelInformation(double minTime, int minIndex) {
+            this.time = minTime;
+            this.index = minIndex;
+        }
+
+        public String toString() {
+            return "time = " + time + " @ " + index;
         }
     }
 
@@ -268,7 +272,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     }
 
     private final GradientWrtParameterProvider gradientProvider;
-    private final PrecisionMatrixVectorProductProvider productProvider;
+    final PrecisionMatrixVectorProductProvider productProvider;
     final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;

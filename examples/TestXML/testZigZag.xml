@@ -205,6 +205,13 @@
         </numClasses>
     </orderedLatentLiabilityLikelihood>
 
+	<jitter scale="0.25">
+		<maskedParameter idref="latentParameters"/>
+		<randomWalkOperator windowSize="0.1" weight="1">
+			<maskedParameter idref="latentParameters"/>
+		</randomWalkOperator>
+	</jitter>
+
 	<report>
 		<maskedParameter idref="latentParameters"/>
 	</report>
@@ -231,11 +238,11 @@
 				<traitDataLikelihood idref="scalarLikelihood"/>
 			</traitGradientOnTree>
 
-			<precisionTraitProductOnTree id="product" traitName="latent">
+			<precisionTraitProductOnTree id="product" traitName="latent" roughTravelTimeGuess="1.0">
 				<traitDataLikelihood idref="scalarLikelihood"/>
 			</precisionTraitProductOnTree>
 
-			<precisionColumnOnTree>
+			<precisionColumnOnTree id="precisionColumn">
 				<kroneckerProduct>
 					<precisionTraitProductOnTree>
 						<traitDataLikelihood idref="elementaryLikelihood"/>
@@ -258,6 +265,10 @@
 
     </operators>
 
+    <report>
+    	<traitDataLikelihood idref="scalarLikelihood"/>
+    	<precisionColumnOnTree idref="precisionColumn"/>
+    </report>
 
 	<mcmc id="mcmc" chainLength="1000000" autoOptimize="false">
 		<posterior id="posterior">

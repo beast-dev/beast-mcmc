@@ -85,8 +85,8 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
                             WrappedVector position, WrappedVector velocity,
                             WrappedVector gradient, ReadableVector Phi_v) {
 
-        double timeToBoundary = travelInfo.minTime;
-        int boundaryIndex = travelInfo.minIndex;
+        double timeToBoundary = travelInfo.time;
+        int boundaryIndex = travelInfo.index;
 
         if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
 

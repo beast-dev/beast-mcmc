@@ -159,6 +159,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             // one partials buffer for each tip and two for each internal node (for store restore)
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
+            int numPartials = partialBufferHelper.getBufferCount();
+            this.usePreOrder = false;
+
+            // one partial buffer for root node and two for each node including tip nodes (for store restore)
+            if (usePreOrder){
+                this.usePreOrder = true;
+                preOrderpartialBufferHelper = new BufferIndexHelper(nodeCount, 1);
+                numPartials += preOrderpartialBufferHelper.getBufferCount();
+            } else{
+                preOrderpartialBufferHelper = null;
+            }
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
@@ -283,17 +294,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
-            // double the size of buffers when allow preOrder traversals
-            int partialBufferCountMultiplier = 1;
-            this.usePreOrder = false;
-            if (usePreOrder){
-                partialBufferCountMultiplier = 2;
-                this.usePreOrder = true;
-            }
 
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
-                    partialBufferHelper.getBufferCount() * partialBufferCountMultiplier,
+                    numPartials,
                     compactPartialsCount,
                     stateCount,
                     patternCount,
@@ -961,6 +965,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private boolean flip = true;
     private final BufferIndexHelper partialBufferHelper;
     private final BufferIndexHelper scaleBufferHelper;
+    private final BufferIndexHelper preOrderpartialBufferHelper;
 
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;

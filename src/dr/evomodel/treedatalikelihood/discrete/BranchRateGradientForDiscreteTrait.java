@@ -108,7 +108,8 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
     @Override
     public double[] getGradientLogDensity() {
 
-        double[] result = new double[rateParameter.getDimension()];
+        double[] result = new double[rateParameter.getDimension() * (tree.getNodeCount() - 1)];
+        double[] gradient;
 
         // TODO Do single call to traitProvider with node == null (get full tree)
 //        List<double[]> statisticsForTree = (List<double[]>)
@@ -119,21 +120,9 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
             if (!tree.isRoot(node)) {
 
-                double[] statisticsForNode = (double[]) treeTraitProvider.getTrait(tree, node);
-//
-//                assert (statisticsForNode.size() == nTraits);
-//
-                double differential = branchRateModel.getBranchRateDifferential(tree, node);
-//
-                double gradient = 0.0;
-//                for (int trait = 0; trait < nTraits; ++trait) {
-//                    gradient += getGradientForBranch(statisticsForNode.get(trait), differential);
-//                }
+                gradient = (double[]) treeTraitProvider.getTrait(tree, node);
+                System.arraycopy(gradient, 0, result, i * rateParameter.getDimension(), rateParameter.getDimension());
 
-                final int destinationIndex = getParameterIndexFromNode(node);
-                assert (destinationIndex != -1);
-
-                result[destinationIndex] = gradient;
             }
         }
 

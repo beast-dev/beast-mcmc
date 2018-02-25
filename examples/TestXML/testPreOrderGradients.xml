@@ -165,13 +165,13 @@
         <arbitraryBranchRates idref="branchRatesDiscrete"/>
     </treeDataLikelihood>
 
-    <report>
-        HKY85:
-        ln L =
-        <treeDataLikelihood idref="treeLikelihood"/>
-        (R = -19.25650498361634)
+    <!--<report>-->
+        <!--HKY85:-->
+        <!--ln L =-->
+        <!--<treeDataLikelihood idref="treeLikelihood"/>-->
+        <!--(R = -19.25650498361634)-->
 
-    </report>
+    <!--</report>-->
 
     <branchRateGradient id="branchRateGradientDiscreteTrait" traitName="Sequence">
         <treeDataLikelihood idref="treeLikelihood"/>

@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 import beagle.Beagle;
 import beagle.InstanceDetails;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -172,7 +173,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         final double[] preOrderPartial = new double[stateCount * patternCount * categoryCount];
         final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
         final double[] rootPostOrderPartials = new double[stateCount * patternCount * categoryCount];
-        final double[] gradient = new double[patternList.getStateCount()];
 
         //create a matrix for fetching the infinitesimal matrix Q
         double [] Q = new  double[stateCount * stateCount];
@@ -234,9 +234,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 t++;
             }
         }
-        for( m = 0; m < patternList.getStateCount(); m++){
-            int sitePatternIndex = ((SitePatterns) patternList).getPatternIndex(m);
-            gradient[m] = grand_numerator[sitePatternIndex] / grand_denominator[sitePatternIndex];
+
+        double[] gradient = {0.0};
+        for(m = 0; m < patternCount; m++){
+            gradient[0] += grand_numerator[m] / grand_denominator[m] * patternList.getPatternWeight(m);
         }
         // TODO See TipGradientViaFullConditionalDelegate.getTrait() as an example of using post- and pre-order partials together
         return gradient;

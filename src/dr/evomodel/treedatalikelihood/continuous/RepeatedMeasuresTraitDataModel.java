@@ -39,6 +39,7 @@ import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
+import java.util.Vector;
 
 /**
  * @author Marc A. Suchard
@@ -56,6 +57,10 @@ public class RepeatedMeasuresTraitDataModel extends
                                           Parameter samplingPrecision) {
         super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.samplingPrecision = samplingPrecision;
+        addVariable(samplingPrecision);
+
+        samplingPrecision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+                samplingPrecision.getDimension()));
 
         if (samplingPrecision.getDimension() != dimTrait) {
             throw new RuntimeException("Currently only implemented for diagonal deflation");

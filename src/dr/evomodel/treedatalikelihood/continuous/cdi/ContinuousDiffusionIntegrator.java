@@ -181,7 +181,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert(partials != null);
             assert(partial.length >= dimPartial);
 
-            System.arraycopy(partials, dimPartial * bufferIndex, partial, 0, dimPartial);
+            System.arraycopy(partials, getArrayStart(bufferIndex),
+                    partial, 0,
+                    getArrayLength(bufferIndex));
         }
 
         @Override

@@ -28,47 +28,32 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
-import java.util.Arrays;
+import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
 
 /**
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 
-public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class BouncyParticleOperator extends AbstractParticleOperator {
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
                                   double weight, Options runtimeOptions, Parameter mask) {
-
-        this.gradientProvider = gradientProvider;
-        this.productProvider = multiplicationProvider;
-        this.parameter = gradientProvider.getParameter();
-        this.drawDistribution = new NormalDistribution(0, 1);
-        this.mask = mask;
-
-        this.runtimeOptions = runtimeOptions;
-        this.preconditioning = setupPreconditioning();
-
-        setWeight(weight);
-        checkParameterBounds(parameter);
+        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
+    }
+    
+    @Override
+    public String getOperatorName() {
+        return "Bouncy particle operator";
     }
 
     @Override
-    public double doOperation() {
+    double integrateTrajectory(WrappedVector position) {
 
-        if (shouldUpdatePreconditioning()) {
-            preconditioning = setupPreconditioning();
-        }
-
-        WrappedVector position = getInitialPosition();
         WrappedVector velocity = drawInitialVelocity();
         WrappedVector gradient = getInitialGradient();
 
@@ -92,34 +77,7 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
             );
         }
 
-        setParameter(position);
-
         return 0.0;
-    }
-
-    private double drawTotalTravelTime() {
-
-        double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
-
-        if (runtimeOptions.roughRuntimeGuess) {
-
-            updateRunTime();
-            return runTime * randomFraction;
-
-        } else {
-
-            return preconditioning.totalTravelTime * randomFraction;
-        }
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
-
-    @Override
-    public String getOperatorName() {
-        return "Bouncy particle operator";
     }
 
     private double doBounce(double remainingTime, double bounceTime,
@@ -157,243 +115,4 @@ public class BouncyParticleOperator extends SimpleMCMCOperator implements GibbsO
 
         return remainingTime;
     }
-
-    private void setParameter(ReadableVector position) {
-        for (int j = 0, dim = position.getDim(); j < dim; ++j) {
-            parameter.setParameterValueQuietly(j, position.get(j));
-        }
-        parameter.fireParameterChangedEvent();
-    }
-
-    private void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
-
-        ReadableVector gDivM = new ReadableVector.Quotient(gradient, mass);
-
-        double vg = innerProduct(velocity, gradient);
-        double ggDivM = innerProduct(gradient, gDivM);
-
-        for (int i = 0, len = velocity.getDim(); i < len; ++i) {
-            velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
-        }
-    }
-
-    private void updateGradient(WrappedVector gradient, double time, ReadableVector Phi_v) {
-        for (int i = 0, len = gradient.getDim(); i < len; ++i) {
-            gradient.set(i, gradient.get(i) - time * Phi_v.get(i));
-        }
-    }
-
-    private void updatePosition(WrappedVector position, WrappedVector velocity, double time) {
-        for (int i = 0, len = position.getDim(); i < len; ++i) {
-            position.set(i, position.get(i) + time * velocity.get(i));
-        }
-    }
-
-    @SuppressWarnings("all")
-    private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
-        double a = v_phi_v / 2;
-        double b = v_phi_x;
-        double c = u_min - MathUtils.nextExponential(1);
-        return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
-    }
-    
-    private WrappedVector getInitialGradient() {
-
-        double[] gradient = gradientProvider.getGradientLogDensity();
-
-        if (mask != null) {
-            applyMask(gradient);
-        }
-
-        return new WrappedVector.Raw(gradient);
-    }
-
-    private void applyMask(double[] vector) {
-
-        assert (vector.length == mask.getDimension());
-
-        for (int i = 0, len = vector.length; i < len; ++i) {
-            vector[i] *= mask.getParameterValue(i);
-        }
-    }
-
-    private double innerProduct(ReadableVector x, ReadableVector y) {
-
-        assert (x.getDim() == y.getDim());
-
-        double sum = 0;
-        for (int i = 0, dim = x.getDim(); i < dim; ++i) {
-            sum += x.get(i) * y.get(i);
-        }
-
-        return sum;
-    }
-
-    private ReadableVector getPrecisionProduct(ReadableVector velocity) {
-
-        setParameter(velocity);
-
-        double[] product = productProvider.getProduct(parameter);
-
-        if (mask != null) {
-            applyMask(product);
-        }
-
-        return new WrappedVector.Raw(product);
-    }
-
-    private WrappedVector drawInitialVelocity() {
-
-        ReadableVector mass = preconditioning.mass;
-        double[] velocity = new double[mass.getDim()];
-
-        for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = (Double) drawDistribution.nextRandom() / Math.sqrt(mass.get(i));
-        }
-
-        if (mask != null) {
-            applyMask(velocity);
-        }
-
-        return new WrappedVector.Raw(velocity);
-    }
-
-    private MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
-
-        assert (position.getDim() == velocity.getDim());
-
-        int index = -1;
-        double minTime = Double.MAX_VALUE;
-
-        for (int i = 0, len = position.getDim(); i < len; ++i) {
-
-            double travelTime = Math.abs(position.get(i) / velocity.get(i));
-
-            if (travelTime > 0.0 && headingAwayFromBoundary(position.get(i), velocity.get(i))) {
-
-                if (travelTime < minTime) {
-                    index = i;
-                    minTime = travelTime;
-                }
-            }
-        }
-
-        return new MinimumTravelInformation(minTime, index);
-    }
-
-    private boolean headingAwayFromBoundary(double position, double velocity) {
-        return position * velocity < 0.0;
-    }
-
-    private WrappedVector getInitialPosition() {
-        return new WrappedVector.Raw(parameter.getParameterValues());
-    }
-
-    private void checkParameterBounds(Parameter parameter) {
-
-        for (int i = 0, len = parameter.getDimension(); i < len; ++i) {
-            double value = parameter.getParameterValue(i);
-            if (value < parameter.getBounds().getLowerLimit(i) ||
-                    value > parameter.getBounds().getUpperLimit(i)) {
-                throw new IllegalArgumentException("Parameter '" + parameter.getId() + "' is out-of-bounds");
-            }
-        }
-    }
-
-    private void updateRunTime() {
-
-        if (shouldUpdatePreconditioning()) {
-
-            WrappedVector x = drawUniformSphere();
-            ReadableVector Phi_x = getPrecisionProduct(x);
-
-            double precisionMinEigenvalueLowerBound = innerProduct(x, Phi_x);
-            runTime = Math.sqrt(1 / precisionMinEigenvalueLowerBound);
-        }
-    }
-
-
-    private WrappedVector drawUniformSphere() {
-
-        double[] x = new double[parameter.getDimension()];
-        double normSquare = 0.0;
-
-        for (int i = 0, len = parameter.getDimension(); i < len; i++) {
-            x[i] = (Double) drawDistribution.nextRandom();
-            normSquare += x[i] * x[i];
-        }
-
-        double norm = Math.sqrt(normSquare);
-
-        for (int i = 0, len = parameter.getDimension(); i < len; i++) {
-            x[i] = x[i] / norm;
-        }
-
-        return new WrappedVector.Raw(x);
-    }
-
-
-    private Preconditioning setupPreconditioning() {
-
-        double[] mass = new double[parameter.getDimension()];
-        Arrays.fill(mass, 1.0);
-
-        // TODO Should use:
-        productProvider.getMassVector();
-        productProvider.getTimeScale();
-
-        return new Preconditioning(
-                new WrappedVector.Raw(mass),
-                1
-        );
-    }
-
-    private boolean shouldUpdatePreconditioning() {
-        return runtimeOptions.preconditioningUpdateFrequency > 0
-                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
-    }
-
-    private class MinimumTravelInformation {
-
-        double minTime;
-        int minIndex;
-
-        private MinimumTravelInformation(double minTime, int minIndex) {
-            this.minTime = minTime;
-            this.minIndex = minIndex;
-        }
-    }
-
-    public static class Options {
-
-        double randomTimeWidth;
-        int preconditioningUpdateFrequency;
-        boolean roughRuntimeGuess;
-
-        public Options(double randomTimeWidth, int preconditioningUpdateFrequency, boolean roughRuntimeGuess) {
-            this.randomTimeWidth = randomTimeWidth;
-            this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
-            this.roughRuntimeGuess = roughRuntimeGuess;
-        }
-    }
-
-    private class Preconditioning {
-        WrappedVector mass;
-        double totalTravelTime;
-
-        private Preconditioning(WrappedVector mass, double totalTravelTime) {
-            this.mass = mass;
-            this.totalTravelTime = totalTravelTime;
-        }
-    }
-
-    private final GradientWrtParameterProvider gradientProvider;
-    private final PrecisionMatrixVectorProductProvider productProvider;
-    private final Parameter parameter;
-    private final NormalDistribution drawDistribution;
-    private final Options runtimeOptions;
-    private final Parameter mask;
-
-    private double runTime;
-    private Preconditioning preconditioning;
 }

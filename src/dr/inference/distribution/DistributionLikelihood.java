@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;

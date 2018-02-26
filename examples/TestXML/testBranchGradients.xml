@@ -142,51 +142,38 @@
 		<branchRateGradient idref="branchRateGradientFull"/>
 	</report>
 
-
 <!--
+	<distributionLikelihood id="ratesPrior">
+		<data>
+			<parameter idref="rates"/>
+		</data>
+		<distribution>
+
+		NOTE: put normal prior on (log) rates, and put the gradient of this density into the HMC object ... ask Zhenyu.
+ -->
+
 	<operators id="operators">
- 		<scaleOperator scaleFactor="0.75" weight="1">
- 			<parameter idref="pseudoBranchLengthAB"/>
- 		</scaleOperator>
-
-		<uniformOperator weight="1">
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="treeModel.rootHeight"/>
-		</scaleOperator>
-
-		<subtreeSlide size="65.0" gaussian="true" weight="15">
-			<treeModel idref="treeModel"/>
-		</subtreeSlide>
-
-		<narrowExchange weight="15">
-			<treeModel idref="treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="treeModel"/>
-		</wilsonBalding>
-
-
+  		<hamiltonianMonteCarloOperator autoOptimize="false" weight="1" nSteps="10" stepSize="0.1" drawVariance="1.0">
+			<branchRateGradient idref="branchRateGradientFull"/>
+			<parameter idref="actual.rates"/>
+ 		</hamiltonianMonteCarloOperator>
 	</operators>
 
 	<mcmc id="mcmc" chainLength="1000">
 		<posterior id="posterior">
-			<traitDataLikelihood idref="newRestrictedLikelihood"/>
+			<traitDataLikelihood idref="fullLikelihood"/>
+
 		</posterior>
 		<operators idref="operators"/>
 		<log logEvery="10">
 			<posterior idref="posterior"/>
 		</log>
 		<logTree logEvery="10" nexusFormat="true" fileName="testRestrictedTraitLikelihood.trees">
-			<traitDataLikelihood idref="newRestrictedLikelihood"/>
-			<treeModel idref="ancestralTraitTreeModel"/>
+			<traitDataLikelihood idref="fullLikelihood"/>
+			<treeModel idref="treeModel"/>
 		</logTree>
 	</mcmc>
- -->
+
 
 
 </beast>

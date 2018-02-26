@@ -36,6 +36,8 @@ import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDele
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -53,7 +55,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
 /**
  * @author Marc A. Suchard
  */
-public class BranchRateGradient implements GradientWrtParameterProvider, Reportable {
+public class BranchRateGradient implements GradientWrtParameterProvider, Reportable, Loggable {
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait<List<BranchSufficientStatistics>> treeTraitProvider;
@@ -308,4 +310,18 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
     }
 
     private static final boolean DEBUG = false;
+
+    @Override
+    public LogColumn[] getColumns() {
+
+        LogColumn[] columns = new LogColumn[1];
+        columns[0] = new LogColumn.Default("gradient report", new Object() {
+            @Override
+            public String toString() {
+                return "\n" + getReport();
+            }
+        });
+
+        return columns;
+    }
 }

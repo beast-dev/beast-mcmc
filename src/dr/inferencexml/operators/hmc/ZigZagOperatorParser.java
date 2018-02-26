@@ -35,11 +35,12 @@ import dr.inference.operators.hmc.BouncyParticleOperator;
 import dr.xml.*;
 
 /**
+ * @author Aki Nishimura
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 
-public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
+public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final static String BPO_OPERATOR = "bouncyParticleOperator";
     private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";

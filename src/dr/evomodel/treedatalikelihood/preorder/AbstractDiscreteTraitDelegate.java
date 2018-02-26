@@ -183,62 +183,72 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         double [] grand_denominator = new double[patternCount];
         double [] grand_numerator = new double[patternCount];
 
-        int l, j, k, s, t, m, u;
-        for(m = 0; m < patternCount; ++m){
-            grand_denominator[m] = 0;
-            grand_numerator[m] = 0;
-        }
+        double[] gradient = new double[tree.getNodeCount() - 1];
 
-        beagle.getPartials(partialBufferHelper.getOffsetIndex(node.getNumber()), Beagle.NONE, postOrderPartial);
-        beagle.getPartials(getPreOrderPartialIndex(node.getNumber()), Beagle.NONE, preOrderPartial);
-
-        evolutionaryProcessDelegate.getSubstitutionModel(node.getNumber()).getInfinitesimalMatrix(Q);  //store the Q matrix
-
-        double[] tmpNumerator = new double[patternCount * categoryCount];
-        l = 0; j = 0;
-        for(s = 0; s < categoryCount; s++){
-            for(m = 0; m < patternCount; m++){
-                double clikelihood_tmp = 0;
-                for( k = 0; k < stateCount; k++){
-                    clikelihood_tmp += frequencies[k] * rootPostOrderPartials[l++];
+        int l, j, k, s, t, m, u, v;
+        v = 0;
+        for(int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
+            if(! tree.isRoot(tree.getNode(nodeNum))){
+                for(m = 0; m < patternCount; ++m){
+                    grand_denominator[m] = 0;
+                    grand_numerator[m] = 0;
                 }
-                clikelihood[j++] = clikelihood_tmp;
-            }
-        }
 
-        //now calculate weights
-        t = 0; u = 0;
-        double denominator = 0;
-        double numerator = 0;
-        double tmp = 0;
-        double[] weights = siteRateModel.getCategoryProportions();
-        for(s = 0; s < categoryCount; s++){
-            double rs = siteRateModel.getRateForCategory(s);
-            double ws = weights[s];
-            for(m = 0; m < patternCount; m++){
-                l = 0;
-                numerator = 0;
-                denominator = 0;
-                for(k = 0; k < stateCount; k++){
-                    tmp = 0;
-                    for(j = 0; j < stateCount; j++){
-                        tmp += Q[l++] * postOrderPartial[u + j];
+                beagle.getPartials(partialBufferHelper.getOffsetIndex(nodeNum), Beagle.NONE, postOrderPartial);
+                beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
+
+                evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //store the Q matrix
+
+                double[] tmpNumerator = new double[patternCount * categoryCount];
+                l = 0; j = 0;
+                for(s = 0; s < categoryCount; s++){
+                    for(m = 0; m < patternCount; m++){
+                        double clikelihood_tmp = 0;
+                        for( k = 0; k < stateCount; k++){
+                            clikelihood_tmp += frequencies[k] * rootPostOrderPartials[l++];
+                        }
+                        clikelihood[j++] = clikelihood_tmp;
                     }
-                    numerator += tmp * preOrderPartial[u + k];
-                    denominator += postOrderPartial[u + k] * preOrderPartial[u + k];
                 }
-                u += stateCount;
-                tmpNumerator[t] = ws * rs * numerator / denominator * clikelihood[t];
-                grand_numerator[m] += tmpNumerator[t];
-                grand_denominator[m] += ws * clikelihood[t];
-                t++;
+
+                //now calculate weights
+                t = 0; u = 0;
+                double denominator = 0;
+                double numerator = 0;
+                double tmp = 0;
+                double[] weights = siteRateModel.getCategoryProportions();
+                for(s = 0; s < categoryCount; s++){
+                    double rs = siteRateModel.getRateForCategory(s);
+                    double ws = weights[s];
+                    for(m = 0; m < patternCount; m++){
+                        l = 0;
+                        numerator = 0;
+                        denominator = 0;
+                        for(k = 0; k < stateCount; k++){
+                            tmp = 0;
+                            for(j = 0; j < stateCount; j++){
+                                tmp += Q[l++] * postOrderPartial[u + j];
+                            }
+                            numerator += tmp * preOrderPartial[u + k];
+                            denominator += postOrderPartial[u + k] * preOrderPartial[u + k];
+                        }
+                        u += stateCount;
+                        tmpNumerator[t] = ws * rs * numerator / denominator * clikelihood[t];
+                        grand_numerator[m] += tmpNumerator[t];
+                        grand_denominator[m] += ws * clikelihood[t];
+                        t++;
+                    }
+                }
+
+                for(m = 0; m < patternCount; m++){
+                    gradient[v] += grand_numerator[m] / grand_denominator[m] * patternList.getPatternWeight(m); // this assumes that root node is always at the end
+                }
+                v++;
             }
+
         }
 
-        double[] gradient = {0.0};
-        for(m = 0; m < patternCount; m++){
-            gradient[0] += grand_numerator[m] / grand_denominator[m] * patternList.getPatternWeight(m);
-        }
+
         // TODO See TipGradientViaFullConditionalDelegate.getTrait() as an example of using post- and pre-order partials together
         return gradient;
     }

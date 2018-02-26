@@ -110,22 +110,15 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
         double[] result = new double[rateParameter.getDimension()];
 
-        // TODO Do single call to traitProvider with node == null (get full tree)
-//        List<double[]> statisticsForTree = (List<double[]>)
-//                treeTraitProvider.getTrait(tree, null);
+        //Do single call to traitProvider with node == null (get full tree)
+        double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
 
+        int v =0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
-
             if (!tree.isRoot(node)) {
-                double gradient = 0.0;
                 final int destinationIndex = getParameterIndexFromNode(node);
-                for( int trait = 0; trait < nTraits; ++trait){
-                    gradient += ((double[]) treeTraitProvider.getTrait(tree, node))[trait];
-                }
-                result[destinationIndex] = gradient;
-
-
+                result[destinationIndex] = gradient[v++];
             }
         }
 

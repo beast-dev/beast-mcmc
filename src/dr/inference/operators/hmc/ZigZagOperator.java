@@ -67,7 +67,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         WrappedVector momentum = drawInitialMomentum();
         WrappedVector velocity = drawInitialVelocity(momentum);
         WrappedVector gradient = getInitialGradient();
-
         WrappedVector action = getPrecisionProduct(velocity);
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
@@ -99,11 +98,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
                 if (bounceState.type != Type.BOUNDARY && signString.compareTo(newSignString) != 0) {
                     System.err.println("Sign error");
-                    System.err.println("velocity: " + velocity);
-                    System.err.println("momentum: " + momentum);
-                    System.err.println();
-                    System.err.println("Entry 18: " + position.get(18) + " " +  velocity.get(18) + " " + momentum.get(18));
-                    System.exit(-1);
                 }
             }
         }

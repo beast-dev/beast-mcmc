@@ -36,7 +36,6 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
-import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
@@ -91,18 +90,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return preconditioning.totalTravelTime * randomFraction;
     }
 
-    static void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
-
-        ReadableVector gDivM = new ReadableVector.Quotient(gradient, mass);
-
-        double vg = innerProduct(velocity, gradient);
-        double ggDivM = innerProduct(gradient, gDivM);
-
-        for (int i = 0, len = velocity.getDim(); i < len; ++i) {
-            velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
-        }
-    }
-
     static void updateGradient(WrappedVector gradient, double time, ReadableVector Phi_v) {
         for (int i = 0, len = gradient.getDim(); i < len; ++i) {
             gradient.set(i, gradient.get(i) - time * Phi_v.get(i));
@@ -115,14 +102,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    @SuppressWarnings("all")
-    protected double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
-        double a = v_phi_v / 2;
-        double b = v_phi_x;
-        double c = u_min - MathUtils.nextExponential(1);
-        return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
-    }
-    
     WrappedVector getInitialGradient() {
 
         double[] gradient = gradientProvider.getGradientLogDensity();
@@ -154,45 +133,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
 
         return new WrappedVector.Raw(product);
-    }
-
-    WrappedVector drawInitialVelocity() {
-
-        ReadableVector mass = preconditioning.mass;
-        double[] velocity = new double[mass.getDim()];
-
-        for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
-        }
-
-        if (mask != null) {
-            applyMask(velocity);
-        }
-
-        return new WrappedVector.Raw(velocity);
-    }
-
-    MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
-
-        assert (position.getDim() == velocity.getDim());
-
-        int index = -1;
-        double minTime = Double.MAX_VALUE;
-
-        for (int i = 0, len = position.getDim(); i < len; ++i) {
-
-            double travelTime = Math.abs(position.get(i) / velocity.get(i));
-
-            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i))) {
-
-                if (travelTime < minTime) {
-                    index = i;
-                    minTime = travelTime;
-                }
-            }
-        }
-
-        return new MinimumTravelInformation(minTime, index);
     }
 
     static boolean headingTowardsBoundary(double position, double velocity) {

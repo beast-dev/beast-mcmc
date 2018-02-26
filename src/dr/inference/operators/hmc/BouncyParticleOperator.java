@@ -28,6 +28,7 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
@@ -114,5 +115,64 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         }
 
         return remainingTime;
+    }
+
+    private WrappedVector drawInitialVelocity() {
+
+        ReadableVector mass = preconditioning.mass;
+        double[] velocity = new double[mass.getDim()];
+
+        for (int i = 0, len = velocity.length; i < len; i++) {
+            velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
+        }
+
+        if (mask != null) {
+            applyMask(velocity);
+        }
+
+        return new WrappedVector.Raw(velocity);
+    }
+
+    private MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
+
+        assert (position.getDim() == velocity.getDim());
+
+        int index = -1;
+        double minTime = Double.MAX_VALUE;
+
+        for (int i = 0, len = position.getDim(); i < len; ++i) {
+
+            double travelTime = Math.abs(position.get(i) / velocity.get(i));
+
+            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i))) {
+
+                if (travelTime < minTime) {
+                    index = i;
+                    minTime = travelTime;
+                }
+            }
+        }
+
+        return new MinimumTravelInformation(minTime, index);
+    }
+
+    @SuppressWarnings("all")
+    private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
+        double a = v_phi_v / 2;
+        double b = v_phi_x;
+        double c = u_min - MathUtils.nextExponential(1);
+        return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
+    }
+
+    private static void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
+
+        ReadableVector gDivM = new ReadableVector.Quotient(gradient, mass);
+
+        double vg = innerProduct(velocity, gradient);
+        double ggDivM = innerProduct(gradient, gDivM);
+
+        for (int i = 0, len = velocity.getDim(); i < len; ++i) {
+            velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
+        }
     }
 }

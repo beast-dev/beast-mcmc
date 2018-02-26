@@ -25,12 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.inference.model.DiagonalMatrix;
-import dr.inference.model.Parameter;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
@@ -100,6 +98,7 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
 //            // NOTE TO PB: Massive code duplication with work in SafeMultivariateDiagonalActualizedWithDriftIntegrator
 //            // Please only compute once (in SafeMultivariateDiagonalActualizedWithDriftIntegrator) and get information from cdi
 //            // here to accumulate
+//            // PB: See new function recursivelyAccumulateDrift in AbstractDriftDiffusionModelDelegate.
 //
 //            // Actualize
 //            int[] branchIndice = new int[1];

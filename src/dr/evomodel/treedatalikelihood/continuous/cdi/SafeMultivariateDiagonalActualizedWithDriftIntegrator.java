@@ -209,17 +209,24 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
             startTime("drift1");
         }
 
-        int offset = 0;
+//        int offset = 0;
+//        for (int up = 0; up < updateCount; ++up) {
+//
+//            final int pio = dimTrait * probabilityIndices[up];
+//
+//            double[] scales = new double[dimTrait];
+//            scalingActualizationDisplacement(diagonalActualizations, pio, dimTrait, scales);
+//
+//            scale(optimalRates, offset, scales, displacements, pio, dimTrait);
+//            offset += dimTrait;
+//        }
+
+
         for (int up = 0; up < updateCount; ++up) {
-
-//            final int scaledOffset = matrixSize * probabilityIndices[up];
             final int pio = dimTrait * probabilityIndices[up];
-
-            double[] scales = new double[dimTrait];
-            scalingActualizationDisplacement(diagonalActualizations, pio, dimTrait, scales);
-
-            scale(optimalRates, offset, scales, displacements, pio, dimTrait);
-            offset += dimTrait;
+            for (int j = 0; j < dimTrait; ++j) {
+                displacements[pio + j] = optimalRates[up + j] * (1 - diagonalActualizations[pio + j]);
+            }
         }
 
         if (TIMING) {
@@ -227,6 +234,8 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         }
 
         // NOTE TO PB: very complex function, why multiple for (up = 0; up < updateCount; ++up) ?
+        // PB: I don't know if that's better, but I needed the loop to re-order the optimal rates according to the branches.
+        // But maybe there is a better way to do that ?
 
         precisionOffset = dimTrait * dimTrait * precisionIndex;
         precisionLogDet = determinants[precisionIndex];
@@ -266,14 +275,20 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     }
 
 
-    private static void scalingActualizationDisplacement(final double[] source,
-                                                         final int offset,
-                                                         final int dim,
-                                                         final double[] destination) {
-        for (int i = 0; i < dim; ++i) {
-                destination[i] = 1 - source[offset + i];
-        }
-    }
+//    private static void scalingActualizationDisplacement(final double[] vec) {
+//        for (int i = 0; i < vec.length; ++i) {
+//            vec[i] = 1 - vec[i];
+//        }
+//    }
+
+//    private static void scalingActualizationDisplacement(final double[] source,
+//                                                         final int offset,
+//                                                         final int dim,
+//                                                         final double[] destination) {
+//        for (int i = 0; i < dim; ++i) {
+//            destination[i] = 1 - source[offset + i];
+//        }
+//    }
 
     @Override
     public void updatePreOrderPartial(

@@ -54,6 +54,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDiffusionModelDelegate {
 
     // NOTE TO PB: Need to merge DriftDiffusion*, OrnsteinUhlenbeck* into single class and then delegate specialized work
+    // PB: See newly created classes AbstractDrift* and AbstractOU* to factorize the code.
 
 
     private MatrixParameterInterface strengthOfSelectionMatrixParameter;

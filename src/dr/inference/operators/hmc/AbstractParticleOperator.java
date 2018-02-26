@@ -91,7 +91,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return preconditioning.totalTravelTime * randomFraction;
     }
 
-    void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
+    static void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
 
         ReadableVector gDivM = new ReadableVector.Quotient(gradient, mass);
 
@@ -103,13 +103,13 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    void updateGradient(WrappedVector gradient, double time, ReadableVector Phi_v) {
+    static void updateGradient(WrappedVector gradient, double time, ReadableVector Phi_v) {
         for (int i = 0, len = gradient.getDim(); i < len; ++i) {
             gradient.set(i, gradient.get(i) - time * Phi_v.get(i));
         }
     }
 
-    void updatePosition(WrappedVector position, WrappedVector velocity, double time) {
+    static void updatePosition(WrappedVector position, WrappedVector velocity, double time) {
         for (int i = 0, len = position.getDim(); i < len; ++i) {
             position.set(i, position.get(i) + time * velocity.get(i));
         }
@@ -199,7 +199,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return position * velocity < 0.0;
     }
 
-    WrappedVector getInitialPosition() {
+    private WrappedVector getInitialPosition() {
         return new WrappedVector.Raw(parameter.getParameterValues());
     }
 
@@ -214,7 +214,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    Preconditioning setupPreconditioning() {
+    private Preconditioning setupPreconditioning() {
 
         double[] mass = new double[parameter.getDimension()];
         Arrays.fill(mass, 1.0);
@@ -229,7 +229,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         );
     }
 
-    boolean shouldUpdatePreconditioning() {
+    private boolean shouldUpdatePreconditioning() {
         return runtimeOptions.preconditioningUpdateFrequency > 0
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
@@ -272,8 +272,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     }
 
     private final GradientWrtParameterProvider gradientProvider;
-    final PrecisionMatrixVectorProductProvider productProvider;
-    final Parameter parameter;
+    private final PrecisionMatrixVectorProductProvider productProvider;
+    private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
 

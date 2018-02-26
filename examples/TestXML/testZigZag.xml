@@ -79,10 +79,8 @@
 		<alignment idref="alignment"/>
 	</patterns>
 
-	<newick id="startingTree">		((SK101_ZA_0.867_2003:0.4,((SK001_ZA_0.894_2003:0.6,SK106_ZA_0.872_2003:0.3):0.8,((SK103_ZA_0.835_2003:0.03,SK102_ZA_0.752_2003:0.03):0.5,(SK105_ZA_0.722_2003:0.2,SK104_ZA_0.837_2003:0.5):0.5):0.2):0.7):0.5,SK100_ZA_0.885_2003:0.1);
+	<newick id="startingTree"> ((SK101_ZA_0.867_2003:0.4,((SK001_ZA_0.894_2003:0.6,SK106_ZA_0.872_2003:0.3):0.8,((SK103_ZA_0.835_2003:0.03,SK102_ZA_0.752_2003:0.03):0.5,(SK105_ZA_0.722_2003:0.2,SK104_ZA_0.837_2003:0.5):0.5):0.2):0.7):0.5,SK100_ZA_0.885_2003:0.1);
 	</newick>
-
-
 
 	<!-- Generate a tree model                                                   -->
 	<treeModel id="treeModel">
@@ -103,23 +101,15 @@
 
 	</treeModel>
 
-			<matrixParameter id="precision">
-				<parameter id="precision.col1"  value="1.00 0.10 0.10"/>
-				<parameter id="precision.col2"  value="0.10 1.00 0.10"/>
-				<parameter id="precision.col3"  value="0.10 0.10 1.00"/>
-			</matrixParameter>
-
-			<diagonalContrainedMatrixView id="constrained.precision">
-				<matrixParameter idref="precision"/>
-				<mask>
-					<parameter value="1 1 1"/>
-				</mask>
-			</diagonalContrainedMatrixView>
-
+	<matrixParameter id="precision">
+		<parameter id="precision.col1"  value="1.00 0.10 0.10"/>
+		<parameter id="precision.col2"  value="0.10 1.00 0.10"/>
+		<parameter id="precision.col3"  value="0.10 0.10 1.00"/>
+	</matrixParameter>
 
 	<multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
-			<diagonalContrainedMatrixView idref="constrained.precision"/>
+			<matrixParameter idref="precision"/>
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
@@ -147,7 +137,7 @@
 				<parameter value="0.0 0.0 0.0"/>
 			</meanParameter>
 			<priorSampleSize>
-				<parameter value="0.001"/>
+				<parameter id="priorSampleSize" value="0.001"/>
 			</priorSampleSize>
         </conjugateRootPrior>
         <missingIndicator latentFrom="1" latentTo="3">
@@ -174,7 +164,7 @@
 				<parameter value="0.0"/>
 			</meanParameter>
 			<priorSampleSize>
-				<parameter value="0.001"/>
+				<parameter idref="priorSampleSize"/>
 			</priorSampleSize>
         </conjugateRootPrior>
 	</traitDataLikelihood>
@@ -270,7 +260,7 @@
     	<precisionColumnOnTree idref="precisionColumn"/>
     </report>
 
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="false">
+	<mcmc id="mcmc" chainLength="10000" autoOptimize="false">
 		<posterior id="posterior">
 			<prior id="prior">
 				<multivariateWishartPrior idref="precisionPrior"/>
@@ -284,7 +274,7 @@
 		<operators idref="operators"/>
 
 		<log id="screenLog" logEvery="1000">
-			<column label="Posteriorrrr" dp="4" width="12">
+			<column label="Joint" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
 			<column label="Prior" dp="4" width="12">
@@ -298,22 +288,22 @@
 			</column>
 		</log>
 
-		<log id="fileLog1" logEvery="100" fileName="BPO_small_latentOnly.log">
+		<log id="fileLog1" logEvery="10" fileName="testZigZag.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
-			<diagonalContrainedMatrixView idref="constrained.precision"/>
-			<!-- <matrixParameter idref="precision"/> -->
+			<matrixParameter idref="precision"/>
 			<parameter idref="leafTraits"/>
 		</log>
-
 	</mcmc>
+
 	<report>
 		<property name="timer">
 			<mcmc idref="mcmc"/>
 		</property>
 	</report>
 
+	<traceAnalysis fileName="testZigZag.log" stdError="true"/>
 
 </beast>
 

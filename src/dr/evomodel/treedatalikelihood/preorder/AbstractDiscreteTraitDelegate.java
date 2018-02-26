@@ -207,7 +207,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         }
 
         //now calculate weights
-        t = 0;
+        t = 0; u = 0;
         double denominator = 0;
         double numerator = 0;
         double tmp = 0;
@@ -215,7 +215,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         for(s = 0; s < categoryCount; s++){
             double rs = siteRateModel.getRateForCategory(s);
             double ws = weights[s];
-            u = 0;
             for(m = 0; m < patternCount; m++){
                 l = 0;
                 numerator = 0;

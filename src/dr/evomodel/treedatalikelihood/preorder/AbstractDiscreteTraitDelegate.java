@@ -28,11 +28,8 @@ package dr.evomodel.treedatalikelihood.preorder;
 import beagle.Beagle;
 import beagle.InstanceDetails;
 import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.alignment.SitePatterns;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.inference.model.Model;
 
@@ -100,13 +97,13 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         int[] beagleoperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
         int k = 0; int j = 0;
         for(int i = 0; i < operationCount; ++i){
-            beagleoperations[k++] = getPreOrderPartialIndex(operations[j++]);
-            beagleoperations[k++] = Beagle.NONE;
-            beagleoperations[k++] = Beagle.NONE;
-            beagleoperations[k++] = getPreOrderPartialIndex(operations[j++]);
-            beagleoperations[k++] = evolutionaryProcessDelegate.getMatrixIndex(operations[j++]);
-            beagleoperations[k++] = partialBufferHelper.getOffsetIndex(operations[j++]);
-            beagleoperations[k++] = evolutionaryProcessDelegate.getMatrixIndex(operations[j++]);
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = Beagle.NONE;
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 2] = Beagle.NONE;
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 3] = getPreOrderPartialIndex(operations[i * 5 + 1]);
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 4] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 2]);
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = partialBufferHelper.getOffsetIndex(operations[i * 5 + 3]);
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 6] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 4]);
         }
         beagle.updatePrePartials(beagleoperations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
 
@@ -184,15 +181,16 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         double [] grand_numerator = new double[patternCount];
 
         double[] gradient = new double[tree.getNodeCount() - 1];
+        double branch_length;
 
-        int l, j, k, s, t, m, u, v;
-        v = 0;
+        int v = 0;
         for(int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
             if(! tree.isRoot(tree.getNode(nodeNum))){
-                for(m = 0; m < patternCount; ++m){
+                for(int m = 0; m < patternCount; ++m){
                     grand_denominator[m] = 0;
                     grand_numerator[m] = 0;
                 }
+                branch_length = tree.getBranchLength(tree.getNode(nodeNum));
 
                 beagle.getPartials(partialBufferHelper.getOffsetIndex(nodeNum), Beagle.NONE, postOrderPartial);
                 beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
@@ -200,49 +198,54 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //store the Q matrix
 
                 double[] tmpNumerator = new double[patternCount * categoryCount];
-                l = 0; j = 0;
-                for(s = 0; s < categoryCount; s++){
-                    for(m = 0; m < patternCount; m++){
+
+                for (int s = 0; s < categoryCount; s++) {
+                    for (int m = 0; m < patternCount; m++) {
                         double clikelihood_tmp = 0;
-                        for( k = 0; k < stateCount; k++){
-                            clikelihood_tmp += frequencies[k] * rootPostOrderPartials[l++];
+                        for (int k = 0; k < stateCount; k++) {
+                            clikelihood_tmp += frequencies[k] * rootPostOrderPartials[s * patternCount * stateCount + m * stateCount + k];
                         }
-                        clikelihood[j++] = clikelihood_tmp;
+                        clikelihood[s * patternCount + m] = clikelihood_tmp;
                     }
                 }
 
                 //now calculate weights
-                t = 0; u = 0;
                 double denominator = 0;
                 double numerator = 0;
                 double tmp = 0;
                 double[] weights = siteRateModel.getCategoryProportions();
-                for(s = 0; s < categoryCount; s++){
+
+                for (int s = 0; s < categoryCount; s++) {
                     double rs = siteRateModel.getRateForCategory(s);
                     double ws = weights[s];
-                    for(m = 0; m < patternCount; m++){
-                        l = 0;
+                    for (int m = 0; m < patternCount; m++) {
                         numerator = 0;
                         denominator = 0;
-                        for(k = 0; k < stateCount; k++){
+                        for (int k = 0; k < stateCount; k++) {
                             tmp = 0;
-                            for(j = 0; j < stateCount; j++){
-                                tmp += Q[l++] * postOrderPartial[u + j];
+                            for (int j = 0; j < stateCount; j++) {
+                                tmp += Q[k*stateCount + j] * postOrderPartial[(s * patternCount + m) * stateCount + j];
                             }
-                            numerator += tmp * preOrderPartial[u + k];
-                            denominator += postOrderPartial[u + k] * preOrderPartial[u + k];
+                            numerator += tmp * preOrderPartial[(s * patternCount + m) * stateCount + k];
+                            denominator += postOrderPartial[(s * patternCount + m) * stateCount + k] * preOrderPartial[(s * patternCount + m) * stateCount + k];
                         }
-                        u += stateCount;
-                        tmpNumerator[t] = ws * rs * numerator / denominator * clikelihood[t];
-                        grand_numerator[m] += tmpNumerator[t];
-                        grand_denominator[m] += ws * clikelihood[t];
-                        t++;
+                        if (Double.isNaN(denominator)) {
+                            System.err.println("bad bad");
+                        }
+                        tmpNumerator[s * patternCount + m] = ws * rs * numerator / denominator * clikelihood[s * patternCount + m];
+                        grand_numerator[m] += tmpNumerator[s * patternCount + m];
+                        grand_denominator[m] += ws * clikelihood[s * patternCount + m];
                     }
                 }
 
-                for(m = 0; m < patternCount; m++){
+                for(int m = 0; m < patternCount; m++){
                     gradient[v] += grand_numerator[m] / grand_denominator[m] * patternList.getPatternWeight(m); // this assumes that root node is always at the end
+
+                    if (Double.isNaN(gradient[v])) {
+                        System.err.println("bad");
+                    }
                 }
+                gradient[v] *= branch_length;
                 v++;
             }
 
@@ -260,7 +263,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
-        // TODO
+        // TODO When we start to cache intermediate calculation
+
     }
 
     @Override
@@ -323,6 +327,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private final BufferIndexHelper preOrderBufferHelper;
     private final PatternList patternList;
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 }
 

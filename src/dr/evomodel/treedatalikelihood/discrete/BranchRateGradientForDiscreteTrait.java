@@ -25,17 +25,18 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import beagle.Beagle;
 import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
-import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
 import java.util.List;
@@ -113,6 +114,8 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         //Do single call to traitProvider with node == null (get full tree)
         double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
 
+        System.err.println(new WrappedVector.Raw(gradient));
+
         int v =0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
@@ -178,8 +181,49 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
     private static final boolean DEBUG = true;
 
+    private MultivariateFunction numeric1 = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            for (int i = 0; i < argument.length; ++i) {
+                rateParameter.setParameterValue(i, argument[i]);
+            }
+
+            treeDataLikelihood.makeDirty();
+            return treeDataLikelihood.getLogLikelihood();
+        }
+
+        @Override
+        public int getNumArguments() {
+            return rateParameter.getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return 0;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
     @Override
     public String getReport() {
-        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
+        double[] savedValues = rateParameter.getParameterValues();
+        double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
+
+        for (int i = 0; i < savedValues.length; ++i) {
+            rateParameter.setParameterValue(i, savedValues[i]);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
+        sb.append("\n");
+        sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+        sb.append("\n");
+
+        return sb.toString();
     }
 }

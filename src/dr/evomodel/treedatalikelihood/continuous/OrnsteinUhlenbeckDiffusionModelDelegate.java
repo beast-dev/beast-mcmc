@@ -126,7 +126,9 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
         return drift.data;
     }
 
-    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift, ContinuousDiffusionIntegrator cdi, double[] displacement, double[] actualization) {
+    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift,
+                                            ContinuousDiffusionIntegrator cdi,
+                                            double[] displacement, double[] actualization) {
         if (!tree.isRoot(node)) {
 
             // Compute parent
@@ -144,7 +146,9 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
     }
 
     @Override
-    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
+    public double[][] getJointVariance(final double priorSampleSize,
+                                       final double[][] treeVariance, final double[][] treeSharedLengths,
+                                       final double[][] traitVariance) {
 
         double[] eigVals = this.getEigenValuesStrengthOfSelection();
         DenseMatrix64F V = wrap(this.getEigenVectorsStrengthOfSelection(), 0, dim, dim);

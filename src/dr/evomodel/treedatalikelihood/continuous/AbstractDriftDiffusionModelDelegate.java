@@ -137,7 +137,8 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     }
 
     @Override
-    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
+    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance,
+                                       final double[][] treeSharedLengths, final double[][] traitVariance) {
         return KroneckerOperation.product(treeVariance, traitVariance);
     }
 }

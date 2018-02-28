@@ -55,8 +55,8 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
     }
 
     @Override
-    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
-        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance);
-        return jointVariance;
+    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance,
+                                       final double[][] treeSharedLengths, final double[][] traitVariance) {
+        return KroneckerOperation.product(treeVariance, traitVariance);
     }
 }

@@ -132,7 +132,9 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
 //    }
 
     @Override
-    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance) {
+    public double[][] getJointVariance(final double priorSampleSize,
+                                       final double[][] treeVariance, final double[][] treeSharedLengths,
+                                       final double[][] traitVariance) {
 
         // Eigen of strength of selection matrix
         double[] eigVals = this.getEigenValuesStrengthOfSelection();

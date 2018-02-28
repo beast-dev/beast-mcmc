@@ -47,6 +47,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 precision, 0, dimTrait * dimTrait);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    /// Setting variances, displacement and actualization vectors
+    ///////////////////////////////////////////////////////////////////////////
+
     public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
                                                 final double[] edgeLengths, final double[] driftRates,
                                                 int updateCount) {
@@ -97,6 +101,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             destination[destinationOffset + i] = scale * source[sourceOffset + i];
         }
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// Tree-traversal functions
+    ///////////////////////////////////////////////////////////////////////////
 
 //    @Override
 //    public void updatePreOrderPartial(

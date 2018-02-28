@@ -49,6 +49,10 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         vectorDispj = new double[dimTrait];
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    /// Setting variances, displacement and actualization vectors
+    ///////////////////////////////////////////////////////////////////////////
+
     public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
                                                 final double[] edgeLengths, final double[] driftRates,
                                                 int updateCount) {
@@ -83,6 +87,10 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
             }
         }
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// Tree-traversal functions
+    ///////////////////////////////////////////////////////////////////////////
 
     @Override
     public void updatePreOrderPartial(

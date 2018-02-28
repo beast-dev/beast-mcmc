@@ -82,7 +82,7 @@ public class RepeatedMeasuresTraitDataModel extends
 
         // TODO Deflate partial precision by samplingPrecision
         for (int index = 0; index< dimTrait; index++){
-            V.set(index, index, V.get(index, index) + samplingPrecision.getParameterValue(index));
+            V.set(index, index, V.get(index, index) + 1 / samplingPrecision.getParameterValue(index));
         }
 
         DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);

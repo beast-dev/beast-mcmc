@@ -90,9 +90,9 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return preconditioning.totalTravelTime * randomFraction;
     }
 
-    static void updateGradient(WrappedVector gradient, double time, ReadableVector Phi_v) {
+    static void updateGradient(WrappedVector gradient, double time, ReadableVector action) {
         for (int i = 0, len = gradient.getDim(); i < len; ++i) {
-            gradient.set(i, gradient.get(i) - time * Phi_v.get(i));
+            gradient.set(i, gradient.get(i) - time * action.get(i));
         }
     }
 
@@ -111,6 +111,15 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
 
         return new WrappedVector.Raw(gradient);
+    }
+
+    void applyMask(WrappedVector vector) {
+
+        assert (vector.getDim() == mask.getDimension());
+
+        for (int i = 0, dim = vector.getDim(); i < dim; ++i) {
+            vector.set(i, vector.get(i) * mask.getParameterValue(i));
+        }
     }
 
     void applyMask(double[] vector) {

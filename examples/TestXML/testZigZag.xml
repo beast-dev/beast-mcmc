@@ -204,7 +204,7 @@
 
 	<report>
 		<maskedParameter idref="latentParameters"/>
-	</report>
+	</report>    
 
 	<maskedParameter id="traceLatent" from="1" to="6">
 		<parameter idref="leafTraits"/>
@@ -213,7 +213,7 @@
     <operators id="operators" optimizationSchedule="log">
 
 <!--
-  		<bouncyParticleOperator mode="nuts" traitName="latent" drawVariance = "1" weight="5" autoOptimize="false">
+  		<bouncyParticleOperator traitName="latent" weight="5" autoOptimize="false">
 				<traitGradientOnTree id="gradient">
 					<traitDataLikelihood idref="scalarLikelihood"/>
 				</traitGradientOnTree>

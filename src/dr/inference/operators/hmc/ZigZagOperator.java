@@ -206,35 +206,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return new MinimumTravelInformation(minimumTime, index);
     }
 
-//    private MinimumTravelInformation getNextBoundaryBounce(ReadableVector position,
-//                                                           ReadableVector velocity,
-//                                                           BounceState lastBounce) {
-//
-//        final boolean noCheck = lastBounce.type != Type.BOUNDARY;
-//
-//        double minimumTime = Double.POSITIVE_INFINITY;
-//        int index = -1;
-//
-//        for (int i = 0, len = position.getDim(); i < len; ++i) {
-//
-//            if (noCheck || i != lastBounce.index) {
-//
-//                double x = position.get(i);
-//                double v = velocity.get(i);
-//
-//                if (headingTowardsBoundary(x, v)) {
-//                    double time = Math.abs(x / v);
-//                    if (time < minimumTime) {
-//                        minimumTime = time;
-//                        index = i;
-//                    }
-//                }
-//            }
-//        }
-//
-//        return new MinimumTravelInformation(minimumTime, index);
-//    }
-
     private static double minimumPositiveRoot(double a,
                                               double b,
                                               double c) {
@@ -365,6 +336,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
                     action.get(i) + 2 * v * column.get(i)
             );
         }
+
+        if (mask != null) {
+            applyMask(action);
+        }
     }
 
     private static void reflectMomentum(WrappedVector momentum,
@@ -381,15 +356,19 @@ public class ZigZagOperator extends AbstractParticleOperator {
         velocity.set(eventIndex, -velocity.get(eventIndex));
     }
 
-    private static void updateMomentum(WrappedVector momentum,
-                                       ReadableVector gradient,
-                                       ReadableVector action,
-                                       double eventTime) {
+    private void updateMomentum(WrappedVector momentum,
+                                ReadableVector gradient,
+                                ReadableVector action,
+                                double eventTime) {
 
         for (int i = 0, len = momentum.getDim(); i < len; ++i) {
             momentum.set(i,
                     momentum.get(i) + eventTime * gradient.get(i) - eventTime * eventTime * action.get(i) / 2
             );
+        }
+
+        if (mask != null) {
+            applyMask(momentum);
         }
     }
 

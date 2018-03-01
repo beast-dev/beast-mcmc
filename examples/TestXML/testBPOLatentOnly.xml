@@ -79,10 +79,8 @@
 		<alignment idref="alignment"/>
 	</patterns>
 
-	<newick id="startingTree">		((SK101_ZA_0.867_2003:0.4,((SK001_ZA_0.894_2003:0.6,SK106_ZA_0.872_2003:0.3):0.8,((SK103_ZA_0.835_2003:0.03,SK102_ZA_0.752_2003:0.03):0.5,(SK105_ZA_0.722_2003:0.2,SK104_ZA_0.837_2003:0.5):0.5):0.2):0.7):0.5,SK100_ZA_0.885_2003:0.1);
+	<newick id="startingTree"> ((SK101_ZA_0.867_2003:0.4,((SK001_ZA_0.894_2003:0.6,SK106_ZA_0.872_2003:0.3):0.8,((SK103_ZA_0.835_2003:0.03,SK102_ZA_0.752_2003:0.03):0.5,(SK105_ZA_0.722_2003:0.2,SK104_ZA_0.837_2003:0.5):0.5):0.2):0.7):0.5,SK100_ZA_0.885_2003:0.1);
 	</newick>
-	
-	
 
 	<!-- Generate a tree model                                                   -->
 	<treeModel id="treeModel">
@@ -103,23 +101,15 @@
 
 	</treeModel>
 
-			<matrixParameter id="precision">
-				<parameter id="precision.col1"  value="1.00 0.10 0.10"/>
-				<parameter id="precision.col2"  value="0.10 1.00 0.10"/>
-				<parameter id="precision.col3"  value="0.10 0.10 1.00"/>
-			</matrixParameter>
-
-			<diagonalContrainedMatrixView id="constrained.precision">
-				<matrixParameter idref="precision"/>
-				<mask>
-					<parameter value="1 1 1"/>
-				</mask>
-			</diagonalContrainedMatrixView>
-
+	<matrixParameter id="precision">
+		<parameter id="precision.col1"  value="1.00 0.10 0.10"/>
+		<parameter id="precision.col2"  value="0.10 1.00 0.10"/>
+		<parameter id="precision.col3"  value="0.10 0.10 1.00"/>
+	</matrixParameter>
 
 	<multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
-			<diagonalContrainedMatrixView idref="constrained.precision"/>
+			<matrixParameter idref="precision"/>
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
@@ -136,46 +126,21 @@
 		</data>
 	</multivariateWishartPrior>
 
-<!-- 
-	<multivariateTraitLikelihood id="traitLikelihood" traitName="latent"
-	useTreeLength="true" scaleByTime="true" reportAsMultivariate="true"
-	cacheBranches="true" reciprocalRates="true" integrateInternalTraits="true"
-	sampleMissingTraits="true">
+	<traitDataLikelihood id="scalarLikelihood" traitName="latent">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
-		<conjugateRootPrior>
-			<meanParameter>
-				<parameter value="0.0 0.0 0.0 0.0 0.0 0.0"/>
-			</meanParameter>
-			<priorSampleSize>
-				<parameter value="0.001"/>
-			</priorSampleSize>
-		</conjugateRootPrior>
-		<missingIndicator latentFrom="1" latentTo="3"> <!~~ marks discrete traits 1 to 25 and missing (?) continuous traits ~~>
-			<parameter id="mask"/>
-		</missingIndicator>
-	</multivariateTraitLikelihood>
- -->
-	
-	<traitDataLikelihood id="scalarLikelihood" traitName="latent" forceFullPrecision="false">
-		<multivariateDiffusionModel idref="diffusionModel"/>
-		<treeModel idref="treeModel"/>
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
-        <conjugateRootPrior>
+        <conjugateRootPrior id="rootPrior">
 			<meanParameter>
 				<parameter value="0.0 0.0 0.0"/>
 			</meanParameter>
 			<priorSampleSize>
-				<parameter value="0.001"/>
+				<parameter id="priorSampleSize" value="0.001"/>
 			</priorSampleSize>
         </conjugateRootPrior>
-        
-        <missingIndicator latentFrom="1" latentTo="3"> <!-- marks discrete traits 1 to 25 and missing (?) continuous traits -->
+        <missingIndicator latentFrom="1" latentTo="3">
 			<parameter id="mask"/>
 		</missingIndicator>
 	</traitDataLikelihood>
@@ -205,8 +170,13 @@
         	<parameter value = "2 2 2"/>
         </numClasses>
     </orderedLatentLiabilityLikelihood>
-    
-	
+
+	<jitter scale="0.25">
+		<maskedParameter idref="latentParameters"/>
+		<randomWalkOperator windowSize="0.1" weight="1">
+			<maskedParameter idref="latentParameters"/>
+		</randomWalkOperator>
+	</jitter>
 
 	<report>
 		<maskedParameter idref="latentParameters"/>
@@ -218,51 +188,28 @@
 
     <operators id="operators" optimizationSchedule="log">
 
-  		<bouncyParticleOperator mode="nuts" traitName="latent" drawVariance = "1" weight="5" autoOptimize="false">
-<!-- 			<traitDataLikelihood idref="scalarLikelihood"/> -->
-<!-- 			<maskedGradient> -->
+  		<bouncyParticleOperator traitName="latent" weight="5" autoOptimize="false">
 				<traitGradientOnTree id="gradient">
 					<traitDataLikelihood idref="scalarLikelihood"/>
 				</traitGradientOnTree>
 				<precisionTraitProductOnTree id="product" traitName="latent">
 					<traitDataLikelihood idref="scalarLikelihood"/>
 				</precisionTraitProductOnTree>
-<!-- 				<mask> -->
-<!-- 					<parameter idref="mask"/> -->
-<!-- 				</mask> -->
-<!-- 			</maskedGradient> -->
-<!-- 			<maskedParameter idref="latentParameters"/> -->
-<!-- 
-			<orderedLatentLiabilityTransform>
-				<orderedLatentLiabilityLikelihood idref="liabilityLikelihood"/>
-				<mask>
-					<parameter idref="mask"/>
-				</mask>
-			</orderedLatentLiabilityTransform>
- -->
  		</bouncyParticleOperator>
 
-
-		<!--<precisionGibbsOperator weight="1">-->
-            <!--<traitDataLikelihood idref="scalarLikelihood"/>-->
-            <!--<multivariateWishartPrior idref="precisionPrior"/>-->
-            <!--<matrixParameter idref="precision"/>-->
-		<!--</precisionGibbsOperator>-->
-
-		<!--<precisionGibbsOperator weight="2">-->
-			<!--<wishartStatistics  traitName="trait">-->
-				<!--<traitDataLikelihood idref="scalarLikelihood"/>-->
-			<!--</wishartStatistics>-->
-			<!--<multivariateWishartPrior idref="precisionPrior"/>-->
-            <!--<matrixParameter idref="precision"/>-->
-		<!--</precisionGibbsOperator>-->
-
-
+<!--
+		<precisionGibbsOperator weight="2">
+			<wishartStatistics  traitName="trait">
+				<traitDataLikelihood idref="scalarLikelihood"/>
+			</wishartStatistics>
+			<multivariateWishartPrior idref="precisionPrior"/>
+			<matrixParameter idref="precision"/>
+		</precisionGibbsOperator>
+ -->
 
     </operators>
-    
 
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="false" autoOptimizeDelay="50000">
+	<mcmc id="mcmc" chainLength="10000" autoOptimize="false">
 		<posterior id="posterior">
 			<prior id="prior">
 				<multivariateWishartPrior idref="precisionPrior"/>
@@ -276,7 +223,7 @@
 		<operators idref="operators"/>
 
 		<log id="screenLog" logEvery="1000">
-			<column label="Posteriorrrr" dp="4" width="12">
+			<column label="Joint" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
 			<column label="Prior" dp="4" width="12">
@@ -290,41 +237,22 @@
 			</column>
 		</log>
 
-		<log id="fileLog1" logEvery="100" fileName="BPO_small_latentOnly.log">
+		<log id="fileLog1" logEvery="10" fileName="testBPOLatentOnly.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
-			<diagonalContrainedMatrixView idref="constrained.precision"/>
-			<!-- <matrixParameter idref="precision"/> -->
+			<matrixParameter idref="precision"/>
 			<parameter idref="leafTraits"/>
 		</log>
-
-
-		<!-- 
-<log id="fileLog2" logEvery="10000" fileName="Goulder_LL_precision_hmc.log">
-			<matrixParameter idref="precision"/>
-		</log>
-
-		<log id="fileLog3" logEvery="10000" fileName="Goulder_LL_constrained_hmc.log">
-			<diagonalContrainedMatrixView idref="constrained.precision"/>
-		</log>
- -->
-
-<!-- 
-		<logTree id="treeFileLog" logEvery="100" nexusFormat="true" fileName="Goulder_LL.trees" sortTranslationTable="true">
-			<treeModel idref="treeModel"/>
-			<posterior idref="posterior"/>
-			<multivariateDiffusionModel idref="diffusionModel"/>   <!~~ reports info about diffusion model ~~>
-            <multivariateTraitLikelihood idref="traitLikelihood"/>
-		</logTree>
- -->
 	</mcmc>
+
 	<report>
 		<property name="timer">
 			<mcmc idref="mcmc"/>
 		</property>
 	</report>
-	
+
+	<traceAnalysis fileName="testBPOLatentOnly.log" stdError="true"/>
 
 </beast>
 

@@ -152,7 +152,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         try {
 
             int compactPartialsCount = tipCount;
-            if (useAmbiguities) {
+            if (useAmbiguities || usePreOrder) {
                 // if we are using ambiguities then we don't use tip partials
                 compactPartialsCount = 0;
             }

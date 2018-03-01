@@ -95,7 +95,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             System.err.println("Now update preOrder partials at all other nodes");
         }
         int[] beagleoperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
-        int k = 0; int j = 0;
         for(int i = 0; i < operationCount; ++i){
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = Beagle.NONE;
@@ -105,9 +104,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = partialBufferHelper.getOffsetIndex(operations[i * 5 + 3]);
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 6] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 4]);
         }
-        beagle.updatePrePartials(beagleoperations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
 
-        //super.simulate(operations, operationCount, rootNodeNumber); // TODO Should override this to compute pre-order partials
+        beagle.updatePrePartials(beagleoperations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
         //TODO:error control
     }
 
@@ -248,10 +246,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 gradient[v] *= branch_length;
                 v++;
             }
-
         }
-
-
         // TODO See TipGradientViaFullConditionalDelegate.getTrait() as an example of using post- and pre-order partials together
         return gradient;
     }
@@ -302,6 +297,14 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         // Flip all the buffers to be written to first...
         for (int nodeNum = tipCount; nodeNum < nodeCount; ++nodeNum){
             this.partialBufferHelper.flipOffset(nodeNum);
+        }
+
+        // Flip matrix indices
+        for (int nodeNum = 0; nodeNum < nodeCount; ++nodeNum){
+            NodeRef node = tree.getNode(nodeNum);
+            if(! tree.isRoot(node)){
+                this.evolutionaryProcessDelegate.flipTransitionMatrices(new int[] {nodeNum}, 1);
+            }
         }
 
         // Now root = 0 (stored as a tip in postOrder), all other nodeNum += 1

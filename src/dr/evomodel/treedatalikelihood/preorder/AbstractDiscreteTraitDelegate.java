@@ -52,6 +52,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private final SiteRateModel siteRateModel;
     private final int preOrderPartialOffset;
 
+    // TODO Please use auto-format everywhere
+
     public AbstractDiscreteTraitDelegate(String name,
                                   Tree tree,
                                   BeagleDataLikelihoodDelegate likelihoodDelegate) {
@@ -70,6 +72,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         stateCount = likelihoodDelegate.getPatternList().getDataType().getStateCount();
         categoryCount = siteRateModel.getCategoryCount();
 
+        // TODO partialBufferHelper is already instantiated in BeagleDataLikelihoodDelegate
+        // TODO Should probably remove all buffering here
+
         // one partials buffer for each tip and two for each internal node (for store restore)
         partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
         // mirror the preOrderpartialBufferHelper in BeagleDataLikelihoodDelegate
@@ -77,6 +82,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         preOrderBufferHelper = new BufferIndexHelper(nodeCount, 1);
         // put preOrder partials in the same order as defined in BufferIndexHelper right after postOrder partials
         preOrderPartialOffset = partialBufferHelper.getBufferCount();
+        // TODO likelihoodDelegate.getPartialBufferCount();
 
         patternList = likelihoodDelegate.getPatternList();
     }
@@ -94,10 +100,13 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         if(DEBUG){
             System.err.println("Now update preOrder partials at all other nodes");
         }
+
+        // TODO Use something like this: likelihoodDelegate.getPartialBufferIndex(0);
+
         int[] beagleoperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
         int k = 0; int j = 0;
         for(int i = 0; i < operationCount; ++i){
-            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE    ] = getPreOrderPartialIndex(operations[i * 5]);
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = Beagle.NONE;
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 2] = Beagle.NONE;
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 3] = getPreOrderPartialIndex(operations[i * 5 + 1]);
@@ -105,6 +114,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = partialBufferHelper.getOffsetIndex(operations[i * 5 + 3]);
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 6] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 4]);
         }
+
         beagle.updatePrePartials(beagleoperations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
 
         //super.simulate(operations, operationCount, rootNodeNumber); // TODO Should override this to compute pre-order partials
@@ -125,6 +135,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         int[] rootPreIndices = {getPreOrderPartialIndex(rootNumber)};
         int[] rootFreqIndices = {0}; /// as in BeagleDataLikelihoodDelegate.calculateLikelihood()
         InstanceDetails instanceDetails = beagle.getDetails();
+
+        // TODO Call beagle.setPartials()
+
         beagle.setRootPrePartials(rootPreIndices, rootFreqIndices, 1);
         //TODO: find the right error message for control
     }
@@ -173,6 +186,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         //create a matrix for fetching the infinitesimal matrix Q
         double [] Q = new  double[stateCount * stateCount];
+
+        // TODO Should get from BeagleDataLikelihoodDelegate (already computed)
         double[] clikelihood = new double[categoryCount * patternCount];  // likelihood for each category doesn't come in free.
 
         beagle.getPartials(partialBufferHelper.getOffsetIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostOrderPartials);
@@ -199,6 +214,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
                 double[] tmpNumerator = new double[patternCount * categoryCount];
 
+                // TODO is this not the same for all nodes?
                 for (int s = 0; s < categoryCount; s++) {
                     for (int m = 0; m < patternCount; m++) {
                         double clikelihood_tmp = 0;
@@ -264,7 +280,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
         // TODO When we start to cache intermediate calculation
-
     }
 
     @Override
@@ -298,17 +313,27 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         }
     }
 
-    final private void flipBufferIndices(List<NodeOperation> nodeOperations) {
-        // Flip all the buffers to be written to first...
-        for (int nodeNum = tipCount; nodeNum < nodeCount; ++nodeNum){
-            this.partialBufferHelper.flipOffset(nodeNum);
-        }
-
-        // Now root = 0 (stored as a tip in postOrder), all other nodeNum += 1
-        for (int nodeNum = 1; nodeNum < nodeCount; ++nodeNum){
-            this.preOrderBufferHelper.flipOffset(nodeNum);
-        }
+    private final int getPostOrderPartialIndex(final int nodeNumber) {
+        return likelihoodDelegate.getPartialBufferIndex(nodeNumber);
     }
+
+    private final int getPreOrderPartialIndex(final int nodeNumber) {
+        return preOrderPartialOffset + nodeNumber;
+    }
+
+    // TODO Why are pre-order partials cached?  Unnecessary logic, as they are never re-used
+
+//    final private void flipBufferIndices(List<NodeOperation> nodeOperations) {
+//        // Flip all the buffers to be written to first...
+//        for (int nodeNum = tipCount; nodeNum < nodeCount; ++nodeNum){
+//            this.partialBufferHelper.flipOffset(nodeNum);
+//        }
+//
+//        // Now root = 0 (stored as a tip in postOrder), all other nodeNum += 1
+//        for (int nodeNum = 1; nodeNum < nodeCount; ++nodeNum){
+//            this.preOrderBufferHelper.flipOffset(nodeNum);
+//        }
+//    }
 
     // **************************************************************
     // INSTANCE VARIABLES
@@ -323,9 +348,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private final int stateCount;
     private final int categoryCount;
 
-    private final BufferIndexHelper partialBufferHelper;
-    private final BufferIndexHelper preOrderBufferHelper;
-    private final PatternList patternList;
+    private final BufferIndexHelper partialBufferHelper;  // TODO Not needed
+    private final BufferIndexHelper preOrderBufferHelper;  // TODO Not needed
+    private final PatternList patternList;  // TODO Not needed
 
     private static final boolean DEBUG = false;
 }

@@ -207,11 +207,13 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 beagle.getPartials(getPostOrderPartialIndex(nodeNum), Beagle.NONE, postOrderPartial);
                 beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
 
-                if(evolutionaryProcessDelegate instanceof HomogenousSubstitutionModelDelegate){
-                    evolutionaryProcessDelegate.getSubstitutionModel(0).getInfinitesimalMatrix(Q);  //store the Q matrix
-                }else{
-                    evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //assuming index = branchIndex = nodeIndex
-                }
+                // This class should _not_ have to know how its components behave
+//                if(evolutionaryProcessDelegate instanceof HomogenousSubstitutionModelDelegate){
+//                    evolutionaryProcessDelegate.getSubstitutionModel(0).getInfinitesimalMatrix(Q);  //store the Q matrix
+//                }else{
+//                    evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //assuming index = branchIndex = nodeIndex
+//                }
+                evolutionaryProcessDelegate.getSubstitutionModelForBranch(nodeNum).getInfinitesimalMatrix(Q);
 
                 double[] tmpNumerator = new double[patternCount * categoryCount];
 

@@ -199,6 +199,18 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
+    public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
+        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
+        int[] order = mapping.getOrder();
+
+        if (order.length > 1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return getSubstitutionModel(order[0]);
+    }
+
+    @Override
     public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount, boolean flipBuffers) {
 
         int[][] probabilityIndices = new int[eigenCount][updateCount];

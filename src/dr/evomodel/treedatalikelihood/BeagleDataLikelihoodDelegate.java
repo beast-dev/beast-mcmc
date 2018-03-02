@@ -927,6 +927,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return this.siteRateModel;
     }
 
+    public final int getPartialBufferIndex(int nodeNumber) {
+        return partialBufferHelper.getOffsetIndex(nodeNumber);
+    }
+
+    public final int getPartialBufferCount() {
+        return partialBufferHelper.getBufferCount();
+    }
+
     // **************************************************************
     // INSTANCE CITABLE
     // **************************************************************

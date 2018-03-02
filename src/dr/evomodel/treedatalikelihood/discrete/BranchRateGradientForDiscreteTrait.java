@@ -39,8 +39,6 @@ import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
-import java.util.List;
-
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -51,10 +49,13 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
     private final TreeTrait treeTraitProvider;
     private final Tree tree;
 
-    private final int nTraits;
-    private final int dim;
+//    private final int nTraits;
+//    private final int dim;
     private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
+
+    // TODO Refactor / remove code duplication with BranchRateGradient
+    // TODO Maybe use:  AbstractBranchRateGradient, DiscreteTraitBranchRateGradient, ContinuousTraitBranchRateGradien
 
     public BranchRateGradientForDiscreteTrait(String traitName,
                               TreeDataLikelihood treeDataLikelihood,
@@ -84,11 +85,11 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
         assert (treeTraitProvider != null);
 
-        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
+        int nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
-        dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+//        dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
     }
 
     @Override
@@ -131,55 +132,8 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
     private int getParameterIndexFromNode(NodeRef node) {
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
-    
-//
-//    private MultivariateFunction numeric1 = new MultivariateFunction() {
-//        @Override
-//        public double evaluate(double[] argument) {
-//
-//            for (int i = 0; i < argument.length; ++i) {
-//                rateParameter.setParameterValue(i, argument[i]);
-//            }
-//
-//            treeDataLikelihood.makeDirty();
-//            return treeDataLikelihood.getLogLikelihood();
-//        }
-//
-//        @Override
-//        public int getNumArguments() {
-//            return rateParameter.getDimension();
-//        }
-//
-//        @Override
-//        public double getLowerBound(int n) {
-//            return 0;
-//        }
-//
-//        @Override
-//        public double getUpperBound(int n) {
-//            return Double.POSITIVE_INFINITY;
-//        }
-//    };
 
-//    @Override
-//    public String getReport() {
-//
-//        double[] savedValues = rateParameter.getParameterValues();
-//        double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
-//        for (int i = 0; i < savedValues.length; ++i) {
-//            rateParameter.setParameterValue(i, savedValues[i]);
-//        }
-//
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
-//        sb.append("\n");
-//        sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
-//        sb.append("\n");
-//
-//        return sb.toString();
-//    }
-
-    private static final boolean DEBUG = true;
+//    private static final boolean DEBUG = true;
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override

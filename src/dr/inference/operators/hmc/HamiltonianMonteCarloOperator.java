@@ -29,6 +29,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
@@ -42,12 +43,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
     protected final int nSteps;
+    private final double randomStepCountFraction;
     final NormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
-                                         double stepSize, int nSteps, double drawVariance) {
+                                         double stepSize, int nSteps, double drawVariance,
+                                         double randomStepCountFraction) {
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
@@ -55,6 +58,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.gradientProvider = gradientProvider;
         this.stepSize = stepSize;
         this.nSteps = nSteps;
+        this.randomStepCountFraction = randomStepCountFraction;
         this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
         this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform, getDefaultInstabilityHandler()) :
@@ -105,6 +109,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     
     static class NumericInstabilityException extends Exception { }
 
+    private int getNumberOfSteps() {
+        int count = nSteps;
+        if (randomStepCountFraction > 0.0) {
+            double draw = count * (1.0 + randomStepCountFraction * (MathUtils.nextDouble() - 0.5));
+            count = Math.max(1, (int) draw);
+        }
+        return count;
+    }
+
     private double leapFrog() throws NumericInstabilityException {
 
         if (DEBUG) {
@@ -127,12 +140,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-        // TODO Randomize number of steps
-        for (int i = 0; i < nSteps; i++) { // Leap-frog
+        int nStepsThisLeap = getNumberOfSteps();
+
+        for (int i = 0; i < nStepsThisLeap; i++) { // Leap-frog
 
             leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
 
-            if (i < (nSteps - 1)) {
+            if (i < (nStepsThisLeap - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum,
                         gradientProvider.getGradientLogDensity(), stepSize);
             }

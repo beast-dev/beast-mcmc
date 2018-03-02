@@ -311,32 +311,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return likelihoodDelegate.getPartialBufferIndex(nodeNumber);
     }
 
-<<<<<<<HEAD
-    // Flip matrix indices
-        for(
-    int nodeNum = 0;
-    nodeNum<nodeCount; ++nodeNum)
-
-    {
-        NodeRef node = tree.getNode(nodeNum);
-        if (!tree.isRoot(node)) {
-            this.evolutionaryProcessDelegate.flipTransitionMatrices(new int[]{nodeNum}, 1);
-        }
-    }
-
-    // Now root = 0 (stored as a tip in postOrder), all other nodeNum += 1
-        for(
-    int nodeNum = 1;
-    nodeNum<nodeCount; ++nodeNum)
-
-    {
-        this.preOrderBufferHelper.flipOffset(nodeNum);
-    }
-=======
-
     private final int getPreOrderPartialIndex(final int nodeNumber) {
         return preOrderPartialOffset + nodeNumber;
->>>>>>>1 cc691db803853570753adc645ef943e55862157
     }
 
     // TODO Why are pre-order partials cached?  Unnecessary logic, as they are never re-used

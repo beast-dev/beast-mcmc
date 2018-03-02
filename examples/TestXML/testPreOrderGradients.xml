@@ -340,10 +340,10 @@
         <distribution>
             <logNormalDistributionModel meanInRealSpace="true">
                 <mean>
-                    <parameter id="diffusion.mean" value="0.1" lower="0.0"/>
+                    <parameter id="diffusion.mean" value="1E-3" lower="0.0"/>
                 </mean>
                 <stdev>
-                    <parameter id="diffusion.stdev" value="3.0" lower="0.0"/>
+                    <parameter id="diffusion.stdev" value="1.0" lower="0.0"/>
                 </stdev>
             </logNormalDistributionModel>
         </distribution>
@@ -371,11 +371,10 @@
             <parameter idref="diffusion.mean"/>
         </scaleOperator>
 
-<!--
         <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="siteModel.alpha"/>
         </scaleOperator>
- -->
+
 
         <!--
              <scaleOperator weight="1" scaleFactor="0.75">
@@ -420,6 +419,7 @@
         <log logEvery="10" fileName="testPreOrderGradients.log">
             <parameter idref="strict.rates"/>
             <parameter idref="diffusion.mean"/>
+            <parameter idref="siteModel.alpha"/>
         </log>
     </mcmc>
 

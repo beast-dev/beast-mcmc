@@ -41,6 +41,8 @@ import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
+import static dr.math.MachineAccuracy.SQRT_EPSILON;
+
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -165,12 +167,24 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         }
     };
 
+    private boolean valuesAreSufficientlyLarge(double[] vector) {
+        for (double x : vector) {
+            if (x < SQRT_EPSILON * 1.2) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
     public String getReport() {
         double[] savedValues = rateParameter.getParameterValues();
-        double[] testGradient;
+        double[] testGradient = null;
 
-        if (DEBUG) {
+        boolean largeEnoughValues = valuesAreSufficientlyLarge(rateParameter.getParameterValues());
+
+        if (DEBUG && largeEnoughValues) {
             testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
         }
 
@@ -183,15 +197,17 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
         sb.append("\n");
         
-        if (DEBUG) {
+        if (testGradient != null && largeEnoughValues) {
             sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
-            sb.append("\n");
+        } else {
+            sb.append("mumeric: too close to 0");
         }
+        sb.append("\n");
 
         return sb.toString();
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     @Override
     public LogColumn[] getColumns() {

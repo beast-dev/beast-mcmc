@@ -184,6 +184,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         double branchLength;
 
         // TODO is this not the same for all nodes?
+//        beagle.getSiteLogLikelihoods(clikelihood);
         for (int s = 0; s < categoryCount; s++) {
             for (int m = 0; m < patternCount; m++) {
                 double clikelihoodTmp = 0;
@@ -206,7 +207,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 beagle.getPartials(getPostOrderPartialIndex(nodeNum), Beagle.NONE, postOrderPartial);
                 beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
 
-                evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //store the Q matrix
+                if(evolutionaryProcessDelegate instanceof HomogenousSubstitutionModelDelegate){
+                    evolutionaryProcessDelegate.getSubstitutionModel(0).getInfinitesimalMatrix(Q);  //store the Q matrix
+                }else{
+                    evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //assuming index = branchIndex = nodeIndex
+                }
 
                 double[] tmpNumerator = new double[patternCount * categoryCount];
 

@@ -165,10 +165,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
             if (usePreOrder){
                 this.usePreOrder = true;
-                preOrderpartialBufferHelper = new BufferIndexHelper(nodeCount, 1);
-                numPartials += preOrderpartialBufferHelper.getBufferCount();
-            } else{
-                preOrderpartialBufferHelper = null;
+                numPartials += nodeCount;
             }
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
@@ -973,7 +970,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private boolean flip = true;
     private final BufferIndexHelper partialBufferHelper;
     private final BufferIndexHelper scaleBufferHelper;
-    private final BufferIndexHelper preOrderpartialBufferHelper;
 
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;

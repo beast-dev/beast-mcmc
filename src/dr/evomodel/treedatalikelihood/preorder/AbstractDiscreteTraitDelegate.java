@@ -27,7 +27,6 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import beagle.Beagle;
 import beagle.InstanceDetails;
-import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.*;
@@ -66,25 +65,14 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
-        internalNodeCount = nodeCount - tipCount;
 
         patternCount = likelihoodDelegate.getPatternList().getPatternCount();
         stateCount = likelihoodDelegate.getPatternList().getDataType().getStateCount();
         categoryCount = siteRateModel.getCategoryCount();
 
-        // TODO partialBufferHelper is already instantiated in BeagleDataLikelihoodDelegate
-        // TODO Should probably remove all buffering here
+        // put preOrder partials right after postOrder partials
+        preOrderPartialOffset = likelihoodDelegate.getPartialBufferCount();
 
-        // one partials buffer for each tip and two for each internal node (for store restore)
-        partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
-        // mirror the preOrderpartialBufferHelper in BeagleDataLikelihoodDelegate
-        // every node gets two partisl (store and restore) except for the root node
-        preOrderBufferHelper = new BufferIndexHelper(nodeCount, 1);
-        // put preOrder partials in the same order as defined in BufferIndexHelper right after postOrder partials
-        preOrderPartialOffset = partialBufferHelper.getBufferCount();
-        // TODO likelihoodDelegate.getPartialBufferCount();
-
-        patternList = likelihoodDelegate.getPatternList();
     }
 
     @Override
@@ -110,7 +98,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 2] = Beagle.NONE;
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 3] = getPreOrderPartialIndex(operations[i * 5 + 1]);
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 4] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 2]);
-            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = partialBufferHelper.getOffsetIndex(operations[i * 5 + 3]);
+            beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = getPostOrderPartialIndex(operations[i * 5 + 3]);
             beagleoperations[i * Beagle.OPERATION_TUPLE_SIZE + 6] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 4]);
         }
 
@@ -187,40 +175,40 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         // TODO Should get from BeagleDataLikelihoodDelegate (already computed)
         double[] clikelihood = new double[categoryCount * patternCount];  // likelihood for each category doesn't come in free.
 
-        beagle.getPartials(partialBufferHelper.getOffsetIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostOrderPartials);
+        beagle.getPartials(getPostOrderPartialIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostOrderPartials);
 
-        double[] grand_denominator = new double[patternCount];
-        double[] grand_numerator = new double[patternCount];
+        double[] grandDenominator = new double[patternCount];
+        double[] grandNumerator = new double[patternCount];
 
         double[] gradient = new double[tree.getNodeCount() - 1];
-        double branch_length;
+        double branchLength;
+
+        // TODO is this not the same for all nodes?
+        for (int s = 0; s < categoryCount; s++) {
+            for (int m = 0; m < patternCount; m++) {
+                double clikelihoodTmp = 0;
+                for (int k = 0; k < stateCount; k++) {
+                    clikelihoodTmp += frequencies[k] * rootPostOrderPartials[s * patternCount * stateCount + m * stateCount + k];
+                }
+                clikelihood[s * patternCount + m] = clikelihoodTmp;
+            }
+        }
 
         int v = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum) {
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 for (int m = 0; m < patternCount; ++m) {
-                    grand_denominator[m] = 0;
-                    grand_numerator[m] = 0;
+                    grandDenominator[m] = 0;
+                    grandNumerator[m] = 0;
                 }
-                branch_length = tree.getBranchLength(tree.getNode(nodeNum));
+                branchLength = tree.getBranchLength(tree.getNode(nodeNum));
 
-                beagle.getPartials(partialBufferHelper.getOffsetIndex(nodeNum), Beagle.NONE, postOrderPartial);
+                beagle.getPartials(getPostOrderPartialIndex(nodeNum), Beagle.NONE, postOrderPartial);
                 beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
 
                 evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //store the Q matrix
 
                 double[] tmpNumerator = new double[patternCount * categoryCount];
-
-                // TODO is this not the same for all nodes?
-                for (int s = 0; s < categoryCount; s++) {
-                    for (int m = 0; m < patternCount; m++) {
-                        double clikelihood_tmp = 0;
-                        for (int k = 0; k < stateCount; k++) {
-                            clikelihood_tmp += frequencies[k] * rootPostOrderPartials[s * patternCount * stateCount + m * stateCount + k];
-                        }
-                        clikelihood[s * patternCount + m] = clikelihood_tmp;
-                    }
-                }
 
                 //now calculate weights
                 double denominator = 0;
@@ -246,19 +234,19 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                             System.err.println("bad bad");
                         }
                         tmpNumerator[s * patternCount + m] = ws * rs * numerator / denominator * clikelihood[s * patternCount + m];
-                        grand_numerator[m] += tmpNumerator[s * patternCount + m];
-                        grand_denominator[m] += ws * clikelihood[s * patternCount + m];
+                        grandNumerator[m] += tmpNumerator[s * patternCount + m];
+                        grandDenominator[m] += ws * clikelihood[s * patternCount + m];
                     }
                 }
 
                 for (int m = 0; m < patternCount; m++) {
-                    gradient[v] += grand_numerator[m] / grand_denominator[m] * patternList.getPatternWeight(m); // this assumes that root node is always at the end
+                    gradient[v] += grandNumerator[m] / grandDenominator[m] * likelihoodDelegate.getPatternList().getPatternWeight(m); // this assumes that root node is always at the end
 
                     if (Double.isNaN(gradient[v])) {
                         System.err.println("bad");
                     }
                 }
-                gradient[v] *= branch_length;
+                gradient[v] *= branchLength;
                 v++;
             }
         }
@@ -293,18 +281,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             operations[k++] = tmpNodeOperation.getRightChild();
             operations[k++] = tmpNodeOperation.getRightChild();
         }
-        flipBufferIndices(nodeOperations);
         return nodeOperations.size();
-    }
-
-    //This function defines the mapping from nodeNum to its preorder partial index
-    final private int getPreOrderPartialIndex(final int i) {
-        NodeRef nodeRef = tree.getNode(i);
-        if (tree.isRoot(nodeRef)) {
-            return preOrderPartialOffset + 0;
-        } else {
-            return preOrderPartialOffset + preOrderBufferHelper.getOffsetIndex(i + 1);
-        }
     }
 
     private final int getPostOrderPartialIndex(final int nodeNumber) {
@@ -315,19 +292,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return preOrderPartialOffset + nodeNumber;
     }
 
-    // TODO Why are pre-order partials cached?  Unnecessary logic, as they are never re-used
-
-//    final private void flipBufferIndices(List<NodeOperation> nodeOperations) {
-//        // Flip all the buffers to be written to first...
-//        for (int nodeNum = tipCount; nodeNum < nodeCount; ++nodeNum){
-//            this.partialBufferHelper.flipOffset(nodeNum);
-//        }
-//
-//        // Now root = 0 (stored as a tip in postOrder), all other nodeNum += 1
-//        for (int nodeNum = 1; nodeNum < nodeCount; ++nodeNum){
-//            this.preOrderBufferHelper.flipOffset(nodeNum);
-//        }
-//    }
 
     // **************************************************************
     // INSTANCE VARIABLES
@@ -335,16 +299,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
     private final int nodeCount;
     private final int tipCount;
-    private final int internalNodeCount;
-
 
     private final int patternCount;
     private final int stateCount;
     private final int categoryCount;
-
-    private final BufferIndexHelper partialBufferHelper;  // TODO Not needed
-    private final BufferIndexHelper preOrderBufferHelper;  // TODO Not needed
-    private final PatternList patternList;  // TODO Not needed
 
     private static final boolean DEBUG = false;
 }

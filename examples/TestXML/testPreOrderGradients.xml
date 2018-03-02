@@ -340,7 +340,7 @@
         <distribution>
             <logNormalDistributionModel meanInRealSpace="true">
                 <mean>
-                    <parameter id="diffusion.mean" value="1.0" lower="0.0"/>
+                    <parameter id="diffusion.mean" value="0.1" lower="0.0"/>
                 </mean>
                 <stdev>
                     <parameter id="diffusion.stdev" value="3.0" lower="0.0"/>
@@ -352,7 +352,7 @@
     <!--Reference: testBranchGradientFull.xml in Alex Fisher's hmc_random_walk/xml/ folder-->
     <operators id="operators">
 
-        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.1" mode="vanilla"
+        <hamiltonianMonteCarloOperator weight="2" nSteps="10" stepSize="1E-2" mode="vanilla"
                                        drawVariance="1.0" autoOptimize="true">
             <jointGradient>
                 <gradient>
@@ -368,8 +368,14 @@
         </hamiltonianMonteCarloOperator>
 
         <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="diffusion.mean"/>
+        </scaleOperator>
+
+<!--
+        <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="siteModel.alpha"/>
         </scaleOperator>
+ -->
 
         <!--
              <scaleOperator weight="1" scaleFactor="0.75">
@@ -382,6 +388,12 @@
         <posterior id="posterior">
             <prior id="prior">
                 <distributionLikelihood idref="ratesPrior"/>
+                <exponentialPrior offset="0" mean="1">
+                	<parameter idref="siteModel.alpha"/>
+                </exponentialPrior>
+                <exponentialPrior offset="0" mean="1">
+                	<parameter idref="diffusion.mean"/>
+                </exponentialPrior>
             </prior>
             <!--0105-->
             <likelihood id="likelihood">
@@ -394,7 +406,7 @@
         <log logEvery="10">
             <posterior idref="posterior"/>
             <branchRateGradient idref="branchRateGradientDiscreteLong"/>
-<!-- 
+<!--
                         <traitLogger traitName="derivative.Sequence" nodes="all">
                             <treeDataLikelihood idref="treeLikelihoodLong"/>
                             <treeModel idref="treeModelLong"/>
@@ -407,8 +419,11 @@
         </logTree>
         <log logEvery="10" fileName="testPreOrderGradients.log">
             <parameter idref="strict.rates"/>
+            <parameter idref="diffusion.mean"/>
         </log>
     </mcmc>
+
+    <traceAnalysis fileName="testPreOrderGradients.log"/>
 
 </beast>
 

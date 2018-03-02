@@ -32,6 +32,8 @@ import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -43,7 +45,7 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterProvider, Reportable {
+public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterProvider, Reportable, Loggable {
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
@@ -166,7 +168,12 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
     @Override
     public String getReport() {
         double[] savedValues = rateParameter.getParameterValues();
-        double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
+        double[] testGradient;
+
+        if (DEBUG) {
+            testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
+        }
+
 
         for (int i = 0; i < savedValues.length; ++i) {
             rateParameter.setParameterValue(i, savedValues[i]);
@@ -175,9 +182,28 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         StringBuilder sb = new StringBuilder();
         sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
         sb.append("\n");
-        sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
-        sb.append("\n");
+        
+        if (DEBUG) {
+            sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+            sb.append("\n");
+        }
 
         return sb.toString();
+    }
+
+    private static final boolean DEBUG = false;
+
+    @Override
+    public LogColumn[] getColumns() {
+
+        LogColumn[] columns = new LogColumn[1];
+        columns[0] = new LogColumn.Default("gradient report", new Object() {
+            @Override
+            public String toString() {
+                return "\n" + getReport();
+            }
+        });
+
+        return columns;
     }
 }

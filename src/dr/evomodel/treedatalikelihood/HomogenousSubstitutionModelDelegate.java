@@ -30,13 +30,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.util.Timer;
 
 import java.io.Serializable;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
 
 /**
  * A simple substitution model delegate with the same substitution model over the whole tree
@@ -52,8 +47,6 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
-    private final BranchModel branchModel;
-    private final Tree tree;
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -77,10 +70,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
-
-        this.branchModel = branchModel;
-        this.tree = tree;
-
+        
         nodeCount = tree.getNodeCount();
 
         // two eigen buffers for each decomposition for store and restore.
@@ -148,14 +138,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     @Override
     public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
-        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
-        int[] order = mapping.getOrder();
-
-        if (order.length > 1) {
-            throw new RuntimeException("Not yet implemented");
-        }
-
-        return getSubstitutionModel(order[0]);
+        return substitutionModel;
     }
 
     @Override

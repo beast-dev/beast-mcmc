@@ -63,9 +63,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         evolutionaryProcessDelegate = this.likelihoodDelegate.getEvolutionaryProcessDelegate();
         siteRateModel = this.likelihoodDelegate.getSiteRateModel();
 
-        nodeCount = tree.getNodeCount();
-        tipCount = tree.getExternalNodeCount();
-
         patternCount = likelihoodDelegate.getPatternList().getPatternCount();
         stateCount = likelihoodDelegate.getPatternList().getDataType().getStateCount();
         categoryCount = siteRateModel.getCategoryCount();
@@ -117,13 +114,14 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         if (DEBUG) {
             System.err.println("Simulate root node " + rootNumber);
         }
-        int[] rootPreIndices = {getPreOrderPartialIndex(rootNumber)};
-        int[] rootFreqIndices = {0}; /// as in BeagleDataLikelihoodDelegate.calculateLikelihood()
-        InstanceDetails instanceDetails = beagle.getDetails();
+        final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+        double[] rootPreOrderPartial = new double[stateCount * patternCount * categoryCount];
+        for (int i = 0; i < patternCount * categoryCount; ++i) {
+            System.arraycopy(frequencies, 0, rootPreOrderPartial, i * stateCount, stateCount);
+        }
+//        InstanceDetails instanceDetails = beagle.getDetails();
 
-        // TODO Call beagle.setPartials()
-
-        beagle.setRootPrePartials(rootPreIndices, rootFreqIndices, 1);
+        beagle.setPartials(getPreOrderPartialIndex(rootNumber), rootPreOrderPartial); // Call beagle.setPartials()
         //TODO: find the right error message for control
     }
 
@@ -183,7 +181,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         double[] gradient = new double[tree.getNodeCount() - 1];
         double branchLength;
 
-        // TODO is this not the same for all nodes?
 //        beagle.getSiteLogLikelihoods(clikelihood);
         for (int s = 0; s < categoryCount; s++) {
             for (int m = 0; m < patternCount; m++) {
@@ -207,12 +204,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 beagle.getPartials(getPostOrderPartialIndex(nodeNum), Beagle.NONE, postOrderPartial);
                 beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
 
-                // This class should _not_ have to know how its components behave
-//                if(evolutionaryProcessDelegate instanceof HomogenousSubstitutionModelDelegate){
-//                    evolutionaryProcessDelegate.getSubstitutionModel(0).getInfinitesimalMatrix(Q);  //store the Q matrix
-//                }else{
-//                    evolutionaryProcessDelegate.getSubstitutionModel(nodeNum).getInfinitesimalMatrix(Q);  //assuming index = branchIndex = nodeIndex
-//                }
                 evolutionaryProcessDelegate.getSubstitutionModelForBranch(nodeNum).getInfinitesimalMatrix(Q);
 
                 double[] tmpNumerator = new double[patternCount * categoryCount];
@@ -257,7 +248,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 v++;
             }
         }
-        // TODO See TipGradientViaFullConditionalDelegate.getTrait() as an example of using post- and pre-order partials together
+        // See TipGradientViaFullConditionalDelegate.getTrait() as an example of using post- and pre-order partials together
         return gradient;
     }
 
@@ -303,9 +294,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
-
-    private final int nodeCount;
-    private final int tipCount;
 
     private final int patternCount;
     private final int stateCount;

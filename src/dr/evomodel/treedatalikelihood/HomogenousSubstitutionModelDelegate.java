@@ -52,6 +52,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
+    private final BranchModel branchModel;
+    private final Tree tree;
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -76,6 +78,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
 
+        this.branchModel = branchModel;
+        this.tree = tree;
 
         nodeCount = tree.getNodeCount();
 
@@ -140,6 +144,18 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                 ed.getEigenVectors(),
                 ed.getInverseEigenVectors(),
                 ed.getEigenValues());
+    }
+
+    @Override
+    public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
+        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
+        int[] order = mapping.getOrder();
+
+        if (order.length > 1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return getSubstitutionModel(order[0]);
     }
 
     @Override

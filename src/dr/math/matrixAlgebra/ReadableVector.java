@@ -123,11 +123,6 @@ public interface ReadableVector {
             return Math.sqrt(innerProduct(vector, vector));
         }
 
-        public static ReadableVector getScaleProduct(ReadableVector vector, double scalar) {
-
-            return (new Scale(scalar, vector));
-        }
-
         public static ReadableVector getMatrixVectorProduct(double[][] matrix, ReadableVector vector) {
 
             assert (vector.getDim() == matrix[1].length);

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
-import static dr.math.matrixAlgebra.ReadableVector.Utils.getScaleProduct;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.getNorm;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.getMatrixVectorProduct;
 
@@ -211,10 +210,11 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         for (int i = 0; i < numIterations; ++i) {
 
-            ReadableVector v = getScaleProduct(y, 1 / getNorm(y));
+            ReadableVector v = new ReadableVector.Scale(1 / getNorm(y), y);
             y = getMatrixVectorProduct(matrix, v);
             maxEigenvalue = innerProduct(v, y);
-            diff = new ReadableVector.Sum(y, getScaleProduct(v, -maxEigenvalue));
+            diff = new ReadableVector.Sum(y,
+                    new ReadableVector.Scale(-maxEigenvalue, v));
 
             if (ReadableVector.Utils.getNorm(diff) < err) {
                 break;

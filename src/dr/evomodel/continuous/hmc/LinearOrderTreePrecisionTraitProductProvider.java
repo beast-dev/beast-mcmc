@@ -15,6 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
+import static dr.math.matrixAlgebra.ReadableVector.Utils.getScaleProduct;
+import static dr.math.matrixAlgebra.ReadableVector.Utils.getNorm;
+import static dr.math.matrixAlgebra.ReadableVector.Utils.getMatrixVectorProduct;
+
 /**
  * @author Marc A. Suchard
  */
@@ -182,11 +187,43 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         if (roughTimeGuess > 0.0) { // TODO Super bad, some delegate for re-use with other Providers
             return roughTimeGuess;
         }
-
-        return getTimeScaleFromPrecisionMatrix();
+        return getMaxEigenvalueAsTravelTime();
     }
     
-    private double getTimeScaleFromPrecisionMatrix() {
+    private double getMaxEigenvalueAsTravelTime() {
+
+        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01)
+                *  maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01);
+    }
+
+    private double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err) {
+
+        double[] y0 = new double[matrix.length];
+        ReadableVector diff;
+        double maxEigenvalue = 10.0;
+
+        for (int i = 0; i < matrix.length; ++i) {
+
+            y0[i] = MathUtils.nextDouble();
+        }
+
+        ReadableVector y = new WrappedVector.Raw(y0);
+
+        for (int i = 0; i < numIterations; ++i) {
+
+            ReadableVector v = getScaleProduct(y, 1 / getNorm(y));
+            y = getMatrixVectorProduct(matrix, v);
+            maxEigenvalue = innerProduct(v, y);
+            diff = new ReadableVector.Sum(y, getScaleProduct(v, -maxEigenvalue));
+
+            if (ReadableVector.Utils.getNorm(diff) < err) {
+                break;
+            }
+        }
+        return maxEigenvalue;
+    }
+
+    private double getRoughLowerBoundforTravelTime() {
 
         ReadableVector savedDataParameter = new WrappedVector.Raw(dataParameter.getParameterValues());
 

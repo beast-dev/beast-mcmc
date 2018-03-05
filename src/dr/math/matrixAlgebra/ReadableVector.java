@@ -117,5 +117,30 @@ public interface ReadableVector {
 
             return sum;
         }
+
+        public static double getNorm(ReadableVector vector) {
+
+            return Math.sqrt(innerProduct(vector, vector));
+        }
+
+        public static ReadableVector getScaleProduct(ReadableVector vector, double scalar) {
+
+            return (new Scale(scalar, vector));
+        }
+
+        public static ReadableVector getMatrixVectorProduct(double[][] matrix, ReadableVector vector) {
+
+            assert (vector.getDim() == matrix[1].length);
+            int dim = matrix.length;
+            double[] result = new double[dim];
+            for (int row = 0; row < dim; ++row) {
+                double sum = 0.0;
+                for (int col = 0; col < matrix[row].length; ++col) {
+                    sum += matrix[row][col] * vector.get(col);
+                }
+                result[row] = sum;
+            }
+            return new WrappedVector.Raw(result);
+        }
     }
 }

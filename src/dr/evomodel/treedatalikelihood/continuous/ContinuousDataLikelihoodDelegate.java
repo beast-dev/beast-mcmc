@@ -275,7 +275,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public int getPartialBufferCount() { return partialBufferHelper.getBufferCount(); }
 
-    private double[][] getTreeVariance() {
+    public double[][] getTreeVariance() {
 
         final double normalization = rateTransformation.getNormalization();
         final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
@@ -284,12 +284,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 normalization, priorSampleSize);
     }
 
-    private double[][] getTreePrecision() {
+    public double[][] getTreePrecision() {
         Matrix precision = new Matrix(getTreeVariance()).inverse();
         return precision.toComponents();
     }
 
-    private double[][] getTraitVariance() {
+    public double[][] getTraitVariance() {
         Matrix variance = new Matrix(getDiffusionModel().getPrecisionmatrix()).inverse();
         return variance.toComponents();
     }

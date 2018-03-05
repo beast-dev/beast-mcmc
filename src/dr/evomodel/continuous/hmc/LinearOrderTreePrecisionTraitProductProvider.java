@@ -187,7 +187,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         if (roughTimeGuess > 0.0) { // TODO Super bad, some delegate for re-use with other Providers
             return roughTimeGuess;
         }
-        return getMaxEigenvalueAsTravelTime();
+        return getRoughLowerBoundforTravelTime();
     }
     
     private double getMaxEigenvalueAsTravelTime() {

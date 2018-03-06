@@ -1,6 +1,5 @@
 <?xml version="1.0" standalone="yes"?>
 <beast>
-
 	<taxa id="taxa">
 		<taxon id="A">
 			<attr name="X">10 NA</attr>
@@ -9,7 +8,7 @@
 			<attr name="X">2 3</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">3 4</attr>
+			<attr name="X">3 5</attr>
 		</taxon>
 	</taxa>
 
@@ -59,7 +58,7 @@
 		<repeatedMeasuresModel idref="repeatedMeasures"/>
      	<conjugateRootPrior>
             <meanParameter>
-                <parameter value="-3.0 -1.0"/>
+                <parameter id="mean" value="0.0 0.0"/>
             </meanParameter>
             <priorSampleSize>
                 <parameter value="10.0"/>
@@ -67,10 +66,79 @@
         </conjugateRootPrior>
 	</traitDataLikelihood>
 
+	<multivariateNormalPrior id="meanPrior">
+		<meanParameter>
+			<parameter value="0.0 0.0"/>
+		</meanParameter>
+		<precisionParameter>
+			<matrixParameter>
+				<parameter value="0.001 0.000"/>
+				<parameter value="0.000 0.001"/>
+			</matrixParameter>
+		</precisionParameter>
+		<data>
+			<parameter idref="mean"/>
+		</data>
+	</multivariateNormalPrior>
+
+	<multivariateWishartPrior id="precisionPrior" df="2">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="1.0 0.0"/>
+				<parameter value="0.0 1.0"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<parameter idref="precisionMatrix"/>
+		</data>
+	</multivariateWishartPrior>
+
+    <operators id="operators">
+		<!--<scaleOperator scaleFactor="0.75" weight="1" autoOptimize="true">-->
+			<!--<parameter idref="precisionMatrix"/>-->
+		<!--</scaleOperator>-->
+		<!--<scaleOperator scaleFactor="0.75" weight="1" autoOptimize="true">-->
+			<!--<parameter idref="mean"/>-->
+		<!--</scaleOperator>-->
+		<!--<scaleOperator scaleFactor="0.75" weight="1" autoOptimize="true">-->
+			<!--<maskedParameter>-->
+				<!--<parameter idref="prec.col1"/>-->
+				<!--<mask>-->
+					<!--<parameter value="1 0"/>-->
+				<!--</mask>-->
+			<!--</maskedParameter>-->
+		<!--</scaleOperator>-->
+		<randomWalkOperator windowSize=".5" weight="1">
+			<parameter idref="mean"/>
+		</randomWalkOperator>
+	</operators>
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+		<posterior id="posterior">
+			<prior id="prior">
+				<multivariateNormalPrior idref="meanPrior"/>
+				<multivariateWishartPrior idref="precisionPrior"/>
+			</prior>
+			<likelihood id="likelihood">
+				<traitDataLikelihood idref="driftLikelihood"/>
+			</likelihood>
+		</posterior>
+		<operators idref="operators"/>
+		<log id="screenLog" logEvery="10000">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior"/>
+			</column>
+			<column label="Mean" dp="4" width="12">
+				<parameter idref="mean"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+				<parameter idref="precisionMatrix"/>
+			</column>
+		</log>
+	</mcmc>
+
 	<report>
 		With likelihood =
 		<traitDataLikelihood idref="driftLikelihood"/>
 	</report>
-
 </beast>
 

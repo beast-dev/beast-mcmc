@@ -1,13 +1,20 @@
 package dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedMeasures;
 
+import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
 
 import java.util.List;
+
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
 /**
  * @author Marc A. Suchard
@@ -17,6 +24,8 @@ public interface GammaGibbsProvider {
     SufficientStatistics getSufficientStatistics(int dim);
 
     Parameter getPrecisionParameter();
+
+    void drawValues();
 
     class SufficientStatistics {
         final public int observationCount;
@@ -85,5 +94,50 @@ public interface GammaGibbsProvider {
         public Parameter getPrecisionParameter() {
             return precisionParameter;
         }
+
+        @Override
+        public void drawValues() {
+            // Do nothing
+        }
+    }
+
+    class RepeatedMeasuresGibbsProvider implements GammaGibbsProvider {
+
+        private final RepeatedMeasuresTraitLikelihood traitLikelihood;
+        private final TreeDataLikelihood treeLikelihood;
+        private final CompoundParameter traitParameter;
+        private final TreeTrait tipTrait;
+
+        private double tipValues[];
+
+        public RepeatedMeasuresGibbsProvider(RepeatedMeasuresTraitLikelihood traitLikelihood,
+                                             TreeDataLikelihood treeLikelihood,
+                                             String traitName) {
+            this.traitLikelihood = traitLikelihood;
+            this.treeLikelihood = treeLikelihood;
+            this.traitParameter = traitLikelihood.getParameter();
+            this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
+        }
+
+        @Override
+        public SufficientStatistics getSufficientStatistics(int dim) {
+            return null;
+        }
+
+        @Override
+        public Parameter getPrecisionParameter() {
+            return null;
+        }
+
+        @Override
+        public void drawValues() {
+            tipValues = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
+
+            if (DEBUG) {
+                System.err.println("tipValues: " + new WrappedVector.Raw(tipValues));
+            }
+        }
+
+        private static final boolean DEBUG = true;
     }
 }

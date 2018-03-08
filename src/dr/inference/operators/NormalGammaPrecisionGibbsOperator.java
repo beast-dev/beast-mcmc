@@ -92,6 +92,8 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                 prior.mean(),
                 prior.variance());
 
+        gammaGibbsProvider.drawValues();
+
         for (int dim = 0; dim < precisionParameter.getDimension(); ++dim) {
 
             final GammaGibbsProvider.SufficientStatistics statistics = gammaGibbsProvider.getSufficientStatistics(dim);

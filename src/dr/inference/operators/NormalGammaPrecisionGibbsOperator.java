@@ -30,13 +30,11 @@ import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.Parameter;
+import dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.GammaDistribution;
-import dr.util.Attribute;
 import dr.xml.*;
-
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -51,30 +49,11 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     public NormalGammaPrecisionGibbsOperator(DistributionLikelihood inLikelihood, Distribution prior,
                                              double weight) {
 
-        if (!(prior instanceof GammaDistribution || prior instanceof GammaDistributionModel))
-            throw new RuntimeException("Precision prior must be Gamma");
-
-        Distribution likelihood = inLikelihood.getDistribution();
-        this.dataList = inLikelihood.getDataList();
-
-        if (likelihood instanceof NormalDistributionModel) {
-            this.precisionParameter = (Parameter) ((NormalDistributionModel) likelihood).getPrecision();
-            this.meanParameter = (Parameter) ((NormalDistributionModel) likelihood).getMean();
-        } else if (likelihood instanceof LogNormalDistributionModel) {
-            if (((LogNormalDistributionModel) likelihood).getParameterization() == LogNormalDistributionModel.Parameterization.MU_PRECISION) {
-                this.meanParameter = ((LogNormalDistributionModel) likelihood).getMuParameter();
-            } else {
-                throw new RuntimeException("Must characterize likelihood in terms of mu and precision parameters");
-            }
-            this.precisionParameter = ((LogNormalDistributionModel) likelihood).getPrecisionParameter();
-            isLog = true;
-        } else
-            throw new RuntimeException("Likelihood must be Normal or log Normal");
-
-        if (precisionParameter == null)
-            throw new RuntimeException("Must characterize likelihood in terms of a precision parameter");
+        this.gammaGibbsProvider = new GammaGibbsProvider.Default(inLikelihood);
+        this.precisionParameter = gammaGibbsProvider.getPrecisionParameter();
 
         this.prior = prior;
+
         setWeight(weight);
     }
 
@@ -90,8 +69,8 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     }
 
     static class GammaParametrization {
-        private double rate;
-        private double shape;
+        private final double rate;
+        private final double shape;
 
         GammaParametrization(double mean, double variance) {
             if (mean == 0) {
@@ -107,38 +86,25 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         double getShape() { return shape; }
     }
 
-    /**
-     * Called by operate(), does the actual operation.
-     *
-     * @return the hastings ratio
-     */
     public double doOperation() {
 
         GammaParametrization priorParametrization = new GammaParametrization(
                 prior.mean(),
                 prior.variance());
 
-        // Calculate weighted sum-of-squares
-        final double mu = meanParameter.getParameterValue(0);
-        double SSE = 0;
-        int n = 0;
-        for (Attribute<double[]> statistic : dataList) {
-            for (double x : statistic.getAttributeValue()) {
-                if (isLog) {
-                    final double logX = Math.log(x);
-                    SSE += (logX - mu) * (logX - mu);
-                } else {
-                    SSE += (x - mu) * (x - mu);
-                }
-                n++;
-            }
+        gammaGibbsProvider.drawValues();
+
+        for (int dim = 0; dim < precisionParameter.getDimension(); ++dim) {
+
+            final GammaGibbsProvider.SufficientStatistics statistics = gammaGibbsProvider.getSufficientStatistics(dim);
+
+            final double shape = priorParametrization.getShape() + pathParameter * statistics.observationCount / 2;
+            final double rate = priorParametrization.getRate() + pathParameter * statistics.sumOfSquaredErrors / 2;
+
+            final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
+
+            precisionParameter.setParameterValue(dim, draw);
         }
-
-        final double shape = priorParametrization.getShape() + pathParameter * n / 2.0;
-        final double rate = priorParametrization.getRate() + pathParameter * 0.5 * SSE;
-
-        final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
-        precisionParameter.setParameterValue(0, draw);
 
         return 0;
     }
@@ -217,11 +183,8 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     };
 
+    private final GammaGibbsProvider gammaGibbsProvider;
     private final Distribution prior;
-    private boolean isLog = false;
-
-    private final List<Attribute<double[]>> dataList;
-    private final Parameter meanParameter;
     private final Parameter precisionParameter;
 
     private double pathParameter = 1.0;

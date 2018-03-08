@@ -26,6 +26,8 @@
 package dr.math.matrixAlgebra;
 
 
+import dr.inference.model.Parameter;
+
 /**
  * @author Marc A. Suchard
  */
@@ -38,8 +40,8 @@ public interface ReadableVector {
 
     class Sum implements ReadableVector {
 
-        private ReadableVector lhs;
-        private ReadableVector rhs;
+        private final ReadableVector lhs;
+        private final ReadableVector rhs;
 
         public Sum(final ReadableVector lhs, final ReadableVector rhs) {
             this.lhs = lhs;
@@ -55,5 +57,71 @@ public interface ReadableVector {
         public int getDim() {
             return Math.min(lhs.getDim(), rhs.getDim());
         }
+    }
+
+    class Quotient implements ReadableVector {
+
+        private final ReadableVector numerator;
+        private final ReadableVector denominator;
+
+        public Quotient(final ReadableVector numerator, final ReadableVector denominator) {
+            this.numerator = numerator;
+            this.denominator = denominator;
+        }
+
+        @Override
+        public double get(int i) {
+            return numerator.get(i) / denominator.get(i);
+        }
+
+        @Override
+        public int getDim() {
+            return Math.min(numerator.getDim(), denominator.getDim());
+        }
+    }
+
+    class Scale implements ReadableVector {
+
+        private final ReadableVector vector;
+        private final double scalar;
+
+        public Scale(final double scalar, final ReadableVector vector) {
+            this.vector = vector;
+            this.scalar = scalar;
+        }
+
+        @Override
+        public double get(int i) { return scalar * vector.get(i); }
+
+        @Override
+        public int getDim() { return vector.getDim(); }
+    }
+
+    class Utils {
+        
+        public static void setParameter(ReadableVector position, Parameter parameter) {
+            for (int j = 0, dim = position.getDim(); j < dim; ++j) {
+                parameter.setParameterValueQuietly(j, position.get(j));
+            }
+            parameter.fireParameterChangedEvent();
+        }
+
+        public static double innerProduct(ReadableVector lhs, ReadableVector rhs) {
+
+            assert (lhs.getDim() == rhs.getDim());
+
+            double sum = 0;
+            for (int i = 0, dim = lhs.getDim(); i < dim; ++i) {
+                sum += lhs.get(i) * rhs.get(i);
+            }
+
+            return sum;
+        }
+
+        public static double norm(ReadableVector vector) {
+
+            return Math.sqrt(innerProduct(vector, vector));
+        }
+
     }
 }

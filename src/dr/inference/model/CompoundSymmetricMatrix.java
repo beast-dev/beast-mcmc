@@ -30,12 +30,11 @@ package dr.inference.model;
  */
 public class CompoundSymmetricMatrix extends MatrixParameter {
 
-    private Parameter diagonalParameter;
-    private Parameter offDiagonalParameter;
+    private final Parameter diagonalParameter;
+    private final Parameter offDiagonalParameter;
 
-    private boolean asCorrelation = false;
-
-    private int dim;
+    private final boolean asCorrelation;
+    private final int dim;
 
     public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
         super(MATRIX_PARAMETER);
@@ -47,6 +46,7 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         this.asCorrelation = asCorrelation;
     }
 
+    @Override
     public double[] getAttributeValue() {
         double[] stats = new double[dim * dim];
         int index = 0;
@@ -59,14 +59,27 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         return stats;
     }
 
-    public double[] getDiagonals() {
-        return diagonalParameter.getParameterValues();
+    @Override
+    public int getDimension() {
+        return getColumnDimension() * getRowDimension();
+    }
+    
+    @Override
+    public double getParameterValue(int index) {
+        final int dim = getColumnDimension();
+        return getParameterValue(index / dim, index % dim);
     }
 
-    public double getOffDiagonal() {
-        return offDiagonalParameter.getParameterValue(0);
+    @Override
+    public String getDimensionName(int index) {
+        int dim = getColumnDimension();
+        String row = Integer.toString(index / dim);
+        String col = Integer.toString(index % dim);
+
+        return getId() + row + col;
     }
 
+    @Override
     public double getParameterValue(int row, int col) {
         if (row != col) {
             if (asCorrelation) {
@@ -78,6 +91,7 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         return diagonalParameter.getParameterValue(row);
     }
 
+    @Override
     public double[][] getParameterAsMatrix() {
         final int I = dim;
         double[][] parameterAsMatrix = new double[I][I];
@@ -90,12 +104,23 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         return parameterAsMatrix;
     }
 
+    @Override
     public int getColumnDimension() {
         return diagonalParameter.getDimension();
     }
 
+    @Override
     public int getRowDimension() {
         return diagonalParameter.getDimension();
     }
 
+    @Override
+    public void setParameterValue(int index, double a) {
+        throw new RuntimeException("Do not set entries of a CompoundSymmetricMatrix directly");
+    }
+
+    @Override
+    public void setParameterValue(int row, int column, double a) {
+        throw new RuntimeException("Do not set entries of a CompoundSymmetricMatrix directly");
+    }
 }

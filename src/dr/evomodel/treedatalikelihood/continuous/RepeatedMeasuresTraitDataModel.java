@@ -95,6 +95,8 @@ public class RepeatedMeasuresTraitDataModel extends
         return partial;
     }
 
+    public Parameter getSamplingPrecision() { return samplingPrecision; }
+
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         super.handleVariableChangedEvent(variable, index, type);

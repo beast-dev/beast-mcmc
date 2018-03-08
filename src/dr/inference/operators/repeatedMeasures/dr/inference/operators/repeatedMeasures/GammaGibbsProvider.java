@@ -1,0 +1,89 @@
+package dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedMeasures;
+
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.model.Parameter;
+import dr.math.distributions.Distribution;
+import dr.util.Attribute;
+
+import java.util.List;
+
+/**
+ * @author Marc A. Suchard
+ */
+public interface GammaGibbsProvider {
+
+    SufficientStatistics getSufficientStatistics(int dim);
+
+    Parameter getPrecisionParameter();
+
+    class SufficientStatistics {
+        final public int observationCount;
+        final public double sumOfSquaredErrors;
+
+        SufficientStatistics(int observationCount, double sumOfSquaredErrors) {
+            this.observationCount = observationCount;
+            this.sumOfSquaredErrors = sumOfSquaredErrors;
+        }
+    }
+
+    class Default implements GammaGibbsProvider {
+
+        private final Parameter precisionParameter;
+        private final Parameter meanParameter;
+        private final boolean isLog;
+        private final List<Attribute<double[]>> dataList;
+
+        public Default(DistributionLikelihood inLikelihood) {
+
+            Distribution likelihood = inLikelihood.getDistribution();
+            this.dataList = inLikelihood.getDataList();
+
+            if (likelihood instanceof NormalDistributionModel) {
+                this.precisionParameter = (Parameter) ((NormalDistributionModel) likelihood).getPrecision();
+                this.meanParameter = (Parameter) ((NormalDistributionModel) likelihood).getMean();
+                this.isLog = false;
+            } else if (likelihood instanceof LogNormalDistributionModel) {
+                if (((LogNormalDistributionModel) likelihood).getParameterization() == LogNormalDistributionModel.Parameterization.MU_PRECISION) {
+                    this.meanParameter = ((LogNormalDistributionModel) likelihood).getMuParameter();
+                } else {
+                    throw new RuntimeException("Must characterize likelihood in terms of mu and precision parameters");
+                }
+                this.precisionParameter = ((LogNormalDistributionModel) likelihood).getPrecisionParameter();
+                isLog = true;
+            } else
+                throw new RuntimeException("Likelihood must be Normal or log Normal");
+
+            if (precisionParameter == null)
+                throw new RuntimeException("Must characterize likelihood in terms of a precision parameter");
+        }
+
+        @Override
+        public SufficientStatistics getSufficientStatistics(int dim) {
+
+            // Calculate weighted sum-of-squares
+            final double mu = meanParameter.getParameterValue(dim);
+            double SSE = 0;
+            int n = 0;
+            for (Attribute<double[]> statistic : dataList) {
+                for (double x : statistic.getAttributeValue()) {
+                    if (isLog) {
+                        final double logX = Math.log(x);
+                        SSE += (logX - mu) * (logX - mu);
+                    } else {
+                        SSE += (x - mu) * (x - mu);
+                    }
+                    n++;
+                }
+            }
+
+            return new SufficientStatistics(n, SSE);
+        }
+
+        @Override
+        public Parameter getPrecisionParameter() {
+            return precisionParameter;
+        }
+    }
+}

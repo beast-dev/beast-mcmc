@@ -202,7 +202,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         double[] y0 = new double[matrix.length];
         ReadableVector diff;
         double maxEigenvalue = 10.0; // TODO Bad magic number
-
+ 
         for (int i = 0; i < matrix.length; ++i) {
             y0[i] = MathUtils.nextDouble();
         }

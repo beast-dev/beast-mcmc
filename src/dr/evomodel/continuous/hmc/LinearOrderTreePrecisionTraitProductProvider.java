@@ -9,15 +9,16 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+import static dr.math.matrixAlgebra.ReadableMatrix.Utils.product;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
-import static dr.math.matrixAlgebra.ReadableVector.Utils.getNorm;
-import static dr.math.matrixAlgebra.ReadableVector.Utils.getMatrixVectorProduct;
+import static dr.math.matrixAlgebra.ReadableVector.Utils.norm;
 
 /**
  * @author Marc A. Suchard
@@ -191,32 +192,33 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     
     private double getMaxEigenvalueAsTravelTime() {
 
+        // TODO Lots of bad magic numbers
         return maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01)
                 *  maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01);
     }
 
-    private double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err) {
+    private static double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err) {
 
         double[] y0 = new double[matrix.length];
         ReadableVector diff;
-        double maxEigenvalue = 10.0;
+        double maxEigenvalue = 10.0; // TODO Bad magic number
 
         for (int i = 0; i < matrix.length; ++i) {
-
             y0[i] = MathUtils.nextDouble();
         }
+        WrappedVector y = new WrappedVector.Raw(y0);
 
-        ReadableVector y = new WrappedVector.Raw(y0);
+        final ReadableMatrix mat = new WrappedMatrix.ArrayOfArray(matrix);
 
         for (int i = 0; i < numIterations; ++i) {
 
-            ReadableVector v = new ReadableVector.Scale(1 / getNorm(y), y);
-            y = getMatrixVectorProduct(matrix, v);
+            ReadableVector v = new ReadableVector.Scale(1 / norm(y), y);
+            y = product(mat, v);
             maxEigenvalue = innerProduct(v, y);
             diff = new ReadableVector.Sum(y,
                     new ReadableVector.Scale(-maxEigenvalue, v));
 
-            if (ReadableVector.Utils.getNorm(diff) < err) {
+            if (ReadableVector.Utils.norm(diff) < err) {
                 break;
             }
         }

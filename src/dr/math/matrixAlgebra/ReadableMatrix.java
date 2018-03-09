@@ -25,8 +25,6 @@
 
 package dr.math.matrixAlgebra;
 
-import java.util.Arrays;
-
 /**
  * @author Marc A. Suchard
  */

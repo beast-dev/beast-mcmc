@@ -103,7 +103,7 @@ public interface GammaGibbsProvider {
 
     class RepeatedMeasuresGibbsProvider implements GammaGibbsProvider {
 
-        private final RepeatedMeasuresTraitDataModel dataModel;
+//        private final RepeatedMeasuresTraitDataModel dataModel;
         private final TreeDataLikelihood treeLikelihood;
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
@@ -114,7 +114,7 @@ public interface GammaGibbsProvider {
         public RepeatedMeasuresGibbsProvider(RepeatedMeasuresTraitDataModel dataModel,
                                              TreeDataLikelihood treeLikelihood,
                                              String traitName) {
-            this.dataModel = dataModel;
+//            this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
             this.precisionParameter = dataModel.getSamplingPrecision();
@@ -123,7 +123,22 @@ public interface GammaGibbsProvider {
 
         @Override
         public SufficientStatistics getSufficientStatistics(int dim) {
-            return null;
+
+            final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
+            final int traitDim = treeLikelihood.getDataLikelihoodDelegate().getTraitDim();
+
+            double SSE = 0;
+
+            for (int taxon = 0; taxon < taxonCount; ++taxon) {
+
+                double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
+                double tipValue = tipValues[taxon * traitDim + dim];
+
+                SSE += (traitValue - tipValue) * (traitValue - tipValue);
+
+            }
+
+            return new SufficientStatistics(taxonCount, SSE);
         }
 
         @Override

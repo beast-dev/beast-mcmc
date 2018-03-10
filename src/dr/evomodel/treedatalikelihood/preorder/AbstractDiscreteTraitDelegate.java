@@ -65,6 +65,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         // put preOrder partials right after postOrder partials
         this.preOrderPartialOffset = likelihoodDelegate.getPartialBufferCount();
 
+        // put scaleBuffers for preOrder partials right after those for postOrder partials
+        this.preOrderScaleBufferOffset = tree.getNodeCount() - tree.getExternalNodeCount() - 1;
+
         this.patternList = likelihoodDelegate.getPatternList();
 
         this.postOrderPartial = new double[stateCount * patternCount * categoryCount];
@@ -96,8 +99,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         int[] beagleOperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
         for (int i = 0; i < operationCount; ++i) {
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE    ] = getPreOrderPartialIndex(operations[i * 5]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = Beagle.NONE;
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = getPreOrderScaleBufferIndex(operations[i * 5]);
             beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 2] = Beagle.NONE;
             beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 3] = getPreOrderPartialIndex(operations[i * 5 + 1]);
             beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 4] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 2]);
@@ -233,10 +236,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                                     * preOrderPartial[patternOffset * stateCount + k];
                         }
 
-                        if (Double.isNaN(denominator)) {
-                            System.err.println("bad bad");
+                        if (denominator == 0 || Double.isNaN(denominator)){
+                            System.err.println("something wrong gradient calculation.");
                         }
-
                         grandNumerator[pattern] += weight * rate * numerator / denominator * cLikelihood[patternOffset];
                         grandDenominator[pattern] += weight * cLikelihood[patternOffset];
                     }
@@ -298,6 +300,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return preOrderPartialOffset + nodeNumber;
     }
 
+    private int getPreOrderScaleBufferIndex(final int nodeNumber) {
+        return preOrderScaleBufferOffset + nodeNumber;
+    }
+
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
@@ -312,6 +318,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private final int stateCount;
     private final int categoryCount;
     private final int preOrderPartialOffset;
+    private final int preOrderScaleBufferOffset;
 
     private final double[] postOrderPartial;
     private final double[] preOrderPartial;

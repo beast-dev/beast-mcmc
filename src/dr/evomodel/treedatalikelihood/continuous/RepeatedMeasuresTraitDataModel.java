@@ -29,7 +29,6 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.WrappedMatrix;
@@ -39,7 +38,6 @@ import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
-import java.util.Vector;
 
 /**
  * @author Marc A. Suchard
@@ -47,6 +45,7 @@ import java.util.Vector;
 public class RepeatedMeasuresTraitDataModel extends
         ContinuousTraitDataModel implements ContinuousTraitPartialsProvider {
 
+    private final String traitName;
     private final Parameter samplingPrecision;
 
     public RepeatedMeasuresTraitDataModel(String name,
@@ -56,6 +55,7 @@ public class RepeatedMeasuresTraitDataModel extends
                                           final int dimTrait,
                                           Parameter samplingPrecision) {
         super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+        this.traitName = name;
         this.samplingPrecision = samplingPrecision;
         addVariable(samplingPrecision);
 
@@ -96,6 +96,8 @@ public class RepeatedMeasuresTraitDataModel extends
     }
 
     public Parameter getSamplingPrecision() { return samplingPrecision; }
+
+    public String getTraitName() { return traitName; }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

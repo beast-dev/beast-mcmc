@@ -2,7 +2,7 @@
 
 
 /*
- * newLatentLiabilityGibbs.java
+ * NewLatentLiabilityGibbs.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -54,7 +54,7 @@ import dr.xml.*;
 
 import java.util.List;
 
-public class newLatentLiabilityGibbs extends SimpleMCMCOperator {
+public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     public static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
     public static final String TREE_MODEL = "treeModel";
@@ -82,7 +82,7 @@ public class newLatentLiabilityGibbs extends SimpleMCMCOperator {
     private int[] dontUpdate;
 
 
-    public newLatentLiabilityGibbs(
+    public NewLatentLiabilityGibbs(
             TreeDataLikelihood traitModel,
             LatentTruncation LatentLiability, CompoundParameter tipTraitParameter, Parameter mask,
             double weight, String traitName) {
@@ -275,7 +275,7 @@ public class newLatentLiabilityGibbs extends SimpleMCMCOperator {
                 mask = (Parameter) xo.getElementFirstChild(MASK);
             }
 
-            return new newLatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, mask, weight, "latent");
+            return new NewLatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, mask, weight, "latent");
         }
 
         public String getParserDescription() {

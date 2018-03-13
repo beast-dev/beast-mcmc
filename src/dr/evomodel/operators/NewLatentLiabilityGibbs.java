@@ -183,7 +183,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
 
         double[] oldValue = getNodeTrait(node);
-        double[] value = new double[oldValue.length];
+        double[] value = null;
 
         int attempt = 0;
         boolean validTip = false;
@@ -197,7 +197,6 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         while (!validTip & attempt < max) {
 
             value = distribution.nextMultivariateNormal();
-
             setNodeTrait(node, value);
 
             if (latentLiability.validTraitForTip(thisNumber)) {
@@ -207,12 +206,10 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
 
         if (attempt == max) {
-            // TODO Automatically reject?
             return Double.NEGATIVE_INFINITY;
         }
 
         double pOld = distribution.logPdf(oldValue);
-
         double pNew = distribution.logPdf(value);
 
         return pOld - pNew;

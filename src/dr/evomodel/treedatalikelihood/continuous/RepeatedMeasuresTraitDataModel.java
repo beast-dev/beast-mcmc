@@ -31,8 +31,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
@@ -73,20 +71,13 @@ public class RepeatedMeasuresTraitDataModel extends
         assert (numTraits == 1);
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
-
-        WrappedVector mean = new WrappedVector.Raw(partial, 0, dimTrait);
-        WrappedMatrix precision = new WrappedMatrix.Raw(partial, dimTrait, dimTrait, dimTrait);
-        WrappedMatrix variance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-
         DenseMatrix64F V = MissingOps.wrap(partial,dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
-        // TODO Deflate partial precision by samplingPrecision
         for (int index = 0; index< dimTrait; index++){
             V.set(index, index, V.get(index, index) + 1 / samplingPrecision.getParameterValue(index));
         }
 
         DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
-
         MissingOps.safeInvert(V, P, false);
 
         MissingOps.unwrap(P, partial, dimTrait);
@@ -107,9 +98,7 @@ public class RepeatedMeasuresTraitDataModel extends
             fireModelChanged();
         }
     }
-
-
-
+    
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";

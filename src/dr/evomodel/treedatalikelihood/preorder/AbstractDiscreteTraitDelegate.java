@@ -204,6 +204,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
                 Arrays.fill(grandDenominator, 0.0);
                 Arrays.fill(grandNumerator, 0.0);
+                Arrays.fill(grandNumeratorIncrementLowerBound, 0.0);
+                Arrays.fill(grandNumeratorIncrementUpperBound, 0.0);
 
                 beagle.getPartials(getPostOrderPartialIndex(nodeNum), Beagle.NONE, postOrderPartial);
                 beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);

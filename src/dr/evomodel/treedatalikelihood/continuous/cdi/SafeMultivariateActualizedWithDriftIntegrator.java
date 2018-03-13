@@ -168,7 +168,6 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     @Override
     void computeActualizedDisplacement(final double[] optimalRates,
                                        final int offset,
-                                       final int up,
                                        final int actualizationOffset,
                                        final int pio) {
         DenseMatrix64F actualization = wrap(actualizations, actualizationOffset, dimTrait, dimTrait);

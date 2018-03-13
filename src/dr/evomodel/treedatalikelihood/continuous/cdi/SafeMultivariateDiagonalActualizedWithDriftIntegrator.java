@@ -216,7 +216,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
             final int pio = dimTrait * probabilityIndices[up];
             final int scaledOffset = matrixSize * probabilityIndices[up];
 
-            computeActualizedDisplacement(optimalRates, offset, up, scaledOffset, pio);
+            computeActualizedDisplacement(optimalRates, offset, scaledOffset, pio);
             offset += dimTrait;
         }
 
@@ -281,12 +281,11 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
     void computeActualizedDisplacement(final double[] optimalRates,
                                        final int offset,
-                                       final int up,
                                        final int actualizationOffset,
                                        final int pio) {
 
         for (int j = 0; j < dimTrait; ++j) {
-            displacements[pio + j] = optimalRates[up + j] * (1 - diagonalActualizations[pio + j]);
+            displacements[pio + j] = optimalRates[offset + j] * (1 - diagonalActualizations[pio + j]);
         }
     }
 

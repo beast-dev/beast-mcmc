@@ -157,6 +157,9 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
+    public boolean hasDiagonalActualization() { return false; }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionModel) {
             fireModelChanged(model);

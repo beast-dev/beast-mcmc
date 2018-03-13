@@ -151,8 +151,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Conditional simulations
         MathUtils.setSeed(17890826);
         ProcessSimulationDelegate simulationDelegate =
-                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
-                        "dataModel", treeModel,
+                new MultivariateConditionalOnTipsRealizedDelegate("dataModel", treeModel,
                         diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         ProcessSimulation simulationProcess = new ProcessSimulation(dataLikelihood, simulationDelegate);
         simulationProcess.cacheSimulatedTraits(null);
@@ -436,8 +435,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Conditional simulations
         MathUtils.setSeed(17890826);
         ProcessSimulationDelegate simulationDelegate =
-                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
-                        "dataModel", treeModel,
+                new MultivariateConditionalOnTipsRealizedDelegate("dataModel", treeModel,
                         diffusionModelFactor, dataModelFactor, rootPrior, rateTransformation, likelihoodDelegateFactors);
         ProcessSimulation simulationProcess = new ProcessSimulation(dataLikelihoodFactors, simulationDelegate);
         simulationProcess.cacheSimulatedTraits(null);
@@ -486,8 +484,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Conditional simulations
         MathUtils.setSeed(17890826);
         ProcessSimulationDelegate simulationDelegate =
-                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
-                        "dataModel", treeModel,
+                new MultivariateConditionalOnTipsRealizedDelegate("dataModel", treeModel,
                         diffusionModelFactor, dataModelFactor, rootPrior, rateTransformation, likelihoodDelegateFactors);
         ProcessSimulation simulationProcess = new ProcessSimulation(dataLikelihoodFactors, simulationDelegate);
         simulationProcess.cacheSimulatedTraits(null);
@@ -538,8 +535,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Conditional simulations
         MathUtils.setSeed(17890826);
         ProcessSimulationDelegate simulationDelegate =
-                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
-                        "dataModel", treeModel,
+                new MultivariateConditionalOnTipsRealizedDelegate("dataModel", treeModel,
                         diffusionModelFactor, dataModelFactor, rootPrior, rateTransformation, likelihoodDelegateFactors);
         ProcessSimulation simulationProcess = new ProcessSimulation(dataLikelihoodFactors, simulationDelegate);
         simulationProcess.cacheSimulatedTraits(null);

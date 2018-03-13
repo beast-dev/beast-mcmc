@@ -65,6 +65,8 @@ public interface DiffusionProcessDelegate extends Model {
 
     boolean hasActualization();
 
+    boolean hasDiagonalActualization();
+
     void storeState();
 
     void restoreState();

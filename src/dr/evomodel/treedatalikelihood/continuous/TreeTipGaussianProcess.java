@@ -85,14 +85,9 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
             likelihoodDelegate = createWithMissingData(likelihoodDelegate);
 
             ProcessSimulationDelegate simulationDelegate =
-                    MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
-                            traitName, treeDataLikelihood.getTree(),
-                            likelihoodDelegate.getDiffusionModel(), likelihoodDelegate.getDataModel(),
-                            likelihoodDelegate.getRootPrior(),
+                    new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeDataLikelihood.getTree(),
+                            likelihoodDelegate.getDiffusionModel(), likelihoodDelegate.getDataModel(), likelihoodDelegate.getRootPrior(),
                             likelihoodDelegate.getRateTransformation(), likelihoodDelegate);
-//                    new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeDataLikelihood.getTree(),
-//                            likelihoodDelegate.getDiffusionModel(), likelihoodDelegate.getDataModel(), likelihoodDelegate.getRootPrior(),
-//                            likelihoodDelegate.getRateTransformation(), likelihoodDelegate);
 
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
 

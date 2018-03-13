@@ -80,7 +80,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         Tree treeModel = (Tree) xo.getChild(Tree.class);
         MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
         BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-        
+
         boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
         boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
         boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
@@ -202,8 +202,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                         delegate.getPrecisionType() == PrecisionType.SCALAR ?
                                 new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
-                                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
-                                        traitName, treeModel,
+                                new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
@@ -216,8 +215,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                         delegate.getPrecisionType() == PrecisionType.SCALAR ?
                                 new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
-                                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
-                                        traitName, treeModel,
+                                new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);

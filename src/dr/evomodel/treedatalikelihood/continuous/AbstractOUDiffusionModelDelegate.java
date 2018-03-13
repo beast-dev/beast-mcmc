@@ -56,9 +56,7 @@ public abstract class AbstractOUDiffusionModelDelegate extends AbstractDriftDiff
     }
 
     @Override
-    public boolean hasActualization() {
-        return true;
-    }
+    public boolean hasActualization() { return true; }
 
     abstract double[][] getStrengthOfSelection();
 

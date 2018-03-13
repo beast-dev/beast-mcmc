@@ -72,6 +72,9 @@ public final class DiagonalOrnsteinUhlenbeckDiffusionModelDelegate extends Abstr
     }
 
     @Override
+    public boolean hasDiagonalActualization() { return true; }
+
+    @Override
     public double[] getEigenValuesStrengthOfSelection() {
         return strengthOfSelectionMatrixParameter.getDiagonalParameter().getParameterValues();
     }

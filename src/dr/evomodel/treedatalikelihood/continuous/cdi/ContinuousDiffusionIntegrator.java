@@ -25,7 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
@@ -57,6 +56,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void getBranchDisplacement(int bufferIndex, double[] displacement);
 
     void getBranchActualization(int bufferIndex, double[] actualization);
+
+    void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement, double[] expectation);
 
     @SuppressWarnings("unused")
     void setPreOrderPartial(int bufferIndex, final double[] partial);
@@ -245,6 +246,19 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert (displacement.length >= dimTrait);
 
             Arrays.fill(displacement, 0, dimTrait, 0.0);
+        }
+
+        @Override
+        public void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement,
+                                         double[] expectation) {
+
+            assert (expectation != null);
+            assert (expectation.length >= dimTrait);
+
+            assert (parentValue != null);
+            assert (parentValue.length >= dimTrait);
+
+            System.arraycopy(parentValue, 0, expectation, 0, dimTrait);
         }
 
         @Override

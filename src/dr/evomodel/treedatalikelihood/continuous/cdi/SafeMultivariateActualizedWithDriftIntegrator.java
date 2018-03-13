@@ -38,6 +38,33 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                 actualization, 0, dimTrait * dimTrait);
     }
 
+    @Override
+    public void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement,
+                                     double[] expectation) {
+
+        assert (expectation != null);
+        assert (expectation.length >= dimTrait);
+
+        assert (actualization != null);
+        assert (actualization.length >= dimTrait * dimTrait);
+
+        assert (parentValue != null);
+        assert (parentValue.length >= dimTrait);
+
+        assert (displacement != null);
+        assert (displacement.length >= dimTrait);
+
+        DenseMatrix64F actualizationMatrix = wrap(actualization, 0, dimTrait, dimTrait);
+        DenseMatrix64F displacementMatrix = wrap(displacement, 0, dimTrait, 1);
+        DenseMatrix64F parentValueMatrix = wrap(parentValue, 0, dimTrait, 1);
+
+        DenseMatrix64F branchExpectationMatrix = new DenseMatrix64F(dimTrait, 1);
+        CommonOps.mult(actualizationMatrix, parentValueMatrix, branchExpectationMatrix);
+        CommonOps.addEquals(branchExpectationMatrix, displacementMatrix);
+
+        unwrap(branchExpectationMatrix, expectation, 0);
+    }
+
 //    private static final boolean TIMING = false;
 
     private void allocateStorage() {

@@ -44,6 +44,27 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                 diagonalActualization, 0, dimTrait);
     }
 
+    @Override
+    public void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement,
+                                     double[] expectation) {
+
+        assert (expectation != null);
+        assert (expectation.length >= dimTrait);
+
+        assert (actualization != null);
+        assert (actualization.length >= dimTrait);
+
+        assert (parentValue != null);
+        assert (parentValue.length >= dimTrait);
+
+        assert (displacement != null);
+        assert (displacement.length >= dimTrait);
+
+        for (int i = 0; i < dimTrait; ++i) {
+            expectation[i] = actualization[i] * parentValue[i] + displacement[i];
+        }
+    }
+
     private static final boolean TIMING = false;
 
     private void allocateStorage() {

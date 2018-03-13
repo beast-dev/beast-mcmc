@@ -84,11 +84,6 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     }
 
     @Override
-    public boolean hasActualization() {
-        return false;
-    }
-
-    @Override
     protected double[] getDriftRates(int[] branchIndices, int updateCount) {
 
         final double[] drift = new double[updateCount * dim];  // TODO Reuse?

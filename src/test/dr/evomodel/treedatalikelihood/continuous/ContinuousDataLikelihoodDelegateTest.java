@@ -396,6 +396,56 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         assertEquals("likelihoodFullOURelaxed", format.format(logDatumLikelihood), format.format(dataLikelihood.getLogLikelihood()));
 
         System.out.println("likelihoodFullOURelaxed: " + format.format(logDatumLikelihood));
+
+    public void testLikelihoodFullAndDiagonalOU() {
+        System.out.println("\nTest Likelihood comparing Full and Diagonal OU:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
+                new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
+                false, false, false));
+        optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
+                new Parameter.Default("rate.2", new double[]{0, -1, 2, -3, 4, -5, 6, -7, 8, -9}),
+                false, false, false));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[3];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.0, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.0, 10.5, 0.0});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{0.0, 0.0, 100.0});
+        MatrixParameter strengthOfSelectionMatrixParam = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiagonalMatrix strengthOfSelectionMatrixParamDiag = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 10.5, 100.0}));
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, strengthOfSelectionMatrixParam);
+
+        DiffusionProcessDelegate diffusionProcessDelegateDiag
+                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, strengthOfSelectionMatrixParamDiag);
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, false);
+
+        ContinuousDataLikelihoodDelegate likelihoodDelegateDiag = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegateDiag, dataModel, rootPrior, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        TreeDataLikelihood dataLikelihoodDiag = new TreeDataLikelihood(likelihoodDelegateDiag, treeModel, rateModel);
+
+        assertEquals("likelihoodFullDiagOU",
+                format.format(dataLikelihood.getLogLikelihood()),
+                format.format(dataLikelihoodDiag.getLogLikelihood()));
     }
 
     //// Factor Model //// *********************************************************************************************
@@ -713,6 +763,65 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
 
         assertEquals("likelihoodFullRelaxedOUFactor", format.format(logDatumLikelihoodFactor), format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+    }
+
+    public void testLikelihoodFullDiagOUFactor() {
+        System.out.println("\nTest Likelihood comparing full and diagonal OU and factor:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
+                new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
+                false, false, false));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{1.5})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[2];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.0, 1.5});
+        MatrixParameter strengthOfSelectionMatrixParam = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiagonalMatrix strengthOfSelectionMatrixParamDiag = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 1.5}));
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, strengthOfSelectionMatrixParam);
+
+        DiffusionProcessDelegate diffusionProcessDelegateDiag
+                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, strengthOfSelectionMatrixParamDiag);
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegateFactors = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModelFactor, rootPriorFactor,
+                rateTransformation, rateModel, false);
+
+        ContinuousDataLikelihoodDelegate likelihoodDelegateFactorsDiag = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegateDiag, dataModelFactor, rootPriorFactor,
+                rateTransformation, rateModel, false);
+
+
+        dataModelFactor.setLikelihoodDelegate(likelihoodDelegateFactors);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihoodFactors = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
+
+        TreeDataLikelihood dataLikelihoodFactorsDiag = new TreeDataLikelihood(likelihoodDelegateFactorsDiag, treeModel, rateModel);
+
+        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
+        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
+
+        double likelihoodFactorDataDiag = dataLikelihoodFactorsDiag.getLogLikelihood();
+        double likelihoodFactorDiffusionDiag = dataModelFactor.getLogLikelihood();
+
+
+        assertEquals("likelihoodFullDiagOUFactor",
+                format.format(likelihoodFactorData + likelihoodFactorDiffusion),
+                format.format(likelihoodFactorDataDiag + likelihoodFactorDiffusionDiag));
     }
 
 }

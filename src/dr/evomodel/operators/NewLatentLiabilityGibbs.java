@@ -58,25 +58,15 @@ import java.util.List;
 public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     public static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
-    public static final String TREE_MODEL = "treeModel";
-
 
     private final LatentTruncation latentLiability;
-
     private final CompoundParameter tipTraitParameter;
-
     private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
-
 
     private final Tree treeModel;
     private final int dim;
 
-    public double[][] postMeans;
-    public double[][] preMeans;
-    public double[] preP;
-    public double[] postP;
     private Parameter mask;
-    private boolean hasMask = false;
     private int numFixed = 0;
     private int numUpdate = 0;
     private int[] doUpdate;
@@ -100,19 +90,11 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
         this.fullConditionalDensity = castTreeTrait(traitModel.getTreeTrait(fcdName));
         this.mask = mask;
-        if (mask != null) {
-            hasMask = true;
-        }
-
-        postMeans = new double[treeModel.getNodeCount()][dim];
-        preMeans = new double[treeModel.getNodeCount()][dim];
-        preP = new double[treeModel.getNodeCount()];
-        postP = new double[treeModel.getNodeCount()];
 
         dontUpdate = new int[dim];
         doUpdate = new int[dim];
 
-        if (hasMask) {
+        if (mask != null) {
             for (int i = 0; i < dim; i++) {
                 if (mask.getParameterValue(i) == 0.0) {
                     dontUpdate[numFixed] = i;
@@ -153,20 +135,18 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     public double[] getNodeTrait(NodeRef node) {
         int index = node.getNumber();
-        double[] traitValue = tipTraitParameter.getParameter(index).getParameterValues();
-        return traitValue;
+        return tipTraitParameter.getParameter(index).getParameterValues();
     }
 
-    public double getNodeTrait(NodeRef node, int entry) {
-        int index = node.getNumber();
-        double traitValue = tipTraitParameter.getParameter(index).getParameterValue(entry);
-        return traitValue;
-    }
+//    public double getNodeTrait(NodeRef node, int entry) {
+//        int index = node.getNumber();
+//        double traitValue = tipTraitParameter.getParameter(index).getParameterValue(entry);
+//        return traitValue;
+//    }
 
     public void setNodeTrait(NodeRef node, double[] traitValue) {
         int index = node.getNumber();
         for (int i = 0; i < dim; i++) {
-
             tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[i]);
         }
     }

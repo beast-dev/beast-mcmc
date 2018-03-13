@@ -239,8 +239,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                         if (denominator == 0) {  // Now instead evaluate the bound of the gradient
                             grandNumeratorIncrement = 0.0;  // if numerator == 0, it is 0
                             if (numerator != 0.0) {
-                                grandNumeratorIncrementLowerBound[pattern] += numerator > 0 ? 0.0 : numerator;
-                                grandNumeratorIncrementUpperBound[pattern] += numerator > 0 ? numerator : 0.0;
+                                grandNumeratorIncrementLowerBound[pattern] += weight * rate * (numerator > 0 ? 0.0 : numerator);
+                                grandNumeratorIncrementUpperBound[pattern] += weight * rate * (numerator > 0 ? numerator : 0.0);
                             }
                         } else if (Double.isNaN(denominator)) {
                             System.err.println("something wrong with preOrder partial calculation.");

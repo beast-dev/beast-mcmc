@@ -31,13 +31,10 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.continuous.*;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate;
-import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
+import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.preorder.TipRealizedValuesViaFullConditionalDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.DiagonalMatrix;
@@ -202,10 +199,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             if (!useMissingIndices) {
 
                 ProcessSimulationDelegate simulationDelegate =
-                        delegate.getPrecisionType()== PrecisionType.SCALAR ?
+                        delegate.getPrecisionType() == PrecisionType.SCALAR ?
                                 new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
-                                new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
+                                        traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
@@ -215,10 +213,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             } else {
 
                 ProcessSimulationDelegate simulationDelegate =
-                        delegate.getPrecisionType()== PrecisionType.SCALAR ?
+                        delegate.getPrecisionType() == PrecisionType.SCALAR ?
                                 new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
-                                new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                MultivariateConditionalOnTipsRealizedDelegate.constructMultivariateConditionalOnTipsRealizedDelegate(
+                                        traitName, treeModel,
                                         diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);

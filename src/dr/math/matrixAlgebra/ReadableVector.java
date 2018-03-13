@@ -80,6 +80,27 @@ public interface ReadableVector {
         }
     }
 
+    class Product implements ReadableVector {
+
+        private final ReadableVector lhs;
+        private final ReadableVector rhs;
+
+        public Product(final ReadableVector lhs, final ReadableVector rhs) {
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
+
+        @Override
+        public double get(int i) {
+            return lhs.get(i) * rhs.get(i);
+        }
+
+        @Override
+        public int getDim() {
+            return Math.min(lhs.getDim(), rhs.getDim());
+        }
+    }
+
     class Scale implements ReadableVector {
 
         private final ReadableVector vector;
@@ -116,6 +137,14 @@ public interface ReadableVector {
             }
 
             return sum;
+        }
+
+        public static double[] getBuffer(ReadableVector vector) {
+            double[] buffer = new double[vector.getDim()];
+            for (int i = 0; i < vector.getDim(); ++i) {
+                buffer[i] = vector.get(i);
+            }
+            return buffer;
         }
     }
 }

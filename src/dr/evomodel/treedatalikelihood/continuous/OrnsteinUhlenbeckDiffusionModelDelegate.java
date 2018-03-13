@@ -116,35 +116,6 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
         return EigenOps.createMatrixV(eigenDecompositionStrengthOfSelection).data;
     }
 
-
-    @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi) {
-        final DenseMatrix64F drift = new DenseMatrix64F(dim, 1, true, priorMean);
-        double[] displacement = new double[dim];
-        double[] actualization = new double[dim * dim];
-        recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization);
-        return drift.data;
-    }
-
-    private void recursivelyAccumulateDrift(final NodeRef node, final DenseMatrix64F drift,
-                                            ContinuousDiffusionIntegrator cdi,
-                                            double[] displacement, double[] actualization) {
-        if (!tree.isRoot(node)) {
-
-            // Compute parent
-            recursivelyAccumulateDrift(tree.getParent(node), drift, cdi, displacement, actualization);
-
-            // Node
-            cdi.getBranchDisplacement(getMatrixBufferOffsetIndex(node.getNumber()), displacement);
-            cdi.getBranchActualization(getMatrixBufferOffsetIndex(node.getNumber()), actualization);
-
-            DenseMatrix64F temp = new DenseMatrix64F(dim, 1);
-            CommonOps.mult(new DenseMatrix64F(dim, dim, true, actualization), drift, temp);
-            CommonOps.add(temp, new DenseMatrix64F(dim, 1, true, displacement), drift);
-
-        }
-    }
-
     @Override
     public double[][] getJointVariance(final double priorSampleSize,
                                        final double[][] treeVariance, final double[][] treeSharedLengths,

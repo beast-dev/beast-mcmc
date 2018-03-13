@@ -54,13 +54,11 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         assert (displacement != null);
         assert (displacement.length >= dimTrait);
 
-        DenseMatrix64F actualizationMatrix = wrap(actualization, 0, dimTrait, dimTrait);
-        DenseMatrix64F displacementMatrix = wrap(displacement, 0, dimTrait, 1);
-        DenseMatrix64F parentValueMatrix = wrap(parentValue, 0, dimTrait, 1);
-
         DenseMatrix64F branchExpectationMatrix = new DenseMatrix64F(dimTrait, 1);
-        CommonOps.mult(actualizationMatrix, parentValueMatrix, branchExpectationMatrix);
-        CommonOps.addEquals(branchExpectationMatrix, displacementMatrix);
+        CommonOps.mult(wrap(actualization, 0, dimTrait, dimTrait),
+                wrap(parentValue, 0, dimTrait, 1),
+                branchExpectationMatrix);
+        CommonOps.addEquals(branchExpectationMatrix, wrap(displacement, 0, dimTrait, 1));
 
         unwrap(branchExpectationMatrix, expectation, 0);
     }

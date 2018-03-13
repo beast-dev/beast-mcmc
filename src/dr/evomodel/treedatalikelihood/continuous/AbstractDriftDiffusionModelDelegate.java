@@ -109,12 +109,21 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
         final double[] drift = new double[dim];
         System.arraycopy(priorMean, 0, drift, 0, priorMean.length);
         double[] displacement = new double[dim];
-        double[] actualization = new double[dim];
+        double[] actualization = null;
+        if (hasActualization()) {
+            if (hasDiagonalActualization()) {
+                actualization = new double[dim];
+            } else {
+                actualization = new double[dim * dim];
+            }
+        }
         recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization);
         return drift;
     }
 
-    private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift, ContinuousDiffusionIntegrator cdi, double[] displacement, double[] actualization) {
+    private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift,
+                                            ContinuousDiffusionIntegrator cdi,
+                                            double[] displacement, double[] actualization) {
         if (!tree.isRoot(node)) {
 
             // Compute parent
@@ -122,12 +131,13 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
 
             // Node
             cdi.getBranchDisplacement(getMatrixBufferOffsetIndex(node.getNumber()), displacement);
-            cdi.getBranchActualization(getMatrixBufferOffsetIndex(node.getNumber()), actualization);
-
-            for (int model = 0; model < dim; ++model) {
-                drift[model] *= actualization[model];
-                drift[model] += displacement[model];
+            if (hasActualization()) {
+                cdi.getBranchActualization(getMatrixBufferOffsetIndex(node.getNumber()), actualization);
             }
+
+            double[] temp = new double[dim];
+            cdi.getBranchExpectation(actualization, drift, displacement, temp);
+            System.arraycopy(temp, 0, drift, 0, dim);
         }
     }
 

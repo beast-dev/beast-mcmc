@@ -78,6 +78,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         this.grandDenominator = new double[patternCount];
         this.grandNumerator = new double[patternCount];
+        this.grandNumeratorIncrementLowerBound = new double[patternCount];
+        this.grandNumeratorIncrementUpperBound = new double[patternCount];
 
     }
 
@@ -85,18 +87,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     public void simulate(final int[] operations, final int operationCount,
                          final int rootNodeNumber) {
         //This function updates preOrder Partials for all nodes
-        if (DEBUG) {
-            System.err.println("Setting Root preOrder partial.");
-        }
-
         this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
 
-        if (DEBUG) {
-            System.err.println("Now update preOrder partials at all other nodes");
-        }
-
         // TODO Use something like this: likelihoodDelegate.getPartialBufferIndex(0);
-
         int[] beagleOperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
         for (int i = 0; i < operationCount; ++i) {
             beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
@@ -195,6 +188,12 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 }
 
                 cLikelihood[category * patternCount + pattern] = sumOverEndState;
+//                if (sumOverEndState < 1E-20){ // underflow occurred in postOrderPartials
+//                    System.err.println("Underflow error occurred in postOrder Partials, try turn on scalingScheme=\"always\"");
+//                    if(DEBUG){
+//                        System.err.println("underflow occurred in postOrder Partials");
+//                    }
+//                }
             }
         }
 
@@ -236,17 +235,25 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                                     * preOrderPartial[patternOffset * stateCount + k];
                         }
 
-                        if (denominator == 0 || Double.isNaN(denominator)){
-                            System.err.println("something wrong gradient calculation.");
+                        double grandNumeratorIncrement = weight * rate * numerator / denominator * cLikelihood[patternOffset];
+                        if (denominator == 0) {  // Now instead evaluate the bound of the gradient
+                            grandNumeratorIncrement = 0.0;  // if numerator == 0, it is 0
+                            if (numerator != 0.0) {
+                                grandNumeratorIncrementLowerBound[pattern] += numerator > 0 ? 0.0 : numerator;
+                                grandNumeratorIncrementUpperBound[pattern] += numerator > 0 ? numerator : 0.0;
+                            }
+                        } else if (Double.isNaN(denominator)) {
+                            System.err.println("something wrong with preOrder partial calculation.");
                         }
-                        grandNumerator[pattern] += weight * rate * numerator / denominator * cLikelihood[patternOffset];
+                        grandNumerator[pattern] += grandNumeratorIncrement;
                         grandDenominator[pattern] += weight * cLikelihood[patternOffset];
                     }
                 }
 
                 for (int pattern = 0; pattern < patternCount; pattern++) {
 
-                    gradient[index] += grandNumerator[pattern] / grandDenominator[pattern] * patternWeights[pattern];
+                    gradient[index] += (grandNumerator[pattern] + (grandNumeratorIncrementLowerBound[pattern] + grandNumeratorIncrementUpperBound[pattern]) / 2.0)
+                            / grandDenominator[pattern] * patternWeights[pattern];
 
                     if (Double.isNaN(gradient[index])) {
                         System.err.println("bad");
@@ -328,6 +335,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
     private final double[] grandDenominator;
     private final double[] grandNumerator;
+    private final double[] grandNumeratorIncrementLowerBound;
+    private final double[] grandNumeratorIncrementUpperBound;
 
     private static final boolean DEBUG = false;
 }

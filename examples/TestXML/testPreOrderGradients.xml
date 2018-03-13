@@ -85,7 +85,7 @@
         </gammaShape>
     </siteModel>
 
-    <treeLikelihood id="treeLikelihood3">
+    <treeLikelihood id="treeLikelihood3" scalingScheme="always" delayScaling="false">
         <patterns idref="patterns1"/>
         <treeModel idref="treeModel"/>
         <siteModel idref="siteModel3"/>
@@ -99,7 +99,7 @@
     </arbitraryBranchRates>
 
     <!-- Likelihood for tree given sequence data                                 -->
-    <treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true" scalingScheme="always" delayScaling="false">
         <patterns idref="patterns1"/>
         <treeModel idref="treeModel"/>
         <siteModel idref="siteModel3"/>
@@ -312,7 +312,7 @@
     </siteModel>
 
     <!-- Likelihood for tree given sequence data                                 -->
-    <treeDataLikelihood id="treeLikelihoodLong" useAmbiguities="false" usePreOrder="true">
+    <treeDataLikelihood id="treeLikelihoodLong" useAmbiguities="false" usePreOrder="true" scalingScheme="always" delayScaling="false">
         <patterns idref="patterns"/>
         <treeModel idref="treeModelLong"/>
         <siteModel idref="siteModel"/>

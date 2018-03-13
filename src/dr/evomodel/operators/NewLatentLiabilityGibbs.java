@@ -41,6 +41,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform;
 import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.CompoundParameter;
@@ -184,6 +185,9 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         ReadableVector mean = statistics.getMean();
         ReadableMatrix thisP = statistics.getPrecision();
 
+        //todo: add mask; pass the joint conditional mean and precision for both discrete and continuous traits.
+        addMaskIfNeeded(mean, thisP);
+
         double[] meanVector = new double[mean.getDim()];
         double[][] precisionMatrix = new double[mean.getDim()][mean.getDim()];
 
@@ -233,6 +237,18 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         double logq = pOld - pNew;
 
         return logq;
+    }
+
+    private void addMaskIfNeeded(ReadableVector jointmean, ReadableMatrix jointPrecision) {
+
+        if(mask == null){
+            return;
+        } else {
+            //todo
+//            ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
+//                    new Matrix(jointGraphVariance), cMissingJoint, cNotMissingJoint);
+
+        }
     }
 
     private TreeTrait<List<WrappedMeanPrecision>> castTreeTrait(TreeTrait trait) {

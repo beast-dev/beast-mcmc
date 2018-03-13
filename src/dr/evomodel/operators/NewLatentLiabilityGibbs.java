@@ -197,9 +197,8 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         }
 
-
         double[] oldValue = getNodeTrait(node);
-        double[] value = oldValue;
+        double[] value = new double[oldValue.length];
 
         int attempt = 0;
         boolean validTip = false;
@@ -208,7 +207,9 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         MultivariateNormalDistribution distribution = new MultivariateNormalDistribution(meanVector, precisionMatrix);
 
-        while (!validTip & attempt < 10000) {
+        final int max = 10000;
+
+        while (!validTip & attempt < max) {
 
             value = distribution.nextMultivariateNormal();
 
@@ -218,6 +219,11 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
                 validTip = true;
             }
             attempt++;
+        }
+
+        if (attempt == max) {
+            // TODO Automatically reject?
+            return Double.NEGATIVE_INFINITY;
         }
 
         double pOld = distribution.logPdf(oldValue);

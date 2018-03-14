@@ -240,7 +240,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                         double grandNumeratorIncrement = weight * rate * numerator / denominator * cLikelihood[patternOffset];
                         if (denominator == 0) {  // Now instead evaluate the bound of the gradient
                             grandNumeratorIncrement = 0.0;  // if numerator == 0, it is 0
-                            if (numerator != 0.0) {
+                            if (numerator != 0.0) { // TODO Trouble?  Why is this only done when != 0.0?  What about 0 / 0 case?
                                 grandNumeratorIncrementLowerBound[pattern] += weight * rate * (numerator > 0 ? 0.0 : numerator);
                                 grandNumeratorIncrementUpperBound[pattern] += weight * rate * (numerator > 0 ? numerator : 0.0);
                             }

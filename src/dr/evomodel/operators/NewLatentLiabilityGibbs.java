@@ -41,8 +41,6 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform2;
 import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.CompoundParameter;
@@ -53,14 +51,13 @@ import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.*;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
-    public static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
+    private static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
 
     private final LatentTruncation latentLiability;
     private final CompoundParameter tipTraitParameter;
@@ -130,7 +127,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         return logq;
     }
 
-    public double[] getNodeTrait(NodeRef node) {
+    private double[] getNodeTrait(NodeRef node) {
         int index = node.getNumber();
         return tipTraitParameter.getParameter(index).getParameterValues();
     }
@@ -141,21 +138,21 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 //        return traitValue;
 //    }
 
-    public void setNodeTrait(NodeRef node, double[] traitValue) {
+    private void setNodeTrait(NodeRef node, double[] traitValue) {
         int index = node.getNumber();
         for (int i = 0; i < dim; i++) {
             tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[i]);
         }
     }
 
-    public void setNodeTrait(NodeRef node, int entry, double traitValue) {
-        int index = node.getNumber();
+//    private void setNodeTrait(NodeRef node, int entry, double traitValue) {
+//        int index = node.getNumber();
+//
+//        tipTraitParameter.getParameter(index).setParameterValue(entry, traitValue);
+//
+//    }
 
-        tipTraitParameter.getParameter(index).setParameterValue(entry, traitValue);
-
-    }
-
-    public double sampleNode2(NodeRef node, WrappedMeanPrecision statistics) {
+    private double sampleNode2(NodeRef node, WrappedMeanPrecision statistics) {
 
         final int thisNumber = node.getNumber();
 
@@ -213,14 +210,12 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         return pOld - pNew;
     }
 
-    private void addMaskIfNeeded(ReadableVector jointmean, ReadableMatrix jointPrecision) {
+    private void addMaskIfNeeded(ReadableVector jointMean, ReadableMatrix jointPrecision) {
 
-        if(mask == null){
-            return;
-        } else {
+        if (mask != null) {
 
-            List<Integer> missingIndex = new ArrayList<>();
-            List<Integer> notmissingIndex = new ArrayList<>();
+            List<Integer> missingIndex = new ArrayList<Integer>();
+            List<Integer> notmissingIndex = new ArrayList<Integer>();
 
             for(int i = 0; i < dim; ++i){
                 if (mask.getParameterValue(i) == 1.0) {
@@ -232,6 +227,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private TreeTrait<List<WrappedMeanPrecision>> castTreeTrait(TreeTrait trait) {
         return trait;
     }
@@ -248,7 +244,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-        public final static String MASK = "mask";
+        private final static String MASK = "mask";
 
 
         public String getParserName() {

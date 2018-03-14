@@ -42,6 +42,7 @@ import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform2;
 import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.CompoundParameter;
@@ -52,7 +53,9 @@ import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
@@ -74,21 +77,21 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
 
     public NewLatentLiabilityGibbs(
-            TreeDataLikelihood traitModel,
+            TreeDataLikelihood treeDataLikelihood,
             LatentTruncation LatentLiability, CompoundParameter tipTraitParameter, Parameter mask,
             double weight, String traitName) {
         super();
 
         this.latentLiability = LatentLiability;
         this.tipTraitParameter = tipTraitParameter;
-        this.treeModel = traitModel.getTree();
-        ContinuousDataLikelihoodDelegate likelihoodDelegate = (ContinuousDataLikelihoodDelegate) traitModel.getDataLikelihoodDelegate();
+        this.treeModel = treeDataLikelihood.getTree();
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
         this.dim = likelihoodDelegate.getTraitDim();
         String fcdName = WrappedTipFullConditionalDistributionDelegate.getName(traitName);
-        if (traitModel.getTreeTrait(fcdName) == null) {
+        if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
             likelihoodDelegate.addWrappedFullConditionalDensityTrait(traitName);
         }
-        this.fullConditionalDensity = castTreeTrait(traitModel.getTreeTrait(fcdName));
+        this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
         this.mask = mask;
 
         dontUpdate = new int[dim];
@@ -117,19 +120,13 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     public double doOperation() {
 
         final int pos = MathUtils.nextInt(treeModel.getExternalNodeCount());
-
-        final List<WrappedMeanPrecision> allStatistics = fullConditionalDensity.getTrait(treeModel, treeModel.getExternalNode(pos));
-
-        final WrappedMeanPrecision statistic;
-
-        statistic = allStatistics.get(0);
-
         NodeRef node = treeModel.getExternalNode(pos);
 
+        final List<WrappedMeanPrecision> allStatistics = fullConditionalDensity.getTrait(treeModel, node);
+        final WrappedMeanPrecision statistic = allStatistics.get(0);
+
         double logq = sampleNode2(node, statistic);
-
         tipTraitParameter.fireParameterChangedEvent();
-
         return logq;
     }
 
@@ -206,7 +203,6 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
 
         if (attempt == max) {
-            // TODO Automatically reject?
             return Double.NEGATIVE_INFINITY;
         }
 
@@ -214,9 +210,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         double pNew = distribution.logPdf(value);
 
-        double logq = pOld - pNew;
-
-        return logq;
+        return pOld - pNew;
     }
 
     private void addMaskIfNeeded(ReadableVector jointmean, ReadableMatrix jointPrecision) {
@@ -224,10 +218,17 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         if(mask == null){
             return;
         } else {
-            //todo
-//            ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
-//                    new Matrix(jointGraphVariance), cMissingJoint, cNotMissingJoint);
 
+            List<Integer> missingIndex = new ArrayList<>();
+            List<Integer> notmissingIndex = new ArrayList<>();
+
+            for(int i = 0; i < dim; ++i){
+                if (mask.getParameterValue(i) == 1.0) {
+                    missingIndex.add(i);
+                } else {
+                    notmissingIndex.add(i);
+                }
+            }
         }
     }
 

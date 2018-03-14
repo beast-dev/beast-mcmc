@@ -234,7 +234,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                         double grandNumeratorIncrement = weight * rate * numerator / denominator * cLikelihood[patternOffset];
                         if (denominator == 0) {  // Now instead evaluate the bound of the gradient
                             grandNumeratorIncrement = 0.0;  // if numerator == 0, it is 0
-                            if (numerator != 0.0) {
+                            if (numerator != 0.0) { // TODO Trouble?  Why is this only done when != 0.0?  What about 0 / 0 case?
                                 grandNumeratorIncrementLowerBound[pattern] += weight * rate * (numerator > 0 ? 0.0 : numerator);
                                 grandNumeratorIncrementUpperBound[pattern] += weight * rate * (numerator > 0 ? numerator : 0.0);
                             }
@@ -248,8 +248,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
                 for (int pattern = 0; pattern < patternCount; pattern++) {
 
-                    gradient[index] += (grandNumerator[pattern] + (grandNumeratorIncrementLowerBound[pattern] + grandNumeratorIncrementUpperBound[pattern]) / 2.0)
-                            / grandDenominator[pattern] * patternWeights[pattern];
+                    final double numerator = clampGradientNumerator(grandNumerator[pattern],
+                            grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
+
+                    gradient[index] += numerator / grandDenominator[pattern] * patternWeights[pattern];
 
                     if (Double.isNaN(gradient[index]) && DEBUG) {
                         System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
@@ -263,6 +265,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         }
 
         return gradient;
+    }
+
+    // TODO Delegate for alternative behavior, like least value in magnitude
+    private double clampGradientNumerator(double unbounded, double lowerBound, double upperBound) {
+        return unbounded + (lowerBound + upperBound) / 2;
     }
 
     @Override

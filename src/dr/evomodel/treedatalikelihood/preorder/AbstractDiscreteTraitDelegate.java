@@ -114,9 +114,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     @Override
     protected void simulateRoot(int rootNumber) {
         //This function sets preOrderPartials at Root for now.
-        if (DEBUG) {
-            System.err.println("Simulate root node " + rootNumber);
-        }
         final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
         double[] rootPreOrderPartial = new double[stateCount * patternCount * categoryCount];
         for (int i = 0; i < patternCount * categoryCount; ++i) {
@@ -190,9 +187,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 cLikelihood[category * patternCount + pattern] = sumOverEndState;
 //                if (sumOverEndState < 1E-20){ // underflow occurred in postOrderPartials
 //                    System.err.println("Underflow error occurred in postOrder Partials, try turn on scalingScheme=\"always\"");
-//                    if(DEBUG){
-//                        System.err.println("underflow occurred in postOrder Partials");
-//                    }
 //                }
             }
         }
@@ -257,8 +251,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                     gradient[index] += (grandNumerator[pattern] + (grandNumeratorIncrementLowerBound[pattern] + grandNumeratorIncrementUpperBound[pattern]) / 2.0)
                             / grandDenominator[pattern] * patternWeights[pattern];
 
-                    if (Double.isNaN(gradient[index])) {
-                        System.err.println("bad");
+                    if (Double.isNaN(gradient[index]) && DEBUG) {
+                        System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
                     }
                 }
 

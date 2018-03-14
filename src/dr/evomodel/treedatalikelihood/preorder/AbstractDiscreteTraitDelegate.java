@@ -254,8 +254,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
                 for (int pattern = 0; pattern < patternCount; pattern++) {
 
-                    gradient[index] += (grandNumerator[pattern] + (grandNumeratorIncrementLowerBound[pattern] + grandNumeratorIncrementUpperBound[pattern]) / 2.0)
-                            / grandDenominator[pattern] * patternWeights[pattern];
+                    final double numerator = clampGradientNumerator(grandNumerator[pattern],
+                            grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
+
+                    gradient[index] += numerator / grandDenominator[pattern] * patternWeights[pattern];
 
                     if (Double.isNaN(gradient[index])) {
                         System.err.println("bad");
@@ -269,6 +271,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         }
 
         return gradient;
+    }
+
+    // TODO Delegate for alternative behavior, like least value in magnitude
+    private double clampGradientNumerator(double unbounded, double lowerBound, double upperBound) {
+        return unbounded + (lowerBound + upperBound) / 2;
     }
 
     @Override

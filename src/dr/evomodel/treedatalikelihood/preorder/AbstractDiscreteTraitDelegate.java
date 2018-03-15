@@ -214,8 +214,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
                 for (int category = 0; category < categoryCount; category++) {
 
-                    final double rate = categoryRates[category];
                     final double weight = categoryWeights[category];
+                    final double weightedRate = weight * categoryRates[category];
 
                     for (int pattern = 0; pattern < patternCount; pattern++) {
 
@@ -237,17 +237,28 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                                     * preOrderPartial[patternOffset * stateCount + k];
                         }
 
-                        double grandNumeratorIncrement = weight * rate * numerator / denominator * cLikelihood[patternOffset];
-                        if (denominator == 0) {  // Now instead evaluate the bound of the gradient
-                            grandNumeratorIncrement = 0.0;  // if numerator == 0, it is 0
-                            if (numerator != 0.0) { // TODO Trouble?  Why is this only done when != 0.0?  What about 0 / 0 case?
-                                grandNumeratorIncrementLowerBound[pattern] += weight * rate * (numerator > 0 ? 0.0 : numerator);
-                                grandNumeratorIncrementUpperBound[pattern] += weight * rate * (numerator > 0 ? numerator : 0.0);
+                        if (numerator != 0.0) {
+                            if (denominator == 0.0) {
+                                grandNumeratorIncrementLowerBound[pattern] += weightedRate * Math.min(numerator, 0.0);
+                                grandNumeratorIncrementUpperBound[pattern] += weightedRate * Math.max(numerator, 0.0);
+                            } else {
+                                grandNumerator[pattern] += weightedRate * numerator *
+                                        cLikelihood[patternOffset] / denominator;
                             }
-                        } else if (Double.isNaN(denominator)) {
-                            System.err.println("something wrong with preOrder partial calculation.");
                         }
-                        grandNumerator[pattern] += grandNumeratorIncrement;
+
+//                        double grandNumeratorIncrement = weightedRate * numerator / denominator * cLikelihood[patternOffset];
+//                        if (denominator == 0) {  // Now instead evaluate the bound of the gradient
+//                            grandNumeratorIncrement = 0.0;  // if numerator == 0, it is 0
+//                            if (numerator != 0.0) {
+//                                grandNumeratorIncrementLowerBound[pattern] += weightedRate * (numerator > 0 ? 0.0 : numerator);
+//                                grandNumeratorIncrementUpperBound[pattern] += weightedRate * (numerator > 0 ? numerator : 0.0);
+//                            }
+//                        } else if (Double.isNaN(denominator)) {
+//                            System.err.println("something wrong with preOrder partial calculation.");
+//                        }
+//                        grandNumerator[pattern] += grandNumeratorIncrement;
+
                         grandDenominator[pattern] += weight * cLikelihood[patternOffset];
                     }
                 }

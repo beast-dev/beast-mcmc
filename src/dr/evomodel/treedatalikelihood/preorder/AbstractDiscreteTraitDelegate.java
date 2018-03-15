@@ -89,18 +89,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         //This function updates preOrder Partials for all nodes
         this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
 
-        // TODO Use something like this: likelihoodDelegate.getPartialBufferIndex(0);
-        int[] beagleOperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
-        for (int i = 0; i < operationCount; ++i) {
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = getPreOrderScaleBufferIndex(operations[i * 5]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 2] = Beagle.NONE;
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 3] = getPreOrderPartialIndex(operations[i * 5 + 1]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 4] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 2]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = getPostOrderPartialIndex(operations[i * 5 + 3]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 6] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 4]);
-            // TODO Shouldn't this transformation happen in vectorizeNodeOperations() such that we only transform once?
-        }
+        int[] beagleOperations = vectorizeAgainForNoReason(operations, operationCount);
 
         beagle.updatePrePartials(beagleOperations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
         //TODO:error control
@@ -168,7 +157,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         final double[] categoryWeights = siteRateModel.getCategoryProportions();
         final double[] categoryRates = siteRateModel.getCategoryRates();
 
-        // TODO Should get from BeagleDataLikelihoodDelegate (already computed)
         beagle.getPartials(getPostOrderPartialIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostOrderPartials);
 
         double[] gradient = new double[tree.getNodeCount() - 1];
@@ -184,7 +172,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                     sumOverEndState += frequencies[k] * rootPostOrderPartials[patternIndex * stateCount + k];
                 }
 
-                cLikelihood[category * patternCount + pattern] = sumOverEndState;
+                cLikelihood[patternIndex] = sumOverEndState;
 //                if (sumOverEndState < 1E-20){ // underflow occurred in postOrderPartials
 //                    System.err.println("Underflow error occurred in postOrder Partials, try turn on scalingScheme=\"always\"");
 //                }
@@ -299,6 +287,23 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             // TODO Transform to Beagle operations here
         }
         return nodeOperations.size();
+    }
+
+    private int[] vectorizeAgainForNoReason(final int[] operations, final int operationCount) {
+
+        int[] beagleOperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
+        for (int i = 0; i < operationCount; ++i) {
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = getPreOrderScaleBufferIndex(operations[i * 5]);
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 2] = Beagle.NONE;
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 3] = getPreOrderPartialIndex(operations[i * 5 + 1]);
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 4] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 2]);
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = getPostOrderPartialIndex(operations[i * 5 + 3]);
+            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 6] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 4]);
+            // TODO Shouldn't this transformation happen in vectorizeNodeOperations() such that we only transform once?
+        }
+
+        return beagleOperations;
     }
 
     private int getPostOrderPartialIndex(final int nodeNumber) {

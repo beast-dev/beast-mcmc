@@ -241,18 +241,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                             }
                         }
 
-//                        double grandNumeratorIncrement = weightedRate * numerator / denominator * cLikelihood[patternOffset];
-//                        if (denominator == 0) {  // Now instead evaluate the bound of the gradient
-//                            grandNumeratorIncrement = 0.0;  // if numerator == 0, it is 0
-//                            if (numerator != 0.0) {
-//                                grandNumeratorIncrementLowerBound[pattern] += weightedRate * (numerator > 0 ? 0.0 : numerator);
-//                                grandNumeratorIncrementUpperBound[pattern] += weightedRate * (numerator > 0 ? numerator : 0.0);
-//                            }
-//                        } else if (Double.isNaN(denominator)) {
-//                            System.err.println("something wrong with preOrder partial calculation.");
-//                        }
-//                        grandNumerator[pattern] += grandNumeratorIncrement;
-
                         grandDenominator[pattern] += weight * cLikelihood[patternOffset];
                     }
                 }

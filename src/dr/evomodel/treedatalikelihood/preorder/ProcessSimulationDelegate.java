@@ -59,6 +59,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations);
 
+    int getSingleOperationSize();
+
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
 
         AbstractDelegate(String name, Tree tree) {
@@ -190,6 +192,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             this.likelihoodDelegate = likelihoodDelegate;
 
             diffusionModel.addModelListener(this);
+        }
+
+        @Override
+        public int getSingleOperationSize() {
+            return ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
         }
 
         @Override

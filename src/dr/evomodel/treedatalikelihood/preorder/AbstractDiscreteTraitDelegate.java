@@ -288,6 +288,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return nodeOperations.size();
     }
 
+    @Override
+    public int getSingleOperationSize() {
+        return Beagle.OPERATION_TUPLE_SIZE;
+    }
+
     private int getPostOrderPartialIndex(final int nodeNumber) {
         return likelihoodDelegate.getPartialBufferIndex(nodeNumber);
     }
@@ -303,7 +308,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
-    public static final int OPERATION_TUPLE_SIZE = 7;
 
     private final BeagleDataLikelihoodDelegate likelihoodDelegate;
     private final Beagle beagle;

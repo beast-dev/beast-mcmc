@@ -31,6 +31,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
@@ -67,9 +68,17 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
 
-        this.operations = new int[tree.getNodeCount() * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
+        this.operations = new int[tree.getNodeCount() * getSingleOperationSize()];
 
         validSimulation = false;
+    }
+
+    private final int getSingleOperationSize() {
+        if (this.simulationDelegate instanceof AbstractDiscreteTraitDelegate) {
+            return AbstractDiscreteTraitDelegate.OPERATION_TUPLE_SIZE;
+        } else {
+            return ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+        }
     }
 
     public final void cacheSimulatedTraits(final NodeRef node) {

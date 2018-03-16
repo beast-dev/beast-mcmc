@@ -88,10 +88,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                          final int rootNodeNumber) {
         //This function updates preOrder Partials for all nodes
         this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
-
-        int[] beagleOperations = vectorizeAgainForNoReason(operations, operationCount);
-
-        beagle.updatePrePartials(beagleOperations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
+        beagle.updatePrePartials(operations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
         //TODO:error control
     }
 
@@ -279,31 +276,16 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         int k = 0;
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
-            operations[k++] = tmpNodeOperation.getLeftChild();
-            operations[k++] = tmpNodeOperation.getNodeNumber();
-            operations[k++] = tmpNodeOperation.getLeftChild();
-            operations[k++] = tmpNodeOperation.getRightChild();
-            operations[k++] = tmpNodeOperation.getRightChild();
+            operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = Beagle.NONE;
+            operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
+            operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = getPostOrderPartialIndex(tmpNodeOperation.getRightChild());
+            operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getRightChild());
             // TODO Transform to Beagle operations here
         }
         return nodeOperations.size();
-    }
-
-    private int[] vectorizeAgainForNoReason(final int[] operations, final int operationCount) {
-
-        int[] beagleOperations = new int[operationCount * Beagle.OPERATION_TUPLE_SIZE];
-        for (int i = 0; i < operationCount; ++i) {
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE] = getPreOrderPartialIndex(operations[i * 5]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 1] = getPreOrderScaleBufferIndex(operations[i * 5]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 2] = Beagle.NONE;
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 3] = getPreOrderPartialIndex(operations[i * 5 + 1]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 4] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 2]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 5] = getPostOrderPartialIndex(operations[i * 5 + 3]);
-            beagleOperations[i * Beagle.OPERATION_TUPLE_SIZE + 6] = evolutionaryProcessDelegate.getMatrixIndex(operations[i * 5 + 4]);
-            // TODO Shouldn't this transformation happen in vectorizeNodeOperations() such that we only transform once?
-        }
-
-        return beagleOperations;
     }
 
     private int getPostOrderPartialIndex(final int nodeNumber) {
@@ -321,6 +303,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
+    public static final int OPERATION_TUPLE_SIZE = 7;
 
     private final BeagleDataLikelihoodDelegate likelihoodDelegate;
     private final Beagle beagle;

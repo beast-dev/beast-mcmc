@@ -245,20 +245,9 @@
     <!--Reference: testBranchGradientFull.xml in Alex Fisher's hmc_random_walk/xml/ folder-->
     <operators id="operators">
 
-        <hamiltonianMonteCarloOperator weight="2" nSteps="10" stepSize="1E-2" mode="vanilla"
-                                       drawVariance="1.0" autoOptimize="true">
-            <jointGradient>
-                <gradient>
-                    <distributionLikelihood idref="ratesPrior"/>
-                    <parameter idref="strict.rates"/>
-                </gradient>
-                <branchRateGradient idref="branchRateGradientDiscreteLong"/>
-            </jointGradient>
-            <parameter idref="strict.rates"/>
-            <signTransform>
-                <parameter idref = "strict.rates"/>
-            </signTransform>
-        </hamiltonianMonteCarloOperator>
+        <scaleOperator scaleFactor="0.75" weight="2">
+                <parameter idref="strict.rates"/>
+        </scaleOperator>
 
         <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="diffusion.mean"/>
@@ -276,7 +265,7 @@
          -->
     </operators>
 
-    <mcmc id="mcmc" chainLength="100000000">
+    <mcmc id="mcmc" chainLength="10000000">
         <posterior id="posterior">
             <prior id="prior">
                 <distributionLikelihood idref="ratesPrior"/>
@@ -297,7 +286,7 @@
         <operators idref="operators"/>
         <log logEvery="10">
             <posterior idref="posterior"/>
-            <branchRateGradient idref="branchRateGradientDiscreteLong"/>
+            <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
 <!--
                         <traitLogger traitName="derivative.Sequence" nodes="all">
                             <treeDataLikelihood idref="treeLikelihoodLong"/>
@@ -309,14 +298,14 @@
             <treeDataLikelihood idref="treeLikelihoodLong"/>
             <treeModel idref="treeModelLong"/>
         </logTree>
-        <log logEvery="100" fileName="testPreOrderGradients.log">
+        <log logEvery="100" fileName="testPreOrderGradientsCompare.log">
             <parameter idref="strict.rates"/>
             <parameter idref="diffusion.mean"/>
             <parameter idref="siteModel.alpha"/>
         </log>
     </mcmc>
 
-    <traceAnalysis fileName="testPreOrderGradients.log"/>
+    <traceAnalysis fileName="testPreOrderGradientsCompare.log"/>
 
     <report>
         <property name="timer">

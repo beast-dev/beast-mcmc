@@ -56,27 +56,31 @@ import java.util.List;
 public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     private static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
+    private static final String MAX_ATTEMPTS = "numAttempts";
 
     private final LatentTruncation latentLiability;
     private final CompoundParameter tipTraitParameter;
     private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
 
+    private int maxAttempts;
+
     private final Tree treeModel;
     private final int dim;
 
     private Parameter mask;
-    private int numFixed = 0;
-//    private int numUpdate = 0;
-//    private int[] doUpdate;
-//    private int[] dontUpdate;
+    private MaskIndices maskIndices;
+
     private double[] fcdMean;
     private double[][] fcdPrecision;
     private double[][] fcdVaraince;
+    private double[] maskedMean;
+    private double[][] maskedPrecision;
+
 
     public NewLatentLiabilityGibbs(
             TreeDataLikelihood treeDataLikelihood,
             LatentTruncation LatentLiability, CompoundParameter tipTraitParameter, Parameter mask,
-            double weight, String traitName) {
+            double weight, String traitName, int maxAttempts) {
         super();
 
         this.latentLiability = LatentLiability;
@@ -91,22 +95,13 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
         this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
         this.mask = mask;
+        setupmask();
+        this.fcdMean = new double[dim];
+        this.fcdVaraince = new double[dim][dim];
+        this.fcdPrecision = new double[dim][dim];
 
-//        dontUpdate = new int[dim];
-//        doUpdate = new int[dim];
+        this.maxAttempts = maxAttempts;
 
-//        if (mask != null) {
-//            for (int i = 0; i < dim; i++) {
-//                if (mask.getParameterValue(i) == 0.0) {
-//                    dontUpdate[numFixed] = i;
-//                    numFixed++;
-//                } else {
-//                    doUpdate[numUpdate] = i;
-//                    numUpdate++;
-//                }
-//
-//            }
-//        }
         setWeight(weight);
     }
 
@@ -122,7 +117,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         final List<WrappedMeanPrecision> allStatistics = fullConditionalDensity.getTrait(treeModel, node);
         final WrappedMeanPrecision statistic = allStatistics.get(0);
 
-        double logq = sampleNode2(node, statistic);
+        double logq = sampleNode(node, statistic);
         tipTraitParameter.fireParameterChangedEvent();
         return logq;
     }
@@ -133,13 +128,22 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     }
 
     private void setNodeTrait(NodeRef node, double[] traitValue) {
+
         int index = node.getNumber();
-        for (int i = 0; i < dim; i++) {
-            tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[i]);
+        if (maskIndices == null) {
+            for (int i = 0; i < dim; i++) {
+                tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[i]);
+            }
+        } else {
+            int j = 0;
+            for (int i : maskIndices.missingIndices) {
+                tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[j]);
+                j++;
+            }
         }
     }
 
-    private double sampleNode2(NodeRef node, WrappedMeanPrecision statistics) {
+    private double sampleNode(NodeRef node, WrappedMeanPrecision statistics) {
 
         final int thisNumber = node.getNumber();
 
@@ -159,23 +163,24 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         fcdVaraince = (new Matrix(fcdPrecision)).inverse().toComponents();
 
-        addMaskIfNeeded(fcdMean, fcdVaraince);
+        MultivariateNormalDistribution fullDistribution = new MultivariateNormalDistribution(fcdMean, fcdPrecision);
+        MultivariateNormalDistribution drawDistribution;
+
+        if (maskIndices != null) {
+            addMaskIfNeeded();
+            drawDistribution = new MultivariateNormalDistribution(maskedMean, maskedPrecision);
+        } else {
+            drawDistribution = fullDistribution;
+        }
 
         double[] oldValue = getNodeTrait(node);
-        double[] value = new double[oldValue.length];
 
         int attempt = 0;
         boolean validTip = false;
 
-        MultivariateNormalDistribution distribution = new MultivariateNormalDistribution(fcdMean, fcdPrecision);
+        while (!validTip & attempt < maxAttempts) {
 
-        final int max = 10000;
-
-        while (!validTip & attempt < max) {
-
-            value = distribution.nextMultivariateNormal();
-
-            setNodeTrait(node, value);
+            setNodeTrait(node, drawDistribution.nextMultivariateNormal());
 
             if (latentLiability.validTraitForTip(thisNumber)) {
                 validTip = true;
@@ -183,27 +188,42 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             attempt++;
         }
 
-        if (attempt == max) {
+        if (attempt == maxAttempts) {
             return Double.NEGATIVE_INFINITY;
         }
 
-        double pOld = distribution.logPdf(oldValue);
+        double[] newValue = getNodeTrait(node);
 
-        double pNew = distribution.logPdf(value);
-
-        return pOld - pNew;
+        return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
     }
 
-    private void addMaskIfNeeded(double[] jointMean, double[][] jointVariance) {
+    private void addMaskIfNeeded() {
 
-        if (mask == null) {
-            return;
-        } else {
+        ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
+                new Matrix(fcdVaraince), maskIndices.missingIndices, maskIndices.notMissingIndex);
+
+        maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
+        maskedMean = cVarianceJoint.getConditionalMean(tipTraitParameter.getParameterValues(), 0, fcdMean, 0);
+    }
+
+    private int[] convertListToArray(List<Integer> listResult) { //todo this shouldn't be here...
+        int[] result = new int[listResult.size()];
+        int i = 0;
+        for (int num : listResult) {
+            result[i++] = num;
+        }
+        return result;
+    }
+
+    private void setupmask() {
+
+        if (mask != null) {
 
             List<Integer> missingIndex = new ArrayList<Integer>();
             List<Integer> notmissingIndex = new ArrayList<Integer>();
 
             for (int i = 0; i < dim; ++i) {
+
                 if (mask.getParameterValue(i) == 1.0) {
                     missingIndex.add(i);
                 } else {
@@ -214,28 +234,19 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             int[] cMissingJoint = convertListToArray(missingIndex);
             int[] cNotMissingJoint = convertListToArray(notmissingIndex);
 
-            double[] continousTraitValues = new double[cNotMissingJoint.length];
-
-            for (int i = 0; i < cNotMissingJoint.length; ++i) {
-                continousTraitValues[i] = tipTraitParameter.getParameterValue(i);//todo: check: put the current value - correct?
-            }
-
-            ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
-                    new Matrix(jointVariance), cMissingJoint, cNotMissingJoint);
-
-            fcdPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
-            fcdMean = cVarianceJoint.getConditionalMean(continousTraitValues, 0, jointMean, 0);
+            maskIndices = new MaskIndices(cMissingJoint, cNotMissingJoint);
         }
-
     }
 
-    private int[] convertListToArray(List<Integer> listResult) { //todo this shouldn't be here...
-        int[] result = new int[listResult.size()];
-        int i = 0;
-        for (int num : listResult) {
-            result[i++] = num;
+    protected class MaskIndices {
+
+        final int[] missingIndices;
+        final int[] notMissingIndex;
+
+        private MaskIndices(int[] latentindex, int[] contindex) {
+            this.missingIndices = latentindex;
+            this.notMissingIndex = contindex;
         }
-        return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -279,6 +290,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             TreeDataLikelihood traitModel = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             LatentTruncation LLModel = (LatentTruncation) xo.getChild(LatentTruncation.class);
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
+            int numAttempts = xo.getAttribute(MAX_ATTEMPTS, 100000);
 
             Parameter mask = null;
 
@@ -286,7 +298,8 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
                 mask = (Parameter) xo.getElementFirstChild(MASK);
             }
 
-            return new NewLatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, mask, weight, "latent");
+            return new NewLatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, mask, weight, "latent",
+                    numAttempts);
         }
 
         public String getParserDescription() {

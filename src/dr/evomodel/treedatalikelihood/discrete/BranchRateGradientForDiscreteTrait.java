@@ -119,7 +119,9 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         //Do single call to traitProvider with node == null (get full tree)
         double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
 
-        System.err.println(new WrappedVector.Raw(gradient));
+        if (DEBUG) {
+            System.err.println(new WrappedVector.Raw(gradient));
+        }
 
         int v =0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
@@ -207,7 +209,7 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         return sb.toString();
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     @Override
     public LogColumn[] getColumns() {

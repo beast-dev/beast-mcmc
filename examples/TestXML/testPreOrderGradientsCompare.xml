@@ -140,7 +140,7 @@
     <!-- throughout the time spanned by the genealogy.                           -->
     <constantSize id="constant" units="years">
         <populationSize>
-            <parameter id="constant.popSize" value="380.0" lower="0.0" upper="38000.0"/>
+            <parameter id="constant.popSize" value="380.0" lower="0.0"/>
         </populationSize>
     </constantSize>
 
@@ -172,12 +172,27 @@
         </nodeHeights>
     </treeModel>
 
+    <coalescentLikelihood id="coalescent">
+        <model>
+            <constantSize idref="constant"/>
+        </model>
+        <populationTree>
+            <treeModel idref="treeModelLong"/>
+        </populationTree>
+    </coalescentLikelihood>
+
     <arbitraryBranchRates id="branchRatesLong">
         <rates>
-            <parameter id="strict.rates" value="1.0" lower="0"/>
+            <parameter id="clock.rates" value="2.4E-5" lower="0"/>
         </rates>
         <treeModel idref="treeModelLong"/>
     </arbitraryBranchRates>
+
+    <!--<strictClockBranchRates id="branchRatesLong">-->
+        <!--<rate>-->
+            <!--<parameter id="clock.rates" value="2.3E-5" lower="0.0"/>-->
+        <!--</rate>-->
+    <!--</strictClockBranchRates>-->
 
     <!-- HKY -->
 
@@ -190,7 +205,7 @@
             </frequencyModel>
         </frequencies>
         <kappa>
-            <parameter id="hky85.kappa" value="1.0" lower="0.0" upper="100.0"/>
+            <parameter id="hky85.kappa" value="1.0" lower="0.0"/>
         </kappa>
     </hkyModel>
 
@@ -199,7 +214,7 @@
         <substitutionModel>
             <hkyModel idref="hky85"/>
         </substitutionModel>
-        <gammaShape gammaCategories="2">
+        <gammaShape gammaCategories="4">
             <parameter id="siteModel.alpha" value="0.5" lower="0.0"/>
         </gammaShape>
     </siteModel>
@@ -218,17 +233,17 @@
         <treeDataLikelihood idref="treeLikelihoodLong"/>
     </report>
 
-    <branchRateGradient id="branchRateGradientDiscreteLong" traitName="Sequence">
-        <treeDataLikelihood idref="treeLikelihoodLong"/>
-    </branchRateGradient>
+    <!--<branchRateGradient id="branchRateGradientDiscreteLong" traitName="Sequence">-->
+        <!--<treeDataLikelihood idref="treeLikelihoodLong"/>-->
+    <!--</branchRateGradient>-->
 
-    <report>
-        <branchRateGradient idref="branchRateGradientDiscreteLong"/>
-    </report>
+    <!--<report>-->
+        <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
+    <!--</report>-->
 
     <distributionLikelihood id="ratesPrior">
         <data>
-            <parameter idref="strict.rates"/>
+            <parameter idref="clock.rates"/>
         </data>
         <distribution>
             <logNormalDistributionModel meanInRealSpace="true">
@@ -242,67 +257,98 @@
         </distribution>
     </distributionLikelihood>
 
-    <!--Reference: testBranchGradientFull.xml in Alex Fisher's hmc_random_walk/xml/ folder-->
+    <!--Reference: old_benchmark-->
     <operators id="operators">
-
-        <scaleOperator scaleFactor="0.75" weight="2">
-                <parameter idref="strict.rates"/>
-        </scaleOperator>
-
         <scaleOperator scaleFactor="0.75" weight="1">
-            <parameter idref="diffusion.mean"/>
+            <parameter idref="hky85.kappa"/>
         </scaleOperator>
 
         <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="siteModel.alpha"/>
         </scaleOperator>
 
+        <scaleOperator scaleFactor="0.75" weight="30">
+            <parameter idref="clock.rates"/>
+        </scaleOperator>
 
-        <!--
-             <scaleOperator weight="1" scaleFactor="0.75">
-                 <parameter idref="actual.rates"/>
-             </scaleOperator>
-         -->
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="constant.popSize"/>
+        </scaleOperator>
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="treeModelLong.rootHeight"/>
+        </scaleOperator>
+        <uniformOperator weight="30">
+            <parameter idref="treeModelLong.internalNodeHeights"/>
+        </uniformOperator>
+
+        <subtreeSlide size="1.0" gaussian="true" weight="15">
+            <treeModel idref="treeModelLong"/>
+        </subtreeSlide>
+        <narrowExchange weight="15">
+            <treeModel idref="treeModelLong"/>
+        </narrowExchange>
+        <wideExchange weight="3">
+            <treeModel idref="treeModelLong"/>
+        </wideExchange>
+        <wilsonBalding weight="3">
+            <treeModel idref="treeModelLong"/>
+        </wilsonBalding>
     </operators>
 
-    <mcmc id="mcmc" chainLength="10000000">
+    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <distributionLikelihood idref="ratesPrior"/>
+                <coalescentLikelihood idref="coalescent"/>
+
                 <exponentialPrior offset="0" mean="1">
-                	<parameter idref="siteModel.alpha"/>
+                    <parameter idref="siteModel.alpha"/>
                 </exponentialPrior>
+
                 <exponentialPrior offset="0" mean="1">
-                	<parameter idref="diffusion.mean"/>
+                    <parameter idref="diffusion.mean"/>
+                </exponentialPrior>
+
+                <exponentialPrior offset="0" mean="1">
+                    <parameter idref="constant.popSize"/>
                 </exponentialPrior>
             </prior>
-            <!--0105-->
             <likelihood id="likelihood">
-                <treeDataLikelihood idref="treeLikelihoodLong"/>
+                <treeLikelihood idref="treeLikelihoodLong"/>
             </likelihood>
-            <!-- 0105 -->
-
         </posterior>
         <operators idref="operators"/>
-        <log logEvery="10">
+        <log id="screenLog" logEvery="100">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Root Height" sf="6" width="12">
+                <parameter idref="treeModelLong.rootHeight"/>
+            </column>
+            <column label="L(tree)" dp="4" width="12">
+                <treeLikelihood idref="treeLikelihoodLong"/>
+            </column>
+            <column label="clock.rate" sf="6" width="12">
+                <parameter idref="clock.rates"/>
+            </column>
+            <!--<column label="L(coalecent)" dp="4" width="12">-->
+                <!--<coalescentLikelihood idref="coalescent"/>-->
+            <!--</column>-->
+        </log>
+        <log id="fileLog" logEvery="1000" fileName="testPreOrderGradientsCompare.log">
             <posterior idref="posterior"/>
-            <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
-<!--
-                        <traitLogger traitName="derivative.Sequence" nodes="all">
-                            <treeDataLikelihood idref="treeLikelihoodLong"/>
-                            <treeModel idref="treeModelLong"/>
-                        </traitLogger>
- -->
-        </log>
-        <logTree logEvery="100" nexusFormat="true" fileName="testPreOrderGradients.trees">
-            <treeDataLikelihood idref="treeLikelihoodLong"/>
-            <treeModel idref="treeModelLong"/>
-        </logTree>
-        <log logEvery="100" fileName="testPreOrderGradientsCompare.log">
-            <parameter idref="strict.rates"/>
-            <parameter idref="diffusion.mean"/>
             <parameter idref="siteModel.alpha"/>
+            <parameter idref="clock.rates"/>
+            <parameter idref="constant.popSize"/>
+            <parameter idref="hky85.kappa"/>
+            <parameter idref="treeModelLong.rootHeight"/>
+            <treeLikelihood idref="treeLikelihoodLong"/>
+            <!--<coalescentLikelihood idref="coalescent"/>-->
         </log>
+        <logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testPreOrderGradientsCompare.trees">
+            <treeModel idref="treeModelLong"/>
+            <posterior idref="posterior"/>
+        </logTree>
     </mcmc>
 
     <traceAnalysis fileName="testPreOrderGradientsCompare.log"/>

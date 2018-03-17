@@ -341,7 +341,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
 
             //add in logger info for preOrder traversal
-            logger.info("  " + (usePreOrder ? "Using" : "Ignoring") + " preOrder traversals in tree likelihood.");
+            logger.info("  " + (usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 

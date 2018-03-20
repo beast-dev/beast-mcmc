@@ -25,6 +25,8 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.NodeRef;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
@@ -43,10 +45,11 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                  double weight, Options runtimeOptions, Parameter mask) {
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
+                                  double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
+        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask, patternList);
+        this.patternList = patternList;
     }
-    
+
     @Override
     public String getOperatorName() {
         return "Bouncy particle operator";
@@ -63,10 +66,10 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
             ReadableVector Phi_v = getPrecisionProduct(velocity);
 
-            double v_Phi_x = - innerProduct(velocity, gradient);
+            double v_Phi_x = -innerProduct(velocity, gradient);
             double v_Phi_v = innerProduct(velocity, Phi_v);
 
-            double tMin = Math.max(0.0, - v_Phi_x / v_Phi_v);
+            double tMin = Math.max(0.0, -v_Phi_x / v_Phi_v);
             double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
 
             double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);

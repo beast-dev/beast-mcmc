@@ -25,6 +25,7 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
@@ -47,8 +48,8 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
-                                    PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                    double weight, Options runtimeOptions, Parameter mask) {
+                             PrecisionMatrixVectorProductProvider multiplicationProvider,
+                             double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -57,9 +58,15 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
+        this.patternList = patternList;
 
         setWeight(weight);
         checkParameterBounds(parameter);
+        setMissingDataMask();
+
+    }
+
+    private void setMissingDataMask() {
     }
 
     @Override
@@ -227,4 +234,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final Parameter mask;
 
     Preconditioning preconditioning;
+    PatternList patternList;
+    WrappedVector missingDataMask;
 }

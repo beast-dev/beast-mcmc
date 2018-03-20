@@ -34,8 +34,6 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
-import java.util.regex.Pattern;
-
 /**
  * @author Aki Nishimura
  * @author Zhenyu Zhang

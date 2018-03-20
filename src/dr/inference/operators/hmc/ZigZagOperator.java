@@ -25,6 +25,7 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -32,6 +33,8 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+
+import java.util.regex.Pattern;
 
 /**
  * @author Aki Nishimura
@@ -44,9 +47,9 @@ public class ZigZagOperator extends AbstractParticleOperator {
     public ZigZagOperator(GradientWrtParameterProvider gradientProvider,
                           PrecisionMatrixVectorProductProvider multiplicationProvider,
                           PrecisionColumnProvider columnProvider,
-                          double weight, Options runtimeOptions, Parameter mask) {
+                          double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
 
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
+        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask, patternList);
         this.columnProvider = columnProvider;
     }
 
@@ -155,7 +158,9 @@ public class ZigZagOperator extends AbstractParticleOperator {
             this.remainingTime = remainingTime;
         }
 
-        boolean isTimeRemaining() { return remainingTime > 0.0; }
+        boolean isTimeRemaining() {
+            return remainingTime > 0.0;
+        }
 
         public String toString() {
             return "remainingTime : " + remainingTime + "\n" +
@@ -235,7 +240,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         for (int i = 0, len = momentum.length; i < len; i++) {
             int sign = (MathUtils.nextDouble() > 0.5) ? 1 : -1;
-            momentum[i] = sign *  MathUtils.nextExponential(1) * Math.sqrt(mass.get(i));
+            momentum[i] = sign * MathUtils.nextExponential(1) * Math.sqrt(mass.get(i));
         }
 
         if (mask != null) {

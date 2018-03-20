@@ -498,10 +498,15 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         //read number of nodes
                         int nodeCount = Integer.parseInt(fields[0]);
                         double[] nodeHeights = new double[nodeCount];
+                        String[] taxaNames = new String[(nodeCount+1)/2];
+
                         for (int i = 0; i < nodeCount; i++) {
                             line = in.readLine();
                             fields = line.split("\t");
                             nodeHeights[i] = Double.parseDouble(fields[1]);
+                            if (i < taxaNames.length) {
+                                taxaNames[i] = fields[2];
+                            }
                         }
 
                         //on to reading edge information
@@ -538,9 +543,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                                 }
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
-                                childOrder[i] = Integer.parseInt(fields[2]);
+                               // childOrder[i] = Integer.parseInt(fields[2]);
+                                childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
                                 for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                    traitValues[j][i] = Double.parseDouble(fields[3+j]);
+                                 //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
+                                    traitValues[j][Integer.parseInt(fields[0])] = Double.parseDouble(fields[3+j]);
                                 }
                             }
                         }
@@ -550,9 +557,12 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                             System.out.println("adopting tree structure");
                         }
 
-                        //adopt the loaded tree structure; this does not copy the traits on the branches
+                        //adopt the loaded tree structure;
                         ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder);
+                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
+                        if (traitModels.size() > 0) {
+                            ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
+                        }
                         ((TreeModel) model).endTreeEdit();
 
                         expectedTreeModelNames.remove(model.getModelName());

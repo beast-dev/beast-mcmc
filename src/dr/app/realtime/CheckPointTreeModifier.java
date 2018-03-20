@@ -49,6 +49,7 @@ public class CheckPointTreeModifier {
 
     public final static String TREE_UPDATE_OPTION = "JC69Distance";
     public final static Double EPSILON = 0.10;
+    public final static Double MIN_DIST = 0.00000001;
 
     public final static boolean CURRENT_APPROACH = true;
 
@@ -444,6 +445,9 @@ public class CheckPointTreeModifier {
                 System.out.println("\nclosest Taxon: " + closest + " with original height: " + closest.getHeight());
                 //get the distance between these two taxa
                 double distance = choice.getDistance(treeModel.getNodeTaxon(newTaxon), closest);
+                if(distance == 0.0){
+                    distance = MIN_DIST;
+                }
                 System.out.println("at distance: " + distance);
                 //TODO what if distance == 0.0 ??? how to choose closest taxon then (in absence of geo info)?
                 //find the NodeRef for the closest Taxon (do not rely on node numbering)

@@ -49,7 +49,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     private final boolean reciprocal;
     private final boolean exp;
 
-    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, boolean reciprocal, boolean exp, boolean setRates) {
+    private final Parameter locationParameter;
+    private final Parameter scaleParameter;
+
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter,
+                                boolean reciprocal, boolean exp, boolean setRates, // TODO No multiple-boolean arguments
+                                Parameter locationParameter, Parameter scaleParameter) {
 
         super(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES);
 
@@ -74,6 +79,21 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
         this.reciprocal = reciprocal;
         this.exp = exp;
+
+        this.locationParameter = locationParameter;
+        this.scaleParameter = scaleParameter;
+
+        if (locationParameter != null) {
+            addVariable(locationParameter);
+        }
+
+        if (scaleParameter != null) {
+            addVariable(scaleParameter);
+        }
+
+        if ((reciprocal || exp) && (locationParameter != null || scaleParameter != null)) {
+            throw new RuntimeException("Not yet implemented");
+        }
     }
 
     public void setBranchRate(Tree tree, NodeRef node, double value) {
@@ -93,23 +113,128 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         return differential;
     }
 
+    private final double baseMeasureMu = getMuPhi(1.0); // TODO Depends on prior distribution
+    private final double baseMeasureSigma = getSigmaPhi(1.0); // TODO Depends on prior distribution
+
+    private double transformMu;
+    private double transformSigma;
+
+    private boolean transformKnown = false;
+
+    private void setupTransform() {
+        final double phi = scaleParameter.getParameterValue(0) * scaleParameter.getParameterValue(0);
+        transformMu = getMuPhi(phi);
+        transformSigma = getSigmaPhi(phi);
+    }
+
+    private double transform(double rate) {
+
+        // TODO Delegate depending on distribution
+        if (exp) {
+
+            if (scaleParameter != null) {
+                rate *= scaleParameter.getParameterValue(0);
+            }
+
+            rate = Math.exp(rate);
+
+        } else if (reciprocal) {
+
+            rate = 1.0 / rate;
+
+        } else {
+
+            if (scaleParameter != null) {
+
+                if (!transformKnown) {
+                    setupTransform();
+                    transformKnown = true;
+                }
+                
+                rate = logNormalTransform(rate, baseMeasureMu, baseMeasureSigma, transformMu, transformSigma);
+            }
+            
+        }
+
+        if (locationParameter != null) {
+            rate *= locationParameter.getParameterValue(0);
+        }
+
+        return rate;
+    }
+
+    private static double logNormalTransform(double baseDraw,
+                                             double baseMeasureMu, double baseMeasureSigma,
+                                             double transformMu, double transformSigma) {
+        return Math.exp(
+                (transformSigma / baseMeasureSigma) * (Math.log(baseDraw) - baseMeasureMu) + transformMu
+        );
+    }
+
+    private static double getMuPhi(double phi) {
+        return -0.5 * Math.log(1.0 + phi);
+    }
+
+    private static double getSigmaPhi(double phi) {
+        return Math.sqrt(Math.log(1.0 + phi));
+    }
+
     public double getBranchRate(final Tree tree, final NodeRef node) {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
-        double rate = rates.getNodeValue(tree, node);
+        double pre = rates.getNodeValue(tree, node);
 
-        if (exp) {
-            rate = Math.exp(rate);
+        double post = transform(pre);
+
+        if (DEBUG) {
+            System.err.println("Pre  : " + pre);
+            System.err.println("Post : " + post);
+            double average = averageRates(tree);
+            double variance = varianceRates(tree, average);
+            System.err.println("Avg  : " + average);
+            System.err.println("Var  : " + variance);
+            System.err.println();
+            System.exit(-1);
         }
-
-        if (reciprocal) {
-            rate = 1.0 / rate;
-        }
-
+        
         // else
-        return rate;
+        return post;
     }
+
+    private double averageRates(final Tree tree) {
+
+        double sum = 0.0;
+
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            NodeRef node = tree.getNode(i);
+
+            if (!tree.isRoot(node)) {
+                sum += transform(rates.getNodeValue(tree, node));
+            }
+        }
+
+        return sum / (tree.getNodeCount() - 1);
+    }
+
+    private double varianceRates(final Tree tree, double average) {
+
+        double sum = 0.0;
+
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            NodeRef node = tree.getNode(i);
+
+            if (!tree.isRoot(node)) {
+                double x = transform(rates.getNodeValue(tree, node));
+                sum += (x - average) * (x - average);
+            }
+        }
+
+        return sum / (tree.getNodeCount() - 1);
+    }
+
+    private static final boolean DEBUG = false;
+
 //
 //    public int getNodeNumberFromParameterIndex(int parameterIndex) {
 //        return rates.getNodeNumberFromParameterIndex(parameterIndex);
@@ -132,12 +257,19 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // Changes to rateParameter are handled by model changed events
+        if (variable == locationParameter || variable == scaleParameter) {
+            transformKnown = false;
+            fireModelChanged();
+        } else {
+            throw new RuntimeException("Unknown variable");
+        }
     }
 
     protected void storeState() {
     }
 
     protected void restoreState() {
+        transformKnown = false;
     }
 
     protected void acceptState() {

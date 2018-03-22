@@ -449,7 +449,6 @@ public class CheckPointTreeModifier {
                     distance = MIN_DIST;
                 }
                 System.out.println("at distance: " + distance);
-                //TODO what if distance == 0.0 ??? how to choose closest taxon then (in absence of geo info)?
                 //find the NodeRef for the closest Taxon (do not rely on node numbering)
                 NodeRef closestRef = null;
                 //careful with node numbering and subtract number of new taxa
@@ -465,33 +464,62 @@ public class CheckPointTreeModifier {
                 System.out.println("timeForDistance = " + timeForDistance);
                 //get parent node of branch that will be split
                 NodeRef parent = treeModel.getParent(closestRef);
+                //child node of branch that will be split (will be assigned value later)
+                NodeRef splitBranchChild;
 
                 //determine height of new node
                 double insertHeight;
                 if (treeModel.getNodeHeight(closestRef) == treeModel.getNodeHeight(newTaxon)) {
                     insertHeight = treeModel.getNodeHeight(closestRef) + timeForDistance / 2.0;
                     System.out.println("treeModel.getNodeHeight(closestRef) == treeModel.getNodeHeight(newTaxon): " + insertHeight);
+                    splitBranchChild = closestRef;
+
                     if (insertHeight >= treeModel.getNodeHeight(parent)) {
-                        insertHeight = treeModel.getNodeHeight(closestRef) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(closestRef));
+                        while (insertHeight >= treeModel.getNodeHeight(parent)) {
+                            if(treeModel.getParent(parent)==null){
+                                // Use this insertHeight value in case parent doesn't have parent
+                                // Otherwise, move up tree
+                                insertHeight = treeModel.getNodeHeight(splitBranchChild) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(splitBranchChild));
+                                break;
+                            }else{
+                                splitBranchChild = parent;
+                                parent = treeModel.getParent(splitBranchChild);
+                            }
+                        }
                     }
                 } else {
                     double remainder = (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon))) / 2.0;
                     if (remainder > 0) {
                         insertHeight = Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon)) + remainder;
                         System.out.println("remainder > 0: " + insertHeight);
+                        splitBranchChild = closestRef;
+
                         if (insertHeight >= treeModel.getNodeHeight(parent)) {
-                            insertHeight = treeModel.getNodeHeight(closestRef) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(closestRef));
+                            while (insertHeight >= treeModel.getNodeHeight(parent)) {
+                                if(treeModel.getParent(parent)==null){
+                                    // Use this insertHeight value in case parent doesn't have parent
+                                    // Otherwise, move up tree
+                                    insertHeight = treeModel.getNodeHeight(splitBranchChild) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(splitBranchChild));
+                                    break;
+                                }else {
+                                    splitBranchChild = parent;
+                                    parent = treeModel.getParent(splitBranchChild);
+                                }
+                            }
                         }
                     } else {
+                        // Come up with better way to handle this?
                         insertHeight = EPSILON * (treeModel.getNodeHeight(parent) - Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon)));
                         insertHeight += Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon));
                         System.out.println("remainder <= 0: " + insertHeight);
+                        splitBranchChild = closestRef;
                     }
                 }
 
                 System.out.println("insert at height: " + insertHeight);
                 //pass on all the necessary variables to a method that adds the new taxon to the tree
-                addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);
+               // addTaxonAlongBranch(newTaxon, parent, closestRef, insertHeight);
+                addTaxonAlongBranch(newTaxon, parent, splitBranchChild, insertHeight);
                 //option to print tree after each taxon addition
                 System.out.println("\nTree after adding taxon " + newTaxon + ":\n" + treeModel.toString());
                 //add newly added Taxon to list of current taxa
@@ -553,7 +581,7 @@ public class CheckPointTreeModifier {
     private void addTaxonAlongBranch(NodeRef newTaxon, NodeRef parentNode, NodeRef childNode, double insertHeight) {
         treeModel.beginTreeEdit();
 
-        //remove child node that correspondes to childNode argument
+        //remove child node that corresponds to childNode argument
         treeModel.removeChild(parentNode, childNode);
         //add a currently unused internal node as the new child node
         NodeRef internalNode = null;

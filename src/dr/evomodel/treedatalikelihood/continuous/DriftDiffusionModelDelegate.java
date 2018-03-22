@@ -86,6 +86,9 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
     public boolean hasDrift() { return true; }
 
     @Override
+    public boolean hasActualization() { return false; }
+
+    @Override
     protected double[] getDriftRates(int[] branchIndices, int updateCount) {
 
         final double[] drift = new double[updateCount * dim];  // TODO Reuse?
@@ -106,8 +109,9 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
         return drift;
     }
 
-    double[] getAccumulativeDrift(final NodeRef node) {
+    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean) {
         final double[] drift = new double[dim];
+        System.arraycopy(priorMean, 0, drift, 0, priorMean.length);
         recursivelyAccumulateDrift(node, drift);
         return drift;
     }

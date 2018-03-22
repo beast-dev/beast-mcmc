@@ -108,10 +108,22 @@ public class KroneckerOperation {
         }
     }
 
-    private static double[] makeIdentityMatrix(int dim) {
+    public static double[] makeIdentityMatrix(int dim) {
         double[] out = new double[dim * dim];
+        makeIdentityMatrix(dim, out);
+        return out;
+    }
+
+    public static void makeIdentityMatrix(int dim, double[] out) {
         for (int i = 0; i < dim; i++) {
             out[i * dim + i] = 1.0;
+        }
+    }
+
+    public static double[][] makeIdentityMatrixArray(int dim) {
+        double[][] out = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            out[i][i] = 1.0;
         }
         return out;
     }
@@ -120,6 +132,48 @@ public class KroneckerOperation {
         double[] out = new double[dim];
         Arrays.fill(out, 1.0);
         return out;
+    }
+
+    // Computes the Kronecker sum C of A (m-by-m) and B (n-by-n) [with matrices]
+    // C = A %x% I_n + I_m %x% B
+    public static double[][] sum(double[][] A, double[][] B) {
+        final int m = A.length;
+        final int n = B.length;
+        final int dim = m * n;
+
+        double[][] out = new double[dim][dim];
+        double[][] tmpA = new double[dim][dim];
+        double[][] tmpB = new double[dim][dim];
+        double[][] Im = makeIdentityMatrixArray(m);
+        double[][] In = makeIdentityMatrixArray(n);
+
+        sum(A, B, Im, In, tmpA, tmpB, out);
+        return out;
+    }
+
+    public static void sum(double[][] A, double[][] B,
+                           double[][] Im, double[][] In,
+                           double[][] tmpA, double[][] tmpB,
+                           double[][] C) {
+
+        final int m = A.length;
+        final int n = B.length;
+        final int dim = m * n;
+
+        if (C.length != dim || C[0].length != dim || A[0].length != m || B[0].length != n
+                || Im.length != m || Im[0].length != m || In.length != n || In[0].length != n
+                || tmpA.length != dim || tmpA[0].length != dim || tmpB.length != dim || tmpB[0].length != dim) {
+            throw new RuntimeException("Wrong dimensions in Kronecker sum");
+        }
+
+        product(A, In, tmpA);
+        product(Im, B, tmpB);
+
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                C[i][j] = tmpA[i][j] + tmpB[i][j];
+            }
+        }
     }
 
     // Computes the Kronecker product of A (m-by-n) and B (p-by-q)

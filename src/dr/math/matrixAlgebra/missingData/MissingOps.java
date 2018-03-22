@@ -510,6 +510,28 @@ public class MissingOps {
         }
     }
 
+    public static void weightedSumActualized(final double[] ipartial,
+                                             final int ibo,
+                                             final DenseMatrix64F Pi,
+                                             final double[] iactualization,
+                                             final int ido,
+                                             final double[] jpartial,
+                                             final int jbo,
+                                             final DenseMatrix64F Pj,
+                                             final double[] jactualization,
+                                             final int jdo,
+                                             final int dimTrait,
+                                             final double[] out) {
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            for (int h = 0; h < dimTrait; ++h) {
+                sum += iactualization[ido + g] * Pi.unsafe_get(g, h) * ipartial[ibo + h];
+                sum += jactualization[jdo + g] * Pj.unsafe_get(g, h) * jpartial[jbo + h];
+            }
+            out[g] = sum;
+        }
+    }
+
     public static void weightedAverage(final double[] ipartial,
                                        final int ibo,
                                        final DenseMatrix64F Pi,

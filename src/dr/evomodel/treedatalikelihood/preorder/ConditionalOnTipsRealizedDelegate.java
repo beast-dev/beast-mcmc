@@ -13,13 +13,16 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuousTraitDelegate {
 
     static final private boolean DEBUG = false;
 
     final protected int dimPartial;
-    final boolean hasNoDrift;
+//    final boolean hasNoDrift;
+    final boolean hasDrift;
+    final boolean hasActualization;
 
     public ConditionalOnTipsRealizedDelegate(String name,
                                              Tree tree,
@@ -38,16 +41,28 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
         tmpMean = new double[dimTrait];
 
-        this.hasNoDrift = ! likelihoodDelegate.getDiffusionProcessDelegate().hasDrift();
+//        this.hasNoDrift = ! likelihoodDelegate.getDiffusionProcessDelegate().hasDrift();
 
-        if (hasNoDrift) {
+        this.hasDrift = likelihoodDelegate.getDiffusionProcessDelegate().hasDrift();
+        this.hasActualization = likelihoodDelegate.getDiffusionProcessDelegate().hasActualization();
+        boolean hasDiagonalActualization = likelihoodDelegate.getDiffusionProcessDelegate().hasDiagonalActualization();
+
+        if (!hasDrift) {
             this.precisionBuffer = null;
             this.displacementBuffer = null;
             this.actualizationBuffer = null;
         } else {
             this.precisionBuffer = new double[dimTrait * dimTrait];
             this.displacementBuffer = new double[dimTrait];
-            this.actualizationBuffer = new double[dimTrait * dimTrait];
+            if (!hasActualization) {
+                this.actualizationBuffer = null;
+            } else {
+                if (hasDiagonalActualization) {
+                    this.actualizationBuffer = new double[dimTrait];
+                } else {
+                    this.actualizationBuffer = new double[dimTrait * dimTrait];
+                }
+            }
         }
     }
 
@@ -138,14 +153,23 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             System.err.println("Simulate for node " + nodeNumber);
         }
 
-        if (!hasNoDrift) {
-            cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer, actualizationBuffer);
+//        if (!hasNoDrift) {
+//            cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer, actualizationBuffer);
+//        }
+
+        if (hasDrift) {
+            cdi.getBranchPrecision(nodeMatrix, precisionBuffer);
+            cdi.getBranchDisplacement(nodeMatrix, displacementBuffer);
+        }
+
+        if (hasActualization) {
+            cdi.getBranchActualization(nodeMatrix, actualizationBuffer);
         }
 
         for (int trait = 0; trait < numTraits; ++trait) {
 
             simulateTraitForNode(nodeNumber, trait, offsetSample, offsetParent, offsetPartial, external, branchPrecision);
-            
+
             offsetSample += dimTrait;
             offsetParent += dimTrait;
             offsetPartial += dimPartial;
@@ -202,7 +226,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     }
 
     final ContinuousDataLikelihoodDelegate likelihoodDelegate;
-    final private ContinuousDiffusionIntegrator cdi;
+    final ContinuousDiffusionIntegrator cdi;
     final double[] partialNodeBuffer;
     final double[] partialPriorBuffer;
     final double[] precisionBuffer;

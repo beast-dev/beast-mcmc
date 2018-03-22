@@ -25,7 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
@@ -51,6 +50,14 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     double getInverseBranchLength(int bufferIndex); // TODO Get rid of inverse
 
     void getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
+
+    void getBranchPrecision(int bufferIndex, double[] precision);
+
+    void getBranchDisplacement(int bufferIndex, double[] displacement);
+
+    void getBranchActualization(int bufferIndex, double[] actualization);
+
+    void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement, double[] expectation);
 
     @SuppressWarnings("unused")
     void setPreOrderPartial(int bufferIndex, final double[] partial);
@@ -199,35 +206,75 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         public double getInverseBranchLength(int bufferIndex) {
             return 1.0 / branchLengths[bufferIndex * dimMatrix];
         }
-        
+
         @Override
         public void getBranchMatrices(int bufferIndex, double[] precision, double[] displacement, double[] actualization) {
+
             if (bufferIndex == -1) {
                 throw new IllegalArgumentException("Not yet implemented");
             }
 
-            int numberOfBranches = 1;
+            getBranchPrecision(bufferIndex, precision);
+            getBranchDisplacement(bufferIndex, displacement);
+            getBranchActualization(bufferIndex, actualization);
+        }
+
+        @Override
+        public void getBranchPrecision(int bufferIndex, double[] precision) {
+
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
 
             assert (precision != null);
-            assert (precision.length >= dimTrait * dimTrait * numberOfBranches);
+            assert (precision.length >= dimTrait * dimTrait);
 
-            assert (displacement != null);
-            assert (displacement.length >= dimTrait * numberOfBranches);
-
-            assert (actualization != null);
-            assert (actualization.length >= dimTrait * dimTrait * numberOfBranches);
-
-            // Fill in displacement
-            Arrays.fill(displacement, 0, dimTrait, 0.0);
-
-            // Get precision
             double scalar = getInverseBranchLength(bufferIndex);
             for (int i = 0; i < dimTrait * dimTrait; ++i) { // TODO Write generic function for WrappedVector?
                 precision[i] = scalar * diffusions[precisionOffset + i];
             }
+        }
+
+        @Override
+        public void getBranchDisplacement(int bufferIndex, double[] displacement) {
+
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            assert (displacement != null);
+            assert (displacement.length >= dimTrait);
+
+            Arrays.fill(displacement, 0, dimTrait, 0.0);
+        }
+
+        @Override
+        public void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement,
+                                         double[] expectation) {
+
+            assert (expectation != null);
+            assert (expectation.length >= dimTrait);
+
+            assert (parentValue != null);
+            assert (parentValue.length >= dimTrait);
+
+            System.arraycopy(parentValue, 0, expectation, 0, dimTrait);
+        }
+
+        @Override
+        public void getBranchActualization(int bufferIndex, double[] actualization) {
+
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
 
             // Fill in actualization
-            KroneckerOperation.makeIdentityMatrix(dimTrait, actualization);
+            assert (actualization != null);
+            assert (actualization.length >= dimTrait);
+
+            for (int i = 0; i < dimTrait; ++i) {
+                actualization[i] = 1.0;
+            }
         }
 
         @Override
@@ -245,7 +292,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     partial, 0,
                     getArrayLength(bufferIndex));
         }
-        
+
         private int getArrayStart(int bufferIndex) {
             return (bufferIndex == -1) ? 0 : dimPartial * bufferIndex;
         }

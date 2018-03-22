@@ -53,6 +53,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     private final Parameter scaleParameter;
 
     public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter,
+                                boolean reciprocal, boolean exp, boolean setRates) {
+        this(tree, rateParameter, reciprocal, exp, setRates, null, null);
+    }
+
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter,
                                 boolean reciprocal, boolean exp, boolean setRates, // TODO No multiple-boolean arguments
                                 Parameter locationParameter, Parameter scaleParameter) {
 

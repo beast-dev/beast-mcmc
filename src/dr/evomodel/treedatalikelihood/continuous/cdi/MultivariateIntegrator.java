@@ -56,9 +56,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     DenseMatrix64F matrix0;
     DenseMatrix64F matrix1;
-    DenseMatrix64F matrix2;
-    DenseMatrix64F matrix3;
-    DenseMatrix64F matrix4;
+    DenseMatrix64F matrixPip;
+    DenseMatrix64F matrixPjp;
+    DenseMatrix64F matrixPk;
     private DenseMatrix64F matrix5;
     private DenseMatrix64F matrix6;
 
@@ -70,9 +70,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         vector0 = new double[dimTrait];
         matrix0 = new DenseMatrix64F(dimTrait, dimTrait);
         matrix1 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix2 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix3 = new DenseMatrix64F(dimTrait, dimTrait);
-        matrix4 = new DenseMatrix64F(dimTrait, dimTrait);
+        matrixPip = new DenseMatrix64F(dimTrait, dimTrait);
+        matrixPjp = new DenseMatrix64F(dimTrait, dimTrait);
+        matrixPk = new DenseMatrix64F(dimTrait, dimTrait);
         matrix5 = new DenseMatrix64F(dimTrait, dimTrait);
         matrix6 = new DenseMatrix64F(dimTrait, dimTrait);
     }
@@ -143,19 +143,19 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
             // B. Inflate variance along sibling branch using matrix inversion
 //                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Vjp = matrix0;
+            final DenseMatrix64F Vjp = matrix1;
             CommonOps.add(Vj, vj, Vd, Vjp);
 
 //                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pjp = matrix1;
+            final DenseMatrix64F Pjp = matrixPjp;
             safeInvert(Vjp, Pjp, false);
 
 //                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pip = matrix2;
+            final DenseMatrix64F Pip = matrixPip;
             CommonOps.add(Pk, Pjp, Pip);
 
 //                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Vip = matrix3;
+            final DenseMatrix64F Vip = matrix0;
             safeInvert(Pip, Vip, false);
 
             // C. Compute prePartial mean
@@ -185,7 +185,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             CommonOps.add(vi, Vd, Vip, Vi);
 
 //                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pi = matrix4;
+            final DenseMatrix64F Pi = matrixPk;
             safeInvert(Vi, Pi, false);
 
             // X. Store precision results for node
@@ -305,8 +305,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
 //                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pip = matrix2;
-            final DenseMatrix64F Pjp = matrix3;
+            final DenseMatrix64F Pip = matrixPip;
+            final DenseMatrix64F Pjp = matrixPjp;
 
             InversionResult ci = safeInvert(Vip, Pip, true);
             InversionResult cj = safeInvert(Vjp, Pjp, true);
@@ -322,7 +322,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final double lpk = lpip + lpjp;
 
 //                final DenseMatrix64F Pk = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F Pk = matrix4;
+            final DenseMatrix64F Pk = matrixPk;
 
             CommonOps.add(Pip, Pjp, Pk);
 
@@ -459,7 +459,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
                 int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
                         - ck.getEffectiveDimension();
-                
+
                 remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
 //                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
                         (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
@@ -473,8 +473,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //                    System.err.println("\t\t\tSSk = " + (SSk));
                     System.err.println("\t\t\tSS = " + (SS));
                     System.err.println("\t\t\tdetI = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetJ = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetK = " + Math.log(ci.getDeterminant()));
+                    System.err.println("\t\t\tdetJ = " + Math.log(cj.getDeterminant()));
+                    System.err.println("\t\t\tdetK = " + Math.log(ck.getDeterminant()));
                     System.err.println("\t\tremainder: " + remainder);
                 }
 

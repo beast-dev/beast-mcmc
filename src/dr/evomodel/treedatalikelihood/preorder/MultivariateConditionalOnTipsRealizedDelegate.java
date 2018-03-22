@@ -14,6 +14,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOnTipsRealizedDelegate {
 
@@ -130,7 +131,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 //    }
 //
 
-    private final static boolean NEW_TIP_WITH_NO_DATA = true;
+    private final static boolean NEW_TIP_WITH_NO_DATA = true; //TODO: What does this do ?
 
     private void simulateTraitForExternalNode(final int nodeIndex,
                                               final int traitIndex,
@@ -150,27 +151,29 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
             final int zeroCount = countZeroDiagonals(P0);
             if (zeroCount == dimTrait) { //  All missing completely at random
+                //TODO: This is N(X_pa(j), l_j V_root). Why not N(X_pa(j), V_branch) ?
 
                 final double sqrtScale = Math.sqrt(1.0 / branchPrecision);
 
                 if (NEW_TIP_WITH_NO_DATA) {
 
-                    final ReadableVector parentSample = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+//                    final ReadableVector parentSample = new WrappedVector.Raw(sample, offsetParent, dimTrait);
 
                     final ReadableVector M;
-                    if (hasNoDrift) {
-                        M = parentSample;
-                    } else {
-                        M = getMeanWithDrift(parentSample,
-                                new WrappedVector.Raw(displacementBuffer, 0, dimTrait));
-                    }
+                    M = getMeanBranch(offsetParent);
+//                    if (hasNoDrift) {
+//                        M = parentSample;
+//                    } else {
+//                        M = getMeanWithDrift(parentSample,
+//                                new WrappedVector.Raw(displacementBuffer, 0, dimTrait));
+//                    }
 
                     MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                             M, // input mean
                             new WrappedMatrix.ArrayOfArray(cholesky), sqrtScale, // input variance
                             new WrappedVector.Raw(sample, offsetSample, dimTrait),
                             tmpEpsilon);
-                    
+
                 } else {
 
                     // TODO Drift?
@@ -197,8 +200,9 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     final int[] observed = indices.getComplement();
                     final int[] missing = indices.getArray();
 
-                    final DenseMatrix64F V1 = new DenseMatrix64F(dimTrait, dimTrait);
-                    CommonOps.scale(1.0 / branchPrecision, Vd, V1);
+                    final DenseMatrix64F V1 = getVarianceBranch(branchPrecision);
+//                    final DenseMatrix64F V1 = new DenseMatrix64F(dimTrait, dimTrait);
+//                    CommonOps.scale(1.0 / branchPrecision, Vd, V1);
 
                     ConditionalVarianceAndTransform2 transform =
                             new ConditionalVarianceAndTransform2(
@@ -216,12 +220,12 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
                     final DenseMatrix64F cP2 = new DenseMatrix64F(missing.length, missing.length);
                     final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
-                    CommonOps.add(cP0, cP1, cP2);
+                    CommonOps.add(cP0, cP1, cP2); //TODO: Shouldn't P0 = 0 always in this situation ?
 
                     safeInvert(cP2, cV2, false);
 
                     // TODO Drift?
-                    assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
+//                    assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
 
                     if (NEW_CHOLESKY) {
                         DenseMatrix64F cC2 = getCholeskyOfVariance(cV2, missing.length);
@@ -274,10 +278,22 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
     private final static boolean NEW_CHOLESKY = false;
 
-    private ReadableVector getMeanWithDrift(final ReadableVector mean,
-                                            final ReadableVector drift) {
-        return new ReadableVector.Sum(mean, drift);
+    ReadableVector getMeanBranch(int offsetParent) {
+        // Get parent value
+        final double[] parentSample = new double[dimTrait];
+        System.arraycopy(sample, offsetParent, parentSample, 0, dimTrait);
+
+        // Get expectation
+        final double[] expectation = new double[dimTrait];
+        cdi.getBranchExpectation(actualizationBuffer, parentSample, displacementBuffer, expectation);
+
+        return new WrappedVector.Raw(expectation, 0, dimTrait);
     }
+
+//    private ReadableVector getMeanWithDrift(final ReadableVector mean,
+//                                                 final ReadableVector drift) {
+//        return new ReadableVector.Sum(mean, drift);
+//    }
 
 //    private ReadableVector getMeanWithDrift(double[] mean, int offsetMean, double[] drift, int dim) {
 //        for (int i = 0;i < dim; ++i) {
@@ -292,24 +308,28 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                               final double branchPrecision) {
 
         if (!Double.isInfinite(branchPrecision)) {
+            // Here we simulate X_j | X_pa(j), Y
 
             final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
             final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
 
-            final ReadableVector parentSample = new WrappedVector.Raw(sample, offsetParent, dimTrait);
+//            final ReadableVector parentSample = new WrappedVector.Raw(sample, offsetParent, dimTrait);
 
             final ReadableVector M1;
             final DenseMatrix64F P1;
 
-            if (hasNoDrift) {
-                M1 = parentSample; // new WrappedVector.Raw(sample, offsetParent, dimTrait);
-                P1 = new DenseMatrix64F(dimTrait, dimTrait);
-                CommonOps.scale(branchPrecision, Pd, P1);
-            } else {
-                M1 = getMeanWithDrift(parentSample,
-                        new WrappedVector.Raw(displacementBuffer, 0, dimTrait)); //getMeanWithDrift(sample, offsetParent, displacementBuffer, dimTrait);
-                P1 = DenseMatrix64F.wrap(dimTrait, dimTrait, precisionBuffer);
-            }
+            M1 = getMeanBranch(offsetParent);
+            P1 = getPrecisionBranch(branchPrecision);
+
+//            if (hasNoDrift) {
+//                M1 = parentSample; // new WrappedVector.Raw(sample, offsetParent, dimTrait);
+//                P1 = new DenseMatrix64F(dimTrait, dimTrait);
+//                CommonOps.scale(branchPrecision, Pd, P1);
+//            } else {
+//                M1 = getMeanWithDrift(parentSample,
+//                        new WrappedVector.Raw(displacementBuffer, 0, dimTrait)); //getMeanWithDrift(sample, offsetParent, displacementBuffer, dimTrait);
+//                P1 = DenseMatrix64F.wrap(dimTrait, dimTrait, precisionBuffer);
+//            }
 
             final WrappedVector M2 = new WrappedVector.Raw(tmpMean, 0, dimTrait);
             final DenseMatrix64F P2 = new DenseMatrix64F(dimTrait, dimTrait);
@@ -376,5 +396,28 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             }
         }
         return true;
+    }
+
+    DenseMatrix64F getPrecisionBranch(double branchPrecision){
+        if (!hasDrift) {
+            DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.scale(branchPrecision, Pd, P1);
+            return P1;
+        } else {
+            return DenseMatrix64F.wrap(dimTrait, dimTrait, precisionBuffer);
+        }
+    }
+
+    DenseMatrix64F getVarianceBranch(double branchPrecision){
+        if (!hasDrift) {
+            final DenseMatrix64F V1 = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.scale(1.0 / branchPrecision, Vd, V1);
+            return V1;
+        } else {
+            DenseMatrix64F P = getPrecisionBranch(branchPrecision);
+            DenseMatrix64F V = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.invert(P, V);
+            return V;
+        }
     }
 }

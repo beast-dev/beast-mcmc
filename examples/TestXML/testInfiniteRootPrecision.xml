@@ -6,7 +6,7 @@
 			<attr name="X">10 11</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">NA 3</attr>
+			<attr name="X">1 3</attr>
 		</taxon>
 		<taxon id="C">
 			<attr name="X">2 4</attr>
@@ -42,7 +42,7 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="true">
+	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="false">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<traitParameter>

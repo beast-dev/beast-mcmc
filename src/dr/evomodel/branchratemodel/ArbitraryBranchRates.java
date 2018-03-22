@@ -107,6 +107,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
 
+        if (scaleParameter != null || locationParameter != null) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         double differential = exp ? 1.0 : getBranchRate(tree, node);
         
         if (reciprocal) {
@@ -188,57 +192,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
-        double pre = rates.getNodeValue(tree, node);
-
-        double post = transform(pre);
-
-        if (DEBUG) {
-            System.err.println("Pre  : " + pre);
-            System.err.println("Post : " + post);
-            double average = averageRates(tree);
-            double variance = varianceRates(tree, average);
-            System.err.println("Avg  : " + average);
-            System.err.println("Var  : " + variance);
-            System.err.println();
-            System.exit(-1);
-        }
-        
-        // else
-        return post;
+        double untransformedRate = rates.getNodeValue(tree, node);
+        return transform(untransformedRate);
     }
-
-    private double averageRates(final Tree tree) {
-
-        double sum = 0.0;
-
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            NodeRef node = tree.getNode(i);
-
-            if (!tree.isRoot(node)) {
-                sum += transform(rates.getNodeValue(tree, node));
-            }
-        }
-
-        return sum / (tree.getNodeCount() - 1);
-    }
-
-    private double varianceRates(final Tree tree, double average) {
-
-        double sum = 0.0;
-
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            NodeRef node = tree.getNode(i);
-
-            if (!tree.isRoot(node)) {
-                double x = transform(rates.getNodeValue(tree, node));
-                sum += (x - average) * (x - average);
-            }
-        }
-
-        return sum / (tree.getNodeCount() - 1);
-    }
-
-    private static final boolean DEBUG = false;
 
 //
 //    public int getNodeNumberFromParameterIndex(int parameterIndex) {

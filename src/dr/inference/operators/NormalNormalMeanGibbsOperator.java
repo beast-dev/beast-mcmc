@@ -92,7 +92,9 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
         double priorPrecision = 1.0 / prior.variance();
         double priorMean = prior.mean();
-        double likelihoodPrecision = 1.0 / likelihood.variance();
+        double likelihoodPrecision = (likelihood instanceof LogNormalDistributionModel) ?
+                ((LogNormalDistributionModel)likelihood).getPrecision() :
+                1.0 / likelihood.variance();
 
         double total = 0;
         int n = 0;

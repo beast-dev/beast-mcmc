@@ -25,6 +25,7 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
@@ -36,7 +37,6 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
-import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
@@ -48,8 +48,8 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
-                                    PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                    double weight, Options runtimeOptions, Parameter mask) {
+                             PrecisionMatrixVectorProductProvider multiplicationProvider,
+                             double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -58,9 +58,15 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
+        this.patternList = patternList;
 
         setWeight(weight);
         checkParameterBounds(parameter);
+        setMissingDataMask();
+
+    }
+
+    private void setMissingDataMask() {
     }
 
     @Override
@@ -91,38 +97,18 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return preconditioning.totalTravelTime * randomFraction;
     }
 
-    void updateVelocity(WrappedVector velocity, WrappedVector gradient, ReadableVector mass) {
-
-        ReadableVector gDivM = new ReadableVector.Quotient(gradient, mass);
-
-        double vg = innerProduct(velocity, gradient);
-        double ggDivM = innerProduct(gradient, gDivM);
-
-        for (int i = 0, len = velocity.getDim(); i < len; ++i) {
-            velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
-        }
-    }
-
-    void updateGradient(WrappedVector gradient, double time, ReadableVector Phi_v) {
+    static void updateGradient(WrappedVector gradient, double time, ReadableVector action) {
         for (int i = 0, len = gradient.getDim(); i < len; ++i) {
-            gradient.set(i, gradient.get(i) - time * Phi_v.get(i));
+            gradient.set(i, gradient.get(i) - time * action.get(i));
         }
     }
 
-    void updatePosition(WrappedVector position, WrappedVector velocity, double time) {
+    static void updatePosition(WrappedVector position, WrappedVector velocity, double time) {
         for (int i = 0, len = position.getDim(); i < len; ++i) {
             position.set(i, position.get(i) + time * velocity.get(i));
         }
     }
 
-    @SuppressWarnings("all")
-    protected double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
-        double a = v_phi_v / 2;
-        double b = v_phi_x;
-        double c = u_min - MathUtils.nextExponential(1);
-        return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
-    }
-    
     WrappedVector getInitialGradient() {
 
         double[] gradient = gradientProvider.getGradientLogDensity();
@@ -132,6 +118,15 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
 
         return new WrappedVector.Raw(gradient);
+    }
+
+    void applyMask(WrappedVector vector) {
+
+        assert (vector.getDim() == mask.getDimension());
+
+        for (int i = 0, dim = vector.getDim(); i < dim; ++i) {
+            vector.set(i, vector.get(i) * mask.getParameterValue(i));
+        }
     }
 
     void applyMask(double[] vector) {
@@ -156,50 +151,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new WrappedVector.Raw(product);
     }
 
-    WrappedVector drawInitialVelocity() {
-
-        ReadableVector mass = preconditioning.mass;
-        double[] velocity = new double[mass.getDim()];
-
-        for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
-        }
-
-        if (mask != null) {
-            applyMask(velocity);
-        }
-
-        return new WrappedVector.Raw(velocity);
-    }
-
-    MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
-
-        assert (position.getDim() == velocity.getDim());
-
-        int index = -1;
-        double minTime = Double.MAX_VALUE;
-
-        for (int i = 0, len = position.getDim(); i < len; ++i) {
-
-            double travelTime = Math.abs(position.get(i) / velocity.get(i));
-
-            if (travelTime > 0.0 && headingAwayFromBoundary(position.get(i), velocity.get(i))) {
-
-                if (travelTime < minTime) {
-                    index = i;
-                    minTime = travelTime;
-                }
-            }
-        }
-
-        return new MinimumTravelInformation(minTime, index);
-    }
-
-    boolean headingAwayFromBoundary(double position, double velocity) {
+    static boolean headingTowardsBoundary(double position, double velocity) {
         return position * velocity < 0.0;
     }
 
-    WrappedVector getInitialPosition() {
+    private WrappedVector getInitialPosition() {
         return new WrappedVector.Raw(parameter.getParameterValues());
     }
 
@@ -214,7 +170,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    Preconditioning setupPreconditioning() {
+    private Preconditioning setupPreconditioning() {
 
         double[] mass = new double[parameter.getDimension()];
         Arrays.fill(mass, 1.0);
@@ -229,19 +185,23 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         );
     }
 
-    boolean shouldUpdatePreconditioning() {
+    private boolean shouldUpdatePreconditioning() {
         return runtimeOptions.preconditioningUpdateFrequency > 0
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
     protected class MinimumTravelInformation {
 
-        final double minTime;
-        final int minIndex;
+        final double time;
+        final int index;
 
-        private MinimumTravelInformation(double minTime, int minIndex) {
-            this.minTime = minTime;
-            this.minIndex = minIndex;
+        MinimumTravelInformation(double minTime, int minIndex) {
+            this.time = minTime;
+            this.index = minIndex;
+        }
+
+        public String toString() {
+            return "time = " + time + " @ " + index;
         }
     }
 
@@ -269,9 +229,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
-    final Parameter parameter;
+    private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
 
     Preconditioning preconditioning;
+    PatternList patternList;
+    WrappedVector missingDataMask;
 }

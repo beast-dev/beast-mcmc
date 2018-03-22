@@ -154,8 +154,8 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
                     System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
                     if (diffusionModel.getPrecisionParameter() instanceof CompoundSymmetricMatrix) {
                         CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix) diffusionModel.getPrecisionParameter();
-                        System.err.println("diagonals = " + new Vector(csMatrix.getDiagonals()));
-                        System.err.println("off diagonal = " + csMatrix.getOffDiagonal());
+//                        System.err.println("diagonals = " + new Vector(csMatrix.getDiagonals()));
+//                        System.err.println("off diagonal = " + csMatrix.getOffDiagonal());
                     }
                 }
             }

@@ -19,11 +19,92 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     public SafeMultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
                                       int diffusionCount) {
         super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
-        
+
+        allocateStorage();
+
         System.err.println("Trying SafeMultivariateIntegrator");
     }
 
+    private void allocateStorage() {
+
+        precisions = new double[dimTrait * dimTrait * bufferCount];
+        variances = new double[dimTrait * dimTrait * bufferCount];
+    }
+
     private static final boolean TIMING = false;
+
+    @Override
+    public void getBranchPrecision(int bufferIndex, double[] precision) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        assert (precision != null);
+        assert (precision.length >= dimTrait * dimTrait);
+
+        System.arraycopy(precisions, bufferIndex * dimTrait * dimTrait,
+                precision, 0, dimTrait * dimTrait);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// Setting variances, displacement and actualization vectors
+    ///////////////////////////////////////////////////////////////////////////
+
+    public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                final double[] edgeLengths, final double[] driftRates,
+                                                int updateCount) {
+
+        super.updateBrownianDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, driftRates, updateCount);
+
+        assert (diffusions != null);
+        assert (probabilityIndices.length >= updateCount);
+        assert (edgeLengths.length >= updateCount);
+
+        if (DEBUG) {
+            System.err.println("Matrices (safe):");
+        }
+
+        final int matrixSize = dimTrait * dimTrait;
+        final int unscaledOffset = matrixSize * precisionIndex;
+
+        if (TIMING) {
+            startTime("diffusion");
+        }
+
+        for (int up = 0; up < updateCount; ++up) {
+
+            if (DEBUG) {
+                System.err.println("\t" + probabilityIndices[up] + " <- " + edgeLengths[up]);
+            }
+
+            final double edgeLength = edgeLengths[up];
+
+            final int scaledOffset = matrixSize * probabilityIndices[up];
+
+            scale(diffusions, unscaledOffset, 1.0 / edgeLength, precisions, scaledOffset, matrixSize);
+            scale(inverseDiffusions, unscaledOffset, edgeLength, variances, scaledOffset, matrixSize); // TODO Only if necessary
+        }
+
+        if (TIMING) {
+            endTime("diffusion");
+        }
+    }
+
+    static void scale(final double[] source,
+                      final int sourceOffset,
+                      final double scale,
+                      final double[] destination,
+                      final int destinationOffset,
+                      final int length) {
+        for (int i = 0; i < length; ++i) {
+            destination[destinationOffset + i] = scale * source[sourceOffset + i];
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// Tree-traversal functions
+    ///////////////////////////////////////////////////////////////////////////
 
 //    @Override
 //    public void updatePreOrderPartial(
@@ -106,7 +187,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //            CommonOps.add(vi, Vd, Vip, Vi);
 //
 ////                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
-//            final DenseMatrix64F Pi = matrix4;
+//            final DenseMatrix64F Pi = matrixPk;
 //            InversionResult ci = safeInvert(Vi, Pi, false);
 //
 //            // X. Store precision results for node
@@ -130,6 +211,260 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //            kbo += dimPartialForTrait;
 //            ibo += dimPartialForTrait;
 //            jbo += dimPartialForTrait;
+//        }
+//    }
+
+//    @Override
+//    protected void updatePartial(
+//            final int kBuffer,
+//            final int iBuffer,
+//            final int iMatrix,
+//            final int jBuffer,
+//            final int jMatrix,
+//            final boolean incrementOuterProducts
+//    ) {
+//
+//        if (incrementOuterProducts) {
+//            throw new RuntimeException("Outer-products are not supported.");
+//        }
+//
+//        if (TIMING) {
+//            startTime("total");
+//        }
+//
+//        // Determine buffer offsets
+//        int kbo = dimPartial * kBuffer;
+//        int ibo = dimPartial * iBuffer;
+//        int jbo = dimPartial * jBuffer;
+//
+//        // Determine matrix offsets
+//        final int imo = dimMatrix * iMatrix;
+//        final int jmo = dimMatrix * jMatrix;
+//
+//        // Read variance increments along descendant branches of k
+//        final double vi = branchLengths[imo];
+//        final double vj = branchLengths[jmo];
+//
+//        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
+//        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
+//
+//        if (DEBUG) {
+//            System.err.println("variance diffusion: " + Vd);
+//            System.err.println("\tvi: " + vi + " vj: " + vj);
+//            System.err.println("precisionOffset = " + precisionOffset);
+//        }
+//
+//        // For each trait // TODO in parallel
+//        for (int trait = 0; trait < numTraits; ++trait) {
+//
+//            // Layout, offset, dim
+//            // trait, 0, dT
+//            // precision, dT, dT * dT
+//            // variance, dT + dT * dT, dT * dT
+//            // scalar, dT + 2 * dT * dT, 1
+//
+//            if (TIMING) {
+//                startTime("peel1");
+//            }
+//
+//            // Increase variance along the branches i -> k and j -> k
+//
+//            // A. Get current precision of i and j
+//            final double lpi = partials[ibo + dimTrait + 2 * dimTrait * dimTrait];
+//            final double lpj = partials[jbo + dimTrait + 2 * dimTrait * dimTrait];
+//
+//            final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+//            final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+//
+//            if (TIMING) {
+//                endTime("peel1");
+//                startTime("peel2");
+//            }
+//
+//            // B. Integrate along branch using two matrix inversions
+//            @SuppressWarnings("SpellCheckingInspection")
+//            final double lpip = Double.isInfinite(lpi) ?
+//                    1.0 / vi : lpi / (1.0 + lpi * vi);
+//            @SuppressWarnings("SpellCheckingInspection")
+//            final double lpjp = Double.isInfinite(lpj) ?
+//                    1.0 / vj : lpj / (1.0 + lpj * vj);
+//
+//            final DenseMatrix64F Pip = matrix2;
+//            final DenseMatrix64F Pjp = matrix3;
+//
+//            InversionResult ci;
+//            InversionResult cj;
+//
+//            final boolean iUseVariance = anyDiagonalInfinities(Pi);
+//            final boolean jUseVariance = anyDiagonalInfinities(Pj);
+//
+//            if (iUseVariance) {
+//
+//                final DenseMatrix64F Vip = matrix0;
+//                final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//                CommonOps.add(Vi, vi, Vd, Vip);
+//                ci = safeInvert(Vip, Pip, true);
+//
+//            } else {
+//
+//                final DenseMatrix64F PiPlusPd = matrix0;
+//                CommonOps.add(Pi, 1.0 / vi, Pd, PiPlusPd);
+//                final DenseMatrix64F PiPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
+//                safeInvert(PiPlusPd, PiPlusPdInv, false);
+//                CommonOps.mult(PiPlusPdInv, Pi, Pip);
+//                CommonOps.mult(Pi, Pip, PiPlusPdInv);
+//                CommonOps.add(Pi, -1, PiPlusPdInv, Pip);
+//                ci = safeDeterminant(Pip, false);
+//            }
+//            // Or ...
+////            InversionResult ci = computeBranchAdjustedPrecision(partials, ibo, Pi, Pd, Vd, vi, Pip);
+//
+//            if (jUseVariance) {
+//
+//                final DenseMatrix64F Vjp = matrix1;
+//                final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//                CommonOps.add(Vj, vj, Vd, Vjp);
+//                cj = safeInvert(Vjp, Pjp, true);
+//
+//            } else {
+//
+//                final DenseMatrix64F PjPlusPd = matrix1;
+//                CommonOps.add(Pj, 1.0 / vj, Pd, PjPlusPd);
+//                final DenseMatrix64F PjPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
+//                safeInvert(PjPlusPd, PjPlusPdInv, false);
+//                CommonOps.mult(PjPlusPdInv, Pj, Pjp);
+//                CommonOps.mult(Pj, Pjp, PjPlusPdInv);
+//                CommonOps.add(Pj, -1, PjPlusPdInv, Pjp);
+//                cj = safeDeterminant(Pjp, false);
+//            }
+//            // Or ...
+////            InversionResult cj = computeBranchAdjustedPrecision(partials,jbo, Pj, Pd, Vd, vj, Pjp);
+//
+//            if (TIMING) {
+//                endTime("peel2");
+//                startTime("peel2a");
+//            }
+//
+//            if (TIMING) {
+//                endTime("peel2a");
+//                startTime("peel3");
+//            }
+//
+//            // Compute partial mean and precision at node k
+//
+//            // A. Partial precision and variance (for later use) using one matrix inversion
+//            final double lpk = lpip + lpjp;
+//
+//            final DenseMatrix64F Pk = matrixPk;
+//            CommonOps.add(Pip, Pjp, Pk);
+//
+//            // B. Partial mean
+//
+//            if (TIMING) {
+//                endTime("peel3");
+//                startTime("peel4");
+//            }
+//
+////                final double[] tmp = new double[dimTrait];
+//            final double[] tmp = vector0;
+////            for (int g = 0; g < dimTrait; ++g) {
+////                double sum = 0.0;
+////                for (int h = 0; h < dimTrait; ++h) {
+////                    sum += Pip.unsafe_get(g, h) * partials[ibo + h];
+////                    sum += Pjp.unsafe_get(g, h) * partials[jbo + h];
+////                }
+////                tmp[g] = sum;
+////            }
+//            weightedSum(partials, ibo, Pip, partials, jbo, Pjp, dimTrait, tmp);
+//
+//
+////            for (int g = 0; g < dimTrait; ++g) {
+////                double sum = 0.0;
+////                for (int h = 0; h < dimTrait; ++h) {
+////                    sum += Vk.unsafe_get(g, h) * tmp[h];
+////                }
+////                partials[kbo + g] = sum;
+////            }
+//
+//            final WrappedVector kPartials = new WrappedVector.Raw(partials, kbo, dimTrait);
+//            final WrappedVector wrapTmp = new WrappedVector.Raw(tmp, 0, dimTrait);
+//
+//            InversionResult ck = safeSolve(Pk, wrapTmp, kPartials, true);
+//
+//            if (TIMING) {
+//                endTime("peel4");
+//                startTime("peel5");
+//            }
+//
+//            // C. Store precision
+//            partials[kbo + dimTrait + 2 * dimTrait * dimTrait] = lpk;
+//
+//            unwrap(Pk, partials, kbo + dimTrait);
+//
+//            if (TIMING) {
+//                endTime("peel5");
+//            }
+//
+//            if (DEBUG) {
+//                reportMeansAndPrecisions(trait, ibo, jbo, kbo, Pi, Pj, Pk);
+//            }
+//
+//            // Computer remainder at node k
+//            double remainder = 0.0;
+//
+//            if (DEBUG) {
+//                reportInversions(ci, cj, ck, Pip, Pjp);
+//
+//            }
+//
+//            if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
+//
+//                if (TIMING) {
+//                    startTime("remain");
+//                }
+//
+//                // Inner products
+//                double SS = weightedThreeInnerProduct(
+//                        partials, ibo, Pip,
+//                        partials, jbo, Pjp,
+//                        partials, kbo, Pk,
+//                        dimTrait);
+//
+//                int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
+//                        - ck.getEffectiveDimension();
+//
+//                remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
+//                        (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
+//                        - 0.5 * SS;
+//
+//                // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
+//
+//                if (DEBUG) {
+//                    System.err.println("\t\t\tDetI = " + Math.log(ci.getDeterminant()));
+//                    System.err.println("\t\t\tDetJ = " + Math.log(ci.getDeterminant()));
+//                    System.err.println("\t\t\tDetK = " + Math.log(ci.getDeterminant()));
+//                    System.err.println("\t\tremainder: " + remainder);
+//                }
+//
+//                if (TIMING) {
+//                    endTime("remain");
+//                }
+//
+//            } // End if remainder
+//
+//            // Accumulate remainder up tree and store
+//
+//            remainders[kBuffer * numTraits + trait] = remainder
+//                    + remainders[iBuffer * numTraits + trait] + remainders[jBuffer * numTraits + trait];
+//
+//            // Get ready for next trait
+//            kbo += dimPartialForTrait;
+//            ibo += dimPartialForTrait;
+//            jbo += dimPartialForTrait;
+//        }
+//
+//        if (TIMING) {
+//            endTime("total");
 //        }
 //    }
 
@@ -157,20 +492,27 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = dimTrait * dimTrait * iMatrix;
+        final int jmo = dimTrait * dimTrait * jMatrix;
+
+        // Determine diagonal matrix offsets
+        final int ido = dimTrait * iMatrix;
+        final int jdo = dimTrait * jMatrix;
 
         // Read variance increments along descendant branches of k
-        final double vi = branchLengths[imo];
-        final double vj = branchLengths[jmo];
+        final DenseMatrix64F Vdi = wrap(variances, imo, dimTrait, dimTrait);
+        final DenseMatrix64F Vdj = wrap(variances, jmo, dimTrait, dimTrait);
+
+        final DenseMatrix64F Pdi = wrap(precisions, imo, dimTrait, dimTrait); // TODO Only if needed
+        final DenseMatrix64F Pdj = wrap(precisions, jmo, dimTrait, dimTrait); // TODO Only if needed
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
-        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
 
         if (DEBUG) {
             System.err.println("variance diffusion: " + Vd);
-            System.err.println("\tvi: " + vi + " vj: " + vj);
             System.err.println("precisionOffset = " + precisionOffset);
+            System.err.println("\tVdi: " + Vdi);
+            System.err.println("\tVdj: " + Vdj);
         }
 
         // For each trait // TODO in parallel
@@ -182,142 +524,38 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             // variance, dT + dT * dT, dT * dT
             // scalar, dT + 2 * dT * dT, 1
 
-            if (TIMING) {
-                startTime("peel1");
-            }
-
             // Increase variance along the branches i -> k and j -> k
 
-            // A. Get current precision of i and j
-            final double lpi = partials[ibo + dimTrait + 2 * dimTrait * dimTrait];
-            final double lpj = partials[jbo + dimTrait + 2 * dimTrait * dimTrait];
+            final DenseMatrix64F Pip = matrixPip;
+            final DenseMatrix64F Pjp = matrixPjp;
 
-            final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
 
-            if (TIMING) {
-                endTime("peel1");
-                startTime("peel2");
-            }
-
-            // B. Integrate along branch using two matrix inversions
-            @SuppressWarnings("SpellCheckingInspection")
-            final double lpip = Double.isInfinite(lpi) ?
-                    1.0 / vi : lpi / (1.0 + lpi * vi);
-            @SuppressWarnings("SpellCheckingInspection")
-            final double lpjp = Double.isInfinite(lpj) ?
-                    1.0 / vj : lpj / (1.0 + lpj * vj);
-
-            final DenseMatrix64F Pip = matrix2;
-            final DenseMatrix64F Pjp = matrix3;
-
-            InversionResult ci;
-            InversionResult cj;
-
-            final boolean iUseVariance = anyDiagonalInfinities(Pi);
-            final boolean jUseVariance = anyDiagonalInfinities(Pj);
-
-            if (iUseVariance) {
-
-                final DenseMatrix64F Vip = matrix0;
-                final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-                CommonOps.add(Vi, vi, Vd, Vip);
-                ci = safeInvert(Vip, Pip, true);
-
-            } else {
-
-                final DenseMatrix64F PiPlusPd = matrix0;
-                CommonOps.add(Pi, 1.0 / vi, Pd, PiPlusPd);
-                final DenseMatrix64F PiPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
-                safeInvert(PiPlusPd, PiPlusPdInv, false);
-                CommonOps.mult(PiPlusPdInv, Pi, Pip);
-                CommonOps.mult(Pi, Pip, PiPlusPdInv);
-                CommonOps.add(Pi, -1, PiPlusPdInv, Pip);
-                ci = safeDeterminant(Pip, false);
-            }
-            // Or ...
-//            InversionResult ci = computeBranchAdjustedPrecision(partials, ibo, Pi, Pd, Vd, vi, Pip);
-
-            if (jUseVariance) {
-
-                final DenseMatrix64F Vjp = matrix1;
-                final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-                CommonOps.add(Vj, vj, Vd, Vjp);
-                cj = safeInvert(Vjp, Pjp, true);
-
-            } else {
-
-                final DenseMatrix64F PjPlusPd = matrix1;
-                CommonOps.add(Pj, 1.0 / vj, Pd, PjPlusPd);
-                final DenseMatrix64F PjPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
-                safeInvert(PjPlusPd, PjPlusPdInv, false);
-                CommonOps.mult(PjPlusPdInv, Pj, Pjp);
-                CommonOps.mult(Pj, Pjp, PjPlusPdInv);
-                CommonOps.add(Pj, -1, PjPlusPdInv, Pjp);
-                cj = safeDeterminant(Pjp, false);
-            }
-            // Or ...
-//            InversionResult cj = computeBranchAdjustedPrecision(partials,jbo, Pj, Pd, Vd, vj, Pjp);
+            InversionResult ci = increaseVariances(ibo, Vdi, Pdi, Pip);
+            InversionResult cj = increaseVariances(jbo, Vdj, Pdj, Pjp);
 
             if (TIMING) {
                 endTime("peel2");
-                startTime("peel2a");
-            }
-
-            if (TIMING) {
-                endTime("peel2a");
                 startTime("peel3");
             }
 
             // Compute partial mean and precision at node k
 
             // A. Partial precision and variance (for later use) using one matrix inversion
-            final double lpk = lpip + lpjp;
-
-            final DenseMatrix64F Pk = matrix4;
-            CommonOps.add(Pip, Pjp, Pk);
-
-            // B. Partial mean
+            final DenseMatrix64F Pk = matrixPk;
+            computePartialPrecision(ido, jdo, imo, jmo, Pip, Pjp, Pk);
 
             if (TIMING) {
                 endTime("peel3");
-                startTime("peel4");
             }
 
-//                final double[] tmp = new double[dimTrait];
-            final double[] tmp = vector0;
-//            for (int g = 0; g < dimTrait; ++g) {
-//                double sum = 0.0;
-//                for (int h = 0; h < dimTrait; ++h) {
-//                    sum += Pip.unsafe_get(g, h) * partials[ibo + h];
-//                    sum += Pjp.unsafe_get(g, h) * partials[jbo + h];
-//                }
-//                tmp[g] = sum;
-//            }
-            weightedSum(partials, ibo, Pip, partials, jbo, Pjp, dimTrait, tmp);
-
-
-//            for (int g = 0; g < dimTrait; ++g) {
-//                double sum = 0.0;
-//                for (int h = 0; h < dimTrait; ++h) {
-//                    sum += Vk.unsafe_get(g, h) * tmp[h];
-//                }
-//                partials[kbo + g] = sum;
-//            }
-
-            final WrappedVector kPartials = new WrappedVector.Raw(partials, kbo, dimTrait);
-            final WrappedVector wrapTmp = new WrappedVector.Raw(tmp, 0, dimTrait);
-
-            InversionResult ck = safeSolve(Pk, wrapTmp, kPartials, true);
+            // B. Partial mean
+            InversionResult ck = partialMean(ibo, jbo, kbo, ido, jdo);
 
             if (TIMING) {
-                endTime("peel4");
                 startTime("peel5");
             }
 
             // C. Store precision
-            partials[kbo + dimTrait + 2 * dimTrait * dimTrait] = lpk;
-
             unwrap(Pk, partials, kbo + dimTrait);
 
             if (TIMING) {
@@ -325,6 +563,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             }
 
             if (DEBUG) {
+                final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
                 reportMeansAndPrecisions(trait, ibo, jbo, kbo, Pi, Pj, Pk);
             }
 
@@ -333,43 +573,55 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             if (DEBUG) {
                 reportInversions(ci, cj, ck, Pip, Pjp);
+            }
 
+            if (TIMING) {
+                startTime("remain");
             }
 
             if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
 
-                if (TIMING) {
-                    startTime("remain");
-                }
-
                 // Inner products
-                double SS = weightedThreeInnerProduct(
-                        partials, ibo, Pip,
-                        partials, jbo, Pjp,
-                        partials, kbo, Pk,
-                        dimTrait);
+                double SS = computeSS(ibo, Pip, jbo, Pjp, kbo, Pk, dimTrait);
 
-                int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
-                        - ck.getEffectiveDimension();
-
-                remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
-                        (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
-                        - 0.5 * SS;
-
-                // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
+                remainder += -0.5 * SS;
 
                 if (DEBUG) {
-                    System.err.println("\t\t\tDetI = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tDetJ = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tDetK = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\tremainder: " + remainder);
+                    System.err.println("\t\t\tSS = " + (SS));
                 }
-
-                if (TIMING) {
-                    endTime("remain");
-                }
-
             } // End if remainder
+
+            int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
+                    - ck.getEffectiveDimension();
+
+            remainder += -dimensionChange * LOG_SQRT_2_PI;
+
+            double deti = 0;
+            double detj = 0;
+            double detk = 0;
+            if (!(ci.getReturnCode() == NOT_OBSERVED)) {
+                deti = Math.log(ci.getDeterminant()); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
+            }
+            if (!(cj.getReturnCode() == NOT_OBSERVED)) {
+                detj = Math.log(cj.getDeterminant());
+            }
+            if (!(ck.getReturnCode() == NOT_OBSERVED)) {
+                detk = Math.log(ck.getDeterminant());
+            }
+            remainder += -0.5 * (deti + detj + detk);
+
+            // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
+
+            if (DEBUG) {
+                System.err.println("\t\t\tdeti = " + Math.log(ci.getDeterminant()));
+                System.err.println("\t\t\tdetj = " + Math.log(cj.getDeterminant()));
+                System.err.println("\t\t\tdetk = " + Math.log(ck.getDeterminant()));
+                System.err.println("\t\tremainder: " + remainder);
+            }
+
+            if (TIMING) {
+                endTime("remain");
+            }
 
             // Accumulate remainder up tree and store
 
@@ -387,14 +639,92 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         }
     }
 
-    void reportInversions(InversionResult ci, InversionResult cj, InversionResult ck,
-                          DenseMatrix64F Pip, DenseMatrix64F Pjp) {
+    private void reportInversions(InversionResult ci, InversionResult cj, InversionResult ck,
+                                  DenseMatrix64F Pip, DenseMatrix64F Pjp) {
         System.err.println("i status: " + ci);
         System.err.println("j status: " + cj);
         System.err.println("k status: " + ck);
         System.err.println("Pip: " + Pip);
         System.err.println("Pjp: " + Pjp);
     }
+
+    private InversionResult increaseVariances(int ibo,
+                                              final DenseMatrix64F Vdi,
+                                              final DenseMatrix64F Pdi,
+                                              final DenseMatrix64F Pip) {
+        if (TIMING) {
+            startTime("peel1");
+        }
+
+        // A. Get current precision of i and j
+        final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+
+        if (TIMING) {
+            endTime("peel1");
+            startTime("peel2");
+        }
+
+        // B. Integrate along branch using two matrix inversions
+
+        final boolean useVariancei = anyDiagonalInfinities(Pi);
+        InversionResult ci;
+
+        if (useVariancei) {
+
+            final DenseMatrix64F Vip = matrix0;
+            final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
+            CommonOps.add(Vi, Vdi, Vip);
+            ci = safeInvert(Vip, Pip, true);
+
+        } else {
+
+            final DenseMatrix64F PiPlusPd = matrix0;
+//                CommonOps.add(Pi, 1.0 / vi, Pd, PiPlusPd); // TODO Fix
+            CommonOps.add(Pi, Pdi, PiPlusPd);
+            final DenseMatrix64F PiPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
+            safeInvert(PiPlusPd, PiPlusPdInv, false);
+            CommonOps.mult(PiPlusPdInv, Pi, Pip);
+            CommonOps.mult(Pi, Pip, PiPlusPdInv);
+            CommonOps.add(Pi, -1, PiPlusPdInv, Pip);
+            ci = safeDeterminant(Pip, false);
+        }
+
+        if (TIMING) {
+            endTime("peel2");
+        }
+
+        return ci;
+    }
+
+    void computePartialPrecision(int ido, int jdo, int imo, int jmo,
+                                 DenseMatrix64F Pip, DenseMatrix64F Pjp, DenseMatrix64F Pk) {
+        CommonOps.add(Pip, Pjp, Pk);
+    }
+
+    InversionResult partialMean(int ibo, int jbo, int kbo,
+                                int ido, int jdo) {
+        if (TIMING) {
+            startTime("peel4");
+        }
+
+        final double[] tmp = vector0;
+        weightedSum(partials, ibo, matrixPip, partials, jbo, matrixPjp, dimTrait, tmp);
+
+
+        final WrappedVector kPartials = new WrappedVector.Raw(partials, kbo, dimTrait);
+        final WrappedVector wrapTmp = new WrappedVector.Raw(tmp, 0, dimTrait);
+
+        InversionResult ck = safeSolve(matrixPk, wrapTmp, kPartials, true);
+
+        if (TIMING) {
+            endTime("peel4");
+            startTime("peel5");
+        }
+        return ck;
+    }
+
+
 
 //    private final Map<String, Long> startTimes = new HashMap<String, Long>();
 //
@@ -468,13 +798,25 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F PTotal = new DenseMatrix64F(dimTrait, dimTrait);
             CommonOps.invert(VTotal, PTotal);  // TODO Does this do anything?
 
-            final DenseMatrix64F tmp1 = new DenseMatrix64F(dimTrait, dimTrait);
-            final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
-            CommonOps.add(PRoot, PPrior, PTotal);
-            CommonOps.invert(PTotal, VTotal);
-            CommonOps.mult(VTotal, PRoot, tmp1);
-            CommonOps.mult(PRoot, tmp1, tmp2);
-            CommonOps.add(PRoot, -1.0, tmp2, PTotal);
+            final boolean useVariance = anyDiagonalInfinities(PRoot);
+            InversionResult ctot;
+
+            if (useVariance) {
+                final DenseMatrix64F Vroot = wrap(partials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+                final DenseMatrix64F VPrior = wrap(partials, priorOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+                CommonOps.add(Vroot, VPrior, VTotal);
+                ctot = safeInvert(VTotal, PTotal, true);
+            } else {
+                final DenseMatrix64F tmp1 = new DenseMatrix64F(dimTrait, dimTrait);
+                final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.add(PRoot, PPrior, PTotal);
+                safeInvert(PTotal, VTotal, false);
+                CommonOps.mult(VTotal, PRoot, tmp1);
+                CommonOps.mult(PRoot, tmp1, tmp2);
+                CommonOps.add(PRoot, -1.0, tmp2, PTotal);
+                ctot = safeDeterminant(PTotal, false);
+            }
+
 
 //            double SS = 0;
 //            for (int g = 0; g < dimTrait; ++g) {
@@ -491,9 +833,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                     partials, priorOffset,
                     PTotal, dimTrait);
 
-            final double logLike = -dimTrait * LOG_SQRT_2_PI
+            final double logLike = -ctot.getEffectiveDimension() * LOG_SQRT_2_PI
 //                    - 0.5 * Math.log(CommonOps.det(VTotal))
-                    + 0.5 * Math.log(CommonOps.det(PTotal))
+//                    + 0.5 * Math.log(CommonOps.det(PTotal))
+                    - 0.5 * Math.log(ctot.getDeterminant())
                     - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
@@ -540,6 +883,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 System.err.println("PPrior: " + PPrior);
                 System.err.println("PTotal: " + PTotal);
                 System.err.println("\t" + logLike + " " + (logLike + remainder));
+                System.err.println("\t" + remainder);
 
 //                if (incrementOuterProducts) {
 //                    System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
@@ -555,35 +899,48 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         }
     }
 
-    private InversionResult computeBranchAdjustedPrecision(final double[] partials,
-                                                           final int bo,
-                                                           final DenseMatrix64F P,
-                                                           final DenseMatrix64F Pd,
-                                                           final DenseMatrix64F Vd,
-                                                           final double v,
-                                                           final DenseMatrix64F Pp) {
-        InversionResult c;
-        if (anyDiagonalInfinities(P)) {
-            // Inflate variance
-            final DenseMatrix64F Vp = matrix0;
-            final DenseMatrix64F Vi = wrap(partials, bo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//    private InversionResult computeBranchAdjustedPrecision(final double[] partials,
+//                                                           final int bo,
+//                                                           final DenseMatrix64F P,
+//                                                           final DenseMatrix64F Pd,
+//                                                           final DenseMatrix64F Vd,
+//                                                           final double v,
+//                                                           final DenseMatrix64F Pp) {
+//        InversionResult c;
+//        if (anyDiagonalInfinities(P)) {
+//            // Inflate variance
+//            final DenseMatrix64F Vp = matrix0;
+//            final DenseMatrix64F Vi = wrap(partials, bo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//
+//            CommonOps.add(Vi, v, Vd, Vp);
+//            c = safeInvert(Vp, Pp, true);
+//        } else {
+//            // Deflate precision
+//            final DenseMatrix64F PPlusPd = matrix0;
+//            CommonOps.add(P, 1.0 / v, Pd, PPlusPd);
+//
+//            final DenseMatrix64F PPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
+//            safeInvert(PPlusPd, PPlusPdInv, false);
+//
+//            CommonOps.mult(PPlusPdInv, P, Pp);
+//            CommonOps.mult(P, Pp, PPlusPdInv);
+//            CommonOps.add(P, -1, PPlusPdInv, Pp);
+//            c = safeDeterminant(Pp, false);
+//        }
+//
+//        return c;
+//    }
 
-            CommonOps.add(Vi, v, Vd, Vp);
-            c = safeInvert(Vp, Pp, true);
-        } else {
-            // Deflate precision
-            final DenseMatrix64F PPlusPd = matrix0;
-            CommonOps.add(P, 1.0 / v, Pd, PPlusPd);
-
-            final DenseMatrix64F PPlusPdInv = new DenseMatrix64F(dimTrait, dimTrait);
-            safeInvert(PPlusPd, PPlusPdInv, false);
-
-            CommonOps.mult(PPlusPdInv, P, Pp);
-            CommonOps.mult(P, Pp, PPlusPdInv);
-            CommonOps.add(P, -1, PPlusPdInv, Pp);
-            c = safeDeterminant(Pp, false);
-        }
-
-        return c;
+    double computeSS(final int ibo,
+                     final DenseMatrix64F Pip,
+                     final int jbo,
+                     final DenseMatrix64F Pjp,
+                     final int kbo,
+                     final DenseMatrix64F Pk,
+                     final int dimTrait) {
+        return weightedThreeInnerProduct(partials, ibo, Pip,
+                partials, jbo, Pjp,
+                partials, kbo, Pk,
+                dimTrait);
     }
 }

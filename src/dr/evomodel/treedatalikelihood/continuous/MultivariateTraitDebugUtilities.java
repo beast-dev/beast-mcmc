@@ -29,6 +29,10 @@ import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.math.KroneckerOperation;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -146,33 +150,58 @@ public class MultivariateTraitDebugUtilities {
         }
     }
 
-    public static double[][] getTreeDrift(Tree tree, DiffusionProcessDelegate diffusion) {
+    public static double[][] getTreeDrift(Tree tree, double[] priorMean, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
         final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
         final double[][] drift = new double[tree.getExternalNodeCount()][dim];
 
-        if (diffusion instanceof DriftDiffusionModelDelegate) {
-            for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
-                drift[tip] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(
-                        tree.getExternalNode(tip));
-            }
+        for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
+            drift[tip] = diffusion.getAccumulativeDrift(tree.getExternalNode(tip), priorMean, cdi);
         }
 
         return drift;
     }
 
-    public static double[][] getGraphDrift(Tree tree, DiffusionProcessDelegate diffusion) {
+    public static double[][] getGraphDrift(Tree tree, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
         final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
         final double[][] drift = new double[tree.getNodeCount()][dim];
 
-        if (diffusion instanceof DriftDiffusionModelDelegate) {
-            for (int node = 0; node < tree.getNodeCount(); ++node) {
-                drift[node] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(
-                        tree.getNode(node));
-            }
+        final double[] temp = new double[dim];
+
+        for (int node = 0; node < tree.getNodeCount(); ++node) {
+            drift[node] = diffusion.getAccumulativeDrift(tree.getNode(node), temp, cdi);
         }
 
         return drift;
+    }
+
+    public static Matrix getJointVarianceFactor(final double priorSampleSize, double[][] treeVariance, double[][] treeSharedLengths,
+                                                double[][] loadingsVariance, double[][] diffusionVariance,
+                                                DiffusionProcessDelegate diffusionProcessDelegate,
+                                                Matrix Lt) {
+        if (!diffusionProcessDelegate.hasActualization()) {
+
+            double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeVariance, loadingsVariance);
+            Matrix loadingsFactorsVariance = new Matrix(jointVariance);
+            return loadingsFactorsVariance;
+
+        } else {
+
+            double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, diffusionVariance);
+
+            Matrix jointVarianceMatrix = new Matrix(jointVariance);
+
+            double[][] identity = KroneckerOperation.makeIdentityMatrixArray(treeSharedLengths[0].length);
+            Matrix loadingsTree = new Matrix(KroneckerOperation.product(identity, Lt.toComponents()));
+
+            Matrix loadingsFactorsVariance = null;
+            try {
+                loadingsFactorsVariance = loadingsTree.product(jointVarianceMatrix.product(loadingsTree.transpose()));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+            return loadingsFactorsVariance;
+        }
     }
 }

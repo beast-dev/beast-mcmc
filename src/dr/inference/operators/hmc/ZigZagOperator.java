@@ -25,6 +25,7 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -44,9 +45,9 @@ public class ZigZagOperator extends AbstractParticleOperator {
     public ZigZagOperator(GradientWrtParameterProvider gradientProvider,
                           PrecisionMatrixVectorProductProvider multiplicationProvider,
                           PrecisionColumnProvider columnProvider,
-                          double weight, Options runtimeOptions, Parameter mask) {
+                          double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
 
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
+        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask, patternList);
         this.columnProvider = columnProvider;
     }
 
@@ -58,34 +59,78 @@ public class ZigZagOperator extends AbstractParticleOperator {
     @Override
     double integrateTrajectory(WrappedVector position) {
 
+        String signString;
+        if (DEBUG_SIGN) {
+            signString = printSign(position);
+            System.err.println(signString);
+        }
+
         WrappedVector momentum = drawInitialMomentum();
         WrappedVector velocity = drawInitialVelocity(momentum);
         WrappedVector gradient = getInitialGradient();
-
-        WrappedVector Phi_v = getPrecisionProduct(velocity);
+        WrappedVector action = getPrecisionProduct(velocity);
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
 
+        int count = 0;
+
         while (bounceState.isTimeRemaining()) {
 
-            Bounce boundaryBounce = getNextBoundaryBounce(position, velocity, bounceState);
-            Bounce gradientBounce = getNextGradientBounce(Phi_v, gradient, momentum);
+            if (DEBUG) {
+                debugBefore(position, count);
+                ++count;
+            }
+
+            MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(position, velocity);
+            MinimumTravelInformation gradientBounce = getNextGradientBounce(action, gradient, momentum);
+
+            if (DEBUG) {
+                System.err.println("boundary: " + boundaryBounce);
+                System.err.println("gradient: " + gradientBounce);
+            }
 
             bounceState = doBounce(bounceState, boundaryBounce, gradientBounce,
-                    position, velocity, momentum, gradient, Phi_v);
+                    position, velocity, momentum, gradient, action);
+
+            if (DEBUG) {
+                debugAfter(bounceState, position);
+                String newSignString = printSign(position);
+                System.err.println(newSignString);
+
+                if (bounceState.type != Type.BOUNDARY && signString.compareTo(newSignString) != 0) {
+                    System.err.println("Sign error");
+                }
+            }
+        }
+
+        if (DEBUG_SIGN) {
+            printSign(position);
         }
 
         return 0.0;
     }
 
-    class Bounce {
-        final double time;
-        final int index;
-
-        Bounce(double time, int index) {
-            this.time = time;
-            this.index = index;
+    private String printSign(ReadableVector position) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < position.getDim(); ++i) {
+            double p = position.get(i);
+            if (p < 0.0) sb.append("- ");
+            else if (p > 0.0) sb.append("+ ");
+            else sb.append("0 ");
         }
+        return sb.toString();
+    }
+
+    private void debugAfter(BounceState bounceState, ReadableVector position) {
+        System.err.println("post position: " + position);
+        System.err.println(bounceState);
+        System.err.println();
+    }
+
+
+    private void debugBefore(ReadableVector position, int count) {
+        System.err.println("before number: " + count);
+        System.err.println("init position: " + position);
     }
 
     enum Type {
@@ -111,45 +156,48 @@ public class ZigZagOperator extends AbstractParticleOperator {
             this.remainingTime = remainingTime;
         }
 
-        boolean isTimeRemaining() { return remainingTime > 0.0; }
+        boolean isTimeRemaining() {
+            return remainingTime > 0.0;
+        }
+
+        public String toString() {
+            return "remainingTime : " + remainingTime + "\n" +
+                    "lastBounceType: " + type + " in dim: " + index;
+        }
     }
 
-    private Bounce getNextGradientBounce(ReadableVector Phi_v,
-                                 ReadableVector gradient,
-                                 ReadableVector momentum) {
+    private MinimumTravelInformation getNextGradientBounce(ReadableVector action,
+                                                           ReadableVector gradient,
+                                                           ReadableVector momentum) {
 
         double minimumRoot = Double.POSITIVE_INFINITY;
         int index = -1;
 
-        for (int i = 0, len = Phi_v.getDim(); i < len; ++i) {
-            double root = minimumPositiveRoot(Phi_v.get(i) / 2, -gradient.get(i), -momentum.get(i));
+        for (int i = 0, len = action.getDim(); i < len; ++i) {
+
+            double root = minimumPositiveRoot(action.get(i) / 2, -gradient.get(i), -momentum.get(i));
             if (root < minimumRoot) {
                 minimumRoot = root;
                 index = i;
-                // TODO double-check dependence on lastBounce
             }
         }
 
-        return new Bounce(minimumRoot, index);
+        return new MinimumTravelInformation(minimumRoot, index);
     }
 
-    private Bounce getNextBoundaryBounce(ReadableVector position,
-                                         ReadableVector velocity,
-                                         BounceState lastBounce) {
+    private MinimumTravelInformation getNextBoundaryBounce(ReadableVector position,
+                                                           ReadableVector velocity) {
 
-        final boolean checkIndex = lastBounce.type == Type.BOUNDARY;
 
         double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;
 
         for (int i = 0, len = position.getDim(); i < len; ++i) {
 
-            if (checkIndex && i == lastBounce.index) break;
-
             double x = position.get(i);
             double v = velocity.get(i);
 
-            if (headingAwayFromBoundary(x, v)) {
+            if (headingTowardsBoundary(x, v)) { // Also ensures x != 0.0
                 double time = Math.abs(x / v);
                 if (time < minimumTime) {
                     minimumTime = time;
@@ -158,9 +206,8 @@ public class ZigZagOperator extends AbstractParticleOperator {
             }
         }
 
-        return new Bounce(minimumTime, index);
+        return new MinimumTravelInformation(minimumTime, index);
     }
-
 
     private static double minimumPositiveRoot(double a,
                                               double b,
@@ -173,11 +220,11 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         double sqrtDiscriminant = Math.sqrt(discriminant);
 
-        double root = (-b - sqrtDiscriminant) / 2 / a;
-        if (root < 0.0) {
-            root = (-b + sqrtDiscriminant) / 2 / a;
+        double root = (-b - sqrtDiscriminant) / (2 * a);
+        if (root <= 0.0) {
+            root = (-b + sqrtDiscriminant) / (2 * a);
         }
-        if (root < 0.0) {
+        if (root <= 0.0) {
             root = Double.POSITIVE_INFINITY;
         }
 
@@ -191,7 +238,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         for (int i = 0, len = momentum.length; i < len; i++) {
             int sign = (MathUtils.nextDouble() > 0.5) ? 1 : -1;
-            momentum[i] = sign *  MathUtils.nextExponential(1) * Math.sqrt(mass.get(i));
+            momentum[i] = sign * MathUtils.nextExponential(1) * Math.sqrt(mass.get(i));
         }
 
         if (mask != null) {
@@ -199,7 +246,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
 
         return new WrappedVector.Raw(momentum);
-
     }
 
     private static int sign(double x) {
@@ -236,11 +282,11 @@ public class ZigZagOperator extends AbstractParticleOperator {
     }
 
     private BounceState doBounce(BounceState initialBounceState,
-                            Bounce boundaryBounce,
-                            Bounce gradientBounce,
-                            WrappedVector position, WrappedVector velocity,
-                            WrappedVector momentum,
-                            WrappedVector gradient, WrappedVector Phi_v) {
+                                 MinimumTravelInformation boundaryBounce,
+                                 MinimumTravelInformation gradientBounce,
+                                 WrappedVector position, WrappedVector velocity,
+                                 WrappedVector momentum,
+                                 WrappedVector gradient, WrappedVector action) {
 
         double remainingTime = initialBounceState.remainingTime;
         double eventTime = Math.min(boundaryBounce.time, gradientBounce.time);
@@ -249,13 +295,12 @@ public class ZigZagOperator extends AbstractParticleOperator {
         if (remainingTime < eventTime) { // No event during remaining time
 
             updatePosition(position, velocity, remainingTime);
-
             finalBounceState = new BounceState(Type.NONE, -1, 0.0);
 
         } else {
 
             updatePosition(position, velocity, eventTime);
-            updateMomentum(momentum, gradient, Phi_v, eventTime);
+            updateMomentum(momentum, gradient, action, eventTime);
 
             final Type eventType;
             final int eventIndex;
@@ -264,7 +309,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
                 eventType = Type.BOUNDARY;
                 eventIndex = boundaryBounce.index;
 
-                momentum.set(eventIndex, -momentum.get(eventIndex));
+                reflectMomentum(momentum, position, eventIndex);
 
             } else { // Bounce caused by the gradient
 
@@ -273,10 +318,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
             }
 
-            velocity.set(eventIndex, -velocity.get(eventIndex));
+            reflectVelocity(velocity, eventIndex);
 
-            updateGradient(gradient, eventTime, Phi_v);
-            updatePhiV(Phi_v, velocity, eventIndex);
+            updateGradient(gradient, eventTime, action);
+            updateAction(action, velocity, eventIndex);
 
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
         }
@@ -284,29 +329,54 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return finalBounceState;
     }
 
-    private void updatePhiV(WrappedVector Phi_v, ReadableVector velocity, int eventIndex) {
+    private void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
 
         ReadableVector column = getPrecisionColumn(eventIndex);
 
         double v = velocity.get(eventIndex);
-        for (int i = 0, len = Phi_v.getDim(); i < len; ++i) {
-            Phi_v.set(i,
-                    Phi_v.get(i) + 2 * v * column.get(i)
+        for (int i = 0, len = action.getDim(); i < len; ++i) {
+            action.set(i,
+                    action.get(i) + 2 * v * column.get(i)
             );
         }
+
+        if (mask != null) {
+            applyMask(action);
+        }
+    }
+
+    private static void reflectMomentum(WrappedVector momentum,
+                                        WrappedVector position,
+                                        int eventIndex) {
+
+        momentum.set(eventIndex, -momentum.get(eventIndex));
+        position.set(eventIndex, 0.0); // Exactly on boundary to avoid potential round-off error
+    }
+
+    private static void reflectVelocity(WrappedVector velocity,
+                                        int eventIndex) {
+
+        velocity.set(eventIndex, -velocity.get(eventIndex));
     }
 
     private void updateMomentum(WrappedVector momentum,
                                 ReadableVector gradient,
-                                ReadableVector Phi_v,
+                                ReadableVector action,
                                 double eventTime) {
 
         for (int i = 0, len = momentum.getDim(); i < len; ++i) {
             momentum.set(i,
-                    momentum.get(i) + eventTime * gradient.get(i) - eventTime * eventTime * Phi_v.get(i) / 2
+                    momentum.get(i) + eventTime * gradient.get(i) - eventTime * eventTime * action.get(i) / 2
             );
+        }
+
+        if (mask != null) {
+            applyMask(momentum);
         }
     }
 
     private final PrecisionColumnProvider columnProvider;
+
+    private final static boolean DEBUG = false;
+    private final static boolean DEBUG_SIGN = false;
 }

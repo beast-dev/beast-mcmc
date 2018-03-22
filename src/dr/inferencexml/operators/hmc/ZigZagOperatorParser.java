@@ -25,14 +25,19 @@
 
 package dr.inferencexml.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.hmc.BouncyParticleOperator;
+import dr.inference.operators.hmc.AbstractParticleOperator;
+import dr.inference.operators.hmc.ZigZagOperator;
 import dr.xml.*;
+
+import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseMask;
+import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRuntimeOptions;
 
 /**
  * @author Aki Nishimura
@@ -42,14 +47,11 @@ import dr.xml.*;
 
 public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
-    private final static String BPO_OPERATOR = "bouncyParticleOperator";
-    private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";
-    private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
-    private final static String MASKING = "mask";
+    private final static String ZIG_ZAG_PARSER = "zigZagOperator";
 
     @Override
     public String getParserName() {
-        return BPO_OPERATOR;
+        return ZIG_ZAG_PARSER;
     }
 
     @Override
@@ -65,39 +67,23 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
         PrecisionMatrixVectorProductProvider productProvider = (PrecisionMatrixVectorProductProvider)
                 xo.getChild(PrecisionMatrixVectorProductProvider.class);
 
-        Parameter mask = null;
-        if (xo.hasChildNamed(MASKING)) {
-            mask = (Parameter) xo.getElementFirstChild(MASKING);
-        }
+        PrecisionColumnProvider columnProvider = (PrecisionColumnProvider)
+                xo.getChild(PrecisionColumnProvider.class);
 
-        BouncyParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
+        Parameter mask = parseMask(xo);
+        AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
+        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions, mask);
-    }
-
-    private BouncyParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {
-
-        double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
-        int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
-
-        return new BouncyParticleOperator.Options(randomTimeWidth, updateFrequency);
+        return new ZigZagOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask, patternList);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return rules;
+        return XMLSyntaxRule.Utils.concatenate(BouncyParticleOperatorParser.rules, additionalRules);
     }
 
-    private final XMLSyntaxRule[] rules = {
-            AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
-            AttributeRule.newDoubleRule(RANDOM_TIME_WIDTH, true),
-            AttributeRule.newIntegerRule(UPDATE_FREQUENCY, true),
-            new ElementRule(GradientWrtParameterProvider.class),
-            new ElementRule(PrecisionMatrixVectorProductProvider.class),
-            new ElementRule(MASKING, new XMLSyntaxRule[] {
-                    new ElementRule(Parameter.class),
-            }, true),
+    private final XMLSyntaxRule[] additionalRules = {
+            new ElementRule(PrecisionColumnProvider.class),
     };
 
     @Override
@@ -107,6 +93,6 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return BouncyParticleOperator.class;
+        return ZigZagOperator.class;
     }
 }

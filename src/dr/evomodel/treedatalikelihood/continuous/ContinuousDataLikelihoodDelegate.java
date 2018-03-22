@@ -36,10 +36,7 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @version $Id$
  */
 
-import dr.evolution.tree.MutableTreeModel;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -125,7 +122,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 forceCompletelyObserved ?
                         PrecisionType.SCALAR :
                         dataModel.getPrecisionType();
-        
+
         this.rateTransformation = rateTransformation;
         this.tree = tree;
         this.rateModel = rateModel;
@@ -172,8 +169,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
-                    base = new SafeMultivariateWithDriftIntegrator(
+                if (diffusionProcessDelegate instanceof DiagonalOrnsteinUhlenbeckDiffusionModelDelegate) {
+                    base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
                             precisionType,
                             numTraits,
                             dimTrait,
@@ -181,8 +178,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                             matrixBufferCount
                     );
                 } else {
-                    if (allowSingular) {
-                        base = new SafeMultivariateIntegrator(
+                    if (diffusionProcessDelegate instanceof OrnsteinUhlenbeckDiffusionModelDelegate) {
+                        base = new SafeMultivariateActualizedWithDriftIntegrator(
                                 precisionType,
                                 numTraits,
                                 dimTrait,
@@ -190,16 +187,35 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                 matrixBufferCount
                         );
                     } else {
-                        base = new MultivariateIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
+                        if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
+                            base = new SafeMultivariateWithDriftIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount
+                            );
+                        } else {
+                            if (allowSingular) {
+                                base = new SafeMultivariateIntegrator(
+                                        precisionType,
+                                        numTraits,
+                                        dimTrait,
+                                        partialBufferCount,
+                                        matrixBufferCount
+                                );
+                            } else {
+                                base = new MultivariateIntegrator(
+                                        precisionType,
+                                        numTraits,
+                                        dimTrait,
+                                        partialBufferCount,
+                                        matrixBufferCount
+                                );
+                            }
+                        }
                     }
                 }
-
             } else {
                 throw new RuntimeException("Not yet implemented");
             }
@@ -246,14 +262,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 if (!checkDataAlignment(node, tree)) {
                     throw new TaxonList.MissingTaxonException("Missing taxon");
                 }
-            }            
+            }
 
             setAllTipData(dataModel.bufferTips());
 
             rootProcessDelegate.setRootPartial(cdi);
 
             updateDiffusionModel = true;
-            
+
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
@@ -275,7 +291,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public int getPartialBufferCount() { return partialBufferHelper.getBufferCount(); }
 
-    private double[][] getTreeVariance() {
+    public double[][] getTreeVariance() {
 
         final double normalization = rateTransformation.getNormalization();
         final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
@@ -284,12 +300,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 normalization, priorSampleSize);
     }
 
-    private double[][] getTreePrecision() {
+    public double[][] getTreePrecision() {
         Matrix precision = new Matrix(getTreeVariance()).inverse();
         return precision.toComponents();
     }
 
-    private double[][] getTraitVariance() {
+    public double[][] getTraitVariance() {
         Matrix variance = new Matrix(getDiffusionModel().getPrecisionmatrix()).inverse();
         return variance.toComponents();
     }
@@ -329,11 +345,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append(new Matrix(treeStructure));
         sb.append("\n\n");
 
+        double[][] treeSharedLengths = MultivariateTraitDebugUtilities.getTreeVariance(tree, callbackLikelihood.getBranchRateModel(),
+                rateTransformation.getNormalization(), Double.POSITIVE_INFINITY);
+
         double[][] treeVariance = getTreeVariance();
         double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
-        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+        double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());
 
         Matrix treeV = new Matrix(treeVariance);
         Matrix treeP = treeV.inverse();
@@ -352,17 +371,31 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append(new Matrix(jointVariance));
         sb.append("\n\n");
 
-        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, diffusionProcessDelegate);
+        double[] priorMean = rootPrior.getMean();
+        sb.append("prior mean: ").append(new dr.math.matrixAlgebra.Vector(priorMean));
+        sb.append("\n\n");
+
+        sb.append("Joint variance:\n");
+        sb.append(new Matrix(jointVariance));
+        sb.append("\n\n");
+
+        sb.append("Joint precision:\n");
+        sb.append(new Matrix(getTreeTraitPrecision()));
+        sb.append("\n\n");
+
+        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, cdi, diffusionProcessDelegate);
+
         if (diffusionProcessDelegate.hasDrift()) {
-            sb.append("Tree drift:\n");
+            sb.append("Tree drift (including root mean):\n");
             sb.append(new Matrix(treeDrift));
             sb.append("\n\n");
         }
+
         double[] drift = KroneckerOperation.vectorize(treeDrift);
 
         final int datumLength = tipCount * dimTrait;
 
-        sb.append("Tree dim : ").append(treeVariance.length).append("\n");
+        sb.append("Tree dim : ").append(treeStructure.length).append("\n");
         sb.append("dimTrait : ").append(dimTrait).append("\n");
         sb.append("numTraits: ").append(numTraits).append("\n");
         sb.append("jVar dim : ").append(jointVariance.length).append("\n");
@@ -389,16 +422,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append(new Matrix(graphStructure));
         sb.append("\n\n");
 
-        double[] priorMean = rootPrior.getMean();
-        sb.append("prior mean: ").append(new dr.math.matrixAlgebra.Vector(priorMean));
-        sb.append("\n\n");
-
-        for (int index = 0; index < drift.length / dimTrait; ++index) {
-            for (int dim = 0; dim < dimTrait; ++dim) {
-                drift[index * dimTrait + dim] += priorMean[dim];
-            }
-        }
-
         for (int trait = 0; trait < numTraits; ++trait) {
             sb.append("Trait #").append(trait).append("\n");
 
@@ -421,7 +444,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double[] datum = rawDatum;
 
             double[] driftDatum = drift;
-            
+
             int[] notMissingIndices;
             if (missing.size() > 0) {
                 notMissingIndices = new int[datumLength - missing.size()];
@@ -464,13 +487,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             for (int tipTrait = dimTrait * tipCount; tipTrait < dimTrait * (2 * tipCount - 1); ++tipTrait) {
                 cMissingJoint[tipTrait - dimTrait * tipCount] = tipTrait;
             }
-            
+
             double[] rawDatumJoint = new double[dimTrait * (2 * tipCount - 1)];
             System.arraycopy(rawDatum, 0, rawDatumJoint, 0, rawDatum.length);
 
-            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, diffusionProcessDelegate);
+            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, cdi, diffusionProcessDelegate);
             double[] driftJoint = KroneckerOperation.vectorize(driftJointMatrix);
-            
+
             for (int idx = 0; idx < driftJoint.length / dimTrait; ++idx) {
                 for (int dim = 0; dim < dimTrait; ++dim) {
                     driftJoint[idx * dimTrait + dim] += priorMean[dim];
@@ -596,7 +619,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
         updateTipData.clear();
     }
-    
+
     private void setTipData(int tipIndex, boolean flip) {
         if (flip) {
             partialBufferHelper.flipOffset(tipIndex);
@@ -610,7 +633,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         cdi.setPostOrderPartial(partialBufferHelper.getOffsetIndex(tipIndex),
                 tipPartial);
     }
-    
+
     private boolean checkDataAlignment(NodeRef node, Tree tree) {
         int index = node.getNumber();
         Parameter traitParameter = dataModel.getParameter().getParameter(index);

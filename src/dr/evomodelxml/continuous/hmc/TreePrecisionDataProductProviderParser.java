@@ -83,7 +83,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
                                                                 ContinuousDataLikelihoodDelegate continuousData,
                                                                 String traitName) throws XMLParseException {
 
-        double roughTimeGuess = xo.getAttribute(TIME_GUESS, -1); // TODO This is bad; magic number, not checking
+        double roughTimeGuess = xo.getAttribute(TIME_GUESS, -1.0); // TODO This is bad; magic number, not checking
         int eigenvalueReplicates = xo.getAttribute(EIGENVALUE_REPLICATES, 1);
 
         String mode = xo.getAttribute(MODE, "linear");
@@ -105,7 +105,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(TRAIT_NAME),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newIntegerRule(THREAD_COUNT, true),
             AttributeRule.newDoubleRule(TIME_GUESS, true),

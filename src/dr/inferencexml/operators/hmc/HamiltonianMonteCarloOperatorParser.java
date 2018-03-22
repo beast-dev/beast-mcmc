@@ -49,6 +49,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String MODE = "mode";
     private final static String NUTS = "nuts";
     private final static String VANILLA = "vanilla";
+    private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
 
     @Override
     public String getParserName() {
@@ -72,6 +73,11 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
         int runMode = parseRunMode(xo);
 
+        double randomStepFraction = Math.abs(xo.getAttribute(RANDOM_STEP_FRACTION, 0.0));
+        if (randomStepFraction > 1) {
+            throw new XMLParseException("Random step count fraction must be < 1.0");
+        }
+
         CoercionMode coercionMode = CoercionMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
@@ -90,7 +96,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
-                    stepSize, nSteps, drawVariance);
+                    stepSize, nSteps, drawVariance, randomStepFraction);
         } else {
             return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
                     stepSize, nSteps, drawVariance);
@@ -109,6 +115,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(MODE, true),
+            AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
             new ElementRule(Parameter.class),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),

@@ -34,6 +34,12 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Allows branch rates to take on any double value
@@ -42,7 +48,7 @@ import dr.inference.model.Variable;
  * @author Marc A. Suchard
  * @author Alexei Drummond
  */
-public class ArbitraryBranchRates extends AbstractBranchRateModel {
+public class ArbitraryBranchRates extends AbstractBranchRateModel implements Citable {
 
     // The rates of each branch
     private final TreeParameterModel rates;
@@ -346,4 +352,28 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
             }
         }
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.MOLECULAR_CLOCK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Location-scale relaxed clock";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("X", "Ji"),
+                    new Author("P", "Lemey"),
+                    new Author("MA", "Suchard")
+            },
+            Citation.Status.IN_PREPARATION
+    );
 }

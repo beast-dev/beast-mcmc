@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.ArbitraryBranchRatesParser;
+import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -46,59 +47,36 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     // The rates of each branch
     private final TreeParameterModel rates;
     private final Parameter rateParameter;
-    private final boolean reciprocal;
-    private final boolean exp;
 
-    private final Parameter locationParameter;
-    private final Parameter scaleParameter;
+    private final BranchRateTransform transform;
 
-    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter,
-                                boolean reciprocal, boolean exp, boolean setRates) {
-        this(tree, rateParameter, reciprocal, exp, setRates, null, null);
-    }
-
-    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter,
-                                boolean reciprocal, boolean exp, boolean setRates, // TODO No multiple-boolean arguments
-                                Parameter locationParameter, Parameter scaleParameter) {
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
+                                boolean setRates) {
 
         super(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES);
 
+        this.transform = transform;
+        if (transform instanceof Model) {
+            addModel((Model)transform);
+        }
+
         if (setRates) {
-            double value = exp ? 0.0 : 1.0;
+            final double value = transform.center();
             for (int i = 0; i < rateParameter.getDimension(); i++) {
                 rateParameter.setValue(i, value);
             }
         }
+
         //Force the boundaries of rate
-        Parameter.DefaultBounds bounds = exp ?
-                new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
-                        rateParameter.getDimension()) :
-                new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0,
-                        rateParameter.getDimension());
+        double lower = transform.lower();
+        double upper = transform.upper();
+        Parameter.DefaultBounds bounds = new Parameter.DefaultBounds(upper, lower, rateParameter.getDimension());
         rateParameter.addBounds(bounds);
 
         this.rates = new TreeParameterModel(tree, rateParameter, false);
         this.rateParameter = rateParameter;
 
         addModel(rates);
-
-        this.reciprocal = reciprocal;
-        this.exp = exp;
-
-        this.locationParameter = locationParameter;
-        this.scaleParameter = scaleParameter;
-
-        if (locationParameter != null) {
-            addVariable(locationParameter);
-        }
-
-        if (scaleParameter != null) {
-            addVariable(scaleParameter);
-        }
-
-        if ((reciprocal || exp) && (locationParameter != null || scaleParameter != null)) {
-            throw new RuntimeException("Not yet implemented");
-        }
     }
 
     public void setBranchRate(Tree tree, NodeRef node, double value) {
@@ -106,100 +84,16 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     }
 
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
-
-        if (scaleParameter != null || locationParameter != null) {
-            throw new RuntimeException("Not yet implemented");
-        }
-
-        double differential = exp ? 1.0 : getBranchRate(tree, node);
-        
-        if (reciprocal) {
-            differential = -differential;
-        } else {
-            differential = 1 / differential;
-        }
-        
-        return differential;
-    }
-
-    private final double baseMeasureMu = getMuPhi(1.0); // TODO Depends on prior distribution
-    private final double baseMeasureSigma = getSigmaPhi(1.0); // TODO Depends on prior distribution
-
-    private double transformMu;
-    private double transformSigma;
-
-    private boolean transformKnown = false;
-
-    private void setupTransform() {
-        final double phi = scaleParameter.getParameterValue(0) * scaleParameter.getParameterValue(0);
-        transformMu = getMuPhi(phi);
-        transformSigma = getSigmaPhi(phi);
-    }
-
-    private double transform(double rate) {
-
-        // TODO Delegate depending on distribution
-        if (exp) {
-
-            if (scaleParameter != null) {
-                rate *= scaleParameter.getParameterValue(0);
-            }
-
-            rate = Math.exp(rate);
-
-        } else if (reciprocal) {
-
-            rate = 1.0 / rate;
-
-        } else {
-
-            if (scaleParameter != null) {
-
-                if (!transformKnown) {
-                    setupTransform();
-                    transformKnown = true;
-                }
-                
-                rate = logNormalTransform(rate, baseMeasureMu, baseMeasureSigma, transformMu, transformSigma);
-            }
-            
-        }
-
-        if (locationParameter != null) {
-            rate *= locationParameter.getParameterValue(0);
-        }
-
-        return rate;
-    }
-
-    private static double logNormalTransform(double baseDraw,
-                                             double baseMeasureMu, double baseMeasureSigma,
-                                             double transformMu, double transformSigma) {
-        return Math.exp(
-                (transformSigma / baseMeasureSigma) * (Math.log(baseDraw) - baseMeasureMu) + transformMu
-        );
-    }
-
-    private static double getMuPhi(double phi) {
-        return -0.5 * Math.log(1.0 + phi);
-    }
-
-    private static double getSigmaPhi(double phi) {
-        return Math.sqrt(Math.log(1.0 + phi));
+        return transform.differential(getBranchRate(tree, node));
     }
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
-        // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
-        double untransformedRate = rates.getNodeValue(tree, node);
-        return transform(untransformedRate);
-    }
+        // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision
 
-//
-//    public int getNodeNumberFromParameterIndex(int parameterIndex) {
-//        return rates.getNodeNumberFromParameterIndex(parameterIndex);
-//    }
+        return transform.transform(rates.getNodeValue(tree, node));
+    }
 
     public int getParameterIndexFromNode(final NodeRef node) {
         return rates.getParameterIndexFromNodeNumber(node.getNumber());
@@ -208,32 +102,248 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     public Parameter getRateParameter() { return rateParameter; }
 
     public boolean usingReciprocal() {
-        return reciprocal;
+        return (transform instanceof BranchRateTransform.Reciprocal);
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
-        // Should be called by TreeParameterModel
-        fireModelChanged(object, index);
-    }
-
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // Changes to rateParameter are handled by model changed events
-        if (variable == locationParameter || variable == scaleParameter) {
-            transformKnown = false;
+        if (model == rates) {
+            fireModelChanged(object, index);
+        } else if (model == transform) {
             fireModelChanged();
         } else {
-            throw new RuntimeException("Unknown variable");
+            throw new RuntimeException("Unknown model");
         }
     }
 
-    protected void storeState() {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }
+
+    protected void storeState() { }
+
+    protected void restoreState() { }
+
+    protected void acceptState() { }
+
+    public static BranchRateTransform make(boolean reciprocal, boolean exp) {
+        return make(reciprocal, exp, null, null);
     }
 
-    protected void restoreState() {
-        transformKnown = false;
+    public static BranchRateTransform make(boolean reciprocal, boolean exp,
+                                    Parameter location,
+                                    Parameter scale) {
+        final BranchRateTransform transform;
+
+        if ((reciprocal || exp) && (location != null || scale != null)) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        if (exp) {
+            transform = new BranchRateTransform.Exponentiate();
+        } else if (reciprocal) {
+            transform = new BranchRateTransform.Reciprocal();
+        } else {
+            if (location != null || scale != null) {
+                transform = new BranchRateTransform.LocationScaleLogNormal(
+                        ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, location, scale);
+            } else {
+                transform = new BranchRateTransform.None();
+            }
+        }
+        return transform;
     }
 
-    protected void acceptState() {
-    }
+    public interface BranchRateTransform {
 
+        double differential(double raw);  // TODO Correct name?  differentialOfInverse
+
+        double transform(double raw);
+
+        double center();
+
+        double lower();
+
+        double upper();
+
+        abstract class Base implements BranchRateTransform {
+            @Override
+            public double center() {
+                return 1.0;
+            }
+
+            @Override
+            public double lower() {
+                return 0.0;
+            }
+
+            @Override
+            public double upper() {
+                return Double.POSITIVE_INFINITY;
+            }
+        }
+
+        class None extends Base {
+
+            @Override
+            public double differential(double raw) {
+                return 1.0 / raw;
+            }
+
+            @Override
+            public double transform(double raw) {
+                return raw;
+            }
+        }
+
+        class Reciprocal extends Base {
+
+            @Override
+            public double differential(double raw) {
+                return -raw;
+            }
+
+            @Override
+            public double transform(double raw) {
+                return 1.0 / raw;
+            }
+        }
+
+        class Exponentiate implements BranchRateTransform {
+
+            @Override
+            public double differential(double raw) {
+                return 1.0;
+            }
+
+            @Override
+            public double transform(double raw) {
+                return Math.exp(raw);
+            }
+
+            @Override
+            public double center() {
+                return 0.0;
+            }
+
+            @Override
+            public double lower() {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            @Override
+            public double upper() {
+                return Double.POSITIVE_INFINITY;
+            }
+        }
+        
+        class LocationScaleLogNormal extends AbstractModel implements BranchRateTransform  {
+
+            private final Parameter location;
+            private final Parameter scale;
+
+            private final double baseMeasureMu = getMuPhi(1.0); // TODO Depends on prior distribution
+            private final double baseMeasureSigma = getSigmaPhi(1.0); // TODO Depends on prior distribution
+
+            private double transformMu;
+            private double transformSigma;
+
+            private boolean transformKnown;
+
+            LocationScaleLogNormal(String name, Parameter location, Parameter scale) {
+                super(name);
+
+                this.location = location;
+                this.scale = scale;
+
+                if (location != null) {
+                    addVariable(location);
+                }
+
+                addVariable(scale);
+
+                this.transformKnown = false;
+            }
+
+            @Override
+            public double differential(double rate) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            @Override
+            public double transform(double rate) {
+
+                if (!transformKnown) {
+                    setupTransform();
+                    transformKnown = true;
+                }
+
+                rate = logNormalTransform(rate, baseMeasureMu, baseMeasureSigma, transformMu, transformSigma);
+
+                if (location != null) {
+                    rate *= location.getParameterValue(0);
+                }
+
+                return rate;
+            }
+
+            @Override
+            public double center() {
+                return 1;
+            }
+
+            @Override
+            public double lower() {
+                return 0.0;
+            }
+
+            @Override
+            public double upper() {
+                return Double.POSITIVE_INFINITY;
+            }
+
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) { }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                if (variable == location || variable == scale) {
+                    transformKnown = false;
+                    fireModelChanged();
+                } else {
+                    throw new RuntimeException("Unknown variable");
+                }
+            }
+
+            @Override
+            protected void storeState() { }
+
+            @Override
+            protected void restoreState() {
+                transformKnown = false;
+            }
+
+            @Override
+            protected void acceptState() { }
+
+            private void setupTransform() {
+                final double phi = scale.getParameterValue(0) * scale.getParameterValue(0);
+                transformMu = getMuPhi(phi);
+                transformSigma = getSigmaPhi(phi);
+            }
+
+            private static double logNormalTransform(double baseDraw,
+                                                     double baseMeasureMu, double baseMeasureSigma,
+                                                     double transformMu, double transformSigma) {
+                return Math.exp(
+                        (transformSigma / baseMeasureSigma) * (Math.log(baseDraw) - baseMeasureMu) + transformMu
+                );
+            }
+
+            private static double getMuPhi(double phi) {
+                return -0.5 * Math.log(1.0 + phi);
+            }
+
+            private static double getSigmaPhi(double phi) {
+                return Math.sqrt(Math.log(1.0 + phi));
+            }
+        }
+    }
 }

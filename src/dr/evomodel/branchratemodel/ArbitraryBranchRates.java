@@ -89,8 +89,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         rates.setNodeValue(tree, node, value);
     }
 
-    public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
-        return transform.differential(getBranchRate(tree, node));
+    public double getBranchRateDifferential(double rate) {
+        return transform.differential(rate);
     }
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
@@ -159,7 +159,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     public interface BranchRateTransform {
 
-        double differential(double raw);  // TODO Correct name?  differentialOfInverse
+        double differential(double rate);
 
         double transform(double raw);
 
@@ -189,8 +189,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class None extends Base {
 
             @Override
-            public double differential(double raw) {
-                return 1.0 / raw;
+            public double differential(double rate) {
+                return 1.0;
             }
 
             @Override
@@ -202,8 +202,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class Reciprocal extends Base {
 
             @Override
-            public double differential(double raw) {
-                return -raw;
+            public double differential(double rate) {
+                return -rate * rate;
             }
 
             @Override
@@ -215,8 +215,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class Exponentiate implements BranchRateTransform {
 
             @Override
-            public double differential(double raw) {
-                return 1.0;
+            public double differential(double rate) {
+                return rate;
             }
 
             @Override
@@ -245,8 +245,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             private final Parameter location;
             private final Parameter scale;
 
-            private final double baseMeasureMu = getMuPhi(1.0); // TODO Depends on prior distribution
-            private final double baseMeasureSigma = getSigmaPhi(1.0); // TODO Depends on prior distribution
+            private final double baseMeasureMu;
+            private final double baseMeasureSigma;
 
             private double transformMu;
             private double transformSigma;
@@ -254,7 +254,16 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             private boolean transformKnown;
 
             LocationScaleLogNormal(String name, Parameter location, Parameter scale) {
+                this(name, location, scale, getMuPhi(1.0), getSigmaPhi(1.0));
+            }
+
+            LocationScaleLogNormal(String name, Parameter location, Parameter scale,
+                                   double baseMeasureMu, double baseMeasureSigma) {
+
                 super(name);
+
+                this.baseMeasureMu = baseMeasureMu;
+                this.baseMeasureSigma = baseMeasureSigma;
 
                 this.location = location;
                 this.scale = scale;
@@ -270,18 +279,28 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             @Override
             public double differential(double rate) {
-                throw new RuntimeException("Not yet implemented");
+
+                if (!transformKnown) {
+                    setupTransform();
+                    transformKnown = true;
+                }
+                
+                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
+                double raw = logNormalTransform(rate / multiplier,
+                        transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
+                
+                return (rate * transformSigma) / (raw * baseMeasureSigma);
             }
 
             @Override
-            public double transform(double rate) {
+            public double transform(double raw) {
 
                 if (!transformKnown) {
                     setupTransform();
                     transformKnown = true;
                 }
 
-                rate = logNormalTransform(rate, baseMeasureMu, baseMeasureSigma, transformMu, transformSigma);
+                double rate = logNormalTransform(raw, baseMeasureMu, baseMeasureSigma, transformMu, transformSigma);
 
                 if (location != null) {
                     rate *= location.getParameterValue(0);

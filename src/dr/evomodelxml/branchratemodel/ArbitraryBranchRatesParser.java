@@ -32,6 +32,8 @@ import dr.xml.*;
 
 import java.util.logging.Logger;
 
+import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
+
 /**
  */
 public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
@@ -74,8 +76,6 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() != numBranches) {
             rateCategoryParameter.setDimension(numBranches);
-//            throw new XMLParseException("Invalid length for '" + rateCategoryParameter.getId() + "'\n" +
-//            "Should have length = " + numBranches);
         }
 
         Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
@@ -83,9 +83,9 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood for sequence data");
         Logger.getLogger("dr.evomodel").info("  reciprocal = " + reciprocal);
 
-        return new ArbitraryBranchRates(tree, rateCategoryParameter,
-                reciprocal, exp, centerAtOne,
-                locationParameter, scaleParameter);
+        ArbitraryBranchRates.BranchRateTransform transform = make(reciprocal, exp, locationParameter, scaleParameter);
+
+        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
     }
 
     //************************************************************************

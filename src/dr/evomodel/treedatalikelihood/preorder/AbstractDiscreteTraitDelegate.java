@@ -242,8 +242,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                     }
                 }
 
-                final double branchLength = tree.getBranchLength(tree.getNode(nodeNum)); // TODO Delegate for rate models with multiple multipliers
-                gradient[index] *= branchLength;
+//                final double branchLength = tree.getBranchLength(tree.getNode(nodeNum)); // TODO Delegate for rate models with multiple multiplier
+//                gradient[index] *= branchLength;
                 index++;
             }
         }

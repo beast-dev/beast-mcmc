@@ -128,7 +128,9 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
-                result[destinationIndex] = gradient[v++];
+                final double rate = branchRateModel.getBranchRate(tree, node);
+                final double differential = branchRateModel.getBranchRateDifferential(rate);
+                result[destinationIndex] = gradient[v++] * differential * tree.getBranchLength(node);
             }
         }
 
@@ -209,7 +211,7 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         return sb.toString();
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     @Override
     public LogColumn[] getColumns() {

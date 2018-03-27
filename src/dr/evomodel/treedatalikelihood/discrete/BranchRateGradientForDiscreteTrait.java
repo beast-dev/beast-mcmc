@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
@@ -47,7 +48,7 @@ import static dr.math.MachineAccuracy.SQRT_EPSILON;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterProvider, Reportable, Loggable {
+public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
@@ -112,6 +113,11 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
     }
 
     @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return new double[0];
+    }
+
+    @Override
     public double[] getGradientLogDensity() {
 
         double[] result = new double[rateParameter.getDimension()];
@@ -119,9 +125,9 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         //Do single call to traitProvider with node == null (get full tree)
         double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
 
-        if (DEBUG) {
-            System.err.println(new WrappedVector.Raw(gradient));
-        }
+//        if (DEBUG) {
+//            System.err.println(new WrappedVector.Raw(gradient));
+//        }
 
         int v =0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
@@ -183,6 +189,9 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
     @Override
     public String getReport() {
+
+        treeDataLikelihood.makeDirty();
+
         double[] savedValues = rateParameter.getParameterValues();
         double[] testGradient = null;
 
@@ -207,6 +216,8 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
             sb.append("mumeric: too close to 0");
         }
         sb.append("\n");
+
+        treeDataLikelihood.makeDirty();
 
         return sb.toString();
     }

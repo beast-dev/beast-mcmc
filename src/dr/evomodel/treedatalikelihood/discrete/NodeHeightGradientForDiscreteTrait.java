@@ -61,7 +61,6 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
     private final TreeModel tree;
     private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
-    private Double[] nodeHeights;
 
     // TODO Refactor / remove code duplication with BranchRateGradient
     // TODO Maybe use:  AbstractBranchRateGradient, DiscreteTraitBranchRateGradient, ContinuousTraitBranchRateGradien
@@ -75,8 +74,6 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = (TreeModel) treeDataLikelihood.getTree();
         this.rateParameter = rateParameter;
-        this.nodeHeights = new Double[this.tree.getInternalNodeCount()];
-        getNodeHeights();
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
         this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;

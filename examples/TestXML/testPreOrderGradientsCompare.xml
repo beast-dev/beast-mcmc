@@ -136,28 +136,29 @@
         <alignment idref="alignmentLong"/>
     </patterns>
 
-    <!-- A prior assumption that the population size has remained constant       -->
-    <!-- throughout the time spanned by the genealogy.                           -->
+    <!--&lt;!&ndash; A prior assumption that the population size has remained constant       &ndash;&gt;-->
+    <!--&lt;!&ndash; throughout the time spanned by the genealogy.                           &ndash;&gt;-->
     <constantSize id="constant" units="years">
         <populationSize>
             <parameter id="constant.popSize" value="380.0" lower="0.0"/>
         </populationSize>
     </constantSize>
 
-    <!-- Generate a random starting tree under the coalescent process            -->
-    <coalescentTree id="startingTreeLong">
-        <taxa idref="taxaLong"/>
-        <constantSize idref="constant"/>
-    </coalescentTree>
+    <!--&lt;!&ndash;Generate a random starting tree under the coalescent process&ndash;&gt;-->
+    <!--<coalescentTree id="startingTreeLong">-->
+        <!--<taxa idref="taxaLong"/>-->
+        <!--<constantSize idref="constant"/>-->
+    <!--</coalescentTree>-->
 
-    <report>
-        <coalescentTree idref="startingTreeLong"/>
-    </report>
+    <!--<report>-->
+        <!--<coalescentTree idref="startingTreeLong"/>-->
+    <!--</report>-->
 
 
-    <!--<newick id="startingTreeLong">-->
-        <!--(((D4ElSal94:25.81403421468474,D4Indon76:7.814034214684739):244.56614874230695,(D4Brazi82:36.80326223293307,D4ElSal83:37.80326223293307):221.57692072405862):29.481672726408988,D4Indon77:282.8618556834007);-->
-    <!--</newick>-->
+    <newick id="startingTreeLong">
+    <!--(((D4ElSal94:25.81403421468474,D4Indon76:7.814034214684739):244.56614874230695,(D4Brazi82:36.80326223293307,D4ElSal83:37.80326223293307):221.57692072405862):29.481672726408988,D4Indon77:282.8618556834007);-->
+        (((D4Tahiti79:121.64256972309869,D4ElSal83:125.64256972309869):276.15381814384403,(((D4Thai78:5.357290453162822,D4NewCal81:8.357290453162822):73.29206151707947,(D4Brazi82:29.650230415687787,(D4Thai84:4.177729080926932,D4Philip84:4.177729080926932):27.472501334760857):52.999121554554506):80.8685390872532,D4Tahiti85:166.5178910574955):237.27849680944723):383.7475827416806,((D4Thai63:554.3663090231738,(D4PRico86:49.042686290706094,D4Philip56:19.042686290706094):528.3236227324677):158.36915707883077,((D4ElSal94:78.37248218386311,((D4Indon76:5.953824456258175,D4Indon77:6.953824456258175):18.35023582027174,D4SLanka78:26.304060276529917):36.068421907333196):40.57189876319946,(D4Philip64:31.372281359595696,D4Mexico84:51.372281359595696):57.57209958746687):624.791085154942):52.80850450661876);
+    </newick>
 
     <treeModel id="treeModelLong">
         <coalescentTree idref="startingTreeLong"/>
@@ -181,17 +182,23 @@
         </populationTree>
     </coalescentLikelihood>
 
-    <arbitraryBranchRates id="branchRatesLong">
+    <arbitraryBranchRates id="branchRatesLong" centerAtOne="false">
         <rates>
-            <parameter id="clock.rates" value="2.4E-5" lower="0"/>
+            <parameter id="clock.rates" value="1" lower="0"/>
         </rates>
+        <scale>
+            <parameter id="clock.rates.scale" lower="0.0" value="1.0"/>
+        </scale>
+        <location>
+            <parameter id="clock.rates.location" lower="0.0" value="1E-3"/>
+        </location>
         <treeModel idref="treeModelLong"/>
     </arbitraryBranchRates>
 
     <!--<strictClockBranchRates id="branchRatesLong">-->
-        <!--<rate>-->
-            <!--<parameter id="clock.rates" value="2.3E-5" lower="0.0"/>-->
-        <!--</rate>-->
+    <!--<rate>-->
+    <!--<parameter id="clock.rates" value="2.3E-5" lower="0.0"/>-->
+    <!--</rate>-->
     <!--</strictClockBranchRates>-->
 
     <!-- HKY -->
@@ -233,13 +240,19 @@
         <treeDataLikelihood idref="treeLikelihoodLong"/>
     </report>
 
-    <!--<branchRateGradient id="branchRateGradientDiscreteLong" traitName="Sequence">-->
-        <!--<treeDataLikelihood idref="treeLikelihoodLong"/>-->
-    <!--</branchRateGradient>-->
+    <branchRateGradient id="branchRateGradientDiscreteLong" traitName="Sequence">
+        <treeDataLikelihood idref="treeLikelihoodLong"/>
+    </branchRateGradient>
 
-    <!--<report>-->
-        <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
-    <!--</report>-->
+    <nodeHeightGradient id="nodeHeightGradientDiscreteLong" traitName="Sequence">
+        <treeDataLikelihood idref="treeLikelihoodLong"/>
+    </nodeHeightGradient>
+
+    <report>
+        <branchRateGradient idref="branchRateGradientDiscreteLong"/>
+        <parameter idref="treeModelLong.internalNodeHeights"/>
+        <nodeHeightGradient idref="nodeHeightGradientDiscreteLong"/>
+    </report>
 
     <distributionLikelihood id="ratesPrior">
         <data>
@@ -248,18 +261,56 @@
         <distribution>
             <logNormalDistributionModel meanInRealSpace="true">
                 <mean>
-                    <parameter id="diffusion.mean" value="1E-3" lower="0.0"/>
+                    <parameter value="1.0" lower="0.0"/>
                 </mean>
                 <stdev>
-                    <parameter id="diffusion.stdev" value="1.0" lower="0.0"/>
+                    <parameter value="1.0" lower="0.0"/>
                 </stdev>
             </logNormalDistributionModel>
         </distribution>
     </distributionLikelihood>
 
-    <!--Reference: old_benchmark-->
+    <!--Reference: testBranchGradientFull.xml in Alex Fisher's hmc_random_walk/xml/ folder-->
     <operators id="operators">
+
+        <hamiltonianMonteCarloOperator weight="4" nSteps="10" stepSize="1E-2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="false" randomStepCountFraction="0.5">
+            <jointGradient>
+                <gradient>
+                    <distributionLikelihood idref="ratesPrior"/>
+                    <parameter idref="clock.rates"/>
+                </gradient>
+                <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
+                <branchRateGradient id="branchRateGradient" traitName="Sequence">
+                    <treeDataLikelihood idref="treeLikelihoodLong"/>
+                </branchRateGradient>
+            </jointGradient>
+            <parameter idref="clock.rates"/>
+            <signTransform>
+                <parameter idref = "clock.rates"/>
+            </signTransform>
+        </hamiltonianMonteCarloOperator>
+
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+            <!--<parameter idref="diffusion.mean"/>-->
+        <!--</scaleOperator>-->
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+        <!--<parameter idref="diffusion.stdev"/>-->
+        <!--</scaleOperator>-->
+
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+            <!--<parameter idref="clock.rates.scale"/>-->
+        <!--</scaleOperator>-->
+
         <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="clock.rates.location"/>
+        </scaleOperator>
+
+        <scaleOperator scaleFactor="0.75" weight="1">
+        <parameter idref="clock.rates"/>
+        </scaleOperator>
+
+        <scaleOperator scaleFactor="0.1" weight="1">
             <parameter idref="hky85.kappa"/>
         </scaleOperator>
 
@@ -267,46 +318,69 @@
             <parameter idref="siteModel.alpha"/>
         </scaleOperator>
 
-        <scaleOperator scaleFactor="0.75" weight="30">
-            <parameter idref="clock.rates"/>
-        </scaleOperator>
-
         <scaleOperator scaleFactor="0.75" weight="3">
             <parameter idref="constant.popSize"/>
         </scaleOperator>
+
         <scaleOperator scaleFactor="0.75" weight="3">
             <parameter idref="treeModelLong.rootHeight"/>
         </scaleOperator>
+
         <uniformOperator weight="30">
             <parameter idref="treeModelLong.internalNodeHeights"/>
         </uniformOperator>
 
-        <subtreeSlide size="1.0" gaussian="true" weight="15">
-            <treeModel idref="treeModelLong"/>
-        </subtreeSlide>
-        <narrowExchange weight="15">
-            <treeModel idref="treeModelLong"/>
-        </narrowExchange>
-        <wideExchange weight="3">
-            <treeModel idref="treeModelLong"/>
-        </wideExchange>
-        <wilsonBalding weight="3">
-            <treeModel idref="treeModelLong"/>
-        </wilsonBalding>
+        <!--<upDownOperator scaleFactor="0.75" weight="3">-->
+            <!--<up>-->
+                <!--<parameter idref="clock.rates.location"/>-->
+            <!--</up>-->
+            <!--<down>-->
+                <!--<parameter idref="treeModelLong.allInternalNodeHeights"/>-->
+            <!--</down>-->
+        <!--</upDownOperator>-->
+        <!--<subtreeSlide size="1.0" gaussian="true" weight="15">-->
+            <!--<treeModel idref="treeModelLong"/>-->
+        <!--</subtreeSlide>-->
+        <!--<narrowExchange weight="15">-->
+            <!--<treeModel idref="treeModelLong"/>-->
+        <!--</narrowExchange>-->
+        <!--<wideExchange weight="3">-->
+            <!--<treeModel idref="treeModelLong"/>-->
+        <!--</wideExchange>-->
+        <!--<wilsonBalding weight="3">-->
+            <!--<treeModel idref="treeModelLong"/>-->
+        <!--</wilsonBalding>-->
+
+        <upDownOperator scaleFactor="0.75" weight="3">
+        <up>
+        <parameter idref="clock.rates.location"/>
+        </up>
+        <down>
+        <parameter idref="treeModelLong.allInternalNodeHeights"/>
+        </down>
+        </upDownOperator>
     </operators>
 
     <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <distributionLikelihood idref="ratesPrior"/>
+
                 <coalescentLikelihood idref="coalescent"/>
 
                 <exponentialPrior offset="0" mean="1">
                     <parameter idref="siteModel.alpha"/>
                 </exponentialPrior>
 
+                <!--<exponentialPrior offset="0" mean="1">-->
+                    <!--<parameter idref="diffusion.mean"/>-->
+                <!--</exponentialPrior>-->
+
                 <exponentialPrior offset="0" mean="1">
-                    <parameter idref="diffusion.mean"/>
+                    <parameter idref="clock.rates.scale"/>
+                </exponentialPrior>
+                <exponentialPrior offset="0" mean="1">
+                    <parameter idref="clock.rates.location"/>
                 </exponentialPrior>
 
                 <exponentialPrior offset="0" mean="1">
@@ -315,40 +389,56 @@
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihoodLong"/>
+
             </likelihood>
         </posterior>
         <operators idref="operators"/>
+        <!--<log logEvery="1000">-->
+        <!--<posterior idref="posterior"/>-->
+        <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
+        <!--</log>-->
         <log id="screenLog" logEvery="100">
             <column label="Posterior" dp="4" width="12">
                 <posterior idref="posterior"/>
             </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
             <column label="Root Height" sf="6" width="12">
                 <parameter idref="treeModelLong.rootHeight"/>
             </column>
-            <column label="L(tree)" dp="4" width="12">
-                <treeLikelihood idref="treeLikelihoodLong"/>
+            <column label="rate means" sf="6" width="12">
+                <!--<parameter idref="diffusion.mean"/>-->
+                <!--<parameter idref="diffusion.stdev"/>-->
+                <parameter idref="clock.rates.scale"/>
+                <parameter idref="clock.rates.location"/>
             </column>
             <column label="clock.rate" sf="6" width="12">
                 <parameter idref="clock.rates"/>
             </column>
             <!--<column label="L(coalecent)" dp="4" width="12">-->
-                <!--<coalescentLikelihood idref="coalescent"/>-->
+            <!--<coalescentLikelihood idref="coalescent"/>-->
             <!--</column>-->
         </log>
-        <log id="fileLog" logEvery="1000" fileName="testPreOrderGradientsCompare.log">
-            <posterior idref="posterior"/>
-            <parameter idref="siteModel.alpha"/>
-            <parameter idref="clock.rates"/>
-            <parameter idref="constant.popSize"/>
-            <parameter idref="hky85.kappa"/>
-            <parameter idref="treeModelLong.rootHeight"/>
-            <treeLikelihood idref="treeLikelihoodLong"/>
-            <!--<coalescentLikelihood idref="coalescent"/>-->
-        </log>
-        <logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testPreOrderGradientsCompare.trees">
+        <logTree logEvery="100" nexusFormat="true" fileName="testPreOrderGradientsCompare.trees">
+            <treeDataLikelihood idref="treeLikelihoodLong"/>
             <treeModel idref="treeModelLong"/>
-            <posterior idref="posterior"/>
         </logTree>
+        <log logEvery="100" fileName="testPreOrderGradientsCompare.log">
+            <parameter idref="clock.rates"/>
+            <parameter idref="clock.rates.scale"/>
+            <parameter idref="clock.rates.location"/>
+            <parameter idref="siteModel.alpha"/>
+        </log>
+
+        <!--<log logEvery="100" fileName="check.log">-->
+            <!--&lt;!&ndash;<report>&ndash;&gt;-->
+                <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
+            <!--&lt;!&ndash;</report>&ndash;&gt;-->
+        <!--</log>-->
     </mcmc>
 
     <traceAnalysis fileName="testPreOrderGradientsCompare.log"/>
@@ -360,8 +450,8 @@
     </report>
 </beast>
 
-<!--
-# R script
-library(mvtnorm)
+        <!--
+        # R script
+        library(mvtnorm)
 
--->
+        -->

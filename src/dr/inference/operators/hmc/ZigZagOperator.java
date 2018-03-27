@@ -197,7 +197,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
             double x = position.get(i);
             double v = velocity.get(i);
 
-            if (headingTowardsBoundary(x, v)) { // Also ensures x != 0.0
+            if (headingTowardsBoundary(x, v, i)) { // Also ensures x != 0.0
                 double time = Math.abs(x / v);
                 if (time < minimumTime) {
                     minimumTime = time;

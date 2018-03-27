@@ -146,8 +146,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         for (int i = 0, len = position.getDim(); i < len; ++i) {
 
             double travelTime = Math.abs(position.get(i) / velocity.get(i));
-
-            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i))) {
+            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
 
                 if (travelTime < minTime) {
                     index = i;

@@ -28,6 +28,7 @@ package dr.inference.operators.hmc;
 import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
+import dr.inference.model.FastMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -61,12 +62,27 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.patternList = patternList;
 
         setWeight(weight);
-        checkParameterBounds(parameter);
         setMissingDataMask();
-
+        checkParameterBounds(parameter);
     }
 
     private void setMissingDataMask() {
+
+        missingDataMask = new double[parameter.getDimension()];
+
+        int traitDim = ((FastMatrixParameter) parameter).getRowDimension();//todo: better way to get these two dimension? "row/col dimension" isn't explicit.
+        int taxaDim = ((FastMatrixParameter) parameter).getColumnDimension();
+
+        for (int i = 0; i < taxaDim; ++i) {
+
+            String taxonName = ((FastMatrixParameter) parameter).getParameter(i).getId();
+            int indexInPatternlist = patternList.getTaxonIndex(taxonName);
+
+            for (int j = 0; j < traitDim; ++j) {
+                int t = patternList.getPattern(j)[indexInPatternlist];
+                missingDataMask[i * traitDim + j] = (t > 1) ? 1 : 0; //now value = 0 in the mask means missing observation;
+            }
+        }
     }
 
     @Override
@@ -151,8 +167,13 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new WrappedVector.Raw(product);
     }
 
-    static boolean headingTowardsBoundary(double position, double velocity) {
-        return position * velocity < 0.0;
+    boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
+
+        if (missingDataMask[positionIndex] == 1.0) {
+            return false;
+        } else {
+            return position * velocity < 0.0;
+        }
     }
 
     private WrappedVector getInitialPosition() {
@@ -235,5 +256,5 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     Preconditioning preconditioning;
     PatternList patternList;
-    WrappedVector missingDataMask;
+    private double[] missingDataMask;
 }

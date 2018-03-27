@@ -252,6 +252,7 @@
         <branchRateGradient idref="branchRateGradientDiscreteLong"/>
         <parameter idref="treeModelLong.internalNodeHeights"/>
         <nodeHeightGradient idref="nodeHeightGradientDiscreteLong"/>
+        <parameter idref="treeModelLong.allInternalNodeHeights"/>
     </report>
 
     <distributionLikelihood id="ratesPrior">
@@ -280,14 +281,28 @@
                     <distributionLikelihood idref="ratesPrior"/>
                     <parameter idref="clock.rates"/>
                 </gradient>
-                <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
                 <branchRateGradient id="branchRateGradient" traitName="Sequence">
                     <treeDataLikelihood idref="treeLikelihoodLong"/>
                 </branchRateGradient>
             </jointGradient>
             <parameter idref="clock.rates"/>
             <signTransform>
-                <parameter idref = "clock.rates"/>
+                <parameter idref ="clock.rates"/>
+            </signTransform>
+        </hamiltonianMonteCarloOperator>
+
+        <hamiltonianMonteCarloOperator weight="4" nSteps="10" stepSize="1E-2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="false">
+            <jointGradient>
+                <!--<gradient>-->
+                    <!--<coalescentLikelihood idref="coalescent"/>-->
+                    <!--<parameter idref="treeModelLong.internalNodeHeights"/>-->
+                <!--</gradient>-->
+                <nodeHeightGradient idref="nodeHeightGradientDiscreteLong"/>
+            </jointGradient>
+            <parameter idref="treeModelLong.allInternalNodeHeights"/>
+            <signTransform>
+                <parameter idref = "treeModelLong.allInternalNodeHeights"/>
             </signTransform>
         </hamiltonianMonteCarloOperator>
 
@@ -389,7 +404,6 @@
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihoodLong"/>
-
             </likelihood>
         </posterior>
         <operators idref="operators"/>
@@ -432,6 +446,7 @@
             <parameter idref="clock.rates.scale"/>
             <parameter idref="clock.rates.location"/>
             <parameter idref="siteModel.alpha"/>
+            <parameter idref = "treeModelLong.allInternalNodeHeights"/>
         </log>
 
         <!--<log logEvery="100" fileName="check.log">-->

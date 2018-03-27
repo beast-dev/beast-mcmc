@@ -52,12 +52,12 @@ public class SumDerivative implements GradientWrtParameterProvider {
 
         this.derivativeList = derivativeList;
 
-        GradientWrtParameterProvider first = derivativeList.get(1);
-        dimension = first.getDimension();
-        parameter = first.getParameter();
+        GradientWrtParameterProvider last = derivativeList.get(derivativeList.size() - 1);
+        dimension = last.getDimension();
+        parameter = last.getParameter();
 
         if (derivativeList.size() == 1) {
-            likelihood = first.getLikelihood();
+            likelihood = last.getLikelihood();
         } else {
             List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
 

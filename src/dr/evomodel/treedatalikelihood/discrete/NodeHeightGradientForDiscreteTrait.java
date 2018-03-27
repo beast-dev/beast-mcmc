@@ -59,8 +59,8 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
     private final TreeModel tree;
-    private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
+    private final double[] nodeHeights;
 
     // TODO Refactor / remove code duplication with BranchRateGradient
     // TODO Maybe use:  AbstractBranchRateGradient, DiscreteTraitBranchRateGradient, ContinuousTraitBranchRateGradien
@@ -73,7 +73,7 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = (TreeModel) treeDataLikelihood.getTree();
-        this.rateParameter = rateParameter;
+        this.nodeHeights = new double[tree.getInternalNodeCount()];
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
         this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
@@ -104,12 +104,12 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
 
     @Override
     public Parameter getParameter() {
-        return rateParameter;
+        return tree.createNodeHeightsParameter(true, true, false);
     }
 
     @Override
     public int getDimension() {
-        return getParameter().getDimension();
+        return tree.getInternalNodeCount();
     }
 
     @Override
@@ -119,7 +119,7 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
         Arrays.fill(result, 0.0);
 
         //Do single call to traitProvider with node == null (get full tree)
-        double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
+        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
 //        if (DEBUG) {
 //            System.err.println(new WrappedVector.Raw(gradient));
@@ -141,7 +141,6 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
     }
 
     private double[] getNodeHeights() {
-        double[] nodeHeights = new double[tree.getInternalNodeCount()];
         for (int i = 0; i < tree.getInternalNodeCount(); ++i){
             NodeRef internalNode = tree.getInternalNode(i);
             nodeHeights[i] = tree.getNodeHeight(internalNode);

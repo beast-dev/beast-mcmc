@@ -25,7 +25,6 @@
 
 package dr.inference.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -44,7 +43,7 @@ public class SumDerivative implements GradientWrtParameterProvider {
     private final Likelihood likelihood;
     private final Parameter parameter;
 
-    List<GradientWrtParameterProvider> derivativeList;
+    private final List<GradientWrtParameterProvider> derivativeList;
 
     public SumDerivative(List<GradientWrtParameterProvider> derivativeList){
 
@@ -52,12 +51,12 @@ public class SumDerivative implements GradientWrtParameterProvider {
 
         this.derivativeList = derivativeList;
 
-        GradientWrtParameterProvider last = derivativeList.get(derivativeList.size() - 1);
-        dimension = last.getDimension();
-        parameter = last.getParameter();
+        GradientWrtParameterProvider first = derivativeList.get(0);
+        dimension = first.getDimension();
+        parameter = first.getParameter();
 
         if (derivativeList.size() == 1) {
-            likelihood = last.getLikelihood();
+            likelihood = first.getLikelihood();
         } else {
             List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
 
@@ -90,10 +89,6 @@ public class SumDerivative implements GradientWrtParameterProvider {
     public double[] getGradientLogDensity() {
         int size = derivativeList.size();
 
-        if (DEBUG) {
-            // start timer
-        }
-
         final double[] derivative = derivativeList.get(0).getGradientLogDensity();
 
         if (DEBUG) {
@@ -106,15 +101,10 @@ public class SumDerivative implements GradientWrtParameterProvider {
 
         for (int i = 1; i < size; i++) {
 
-            if (DEBUG) {
-                // start timer
-            }
 
             final double[] temp = derivativeList.get(i).getGradientLogDensity();
 
             if (DEBUG) {
-                // stop timer
-                
                 String name = derivativeList.get(i).getLikelihood().getId();
                 System.err.println(name);
                 System.err.println(new Vector(temp));
@@ -126,8 +116,6 @@ public class SumDerivative implements GradientWrtParameterProvider {
         }
 
         if (DEBUG) {
-            // print times
-
             if (DEBUG_KILL) {
                 System.exit(-1);
             }

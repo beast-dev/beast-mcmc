@@ -171,6 +171,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             public double getBranchRateDifferential(ArbitraryBranchRates branchRates, double rate) {
                 return branchRates.getBranchRateDifferential(rate);
             }
+
+            @Override
+            public double getRateDifferential(double rate) {
+                return rate;
+            }
         },
         HESSIAN {
             @Override
@@ -194,11 +199,18 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 // TODO
                 return branchRates.getBranchRateSecondDifferential(rate);
             }
+
+            @Override
+            public double getRateDifferential(double rate) {
+                return rate * rate;
+            }
         };
 
         public abstract void getMatrix(SubstitutionModel model, double[] matrix);
 
         public abstract double getBranchRateDifferential(ArbitraryBranchRates branchRates, double rate);
+
+        public abstract double getRateDifferential(double rate);
 
     }
 
@@ -258,7 +270,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         beagle.getPartials(getPostOrderPartialIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostOrderPartials);
 
-        double[] gradient = new double[(tree.getNodeCount() - 1) * patternCount];
+        double[] derivative = new double[(tree.getNodeCount() - 1) * patternCount];
 
 //        beagle.getSiteLogLikelihoods(cLikelihood);
         for (int category = 0; category < categoryCount; category++) {
@@ -296,7 +308,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 for (int category = 0; category < categoryCount; category++) {
 
                     final double weight = categoryWeights[category];
-                    final double weightedRate = weight * categoryRates[category];
+                    final double weightedRate = weight * matrixChoice.getRateDifferential(categoryRates[category]);
 
                     for (int pattern = 0; pattern < patternCount; pattern++) {
 
@@ -337,9 +349,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                     final double numerator = clampGradientNumerator(grandNumerator[pattern],
                             grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
 
-                    gradient[index * patternCount + pattern] += numerator / grandDenominator[pattern];
+                    derivative[index * patternCount + pattern] += numerator / grandDenominator[pattern];
 
-                    if (Double.isNaN(gradient[index]) && DEBUG) {
+                    if (Double.isNaN(derivative[index]) && DEBUG) {
                         System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
                     }
                 }
@@ -350,7 +362,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             }
         }
 
-        return gradient;
+        return derivative;
     }
 
     // TODO Delegate for alternative behavior, like least value in magnitude

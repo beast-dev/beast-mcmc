@@ -48,6 +48,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "branchRateGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String USE_HESSIAN = "useHessian";
 
     @Override
     public String getParserName() {
@@ -58,6 +59,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
+        boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
@@ -78,7 +80,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-                return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates);
+                return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
             } else {
                 throw new XMLParseException("Unknown likelihood delegate type");
             }

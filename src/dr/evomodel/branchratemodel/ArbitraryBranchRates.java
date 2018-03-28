@@ -157,9 +157,15 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         return transform;
     }
 
+    public double getBranchRateSecondDifferential(double rate) {
+        return transform.secondDifferential(rate);
+    }
+
     public interface BranchRateTransform {
 
         double differential(double rate);
+
+        double secondDifferential(double rate);
 
         double transform(double raw);
 
@@ -194,6 +200,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
+            public double secondDifferential(double rate) {
+                return 0.0;
+            }
+
+            @Override
             public double transform(double raw) {
                 return raw;
             }
@@ -207,6 +218,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
+            public double secondDifferential(double rate) {
+                return 2.0 * rate * rate * rate;
+            }
+
+            @Override
             public double transform(double raw) {
                 return 1.0 / raw;
             }
@@ -216,6 +232,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             @Override
             public double differential(double rate) {
+                return rate;
+            }
+
+            @Override
+            public double secondDifferential(double rate) {
                 return rate;
             }
 
@@ -291,6 +312,22 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 
                 return (rate * transformSigma) / (raw * baseMeasureSigma);
             }
+
+            @Override
+            public double secondDifferential(double rate) {
+
+                if (!transformKnown) {
+                    setupTransform();
+                    transformKnown = true;
+                }
+
+                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
+                double raw = logNormalTransform(rate / multiplier,
+                        transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
+
+                return (rate * transformSigma) / (raw * raw * baseMeasureSigma) * (transformSigma / baseMeasureSigma - 1.0);
+            }
+
 
             @Override
             public double transform(double raw) {

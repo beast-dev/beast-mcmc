@@ -39,7 +39,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
@@ -48,30 +47,33 @@ import static dr.math.MachineAccuracy.SQRT_EPSILON;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
+public class BranchRateGradientForDiscreteTrait
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
     private final Tree tree;
+    private final boolean useHessian;
 
 //    private final int nTraits;
 //    private final int dim;
-    private final Parameter rateParameter;
+private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
 
     // TODO Refactor / remove code duplication with BranchRateGradient
     // TODO Maybe use:  AbstractBranchRateGradient, DiscreteTraitBranchRateGradient, ContinuousTraitBranchRateGradien
-
     public BranchRateGradientForDiscreteTrait(String traitName,
-                              TreeDataLikelihood treeDataLikelihood,
-                              BeagleDataLikelihoodDelegate likelihoodDelegate,
-                              Parameter rateParameter) {
+                                              TreeDataLikelihood treeDataLikelihood,
+                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                              Parameter rateParameter,
+                                              boolean useHessian) {
 
-        assert(treeDataLikelihood != null);
+        assert (treeDataLikelihood != null);
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.rateParameter = rateParameter;
+        this.useHessian = useHessian;
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
         this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
@@ -114,7 +116,29 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        return new double[0];
+
+        double[] result = new double[rateParameter.getDimension()];
+
+        //Do single call to traitProvider with node == null (get full tree)
+        double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
+        double[] diagonalHessian =  (double[]) treeDataLikelihood.getTreeTrait("Hessian").getTrait(tree, null);
+
+        int v =0;
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            final NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                final int destinationIndex = getParameterIndexFromNode(node);
+                final double rate = branchRateModel.getBranchRate(tree, node);
+                final double differential = branchRateModel.getBranchRateDifferential(rate);
+                final double secondDifferential = branchRateModel.getBranchRateSecondDifferential(rate);
+                final double branchLength = tree.getBranchLength(node);
+                result[destinationIndex] =  branchLength *
+                        (gradient[v] * secondDifferential + diagonalHessian[v] * differential * differential * branchLength);
+                v++;
+            }
+        }
+
+        return result;
     }
 
     @Override
@@ -194,11 +218,16 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
 
         double[] savedValues = rateParameter.getParameterValues();
         double[] testGradient = null;
+        double[] testHessian = null;
 
         boolean largeEnoughValues = valuesAreSufficientlyLarge(rateParameter.getParameterValues());
 
         if (DEBUG && largeEnoughValues) {
             testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
+        }
+
+        if (DEBUG && useHessian && largeEnoughValues) {
+            testHessian = NumericalDerivative.diagonalHessian(numeric1, rateParameter.getParameterValues());
         }
 
 
@@ -212,6 +241,18 @@ public class BranchRateGradientForDiscreteTrait implements GradientWrtParameterP
         
         if (testGradient != null && largeEnoughValues) {
             sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+        } else {
+            sb.append("mumeric: too close to 0");
+        }
+        sb.append("\n");
+
+        if (useHessian && largeEnoughValues){
+            sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+            sb.append("\n");
+        }
+
+        if (testHessian != null && largeEnoughValues) {
+            sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
         } else {
             sb.append("mumeric: too close to 0");
         }

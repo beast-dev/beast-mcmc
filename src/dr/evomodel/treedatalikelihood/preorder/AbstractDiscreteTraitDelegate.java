@@ -28,7 +28,6 @@ package dr.evomodel.treedatalikelihood.preorder;
 import beagle.Beagle;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.*;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.*;
@@ -168,11 +167,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             }
 
             @Override
-            public double getBranchRateDifferential(ArbitraryBranchRates branchRates, double rate) {
-                return branchRates.getBranchRateDifferential(rate);
-            }
-
-            @Override
             public double getRateDifferential(double rate) {
                 return rate;
             }
@@ -195,20 +189,12 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             }
 
             @Override
-            public double getBranchRateDifferential(ArbitraryBranchRates branchRates, double rate) {
-                // TODO
-                return branchRates.getBranchRateSecondDifferential(rate);
-            }
-
-            @Override
             public double getRateDifferential(double rate) {
                 return rate * rate;
             }
         };
 
         public abstract void getMatrix(SubstitutionModel model, double[] matrix);
-
-        public abstract double getBranchRateDifferential(ArbitraryBranchRates branchRates, double rate);
 
         public abstract double getRateDifferential(double rate);
 
@@ -220,22 +206,26 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         final double[] patternWeights = patternList.getPatternWeights();
         double[] patternDiagonalLogHessian = new double[patternGradient.length];
         double[] diagonalLogHessian = new double[tree.getNodeCount() - 1];
-        Arrays.fill(diagonalLogHessian, 0.0);
 
         for (int i = 0; i < patternGradient.length; ++i){
             patternDiagonalLogHessian[i] = patternDiagonalHessian[i] - patternGradient[i] * patternGradient[i];
         }
 
+        sumOverPatterns(tree, patternWeights, patternDiagonalLogHessian, diagonalLogHessian);
+        return diagonalLogHessian;
+    }
+
+    private void sumOverPatterns(Tree tree, double[] patternWeights, double[] patternArray, double[] summedArray) {
         int v = 0;
+        Arrays.fill(summedArray, 0.0);
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 for (int pattern = 0; pattern < patternCount; pattern++) {
-                    diagonalLogHessian[nodeNum] += patternDiagonalLogHessian[v * patternCount + pattern] * patternWeights[pattern];
+                    summedArray[nodeNum] += patternArray[v * patternCount + pattern] * patternWeights[pattern];
                 }
                 v++;
             }
         }
-        return diagonalLogHessian;
     }
 
     @Override
@@ -243,16 +233,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         final double[] patternGradient = getTrait(tree, node, GRADIENT);
         final double[] patternWeights = patternList.getPatternWeights();
         double[] gradient = new double[tree.getNodeCount() - 1];
-        Arrays.fill(gradient, 0.0);
-        int v = 0;
-        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
-            if (!tree.isRoot(tree.getNode(nodeNum))) {
-                for (int pattern = 0; pattern < patternCount; pattern++) {
-                    gradient[nodeNum] += patternGradient[v * patternCount + pattern] * patternWeights[pattern];
-                }
-                v++;
-            }
-        }
+        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
         return gradient;
     }
 
@@ -349,7 +330,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                     final double numerator = clampGradientNumerator(grandNumerator[pattern],
                             grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
 
-                    derivative[index * patternCount + pattern] += numerator / grandDenominator[pattern];
+                    derivative[index] += numerator / grandDenominator[pattern];
 
                     if (Double.isNaN(derivative[index]) && DEBUG) {
                         System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
@@ -391,13 +372,12 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
-            operations[k++] = Beagle.NONE;//getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild());
             operations[k++] = Beagle.NONE;
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());
             operations[k++] = getPostOrderPartialIndex(tmpNodeOperation.getRightChild());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getRightChild());
-            // TODO Transform to Beagle operations here
         }
         return nodeOperations.size();
     }

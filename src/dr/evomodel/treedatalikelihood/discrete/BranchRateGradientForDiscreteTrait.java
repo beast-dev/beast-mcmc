@@ -160,6 +160,10 @@ private final Parameter rateParameter;
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double rate = branchRateModel.getBranchRate(tree, node);
                 final double differential = branchRateModel.getBranchRateDifferential(rate);
+                final double tmpResult = gradient[v] * differential * tree.getBranchLength(node);
+                if (Double.isNaN(tmpResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
+                    System.err.println("bad");
+                }
                 result[destinationIndex] = gradient[v++] * differential * tree.getBranchLength(node);
             }
         }

@@ -10,22 +10,10 @@
 		<taxon id="C">
 			<attr name="X">3.2120639563878823 -3.8426078209966636</attr>
 		</taxon>
-		<taxon id="D">
-			<attr name="X">-0.8079990211612194 -5.220055178699147</attr>
-		</taxon>
-		<taxon id="E">
-			<attr name="X">-0.29266208009338546 -4.676520033190973</attr>
-		</taxon>
-		<taxon id="F">
-			<attr name="X">-5.760241711670387 -2.2612355043113865</attr>
-		</taxon>
-		<taxon id="G">
-			<attr name="X">-4.54549357709319 NA</attr>
-		</taxon>
 	</taxa>
 
 	<newick id="tree">
-		((A:2.5,(B:1.5,C:1.5):1.0):0.5,((D:0.5,E:0.5):1.5,(F:1.0,G:1.0):1.0):1.0);
+		(A:2,(B:1,C:1):1);
 	</newick>
 
 	<treeModel id="treeModel">
@@ -107,12 +95,12 @@
 				<parameter idref="gamma"/>
 			</column>
 		</log>
-		<log id="fileLog" logEvery="1000" fileName="precision_log.log">
-			<posterior idref="posterior"/>
-			<prior idref="prior"/>
-			<likelihood idref="likelihood"/>
-			<parameter idref="gamma"/>
-		</log>
+		<!--<log id="fileLog" logEvery="1000" fileName="precision_log.log">-->
+			<!--<posterior idref="posterior"/>-->
+			<!--<prior idref="prior"/>-->
+			<!--<likelihood idref="likelihood"/>-->
+			<!--<parameter idref="gamma"/>-->
+		<!--</log>-->
 	</mcmc>
 
 </beast>

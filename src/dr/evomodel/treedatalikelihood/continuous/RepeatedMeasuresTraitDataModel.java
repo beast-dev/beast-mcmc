@@ -71,6 +71,9 @@ public class RepeatedMeasuresTraitDataModel extends
         assert (numTraits == 1);
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+        if (fullyObserved == true){
+            return partial;
+        }
         DenseMatrix64F V = MissingOps.wrap(partial,dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
         for (int index = 0; index< dimTrait; index++){

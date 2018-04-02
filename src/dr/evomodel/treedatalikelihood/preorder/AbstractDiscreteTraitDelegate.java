@@ -330,7 +330,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                     final double numerator = clampGradientNumerator(grandNumerator[pattern],
                             grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
 
-                    derivative[index] += numerator / grandDenominator[pattern];
+                    derivative[index * patternCount + pattern] += numerator / grandDenominator[pattern];
 
                     if (Double.isNaN(derivative[index]) && DEBUG) {
                         System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.

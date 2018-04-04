@@ -36,6 +36,7 @@ import dr.util.CommonCitations;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -87,11 +88,25 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         if (tipData == null) {
             tipData = new int[treeModel.getExternalNodeCount()][patternList.getPatternCount()];
         }
+
+        final int dim = tipTraitParameter.getParameter(0).getDimension();
+
+        double[] upperBoundsOneNode = new double[dim];
+        double[] lowerBoundsOneNode = new double[dim];
+        double[] upperBoundsAllNodes = new double[dim * treeModel.getExternalNodeCount()];
+        double[] lowerBoundsAllNodes = new double[dim * treeModel.getExternalNodeCount()];
+
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+
             NodeRef node = treeModel.getExternalNode(i);
             String id = treeModel.getTaxonId(i);
             int index = patternList.getTaxonIndex(id);
-            setTipDataValuesForNode(node, index);
+            setTipDataValueForNodeAndGetBounds(node, index, upperBoundsOneNode,lowerBoundsOneNode);
+
+            System.arraycopy(upperBoundsOneNode, 0, upperBoundsAllNodes, i*dim, dim);
+            System.arraycopy(lowerBoundsOneNode, 0, lowerBoundsAllNodes, i*dim, dim);
+
+            tipTraitParameter.addBounds(new Parameter.DefaultBounds(upperBoundsAllNodes,lowerBoundsAllNodes));
 
             if (DEBUG) {
                 System.err.println("\t For node: " + i + " with ID " + id + " you get taxon " + index + " with ID " + patternList.getTaxonId(index));
@@ -112,20 +127,14 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         }
     }
 
-    private void setTipDataValuesForNode(NodeRef node, int index) {
-        // Set tip data values
+    private void setTipDataValueForNodeAndGetBounds(NodeRef node, int index, double[] upperBounds, double[] lowerBounds) {
+
         final int Nindex = node.getNumber();
-        final int dim = tipTraitParameter.getParameter(0).getDimension();
 
         // TODO - This class appears to work for only binary data; how does it handle ordered-multistate data?
 
-        // boolean isBinary = patternList.getDataType() == TwoStates.INSTANCE;
-
-        double[] upperBounds = new double[dim];
-        double[] lowerBounds = new double[dim];
-
         for (int datum = 0; datum < patternList.getPatternCount(); ++datum) {
-            tipData[Nindex][datum] = (int) patternList.getPattern(datum)[index];
+            tipData[Nindex][datum] = patternList.getPattern(datum)[index];
 
             switch(tipData[Nindex][datum]) {
                 case 0:
@@ -144,6 +153,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         }
 
         tipTraitParameter.getParameter(Nindex).addBounds(new Parameter.DefaultBounds(upperBounds,lowerBounds));
+        //what these bounds in "ParameterProxy" do?
     }
 
     @Override

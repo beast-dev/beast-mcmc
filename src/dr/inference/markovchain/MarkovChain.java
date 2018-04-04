@@ -261,6 +261,7 @@ public final class MarkovChain implements Serializable {
                 }
 
                 // The new model is evaluated
+                likelihood.makeDirty();
                 score = evaluate(likelihood);
 
                 if (PROFILE) {

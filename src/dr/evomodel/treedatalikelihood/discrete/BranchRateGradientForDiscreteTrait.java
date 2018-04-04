@@ -57,7 +57,7 @@ public class BranchRateGradientForDiscreteTrait
 
 //    private final int nTraits;
 //    private final int dim;
-private final Parameter rateParameter;
+    private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
 
     // TODO Refactor / remove code duplication with BranchRateGradient

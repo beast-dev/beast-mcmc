@@ -31,6 +31,7 @@ import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -63,6 +64,9 @@ public class SumDerivative implements GradientWrtParameterProvider {
             for (GradientWrtParameterProvider grad : derivativeList) {
                 if (grad.getDimension() != dimension) {
                     throw new RuntimeException("Unequal parameter dimensions");
+                }
+                if (!Arrays.equals(grad.getParameter().getParameterValues(), parameter.getParameterValues())){
+                    throw new RuntimeException("Unequal parameter values");
                 }
                 likelihoodList.add(grad.getLikelihood());
             }

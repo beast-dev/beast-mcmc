@@ -332,9 +332,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
                     derivative[index * patternCount + pattern] += numerator / grandDenominator[pattern];
 
-                    if (Double.isNaN(derivative[index]) && DEBUG) {
-                        System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
-                    }
+//                    if (Double.isNaN(derivative[index * patternCount + pattern]) && DEBUG) {
+//                        System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
+//                    }
                 }
 
 //                final double branchLength = tree.getBranchLength(tree.getNode(nodeNum)); // TODO Delegate for rate models with multiple multiplier
@@ -372,7 +372,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
-            operations[k++] = getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = Beagle.NONE; //getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild()); index is probably messed up TODO:fix index
             operations[k++] = Beagle.NONE;
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());

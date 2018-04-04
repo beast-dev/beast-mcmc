@@ -136,7 +136,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         } else {
             int j = 0;
-            for (int i : maskIndices.missingIndices) {
+            for (int i : maskIndices.discreteIndices) {
                 tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[j]);
                 j++;
             }
@@ -166,8 +166,8 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         MultivariateNormalDistribution fullDistribution = new MultivariateNormalDistribution(fcdMean, fcdPrecision);
         MultivariateNormalDistribution drawDistribution;
 
-        if (maskIndices != null) {
-            addMaskIfNeeded();
+        if (maskIndices != null && maskIndices.continuousIndex.length > 0) {
+            addMaskOnContiuousTraits();
             drawDistribution = new MultivariateNormalDistribution(maskedMean, maskedPrecision);
         } else {
             drawDistribution = fullDistribution;
@@ -197,10 +197,10 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
     }
 
-    private void addMaskIfNeeded() {
+    private void addMaskOnContiuousTraits() {
 
         ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
-                new Matrix(fcdVaraince), maskIndices.missingIndices, maskIndices.notMissingIndex);
+                new Matrix(fcdVaraince), maskIndices.discreteIndices, maskIndices.continuousIndex);
 
         maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
         maskedMean = cVarianceJoint.getConditionalMean(tipTraitParameter.getParameterValues(), 0, fcdMean, 0);
@@ -240,12 +240,12 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     protected class MaskIndices {
 
-        final int[] missingIndices;
-        final int[] notMissingIndex;
+        final int[] discreteIndices;
+        final int[] continuousIndex;
 
         private MaskIndices(int[] latentindex, int[] contindex) {
-            this.missingIndices = latentindex;
-            this.notMissingIndex = contindex;
+            this.discreteIndices = latentindex;
+            this.continuousIndex = contindex;
         }
     }
 

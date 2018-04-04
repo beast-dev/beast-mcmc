@@ -45,9 +45,8 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                  double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask, patternList);
-        this.patternList = patternList;
+                                  double weight, Options runtimeOptions, Parameter mask) {
+        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
     }
 
     @Override

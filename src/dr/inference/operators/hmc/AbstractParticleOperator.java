@@ -25,10 +25,8 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
-import dr.inference.model.FastMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -50,7 +48,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
-                             double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
+                             double weight, Options runtimeOptions, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -59,7 +57,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
-        this.patternList = patternList;
 
         setWeight(weight);
         setMissingDataMask();
@@ -68,20 +65,16 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     private void setMissingDataMask() {
 
-        missingDataMask = new double[parameter.getDimension()];
+        int dim = parameter.getDimension();
+        missingDataMask = new double[dim];
+        assert (dim == parameter.getBounds().getBoundsDimension());
 
-        int traitDim = ((FastMatrixParameter) parameter).getRowDimension();//todo: better way to get these two dimension? "row/col dimension" isn't explicit.
-        int taxaDim = ((FastMatrixParameter) parameter).getColumnDimension();
+        for (int i = 0; i < dim; ++i) {
 
-        for (int i = 0; i < taxaDim; ++i) {
+            missingDataMask[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
+                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY) ? 1 : 0;//now value = 1.0 in
+            // the mask means missing observation;
 
-            String taxonName = ((FastMatrixParameter) parameter).getParameter(i).getId();
-            int indexInPatternlist = patternList.getTaxonIndex(taxonName);
-
-            for (int j = 0; j < traitDim; ++j) {
-                int t = patternList.getPattern(j)[indexInPatternlist];
-                missingDataMask[i * traitDim + j] = (t > 1) ? 1 : 0; //now value = 0 in the mask means missing observation;
-            }
         }
     }
 
@@ -255,6 +248,5 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final Parameter mask;
 
     Preconditioning preconditioning;
-    PatternList patternList;
     private double[] missingDataMask;
 }

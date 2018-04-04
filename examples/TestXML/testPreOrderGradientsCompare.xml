@@ -184,14 +184,14 @@
 
     <arbitraryBranchRates id="branchRatesLong" centerAtOne="false">
         <rates>
-            <parameter id="clock.rates" value="1" lower="0"/>
+            <parameter id="clock.rates" value="1E-1" lower="0"/>
         </rates>
-        <scale>
-            <parameter id="clock.rates.scale" lower="0.0" value="1.0"/>
-        </scale>
-        <location>
-            <parameter id="clock.rates.location" lower="0.0" value="1E-3"/>
-        </location>
+        <!--<scale>-->
+            <!--<parameter id="clock.rates.scale" lower="0.0" value="1.0"/>-->
+        <!--</scale>-->
+        <!--<location>-->
+            <!--<parameter id="clock.rates.location" lower="0.0" value="1E-3"/>-->
+        <!--</location>-->
         <treeModel idref="treeModelLong"/>
     </arbitraryBranchRates>
 
@@ -240,7 +240,7 @@
         <treeDataLikelihood idref="treeLikelihoodLong"/>
     </report>
 
-    <branchRateGradient id="branchRateGradientDiscreteLong" traitName="Sequence">
+    <branchRateGradient id="branchRateGradientDiscreteLong" traitName="Sequence" useHessian="true">
         <treeDataLikelihood idref="treeLikelihoodLong"/>
     </branchRateGradient>
 
@@ -251,8 +251,7 @@
     <report>
         <branchRateGradient idref="branchRateGradientDiscreteLong"/>
         <parameter idref="treeModelLong.internalNodeHeights"/>
-        <nodeHeightGradient idref="nodeHeightGradientDiscreteLong"/>
-        <parameter idref="treeModelLong.allInternalNodeHeights"/>
+        <!--<nodeHeightGradient idref="nodeHeightGradientDiscreteLong"/>-->
     </report>
 
     <distributionLikelihood id="ratesPrior">
@@ -274,8 +273,8 @@
     <!--Reference: testBranchGradientFull.xml in Alex Fisher's hmc_random_walk/xml/ folder-->
     <operators id="operators">
 
-        <hamiltonianMonteCarloOperator weight="4" nSteps="10" stepSize="1E-2" mode="vanilla"
-                                       drawVariance="1.0" autoOptimize="false" randomStepCountFraction="0.5">
+        <hamiltonianMonteCarloOperator weight="4" nSteps="10" stepSize="1E-1" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true" >
             <jointGradient>
                 <gradient>
                     <distributionLikelihood idref="ratesPrior"/>
@@ -291,20 +290,20 @@
             </signTransform>
         </hamiltonianMonteCarloOperator>
 
-        <hamiltonianMonteCarloOperator weight="4" nSteps="10" stepSize="1E-2" mode="vanilla"
-                                       drawVariance="1.0" autoOptimize="false">
-            <jointGradient>
-                <!--<gradient>-->
-                    <!--<coalescentLikelihood idref="coalescent"/>-->
-                    <!--<parameter idref="treeModelLong.internalNodeHeights"/>-->
-                <!--</gradient>-->
-                <nodeHeightGradient idref="nodeHeightGradientDiscreteLong"/>
-            </jointGradient>
-            <parameter idref="treeModelLong.allInternalNodeHeights"/>
-            <signTransform>
-                <parameter idref = "treeModelLong.allInternalNodeHeights"/>
-            </signTransform>
-        </hamiltonianMonteCarloOperator>
+        <!--<hamiltonianMonteCarloOperator weight="4" nSteps="10" stepSize="1E-2" mode="vanilla"-->
+                                       <!--drawVariance="1.0" autoOptimize="false">-->
+            <!--<jointGradient>-->
+                <!--&lt;!&ndash;<gradient>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<coalescentLikelihood idref="coalescent"/>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<parameter idref="treeModelLong.internalNodeHeights"/>&ndash;&gt;-->
+                <!--&lt;!&ndash;</gradient>&ndash;&gt;-->
+                <!--<nodeHeightGradient idref="nodeHeightGradientDiscreteLong"/>-->
+            <!--</jointGradient>-->
+            <!--<parameter idref="treeModelLong.allInternalNodeHeights"/>-->
+            <!--<signTransform>-->
+                <!--<parameter idref = "treeModelLong.allInternalNodeHeights"/>-->
+            <!--</signTransform>-->
+        <!--</hamiltonianMonteCarloOperator>-->
 
         <!--<scaleOperator scaleFactor="0.75" weight="1">-->
             <!--<parameter idref="diffusion.mean"/>-->
@@ -317,25 +316,25 @@
             <!--<parameter idref="clock.rates.scale"/>-->
         <!--</scaleOperator>-->
 
-        <scaleOperator scaleFactor="0.75" weight="1">
-            <parameter idref="clock.rates.location"/>
-        </scaleOperator>
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+            <!--<parameter idref="clock.rates.location"/>-->
+        <!--</scaleOperator>-->
 
-        <scaleOperator scaleFactor="0.75" weight="1">
-        <parameter idref="clock.rates"/>
-        </scaleOperator>
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+        <!--<parameter idref="clock.rates"/>-->
+        <!--</scaleOperator>-->
 
-        <scaleOperator scaleFactor="0.1" weight="1">
-            <parameter idref="hky85.kappa"/>
-        </scaleOperator>
+        <!--<scaleOperator scaleFactor="0.1" weight="1">-->
+            <!--<parameter idref="hky85.kappa"/>-->
+        <!--</scaleOperator>-->
 
-        <scaleOperator scaleFactor="0.75" weight="1">
-            <parameter idref="siteModel.alpha"/>
-        </scaleOperator>
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+            <!--<parameter idref="siteModel.alpha"/>-->
+        <!--</scaleOperator>-->
 
-        <scaleOperator scaleFactor="0.75" weight="3">
-            <parameter idref="constant.popSize"/>
-        </scaleOperator>
+        <!--<scaleOperator scaleFactor="0.75" weight="3">-->
+            <!--<parameter idref="constant.popSize"/>-->
+        <!--</scaleOperator>-->
 
         <scaleOperator scaleFactor="0.75" weight="3">
             <parameter idref="treeModelLong.rootHeight"/>
@@ -366,14 +365,14 @@
             <!--<treeModel idref="treeModelLong"/>-->
         <!--</wilsonBalding>-->
 
-        <upDownOperator scaleFactor="0.75" weight="3">
-        <up>
-        <parameter idref="clock.rates.location"/>
-        </up>
-        <down>
-        <parameter idref="treeModelLong.allInternalNodeHeights"/>
-        </down>
-        </upDownOperator>
+        <!--<upDownOperator scaleFactor="0.75" weight="3">-->
+        <!--<up>-->
+        <!--<parameter idref="clock.rates.location"/>-->
+        <!--</up>-->
+        <!--<down>-->
+        <!--<parameter idref="treeModelLong.allInternalNodeHeights"/>-->
+        <!--</down>-->
+        <!--</upDownOperator>-->
     </operators>
 
     <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
@@ -383,24 +382,24 @@
 
                 <coalescentLikelihood idref="coalescent"/>
 
-                <exponentialPrior offset="0" mean="1">
-                    <parameter idref="siteModel.alpha"/>
-                </exponentialPrior>
+                <!--<exponentialPrior offset="0" mean="1">-->
+                    <!--<parameter idref="siteModel.alpha"/>-->
+                <!--</exponentialPrior>-->
 
                 <!--<exponentialPrior offset="0" mean="1">-->
                     <!--<parameter idref="diffusion.mean"/>-->
                 <!--</exponentialPrior>-->
 
-                <exponentialPrior offset="0" mean="1">
-                    <parameter idref="clock.rates.scale"/>
-                </exponentialPrior>
-                <exponentialPrior offset="0" mean="1">
-                    <parameter idref="clock.rates.location"/>
-                </exponentialPrior>
+                <!--<exponentialPrior offset="0" mean="1">-->
+                    <!--<parameter idref="clock.rates.scale"/>-->
+                <!--</exponentialPrior>-->
+                <!--<exponentialPrior offset="0" mean="1">-->
+                    <!--<parameter idref="clock.rates.location"/>-->
+                <!--</exponentialPrior>-->
 
-                <exponentialPrior offset="0" mean="1">
-                    <parameter idref="constant.popSize"/>
-                </exponentialPrior>
+                <!--<exponentialPrior offset="0" mean="1">-->
+                    <!--<parameter idref="constant.popSize"/>-->
+                <!--</exponentialPrior>-->
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihoodLong"/>
@@ -424,12 +423,12 @@
             <column label="Root Height" sf="6" width="12">
                 <parameter idref="treeModelLong.rootHeight"/>
             </column>
-            <column label="rate means" sf="6" width="12">
-                <!--<parameter idref="diffusion.mean"/>-->
-                <!--<parameter idref="diffusion.stdev"/>-->
-                <parameter idref="clock.rates.scale"/>
-                <parameter idref="clock.rates.location"/>
-            </column>
+            <!--<column label="rate means" sf="6" width="12">-->
+                <!--&lt;!&ndash;<parameter idref="diffusion.mean"/>&ndash;&gt;-->
+                <!--&lt;!&ndash;<parameter idref="diffusion.stdev"/>&ndash;&gt;-->
+                <!--<parameter idref="clock.rates.scale"/>-->
+                <!--<parameter idref="clock.rates.location"/>-->
+            <!--</column>-->
             <column label="clock.rate" sf="6" width="12">
                 <parameter idref="clock.rates"/>
             </column>
@@ -443,13 +442,13 @@
         </logTree>
         <log logEvery="100" fileName="testPreOrderGradientsCompare.log">
             <parameter idref="clock.rates"/>
-            <parameter idref="clock.rates.scale"/>
-            <parameter idref="clock.rates.location"/>
+            <!--<parameter idref="clock.rates.scale"/>-->
+            <!--<parameter idref="clock.rates.location"/>-->
             <parameter idref="siteModel.alpha"/>
             <parameter idref = "treeModelLong.allInternalNodeHeights"/>
         </log>
 
-        <!--<log logEvery="100" fileName="check.log">-->
+        <!--<log logEvery="1" fileName="check.log">-->
             <!--&lt;!&ndash;<report>&ndash;&gt;-->
                 <!--<branchRateGradient idref="branchRateGradientDiscreteLong"/>-->
             <!--&lt;!&ndash;</report>&ndash;&gt;-->

@@ -221,7 +221,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 for (int pattern = 0; pattern < patternCount; pattern++) {
-                    summedArray[nodeNum] += patternArray[v * patternCount + pattern] * patternWeights[pattern];
+                    summedArray[v] += patternArray[v * patternCount + pattern] * patternWeights[pattern];
                 }
                 v++;
             }

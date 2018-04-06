@@ -150,7 +150,6 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         ReadableVector mean = statistics.getMean();
         ReadableMatrix thisP = statistics.getPrecision();
         double precisionScalar = statistics.getPrecisionScalar();
-
         for (int i = 0; i < mean.getDim(); ++i) {
             fcdMean[i] = mean.get(i);
         }
@@ -167,7 +166,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         MultivariateNormalDistribution drawDistribution;
 
         if (maskIndices != null && maskIndices.continuousIndex.length > 0) {
-            addMaskOnContiuousTraits();
+            addMaskOnContiuousTraits(thisNumber);
             drawDistribution = new MultivariateNormalDistribution(maskedMean, maskedPrecision);
         } else {
             drawDistribution = fullDistribution;
@@ -197,13 +196,19 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
     }
 
-    private void addMaskOnContiuousTraits() {
+    private void addMaskOnContiuousTraits(int nodeNumber) {
+
+        double[] currentValues = new double[dim];
+
+        for (int i = 0; i < currentValues.length; ++i) {
+            currentValues[i] = tipTraitParameter.getParameterValues()[nodeNumber * dim + i];
+        }
 
         ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
                 new Matrix(fcdVaraince), maskIndices.discreteIndices, maskIndices.continuousIndex);
 
         maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
-        maskedMean = cVarianceJoint.getConditionalMean(tipTraitParameter.getParameterValues(), 0, fcdMean, 0);
+        maskedMean = cVarianceJoint.getConditionalMean(currentValues, 0, fcdMean, 0);
     }
 
     private int[] convertListToArray(List<Integer> listResult) { //todo this shouldn't be here...

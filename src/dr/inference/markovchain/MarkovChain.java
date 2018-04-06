@@ -49,7 +49,7 @@ import java.util.logging.Logger;
 public final class MarkovChain implements Serializable {
     private static final long serialVersionUID = 181L;
 
-    private final static boolean DEBUG = false;
+    private final static boolean DEBUG = true;
     private final static boolean PROFILE = true;
 
     public static final double EVALUATION_TEST_THRESHOLD = 1e-1;
@@ -261,7 +261,7 @@ public final class MarkovChain implements Serializable {
                 }
 
                 // The new model is evaluated
-                likelihood.makeDirty(); // TODO: remove after issue #985 https://github.com/beast-dev/beast-mcmc/issues/985
+                //likelihood.makeDirty(); // TODO: remove after issue #985 https://github.com/beast-dev/beast-mcmc/issues/985
                 score = evaluate(likelihood);
 
                 if (PROFILE) {

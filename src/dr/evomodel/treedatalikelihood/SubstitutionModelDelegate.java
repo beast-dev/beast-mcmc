@@ -176,6 +176,11 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
+    public void flipAllMatrixIndex() {
+        matrixBufferHelper.flipAllOffset();
+    }
+
+    @Override
     public double[] getRootStateFrequencies() {
         return branchModel.getRootFrequencyModel().getFrequencies();
     }// END: getStateFrequencies

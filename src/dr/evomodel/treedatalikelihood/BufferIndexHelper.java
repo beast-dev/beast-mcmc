@@ -70,6 +70,12 @@ public class BufferIndexHelper implements Serializable {
         indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
     }
 
+    public void flipAllOffset() {
+        for ( int i = minIndexValue; i < maxIndexValue; i++) {
+            flipOffset(i);
+        }
+    }
+
     public int getOffsetIndex(int i) {
         if (i < minIndexValue) {
             return i + constantOffset;

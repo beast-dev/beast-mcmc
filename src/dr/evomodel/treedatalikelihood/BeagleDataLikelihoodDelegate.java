@@ -844,6 +844,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     public void makeDirty() {
         updateSiteModel = true;
         updateSubstitutionModel = true;
+        // Do one additional flip on all double buffer indices, this prevents the stored (old) partials being overwritten
+        partialBufferHelper.flipAllOffset();
+        evolutionaryProcessDelegate.flipAllMatrixIndex();
     }
 
     @Override

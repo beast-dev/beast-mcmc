@@ -70,10 +70,16 @@ public class RepeatedMeasuresTraitDataModel extends
 
         assert (numTraits == 1);
 
-        double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+//        if (fullyObserved) {
+//            throw new IllegalArgumentException("Wishart statistics are not implemented for the repeated measures model");
+//        }
         if (fullyObserved == true){
-            return partial;
+            return new double[dimTrait + 1];
         }
+
+
+        double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+
         DenseMatrix64F V = MissingOps.wrap(partial,dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
         for (int index = 0; index< dimTrait; index++){

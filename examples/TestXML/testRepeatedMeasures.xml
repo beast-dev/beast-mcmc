@@ -41,7 +41,7 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<repeatedMeasuresModel id="repeatedMeasures" traitName="X">
+	<repeatedMeasuresModel id="repeatedMeasuresID" traitName="X">
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="leafTraits"/>
@@ -55,7 +55,7 @@
 	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
-		<repeatedMeasuresModel idref="repeatedMeasures"/>
+		<repeatedMeasuresModel idref="repeatedMeasuresID"/>
 		<conjugateRootPrior>
 			<meanParameter>
 				<parameter id="mean" value="-1.0 -3.0"/>
@@ -66,6 +66,37 @@
 		</conjugateRootPrior>
 	</traitDataLikelihood>
 
+
+	<prior id="priorID">
+		<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">
+			<parameter idref="gamma"/>
+		</gammaPrior>
+	</prior>
+
+	<distributionLikelihood id="distributionLikelihoodID">
+		<distribution id="distributionID">
+
+		</distribution>
+		<logNormalDistributionModel id="logNormalID">
+			<mean value="1.0"/>
+		</logNormalDistributionModel>
+	</distributionLikelihood>
+
+	<operators id="operators" optimizationSchedule="log">
+		<!--<scaleOperator scaleFactor="0.75" weight="1.0" autoOptmizie="true">-->
+			<!--<parameter idref="gamma"/>-->
+		<!--</scaleOperator>-->
+
+		<normalGammaPrecisionGibbsOperator weight="1.0">
+			<repeatedMeasures>
+				<repeatedMeasuresModel idref="repeatedMeasuresID"/>
+				<treeDataLikelihood idref="driftLikelihood"/>
+			</repeatedMeasures>
+			<prior idref="priorID"/>
+			<distributionLikelihood idref="distributionLikelihoodID"/>
+		</normalGammaPrecisionGibbsOperator>
+	</operators>
+
 	<report>
 		With likelihood =
 		<traitDataLikelihood idref="driftLikelihood"/>
@@ -73,20 +104,10 @@
 
 	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
 		<posterior id="posterior">
-			<prior id="prior">
-				<gammaPrior shape="2" scale="0.5" offset="0.0">
-					<parameter idref="gamma"/>
-				</gammaPrior>
-			</prior>
-			<likelihood id="likelihood">
-				<traitDataLikelihood idref="driftLikelihood"/>
-			</likelihood>
+			<prior idref="prior"/>
+			<likelihood idref="likelihoodID"/>
 		</posterior>
-		<operators>
-			<scaleOperator scaleFactor="0.75" weight="1.0" autoOptmizie="true">
-				<parameter idref="gamma"/>
-			</scaleOperator>
-		</operators>
+		<operators idref="operators"/>
 		<log id="screenLog" logEvery="10000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>

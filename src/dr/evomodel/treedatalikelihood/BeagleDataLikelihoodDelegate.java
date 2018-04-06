@@ -49,7 +49,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -844,9 +843,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     public void makeDirty() {
         updateSiteModel = true;
         updateSubstitutionModel = true;
-        // Do one additional flip on all double buffer indices, this prevents the stored (old) partials being overwritten
-        partialBufferHelper.flipAllOffset();
-        evolutionaryProcessDelegate.flipAllMatrixIndex();
     }
 
     @Override

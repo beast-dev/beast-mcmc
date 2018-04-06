@@ -118,11 +118,6 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
-    public void flipAllMatrixIndex() {
-        matrixBufferHelper.flipAllOffset();
-    }
-
-    @Override
     public double[] getRootStateFrequencies() {
         return substitutionModel.getFrequencyModel().getFrequencies();
     }

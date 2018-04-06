@@ -185,7 +185,7 @@ public class BranchRateGradientForDiscreteTrait
                 rateParameter.setParameterValue(i, argument[i]);
             }
 
-            treeDataLikelihood.makeDirty();
+//            treeDataLikelihood.makeDirty();
             return treeDataLikelihood.getLogLikelihood();
         }
 
@@ -218,7 +218,7 @@ public class BranchRateGradientForDiscreteTrait
     @Override
     public String getReport() {
 
-        treeDataLikelihood.makeDirty();
+//        treeDataLikelihood.makeDirty();
 
         double[] savedValues = rateParameter.getParameterValues();
         double[] testGradient = null;
@@ -262,7 +262,7 @@ public class BranchRateGradientForDiscreteTrait
         }
         sb.append("\n");
 
-        treeDataLikelihood.makeDirty();
+//        treeDataLikelihood.makeDirty();
 
         return sb.toString();
     }

@@ -54,8 +54,6 @@ public interface EvolutionaryProcessDelegate {
 
     int getMatrixIndex(int branchIndex);
 
-    void flipAllMatrixIndex();
-
     double[] getRootStateFrequencies();
 
     void updateSubstitutionModels(Beagle beagle, boolean flipBuffers);

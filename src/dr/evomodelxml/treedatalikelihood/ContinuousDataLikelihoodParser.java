@@ -146,6 +146,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             } else {
                 allowSingular = true;
             }
+        } else if (dataModel instanceof RepeatedMeasuresTraitDataModel) {
+            traitName = ((RepeatedMeasuresTraitDataModel) dataModel).getTraitName();
+            allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
         } else {
             allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
         }

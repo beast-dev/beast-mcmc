@@ -7,85 +7,75 @@ import dr.math.matrixAlgebra.Matrix;
 public class ConditionalPrecisionAndTransform {
 
     /**
-     * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
+     * For partially observed tips: (y_1, y_2)^t \sim N(\mu, P^{-1}) where
      * <p>
      * \mu = (\mu_1, \mu_2)^t
-     * \Sigma = ((\Sigma_{11}, \Sigma_{12}), (\Sigma_{21}, \Sigma_{22})^t
+     * \Sigma = ((P_{11}, P_{12}), (P_{21}, P_{22})^t
      * <p>
-     * then  y_1 | y_2 \sim N (\bar{\mu}, \bar{\Sigma}), where
+     * then  y_1 | y_2 \sim N (\bar{\mu}, \bar{P}^{-1}), where
      * <p>
-     * \bar{\mu} = \mu_1 + \Sigma_{12}\Sigma_{22}^{-1}(y_2 - \mu_2), and
-     * \bar{\Sigma} = \Sigma_{11} - \Sigma_{12}\Sigma_{22}^1\Sigma{21}
+     * \bar{\mu} = \mu_1 - P_{11}^{-1}P_{12}(y_2 - \mu_2), and
+     * \bar{P} = P_{11}
      */
-
-    final private double[][] cholesky;
+    //final private double[][] cholesky;
     final private Matrix affineTransform;
-    private Matrix sBar;
+    private Matrix pBar;
     private final int[] missingIndices;
     private final int[] notMissingIndices;
-    private final double[] tempStorage;
 
     private final int numMissing;
     private final int numNotMissing;
 
     private static final boolean DEBUG = false;
 
-    public ConditionalPrecisionAndTransform(final Matrix variance, final int[] missingIndices, final int[] notMissingIndices) {
+    public ConditionalPrecisionAndTransform(final Matrix precision, final int[] missingIndices, final int[] notMissingIndices) {
 
-        assert (missingIndices.length + notMissingIndices.length == variance.rows());
-        assert (missingIndices.length + notMissingIndices.length == variance.columns());
+        assert (missingIndices.length + notMissingIndices.length == precision.rows());
+        assert (missingIndices.length + notMissingIndices.length == precision.columns());
 
         this.missingIndices = missingIndices;
         this.notMissingIndices = notMissingIndices;
 
         if (DEBUG) {
-            System.err.println("variance:\n" + variance);
+            System.err.println("variance:\n" + precision);
         }
 
-        Matrix S12S22Inv = null;
-        sBar = null;
+        Matrix P11InvP12 = null;
+        pBar = null;
 
         try {
-
-            Matrix S22 = variance.extractRowsAndColumns(notMissingIndices, notMissingIndices);
+            Matrix P11 = precision.extractRowsAndColumns(missingIndices, missingIndices);
             if (DEBUG) {
-                System.err.println("S22:\n" + S22);
+                System.err.println("P11:\n" + P11);
             }
 
-            Matrix S22Inv = S22.inverse();
+            Matrix P11Inv = P11.inverse();
             if (DEBUG) {
-                System.err.println("S22Inv:\n" + S22Inv);
+                System.err.println("P11Inv:\n" + P11Inv);
             }
 
-            Matrix S12 = variance.extractRowsAndColumns(missingIndices, notMissingIndices);
+            Matrix P12 = precision.extractRowsAndColumns(missingIndices, notMissingIndices);
             if (DEBUG) {
-                System.err.println("S12:\n" + S12);
+                System.err.println("P12:\n" + P12);
             }
 
-            S12S22Inv = S12.product(S22Inv);
+            P11InvP12 = P11Inv.product(P12);
             if (DEBUG) {
-                System.err.println("S12S22Inv:\n" + S12S22Inv);
+                System.err.println("P11InvP12:\n" + P11InvP12);
             }
 
-            Matrix S12S22InvS21 = S12S22Inv.productWithTransposed(S12);
+            pBar = precision.extractRowsAndColumns(missingIndices, missingIndices);
             if (DEBUG) {
-                System.err.println("S12S22InvS21:\n" + S12S22InvS21);
+                System.err.println("pBar:\n" + pBar);
             }
 
-            sBar = variance.extractRowsAndColumns(missingIndices, missingIndices);
-            sBar.decumulate(S12S22InvS21);
-            if (DEBUG) {
-                System.err.println("sBar:\n" + sBar);
-            }
 
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }
 
-        this.affineTransform = S12S22Inv;
-        this.cholesky = ProcessSimulationDelegate.AbstractContinuousTraitDelegate.getCholeskyOfVariance(sBar);
-        this.tempStorage = new double[missingIndices.length];
-
+        this.affineTransform = P11InvP12;
+        //this.cholesky = ProcessSimulationDelegate.AbstractContinuousTraitDelegate.getCholeskyOfVariance(sBar);
         this.numMissing = missingIndices.length;
         this.numNotMissing = notMissingIndices.length;
 
@@ -96,45 +86,28 @@ public class ConditionalPrecisionAndTransform {
 
         double[] muBar = new double[numMissing];
 
-//        double[] shift = new double[numNotMissing];
-//        for (int i = 0; i < numNotMissing; ++i) {
-//            final int notI = notMissingIndices[i];
-//            shift[i] = y[offsetY + notI] - mu[offsetMu + notI];
-//        }
-//
-//        for (int i = 0; i < numMissing; ++i) {
-//            double delta = 0.0;
-//            for (int k = 0; k < numNotMissing; ++k) {
-//                delta += affineTransform.component(i, k) * shift[k];
-//            }
-//
-//            muBar[i] = mu[offsetMu + missingIndices[i]] + delta;
-//        }
+        double[] shift = new double[numNotMissing];
+        for (int i = 0; i < numNotMissing; ++i) {
+            final int notI = notMissingIndices[i];
+            shift[i] = y[offsetY + notI] - mu[offsetMu + notI];
+        }
+
+        for (int i = 0; i < numMissing; ++i) {
+            double delta = 0.0;
+            for (int k = 0; k < numNotMissing; ++k) {
+                delta += affineTransform.component(i, k) * shift[k];
+            }
+
+            muBar[i] = mu[offsetMu + missingIndices[i]] - delta;
+        }
 
         return muBar;
     }
 
-//    void scatterResult(final double[] source, final int offsetSource,
-//                       final double[] destination, final int offsetDestination) {
-//        for (int i = 0; i < numMissing; ++i) {
-//            destination[offsetDestination + missingIndices[i]] = source[offsetSource + i];
-//        }
-//    }
 
-    double[][] getConditionalCholesky() {
-        return cholesky;
+    public Matrix getConditionalPrecision() {
+        return pBar;
     }
 
-    public Matrix getConditionalVariance() {
-        return sBar;
-    }
-
-//    Matrix getAffineTransform() {
-//        return affineTransform;
-//    }
-
-    double[] getTemporaryStorage() {
-        return tempStorage;
-    }
 }
 

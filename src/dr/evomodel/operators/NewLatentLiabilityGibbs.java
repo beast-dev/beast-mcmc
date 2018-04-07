@@ -161,13 +161,11 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         }
 
-        fcdVaraince = (new Matrix(fcdPrecision)).inverse().toComponents();
-
         MultivariateNormalDistribution fullDistribution = new MultivariateNormalDistribution(fcdMean, fcdPrecision);
         MultivariateNormalDistribution drawDistribution;
 
         if (maskIndices != null && maskIndices.continuousIndex.length > 0) {
-            addMaskOnContiuousTraits(thisNumber);
+            addMaskOnContiuousTraitsPrecisionSpace(thisNumber);
             drawDistribution = new MultivariateNormalDistribution(maskedMean, maskedPrecision);
         } else {
             drawDistribution = fullDistribution;
@@ -197,20 +195,20 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
     }
 
-    private void addMaskOnContiuousTraits(int nodeNumber) {
-
-        double[] currentValues = new double[dim];
-
-        for (int i = 0; i < currentValues.length; ++i) {
-            currentValues[i] = tipTraitParameter.getParameterValues()[nodeNumber * dim + i];
-        }
-
-        ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
-                new Matrix(fcdVaraince), maskIndices.discreteIndices, maskIndices.continuousIndex);
-
-        maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
-        maskedMean = cVarianceJoint.getConditionalMean(currentValues, 0, fcdMean, 0);
-    }
+//    private void addMaskOnContiuousTraits(int nodeNumber) {
+//
+//        double[] currentValues = new double[dim];
+//
+//        for (int i = 0; i < currentValues.length; ++i) {
+//            currentValues[i] = tipTraitParameter.getParameterValues()[nodeNumber * dim + i];
+//        }
+//
+//        ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
+//                new Matrix(fcdVaraince), maskIndices.discreteIndices, maskIndices.continuousIndex);
+//
+//        maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
+//        maskedMean = cVarianceJoint.getConditionalMean(currentValues, 0, fcdMean, 0);
+//    }
 
     private void addMaskOnContiuousTraitsPrecisionSpace(int nodeNumber) {
 
@@ -223,7 +221,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         ConditionalPrecisionAndTransform cVarianceJoint = new ConditionalPrecisionAndTransform(
                 new Matrix(fcdPrecision), maskIndices.discreteIndices, maskIndices.continuousIndex);
 
-        maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
+        maskedPrecision = cVarianceJoint.getConditionalPrecision().toComponents();
         maskedMean = cVarianceJoint.getConditionalMean(currentValues, 0, fcdMean, 0);
     }
 

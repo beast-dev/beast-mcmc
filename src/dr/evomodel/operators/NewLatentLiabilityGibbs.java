@@ -38,6 +38,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalPrecisionAndTransform;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform;
 import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
@@ -206,6 +207,21 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         ConditionalVarianceAndTransform cVarianceJoint = new ConditionalVarianceAndTransform(
                 new Matrix(fcdVaraince), maskIndices.discreteIndices, maskIndices.continuousIndex);
+
+        maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
+        maskedMean = cVarianceJoint.getConditionalMean(currentValues, 0, fcdMean, 0);
+    }
+
+    private void addMaskOnContiuousTraitsPrecisionSpace(int nodeNumber) {
+
+        double[] currentValues = new double[dim];
+
+        for (int i = 0; i < currentValues.length; ++i) {
+            currentValues[i] = tipTraitParameter.getParameterValues()[nodeNumber * dim + i];
+        }
+
+        ConditionalPrecisionAndTransform cVarianceJoint = new ConditionalPrecisionAndTransform(
+                new Matrix(fcdPrecision), maskIndices.discreteIndices, maskIndices.continuousIndex);
 
         maskedPrecision = cVarianceJoint.getConditionalVariance().inverse().toComponents();
         maskedMean = cVarianceJoint.getConditionalMean(currentValues, 0, fcdMean, 0);

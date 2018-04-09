@@ -325,7 +325,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 double raw = logNormalTransform(rate / multiplier,
                         transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
 
-                if (rate > 0.0) {
+                if (raw > 0.0) {
                     return (rate * transformSigma) / (raw * raw * baseMeasureSigma) * (transformSigma / baseMeasureSigma - 1.0);
                 }else{
                     if (transformSigma > baseMeasureSigma){

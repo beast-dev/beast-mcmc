@@ -309,8 +309,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
                 double raw = logNormalTransform(rate / multiplier,
                         transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
-                
-                return (rate * transformSigma) / (raw * baseMeasureSigma);
+
+                return raw > 0. ? (rate * transformSigma) / (raw * baseMeasureSigma) : Double.POSITIVE_INFINITY;
             }
 
             @Override
@@ -325,7 +325,17 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 double raw = logNormalTransform(rate / multiplier,
                         transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
 
-                return (rate * transformSigma) / (raw * raw * baseMeasureSigma) * (transformSigma / baseMeasureSigma - 1.0);
+                if (rate > 0.0) {
+                    return (rate * transformSigma) / (raw * raw * baseMeasureSigma) * (transformSigma / baseMeasureSigma - 1.0);
+                }else{
+                    if (transformSigma > baseMeasureSigma){
+                        return Double.POSITIVE_INFINITY;
+                    } else if (transformSigma < baseMeasureSigma) {
+                        return Double.NEGATIVE_INFINITY;
+                    } else {
+                        return 0.0;
+                    }
+                }
             }
 
 

@@ -686,6 +686,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
+            if (!partialBufferHelper.isSafeUpdate(nodeNum)) {
+                System.err.println("Stored partial should not be updated!");
+            }
+
             if (useScaleFactors) {
                 // get the index of this scaling buffer
                 int n = nodeNum - tipCount;

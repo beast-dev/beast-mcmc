@@ -82,6 +82,15 @@ public class BufferIndexHelper implements Serializable {
         return indexOffsets[i - minIndexValue] + i + constantOffset;
     }
 
+    private int getStoredOffsetIndex(int i) {
+        assert (i >= minIndexValue);
+        return storedIndexOffsets[i - minIndexValue] + i + constantOffset;
+    }
+
+    public boolean isSafeUpdate(int i) {
+        return getStoredOffsetIndex(i) != getOffsetIndex(i);
+    }
+
     public void storeState() {
         System.arraycopy(indexOffsets, 0, storedIndexOffsets, 0, indexOffsets.length);
 

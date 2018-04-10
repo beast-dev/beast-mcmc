@@ -148,6 +148,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         firstRescaleAttempt = true;
 
+        isRestored = false;
+
         try {
 
             int compactPartialsCount = tipCount;
@@ -686,7 +688,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-            if (!partialBufferHelper.isSafeUpdate(nodeNum)) {
+            if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum)) {
                 System.err.println("Stored partial should not be updated!");
             }
 
@@ -882,6 +884,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         // turn on double buffering flipping (may have been turned off to enable a rescale)
         flip = true;
+
+        isRestored = false;
     }
 
     /**
@@ -901,6 +905,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             scaleBufferIndices = tmp;
 //            rescalingCount = storedRescalingCount;
         }
+
+        isRestored = true;
 
     }
 
@@ -1009,6 +1015,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * the pattern weights
      */
     private final double[] patternWeights;
+
+    /**
+     * if the chain is already restored
+     */
+    private boolean isRestored;
 
     /**
      * the number of patterns

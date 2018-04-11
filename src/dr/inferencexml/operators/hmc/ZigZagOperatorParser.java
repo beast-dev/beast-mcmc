@@ -74,7 +74,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-        return new ZigZagOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask, patternList);
+        return new ZigZagOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask);
     }
 
     @Override

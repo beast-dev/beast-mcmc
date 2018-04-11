@@ -25,7 +25,6 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -45,9 +44,9 @@ public class ZigZagOperator extends AbstractParticleOperator {
     public ZigZagOperator(GradientWrtParameterProvider gradientProvider,
                           PrecisionMatrixVectorProductProvider multiplicationProvider,
                           PrecisionColumnProvider columnProvider,
-                          double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
+                          double weight, Options runtimeOptions, Parameter mask) {
 
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask, patternList);
+        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
         this.columnProvider = columnProvider;
     }
 
@@ -197,7 +196,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
             double x = position.get(i);
             double v = velocity.get(i);
 
-            if (headingTowardsBoundary(x, v)) { // Also ensures x != 0.0
+            if (headingTowardsBoundary(x, v, i)) { // Also ensures x != 0.0
                 double time = Math.abs(x / v);
                 if (time < minimumTime) {
                     minimumTime = time;

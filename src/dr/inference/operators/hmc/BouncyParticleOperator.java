@@ -45,9 +45,8 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                  double weight, Options runtimeOptions, Parameter mask, PatternList patternList) {
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask, patternList);
-        this.patternList = patternList;
+                                  double weight, Options runtimeOptions, Parameter mask) {
+        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
     }
 
     @Override
@@ -146,8 +145,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         for (int i = 0, len = position.getDim(); i < len; ++i) {
 
             double travelTime = Math.abs(position.get(i) / velocity.get(i));
-
-            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i))) {
+            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
 
                 if (travelTime < minTime) {
                     index = i;

@@ -25,7 +25,6 @@
 
 package dr.inferencexml.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
@@ -68,9 +67,8 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
         Parameter mask = parseMask(xo);
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
-        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions, mask, patternList);
+        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions, mask);
     }
 
     static Parameter parseMask(XMLObject xo) throws XMLParseException {

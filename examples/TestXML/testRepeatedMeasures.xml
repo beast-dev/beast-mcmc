@@ -52,7 +52,7 @@
 		<multivariateDiffusionModel idref="diffusionModel"/>
 	</repeatedMeasuresModel>
 
-	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="true">
+	<traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<repeatedMeasuresModel idref="repeatedMeasures"/>
@@ -66,42 +66,11 @@
 		</conjugateRootPrior>
 	</traitDataLikelihood>
 
-	<emptyTraitModel id="nullModel" traitName="X">
-		<treeModel idref="treeModel"/>
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
-		<multivariateDiffusionModel idref="diffusionModel"/>
-	</emptyTraitModel>
-
-
-	<traitDataLikelihood id="driftLikelihoodForWishart" traitName="X" forceFullPrecision="false" scaleByTime="true" useTreeLength="false">
-		<multivariateDiffusionModel idref="diffusionModel"/>
-		<treeModel idref="treeModel"/>
-		<emptyTraitModel idref="nullModel"/>
-		<conjugateRootPrior>
-			<meanParameter>
-				<parameter id="mean" value="0.0 0.0 0.0"/>
-			</meanParameter>
-			<priorSampleSize>
-				<parameter value="10.0"/>
-			</priorSampleSize>
-		</conjugateRootPrior>
-	</traitDataLikelihood>
-
-
-	<prior id="prior">
-		<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">
-			<parameter idref="gamma"/>
-		</gammaPrior>
-	</prior>
-
-	<multivariateWishartPrior id="precisionPrior" df="3">
+	<multivariateWishartPrior id="precisionPrior" df="2">
 		<scaleMatrix>
 			<matrixParameter>
-				<parameter value="1 0 0"/>
-				<parameter value="0 1 0"/>
-				<parameter value="0 0 1"/>
+				<parameter value="1 0"/>
+				<parameter value="0 1"/>
 			</matrixParameter>
 		</scaleMatrix>
 		<data>
@@ -109,32 +78,28 @@
 		</data>
 	</multivariateWishartPrior>
 
-	<distributionLikelihood id="distributionLikelihood">
-		<distribution id="distribution">
-
-		</distribution>
-		<logNormalDistributionModel id="logNormal">
-			<mean value="1.0"/>
-		</logNormalDistributionModel>
-	</distributionLikelihood>
+	<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">
+		<parameter idref="gamma"/>
+	</gammaPrior>
 
 	<operators id="operators" optimizationSchedule="log">
 		<!--<scaleOperator scaleFactor="0.75" weight="1.0" autoOptmizie="true">-->
 			<!--<parameter idref="gamma"/>-->
 		<!--</scaleOperator>-->
 
-		<!--<normalGammaPrecisionGibbsOperator weight="1.0">-->
-			<!--<repeatedMeasures>-->
-				<!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
-				<!--<treeDataLikelihood idref="driftLikelihood"/>-->
-			<!--</repeatedMeasures>-->
-			<!--<prior idref="prior"/>-->
-			<!--<distributionLikelihood idref="distributionLikelihood"/>-->
-		<!--</normalGammaPrecisionGibbsOperator>-->
+		<normalGammaPrecisionGibbsOperator weight="1.0">
+			<repeatedMeasures>
+				<repeatedMeasuresModel idref="repeatedMeasures"/>
+				<treeDataLikelihood idref="traitLikelihood"/>
+			</repeatedMeasures>
+			<prior>
+				<gammaPrior idref="gammaPrior"/>
+			</prior>
+		</normalGammaPrecisionGibbsOperator>
 
 		<precisionGibbsOperator weight="1">
 			<wishartStatistics  traitName="X">
-				<traitDataLikelihood idref="driftLikelihoodForWishart"/>
+				<traitDataLikelihood idref="traitLikelihood"/>
 			</wishartStatistics>
 			<multivariateWishartPrior idref="precisionPrior"/>
 		</precisionGibbsOperator>
@@ -142,22 +107,29 @@
 
 	<report>
 		With likelihood =
-		<traitDataLikelihood idref="driftLikelihood"/>
+		<traitDataLikelihood idref="traitLikelihood"/>
 	</report>
 
 	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
 		<posterior id="posterior">
-			<prior idref="prior"/>
-			<multivariateWishartPrior idref="precisionPrior"/>
-			<likelihood idref="likelihood"/>
+			<prior id="prior">
+				<gammaPrior idref="gammaPrior"/>
+				<multivariateWishartPrior idref="precisionPrior"/>
+			</prior>
+			<likelihood>
+				<traitDataLikelihood idref="traitLikelihood"/>
+			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
 		<log id="screenLog" logEvery="10000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
-			<column label="Sampling Precision" dp="4" width="20">
+			<column label="Sampling Precision" dp="4" width="12">
 				<parameter idref="gamma"/>
+			</column>
+			<column label="Trait Precision" dp="4" width="12">
+				<matrixParameter idref="precisionMatrix"/>
 			</column>
 		</log>
 		<!--<log id="fileLog" logEvery="1000" fileName="precision_log.log">-->

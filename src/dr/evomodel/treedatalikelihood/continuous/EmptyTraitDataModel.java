@@ -42,10 +42,13 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
 
     private final String name;
     private final int dimTrait;
+    private final CompoundParameter traitParameter;
     private final PrecisionType precisionType;
 
-    public EmptyTraitDataModel(String name, final int dimTrait, PrecisionType precisionType) {
+    public EmptyTraitDataModel(String name, CompoundParameter traitParameter,
+                               final int dimTrait, PrecisionType precisionType) {
         this.name = name;
+        this.traitParameter = traitParameter;
         this.dimTrait = dimTrait;
         this.precisionType = precisionType;
     }
@@ -65,7 +68,7 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public CompoundParameter getParameter() { return null; }
+    public CompoundParameter getParameter() { return traitParameter; }
 
     @Override
     public String getModelName() {
@@ -79,52 +82,52 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
         return new double[dimTrait + precisionType.getMatrixLength(dimTrait)];
     }
-
-    private static final String EMPTY_TRAIT_MODEL = "emptyTraitModel";
-
-    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException{
-            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(TreeModel.class);
-            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-
-            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
-                            treeModel, true);
-
-            String traitName = returnValue.traitName;
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-                    xo.getChild(MultivariateDiffusionModel.class);
-
-            PrecisionType precision = PrecisionType.SCALAR;
-
-            return new EmptyTraitDataModel(
-                    traitName,
-                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                    precision
-
-            );
-        }
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[0];
-        }
-
-        @Override
-        public String getParserDescription() {
-            return null;
-        }
-
-        @Override
-        public Class getReturnType() {
-            return null;
-        }
-
-        @Override
-        public String getParserName() {
-            return null;
-        }
-    };
+//
+//    private static final String EMPTY_TRAIT_MODEL = "emptyTraitModel";
+//
+//    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+//        @Override
+//        public Object parseXMLObject(XMLObject xo) throws XMLParseException{
+//            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(TreeModel.class);
+//            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
+//
+//            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
+//                    utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
+//                            treeModel, true);
+//
+//            String traitName = returnValue.traitName;
+//            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
+//                    xo.getChild(MultivariateDiffusionModel.class);
+//
+//            PrecisionType precision = PrecisionType.SCALAR;
+//
+//            return new EmptyTraitDataModel(
+//                    traitName,
+//                    diffusionModel.getPrecisionParameter().getRowDimension(),
+//                    precision
+//
+//            );
+//        }
+//
+//        @Override
+//        public XMLSyntaxRule[] getSyntaxRules() {
+//            return new XMLSyntaxRule[0];
+//        }
+//
+//        @Override
+//        public String getParserDescription() {
+//            return null;
+//        }
+//
+//        @Override
+//        public Class getReturnType() {
+//            return null;
+//        }
+//
+//        @Override
+//        public String getParserName() {
+//            return null;
+//        }
+//    };
 }
 

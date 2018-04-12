@@ -943,16 +943,28 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+    static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                                   ContinuousTraitPartialsProvider dataProvider) {
         return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
                 likelihoodDelegate.diffusionProcessDelegate,
-                likelihoodDelegate.dataModel,
+                dataProvider,
                 likelihoodDelegate.rootPrior,
                 likelihoodDelegate.rateTransformation,
                 likelihoodDelegate.rateModel,
                 true,
                 false);
     }
+
+//    static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+//        return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
+//                likelihoodDelegate.diffusionProcessDelegate,
+//                likelihoodDelegate.dataModel,
+//                likelihoodDelegate.rootPrior,
+//                likelihoodDelegate.rateTransformation,
+//                likelihoodDelegate.rateModel,
+//                true,
+//                false);
+//    }
 
     static ContinuousDataLikelihoodDelegate createWithMissingData(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 

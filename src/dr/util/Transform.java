@@ -510,6 +510,53 @@ public interface Transform {
         private final UnivariableTransform inner;
     }
 
+    class ComposeMultivariable extends MultivariableTransform  {
+
+        public ComposeMultivariable(MultivariableTransform outer, MultivariableTransform inner) {
+            this.outer = outer;
+            this.inner = inner;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "compose." + outer.getTransformName() + "." + inner.getTransformName();
+        }
+
+        @Override
+        public double[] transform(double[] values, int from, int to) {
+            return outer.transform(inner.transform(values, from, to), from, to);
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to) {
+            return inner.inverse(outer.inverse(values, from, to), from, to);
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public double[] gradientInverse(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public double getLogJacobian(double[] values, int from, int to) {
+            return inner.getLogJacobian(values, from, to)
+                    + outer.getLogJacobian(inner.transform(values, from, to), from, to);
+        }
+
+        private final MultivariableTransform outer;
+        private final MultivariableTransform inner;
+    }
+
     class Inverse extends UnivariableTransform {
 
         public Inverse(UnivariableTransform inner) {

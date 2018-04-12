@@ -147,11 +147,25 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 //the translation table is constructed upon loading the initial tree for the analysis
                 //if that tree is user-defined or a UPGMA starting tree, the starting seed won't matter
                 //if that tree is constructed at random, we currently don't provide a way to retrieve the original translation table
+
                 if (digits < 15) {
-                    throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
-                            ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
-                            "\nYour XML may require the construction of a randomly generated starting tree. " +
-                            "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
+
+                    //currently use the general BEAST -threshold argument
+                    //TODO Evaluate whether a checkpoint-specific threshold option is required or useful
+                    double threshold = 0.0;
+                    if (System.getProperty("mcmc.evaluation.threshold") != null) {
+                        threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
+                    }
+                    if (Math.abs(lnL - savedLnL) > threshold) {
+                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                                "\nYour XML may require the construction of a randomly generated starting tree. " +
+                                "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
+                    } else {
+                        System.out.println("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                        ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                        "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
+                    }
                 }
 
             } else {
@@ -484,10 +498,15 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         //read number of nodes
                         int nodeCount = Integer.parseInt(fields[0]);
                         double[] nodeHeights = new double[nodeCount];
+                        String[] taxaNames = new String[(nodeCount+1)/2];
+
                         for (int i = 0; i < nodeCount; i++) {
                             line = in.readLine();
                             fields = line.split("\t");
                             nodeHeights[i] = Double.parseDouble(fields[1]);
+                            if (i < taxaNames.length) {
+                                taxaNames[i] = fields[2];
+                            }
                         }
 
                         //on to reading edge information
@@ -524,9 +543,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                                 }
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
-                                childOrder[i] = Integer.parseInt(fields[2]);
+                               // childOrder[i] = Integer.parseInt(fields[2]);
+                                childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
                                 for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                    traitValues[j][i] = Double.parseDouble(fields[3+j]);
+                                 //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
+                                    traitValues[j][Integer.parseInt(fields[0])] = Double.parseDouble(fields[3+j]);
                                 }
                             }
                         }
@@ -536,9 +557,12 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                             System.out.println("adopting tree structure");
                         }
 
-                        //adopt the loaded tree structure; this does not copy the traits on the branches
+                        //adopt the loaded tree structure;
                         ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder);
+                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
+                        if (traitModels.size() > 0) {
+                            ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
+                        }
                         ((TreeModel) model).endTreeEdit();
 
                         expectedTreeModelNames.remove(model.getModelName());

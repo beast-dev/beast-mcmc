@@ -53,27 +53,28 @@ public class LKJCorrelationDistribution implements MultivariateDistribution {
     private double computelogNormalizationConstant() {
         // Lewandowski, Kurowicka, and Joe (2009)
         // See also Stan: http://mc-stan.org/math/db/d4f/lkj__corr__lpdf_8hpp_source.html
+        // And: http://discourse.mc-stan.org/t/question-about-lkj-normalizing-constant/2001/11 (for the sign)
         double res = 0.0;
         if (shape == 1.0) {
             // Lewandowski et al. (2009) Theorem 5
             for (int k = 1; k <= (dim - 1) / 2; k++) {
-                res += GammaFunction.lnGamma(2.0 * k);
+                res -= GammaFunction.lnGamma(2.0 * k);
             }
             if ((dim % 2) == 1) {
-                res += 0.25 * (dim * dim - 1) * Math.log(Math.PI)
+                res -= 0.25 * (dim * dim - 1) * Math.log(Math.PI)
                         - 0.25 * (dim - 1) * (dim - 1) * Math.log(2.0)
                         - (dim - 1) * GammaFunction.lnGamma(0.5 * (dim + 1));
             } else {
-                res += 0.25 * dim * (dim - 2) * Math.log(Math.PI)
+                res -= 0.25 * dim * (dim - 2) * Math.log(Math.PI)
                         + 0.25 * (3 * dim * dim - 4 * dim) * Math.log(2.0)
                         + dim * GammaFunction.lnGamma(0.5 * dim)
                         - (dim - 1) * GammaFunction.lnGamma(dim);
             }
         } else {
             // Lewandowski et al. (2009), expression in proof of eq. (17)
-            res = -(dim - 1) * GammaFunction.lnGamma(shape + 0.5 * (dim - 1));
+            res = (dim - 1) * GammaFunction.lnGamma(shape + 0.5 * (dim - 1));
             for (int k = 1; k <= (dim - 1); k++) {
-                res += 0.5 * k * Math.log(Math.PI)
+                res -= 0.5 * k * Math.log(Math.PI)
                         + GammaFunction.lnGamma(shape + 0.5 * (dim - 1 - k));
             }
         }

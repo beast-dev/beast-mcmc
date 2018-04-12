@@ -266,7 +266,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 //        }
 
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
-            return new SymmetricMatrix(precision).inverse().toVectorizedComponents();
+            return new SymmetricMatrix(precision).inverse().toArrayComponents();
         }
 
     }

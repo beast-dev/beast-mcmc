@@ -162,7 +162,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
-            scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
+            scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
             int numPartials = partialBufferHelper.getBufferCount();
             int numScaleBuffers = scaleBufferHelper.getBufferCount();
@@ -468,7 +468,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return order;
     }
 
-    private int getScaleBufferCount() {
+    private int getSingleScaleBufferCount() {
         return internalNodeCount + 1;
     }
 
@@ -938,6 +938,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     public final int getPartialBufferIndex(int nodeNumber) {
         return partialBufferHelper.getOffsetIndex(nodeNumber);
+    }
+
+    public final int getScaleBufferCount() {
+        return scaleBufferHelper.getBufferCount();
     }
 
     public final int getPartialBufferCount() {

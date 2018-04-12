@@ -69,7 +69,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         this.preOrderPartialOffset = likelihoodDelegate.getPartialBufferCount();
 
         // put scaleBuffers for preOrder partials right after those for postOrder partials
-        this.preOrderScaleBufferOffset = tree.getNodeCount() - tree.getExternalNodeCount() - 1;
+        this.preOrderScaleBufferOffset = likelihoodDelegate.getScaleBufferCount();
 
         this.patternList = likelihoodDelegate.getPatternList();
 
@@ -253,8 +253,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         double[] derivative = new double[(tree.getNodeCount() - 1) * patternCount];
 
-//        beagle.getSiteLogLikelihoods(cLikelihood);
+        Arrays.fill(grandDenominator, 0.0);
         for (int category = 0; category < categoryCount; category++) {
+            final double weight = categoryWeights[category];
             for (int pattern = 0; pattern < patternCount; pattern++) {
 
                 final int patternIndex = category * patternCount + pattern;
@@ -268,6 +269,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 //                if (sumOverEndState < 1E-20){ // underflow occurred in postOrderPartials
 //                    System.err.println("Underflow error occurred in postOrder Partials, try turn on scalingScheme=\"always\"");
 //                }
+                grandDenominator[pattern] += weight * cLikelihood[patternIndex];
             }
         }
 
@@ -276,7 +278,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
             if (!tree.isRoot(tree.getNode(nodeNum))) {
 
-                Arrays.fill(grandDenominator, 0.0);
                 Arrays.fill(grandNumerator, 0.0);
                 Arrays.fill(grandNumeratorIncrementLowerBound, 0.0);
                 Arrays.fill(grandNumeratorIncrementUpperBound, 0.0);
@@ -288,8 +289,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
                 for (int category = 0; category < categoryCount; category++) {
 
-                    final double weight = categoryWeights[category];
-                    final double weightedRate = weight * matrixChoice.getRateDifferential(categoryRates[category]);
+                    final double weightedRate = categoryWeights[category] * matrixChoice.getRateDifferential(categoryRates[category]);
 
                     for (int pattern = 0; pattern < patternCount; pattern++) {
 
@@ -312,16 +312,14 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                         }
 
                         if (numerator != 0.0) {
-                            if (denominator == 0.0) {
+                            if (Math.abs(denominator) < 1E-10) {
                                 grandNumeratorIncrementLowerBound[pattern] += weightedRate * Math.min(numerator, 0.0);
                                 grandNumeratorIncrementUpperBound[pattern] += weightedRate * Math.max(numerator, 0.0);
                             } else {
-                                grandNumerator[pattern] += weightedRate * numerator *
-                                        cLikelihood[patternOffset] / denominator;
+                                grandNumerator[pattern] += weightedRate * cLikelihood[patternOffset] / denominator * numerator;
                             }
                         }
 
-                        grandDenominator[pattern] += weight * cLikelihood[patternOffset];
                     }
                 }
 
@@ -336,9 +334,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 //                        System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
 //                    }
                 }
-
-//                final double branchLength = tree.getBranchLength(tree.getNode(nodeNum)); // TODO Delegate for rate models with multiple multiplier
-//                gradient[index] *= branchLength;
                 index++;
             }
         }
@@ -372,7 +367,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
-            operations[k++] = Beagle.NONE; //getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild()); index is probably messed up TODO:fix index
+            operations[k++] = getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild());
             operations[k++] = Beagle.NONE;
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());

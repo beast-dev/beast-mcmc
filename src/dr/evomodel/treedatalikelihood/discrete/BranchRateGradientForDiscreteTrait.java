@@ -160,11 +160,12 @@ public class BranchRateGradientForDiscreteTrait
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double rate = branchRateModel.getBranchRate(tree, node);
                 final double differential = branchRateModel.getBranchRateDifferential(rate);
-                final double tmpResult = gradient[v] * differential * tree.getBranchLength(node);
-                if (Double.isNaN(tmpResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-                    System.err.println("bad");
+                final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
+                if (Double.isNaN(nodeResult) && Double.isFinite(treeDataLikelihood.getLogLikelihood())) {
+                    System.err.println("Check Gradient calculation please.");
                 }
-                result[destinationIndex] = gradient[v++] * differential * tree.getBranchLength(node);
+                result[destinationIndex] = nodeResult;
+                v++;
             }
         }
 
@@ -250,24 +251,26 @@ public class BranchRateGradientForDiscreteTrait
         }
         sb.append("\n");
 
-        if (useHessian && largeEnoughValues){
-            sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+        if (useHessian) {
+            if (largeEnoughValues){
+                sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+                sb.append("\n");
+            }
+
+            if (testHessian != null && largeEnoughValues) {
+                sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
+            } else {
+                sb.append("mumeric: too close to 0");
+            }
             sb.append("\n");
         }
-
-        if (testHessian != null && largeEnoughValues) {
-            sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
-        } else {
-            sb.append("mumeric: too close to 0");
-        }
-        sb.append("\n");
 
 //        treeDataLikelihood.makeDirty();
 
         return sb.toString();
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     @Override
     public LogColumn[] getColumns() {

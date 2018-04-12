@@ -34,6 +34,7 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     private Parameter offDiagonalParameter;
 
     private boolean asCorrelation = false;
+    private boolean asFisherCPC = false;
 
     private int dim;
 
@@ -70,12 +71,25 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     public double getParameterValue(int row, int col) {
         if (row != col) {
             if (asCorrelation) {
-                return offDiagonalParameter.getParameterValue(0) *
+                return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col)) *
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
             }
             return offDiagonalParameter.getParameterValue(0);
         }
         return diagonalParameter.getParameterValue(row);
+    }
+
+    private int getUpperTriangularIndex(int i, int j) {
+        assert i != j;
+        if (i < j) {
+            return upperTriangularTransformation(i, j);
+        } else {
+            return upperTriangularTransformation(j, i);
+        }
+    }
+
+    private int upperTriangularTransformation(int i, int j) {
+        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
     }
 
     public double[][] getParameterAsMatrix() {

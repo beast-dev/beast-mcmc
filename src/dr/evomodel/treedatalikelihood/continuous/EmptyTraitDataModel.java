@@ -25,8 +25,13 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.MutableTreeModel;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
+import dr.xml.*;
 
 import java.util.List;
 
@@ -74,4 +79,52 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
         return new double[dimTrait + precisionType.getMatrixLength(dimTrait)];
     }
+
+    private static final String EMPTY_TRAIT_MODEL = "emptyTraitModel";
+
+    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException{
+            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(TreeModel.class);
+            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
+
+            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
+                    utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
+                            treeModel, true);
+
+            String traitName = returnValue.traitName;
+            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
+                    xo.getChild(MultivariateDiffusionModel.class);
+
+            PrecisionType precision = PrecisionType.SCALAR;
+
+            return new EmptyTraitDataModel(
+                    traitName,
+                    diffusionModel.getPrecisionParameter().getRowDimension(),
+                    precision
+
+            );
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[0];
+        }
+
+        @Override
+        public String getParserDescription() {
+            return null;
+        }
+
+        @Override
+        public Class getReturnType() {
+            return null;
+        }
+
+        @Override
+        public String getParserName() {
+            return null;
+        }
+    };
 }
+

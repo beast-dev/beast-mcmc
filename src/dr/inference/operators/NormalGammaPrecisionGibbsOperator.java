@@ -134,26 +134,15 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double weight = xo.getDoubleAttribute(WEIGHT);
-
-//            DistributionLikelihood prior = (DistributionLikelihood) xo.getElementFirstChild(PRIOR);
-//
-//            if (!((prior.getDistribution() instanceof GammaDistribution) ||
-//                    (prior.getDistribution() instanceof GammaDistributionModel)
-//            ) ||
-//                    !((likelihood.getDistribution() instanceof NormalDistributionModel) ||
-//                            (likelihood.getDistribution() instanceof LogNormalDistributionModel)
-//                    ))
-//                throw new XMLParseException("Gibbs operator assumes normal-gamma model");
-
-            DistributionLikelihood prior = (DistributionLikelihood) xo.getElementFirstChild(PRIOR);
+            final double weight = xo.getDoubleAttribute(WEIGHT);
+            final DistributionLikelihood prior = (DistributionLikelihood) xo.getElementFirstChild(PRIOR);
 
             if (!((prior.getDistribution() instanceof GammaDistribution) ||
                     (prior.getDistribution() instanceof GammaDistributionModel))) {
                 throw new XMLParseException("Gibbs operator assumes normal-gamma model");
             }
 
-            GammaGibbsProvider gammaGibbsProvider;
+            final GammaGibbsProvider gammaGibbsProvider;
 
             if (xo.hasChildNamed(LIKELIHOOD)) {
 

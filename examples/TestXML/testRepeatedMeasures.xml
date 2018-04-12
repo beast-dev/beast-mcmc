@@ -41,7 +41,7 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<repeatedMeasuresModel id="repeatedMeasuresID" traitName="X">
+	<repeatedMeasuresModel id="repeatedMeasures" traitName="X">
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="leafTraits"/>
@@ -55,7 +55,7 @@
 	<traitDataLikelihood id="driftLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
-		<repeatedMeasuresModel idref="repeatedMeasuresID"/>
+		<repeatedMeasuresModel idref="repeatedMeasures"/>
 		<conjugateRootPrior>
 			<meanParameter>
 				<parameter id="mean" value="-1.0 -3.0"/>
@@ -66,18 +66,54 @@
 		</conjugateRootPrior>
 	</traitDataLikelihood>
 
+	<emptyTraitModel id="nullModel" traitName="X">
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+		<multivariateDiffusionModel idref="diffusionModel"/>
+	</emptyTraitModel>
 
-	<prior id="priorID">
+
+	<traitDataLikelihood id="driftLikelihoodForWishart" traitName="X" forceFullPrecision="false" scaleByTime="true" useTreeLength="false">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<emptyTraitModel idref="nullModel"/>
+		<conjugateRootPrior>
+			<meanParameter>
+				<parameter id="mean" value="0.0 0.0 0.0"/>
+			</meanParameter>
+			<priorSampleSize>
+				<parameter value="10.0"/>
+			</priorSampleSize>
+		</conjugateRootPrior>
+	</traitDataLikelihood>
+
+
+	<prior id="prior">
 		<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">
 			<parameter idref="gamma"/>
 		</gammaPrior>
 	</prior>
 
-	<distributionLikelihood id="distributionLikelihoodID">
-		<distribution id="distributionID">
+	<multivariateWishartPrior id="precisionPrior" df="3">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="1 0 0"/>
+				<parameter value="0 1 0"/>
+				<parameter value="0 0 1"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<matrixParameter idref="precisionMatrix"/>
+		</data>
+	</multivariateWishartPrior>
+
+	<distributionLikelihood id="distributionLikelihood">
+		<distribution id="distribution">
 
 		</distribution>
-		<logNormalDistributionModel id="logNormalID">
+		<logNormalDistributionModel id="logNormal">
 			<mean value="1.0"/>
 		</logNormalDistributionModel>
 	</distributionLikelihood>
@@ -87,14 +123,21 @@
 			<!--<parameter idref="gamma"/>-->
 		<!--</scaleOperator>-->
 
-		<normalGammaPrecisionGibbsOperator weight="1.0">
-			<repeatedMeasures>
-				<repeatedMeasuresModel idref="repeatedMeasuresID"/>
-				<treeDataLikelihood idref="driftLikelihood"/>
-			</repeatedMeasures>
-			<prior idref="priorID"/>
-			<distributionLikelihood idref="distributionLikelihoodID"/>
-		</normalGammaPrecisionGibbsOperator>
+		<!--<normalGammaPrecisionGibbsOperator weight="1.0">-->
+			<!--<repeatedMeasures>-->
+				<!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
+				<!--<treeDataLikelihood idref="driftLikelihood"/>-->
+			<!--</repeatedMeasures>-->
+			<!--<prior idref="prior"/>-->
+			<!--<distributionLikelihood idref="distributionLikelihood"/>-->
+		<!--</normalGammaPrecisionGibbsOperator>-->
+
+		<precisionGibbsOperator weight="1">
+			<wishartStatistics  traitName="X">
+				<traitDataLikelihood idref="driftLikelihoodForWishart"/>
+			</wishartStatistics>
+			<multivariateWishartPrior idref="precisionPrior"/>
+		</precisionGibbsOperator>
 	</operators>
 
 	<report>
@@ -105,7 +148,8 @@
 	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior idref="prior"/>
-			<likelihood idref="likelihoodID"/>
+			<multivariateWishartPrior idref="precisionPrior"/>
+			<likelihood idref="likelihood"/>
 		</posterior>
 		<operators idref="operators"/>
 		<log id="screenLog" logEvery="10000">

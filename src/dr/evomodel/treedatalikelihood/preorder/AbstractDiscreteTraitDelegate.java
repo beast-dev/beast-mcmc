@@ -93,6 +93,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
         beagle.updatePrePartials(operations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
         //TODO:error control
+
+        if (COUNT_TOTAL_OPERATIONS) {
+            ++simulateCount;
+        }
     }
 
     @Override
@@ -200,7 +204,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
     }
 
-    public double[] getHessian(Tree tree, NodeRef node) {
+    private double[] getHessian(Tree tree, NodeRef node) {
         final double[] patternGradient = getTrait(tree, node, GRADIENT); // this is 1/L * firstDerivative(L)
         final double[] patternDiagonalHessian  = getTrait(tree, node, HESSIAN); // this is 1/L * secondDerivative(L)
         final double[] patternWeights = patternList.getPatternWeights();
@@ -230,6 +234,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
     @Override
     public double[] getTrait(Tree tree, NodeRef node) {
+
+        if (COUNT_TOTAL_OPERATIONS) {
+            ++getTraitCount;
+        }
+
         final double[] patternGradient = getTrait(tree, node, GRADIENT);
         final double[] patternWeights = patternList.getPatternWeights();
         double[] gradient = new double[tree.getNodeCount() - 1];
@@ -394,6 +403,17 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return preOrderScaleBufferOffset + nodeNumber;
     }
 
+    @Override
+    public String toString() {
+        if (COUNT_TOTAL_OPERATIONS) {
+
+            return "\tsimulateCount = " + simulateCount + "\n" +
+                    "\tgetTraitCount = " + getTraitCount + "\n";
+
+        } else {
+            return super.toString();
+        }
+    }
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
@@ -421,6 +441,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private final double[] grandNumeratorIncrementLowerBound;
     private final double[] grandNumeratorIncrementUpperBound;
 
-    private static final boolean DEBUG = false;
+    private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private long simulateCount = 0;
+    private long getTraitCount = 0;
 }
 

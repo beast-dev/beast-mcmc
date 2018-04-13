@@ -161,12 +161,16 @@ public class BranchRateGradientForDiscreteTrait
                 final double rate = branchRateModel.getBranchRate(tree, node);
                 final double differential = branchRateModel.getBranchRateDifferential(rate);
                 final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
-                if (Double.isNaN(nodeResult) && Double.isFinite(treeDataLikelihood.getLogLikelihood())) {
+                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
                     System.err.println("Check Gradient calculation please.");
                 }
                 result[destinationIndex] = nodeResult;
                 v++;
             }
+        }
+
+        if (COUNT_TOTAL_OPERATIONS) {
+            ++getGradientLogDensityCount;
         }
 
         return result;
@@ -265,12 +269,17 @@ public class BranchRateGradientForDiscreteTrait
             sb.append("\n");
         }
 
-//        treeDataLikelihood.makeDirty();
+        if (COUNT_TOTAL_OPERATIONS) {
+            sb.append("\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount);
+        }
 
         return sb.toString();
     }
 
     private static final boolean DEBUG = false;
+
+    private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private long getGradientLogDensityCount = 0;
 
     @Override
     public LogColumn[] getColumns() {

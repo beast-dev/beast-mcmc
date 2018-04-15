@@ -2,7 +2,7 @@ package dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedM
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
@@ -103,30 +103,47 @@ public interface GammaGibbsProvider {
 
     class RepeatedMeasuresGibbsProvider implements GammaGibbsProvider {
 
-        private final RepeatedMeasuresTraitLikelihood traitLikelihood;
+//        private final RepeatedMeasuresTraitDataModel dataModel;
         private final TreeDataLikelihood treeLikelihood;
         private final CompoundParameter traitParameter;
+        private final Parameter precisionParameter;
         private final TreeTrait tipTrait;
 
         private double tipValues[];
 
-        public RepeatedMeasuresGibbsProvider(RepeatedMeasuresTraitLikelihood traitLikelihood,
+        public RepeatedMeasuresGibbsProvider(RepeatedMeasuresTraitDataModel dataModel,
                                              TreeDataLikelihood treeLikelihood,
                                              String traitName) {
-            this.traitLikelihood = traitLikelihood;
+//            this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
-            this.traitParameter = traitLikelihood.getParameter();
+            this.traitParameter = dataModel.getParameter();
+            this.precisionParameter = dataModel.getSamplingPrecision();
             this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
         }
 
         @Override
         public SufficientStatistics getSufficientStatistics(int dim) {
-            return null;
+
+            final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
+            final int traitDim = treeLikelihood.getDataLikelihoodDelegate().getTraitDim();
+
+            double SSE = 0;
+
+            for (int taxon = 0; taxon < taxonCount; ++taxon) {
+
+                double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
+                double tipValue = tipValues[taxon * traitDim + dim];
+
+                SSE += (traitValue - tipValue) * (traitValue - tipValue);
+
+            }
+
+            return new SufficientStatistics(taxonCount, SSE);
         }
 
         @Override
         public Parameter getPrecisionParameter() {
-            return null;
+            return precisionParameter;
         }
 
         @Override
@@ -138,6 +155,6 @@ public interface GammaGibbsProvider {
             }
         }
 
-        private static final boolean DEBUG = true;
+        private static final boolean DEBUG = false;
     }
 }

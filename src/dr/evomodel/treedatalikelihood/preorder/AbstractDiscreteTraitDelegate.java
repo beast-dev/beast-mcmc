@@ -337,7 +337,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                     final double numerator = clampGradientNumerator(grandNumerator[pattern],
                             grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
 
-                    derivative[index * patternCount + pattern] += numerator / grandDenominator[pattern];
+                    derivative[index * patternCount + pattern] = numerator / grandDenominator[pattern];
 
 //                    if (Double.isNaN(derivative[index * patternCount + pattern]) && DEBUG) {
 //                        System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
@@ -376,7 +376,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
-            operations[k++] = getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild()); // TODO:rescaling control
             operations[k++] = Beagle.NONE;
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());

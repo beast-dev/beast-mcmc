@@ -357,7 +357,6 @@ public class TreeIntervals implements IntervalList {
 
     /**
      * extract coalescent times and tip information into array times from tree.
-     * MK: Made protected for GriddedTreeIntervals
      */
     private static void collectTimes(Tree tree, double[] times, int[] childCounts) {
 

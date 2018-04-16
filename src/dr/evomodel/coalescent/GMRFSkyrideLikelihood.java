@@ -197,7 +197,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471.");
     }
 
-
     public static void checkTree(TreeModel treeModel) {
 
         // todo Should only be run if there exists a zero-length interval

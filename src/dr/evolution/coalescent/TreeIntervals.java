@@ -229,7 +229,7 @@ public class TreeIntervals implements IntervalList {
     /**
      * Recalculates all the intervals for the given tree.
      */
-    protected void calculateIntervals() {
+    private void calculateIntervals() {
 
         int nodeCount = tree.getNodeCount();
 
@@ -359,7 +359,7 @@ public class TreeIntervals implements IntervalList {
      * extract coalescent times and tip information into array times from tree.
      * MK: Made protected for GriddedTreeIntervals
      */
-    protected static void collectTimes(Tree tree, double[] times, int[] childCounts) {
+    private static void collectTimes(Tree tree, double[] times, int[] childCounts) {
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
@@ -451,46 +451,45 @@ public class TreeIntervals implements IntervalList {
         return sb.toString();
     }
 
-    // MK: made protected for GriddedTreeIntervals
-    protected int[] indices;
-    protected int[] storedIndices;
+    private int[] indices;
+    private int[] storedIndices;
 
-    protected double[] times;
-    protected double[] storedTimes;
+    private double[] times;
+    private double[] storedTimes;
 
     /**
      * The tree.
      */
-    protected Tree tree = null;
+    private Tree tree = null;
 
     /**
      * The widths of the intervals.
      */
-    protected double[] intervals;
-    protected double[] storedIntervals;
+    private double[] intervals;
+    private double[] storedIntervals;
 
     /**
      * The number of uncoalesced lineages within a particular interval.
      */
-    protected int[] lineageCounts;
-    protected int[] storedLineageCounts;
+    private int[] lineageCounts;
+    private int[] storedLineageCounts;
 
     /**
      * The lineages in each interval (stored by node ref).
      */
-    protected List<NodeRef>[] lineagesAdded;
-    protected List<NodeRef>[] lineagesRemoved;
-    protected List[] lineages;
+    private List<NodeRef>[] lineagesAdded;
+    private List<NodeRef>[] lineagesRemoved;
+    private List[] lineages;
 
-    protected int intervalCount = 0;
+    private int intervalCount = 0;
 
     /**
      * are the intervals known?
      */
-    protected boolean intervalsKnown = false;
-    protected boolean storedIntervalsKnown;
+    private boolean intervalsKnown = false;
+    private boolean storedIntervalsKnown;
 
-    protected double multifurcationLimit = -1.0;
+    private double multifurcationLimit = -1.0;
 
-    protected static final boolean superStore = true;
+    private static final boolean superStore = true;
 }

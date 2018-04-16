@@ -74,7 +74,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     protected double[] storedPloidySums;
     protected SymmTridiagMatrix precMatrix;
     protected SymmTridiagMatrix storedPrecMatrix;
-    protected SkygridHelper skygridHelper;
+    private SkygridHelper skygridHelper;
     protected List<Parameter> missingCov;
     protected List<MatrixParameter> covariates;
     protected List<Parameter> beta;

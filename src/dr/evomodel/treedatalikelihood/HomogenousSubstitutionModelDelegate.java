@@ -47,6 +47,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
+    private final boolean cacheQMatrices;
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -55,7 +56,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param branchModel Describes which substitution models use on each branch
      */
     public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, 0);
+        this(tree, branchModel, 0, false);
+    }
+
+    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
+        this(tree, branchModel, partitionNumber, false);
     }
 
     /**
@@ -65,7 +70,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param branchModel Describes which substitution models use on each branch
      * @param partitionNumber which data partition is this (used to offset eigen and matrix buffer numbers)
      */
-    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
+    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, boolean cacheQMatrices) {
 
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
@@ -79,7 +84,14 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         // two matrices for each node less the root
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
 
+        this.cacheQMatrices = cacheQMatrices;
+
     }// END: Constructor
+
+    @Override
+    public boolean cacheInfinitesimalMatrices() {
+        return this.cacheQMatrices;
+    }
 
     @Override
     public boolean canReturnComplexDiagonalization() {

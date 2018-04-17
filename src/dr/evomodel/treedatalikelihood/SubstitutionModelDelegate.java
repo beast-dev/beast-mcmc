@@ -156,6 +156,21 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
+    public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
+        return getMatrixBufferCount() + branchIndex;  //store each branch separately
+    }
+
+    @Override
+    public int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex) {
+        return getMatrixBufferCount() + tree.getNodeCount() - 1 + branchIndex; //store each branch separately
+    }
+
+    @Override
+    public int getInfinitesimalMatrixBufferCount() {
+        return 2 * (tree.getNodeCount() - 1);
+    }
+
+    @Override
     public int getSubstitutionModelCount() {
         return substitutionModelList.size();
     }

@@ -164,8 +164,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
+            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+
             int numPartials = partialBufferHelper.getBufferCount();
             int numScaleBuffers = scaleBufferHelper.getBufferCount();
+            int numMatrices = evolutionaryProcessDelegate.getMatrixBufferCount();
             this.usePreOrder = false;
 
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
@@ -173,9 +176,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 this.usePreOrder = true;
                 numPartials += nodeCount;
                 numScaleBuffers += nodeCount - 1; // don't need to rescale at root
+                numMatrices += evolutionaryProcessDelegate.getInfinitesimalMatrixBufferCount();
             }
-
-            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
@@ -303,7 +305,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     stateCount,
                     patternCount,
                     evolutionaryProcessDelegate.getEigenBufferCount(),
-                    evolutionaryProcessDelegate.getMatrixBufferCount(),
+                    numMatrices,
                     categoryCount,
                     numScaleBuffers, // Always allocate; they may become necessary
                     resourceList,

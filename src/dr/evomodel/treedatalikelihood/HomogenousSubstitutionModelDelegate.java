@@ -97,6 +97,21 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
+    public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
+        return matrixBufferHelper.getBufferCount();
+    }
+
+    @Override
+    public int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex) {
+        return matrixBufferHelper.getBufferCount() + 1;
+    }
+
+    @Override
+    public int getInfinitesimalMatrixBufferCount() {
+        return 2;
+    }
+
+    @Override
     public int getSubstitutionModelCount() {
         return 1;
     }

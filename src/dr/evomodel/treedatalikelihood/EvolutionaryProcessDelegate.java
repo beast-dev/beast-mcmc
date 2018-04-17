@@ -44,6 +44,12 @@ public interface EvolutionaryProcessDelegate {
 
     int getMatrixBufferCount();
 
+    int getInfinitesimalMatrixBufferIndex(int branchIndex);
+
+    int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex);
+
+    int getInfinitesimalMatrixBufferCount();
+
     int getSubstitutionModelCount();
 
     SubstitutionModel getSubstitutionModel(int index);

@@ -25,6 +25,9 @@
 
 package dr.util;
 
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
@@ -35,6 +38,8 @@ import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
  */
 
 public class LKJTransformConstrained extends Transform.MultivariableTransform {
+
+    private static boolean DEBUG = false;
 
     // LKJ transform with CPCs constrained between -1 and 1.
 
@@ -48,8 +53,131 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         return transform(values, 0, values.length);
     }
 
+    public double[] inverse(double[] values) {
+        return inverse(values, 0, values.length);
+    }
+
+    // "Cholesky" transform from Stan manual
     @Override
     public double[] transform(double[] values, int from, int to) {
+        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
+        assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
+        for (int k = 0; k < dim; k++) {
+            assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
+        }
+
+        Matrix W = new Matrix(dim, dim);
+
+        double acc;
+        double temp;
+        W.set(0, 0, 1.0);
+        for (int j = 1; j < dim; j++) {
+            acc = 1.0;
+            for (int i = 0; i < j + 1; i++) {
+                temp = getUpperTriangular(values, i, j);
+                W.set(i, j, temp * acc);
+                acc *= Math.sqrt(1 - Math.pow(temp, 2));
+            }
+        }
+
+        SymmetricMatrix R = W.transposedProduct();
+
+        if (DEBUG) {
+            System.err.println("Z: " + compoundCorrelationSymmetricMatrix(values, dim));
+            System.err.println("R: " + R);
+            try {
+                if (!R.isPD()) {
+                    throw new RuntimeException("The LKJ transform should produce a Positive Definite matrix.");
+                }
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+        }
+
+        return extractUpperTriangular(R);
+    }
+
+    @Override
+    public double[] inverse(double[] values, int from, int to) {
+        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
+
+        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(values, dim);
+        double[][] L;
+        try {
+            L = new CholeskyDecomposition(R).getL();
+        } catch (IllegalDimension illegalDimension) {
+            throw new RuntimeException("Unable to decompose matrix in LKJ inverse transform.");
+        }
+
+        double[] results = new double[dim * (dim - 1) / 2];
+
+        double acc;
+        double temp;
+        for (int j = 1; j < dim; j++) {
+            acc = 1.0;
+            for (int i = 0; i < j; i++) {
+                temp = L[j][i] / acc;
+                setUpperTriangular(results, i, j, temp);
+                acc *= Math.sqrt(1 - Math.pow(temp, 2));
+            }
+        }
+
+        if (DEBUG) {
+            System.err.println("R: " + compoundCorrelationSymmetricMatrix(values, dim));
+            System.err.println("L: " + new SymmetricMatrix(L));
+            System.err.println("Z: " + compoundCorrelationSymmetricMatrix(results, dim));
+        }
+
+        return results;
+    }
+
+    private double getUpperTriangular(double[] values, int i, int j) {
+        assert i <= j;
+        if (i == j) return 1.0; // Z_{ii} = 1 by convention.
+        return values[i * (2 * dim - i - 1) / 2 + (j - i - 1)];
+    }
+
+    private void setUpperTriangular(double[] values, int i, int j, double val) {
+        assert i < j;
+        values[i * (2 * dim - i - 1) / 2 + (j - i - 1)] = val;
+    }
+
+    @Override
+    public double[] inverse(double[] values, int from, int to, double sum) {
+        throw new RuntimeException("Not relevant for the LKJ transform.");
+    }
+
+    public String getTransformName() {
+        return "LKJTransform";
+    }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double[] gradientInverse(double[] values, int from, int to) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double getLogJacobian(double[] values, int from, int to) {
+        assert from == 0 && to == values.length
+                : "The logJacobian function can only be applied to the whole array of values.";
+        double logJacobian = 0;
+        int k = 0;
+        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
+            for (int j = i + 1; j < dim; j++) {
+                logJacobian += (dim - i - 2) * Math.log(1.0 - Math.pow(values[k], 2));
+                k++;
+            }
+        }
+        return 0.5 * logJacobian;
+    }
+
+    // Unused recursive transformation (more numerical errors)
+    public double[] transformRecursion(double[] values, int from, int to) {
         assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
         assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
         for (int k = 0; k < dim; k++) {
@@ -65,12 +193,7 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         return extractUpperTriangular(R);
     }
 
-    public double[] inverse(double[] values) {
-        return inverse(values, 0, values.length);
-    }
-
-    @Override
-    public double[] inverse(double[] values, int from, int to) {
+    public double[] inverseRecursion(double[] values, int from, int to) {
         assert from == 0 && to == values.length
                 : "The transform function can only be applied to the whole array of values.";
 
@@ -78,6 +201,16 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
 
         for (int i = 1; i < dim - 1; i++) {
             recursionInverse(Z, i);
+        }
+
+        if (DEBUG) {
+            try {
+                if (!Z.isPD()) {
+                    throw new RuntimeException("The LKJ transform should produce a Positive Definite matrix.");
+                }
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
         }
 
         return extractUpperTriangular(Z);
@@ -112,105 +245,4 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
 
         return (Z.component(i, j) - Zimi * Zimj) / Math.sqrt((1 - Zimi * Zimi) * (1 - Zimj * Zimj));
     }
-
-
-    private double getUpperTriangular(double[] values, int i, int j) {
-        assert i < j;
-        return values[i * (2 * dim - i - 1) / 2 + (j - i - 1)];
-    }
-
-    @Override
-    public double[] inverse(double[] values, int from, int to, double sum) {
-        throw new RuntimeException("Not relevant for the LKJ transform.");
-    }
-
-    public String getTransformName() {
-        return "LKJTransform";
-    }
-
-    @Override
-    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public double[] gradientInverse(double[] values, int from, int to) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public double getLogJacobian(double[] values, int from, int to) {
-        assert from == 0 && to == values.length
-                : "The logJacobian function can only be applied to the whole array of values.";
-        double logJacobian = 0;
-        for (int i = 0; i < dim - 1; i++) {
-            for (int j = i + 1; j < dim; j++) {
-                logJacobian += (dim - i - 1) * Math.log(1.0 - Math.pow(getUpperTriangular(values, i, j), 2));
-            }
-        }
-        return -0.5 * logJacobian;
-    }
-
-// "Cholesky" transform from Stan manual (to be fixed).
-//    public double[] transform_chol(double[] values, int from, int to) {
-//        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-//        assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
-//        for (int k = 0; k < dim; k++) {
-//            assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
-//        }
-//
-//        Matrix W = new Matrix(dim, dim);
-//
-//        W.set(0, 0, 1.0);
-//        for (int j = 1; j < dim; j++) {
-//            W.set(0, j, getUpperTriangular(values, 0, j));
-//            for (int i = 1; i < j; i++) {
-//                W.set(i, j,
-//                        getUpperTriangular(values, i, j)
-//                                * W.component(i - 1, j) / W.component(0, j)
-//                                * Math.sqrt(1 - Math.pow(getUpperTriangular(values, i - 1, j), 2)));
-//            }
-//            W.set(j, j,
-//                    W.component(j - 1, j) / W.component(0, j)
-//                            * Math.sqrt(1 - Math.pow(getUpperTriangular(values, j - 1, j), 2)));
-//        }
-//
-//        SymmetricMatrix R = W.transposedProduct();
-//        return R.toArrayComponents();
-//    }
-//
-//    private void setUpperTriangular(double[] values, int i, int j, double val) {
-//        assert i < j;
-//        values[i * (2 * dim - i - 1) / 2 + (j - i - 1)] = val;
-//    }
-//
-//    public double[] inverse_chol(double[] values, int from, int to) {
-//        if (from != 0 || to != values.length) {
-//            throw new IllegalArgumentException(
-//                    "The transform function can only be applied to the whole array of values.");
-//        }
-//
-//        Matrix R = new Matrix(values, dim, dim);
-//        double[][] L;
-//        try {
-//            L = new CholeskyDecomposition(R).getL();
-//        } catch (IllegalDimension illegalDimension) {
-//            throw new RuntimeException("Unable to decompose matrix in LKJ inverse transform.");
-//        }
-//
-//        double[] results = new double[dim * (dim - 1) / 2];
-//
-//        double acc;
-//        double temp;
-//        for (int j = 1; j < dim; j++) {
-//            acc = 1.0;
-//            for (int i = 0; i < j; i++) {
-//                temp = L[j][i] / acc;
-//                setUpperTriangular(results, i, j, temp);
-//                acc *= Math.sqrt(1 - Math.pow(temp, 2));
-//            }
-//        }
-//
-//        return results;
-//    }
 }

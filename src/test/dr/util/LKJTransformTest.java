@@ -44,6 +44,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
 
     private int dim;
     private double[] CPCs;
+    private double[] CPCsLimit;
     private double[][] CPCsMatrix;
     private LKJTransformConstrained transform;
 
@@ -62,7 +63,11 @@ public class LKJTransformTest extends TraceCorrelationAssert {
 
         transform = new LKJTransformConstrained(dim);
 
-        CPCs = new double[]{0.12, -0.13, 0.14, -0.15, 0.16, -0.23, 0.24, -0.25, 0.26, 0.34, -0.35, 0.36, -0.45, 0.46, 0.56};
+        CPCs = new double[]{0.12, -0.13, 0.14, -0.15, 0.16,
+                           -0.23, 0.24, -0.25, 0.26,
+                            0.34, -0.35, 0.36,
+                           -0.45, 0.46,
+                            0.56};
 
         CPCsMatrix = new double[dim][dim];
         for (int i = 0; i < dim; i++) {
@@ -70,6 +75,12 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 CPCsMatrix[i][j] = (2 * (j % 2) - 1) * ((i + 1) * 0.1 + (j + 1) * 0.01);
             }
         }
+
+        CPCsLimit = new double[]{ 0.99, -0.99,  0.99, -0.99, 0.99,
+                                 -0.99,  0.99, -0.99,  0.99,
+                                 -0.99,  0.99, -0.99,
+                                  0.99, -0.99,
+                                  0.99};
     }
 
     public void testGetter() {
@@ -112,5 +123,87 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                     format.format(inverseTransformedValues[k]));
         }
     }
+
+    public void testTransformationLimit() {
+        System.out.println("\nTest LKJ transform on the border.");
+
+        double[] transformedValue = transform.transform(CPCsLimit);
+        double[] inverseTransformedValues = transform.inverse(transformedValue);
+
+        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);;
+        System.out.println("transformedValue=" + R);
+        try {
+            assertTrue("Positive Definite", R.isPD());
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
+
+        System.out.println("iCPC=" + new Matrix(inverseTransformedValues, dim * (dim - 1) / 2, 1));
+
+        assertEquals("size CPCs",
+                format.format(CPCsLimit.length),
+                format.format(inverseTransformedValues.length));
+
+        for (int k = 0; k < CPCsLimit.length; k++) {
+            assertEquals("inverse transform k=" + k,
+                    format.format(CPCsLimit[k]),
+                    format.format(inverseTransformedValues[k]));
+        }
+    }
+
+    public void testTransformationRecursion() {
+        System.out.println("\nTest LKJ transform.");
+
+        double[] transformedValue = transform.transformRecursion(CPCs, 0, CPCs.length);
+        double[] inverseTransformedValues = transform.inverseRecursion(transformedValue, 0, CPCs.length);
+
+        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);;
+        System.out.println("transformedValue=" + R);
+        try {
+            assertTrue("Positive Definite", R.isPD());
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
+
+        System.out.println("iCPC=" + new Matrix(inverseTransformedValues, dim * (dim - 1) / 2, 1));
+
+        assertEquals("size CPCs",
+                format.format(CPCs.length),
+                format.format(inverseTransformedValues.length));
+
+        for (int k = 0; k < CPCs.length; k++) {
+            assertEquals("inverse transform k=" + k,
+                    format.format(CPCs[k]),
+                    format.format(inverseTransformedValues[k]));
+        }
+    }
+
+    // The limit case fails with the recursion formula.
+//    public void testTransformationLimitRecursion() {
+//        System.out.println("\nTest LKJ transform on the border.");
+//
+//        double[] transformedValue = transform.transformRecursion(CPCsLimit, 0, CPCsLimit.length);
+//        double[] inverseTransformedValues = transform.inverseRecursion(transformedValue, 0, CPCsLimit.length);
+//
+//        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);;
+//        System.out.println("transformedValue=" + R);
+//        try {
+//            assertTrue("Positive Definite", R.isPD());
+//        } catch (IllegalDimension illegalDimension) {
+//            illegalDimension.printStackTrace();
+//        }
+//
+//        System.out.println("iCPC=" + new Matrix(inverseTransformedValues, dim * (dim - 1) / 2, 1));
+//
+//        assertEquals("size CPCs",
+//                format.format(CPCsLimit.length),
+//                format.format(inverseTransformedValues.length));
+//
+//        for (int k = 0; k < CPCsLimit.length; k++) {
+//            assertEquals("inverse transform k=" + k,
+//                    format.format(CPCsLimit[k]),
+//                    format.format(inverseTransformedValues[k]));
+//        }
+//    }
 
 }

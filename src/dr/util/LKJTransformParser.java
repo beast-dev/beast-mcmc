@@ -25,7 +25,6 @@
 
 package dr.util;
 
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -46,19 +45,19 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
         int dim = xo.getIntegerAttribute(DIMENSION);
         int length = dim * (dim - 1) / 2;
 
-        // Fisher Z  (unconstrained to constrained CPCs)
+        // Fisher Z  (constrained CPCs to unconstrained)
         List<Transform> transforms = new ArrayList<Transform>();
-        Transform fisherZ = new Transform.Inverse(Transform.FISHER_Z);
+//        Transform fisherZ = new Transform.Inverse(Transform.FISHER_Z);
         for (int i = 0; i < length; i++) {
-            transforms.add(fisherZ);
+            transforms.add(Transform.FISHER_Z);
         }
         Transform.Array fisherZTransforms = new Transform.Array(transforms, null);
 
-        // LKJ inverse (constrained CPCs to correlation matrix)
-        Transform.MultivariableTransform LKJTransform = new LKJTransformConstrained(dim);
+        // LKJ inverse (correlation matrix to constrained CPCs)
+        Transform.MultivariableTransform LKJTransform = new Transform.InverseMultivariable(new LKJTransformConstrained(dim));
 
         // Compose
-        return new Transform.ComposeMultivariable(LKJTransform, fisherZTransforms);
+        return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);
     }
 
     @Override

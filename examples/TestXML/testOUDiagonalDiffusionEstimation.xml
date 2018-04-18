@@ -136,7 +136,7 @@
         <!--     <parameter idref="rate.1"/> -->
         <!-- </randomWalkOperator> -->
         <transformedParameterRandomWalkOperator windowSize="1.0" weight="1">
-            <transformedMultivariateParameter inverse="true">
+            <transformedMultivariateParameter>
                 <parameter idref="precision.offDiagonal"/>
                 <LKJTransform dimension = "3"/>
             </transformedMultivariateParameter>
@@ -182,7 +182,7 @@
 		</posterior>
 		<operators idref="ouOperators"/>
 
-		<log id="screenLog" logEvery="1">
+		<log id="screenLog" logEvery="1000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="ouPosterior"/>
 			</column>

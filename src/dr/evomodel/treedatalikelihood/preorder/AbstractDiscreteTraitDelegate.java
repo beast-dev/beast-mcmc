@@ -205,6 +205,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     }
 
     private double[] getHessian(Tree tree, NodeRef node) {
+        //update all preOrder partials first
+        simulationProcess.cacheSimulatedTraits(node);
         double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
         double[] patternDiagonalHessian = new double[patternCount * (tree.getNodeCount() - 1)];
         getPatternGradientHessian(tree, patternGradient, patternDiagonalHessian);
@@ -239,6 +241,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         if (COUNT_TOTAL_OPERATIONS) {
             ++getTraitCount;
         }
+        //update all preOrder partials first
+        simulationProcess.cacheSimulatedTraits(node);
 
 //        final double[] patternGradientOld = getTrait(tree, node, GRADIENT);
         double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];

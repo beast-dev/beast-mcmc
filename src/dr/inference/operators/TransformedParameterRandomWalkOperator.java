@@ -26,12 +26,15 @@
 package dr.inference.operators;
 
 import dr.inference.model.TransformedParameter;
+import dr.math.matrixAlgebra.Matrix;
 
 /**
  * @author Paul Bastide
  */
 
 public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
+
+    private static boolean DEBUG = false;
 
     public TransformedParameterRandomWalkOperator(TransformedParameter parameter, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
         super(parameter, windowSize, bc, weight, mode);
@@ -49,12 +52,23 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
     public double doOperation() {
         // Store old states
         double[] oldValues = ((TransformedParameter) parameter).getParameterUntransformedValues();
+        if (DEBUG) {
+            System.err.println("oldValues: " + new Matrix(oldValues, oldValues.length, 1));
+            System.err.println("oldValuesTrans: " + new Matrix(parameter.getParameterValues(), oldValues.length, 1));
+        }
         // Do operation
         double ratio = super.doOperation();
         // New states
         double[] newValues = ((TransformedParameter) parameter).getParameterUntransformedValues();
+        if (DEBUG) {
+            System.err.println("newValues: " + new Matrix(newValues, newValues.length, 1));
+            System.err.println("newValuesTrans: " + new Matrix(parameter.getParameterValues(), newValues.length, 1));
+        }
         // Compute Jacobians
         ratio += ((TransformedParameter) parameter).diffLogJacobian(oldValues, newValues);
+        if (DEBUG) {
+            System.err.println("ratio: " + ratio);
+        }
         return ratio;
     }
 

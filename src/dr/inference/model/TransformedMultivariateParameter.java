@@ -32,9 +32,10 @@ import dr.util.Transform;
  * @author Paul Bastide
  */
 
-public class TransformedMultivariateParameter extends TransformedParameter{
+public class TransformedMultivariateParameter extends TransformedParameter {
 
-    private double[] transformedParameterValues;
+//    private double[] transformedValues;
+//    private double[] storedTransformedValues; //TODO store/restore mechanism for TransformedParameter ?
 
     public TransformedMultivariateParameter(Parameter parameter, Transform.MultivariableTransform transform) {
         this(parameter, transform, false);
@@ -42,28 +43,30 @@ public class TransformedMultivariateParameter extends TransformedParameter{
 
     public TransformedMultivariateParameter(Parameter parameter, Transform.MultivariableTransform transform, boolean inverse) {
         super(parameter, transform, inverse);
-        this.transformedParameterValues = transform(parameter.getParameterValues());
+//        this.transformedValues = transform(parameter.getParameterValues());
     }
 
     public double getParameterValue(int dim) {
-        return transformedParameterValues[dim];
+        return transform(parameter.getParameterValues())[dim];
     }
 
     public void setParameterValue(int dim, double value) {
-        transformedParameterValues[dim] = value;
-        double[] newValues = inverse(transformedParameterValues);
+        double[] transformedValues = transform(parameter.getParameterValues());
+        transformedValues[dim] = value;
+        double[] newValues = inverse(transformedValues);
         // Need to update all values
         parameter.setParameterValueNotifyChangedAll(0, newValues[0]); // Warn everyone is changed
-        for (int i = 1; i < parameter.getDimension(); i ++) {
+        for (int i = 1; i < parameter.getDimension(); i++) {
             parameter.setParameterValueQuietly(i, newValues[i]); // Do the rest quietly
         }
     }
 
     public void setParameterValueQuietly(int dim, double value) {
-        transformedParameterValues[dim] = value;
-        double[] newValues = inverse(transformedParameterValues);
+        double[] transformedValues = transform(parameter.getParameterValues());
+        transformedValues[dim] = value;
+        double[] newValues = inverse(transformedValues);
         // Need to update all values
-        for (int i = 0; i < parameter.getDimension(); i ++) {
+        for (int i = 0; i < parameter.getDimension(); i++) {
             parameter.setParameterValueQuietly(i, newValues[i]);
         }
     }
@@ -81,4 +84,24 @@ public class TransformedMultivariateParameter extends TransformedParameter{
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
         return new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, parameter.getDimension());
     }
+
+//    @Override
+//    protected final void storeValues() {
+//        System.err.println("YOUPI!");
+//        super.storeValues();
+//        if (storedTransformedValues == null || storedTransformedValues.length != transformedValues.length) {
+//            storedTransformedValues = new double[transformedValues.length];
+//        }
+//        System.arraycopy(transformedValues, 0, storedTransformedValues, 0, storedTransformedValues.length);
+//    }
+//
+//    @Override
+//    protected final void restoreValues() {
+//        System.err.println("YOUPI!");
+//        super.restoreValues();
+//        //swap the arrays
+//        double[] temp = storedTransformedValues;
+//        storedTransformedValues = transformedValues;
+//        transformedValues = temp;
+//    }
 }

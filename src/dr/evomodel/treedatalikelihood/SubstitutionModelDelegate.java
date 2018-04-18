@@ -170,20 +170,20 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
-        return getMatrixBufferCount() + getEigenIndex(branchIndex);  //store each branch separately
+        return getMatrixBufferCount() + getEigenIndex(branchIndex);
     }
 
     private int getInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
-        return getMatrixBufferCount() + eigenIndex;  //store each branch separately
+        return getMatrixBufferCount() + eigenIndex;
     }
 
     @Override
     public int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex) {
-        return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex); //store each branch separately
+        return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex);
     }
 
     private int getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
-        return getMatrixBufferCount() + getEigenBufferCount() + eigenIndex; //store each branch separately
+        return getMatrixBufferCount() + getEigenBufferCount() + eigenIndex;
     }
 
     @Override

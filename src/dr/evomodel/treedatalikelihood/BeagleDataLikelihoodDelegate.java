@@ -164,7 +164,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
-            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+            if (usePreOrder) {
+                evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel, 0, true);
+            } else {
+                evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+            }
 
             int numPartials = partialBufferHelper.getBufferCount();
             int numScaleBuffers = scaleBufferHelper.getBufferCount();

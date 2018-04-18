@@ -161,6 +161,24 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                 ed.getEigenVectors(),
                 ed.getInverseEigenVectors(),
                 ed.getEigenValues());
+
+        if (cacheQMatrices) {
+            final int stateCount = substitutionModel.getDataType().getStateCount();
+            double[] infinitesimalMatrix = new double[stateCount * stateCount];
+            double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
+            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
+            beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(0), infinitesimalMatrix, 0.0);
+            for (int l = 0; l < stateCount; l++) {
+                for (int j = 0; j < stateCount; j++) {
+                    double sumOverState = 0.0;
+                    for (int k = 0; k < stateCount; k++) {
+                        sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
+                    }
+                    infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
+                }
+            }
+            beagle.setTransitionMatrix(getSquaredInfinitesimalMatrixBufferIndex(0), infinitesimalMatrixSquared, 0.0);
+        }
     }
 
     @Override

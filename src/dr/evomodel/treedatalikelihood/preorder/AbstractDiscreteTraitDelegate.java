@@ -205,8 +205,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     }
 
     private double[] getHessian(Tree tree, NodeRef node) {
-        final double[] patternGradient = getTrait(tree, node, GRADIENT); // this is 1/L * firstDerivative(L)
-        final double[] patternDiagonalHessian  = getTrait(tree, node, HESSIAN); // this is 1/L * secondDerivative(L)
+        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+        double[] patternDiagonalHessian = new double[patternCount * (tree.getNodeCount() - 1)];
+        getPatternGradientHessian(tree, patternGradient, patternDiagonalHessian);
         final double[] patternWeights = patternList.getPatternWeights();
         double[] patternDiagonalLogHessian = new double[patternGradient.length];
         double[] diagonalLogHessian = new double[tree.getNodeCount() - 1];
@@ -239,11 +240,35 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             ++getTraitCount;
         }
 
-        final double[] patternGradient = getTrait(tree, node, GRADIENT);
+//        final double[] patternGradientOld = getTrait(tree, node, GRADIENT);
+        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+        getPatternGradientHessian(tree, patternGradient, null);
         final double[] patternWeights = patternList.getPatternWeights();
         double[] gradient = new double[tree.getNodeCount() - 1];
         sumOverPatterns(tree, patternWeights, patternGradient, gradient);
         return gradient;
+    }
+
+    private void getPatternGradientHessian(Tree tree, double[] patternGradient, double[] patternDiagonalHessian) {
+        final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
+        final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
+        final int   rootNumber = tree.getRoot().getNumber();
+        final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
+        final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
+
+        int u = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            if (!tree.isRoot(tree.getNode(nodeNum))) {
+                postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
+                preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
+                firstDervIndices[u]  = evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);
+                secondDeriveIndices[u] = evolutionaryProcessDelegate.getSquaredInfinitesimalMatrixBufferIndex(nodeNum);
+                u++;
+            }
+        }
+        beagle.calculateEdgeDerivative(postBufferIndices, preBufferIndices, getPostOrderPartialIndex(rootNumber),
+                firstDervIndices, secondDeriveIndices, 0, 0, 0, new int[]{Beagle.NONE},
+                tree.getNodeCount() - 1, patternGradient, patternDiagonalHessian);
     }
 
     private double[] getTrait(Tree tree, NodeRef node, MatrixChoice matrixChoice) {

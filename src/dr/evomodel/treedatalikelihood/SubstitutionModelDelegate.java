@@ -173,9 +173,17 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         return getMatrixBufferCount() + getEigenIndex(branchIndex);  //store each branch separately
     }
 
+    private int getInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
+        return getMatrixBufferCount() + eigenIndex;  //store each branch separately
+    }
+
     @Override
     public int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex) {
         return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex); //store each branch separately
+    }
+
+    private int getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
+        return getMatrixBufferCount() + getEigenBufferCount() + eigenIndex; //store each branch separately
     }
 
     @Override
@@ -232,7 +240,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                 double[] infinitesimalMatrix = new double[stateCount * stateCount];
                 double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
                 substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-                beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(0), infinitesimalMatrix, 0.0);
+                beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndexByEigenIndex(i), infinitesimalMatrix, 0.0);
                 for (int l = 0; l < stateCount; l++) {
                     for (int j = 0; j < stateCount; j++) {
                         double sumOverState = 0.0;
@@ -242,7 +250,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                         infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
                     }
                 }
-                beagle.setTransitionMatrix(getSquaredInfinitesimalMatrixBufferIndex(0), infinitesimalMatrixSquared, 0.0);
+                beagle.setTransitionMatrix(getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(i), infinitesimalMatrixSquared, 0.0);
             }
         }
     }

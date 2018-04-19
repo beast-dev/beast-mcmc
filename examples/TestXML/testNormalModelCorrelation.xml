@@ -1,0 +1,92 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testMCMC.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the MCMC engine -->
+
+<beast>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <compoundSymmetricMatrix id="precisionMatrix" asCorrelation="true">
+                <diagonal>
+                    <parameter id="precision.diagonal" value="1.0 1.0 1.0 1.0" lower="0.0 0.0 0.0 0.0"/>
+                </diagonal>
+                <offDiagonal>
+                    <parameter id="precision.offDiagonal" value="0.0 0.0 0.0 0.0 0.0 0.0" />
+                </offDiagonal>
+            </compoundSymmetricMatrix>
+        </precisionMatrix>
+	</multivariateDiffusionModel>
+
+    <LKJCorrelationPrior id="precisionPrior" shapeParameter="2.0" dimension="4">
+		<data>
+            <parameter idref="precision.offDiagonal"/>
+		</data>
+	</LKJCorrelationPrior>
+	<!-- <multivariateWishartPrior id="precisionPrior" df="3"> -->
+	<!-- 	<scaleMatrix> -->
+	<!-- 		<matrixParameter> -->
+	<!-- 			<parameter value=" 1.0  0.0  0.0"/> -->
+	<!-- 			<parameter value=" 0.0  1.0  0.0"/> -->
+	<!-- 			<parameter value=" 0.0  0.0  1.0"/> -->
+	<!--  		</matrixParameter> -->
+	<!-- 	</scaleMatrix> -->
+	<!-- 	<data> -->
+	<!-- 		<matrixParameter idref="precisionMatrix"/> -->
+	<!-- 	</data> -->
+	<!-- </multivariateWishartPrior> -->
+    <!-- <uniformPrior id="uniformPrior" lower="-1.0" upper="1.0"> -->
+    <!--     <parameter idref="precision.offDiagonal"/> -->
+    <!-- </uniformPrior> -->
+
+	<operators id="operators">
+
+        <transformedParameterRandomWalkOperator windowSize="1.0" weight="1">
+            <transformedMultivariateParameter>
+                <parameter idref="precision.offDiagonal"/>
+                <LKJTransform dimension = "4"/>
+            </transformedMultivariateParameter>
+        </transformedParameterRandomWalkOperator>
+        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
+        <!--     <parameter idref="precision.offDiagonal"/> -->
+        <!-- </randomWalkOperator> -->
+
+	</operators>
+
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+        <posterior id="posterior">
+        	<dummyLikelihood id="likelihood">
+                <parameter idref="precision.offDiagonal"/>
+            </dummyLikelihood>
+
+            <prior id="prior">
+                <!-- <LKJCorrelationPrior idref="precisionPrior"/> -->
+                <multivariateWishartPrior idref="precisionPrior"/>
+                <!-- <uniformPrior idref="uniformPrior"/> -->
+            </prior>
+        </posterior>
+
+        <operators idref="operators"/>
+
+		<log logEvery="100">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+                <prior idref="prior"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="precisionMatrix"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testNormalModelCorrelation.log">
+            <matrixParameter idref="precisionMatrix"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+	<!-- <traceAnalysis fileName="testNormalModelGibbs.log" stdError="true"/> -->
+	
+</beast>

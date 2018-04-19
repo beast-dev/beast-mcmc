@@ -28,6 +28,9 @@ package dr.math.distributions;
 import dr.math.GammaFunction;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.SymmetricMatrix;
+
+import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
 
 /**
  * @author Paul Bastide
@@ -45,6 +48,14 @@ public class LKJCorrelationDistribution implements MultivariateDistribution {
         assert (shape < 0);
 
         this.shape = shape;
+        this.dim = dim;
+        this.logNormalizationConstant = computelogNormalizationConstant();
+
+    }
+
+    public LKJCorrelationDistribution(int dim) { // returns a non-informative (uniform) density
+
+        this.shape = 1.0;
         this.dim = dim;
         this.logNormalizationConstant = computelogNormalizationConstant();
 
@@ -81,11 +92,12 @@ public class LKJCorrelationDistribution implements MultivariateDistribution {
         return res;
     }
 
-    public double logPdf(double[] x) {
+    public double logPdf(double[] x) { // x must be of length (2 choose dim) [upper triangular]
         if (shape == 1.0) { // Uniform
             return logNormalizationConstant;
         } else {
-            Matrix R = new Matrix(x, dim, dim);
+            SymmetricMatrix R = compoundCorrelationSymmetricMatrix(x, dim);
+//            Matrix R = new Matrix(x, dim, dim);
             return logPdf(R);
         }
     }

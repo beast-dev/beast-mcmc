@@ -129,7 +129,7 @@ public interface GammaGibbsProvider {
 
             final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
             final int traitDim = treeLikelihood.getDataLikelihoodDelegate().getTraitDim();
-            int numMissing = 0;
+            int missingCount = 0;
 
             double SSE = 0;
 
@@ -143,11 +143,11 @@ public interface GammaGibbsProvider {
                     SSE += (traitValue - tipValue) * (traitValue - tipValue);
                 }
                 else{
-                    numMissing += 1;
+                    missingCount += 1;
                 }
             }
 
-            return new SufficientStatistics(taxonCount - numMissing, SSE);
+            return new SufficientStatistics(taxonCount - missingCount, SSE);
         }
 
         @Override

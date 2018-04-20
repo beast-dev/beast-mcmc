@@ -1,6 +1,7 @@
 package dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.inference.distribution.DistributionLikelihood;
@@ -108,6 +109,7 @@ public interface GammaGibbsProvider {
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
         private final TreeTrait tipTrait;
+        private final List<Integer> missingIndices;
 
         private double tipValues[];
 
@@ -119,6 +121,7 @@ public interface GammaGibbsProvider {
             this.traitParameter = dataModel.getParameter();
             this.precisionParameter = dataModel.getSamplingPrecision();
             this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
+            this.missingIndices = dataModel.getMissingIndices();
         }
 
         @Override
@@ -126,19 +129,25 @@ public interface GammaGibbsProvider {
 
             final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
             final int traitDim = treeLikelihood.getDataLikelihoodDelegate().getTraitDim();
+            int numMissing = 0;
 
             double SSE = 0;
 
             for (int taxon = 0; taxon < taxonCount; ++taxon) {
 
-                double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
-                double tipValue = tipValues[taxon * traitDim + dim];
+                int offset = traitDim * taxon;
+                if (missingIndices == null || !missingIndices.contains(dim + offset)){
+                    double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
+                    double tipValue = tipValues[taxon * traitDim + dim];
 
-                SSE += (traitValue - tipValue) * (traitValue - tipValue);
-
+                    SSE += (traitValue - tipValue) * (traitValue - tipValue);
+                }
+                else{
+                    numMissing += 1;
+                }
             }
 
-            return new SufficientStatistics(taxonCount, SSE);
+            return new SufficientStatistics(taxonCount - numMissing, SSE);
         }
 
         @Override
@@ -149,7 +158,6 @@ public interface GammaGibbsProvider {
         @Override
         public void drawValues() {
             tipValues = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
-
             if (DEBUG) {
                 System.err.println("tipValues: " + new WrappedVector.Raw(tipValues));
             }

@@ -153,7 +153,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         try {
 
             int compactPartialsCount = tipCount;
-            if (useAmbiguities || usePreOrder) {
+            if (useAmbiguities) {
                 // if we are using ambiguities then we don't use tip partials
                 compactPartialsCount = 0;
             }
@@ -365,7 +365,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
                             ", is not found in patternList, " + patternList.getId());
                 } else {
-                    if (useAmbiguities || usePreOrder) {
+                    if (useAmbiguities) {
                         setPartials(beagle, patternList, index, i);
                     } else {
                         setStates(beagle, patternList, index, i);

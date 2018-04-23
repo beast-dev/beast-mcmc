@@ -1,13 +1,7 @@
 package dr.math.matrixAlgebra.missingData;
 
-<<<<<<< HEAD
 import dr.inference.model.MatrixParameterInterface;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.WritableVector;
-=======
 import dr.math.matrixAlgebra.*;
->>>>>>> repeated_measures
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
@@ -42,7 +36,6 @@ public class MissingOps {
         return DenseMatrix64F.wrap(numRows, numCols, buffer);
     }
 
-<<<<<<< HEAD
     public static DenseMatrix64F wrap(MatrixParameterInterface A) {
         return wrap(A.getParameterValues(), 0, A.getRowDimension(), A.getColumnDimension());
     }
@@ -62,7 +55,6 @@ public class MissingOps {
         return DenseMatrix64F.wrap(dim, dim, buffer);
     }
 
-=======
     public static DenseMatrix64F copy(ReadableMatrix source) {
         final int len = source.getDim();
         double[] buffer = new double[len];
@@ -78,7 +70,6 @@ public class MissingOps {
             destination.set(i, source.get(i));
         }
     }
->>>>>>> repeated_measures
 
     public static void gatherRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
                                                       final int[] rowIndices, final int[] colIndices) {
@@ -458,13 +449,6 @@ public class MissingOps {
         for (int col = 0; col < dim; ++col) {
             y.set(col, buffer[col]);
         }
-    }
-
-    private void junk() {
-
-        DenseMatrix64F mat;
-
-
     }
 
     private static double[] buffer = new double[16];

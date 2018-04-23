@@ -49,7 +49,7 @@ import java.util.logging.Logger;
 public final class MarkovChain implements Serializable {
     private static final long serialVersionUID = 181L;
 
-    private final static boolean DEBUG = true;
+    private final static boolean DEBUG = false;
     private final static boolean PROFILE = true;
 
     public static final double EVALUATION_TEST_THRESHOLD = 1e-1;

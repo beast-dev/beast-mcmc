@@ -63,12 +63,20 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
     public final static String SAVE_STATE_AT = "save.state.at";
     public final static String SAVE_STATE_EVERY = "save.state.every";
 
+    public final static String FORCE_RESUME = "force.resume";
+
     private final String loadStateFileName;
     private final String saveStateFileName;
+
+    private boolean forceResume = false;
 
     public BeastCheckpointer() {
         loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
         saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+
+        if (System.getProperty(FORCE_RESUME) != null) {
+            forceResume = Boolean.parseBoolean(FORCE_RESUME);
+        }
 
         final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 
@@ -121,7 +129,9 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         if (CHECK_LOAD_STATE) {
             //first perform a simple check for equality of two doubles
             //when this test fails, go over the digits
-            if (lnL != savedLnL) {
+            if (forceResume) {
+                System.out.println("Forcing analysis to resume regardless of recomputed likelihood values.");
+            } else if (lnL != savedLnL) {
 
                 System.out.println("COMPARING LIKELIHOODS: " + lnL + " vs. " + savedLnL);
 

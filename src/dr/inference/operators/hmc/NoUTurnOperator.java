@@ -49,7 +49,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double kappa = 0.75;
         private double t0 = 10.0;
         private double gamma = 0.05;
-        private double delta = 0.2;
+        private double delta = 0.9;
         private double deltaMax = 1000.0;
         private double muFactor = 10.0;
 

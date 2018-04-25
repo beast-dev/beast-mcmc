@@ -50,7 +50,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double t0 = 10.0;
         private double gamma = 0.05;
         private double targetAcceptRate = 0.9;
-        private double deltaMax = 1000.0;
+        private double logProbErrorTol = 1000.0;
         private double muFactor = 10.0;
 
         private int findMax = 100;
@@ -228,7 +228,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         final int numNodes = (logSliceU <= logJointProbAfter ? 1 : 0);
 
-        final boolean flagContinue = (logSliceU < options.deltaMax + logJointProbAfter);
+        final boolean flagContinue = (logSliceU < options.logProbErrorTol + logJointProbAfter);
 
         // Values for dual-averaging
         final double alpha = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));

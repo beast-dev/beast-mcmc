@@ -49,7 +49,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double kappa = 0.75;
         private double t0 = 10.0;
         private double gamma = 0.05;
-        private double delta = 0.9;
+        private double targetAcceptRate = 0.9;
         private double deltaMax = 1000.0;
         private double muFactor = 10.0;
 
@@ -92,7 +92,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             if (m <= options.adaptLength) {
 
-                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.delta - (alpha / nAlpha));
+                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.targetAcceptRate - (alpha / nAlpha));
                 logStepSize = mu - Math.sqrt(m) / options.gamma * h;
                 averageLogStepSize = Math.pow(m, -options.kappa) * logStepSize +
                         (1 - Math.pow(m, -options.kappa)) * averageLogStepSize;

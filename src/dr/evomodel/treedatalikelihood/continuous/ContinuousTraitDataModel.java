@@ -39,8 +39,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     private final List<Integer> missingIndices;
     private final List<Integer> originalMissingIndices;
 
-    private final int numTraits;
-    private final int dimTrait;
+    final int numTraits;
+    final int dimTrait;
     private final PrecisionType precisionType;
 
     public ContinuousTraitDataModel(String name,

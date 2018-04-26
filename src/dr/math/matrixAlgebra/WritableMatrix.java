@@ -29,35 +29,11 @@ package dr.math.matrixAlgebra;
  * @author Marc A. Suchard
  */
 
-public interface ReadableMatrix extends ReadableVector {
+public interface WritableMatrix extends WritableVector {
 
-    double get(final int i, final int j);
+    double set(final int i, final int j, final double value);
 
     int getMajorDim();
 
     int getMinorDim();
-
-    class Utils {
-
-        public static WrappedVector product(ReadableMatrix matrix, ReadableVector vector) {
-
-            final int majorDim = matrix.getMajorDim();
-            final int minorDim = matrix.getMinorDim();
-
-            assert (vector.getDim() == minorDim);
-
-            final double[] result = new double[majorDim];
-
-            for (int row = 0; row < majorDim; ++row) {
-
-                double sum = 0.0;
-                for (int col = 0; col < minorDim; ++col) {
-                    sum += matrix.get(row, col) * vector.get(col);
-                }
-                result[row] = sum;
-            }
-
-            return new WrappedVector.Raw(result);
-        }
-    }
 }

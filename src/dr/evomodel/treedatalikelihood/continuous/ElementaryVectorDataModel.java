@@ -82,6 +82,16 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     @Override
     public CompoundParameter getParameter() { return traitParameter; }
 
+    public void setTipTraitDimParameters(int tip, int trait, int dim) {
+        tipIndicator.setParameterValue(trait, tip);
+
+        if (dimIndicator != null) {
+            dimIndicator.setParameterValue(trait, dim);
+        } else if (dim != 0) {
+            throw new RuntimeException("Not implemented");
+        }
+    }
+
     @Override
     public List<Integer> getMissingIndices() { return noMissingIndices; }
 
@@ -145,7 +155,18 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
 
         @Override
         public double getParameterValue(int index) {
-            throw new RuntimeException("Not yet implemented");
+
+            int taxon = index / (numTraits * dimTrait);
+            int taxonRemainder = index % (numTraits * dimTrait);
+
+            int trait = taxonRemainder / dimTrait;
+            int dim = taxonRemainder % dimTrait;
+
+            if (taxon == getCurrentTipIndex(trait) && dim == getCurrentDimIndex(trait)) {
+                return 1.0;
+            } else {
+                return 0.0;
+            }
         }
 
         @Override
@@ -161,6 +182,11 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
             }
 
             return result;
+        }
+
+        @Override
+        public int getDimension() {
+            return numTips * numTraits * dimTrait;
         }
     };
 

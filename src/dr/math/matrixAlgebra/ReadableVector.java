@@ -119,7 +119,7 @@ public interface ReadableVector {
     }
 
     class Utils {
-        
+
         public static void setParameter(ReadableVector position, Parameter parameter) {
             for (int j = 0, dim = position.getDim(); j < dim; ++j) {
                 parameter.setParameterValueQuietly(j, position.get(j));
@@ -139,12 +139,17 @@ public interface ReadableVector {
             return sum;
         }
 
+        public static double norm(ReadableVector vector) {
+
+            return Math.sqrt(innerProduct(vector, vector));
+        }
+
         public static double[] getBuffer(ReadableVector vector) {
             double[] buffer = new double[vector.getDim()];
             for (int i = 0; i < vector.getDim(); ++i) {
                 buffer[i] = vector.get(i);
             }
             return buffer;
-        }
+        } // TODO Remove? Defeats purpose
     }
 }

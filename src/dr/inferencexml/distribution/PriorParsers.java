@@ -25,12 +25,14 @@
 
 package dr.inferencexml.distribution;
 
+import dr.inference.distribution.CauchyDistribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
 import dr.xml.*;
+import org.apache.commons.math.distribution.CauchyDistributionImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,9 +55,11 @@ public class PriorParsers {
     public static final String INVGAMMA_PRIOR_CORRECT = "inverseGammaPrior";
     public static final String LAPLACE_PRIOR = "laplacePrior";
     public static final String BETA_PRIOR = "betaPrior";
+    public static final String CAUCHY_PRIOR = "cauchyPrior";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
+    public static final String MEDIAN = "median";
     public static final String STDEV = "stdev";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
     public static final String MU = "mu";
@@ -866,5 +870,47 @@ public class PriorParsers {
         }
     };
 
+
+
+    public static XMLObjectParser CAUCH_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return CAUCHY_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            final double median = xo.getDoubleAttribute(MEDIAN);
+            final double scale = xo.getDoubleAttribute(SCALE);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new CauchyDistribution(median, scale));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(MEDIAN),
+                AttributeRule.newDoubleRule(SCALE),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a Cauchy distribution.";
+        }
+
+        public Class getReturnType() {
+            return DistributionLikelihood.class;
+        }
+    };
 
 }

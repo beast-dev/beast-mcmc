@@ -432,6 +432,49 @@ public interface Transform {
         }
     }
 
+    class PowerTransform extends UnivariableTransform{
+        private double power;
+
+        PowerTransform(){
+            this.power = 2;
+        }
+
+        PowerTransform(double power){
+            this.power = power;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "Power Transform";
+        }
+
+        @Override
+        public double transform(double value) {
+            return Math.pow(value, power);
+        }
+
+        @Override
+        public double inverse(double value) {
+            return Math.pow(value, 1 / power);
+        }
+
+        @Override
+        public double gradientInverse(double value) {
+            throw new RuntimeException("not implemented yet");
+//            return 0;
+        }
+
+        @Override
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
+        public double getLogJacobian(double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+    }
+
     class NoTransform extends UnivariableTransform {
 
         public double transform(double value) {
@@ -900,7 +943,7 @@ public interface Transform {
         }
 
         public boolean equivalent(ParsedTransform other) {
-            if (start == other.start && end == other.end && every == other.every && parameters == parameters) {
+            if (start == other.start && end == other.end && every == other.every && parameters == other.parameters) {
                 return true;
             } else {
                 return false;
@@ -933,7 +976,8 @@ public interface Transform {
         LOG_NEGATE("log-negate", new Compose(new LogTransform(), new NegateTransform())),
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
         LOGIT("logit", new LogitTransform()),
-        FISHER_Z("fisherZ",new FisherZTransform());
+        FISHER_Z("fisherZ",new FisherZTransform()),
+        POWER("power", new PowerTransform());
 
         Type(String name, Transform transform) {
             this.name = name;

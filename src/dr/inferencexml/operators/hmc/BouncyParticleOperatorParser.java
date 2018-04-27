@@ -31,6 +31,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.AbstractParticleOperator;
 import dr.inference.operators.hmc.BouncyParticleOperator;
 import dr.xml.*;
 
@@ -64,22 +65,28 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         PrecisionMatrixVectorProductProvider productProvider = (PrecisionMatrixVectorProductProvider)
                 xo.getChild(PrecisionMatrixVectorProductProvider.class);
 
+        Parameter mask = parseMask(xo);
+        AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
+
+        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions, mask);
+    }
+
+    static Parameter parseMask(XMLObject xo) throws XMLParseException {
         Parameter mask = null;
         if (xo.hasChildNamed(MASKING)) {
             mask = (Parameter) xo.getElementFirstChild(MASKING);
         }
 
-        BouncyParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
-
-        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions, mask);
+        return mask;
     }
 
-    private BouncyParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {
+
+    static AbstractParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {
 
         double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
         int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
 
-        return new BouncyParticleOperator.Options(randomTimeWidth, updateFrequency);
+        return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency);
     }
 
     @Override
@@ -87,7 +94,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private final XMLSyntaxRule[] rules = {
+    final static XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newDoubleRule(RANDOM_TIME_WIDTH, true),

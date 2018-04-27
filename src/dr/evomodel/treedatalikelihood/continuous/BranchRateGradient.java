@@ -143,11 +143,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
 
                 assert (statisticsForNode.size() == nTraits);
 
-                double differential = branchRateModel.getBranchRateDifferential(tree, node);
+                final double rate = branchRateModel.getBranchRate(tree, node);
+                final double differential = branchRateModel.getBranchRateDifferential(rate);
+                final double scaling = differential / rate;
 
                 double gradient = 0.0;
                 for (int trait = 0; trait < nTraits; ++trait) {
-                    gradient += getGradientForBranch(statisticsForNode.get(trait), differential);
+                    gradient += getGradientForBranch(statisticsForNode.get(trait), scaling);
                 }
 
                 final int destinationIndex = getParameterIndexFromNode(node);
@@ -258,12 +260,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
             System.err.println("\tadditional     = " + NormalSufficientStatistics.toVectorizedString(additionalVariance));
             System.err.println("delta: " + NormalSufficientStatistics.toVectorizedString(delta));
             System.err.println("grad2 = " + grad2);
-        }
-
-        double grad = grad1 + grad2;
-
-        if (Double.isNaN(grad)) {
-            System.err.println("Doh");
         }
 
         return grad1 + grad2;

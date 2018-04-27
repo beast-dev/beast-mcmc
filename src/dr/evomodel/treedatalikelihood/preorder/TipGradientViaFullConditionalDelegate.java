@@ -61,7 +61,8 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
             double sum = 0.0;
             for (int j = 0; j < dimTrait; ++j) {
                 sum += (fullConditionalPartial[j] - postOrderPartial[j]) * scale *
-                        precision.getParameterValue(i * dimTrait + j);
+                        precision.getParameterValue(i, j);
+//                        precision.getParameterValue(i * dimTrait + j);
             }
 
             gradient[i] = sum;

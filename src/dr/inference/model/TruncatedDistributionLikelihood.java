@@ -23,23 +23,27 @@ public class TruncatedDistributionLikelihood extends DistributionLikelihood {
     }
 
     @Override
-    protected double getLogPDF(double value){
-        if(value > low.getParameterValue(0) && value < high.getParameterValue(0)){
+    protected double getLogPDF(double value, int i){
+        if(high.getParameterValue(i % high.getDimension()) == low.getParameterValue(i % low.getDimension()))
+            return 0;
+        if(value > low.getParameterValue(i % low.getDimension()) && value < high.getParameterValue(i % high.getDimension())){
             double p1 = getDistribution().logPdf(value);
 //            System.out.println(p1);
             double p2 = 0;
-            if(!Double.isInfinite(low.getParameterValue(0)))
-                p2 = getDistribution().cdf(low.getParameterValue(0));
+            if(!Double.isInfinite(low.getParameterValue(i % low.getDimension())))
+                p2 = getDistribution().cdf(low.getParameterValue(i % low.getDimension()));
 //            System.out.println(p2);
-            double p3 = 1;
-            if(!Double.isInfinite(high.getParameterValue(0)))
-                p3 = 1 - getDistribution().cdf(high.getParameterValue(0));
+            double p3 = 0;
+            if(!Double.isInfinite(high.getParameterValue(i % high.getDimension())))
+                p3 = 1 - getDistribution().cdf(high.getParameterValue(i % high.getDimension()));
 //            System.out.println(p3);
-
-            return p1 - Math.log(p3 + p2);
+            return p1 - Math.log(1 - (p3 + p2));
         }
-        else
+        else{
+//            System.out.println(high.getParameterValue(i % high.getDimension()));
+//            System.out.println(low.getParameterValue(i % low.getDimension()));
             return Double.NEGATIVE_INFINITY;
+        }
     }
 
     Parameter low;

@@ -1210,7 +1210,7 @@ public class TimeSlicer {
         minMax[0] = sliceHeights[0];
         minMax[1] = sliceHeights[(sliceHeights.length - 1)];
         String colorString;
-        if (sliceValue == Double.NaN){
+        if (Double.isNaN(sliceValue)){
             colorString = startHPDColor;
         } else {
             colorString = getKMLColor(sliceValue, minMax, endHPDColor, startHPDColor);
@@ -1249,7 +1249,7 @@ public class TimeSlicer {
         minMax[0] = sliceHeights[0];
         minMax[1] = sliceHeights[(sliceHeights.length - 1)];
         String colorString;
-        if (sliceValue == Double.NaN){
+        if (Double.isNaN(sliceValue)){
             colorString = startHPDColor;
         } else {
             colorString = getKMLColor(sliceValue, minMax, endHPDColor, startHPDColor);

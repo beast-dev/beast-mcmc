@@ -49,8 +49,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double kappa = 0.75;
         private double t0 = 10.0;
         private double gamma = 0.05;
-        private double delta = 0.2;
-        private double deltaMax = 1000.0;
+        private double targetAcceptRate = 0.9;
+        private double logProbErrorTol = 1000.0;
         private double muFactor = 10.0;
 
         private int findMax = 100;
@@ -63,7 +63,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                            Parameter parameter, Transform transform, double stepSize, int nSteps, double drawVariance) {
-        super(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, drawVariance);
+        super(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, drawVariance, 0.0);
+    }
+
+    @Override
+    protected InstabilityHandler getDefaultInstabilityHandler() {
+        return InstabilityHandler.IGNORE;
     }
 
     private class StepSize {
@@ -87,7 +92,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             if (m <= options.adaptLength) {
 
-                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.delta - (alpha / nAlpha));
+                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.targetAcceptRate - (alpha / nAlpha));
                 logStepSize = mu - Math.sqrt(m) / options.gamma * h;
                 averageLogStepSize = Math.pow(m, -options.kappa) * logStepSize +
                         (1 - Math.pow(m, -options.kappa)) * averageLogStepSize;
@@ -199,6 +204,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
     }
 
+    private void handleInstability() {
+        throw new RuntimeException("Numerical instability; need to handle"); // TODO
+    }
+
     private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
 
@@ -209,13 +218,17 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         leapFrogEngine.setParameter(position);
 
         // "one frog jump!"
-        doLeap(position, momentum, direction * stepSize);
+        try {
+            doLeap(position, momentum, direction * stepSize);
+        } catch (NumericInstabilityException e) {
+            handleInstability();
+        }
 
         double logJointProbAfter = getJointProbability(gradientProvider, momentum);
 
         final int numNodes = (logSliceU <= logJointProbAfter ? 1 : 0);
 
-        final boolean flagContinue = (logSliceU < options.deltaMax + logJointProbAfter);
+        final boolean flagContinue = (logSliceU < options.logProbErrorTol + logJointProbAfter);
 
         // Values for dual-averaging
         final double alpha = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));
@@ -260,7 +273,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     private void doLeap(final double[] position,
                         final double[] momentum,
-                        final double stepSize) {
+                        final double stepSize) throws NumericInstabilityException {
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
         leapFrogEngine.updatePosition(position, momentum, stepSize, 1.0);
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
@@ -276,7 +289,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double probBefore = getJointProbability(gradientProvider, momentum);
 
-        doLeap(position, momentum, stepSize);
+        try {
+            doLeap(position, momentum, stepSize);
+        } catch (NumericInstabilityException e) {
+            handleInstability();
+        }
 
         double probAfter = getJointProbability(gradientProvider, momentum);
 
@@ -289,7 +306,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             probBefore = probAfter;
 
             //"one frog jump!"
-            doLeap(position, momentum, stepSize);
+            try {
+                doLeap(position, momentum, stepSize);
+            } catch (NumericInstabilityException e) {
+                handleInstability();
+            }
 
             probAfter = getJointProbability(gradientProvider, momentum);
             probRatio = Math.exp(probAfter - probBefore);

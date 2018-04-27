@@ -310,7 +310,7 @@ public class BeastGenerator extends Generator {
 
             //++++++++++++++++ Prior Bounds ++++++++++++++++++
             for (Parameter param : options.selectParameters()) {
-                if (param.getInitial() != Double.NaN) {
+                if (!Double.isNaN(param.getInitial()) ) {
                     if (param.isTruncated && (param.getInitial() < param.truncationLower || param.getInitial() > param.truncationUpper)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
                                 "\ninitial value " + param.getInitial() + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +

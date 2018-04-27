@@ -187,12 +187,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
-        if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
+        if(variable==traitParameter
+                &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)
+                ){
             dimKnown = false;
             dim = traitParameter.getParameter(0).getDimension();
             numData = dim / getDimTrait();
             meanCache = new double[dim * treeModel.getNodeCount()];
-            storedMeanCache = new double[meanCache.length];
+//            storedMeanCache = new double[meanCache.length];
             drawnStates = new double[dim * treeModel.getNodeCount()];
         }
         PostPreKnown=false;
@@ -201,6 +203,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     @Override
     public void storeState() {
+        storedNumData = numData;
+        storedDim = dim;
         super.storeState();
         storedPostPreKnown=PostPreKnown;
         storedDimKnown=dimKnown;
@@ -215,6 +219,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     @Override
     public void restoreState() {
+        dim = storedDim;
+        numData = storedNumData;
+        drawnStates = new double[dim * treeModel.getNodeCount()];
         super.restoreState();
         PostPreKnown=storedPostPreKnown;
         priorInformationKnown = false;
@@ -547,6 +554,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     private boolean dimKnown=false;
     private boolean storedDimKnown=false;
+    private int storedDim;
+    private int storedNumData;
 
     boolean computeWishartStatistics = false;
     private double[] ascertainedData = null;

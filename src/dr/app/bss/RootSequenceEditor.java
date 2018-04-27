@@ -48,135 +48,144 @@ import javax.swing.SwingUtilities;
  */
 public class RootSequenceEditor {
 
-	// Data
-	private PartitionDataList dataList = null;
-	private int row;
-	
-	// Settings
-	private OptionsPanel optionPanel;
-	//TODO: class that checks for ACTG string values, maybe also with scroller
-	private JTextField ancestralSequenceField;
-	
-	//Buttons
-	private JButton done;
-	private JButton cancel;
-	
-	// Window
-	private JDialog window;
-	private Frame owner;
-	
-	public RootSequenceEditor(PartitionDataList dataList, int row) {
-		
-		this.dataList = dataList;
-		this.row = row;
+    // Data
+    private PartitionDataList dataList = null;
+    private int row;
 
-		ancestralSequenceField = new JTextField("", 10);
-		window = new JDialog(owner, "Setup root sequence for partition " + (row + 1));
-		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
-		
+    // Settings
+    private OptionsPanel optionPanel;
+    //TODO: class that checks for ACTG string values, maybe also with scroller
+    private JTextField ancestralSequenceField;
+
+    //Buttons
+    private JButton done;
+    private JButton cancel;
+
+    // Window
+    private JDialog window;
+    private Frame owner;
+
+    public RootSequenceEditor(PartitionDataList dataList, int row) {
+
+        this.dataList = dataList;
+        this.row = row;
+
+        ancestralSequenceField = new JTextField("", 10);
+        window = new JDialog(owner, "Setup root sequence for partition " + (row + 1));
+        optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
+
         optionPanel.setOpaque(false);
 
         setAncestralSequence();
-		
-		// Buttons
-		JPanel buttonsHolder = new JPanel();
-		buttonsHolder.setOpaque(false);
-		
-		cancel = new JButton("Cancel", Utils.createImageIcon(Utils.CLOSE_ICON));
-		cancel.addActionListener(new ListenCancel());
-		buttonsHolder.add(cancel);
-		
-		done = new JButton("Done", Utils.createImageIcon(Utils.CHECK_ICON));
-		done.addActionListener(new ListenOk());
-		buttonsHolder.add(done);
-		
-		// Window
-		owner = Utils.getActiveFrame();
-		window.setLocationRelativeTo(owner);
-		window.getContentPane().setLayout(new BorderLayout());
-		window.getContentPane().add(optionPanel, BorderLayout.CENTER);
-		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
-		window.pack();
-		
-	}//END: Constructor
 
-	private void setAncestralSequence() {
+        // Buttons
+        JPanel buttonsHolder = new JPanel();
+        buttonsHolder.setOpaque(false);
 
-		optionPanel.removeAll();
-		
-		ancestralSequenceField.setText(dataList.get(row).ancestralSequenceString);
-		optionPanel.addComponents(new JLabel("Root sequence:"),
-				ancestralSequenceField);
+        cancel = new JButton("Cancel", Utils.createImageIcon(Utils.CLOSE_ICON));
+        cancel.addActionListener(new ListenCancel());
+        buttonsHolder.add(cancel);
 
-		window.validate();
-		window.repaint();
-	}// END: setAncestralSequence
-	
-	public void collectSettings() {
+        done = new JButton("Done", Utils.createImageIcon(Utils.CHECK_ICON));
+        done.addActionListener(new ListenOk());
+        buttonsHolder.add(done);
 
-			dataList.get(row).ancestralSequenceString = ancestralSequenceField.getText();
-		
-	}// END: collectSettings
-	
-	private class ListenOk implements ActionListener {
-		public void actionPerformed(ActionEvent ev) {
+        // Window
+        owner = Utils.getActiveFrame();
+        window.setLocationRelativeTo(owner);
+        window.getContentPane().setLayout(new BorderLayout());
+        window.getContentPane().add(optionPanel, BorderLayout.CENTER);
+        window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
+        window.pack();
 
-			int ancestralSequenceLength = ancestralSequenceField.getText()
-					.length();
-			int partitionSiteCount = dataList.get(row)
-					.createPartitionSiteCount();
+    }//END: Constructor
 
-			if (ancestralSequenceLength == partitionSiteCount) {
-				window.setVisible(false);
-				collectSettings();
+    private void setAncestralSequence() {
 
-			} else {
+        optionPanel.removeAll();
 
-				if (ancestralSequenceLength != 0) {
+        ancestralSequenceField.setText(dataList.get(row).ancestralSequenceString);
+        optionPanel.addComponents(new JLabel("Root sequence:"),
+                ancestralSequenceField);
 
-					Utils.showDialog("Ancestral sequence length of "
-							+ ancestralSequenceLength
-							+ " does not match partition site count of "
-							+ partitionSiteCount + ".");
-				} else {
-					
-					window.setVisible(false);
-					
-				}
-			}
-			
-		}// END: actionPerformed
-	}// END: ListenSaveLocationCoordinates
-	
-	private class ListenCancel implements ActionListener {
-		public void actionPerformed(ActionEvent ev) {
+        window.validate();
+        window.repaint();
+    }// END: setAncestralSequence
 
-			window.setVisible(false);
-			
-		}// END: actionPerformed
-	}// END: ListenCancel
-	
-	public void showWindow() {
-		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		window.setSize(new Dimension(450, 200));
-		window.setMinimumSize(new Dimension(100, 100));
-		window.setResizable(true);
-		window.setModal(true);
-		window.setVisible(true);
-	}// END: showWindow
+    public void collectSettings() {
 
-	public void launch() {
+        dataList.get(row).ancestralSequenceString = ancestralSequenceField.getText();
 
-		if (SwingUtilities.isEventDispatchThread()) {
-			showWindow();
-		} else {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					showWindow();
-				}
-			});
-		}// END: edt check
+    }// END: collectSettings
 
-	}// END: launch
-	
+    private class ListenOk implements ActionListener {
+        public void actionPerformed(ActionEvent ev) {
+
+            int ancestralSequenceLength = ancestralSequenceField.getText()
+                    .length();
+            int partitionSiteCount = dataList.get(row)
+                    .createPartitionSiteCount();
+
+            if (ancestralSequenceLength == partitionSiteCount) {
+
+                if (ancestralSequenceField.getText().contains("-")) {
+
+                    Utils.showDialog("Ancestral sequence contains one or more gaps.");
+
+                } else {
+
+                    window.setVisible(false);
+                    collectSettings();
+
+                }
+
+            } else {
+
+                if (ancestralSequenceLength != 0) {
+
+                    Utils.showDialog("Ancestral sequence length of "
+                            + ancestralSequenceLength
+                            + " does not match partition site count of "
+                            + partitionSiteCount + ".");
+                } else {
+
+                    window.setVisible(false);
+
+                }
+            }
+
+        }// END: actionPerformed
+    }// END: ListenSaveLocationCoordinates
+
+    private class ListenCancel implements ActionListener {
+        public void actionPerformed(ActionEvent ev) {
+
+            window.setVisible(false);
+
+        }// END: actionPerformed
+    }// END: ListenCancel
+
+    public void showWindow() {
+        window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        window.setSize(new Dimension(450, 200));
+        window.setMinimumSize(new Dimension(100, 100));
+        window.setResizable(true);
+        window.setModal(true);
+        window.setVisible(true);
+    }// END: showWindow
+
+    public void launch() {
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            showWindow();
+        } else {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    showWindow();
+                }
+            });
+        }// END: edt check
+
+    }// END: launch
+
 }//END: class

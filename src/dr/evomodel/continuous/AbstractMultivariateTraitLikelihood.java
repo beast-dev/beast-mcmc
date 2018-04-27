@@ -837,7 +837,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             List<RestrictedPartials> restrictedPartialsList = parseRestrictedPartials(xo, integrate);
-            
+
             AbstractMultivariateTraitLikelihood like;
 
             if (integrate) {
@@ -1080,7 +1080,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
     public static List<RestrictedPartials> parseRestrictedPartials(XMLObject xo, boolean integrate)
             throws XMLParseException {
-        
+
         List<RestrictedPartials> restrictedPartialsList = null;
         for (int i = 0; i < xo.getChildCount(); ++i) {
             Object cxo = xo.getChild(i);

@@ -235,7 +235,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
  
 
-    public boolean validTraitForTip(int tip) {
+    public boolean validTraitForTip(int tip) { //TODO rewrite, to make it more readable.
         boolean valid = true;
         Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
         int[] data = tipData[tip];

@@ -44,13 +44,11 @@ public class CladeDistribution {
 
 	/**
 	 * @param clade
-	 * @param heights
 	 * @param samples
 	 */
 	public CladeDistribution(Clade clade, int samples) {
 		super();
 		this.clade = clade;
-		this.heights = heights;
 		this.samples = samples;
 	}
 

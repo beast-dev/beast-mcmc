@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -63,6 +64,12 @@ public abstract class TreePrecisionTraitProductProvider extends AbstractModel
             addModel((TreeModel) tree);
         }
     }
+
+    public Tree getTree() { return tree; }
+
+    public ContinuousDataLikelihoodDelegate getLikelihoodDelegate() { return likelihoodDelegate; }
+
+    public ContinuousTraitPartialsProvider getDataModel() { return likelihoodDelegate.getDataModel(); }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {

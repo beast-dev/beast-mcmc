@@ -58,7 +58,7 @@ public class BeautiOptions extends ModelOptions {
     public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = true;
 
     // Switches to a dirichlet prior & delta exchange on relative rates
-    public static final boolean NEW_GTR_PARAMETERIZATION = true;
+    public static final boolean NEW_GTR_PARAMETERIZATION = false;
 
     // Makes sets the initial state of PartitionClockModel.continuousQuantile
     public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = true;

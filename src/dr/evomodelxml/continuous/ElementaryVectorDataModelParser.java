@@ -23,7 +23,11 @@ public class ElementaryVectorDataModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter tipIndicator = (Parameter) xo.getElementFirstChild(TIP_INDICATOR);
-        Parameter dimIndicator = (Parameter) xo.getElementFirstChild(DIM_INDICATOR);
+
+        Parameter dimIndicator = null;
+        if (xo.hasChildNamed(DIM_INDICATOR)) {
+            dimIndicator = (Parameter) xo.getElementFirstChild(DIM_INDICATOR);
+        }
 
         int tips = parsePositiveInteger(xo, TIPS);
         int dim = parsePositiveInteger(xo, DIMENSION);

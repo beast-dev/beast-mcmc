@@ -50,6 +50,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -300,12 +301,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 normalization, priorSampleSize);
     }
 
-    private double[][] getTreePrecision() {
+    public double[][] getTreePrecision() {
         Matrix precision = new Matrix(getTreeVariance()).inverse();
         return precision.toComponents();
     }
 
-    private double[][] getTraitVariance() {
+    public double[][] getTraitVariance() {
         Matrix variance = new Matrix(getDiffusionModel().getPrecisionmatrix()).inverse();
         return variance.toComponents();
     }
@@ -354,6 +355,16 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());
 
+        for (int tip = 0; tip < tipCount; ++tip){
+            double [] partial = dataModel.getTipPartial(tip, false);
+            WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            for (int row = 0; row < dimTrait; ++row){
+                for (int col = 0; col < dimTrait; ++col){
+                    jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+                }
+            }
+        }
+
         Matrix treeV = new Matrix(treeVariance);
         Matrix treeP = treeV.inverse();
 
@@ -375,11 +386,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append("prior mean: ").append(new dr.math.matrixAlgebra.Vector(priorMean));
         sb.append("\n\n");
 
-//        for (int index = 0; index < drift.length / dimTrait; ++index) {
-//            for (int dim = 0; dim < dimTrait; ++dim) {
-//                drift[index * dimTrait + dim] += priorMean[dim];
-//            }
-//        }
+        sb.append("Joint variance:\n");
+        sb.append(new Matrix(jointVariance));
+        sb.append("\n\n");
+
+        sb.append("Joint precision:\n");
+        sb.append(new Matrix(getTreeTraitPrecision()));
+        sb.append("\n\n");
 
         double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, cdi, diffusionProcessDelegate);
 
@@ -947,16 +960,28 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+    static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                                   ContinuousTraitPartialsProvider dataProvider) {
         return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
                 likelihoodDelegate.diffusionProcessDelegate,
-                likelihoodDelegate.dataModel,
+                dataProvider,
                 likelihoodDelegate.rootPrior,
                 likelihoodDelegate.rateTransformation,
                 likelihoodDelegate.rateModel,
                 true,
                 false);
     }
+
+//    static ContinuousDataLikelihoodDelegate createObservedDataOnly(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+//        return new ContinuousDataLikelihoodDelegate(likelihoodDelegate.tree,
+//                likelihoodDelegate.diffusionProcessDelegate,
+//                likelihoodDelegate.dataModel,
+//                likelihoodDelegate.rootPrior,
+//                likelihoodDelegate.rateTransformation,
+//                likelihoodDelegate.rateModel,
+//                true,
+//                false);
+//    }
 
     static ContinuousDataLikelihoodDelegate createWithMissingData(ContinuousDataLikelihoodDelegate likelihoodDelegate) {
 

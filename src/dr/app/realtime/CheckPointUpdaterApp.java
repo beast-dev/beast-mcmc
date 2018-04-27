@@ -134,7 +134,7 @@ public class CheckPointUpdaterApp {
     }
 
     /**
-     * The goal is to modify and existing checkpoint file with additional information and generate a novel checkpoint file.
+     * The goal is to modify an existing checkpoint file with additional information and generate a novel checkpoint file.
      * Running the MCMC chain after parsing the file(s) should not happen.
      * @param beastXMLFileName
      */

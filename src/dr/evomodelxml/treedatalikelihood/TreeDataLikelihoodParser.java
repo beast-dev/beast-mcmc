@@ -63,6 +63,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String INSTANCE_COUNT = "instanceCount";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
+    public static final String USE_PREORDER = "usePreOrder";
 
     public static final String PARTITION = "partition";
 
@@ -78,7 +79,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   TipStatesModel tipStatesModel,
                                                   boolean useAmbiguities,
                                                   PartialsRescalingScheme scalingScheme,
-                                                  boolean delayRescalingUntilUnderflow) throws XMLParseException {
+                                                  boolean delayRescalingUntilUnderflow,
+                                                  boolean usePreOrder) throws XMLParseException {
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
@@ -107,7 +109,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
 
-        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {
+//        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {///XJ: need to change this back
+        if (false) {
             DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                     treeModel,
                     patternLists,
@@ -134,7 +137,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         siteRateModels.get(i),
                         useAmbiguities,
                         scalingScheme,
-                        delayRescalingUntilUnderflow);
+                        delayRescalingUntilUnderflow,
+                        usePreOrder);
 
                 treeDataLikelihoods.add(
                         new TreeDataLikelihood(
@@ -155,6 +159,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
+        boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
 
         // TreeDataLikelihood doesn't currently support Instances defined from the command line
 //        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
@@ -274,7 +279,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 null,
                 useAmbiguities,
                 scalingScheme,
-                delayScaling);
+                delayScaling,
+                usePreOrder);
     }
 
     //************************************************************************

@@ -175,6 +175,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         return matrixBufferHelper.getOffsetIndex(branchIndex);
     }
 
+
     @Override
     public double[] getRootStateFrequencies() {
         return branchModel.getRootFrequencyModel().getFrequencies();
@@ -196,6 +197,18 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     ed.getInverseEigenVectors(),
                     ed.getEigenValues());
         }
+    }
+
+    @Override
+    public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
+        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
+        int[] order = mapping.getOrder();
+
+        if (order.length > 1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return getSubstitutionModel(order[0]);
     }
 
     @Override

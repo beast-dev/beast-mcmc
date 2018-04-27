@@ -52,15 +52,15 @@
 
 	</operators>
 
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="60000000" autoOptimize="true">
         <posterior id="posterior">
         	<dummyLikelihood id="likelihood">
                 <parameter idref="precision.offDiagonal"/>
             </dummyLikelihood>
 
             <prior id="prior">
-                <!-- <LKJCorrelationPrior idref="precisionPrior"/> -->
-                <multivariateWishartPrior idref="precisionPrior"/>
+                <LKJCorrelationPrior idref="precisionPrior"/>
+                <!-- <multivariateWishartPrior idref="precisionPrior"/> -->
                 <!-- <uniformPrior idref="uniformPrior"/> -->
             </prior>
         </posterior>
@@ -90,3 +90,30 @@
 	<!-- <traceAnalysis fileName="testNormalModelGibbs.log" stdError="true"/> -->
 	
 </beast>
+
+<!--
+# Read log 
+dat <- read_log(file = "testNormalModelCorrelation.log", burning = 0)
+
+# Get observed moments
+means <- get_mean(dat)
+vars <- get_var(dat)
+
+# Get theoretical moments (uniform on [a, b])
+exp_th <- 0 # LKJ exp is Identity matrix
+
+# var of a LKJ -> transformed beta
+shape <- 2.0
+dim <- 4
+dim_offdiag <- dim * (dim - 1) / 2
+
+var_th <- 1 / (2 * shape + dim - 1)
+
+for (i in 1:(dim_offdiag)) {
+  stopifnot(all.equal(pull(means, dim + i), exp_th, tol = 0.001)) 
+}
+
+for (i in 1:(dim_offdiag)) {
+  stopifnot(all.equal(pull(vars, dim + i), var_th, tol = 0.001))
+}
+-->

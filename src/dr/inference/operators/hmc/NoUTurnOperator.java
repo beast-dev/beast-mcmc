@@ -54,7 +54,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double muFactor = 10.0;
 
         private int findMax = 100;
-        private int maxDepth = 100;
+        private int maxDepth = 10;
         private int adaptLength = 1000;
     }
 

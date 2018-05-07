@@ -139,18 +139,18 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         TreeState root = new TreeState(initialPosition, initialMomentum, 1, true);
 
-        int j = 0;
+        int depth = 0;
 
         while (root.flagContinue) {
 
-            double[] tmp = updateRoot(root, j, logSliceU, initialJointDensity);
+            double[] tmp = updateRoot(root, depth, logSliceU, initialJointDensity);
             if (tmp != null) {
                 endPosition = tmp;
             }
 
-            j++;
+            depth++;
 
-            if (j > options.maxDepth) {
+            if (depth > options.maxDepth) {
                 throw new RuntimeException("Reach maximum tree depth"); // TODO Handle more gracefully
             }
         }
@@ -160,7 +160,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return endPosition;
     }
 
-    private double[] updateRoot(TreeState root, int j, double logSliceU, double initialJointDensity) {
+    private double[] updateRoot(TreeState root, int delpth, double logSliceU, double initialJointDensity) {
 
         double[] endPosition = null;
 
@@ -168,7 +168,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         int direction = (uniform1 < 0.5) ? -1 : 1;
 
         TreeState node = buildTree(root.getPosition(direction), root.getMomentum(direction), direction,
-                logSliceU, j, stepSizeInformation.stepSize, initialJointDensity);
+                logSliceU, delpth, stepSizeInformation.stepSize, initialJointDensity);
 
         root.setPosition(direction, node.getPosition(direction));
         root.setMomentum(direction, node.getMomentum(direction));
@@ -195,12 +195,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     private TreeState buildTree(double[] position, double[] momentum, int direction,
-                                double logSliceU, int j, double stepSize, double initialJointDensity) {
+                                double logSliceU, int depth, double stepSize, double initialJointDensity) {
 
-        if (j == 0) {
+        if (depth == 0) {
             return buildBaseCase(position, momentum, direction, logSliceU, stepSize, initialJointDensity);
         } else {
-            return buildRecursiveCase(position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
+            return buildRecursiveCase(position, momentum, direction, logSliceU, depth, stepSize, initialJointDensity);
         }
     }
 
@@ -240,16 +240,16 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
-                                         double logSliceU, int j, double stepSize, double initialJointDensity) {
+                                         double logSliceU, int depth, double stepSize, double initialJointDensity) {
 
         TreeState node = buildTree(inPosition, inMomentum, direction, logSliceU,
-                j - 1, // Recursion
+                depth - 1, // Recursion
                 stepSize, initialJointDensity);
 
         if (node.flagContinue) {
 
             TreeState child = buildTree(node.getPosition(direction), node.getMomentum(direction), direction,
-                    logSliceU, j - 1, stepSizeInformation.stepSize, initialJointDensity);
+                    logSliceU, depth - 1, stepSizeInformation.stepSize, initialJointDensity);
 
             node.setPosition(direction, child.getPosition(direction));
             node.setMomentum(direction, child.getMomentum(direction));

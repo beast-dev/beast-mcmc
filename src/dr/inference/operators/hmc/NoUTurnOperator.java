@@ -50,7 +50,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double t0 = 10.0;
         private double gamma = 0.05;
         private double targetAcceptRate = 0.9;
-        private double logProbErrorTol = 1000.0;
+        private double logProbErrorTol = 100.0;
         private double muFactor = 10.0;
 
         private int findMax = 100;

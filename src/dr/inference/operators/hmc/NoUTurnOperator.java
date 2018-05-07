@@ -88,11 +88,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.mu = Math.log(options.muFactor * initialStepSize);
         }
 
-        private void update(long m, double alpha, double nAlpha, Options options) {
+        private void update(long m, double cumAcceptProb, double numAcceptProbStates, Options options) {
 
             if (m <= options.adaptLength) {
 
-                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.targetAcceptRate - (alpha / nAlpha));
+                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.targetAcceptRate - (cumAcceptProb / numAcceptProbStates));
                 logStepSize = mu - Math.sqrt(m) / options.gamma * h;
                 averageLogStepSize = Math.pow(m, -options.kappa) * logStepSize +
                         (1 - Math.pow(m, -options.kappa)) * averageLogStepSize;
@@ -155,7 +155,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             }
         }
 
-        stepSizeInformation.update(m, root.alpha, root.nAlpha, options);
+        stepSizeInformation.update(m, root.cumAcceptProb, root.numAcceptProbStates, options);
 
         return endPosition;
     }
@@ -188,8 +188,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         root.flagContinue = computeStopCriterion(node.flagContinue, root);
 
         // Dual-averaging
-        root.alpha += node.alpha;
-        root.nAlpha += node.nAlpha;
+        root.cumAcceptProb += node.cumAcceptProb;
+        root.numAcceptProbStates += node.numAcceptProbStates;
 
         return endPosition;
     }
@@ -231,12 +231,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         final boolean flagContinue = (logSliceU < options.logProbErrorTol + logJointProbAfter);
 
         // Values for dual-averaging
-        final double alpha = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));
-        final int nAlpha = 1;
+        final double acceptProb = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));
+        final int numAcceptProbStates = 1;
 
         leapFrogEngine.setParameter(inPosition);
 
-        return new TreeState(position, momentum, numNodes, flagContinue, alpha, nAlpha);
+        return new TreeState(position, momentum, numNodes, flagContinue, acceptProb, numAcceptProbStates);
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
@@ -264,8 +264,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             node.numNodes += child.numNodes;
             node.flagContinue = computeStopCriterion(child.flagContinue, node);
 
-            node.alpha += child.alpha;
-            node.nAlpha += child.nAlpha;
+            node.cumAcceptProb += child.cumAcceptProb;
+            node.numAcceptProbStates += child.numAcceptProbStates;
 
         }
         return node;
@@ -389,7 +389,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         private TreeState(double[] position, double[] moment,
                          int numNodes, boolean flagContinue,
-                         double alpha, int nAlpha) {
+                         double acceptProb, int numAcceptProbStates) {
             this.position = new double[3][];
             this.momentum = new double[3][];
 
@@ -403,8 +403,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.flagContinue = flagContinue;
 
             // Dual-averaging variables
-            this.alpha = alpha;
-            this.nAlpha = nAlpha;
+            this.cumAcceptProb = acceptProb;
+            this.numAcceptProbStates = numAcceptProbStates;
         }
 
         private double[] getPosition(int direction) {
@@ -434,8 +434,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private int numNodes;
         private boolean flagContinue;
 
-        private double alpha;
-        private int nAlpha;
+        private double cumAcceptProb;
+        private int numAcceptProbStates;
     }
 }
 

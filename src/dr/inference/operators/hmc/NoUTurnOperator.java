@@ -430,18 +430,22 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private void mergeNextTree(TreeState nextTree) {
             this.setPosition(direction, nextTree.getPosition(direction));
             this.setMomentum(direction, nextTree.getMomentum(direction));
-
-            double uniform = MathUtils.nextDouble();
-            if (nextTree.numNodes > 0
-                    && uniform < ((double) nextTree.numNodes / (double) (this.numNodes + nextTree.numNodes))) {
-                this.setSample(nextTree.getSample());
-            }
+            
+            this.updateSample(nextTree)
 
             this.numNodes += nextTree.numNodes;
             this.flagContinue = computeStopCriterion(nextTree.flagContinue, this);
 
             this.cumAcceptProb += nextTree.cumAcceptProb;
             this.numAcceptProbStates += nextTree.numAcceptProbStates;
+        }
+
+        private void updateSample(TreeState nextTree) {
+            double uniform = MathUtils.nextDouble();
+            if (nextTree.numNodes > 0
+                    && uniform < ((double) nextTree.numNodes / (double) (this.numNodes + nextTree.numNodes))) {
+                this.setSample(nextTree.getSample());
+            }
         }
 
         final private double[][] position;

@@ -54,7 +54,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double muFactor = 10.0;
 
         private int findMax = 100;
-        private int maxDepth = 10;
+        private int maxHeight = 10;
         private int adaptLength = 1000;
     }
 
@@ -140,19 +140,19 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum, 1, true);
             // Trajectory of Hamiltonian dynamics endowed with a binary tree structure.
 
-        int depth = 0;
+        int height = 0;
 
         while (trajectoryTree.flagContinue) {
 
-            double[] tmp = updateTrajectoryTree(trajectoryTree, depth, logSliceU, initialJointDensity);
+            double[] tmp = updateTrajectoryTree(trajectoryTree, height, logSliceU, initialJointDensity);
             if (tmp != null) {
                 endPosition = tmp;
             }
 
-            depth++;
+            height++;
 
-            if (depth > options.maxDepth) {
-                throw new RuntimeException("Reach maximum tree depth"); // TODO Handle more gracefully
+            if (height > options.maxHeight) {
+                throw new RuntimeException("Reach maximum tree height"); // TODO Handle more gracefully
             }
         }
 
@@ -196,12 +196,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     private TreeState buildTree(double[] position, double[] momentum, int direction,
-                                double logSliceU, int depth, double stepSize, double initialJointDensity) {
+                                double logSliceU, int height, double stepSize, double initialJointDensity) {
 
-        if (depth == 0) {
+        if (height == 0) {
             return buildBaseCase(position, momentum, direction, logSliceU, stepSize, initialJointDensity);
         } else {
-            return buildRecursiveCase(position, momentum, direction, logSliceU, depth, stepSize, initialJointDensity);
+            return buildRecursiveCase(position, momentum, direction, logSliceU, height, stepSize, initialJointDensity);
         }
     }
 
@@ -241,16 +241,16 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
-                                         double logSliceU, int depth, double stepSize, double initialJointDensity) {
+                                         double logSliceU, int height, double stepSize, double initialJointDensity) {
 
         TreeState subtree = buildTree(inPosition, inMomentum, direction, logSliceU,
-                depth - 1, // Recursion
+                height - 1, // Recursion
                 stepSize, initialJointDensity);
 
         if (subtree.flagContinue) {
 
             TreeState nextSubtree = buildTree(subtree.getPosition(direction), subtree.getMomentum(direction), direction,
-                    logSliceU, depth - 1, stepSizeInformation.stepSize, initialJointDensity);
+                    logSliceU, height - 1, stepSizeInformation.stepSize, initialJointDensity);
 
             subtree.setPosition(direction, nextSubtree.getPosition(direction));
             subtree.setMomentum(direction, nextSubtree.getMomentum(direction));

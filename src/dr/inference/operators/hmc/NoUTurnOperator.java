@@ -180,7 +180,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             final double uniform = MathUtils.nextDouble();
             final double acceptProb = (double) nextTrajectoryTree.numNodes / (double)trajectoryTree.numNodes;
             if (uniform < acceptProb) {
-                endPosition = nextTrajectoryTree.getPosition(0);
+                endPosition = nextTrajectoryTree.getSample();
             }
         }
 
@@ -259,7 +259,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             if (nextSubtree.numNodes > 0
                     && uniform <  ((double) nextSubtree.numNodes / (double) (subtree.numNodes + nextSubtree.numNodes))) {
 
-                subtree.setPosition(0, nextSubtree.getPosition(0));
+                subtree.setSample(nextSubtree.getSample());
             }
 
             subtree.numNodes += nextSubtree.numNodes;
@@ -416,12 +416,24 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             return momentum[getIndex(direction)];
         }
 
+        private double[] getSample() {
+            /*
+            Returns a state chosen uniformly from the acceptable states along a hamiltonian dyanmics trajectory tree.
+            The sample is updated recursively while building trees.
+            */
+            return this.position[getIndex(0)];
+        }
+
         private void setPosition(int direction, double[] position) {
             this.position[getIndex(direction)] = position;
         }
 
         private void setMomentum(int direction, double[] momentum) {
             this.momentum[getIndex(direction)] = momentum;
+        }
+
+        private void setSample(double[] position) {
+            this.setPosition(0, position)
         }
 
         private int getIndex(int direction) { // valid directions: -1, 0, +1

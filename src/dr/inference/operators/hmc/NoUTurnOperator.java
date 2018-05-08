@@ -176,9 +176,9 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         if (node.flagContinue) {
 
             final double uniform = MathUtils.nextDouble();
-            final double p = (double) node.numNodes / (double)root.numNodes;
+            final double acceptProb = (double) node.numNodes / (double)root.numNodes;
 
-            if (uniform < p) {
+            if (uniform < acceptProb) {
                 endPosition = node.getPosition(0);
             }
         }

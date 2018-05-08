@@ -252,21 +252,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             TreeState nextSubtree = buildTree(subtree.getPosition(direction), subtree.getMomentum(direction), direction,
                     logSliceU, height - 1, stepSizeInformation.stepSize, initialJointDensity);
 
-            subtree.setPosition(direction, nextSubtree.getPosition(direction));
-            subtree.setMomentum(direction, nextSubtree.getMomentum(direction));
-
-            double uniform = MathUtils.nextDouble();
-            if (nextSubtree.numNodes > 0
-                    && uniform <  ((double) nextSubtree.numNodes / (double) (subtree.numNodes + nextSubtree.numNodes))) {
-
-                subtree.setSample(nextSubtree.getSample());
-            }
-
-            subtree.numNodes += nextSubtree.numNodes;
-            subtree.flagContinue = computeStopCriterion(nextSubtree.flagContinue, subtree);
-
-            subtree.cumAcceptProb += nextSubtree.cumAcceptProb;
-            subtree.numAcceptProbStates += nextSubtree.numAcceptProbStates;
+            subtree.mergeNextTree(nextSubtree)
 
         }
         return subtree;
@@ -439,6 +425,23 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private int getIndex(int direction) { // valid directions: -1, 0, +1
             assert (direction >= -1 && direction <= 1);
             return direction + 1;
+        }
+
+        private void mergeNextTree(TreeState nextTree) {
+            this.setPosition(direction, nextTree.getPosition(direction));
+            this.setMomentum(direction, nextTree.getMomentum(direction));
+
+            double uniform = MathUtils.nextDouble();
+            if (nextTree.numNodes > 0
+                    && uniform < ((double) nextTree.numNodes / (double) (this.numNodes + nextTree.numNodes))) {
+                this.setSample(nextTree.getSample());
+            }
+
+            this.numNodes += nextTree.numNodes;
+            this.flagContinue = computeStopCriterion(nextTree.flagContinue, this);
+
+            this.cumAcceptProb += nextTree.cumAcceptProb;
+            this.numAcceptProbStates += nextTree.numAcceptProbStates;
         }
 
         final private double[][] position;

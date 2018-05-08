@@ -171,26 +171,17 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         TreeState nextTrajectoryTree = buildTree(
                 trajectoryTree.getPosition(direction), trajectoryTree.getMomentum(direction),
                 direction, logSliceU, delpth, stepSizeInformation.stepSize, initialJointDensity);
-
-        trajectoryTree.setPosition(direction, nextTrajectoryTree.getPosition(direction));
-        trajectoryTree.setMomentum(direction, nextTrajectoryTree.getMomentum(direction));
+        
+        trajectoryTree.mergeNextTree(nextTrajectoryTree);
 
         if (nextTrajectoryTree.flagContinue) {
 
             final double uniform = MathUtils.nextDouble();
-            final double acceptProb = (double) nextTrajectoryTree.numNodes / (double)trajectoryTree.numNodes;
+            final double acceptProb = (double) nextTrajectoryTree.numNodes / (double) trajectoryTree.numNodes;
             if (uniform < acceptProb) {
                 endPosition = nextTrajectoryTree.getSample();
             }
         }
-
-        // Recursion
-        trajectoryTree.numNodes += nextTrajectoryTree.numNodes;
-        trajectoryTree.flagContinue = computeStopCriterion(nextTrajectoryTree.flagContinue, trajectoryTree);
-
-        // Dual-averaging
-        trajectoryTree.cumAcceptProb += nextTrajectoryTree.cumAcceptProb;
-        trajectoryTree.numAcceptProbStates += nextTrajectoryTree.numAcceptProbStates;
 
         return endPosition;
     }
@@ -428,6 +419,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
 
         private void mergeNextTree(TreeState nextTree) {
+
             this.setPosition(direction, nextTree.getPosition(direction));
             this.setMomentum(direction, nextTree.getMomentum(direction));
             

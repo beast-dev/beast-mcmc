@@ -243,7 +243,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             TreeState nextSubtree = buildTree(subtree.getPosition(direction), subtree.getMomentum(direction), direction,
                     logSliceU, height - 1, stepSizeInformation.stepSize, initialJointDensity);
 
-            subtree.mergeNextTree(nextSubtree);
+            subtree.mergeNextTree(nextSubtree, direction);
 
         }
         return subtree;

@@ -243,7 +243,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             TreeState nextSubtree = buildTree(subtree.getPosition(direction), subtree.getMomentum(direction), direction,
                     logSliceU, height - 1, stepSizeInformation.stepSize, initialJointDensity);
 
-            subtree.mergeNextTree(nextSubtree)
+            subtree.mergeNextTree(nextSubtree);
 
         }
         return subtree;
@@ -409,9 +409,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.momentum[getIndex(direction)] = momentum;
         }
 
-        private void setSample(double[] position) {
-            this.setPosition(0, position)
-        }
+        private void setSample(double[] position) { this.setPosition(0, position); }
 
         private int getIndex(int direction) { // valid directions: -1, 0, +1
             assert (direction >= -1 && direction <= 1);
@@ -423,7 +421,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.setPosition(direction, nextTree.getPosition(direction));
             this.setMomentum(direction, nextTree.getMomentum(direction));
             
-            this.updateSample(nextTree)
+            this.updateSample(nextTree);
 
             this.numNodes += nextTree.numNodes;
             this.flagContinue = computeStopCriterion(nextTree.flagContinue, this);

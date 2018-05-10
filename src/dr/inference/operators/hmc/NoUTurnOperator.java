@@ -173,8 +173,6 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 trajectoryTree.getPosition(direction), trajectoryTree.getMomentum(direction),
                 direction, logSliceU, depth, stepSizeInformation.stepSize, initialJointDensity);
 
-        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction);
-
         if (nextTrajectoryTree.flagContinue) {
 
             final double uniform = MathUtils.nextDouble();
@@ -183,6 +181,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 endPosition = nextTrajectoryTree.getSample();
             }
         }
+
+        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction);
 
         return endPosition;
     }

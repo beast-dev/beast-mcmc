@@ -182,7 +182,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             }
         }
 
-        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction);
+        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction, skipSample);
 
         return endPosition;
     }
@@ -421,8 +421,24 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             setPosition(direction, nextTree.getPosition(direction));
             setMomentum(direction, nextTree.getMomentum(direction));
-            
+
             updateSample(nextTree);
+
+            numNodes += nextTree.numNodes;
+            flagContinue = computeStopCriterion(nextTree.flagContinue, this);
+
+            cumAcceptProb += nextTree.cumAcceptProb;
+            numAcceptProbStates += nextTree.numAcceptProbStates;
+        }
+
+        private void mergeNextTree(TreeState nextTree, int direction, boolean skipSample) {
+
+            setPosition(direction, nextTree.getPosition(direction));
+            setMomentum(direction, nextTree.getMomentum(direction));
+
+            if (!skipSample) {
+                updateSample(nextTree);
+            }
 
             numNodes += nextTree.numNodes;
             flagContinue = computeStopCriterion(nextTree.flagContinue, this);

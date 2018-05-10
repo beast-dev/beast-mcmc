@@ -182,7 +182,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             }
         }
 
-        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction, skipSample);
+        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction, true);
 
         return endPosition;
     }

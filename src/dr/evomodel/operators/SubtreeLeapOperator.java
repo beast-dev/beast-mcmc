@@ -92,9 +92,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
         lastInstance = drawOperation();
 
-        applyInstance(lastInstance);
-
-        return lastInstance.logHastingsRatio;
+        return applyInstance(lastInstance);
     }
 
     protected Instance drawOperation() {
@@ -133,21 +131,14 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
         final NodeRef destinationParent = tree.getParent(destination);
 
-        final Map<NodeRef, Double> reverseDestinations = getDestinations(
-                node, parent, getOtherChild(tree, parent, node), delta);
-        double reverseProbability = 1.0 / reverseDestinations.size();
-
-        // hastings ratio = reverse Prob / forward Prob
-        double logHastingsRatio = Math.log(reverseProbability) - Math.log(forwardProbability);
-
-        return new Instance(node, parent, sibling, grandParent, destination, destinationParent, destinationHeight, logHastingsRatio);
+        return new Instance(delta, node, parent, sibling, grandParent, destination, destinationParent, destinationHeight, forwardProbability);
     }
 
     protected Instance getLastInstance() {
         return lastInstance;
     }
 
-    protected void applyInstance(Instance instance) {
+    protected double applyInstance(Instance instance) {
         tree.beginTreeEdit();
 
         NodeRef parent = instance.parent < 0 ? null : tree.getNode(instance.parent);
@@ -205,6 +196,17 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
         if (DEBUG) System.err.println("STL: setting height of node " + parent.getNumber() + " to " + instance.destinationHeight);
         tree.setNodeHeight(parent, instance.destinationHeight);
+
+        NodeRef node = tree.getNode(instance.node);
+
+        final Map<NodeRef, Double> reverseDestinations = getDestinations(
+                node, parent, getOtherChild(tree, parent, node), instance.delta);
+        double reverseProbability = 1.0 / reverseDestinations.size();
+
+        // hastings ratio = reverse Prob / forward Prob
+        double logHastingsRatio = Math.log(reverseProbability) - Math.log(instance.forwardProbability);
+
+        return logHastingsRatio;
     }
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
@@ -344,6 +346,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
     }
 
     class Instance {
+        final double delta;
         final int node;
         final int parent;
         final int sibling;
@@ -351,9 +354,10 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         final int destination;
         final int destinationParent;
         final double destinationHeight;
-        final double logHastingsRatio;
+        final double forwardProbability;
 
-        public Instance(NodeRef node, NodeRef parent, NodeRef sibling, NodeRef grandParent, NodeRef destination, NodeRef destinationParent, double destinationHeight, double logHastingsRatio) {
+        public Instance(double delta, NodeRef node, NodeRef parent, NodeRef sibling, NodeRef grandParent, NodeRef destination, NodeRef destinationParent, double destinationHeight, double forwardProbability) {
+            this.delta = delta;
             this.node = node == null ? -1 : node.getNumber();
             this.parent = parent == null ? -1 : parent.getNumber();
             this.sibling = sibling == null ? -1 : sibling.getNumber();
@@ -361,7 +365,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
             this.destination = destination == null ? -1 : destination.getNumber();
             this.destinationParent = destinationParent == null ? -1 : destinationParent.getNumber();
             this.destinationHeight = destinationHeight;
-            this.logHastingsRatio = logHastingsRatio;
+            this.forwardProbability = forwardProbability;
         }
     }
 }

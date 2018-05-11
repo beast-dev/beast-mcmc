@@ -50,6 +50,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
     private final int prefetchCount;
     private int currentPrefetch;
     private final Instance[] instances;
+    private final double[] logHastingsRatios;
 
     /**
      * Constructor
@@ -74,6 +75,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
         this.prefetchableLikelihood = prefetchableLikelihood;
         this.prefetchCount = prefetchableLikelihood.getPrefetchCount();
         instances = new Instance[prefetchCount];
+        logHastingsRatios = new double[prefetchCount];
 
         currentPrefetch = -1;
     }
@@ -109,7 +111,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
 
                     prefetchableLikelihood.startPrefetchOperation(i);
                     prefetchableLikelihood.setIgnoreTreeEvents(false);
-                    applyInstance(instances[i]);
+                    logHastingsRatios[i] = applyInstance(instances[i]);
                     prefetchableLikelihood.finishPrefetchOperation(i);
 
 //                    System.out.println("PSTL, after operation: " +getTreeModel().getNewick());
@@ -135,7 +137,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             // comparison with the parallel approach) and these are then just applied
             // in sequence as doOperation is called.
 //            System.out.println("PSTL, before apply:     " +getTreeModel().getNewick());
-            applyInstance(instances[currentPrefetch]);
+            return applyInstance(instances[currentPrefetch]);
 //            System.out.println("PSTL, after apply:     " +getTreeModel().getNewick());
         } else {
             prefetchableLikelihood.setPrefetchLikelihood(currentPrefetch);
@@ -146,7 +148,7 @@ public class PrefetchSubtreeLeapOperator extends SubtreeLeapOperator implements 
             applyInstance(instances[currentPrefetch]);
         }
 
-        return instances[currentPrefetch].logHastingsRatio;
+        return logHastingsRatios[currentPrefetch];
     }
 
     @Override

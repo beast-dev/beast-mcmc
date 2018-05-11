@@ -270,8 +270,9 @@ public class BranchRateGradientForDiscreteTrait
         }
 
         if (COUNT_TOTAL_OPERATIONS) {
-            sb.append("\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount).append("\n");
-            sb.append(treeTraitProvider.toString());
+            sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount).append("\n");
+            sb.append(treeTraitProvider.toString()).append("\n");
+            sb.append(treeDataLikelihood.getReport());
         }
 
         return sb.toString();

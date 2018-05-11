@@ -96,6 +96,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++simulateCount;
+            updatePrePartialCount += operationCount;
         }
     }
 
@@ -125,7 +126,29 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
     @Override
     protected void constructTraits(Helper treeTraitHelper) {
-        treeTraitHelper.addTrait(factory(this));
+//        treeTraitHelper.addTrait(factory(this));
+        treeTraitHelper.addTrait(new TreeTrait.DA() {
+            @Override
+            public String getTraitName() {
+                return "Gradient";
+            }
+
+            @Override
+            public Intent getIntent() {
+                return null;
+            }
+
+            @Override
+            public double[] getTrait(Tree tree, NodeRef node) {
+                return AbstractDiscreteTraitDelegate.this.getTrait(tree, node);
+            }
+
+            @Override
+            public String toString() {
+                return AbstractDiscreteTraitDelegate.this.toString();
+            }
+        });
+
         treeTraitHelper.addTrait(new TreeTrait.DA() {
             @Override
             public String getTraitName() {
@@ -141,11 +164,16 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             public double[] getTrait(Tree tree, NodeRef node) {
                 return getHessian(tree, node);
             }
+
+            @Override
+            public String toString() {
+                return AbstractDiscreteTraitDelegate.this.toString();
+            }
         });
     }
 
     public static String getName(String name) {
-        return "derivative." + name;
+        return "Gradient";
     }
 
     @Override
@@ -437,7 +465,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         if (COUNT_TOTAL_OPERATIONS) {
 
             return "\tsimulateCount = " + simulateCount + "\n" +
-                    "\tgetTraitCount = " + getTraitCount + "\n";
+                    "\tgetTraitCount = " + getTraitCount + "\n" +
+                    "\tupPrePartialCount = " + updatePrePartialCount + "\n";
 
         } else {
             return super.toString();
@@ -473,5 +502,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private long simulateCount = 0;
     private long getTraitCount = 0;
+    private long updatePrePartialCount = 0;
 }
 

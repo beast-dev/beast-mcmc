@@ -69,7 +69,7 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserDescription() {
-        return "Returns a LKJ Transformation from unconstrained values to correlation matrix";
+        return "Returns a LKJ Transformation from correlation matrix to unconstrained values";
     }
 
     @Override

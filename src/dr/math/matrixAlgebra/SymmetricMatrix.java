@@ -102,7 +102,7 @@ public class SymmetricMatrix extends Matrix {
 	/**
 	 * Symmetric matrix with diagonal elements equal to 1.
 	 *
-	 * @param offdiag double[] size n*(n-1)/2 with off diagonal elements
+	 * @param offdiag double[] size n*(n-1)/2 with off diagonal elements, row-major.
      * @throws java.lang.NegativeArraySizeException
      *          if n <= 0
 	 */
@@ -126,6 +126,12 @@ public class SymmetricMatrix extends Matrix {
 		return new SymmetricMatrix(a);
 	}
 
+	/**
+	 * Symmetric matrix with diagonal elements equal to 1.
+	 *
+	 * @param M SymmetricMatrix
+	 * @return double n(n-1)/2 with upper-triangular elements, row-major.
+	 */
 	public static double[] extractUpperTriangular(SymmetricMatrix M) {
 		int n = M.columns();
 

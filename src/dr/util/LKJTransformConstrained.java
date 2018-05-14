@@ -131,17 +131,6 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         return results;
     }
 
-    private double getUpperTriangular(double[] values, int i, int j) {
-        assert i <= j;
-        if (i == j) return 1.0; // Z_{ii} = 1 by convention.
-        return values[i * (2 * dim - i - 1) / 2 + (j - i - 1)];
-    }
-
-    private void setUpperTriangular(double[] values, int i, int j, double val) {
-        assert i < j;
-        values[i * (2 * dim - i - 1) / 2 + (j - i - 1)] = val;
-    }
-
     @Override
     public double[] inverse(double[] values, int from, int to, double sum) {
         throw new RuntimeException("Not relevant for the LKJ transform.");
@@ -176,7 +165,86 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         return 0.5 * logJacobian;
     }
 
-    // Unused recursive transformation (more numerical errors)
+    // ************************************************************************* //
+    // Computation of the jacobian matrix
+    // ************************************************************************* //
+
+    // Returns the *transpose* of the Jacobian matrix: jacobian[pos(k, l)][pos(i, j)] = d R_{ij} / d Z_{kl}
+    public double[][] computeJacobianMatrix(double[] values) {
+        int dimJac = dim * (dim - 1) / 2;
+        double[][] jacobian = new double[dimJac][dimJac];
+
+        // Initialization
+        for (int j = 1; j < dim; j++) {
+            jacobian[pos(0, j)][j - 1] = 1.0;
+        }
+
+        recursionJacobian(jacobian, values);
+
+        return jacobian;
+    }
+
+    private void recursionJacobian(double[][] jacobian, double[] values) {
+        for (int i = 1; i < dim; i++) {
+            for (int j = i + 1; j < dim; j++) {
+                jacobian[pos(i, j)][pos(i, j)] = values[pos(i, j)];
+                for (int iota = 1; iota < i + 1; iota++) {
+                    setUpperTriangular(jacobian[pos(i, j)], i, j, recursionFormulaJacobian(jacobian[pos(i, j)], values, i, j, iota, i, j));
+                }
+                // jacobian[pos(k, l)][pos(i, j)] = d R_{ij} / d Z_{kl}
+                for (int k = 0; k < i; k++) {
+                    jacobian[pos(k, i)][pos(i, j)] = values[pos(i, j)];
+                    for (int iota = 1; iota < i + 1; iota++) {
+                        setUpperTriangular(jacobian[pos(k, i)], i, j, recursionFormulaJacobian(jacobian[pos(k, i)], values, i, j, iota, k, i));
+                    }
+                    jacobian[pos(k, j)][pos(i, j)] = values[pos(i, j)];
+                    for (int iota = 1; iota < i + 1; iota++) {
+                        setUpperTriangular(jacobian[pos(k, j)], i, j, recursionFormulaJacobian(jacobian[pos(k, j)], values, i, j, iota, k, j));
+                    }
+                }
+            }
+        }
+    }
+
+    private double recursionFormulaJacobian(double[] trans, double[] values, int i, int j, int iota, int k, int l) {
+        double Rimi = getUpperTriangular(values, i - iota, i);
+        double Rimj = getUpperTriangular(values, i - iota, j);
+
+        if ((i == k) && (j == l) && (iota == 1)) {
+            return Math.sqrt((1 - Rimi * Rimi) * (1 - Rimj * Rimj));
+        }
+        if ((i - iota == k) && (i == l)) {
+            return getUpperTriangular(trans, i, j) * (-Rimi / Math.sqrt((1 - Rimi * Rimi))) * Math.sqrt((1 - Rimj * Rimj)) + Rimj;
+        }
+        if ((i - iota == k) && (j == l)) {
+            return getUpperTriangular(trans, i, j) * (-Rimj / Math.sqrt((1 - Rimj * Rimj))) * Math.sqrt((1 - Rimi * Rimi)) + Rimi;
+        }
+        return getUpperTriangular(trans, i, j) * Math.sqrt((1 - Rimi * Rimi) * (1 - Rimj * Rimj));
+    }
+
+    // ************************************************************************* //
+    // Helper functions to deal with upper triangular matrices
+    // ************************************************************************* //
+
+    private double getUpperTriangular(double[] values, int i, int j) {
+        assert i <= j;
+        if (i == j) return 1.0; // Z_{ii} = 1 by convention.
+        return values[pos(i, j)];
+    }
+
+    private void setUpperTriangular(double[] values, int i, int j, double val) {
+        assert i < j;
+        values[pos(i, j)] = val;
+    }
+
+    private int pos(int i, int j) {
+        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+    }
+
+    // ************************************************************************* //
+    // Unused recursive transformation (kept for test purposes)
+    // ************************************************************************* //
+
     public double[] transformRecursion(double[] values, int from, int to) {
         assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
         assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
@@ -184,26 +252,25 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
             assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
         }
 
-        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(values, dim);
+        double[] trans = new double[values.length];
+        System.arraycopy(values, 0, trans, 0, values.length);
 
-        for (int i = 1; i < dim - 1; i++) {
-            recursion(R, i);
-        }
+        recursion(trans, values);
 
-        return extractUpperTriangular(R);
+        return trans;
     }
 
     public double[] inverseRecursion(double[] values, int from, int to) {
         assert from == 0 && to == values.length
                 : "The transform function can only be applied to the whole array of values.";
 
-        SymmetricMatrix Z = compoundCorrelationSymmetricMatrix(values, dim);
+        double[] inv = new double[values.length];
+        System.arraycopy(values, 0, inv, 0, values.length);
 
-        for (int i = 1; i < dim - 1; i++) {
-            recursionInverse(Z, i);
-        }
+        recursionInverse(inv);
 
         if (DEBUG) {
+            SymmetricMatrix Z = compoundCorrelationSymmetricMatrix(values, dim);
             try {
                 if (!Z.isPD()) {
                     throw new RuntimeException("The LKJ transform should produce a Positive Definite matrix.");
@@ -213,36 +280,40 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
             }
         }
 
-        return extractUpperTriangular(Z);
+        return inv;
     }
 
-    private void recursion(SymmetricMatrix R, int iota) {
-        for (int i = dim - 1; i > iota - 1; i--) {
+    private void recursion(double[] trans, double[] values) {
+        for (int i = 1; i < dim; i++) {
             for (int j = i + 1; j < dim; j++) {
-                R.setSymmetric(i, j, recursionFormula(R, i, j));
+                for (int iota = 1; iota < i + 1; iota++) {
+                    setUpperTriangular(trans, i, j, recursionFormula(trans, values, i, j, iota));
+                }
             }
         }
     }
 
-    private double recursionFormula(SymmetricMatrix R, int i, int j) {
-        double Rimi = R.component(i - 1, i);
-        double Rimj = R.component(i - 1, j);
+    private double recursionFormula(double[] trans, double[] values, int i, int j, int iota) {
+        double Rimi = getUpperTriangular(values, i - iota, i);
+        double Rimj = getUpperTriangular(values, i - iota, j);
 
-        return R.component(i, j) * Math.sqrt((1 - Rimi * Rimi) * (1 - Rimj * Rimj)) + Rimi * Rimj;
+        return getUpperTriangular(trans, i, j) * Math.sqrt((1 - Rimi * Rimi) * (1 - Rimj * Rimj)) + Rimi * Rimj;
     }
 
-    private void recursionInverse(SymmetricMatrix Z, int iota) {
-        for (int i = dim - 1; i > iota - 1; i--) {
+    private void recursionInverse(double[] inv) {
+        for (int i = 1; i < dim; i++) {
             for (int j = i + 1; j < dim; j++) {
-                Z.setSymmetric(i, j, recursionInverseFormula(Z, i, j));
+                for (int iota = 1; iota < i + 1; iota++) {
+                    setUpperTriangular(inv, i, j, recursionInverseFormula(inv, i, j, iota));
+                }
             }
         }
     }
 
-    private double recursionInverseFormula(SymmetricMatrix Z, int i, int j) {
-        double Zimi = Z.component(i - 1, i);
-        double Zimj = Z.component(i - 1, j);
+    private double recursionInverseFormula(double[] inv, int i, int j, int iota) {
+        double Zimi = getUpperTriangular(inv, iota - 1, i);
+        double Zimj = getUpperTriangular(inv, iota - 1, j);
 
-        return (Z.component(i, j) - Zimi * Zimj) / Math.sqrt((1 - Zimi * Zimi) * (1 - Zimj * Zimj));
+        return (getUpperTriangular(inv, i, j) - Zimi * Zimj) / Math.sqrt((1 - Zimi * Zimi) * (1 - Zimj * Zimj));
     }
 }

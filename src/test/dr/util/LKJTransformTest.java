@@ -100,11 +100,11 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testTransformation() {
         System.out.println("\nTest LKJ transform.");
 
-        double[] transformedValue = transform.transform(CPCs);
-        double[] inverseTransformedValues = transform.inverse(transformedValue);
+        double[] transformedValue = transform.inverse(CPCs);
+        double[] inverseTransformedValues = transform.transform(transformedValue);
 
         SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);
-        ;
+
         System.out.println("transformedValue=" + R);
         try {
             assertTrue("Positive Definite", R.isPD());
@@ -128,8 +128,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testTransformationLimit() {
         System.out.println("\nTest LKJ transform on the border.");
 
-        double[] transformedValue = transform.transform(CPCsLimit);
-        double[] inverseTransformedValues = transform.inverse(transformedValue);
+        double[] transformedValue = transform.inverse(CPCsLimit);
+        double[] inverseTransformedValues = transform.transform(transformedValue);
 
         SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);
         ;
@@ -156,8 +156,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testTransformationRecursion() {
         System.out.println("\nTest LKJ transform.");
 
-        double[] transformedValue = transform.transformRecursion(CPCs, 0, CPCs.length);
-        double[] transformedValueChol = transform.transform(CPCs);
+        double[] transformedValue = transform.inverseRecursion(CPCs, 0, CPCs.length);
+        double[] transformedValueChol = transform.inverse(CPCs);
 
         for (int k = 0; k < transformedValueChol.length; k++) {
             assertEquals("transform chol rec k=" + k,
@@ -165,7 +165,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                     format.format(transformedValue[k]));
         }
 
-        double[] inverseTransformedValues = transform.inverseRecursion(transformedValue, 0, CPCs.length);
+        double[] inverseTransformedValues = transform.transformRecursion(transformedValue, 0, CPCs.length);
 
         SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);
         ;
@@ -193,8 +193,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testTransformationLimitRecursion() {
         System.out.println("\nTest LKJ transform on the border.");
 
-        double[] transformedValue = transform.transformRecursion(CPCsLimit, 0, CPCsLimit.length);
-        double[] transformedValueChol = transform.transform(CPCsLimit);
+        double[] transformedValue = transform.inverseRecursion(CPCsLimit, 0, CPCsLimit.length);
+        double[] transformedValueChol = transform.inverse(CPCsLimit);
 
         for (int k = 0; k < transformedValueChol.length; k++) {
             assertEquals("transform chol rec k=" + k,
@@ -202,7 +202,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                     format.format(transformedValue[k]));
         }
 
-        double[] inverseTransformedValues = transform.inverseRecursion(transformedValue, 0, CPCsLimit.length);
+        double[] inverseTransformedValues = transform.transformRecursion(transformedValue, 0, CPCsLimit.length);
 
         SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);
         ;
@@ -229,8 +229,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testJacobian() {
         System.out.println("\nTest LKJ Jacobian.");
 
-        double jacobianDet = transform.getLogJacobian(CPCs, 0, CPCs.length);
-        double[][] jacobianMat = transform.computeJacobianMatrix(CPCs);
+        double jacobianDet = - transform.getLogJacobian(CPCs, 0, CPCs.length);
+        double[][] jacobianMat = transform.computeJacobianMatrixInverse(CPCs);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {

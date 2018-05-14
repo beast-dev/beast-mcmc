@@ -4,39 +4,13 @@
 
 <beast>
 
-    <multivariateDiffusionModel id="diffusionModel">
-        <precisionMatrix>
-            <compoundSymmetricMatrix id="precisionMatrix" asCorrelation="true">
-                <diagonal>
-                    <parameter id="precision.diagonal" value="1.0 1.0 1.0 1.0" lower="0.0 0.0 0.0 0.0"/>
-                </diagonal>
-                <offDiagonal>
-                    <parameter id="precision.offDiagonal" value="0.0 0.0 0.0 0.0 0.0 0.0" />
-                </offDiagonal>
-            </compoundSymmetricMatrix>
-        </precisionMatrix>
-	</multivariateDiffusionModel>
+    <parameter id="precision.offDiagonal" value="0.0 0.0 0.0 0.0 0.0 0.0" />
 
     <LKJCorrelationPrior id="precisionPrior" shapeParameter="2.0" dimension="4">
 		<data>
             <parameter idref="precision.offDiagonal"/>
 		</data>
 	</LKJCorrelationPrior>
-	<!-- <multivariateWishartPrior id="precisionPrior" df="3"> -->
-	<!-- 	<scaleMatrix> -->
-	<!-- 		<matrixParameter> -->
-	<!-- 			<parameter value=" 1.0  0.0  0.0"/> -->
-	<!-- 			<parameter value=" 0.0  1.0  0.0"/> -->
-	<!-- 			<parameter value=" 0.0  0.0  1.0"/> -->
-	<!--  		</matrixParameter> -->
-	<!-- 	</scaleMatrix> -->
-	<!-- 	<data> -->
-	<!-- 		<matrixParameter idref="precisionMatrix"/> -->
-	<!-- 	</data> -->
-	<!-- </multivariateWishartPrior> -->
-    <!-- <uniformPrior id="uniformPrior" lower="-1.0" upper="1.0"> -->
-    <!--     <parameter idref="precision.offDiagonal"/> -->
-    <!-- </uniformPrior> -->
 
 	<operators id="operators">
 
@@ -73,11 +47,11 @@
                 <prior idref="prior"/>
 			</column>
 			<column label="Precision" dp="4" width="12">
-                <matrixParameter idref="precisionMatrix"/>
+                <matrixParameter idref="precision.offDiagonal"/>
 			</column>
 		</log>
 		<log logEvery="100" fileName="testNormalModelCorrelation.log">
-            <matrixParameter idref="precisionMatrix"/>
+            <matrixParameter idref="precision.offDiagonal"/>
 		</log>
 	</mcmc>
 
@@ -87,8 +61,6 @@
 		</property>
 	</report>
 
-	<!-- <traceAnalysis fileName="testNormalModelGibbs.log" stdError="true"/> -->
-	
 </beast>
 
 <!--
@@ -110,10 +82,10 @@ dim_offdiag <- dim * (dim - 1) / 2
 var_th <- 1 / (2 * shape + dim - 1)
 
 for (i in 1:(dim_offdiag)) {
-  stopifnot(all.equal(pull(means, dim + i), exp_th, tol = 0.001)) 
+  stopifnot(all.equal(pull(means, i), exp_th, tol = 0.001)) 
 }
 
 for (i in 1:(dim_offdiag)) {
-  stopifnot(all.equal(pull(vars, dim + i), var_th, tol = 0.001))
+  stopifnot(all.equal(pull(vars, i), var_th, tol = 0.001))
 }
 -->

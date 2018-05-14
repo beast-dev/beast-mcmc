@@ -53,8 +53,8 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
         }
         Transform.Array fisherZTransforms = new Transform.Array(transforms, null);
 
-        // LKJ inverse (correlation matrix to constrained CPCs)
-        Transform.MultivariableTransform LKJTransform = new Transform.InverseMultivariable(new LKJTransformConstrained(dim));
+        // LKJ (constrained CPCs to correlation matrix)
+        Transform.MultivariableTransform LKJTransform = new LKJTransformConstrained(dim);
 
         // Compose
         return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);

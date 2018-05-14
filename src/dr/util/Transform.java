@@ -393,7 +393,10 @@ public interface Transform {
         }
 
         public double updateGradientLogDensity(double gradient, double value) {
-            throw new RuntimeException("Not yet implemented");
+            // 1 - value^2 : gradient of inverse
+            // 1 + value^2 : gradient of log jacobian of inverse
+            double square = value * value;
+            return (1.0 - square) * gradient + 1.0 + square;
         }
 
         public String getTransformName() {
@@ -582,7 +585,10 @@ public interface Transform {
 
         @Override
         public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("Not yet implemented.");
+            return outer.updateGradientLogDensity(
+                    inner.updateGradientLogDensity(gradient, value, from, to),
+                    inner.transform(value, from, to),
+                    from, to);
         }
 
         @Override

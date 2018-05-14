@@ -153,8 +153,9 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         double[] updatedGradient = new double[gradient.length];
         for (int i = 0; i < gradient.length; i++) {
             for (int j = i; j < gradient.length; j++) {
-                updatedGradient[i] += jacobianInverse[i][j] * gradient[j] + gradientLogJacobianInverse[i];
+                updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
             }
+            updatedGradient[i] += gradientLogJacobianInverse[i];
         }
         return updatedGradient;
     }

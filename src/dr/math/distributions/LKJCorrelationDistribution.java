@@ -25,17 +25,19 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.GammaFunction;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
+import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
 
 /**
  * @author Paul Bastide
  */
-public class LKJCorrelationDistribution implements MultivariateDistribution {
+public class LKJCorrelationDistribution implements MultivariateDistribution, GradientProvider {
 
     public static final String TYPE = "LKJCorrelation";
 
@@ -124,6 +126,25 @@ public class LKJCorrelationDistribution implements MultivariateDistribution {
         return logDensity;
     }
 
+    public double[] gradLogPdf(double[] x) { // x must be of length (2 choose dim) [upper triangular]
+        if (shape == 1.0) { // Uniform
+            return new double[x.length];
+        } else {
+            SymmetricMatrix R = compoundCorrelationSymmetricMatrix(x, dim);
+            return gradLogPdf(R, shape);
+        }
+    }
+
+    public static double[] gradLogPdf(SymmetricMatrix R, double shape) {
+
+        double[] gradient = extractUpperTriangular((SymmetricMatrix) R.inverse());
+        for (int i = 0; i < gradient.length; ++i) {
+            gradient[i] = (shape - 1) * gradient[i];
+        }
+
+        return gradient;
+    }
+
     public double[][] getScaleMatrix() {
         throw new RuntimeException("Not yet implemented");
     }
@@ -134,6 +155,16 @@ public class LKJCorrelationDistribution implements MultivariateDistribution {
 
     public String getType() {
         return TYPE;
+    }
+
+    @Override
+    public int getDimension() {
+        return dim;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object x) {
+        return gradLogPdf((double[]) x);
     }
 
 }

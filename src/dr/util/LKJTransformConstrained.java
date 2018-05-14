@@ -143,7 +143,20 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
 
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented");
+        // values = untransformed (R)
+        double[] transformedValues = transform(value);
+        // Jacobian of inverse
+        double[][] jacobianInverse = computeJacobianMatrixInverse(transformedValues);
+        // gradient of log jacobian of the inverse
+        double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
+        // Matrix multiplication (upper triangular) + updated gradient
+        double[] updatedGradient = new double[gradient.length];
+        for (int i = 0; i < gradient.length; i++) {
+            for (int j = i; j < gradient.length; j++) {
+                updatedGradient[i] += jacobianInverse[i][j] * gradient[j] + gradientLogJacobianInverse[i];
+            }
+        }
+        return updatedGradient;
     }
 
     @Override
@@ -166,6 +179,17 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         return -0.5 * logJacobian;
     }
 
+    public double[] getGradientLogJacobianInverse(double[] values) {
+        double[] gradientLogJacobian = new double[values.length];
+        int k = 0;
+        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
+            for (int j = i + 1; j < dim; j++) {
+                gradientLogJacobian[k] = - (dim - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
+                k++;
+            }
+        }
+        return gradientLogJacobian;
+    }
     // ************************************************************************* //
     // Computation of the jacobian matrix
     // ************************************************************************* //

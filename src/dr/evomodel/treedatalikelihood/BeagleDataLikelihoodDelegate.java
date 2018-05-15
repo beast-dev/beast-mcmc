@@ -382,6 +382,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+
+        instanceCount++;
     }
 
     @Override

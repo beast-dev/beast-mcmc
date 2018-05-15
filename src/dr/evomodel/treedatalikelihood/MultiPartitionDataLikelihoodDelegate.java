@@ -454,6 +454,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+
+        instanceCount ++;
     }
 
     @Override

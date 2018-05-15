@@ -694,7 +694,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-            if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum)) {
+            if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum) && !recomputeScaleFactors) {
                 System.err.println("Stored partial should not be updated!");
             }
 

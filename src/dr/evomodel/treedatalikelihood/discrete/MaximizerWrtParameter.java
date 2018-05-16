@@ -28,6 +28,8 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.Reportable;
@@ -44,12 +46,14 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 public class MaximizerWrtParameter implements Reportable {
 
     private final GradientWrtParameterProvider gradient;
+    private final GradientType gradientType;
     private final Parameter parameter;
     private final Likelihood likelihood;
     private final Transform transform;
+    private final Function function;
 
-    private Function function = null;
     private long time = 0;
+    private long count = 0;
     private double minimumValue = Double.NaN;
     private double[] minimumPoint = null;
 
@@ -59,17 +63,20 @@ public class MaximizerWrtParameter implements Reportable {
                                  Transform transform) {
         this.likelihood = likelihood;
         this.parameter = parameter;
-        this.gradient = gradient;
         this.transform = transform;
 
-        // If gradient == null, then construct a numerical version using NumericalDerivative.gradient()
+        if (gradient == null) {
+            this.gradient = constructGradient();
+            this.gradientType = GradientType.NUMERICAL;
+        } else {
+            this.gradient = gradient;
+            this.gradientType = GradientType.ANALYTIC;
+        }
+
+        this.function = constructFunction();
     }
 
     public void maximize() {
-
-        if (function == null) {
-            function = construct();
-        }
 
         boolean printScreen = false;
         LbfgsMinimizer minimizer = new LbfgsMinimizer(printScreen);
@@ -95,22 +102,31 @@ public class MaximizerWrtParameter implements Reportable {
 
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
+            sb.append("Gradient type: ").append(gradientType);
             sb.append("Fx: ").append(String.valueOf(minimumValue)).append("\n");
             sb.append("Time: ").append(time).append("\n");
+            sb.append("Count: ").append(count).append("\n");
 
         }
 
         return sb.toString();
     }
 
-    private Function construct() {
+    private double evaluateLogLikelihood() {
+        ++count;
+        return -likelihood.getLogLikelihood();
+    }
 
-        Function function = new Function() {
+    private Function constructFunction() {
 
+        return new Function() {
+
+            @Override
             public int getDimension() {
                 return gradient.getDimension();
             }
 
+            @Override
             public double valueAt(double[] argument) {
 
                 if (transform != null) {
@@ -118,9 +134,10 @@ public class MaximizerWrtParameter implements Reportable {
                 }
 
                 setParameter(new WrappedVector.Raw(argument), parameter);
-                return -likelihood.getLogLikelihood();
+                return evaluateLogLikelihood();
             }
 
+            @Override
             public double[] gradientAt(double[] argument) {
 
                 if (transform != null) {
@@ -136,7 +153,68 @@ public class MaximizerWrtParameter implements Reportable {
                 return result;
             }
         };
+    }
 
-        return function;
+    private GradientWrtParameterProvider constructGradient() {
+
+        final MultivariateFunction function = new MultivariateFunction() {
+            @Override
+            public double evaluate(double[] argument) {
+
+                setParameter(new WrappedVector.Raw(argument), parameter);
+                return evaluateLogLikelihood();
+            }
+
+            @Override
+            public int getNumArguments() {
+                return parameter.getDimension();
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return Double.POSITIVE_INFINITY;
+            }
+        };
+
+        return new GradientWrtParameterProvider() {
+
+            @Override
+            public Likelihood getLikelihood() {
+                return likelihood;
+            }
+
+            @Override
+            public Parameter getParameter() {
+                return parameter;
+            }
+
+            @Override
+            public int getDimension() {
+                return parameter.getDimension();
+            }
+
+            @Override
+            public double[] getGradientLogDensity() {
+                return NumericalDerivative.gradient(function, parameter.getParameterValues());
+            }
+        };
+    }
+
+    private enum GradientType {
+        ANALYTIC("analytic"),
+        NUMERICAL("numerical");
+
+        private String type;
+
+        GradientType(String type) {
+            this.type = type;
+        }
+
+        public String toString() { return type; }
     }
 }

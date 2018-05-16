@@ -640,7 +640,7 @@ public interface Transform {
 
         @Override
         public double getLogJacobian(double value) {
-            return -inner.getLogJacobian(value);
+            return -inner.getLogJacobian(inner.inverse(value));
         }
 
         private final UnivariableTransform inner;
@@ -684,7 +684,7 @@ public interface Transform {
 
         @Override
         public double getLogJacobian(double[] values, int from, int to) {
-            return -inner.getLogJacobian(values, from, to);
+            return -inner.getLogJacobian(inner.inverse(values, from, to), from, to);
         }
 
         private final MultivariableTransform inner;

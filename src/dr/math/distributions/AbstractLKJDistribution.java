@@ -39,7 +39,7 @@ public abstract class AbstractLKJDistribution implements MultivariateDistributio
 
     AbstractLKJDistribution(int dim, double shape) {
 
-        assert (shape < 0);
+        assert (shape > 0);
 
         this.shape = shape;
         this.dim = dim;

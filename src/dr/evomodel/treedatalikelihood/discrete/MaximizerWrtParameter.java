@@ -28,10 +28,6 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.MultivariateFunction;
-import dr.math.MultivariateMinimum;
-import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.Reportable;
@@ -71,42 +67,18 @@ public class MaximizerWrtParameter implements Reportable {
 
     public void maximize() {
 
-        function = new Function() {
-            public int getDimension() {
-                return gradient.getDimension();
-            }
-
-            public double valueAt(double[] argument) {
-
-                for (int i = 0; i < argument.length; ++i) {
-                    parameter.setParameterValue(i, Math.exp(argument[i])); // TODO Handle transform
-                }
-
-                return -gradient.getLikelihood().getLogLikelihood();
-            }
-
-            public double[] gradientAt(double[] argument) {
-
-                for (int i = 0; i < argument.length; ++i) {
-                    parameter.setParameterValue(i, Math.exp(argument[i])); // TODO Handle transform
-                }
-
-                double lnL = valueAt(argument);
-
-                double[] gradient = MaximizerWrtParameter.this.gradient.getGradientLogDensity();
-
-                for (int i = 0; i < argument.length; ++i) {
-                    gradient[i] *= -Math.exp(argument[i]); // TODO Handle transform
-                }
-
-                return gradient;
-            }
-        };
+        if (function == null) {
+            function = construct();
+        }
 
         boolean printScreen = false;
         LbfgsMinimizer minimizer = new LbfgsMinimizer(printScreen);
 
+        long startTime = System.currentTimeMillis();
         minimumPoint = minimizer.minimize(function);
+        long endTime = System.currentTimeMillis();
+
+        time = endTime - startTime;
         minimumValue = function.valueAt(minimumPoint);
 
         setParameter(new WrappedVector.Raw(minimumPoint), parameter);
@@ -121,13 +93,50 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Not yet executed.");
         } else {
 
-            sb.append("lnX: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
+            sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
-            sb.append("fx: ").append(String.valueOf(minimumValue)).append("\n");
+            sb.append("Fx: ").append(String.valueOf(minimumValue)).append("\n");
+            sb.append("Time: ").append(time).append("\n");
 
         }
 
         return sb.toString();
     }
 
+    private Function construct() {
+
+        Function function = new Function() {
+
+            public int getDimension() {
+                return gradient.getDimension();
+            }
+
+            public double valueAt(double[] argument) {
+
+                if (transform != null) {
+                    // TODO Handle transform: argument -> argument
+                }
+
+                setParameter(new WrappedVector.Raw(argument), parameter);
+                return -likelihood.getLogLikelihood();
+            }
+
+            public double[] gradientAt(double[] argument) {
+
+                if (transform != null) {
+                    // TODO Handle transform: argument -> argument
+                }
+
+                double[] result = gradient.getGradientLogDensity();
+
+                if (transform != null) {
+                    // TODO Handle transform: result -> result
+                }
+
+                return result;
+            }
+        };
+
+        return function;
+    }
 }

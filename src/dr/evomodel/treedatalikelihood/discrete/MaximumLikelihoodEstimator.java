@@ -38,11 +38,11 @@ import com.github.lbfgs4j.liblbfgs.Function;
 
 public class MaximumLikelihoodEstimator implements Reportable {
     private final GradientWrtParameterProvider gradientWrtParameterProvider;
-    private final Parameter rateParameter;
+    private final Parameter parameter;
 
     public MaximumLikelihoodEstimator(GradientWrtParameterProvider gradientWrtParameterProvider) {
         this.gradientWrtParameterProvider = gradientWrtParameterProvider;
-        this.rateParameter = gradientWrtParameterProvider.getParameter();
+        this.parameter = gradientWrtParameterProvider.getParameter();
     }
 
 
@@ -57,7 +57,7 @@ public class MaximumLikelihoodEstimator implements Reportable {
             public double valueAt(double[] argument) {
 
                 for (int i = 0; i < argument.length; ++i) {
-                    rateParameter.setParameterValue(i, Math.exp(argument[i]));
+                    parameter.setParameterValue(i, Math.exp(argument[i]));
                 }
 
                 return -gradientWrtParameterProvider.getLikelihood().getLogLikelihood();
@@ -66,7 +66,7 @@ public class MaximumLikelihoodEstimator implements Reportable {
             public double[] gradientAt(double[] argument) {
 
                 for (int i = 0; i < argument.length; ++i) {
-                    rateParameter.setParameterValue(i, Math.exp(argument[i]));
+                    parameter.setParameterValue(i, Math.exp(argument[i]));
                 }
 
                 double lnL = valueAt(argument);

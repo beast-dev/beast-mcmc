@@ -25,8 +25,6 @@
 
 package dr.math.distributions;
 
-import dr.inference.model.GradientProvider;
-import dr.math.GammaFunction;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -37,61 +35,16 @@ import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
 /**
  * @author Paul Bastide
  */
-public class LKJCorrelationDistribution implements MultivariateDistribution, GradientProvider {
+public class LKJCorrelationDistribution extends AbstractLKJDistribution {
 
     public static final String TYPE = "LKJCorrelation";
 
-    private double shape;
-    private int dim;
-    private double logNormalizationConstant;
-
     public LKJCorrelationDistribution(int dim, double shape) {
-
-        assert (shape < 0);
-
-        this.shape = shape;
-        this.dim = dim;
-        this.logNormalizationConstant = computelogNormalizationConstant();
-
+        super(dim, shape);
     }
 
     public LKJCorrelationDistribution(int dim) { // returns a non-informative (uniform) density
-
-        this.shape = 1.0;
-        this.dim = dim;
-        this.logNormalizationConstant = computelogNormalizationConstant();
-
-    }
-
-    private double computelogNormalizationConstant() {
-        // Lewandowski, Kurowicka, and Joe (2009)
-        // See also Stan: http://mc-stan.org/math/db/d4f/lkj__corr__lpdf_8hpp_source.html
-        // And: http://discourse.mc-stan.org/t/question-about-lkj-normalizing-constant/2001/11 (for the sign)
-        double res = 0.0;
-        if (shape == 1.0) {
-            // Lewandowski et al. (2009) Theorem 5
-            for (int k = 1; k <= (dim - 1) / 2; k++) {
-                res -= GammaFunction.lnGamma(2.0 * k);
-            }
-            if ((dim % 2) == 1) {
-                res -= 0.25 * (dim * dim - 1) * Math.log(Math.PI)
-                        - 0.25 * (dim - 1) * (dim - 1) * Math.log(2.0)
-                        - (dim - 1) * GammaFunction.lnGamma(0.5 * (dim + 1));
-            } else {
-                res -= 0.25 * dim * (dim - 2) * Math.log(Math.PI)
-                        + 0.25 * (3 * dim * dim - 4 * dim) * Math.log(2.0)
-                        + dim * GammaFunction.lnGamma(0.5 * dim)
-                        - (dim - 1) * GammaFunction.lnGamma(dim);
-            }
-        } else {
-            // Lewandowski et al. (2009), expression in proof of eq. (17)
-            res = (dim - 1) * GammaFunction.lnGamma(shape + 0.5 * (dim - 1));
-            for (int k = 1; k <= (dim - 1); k++) {
-                res -= 0.5 * k * Math.log(Math.PI)
-                        + GammaFunction.lnGamma(shape + 0.5 * (dim - 1 - k));
-            }
-        }
-        return res;
+        super(dim);
     }
 
     public double logPdf(double[] x) { // x must be of length (2 choose dim) [upper triangular]
@@ -99,7 +52,6 @@ public class LKJCorrelationDistribution implements MultivariateDistribution, Gra
             return logNormalizationConstant;
         } else {
             SymmetricMatrix R = compoundCorrelationSymmetricMatrix(x, dim);
-//            Matrix R = new Matrix(x, dim, dim);
             return logPdf(R);
         }
     }
@@ -155,11 +107,6 @@ public class LKJCorrelationDistribution implements MultivariateDistribution, Gra
 
     public String getType() {
         return TYPE;
-    }
-
-    @Override
-    public int getDimension() {
-        return dim;
     }
 
     @Override

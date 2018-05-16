@@ -70,6 +70,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String LKJ_PRIOR = "LKJCorrelationPrior";
     public static final String LKJ_SHAPE = "shapeParameter";
     public static final String DIMENSION = "dimension";
+    public static final String CHOLESKY = "cholesky";
 
     public static final String DATA = "data";
 
@@ -728,9 +729,15 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             }
             int dim = xo.getIntegerAttribute(DIMENSION);
 
+            boolean cholesky = xo.getAttribute(CHOLESKY, true);
+
             if (xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE)) {
                 // Make non-informative settings
-                likelihood = new MultivariateDistributionLikelihood(new LKJCorrelationDistribution(dim));
+                if (cholesky) {
+                    likelihood = new MultivariateDistributionLikelihood(new LKJCholeskyCorrelationDistribution(dim));
+                } else {
+                    likelihood = new MultivariateDistributionLikelihood(new LKJCorrelationDistribution(dim));
+                }
             } else {
                 if (!xo.hasAttribute(LKJ_SHAPE)) {
                     throw new XMLParseException("Must specify a shape parameter.");
@@ -738,9 +745,13 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
                 double shape = xo.getDoubleAttribute(LKJ_SHAPE);
 
-                likelihood = new MultivariateDistributionLikelihood(
-                        new LKJCorrelationDistribution(dim, shape)
-                );
+                if (cholesky) {
+                    likelihood
+                            = new MultivariateDistributionLikelihood(new LKJCholeskyCorrelationDistribution(dim, shape));
+                } else {
+                    likelihood
+                            = new MultivariateDistributionLikelihood(new LKJCorrelationDistribution(dim, shape));
+                }
 
             }
 

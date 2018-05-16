@@ -28,7 +28,10 @@ package test.dr.util;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.util.CorrelationToCholesky;
+import dr.util.LKJCholeskyTransformConstrained;
 import dr.util.LKJTransformConstrained;
+import dr.util.Transform;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.text.NumberFormat;
@@ -47,6 +50,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     private double[] CPCsLimit;
     private double[][] CPCsMatrix;
     private LKJTransformConstrained transform;
+    private LKJCholeskyTransformConstrained transformChol;
+    private CorrelationToCholesky transformCorrToChol;
 
     private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 
@@ -62,6 +67,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         dim = 6;
 
         transform = new LKJTransformConstrained(dim);
+        transformChol = new LKJCholeskyTransformConstrained(dim);
+        transformCorrToChol = new CorrelationToCholesky(dim);
 
         CPCs = new double[]{0.12, -0.13, 0.14, -0.15, 0.16,
                 -0.23, 0.24, -0.25, 0.26,
@@ -229,24 +236,111 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testJacobian() {
         System.out.println("\nTest LKJ Jacobian.");
 
-        double jacobianDet = - transform.getLogJacobian(CPCs, 0, CPCs.length);
+        // Matrix
         double[][] jacobianMat = transform.computeJacobianMatrixInverse(CPCs);
+
+        Matrix Jac = new Matrix(jacobianMat);
+        System.out.println("Jacobian Matrix=" + Jac.transpose());
+
+        assertEquals("size Jacobian Matrix",
+                format.format(dim * (dim - 1) / 2),
+                format.format(Jac.rows()));
+
+        assertEquals("size Jacobian Matrix",
+                format.format(dim * (dim - 1) / 2),
+                format.format(Jac.columns()));
+
+        // Determinant
+        double jacobianDet = (new Transform.InverseMultivariable(transform)).getLogJacobian(CPCs, 0, CPCs.length);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {
             jacobianDetBis += Math.log(jacobianMat[i][i]);
         }
 
-        Matrix Jac = new Matrix(jacobianMat);
-        System.out.println("Jacobian Matrix=" + Jac.transpose());
-
-        assertEquals("size Jacobian Matrix",
-                format.format(CPCs.length),
-                format.format(jacobianMat[0].length));
+        System.out.println("Log Jacobiant Det direct=" + jacobianDet);
+        System.out.println("Log Jacobiant Det matrix=" + jacobianDetBis);
 
         assertEquals("jacobian log det",
                 format.format(jacobianDet),
                 format.format(jacobianDetBis));
+    }
+
+    public void testJacobianCholesky() {
+        System.out.println("\nTest LKJ Cholesky Jacobian.");
+
+        // Matrix
+        double[][] jacobianMat = transformChol.computeJacobianMatrixInverse(CPCs);
+
+        Matrix Jac = new Matrix(jacobianMat);
+        System.out.println("Jacobian Matrix=" + Jac.transpose());
+
+        assertEquals("size Jacobian Matrix",
+                format.format(dim * (dim - 1) / 2),
+                format.format(Jac.rows()));
+
+        assertEquals("size Jacobian Matrix",
+                format.format(dim * (dim - 1) / 2),
+                format.format(Jac.columns()));
+
+        // Determinant
+        double jacobianDet = (new Transform.InverseMultivariable(transformChol)).getLogJacobian(CPCs, 0, CPCs.length);
+
+        double jacobianDetBis = 0;
+        for (int i = 0; i < jacobianMat[0].length; i++) {
+            jacobianDetBis += Math.log(jacobianMat[i][i]);
+        }
+
+        System.out.println("Log Jacobiant Det direct=" + jacobianDet);
+        System.out.println("Log Jacobiant Det matrix=" + jacobianDetBis);
+
+        assertEquals("jacobian log det",
+                format.format(jacobianDet),
+                format.format(jacobianDetBis));
+    }
+
+    public void testJacobianComposition() {
+        System.out.println("\nTest LKJ Composition Cholesky Jacobian.");
+
+        // Transforms
+        double[] cholValues = transformChol.inverse(CPCs);
+        double[] corrValues = transform.inverse(CPCs);
+        double[] corrValuesBis = transformCorrToChol.inverse(cholValues);
+
+        Transform.MultivariableTransform transformComposition = new Transform.ComposeMultivariable(transformChol, transformCorrToChol);
+        double[] corrValuesTer = transformComposition.inverse(CPCs, 0, CPCs.length);
+
+
+        for (int k = 0; k < CPCs.length; k++) {
+            assertEquals("inverse transform k=" + k,
+                    format.format(corrValues[k]),
+                    format.format(corrValuesBis[k]));
+        }
+
+        for (int k = 0; k < CPCs.length; k++) {
+            assertEquals("inverse transform k=" + k,
+                    format.format(corrValues[k]),
+                    format.format(corrValuesTer[k]));
+        }
+
+        // Determinant
+        double jacobianDetCholToCPC = transformChol.getLogJacobian(cholValues, 0, CPCs.length);
+        double jacobianDetCorrToChol = transformCorrToChol.getLogJacobian(corrValues, 0, CPCs.length);
+        double jacobianDetCorrToCPC = transform.getLogJacobian(corrValues, 0, CPCs.length);
+        double jacobianDetCorrToCPCComp = transformComposition.getLogJacobian(corrValues, 0, CPCs.length);
+
+        System.out.println("Log Jacobiant Det Chol to CPC=" + jacobianDetCholToCPC);
+        System.out.println("Log Jacobiant Det Corr to Chol=" + jacobianDetCorrToChol);
+        System.out.println("Log Jacobiant Det Corr to CPC=" + jacobianDetCorrToCPC);
+        System.out.println("Log Jacobiant Det Corr to CPC composition=" + jacobianDetCorrToCPCComp);
+
+        assertEquals("jacobian log det",
+                format.format(jacobianDetCorrToCPC),
+                format.format(jacobianDetCholToCPC + jacobianDetCorrToChol));
+
+        assertEquals("jacobian log det",
+                format.format(jacobianDetCorrToCPC),
+                format.format(jacobianDetCorrToCPCComp));
     }
 
 }

@@ -38,6 +38,7 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
 
     public static final String NAME = "LKJTransform";
     public static final String DIMENSION = "dimension";
+    public static final String CHOLESKY = "cholesky";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -53,8 +54,14 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
         }
         Transform.Array fisherZTransforms = new Transform.Array(transforms, null);
 
-        // LKJ (constrained CPCs to correlation matrix)
-        Transform.MultivariableTransform LKJTransform = new LKJTransformConstrained(dim);
+        // LKJ (constrained CPCs to (cholesky of) correlation matrix)
+        Transform.MultivariableTransform LKJTransform;
+        boolean cholesky = xo.getAttribute(CHOLESKY, true);
+        if (cholesky) {
+            LKJTransform = new LKJCholeskyTransformConstrained(dim);
+        } else {
+            LKJTransform = new LKJTransformConstrained(dim);
+        }
 
         // Compose
         return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);

@@ -1,5 +1,5 @@
 /*
- * LKJTransform.java
+ * LKJTransformConstrained.java
  *
  * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -27,61 +27,35 @@ package dr.util;
 
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.WrappedMatrix;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
 import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
+import static dr.math.matrixAlgebra.WrappedMatrix.WrappedUpperTriangularMatrix.fillDiagonal;
 
 /**
  * @author Paul Bastide
  */
 
-public class LKJTransformConstrained extends Transform.MultivariableTransform {
+public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
 
     private static boolean DEBUG = false;
 
     // LKJ transform with CPCs constrained between -1 and 1.
     // transform: from correlation matrix to constrained CPCs
 
-    private int dim;
-
     public LKJTransformConstrained(int dim) {
-        this.dim = dim;
-    }
-
-    public double[] transform(double[] values) {
-        return transform(values, 0, values.length);
-    }
-
-    public double[] inverse(double[] values) {
-        return inverse(values, 0, values.length);
+        super(dim);
     }
 
     // "Cholesky" transform from Stan manual
     @Override
     public double[] inverse(double[] values, int from, int to) {
-        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-        assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
-        for (int k = 0; k < dim; k++) {
-            assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
-        }
+        WrappedMatrix.WrappedUpperTriangularMatrix L
+                = fillDiagonal(super.inverse(values, 0, values.length), dim);
 
-        Matrix W = new Matrix(dim, dim);
-
-        double acc;
-        double temp;
-        W.set(0, 0, 1.0);
-        for (int j = 1; j < dim; j++) {
-            acc = 1.0;
-            for (int i = 0; i < j + 1; i++) {
-                temp = getUpperTriangular(values, i, j);
-                W.set(i, j, temp * acc);
-                acc *= Math.sqrt(1 - Math.pow(temp, 2));
-            }
-        }
-
-        SymmetricMatrix R = W.transposedProduct();
+        SymmetricMatrix R = L.transposedProduct();
 
         if (DEBUG) {
             System.err.println("Z: " + compoundCorrelationSymmetricMatrix(values, dim));
@@ -103,29 +77,18 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
 
         SymmetricMatrix R = compoundCorrelationSymmetricMatrix(values, dim);
-        double[][] L;
+        double[] L;
         try {
-            L = new CholeskyDecomposition(R).getL();
+            L = (new CholeskyDecomposition(R)).getStrictlyUpperTriangular();
         } catch (IllegalDimension illegalDimension) {
             throw new RuntimeException("Unable to decompose matrix in LKJ inverse transform.");
         }
 
-        double[] results = new double[dim * (dim - 1) / 2];
-
-        double acc;
-        double temp;
-        for (int j = 1; j < dim; j++) {
-            acc = 1.0;
-            for (int i = 0; i < j; i++) {
-                temp = L[j][i] / acc;
-                setUpperTriangular(results, i, j, temp);
-                acc *= Math.sqrt(1 - Math.pow(temp, 2));
-            }
-        }
+        double[] results = super.transform(L, 0, L.length);
 
         if (DEBUG) {
             System.err.println("R: " + compoundCorrelationSymmetricMatrix(values, dim));
-            System.err.println("L: " + new SymmetricMatrix(L));
+            System.err.println("L: " + new WrappedMatrix.WrappedUpperTriangularMatrix(L, dim));
             System.err.println("Z: " + compoundCorrelationSymmetricMatrix(results, dim));
         }
 
@@ -142,25 +105,6 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
     }
 
     @Override
-    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        // values = untransformed (R)
-        double[] transformedValues = transform(value);
-        // Jacobian of inverse
-        double[][] jacobianInverse = computeJacobianMatrixInverse(transformedValues);
-        // gradient of log jacobian of the inverse
-        double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
-        // Matrix multiplication (upper triangular) + updated gradient
-        double[] updatedGradient = new double[gradient.length];
-        for (int i = 0; i < gradient.length; i++) {
-            for (int j = i; j < gradient.length; j++) {
-                updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
-            }
-            updatedGradient[i] += gradientLogJacobianInverse[i];
-        }
-        return updatedGradient;
-    }
-
-    @Override
     public double[] gradientInverse(double[] values, int from, int to) {
         throw new RuntimeException("Not yet implemented");
     }
@@ -169,11 +113,12 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
     public double getLogJacobian(double[] values, int from, int to) {
         assert from == 0 && to == values.length
                 : "The logJacobian function can only be applied to the whole array of values.";
+        double[] transformedValues = transform(values);
         double logJacobian = 0;
         int k = 0;
         for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
             for (int j = i + 1; j < dim; j++) {
-                logJacobian += (dim - i - 2) * Math.log(1.0 - Math.pow(values[k], 2));
+                logJacobian += (dim - i - 2) * Math.log(1.0 - Math.pow(transformedValues[k], 2));
                 k++;
             }
         }
@@ -185,7 +130,7 @@ public class LKJTransformConstrained extends Transform.MultivariableTransform {
         int k = 0;
         for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
             for (int j = i + 1; j < dim; j++) {
-                gradientLogJacobian[k] = - (dim - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
+                gradientLogJacobian[k] = -(dim - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
                 k++;
             }
         }

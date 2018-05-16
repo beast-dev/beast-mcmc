@@ -115,4 +115,28 @@ public class CholeskyDecomposition {
         }
         return L;
     }
+
+	public double[] getUpperTriangular() {
+		double[] result = new double[n * (n + 1) / 2];
+		int k = 0;
+		for (int i = 0; i < n; i++) {
+			for (int j = i; j < n; j++) {
+				result[k] = L[j][i];
+				k++;
+			}
+		}
+		return result;
+	}
+
+	public double[] getStrictlyUpperTriangular() {
+		double[] result = new double[n * (n - 1) / 2];
+		int k = 0;
+		for (int i = 0; i < n - 1; i++) {
+			for (int j = i + 1; j < n; j++) {
+				result[k] = L[j][i];
+				k++;
+			}
+		}
+		return result;
+	}
 }

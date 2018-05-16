@@ -153,7 +153,6 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             if (height > options.maxHeight) {
                 trajectoryTree.flagContinue = false;
-                //throw new RuntimeException("Reach maximum tree height"); // TODO Handle more gracefully
             }
         }
 

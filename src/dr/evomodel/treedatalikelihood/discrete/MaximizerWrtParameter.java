@@ -51,6 +51,7 @@ public class MaximizerWrtParameter implements Reportable {
     private final Likelihood likelihood;
     private final Transform transform;
     private final Function function;
+    private final boolean printScreen = false;
 
     private long time = 0;
     private long count = 0;
@@ -78,11 +79,10 @@ public class MaximizerWrtParameter implements Reportable {
 
     public void maximize() {
 
-        boolean printScreen = false;
         LbfgsMinimizer minimizer = new LbfgsMinimizer(printScreen);
 
         long startTime = System.currentTimeMillis();
-        minimumPoint = minimizer.minimize(function);
+        minimumPoint = minimizer.minimize(function, parameter.getParameterValues());
         long endTime = System.currentTimeMillis();
 
         time = endTime - startTime;
@@ -102,8 +102,8 @@ public class MaximizerWrtParameter implements Reportable {
 
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
-            sb.append("Gradient type: ").append(gradientType);
-            sb.append("Fx: ").append(String.valueOf(minimumValue)).append("\n");
+            sb.append("Gradient type: ").append(gradientType).append("\n");
+            sb.append("Fx: ").append(minimumValue).append("\n");
             sb.append("Time: ").append(time).append("\n");
             sb.append("Count: ").append(count).append("\n");
 
@@ -114,7 +114,7 @@ public class MaximizerWrtParameter implements Reportable {
 
     private double evaluateLogLikelihood() {
         ++count;
-        return -likelihood.getLogLikelihood();
+        return likelihood.getLogLikelihood();
     }
 
     private Function constructFunction() {
@@ -130,24 +130,27 @@ public class MaximizerWrtParameter implements Reportable {
             public double valueAt(double[] argument) {
 
                 if (transform != null) {
-                    // TODO Handle transform: argument -> argument
+                    argument = transform.inverse(argument, 0, argument.length);
                 }
 
                 setParameter(new WrappedVector.Raw(argument), parameter);
-                return evaluateLogLikelihood();
+                return -evaluateLogLikelihood();
             }
 
             @Override
             public double[] gradientAt(double[] argument) {
 
-                if (transform != null) {
-                    // TODO Handle transform: argument -> argument
-                }
-
                 double[] result = gradient.getGradientLogDensity();
 
                 if (transform != null) {
-                    // TODO Handle transform: result -> result
+                    double[] differential = transform.gradientInverse(argument, 0, argument.length);
+                    for (int i = 0; i < result.length; ++i) {
+                        result[i] *= differential[i];
+                    }
+
+                }
+                for (int i = 0; i < result.length; ++i) {
+                    result[i] = -result[i];
                 }
 
                 return result;

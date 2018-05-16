@@ -127,8 +127,6 @@ public class TimeDependentBranchRates extends AbstractBranchRateModel implements
     }
 
     private double getBranchTimeEffect(Tree tree, NodeRef node) {
-        double nodeHeight = tree.getNodeHeight(node);
-        double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
         return timeCoefficient.getParameterValue(0)*getMidpointHeight(tree, node, true);
     }
 
@@ -163,36 +161,6 @@ public class TimeDependentBranchRates extends AbstractBranchRateModel implements
     void test() {
         getTrait(null, null);
     }
-
-//    public LogColumn[] getColumns() {
-//        LogColumn[] columns = new LogColumn[ratesParameter.getDimension()];
-//        for (int i = 0; i < ratesParameter.getDimension(); ++i) {
-//            columns[i] = new OccupancyColumn(i);
-//        }
-//
-//        return columns;
-//    }
-
-//    private class OccupancyColumn extends NumberColumn {
-//        private final int index;
-//
-//        public OccupancyColumn(int index) {
-//            super("Occupancy");
-//            this.index = index;
-//        }
-//
-//        public double getDoubleValue() {
-//            int occupancy = 0;
-//            for (NodeRef node : treeModel.getNodes()) {
-//                if (node != treeModel.getRoot()) {
-//                    if (rateCategories.getBranchCategory(treeModel, node) == index) {
-//                        occupancy++;
-//                    }
-//                }
-//            }
-//            return occupancy;
-//        }
-//    }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         AbstractBranchRateModel foundModel = findRandomEffectsModel(model);

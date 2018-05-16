@@ -82,6 +82,9 @@ public abstract class AbstractLKJDistribution implements MultivariateDistributio
         return res;
     }
 
+    static int upperTriangularSize(int dim) {
+        return dim * (dim - 1) / 2;
+    }
 
     public double[][] getScaleMatrix() {
         throw new RuntimeException("Not yet implemented");

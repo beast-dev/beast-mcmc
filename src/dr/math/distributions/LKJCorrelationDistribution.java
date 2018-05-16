@@ -47,7 +47,10 @@ public class LKJCorrelationDistribution extends AbstractLKJDistribution {
         super(dim);
     }
 
-    public double logPdf(double[] x) { // x must be of length (2 choose dim) [upper triangular]
+    public double logPdf(double[] x) {
+
+        assert (x.length == upperTriangularSize(dim));
+
         if (shape == 1.0) { // Uniform
             return logNormalizationConstant;
         } else {
@@ -78,7 +81,10 @@ public class LKJCorrelationDistribution extends AbstractLKJDistribution {
         return logDensity;
     }
 
-    private double[] gradLogPdf(double[] x) { // x must be of length (2 choose dim) [upper triangular]
+    private double[] gradLogPdf(double[] x) {
+
+        assert (x.length == upperTriangularSize(dim));
+
         if (shape == 1.0) { // Uniform
             return new double[x.length];
         } else {

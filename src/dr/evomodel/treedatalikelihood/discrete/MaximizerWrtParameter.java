@@ -82,7 +82,7 @@ public class MaximizerWrtParameter implements Reportable {
         LbfgsMinimizer minimizer = new LbfgsMinimizer(printScreen);
 
         long startTime = System.currentTimeMillis();
-        minimumPoint = minimizer.minimize(function, parameter.getParameterValues());
+        minimumPoint = minimizer.minimize(function);
         long endTime = System.currentTimeMillis();
 
         time = endTime - startTime;
@@ -140,9 +140,16 @@ public class MaximizerWrtParameter implements Reportable {
             @Override
             public double[] gradientAt(double[] argument) {
 
+                if (transform != null) {
+                    argument = transform.inverse(argument, 0, argument.length);
+                }
+
+                setParameter(new WrappedVector.Raw(argument), parameter);
+
                 double[] result = gradient.getGradientLogDensity();
 
                 if (transform != null) {
+                    argument = transform.transform(argument, 0, argument.length);
                     double[] differential = transform.gradientInverse(argument, 0, argument.length);
                     for (int i = 0; i < result.length; ++i) {
                         result[i] *= differential[i];

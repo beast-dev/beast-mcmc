@@ -22,6 +22,7 @@
         <pathelement location="lib/jebl.jar"/>
         <pathelement location="lib/JRI.jar"/>
         <pathelement location="lib/junit-4.4.jar"/>
+        <pathelement location="lib/lbfgs4j-0.2.1.jar"/>
         <pathelement location="lib/mpj.jar"/>
         <pathelement location="lib/mtj.jar"/>
         <pathelement location="lib/options.jar"/>

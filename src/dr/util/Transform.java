@@ -85,6 +85,10 @@ public interface Transform {
 
     double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to);
 
+    double gradient(double value);
+
+    double[] gradient(double[] values, int from, int to);
+
     double gradientInverse(double value);
 
     double[] gradientInverse(double[] values, int from, int to);
@@ -154,6 +158,17 @@ public interface Transform {
             return result;
         }
 
+        public abstract double gradient(double value);
+
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = gradient(values[i]);
+            }
+            return result;
+        }
+
         public abstract double getLogJacobian(double value);
 
         public double getLogJacobian(double[] values, int from, int to) {
@@ -183,6 +198,10 @@ public interface Transform {
              throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
          }
 
+        public double gradient(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
         public double getLogJacobian(double value) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
@@ -208,6 +227,11 @@ public interface Transform {
             // value == gradient of inverse()
             // 1.0 == gradient of log Jacobian of inverse()
             return gradient * value + 1.0;
+        }
+
+        @Override
+        public double gradient(double value) {
+            return value;
         }
 
         public String getTransformName() { return "log"; }
@@ -285,6 +309,16 @@ public interface Transform {
         }
 
         public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -366,6 +400,11 @@ public interface Transform {
             throw new RuntimeException("Not yet implemented");
         }
 
+        @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         public String getTransformName() {
             return "logit";
         }
@@ -396,6 +435,11 @@ public interface Transform {
             throw new RuntimeException("Not yet implemented");
         }
 
+        @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         public String getTransformName() {
             return "fisherz";
         }
@@ -419,6 +463,11 @@ public interface Transform {
             // -1 == gradient of inverse()
             // 0.0 == gradient of log Jacobian of inverse()
             return -gradient;
+        }
+
+        @Override
+        public double gradient(double value) {
+            return -1.0;
         }
 
         public double gradientInverse(double value) { return -1.0; }
@@ -470,6 +519,11 @@ public interface Transform {
         }
 
         @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
         public double getLogJacobian(double value) {
             throw new RuntimeException("not implemented yet");
         }
@@ -487,6 +541,11 @@ public interface Transform {
 
         public double updateGradientLogDensity(double gradient, double value) {
             return gradient;
+        }
+
+        @Override
+        public double gradient(double value) {
+            return 1.0;
         }
 
         public double gradientInverse(double value) { return 1.0; }
@@ -545,6 +604,11 @@ public interface Transform {
         }
 
         @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
         public double getLogJacobian(double value) {
             return inner.getLogJacobian(value) + outer.getLogJacobian(inner.transform(value));
         }
@@ -572,6 +636,11 @@ public interface Transform {
 
         @Override
         public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -659,7 +728,18 @@ public interface Transform {
               return result;
           }
 
-          @Override
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (int i = from; i < to; ++i) {
+                result[i] = array.get(i).gradient(values[i]);
+            }
+            return result;
+        }
+
+        @Override
           public String getTransformName() {
               return "array";
           }
@@ -785,6 +865,24 @@ public interface Transform {
             }
             return result;
         }
+
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (ParsedTransform segment : segments) {
+                if (from < segment.end && to >= segment.start) {
+                    final int begin = Math.max(segment.start, from);
+                    final int end = Math.min(segment.end, to);
+                    for (int i = begin; i < end; ++i) {
+                        result[i] = segment.transform.gradient(values[i]);
+                    }
+                }
+            }
+            return result;
+        }
+
 
         @Override
         public String getTransformName() {

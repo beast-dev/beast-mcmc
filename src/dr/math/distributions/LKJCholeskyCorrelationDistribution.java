@@ -46,7 +46,10 @@ public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution 
         super(dim);
     }
 
-    public double logPdf(double[] x) { // x must be of length dim*(dim-1)/2 [upper triangular]
+    public double logPdf(double[] x) {
+
+        assert (x.length == upperTriangularSize(dim));
+
         WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(x, dim);
         return logPdf(L);
     }
@@ -63,12 +66,15 @@ public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution 
         return logDensity;
     }
 
-    public double[] gradLogPdf(double[] x) { // x must be of length dim*(dim-1)/2 [upper triangular]
+    private double[] gradLogPdf(double[] x) {
+
+        assert (x.length == upperTriangularSize(dim));
+
         WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(x, dim);
         return gradLogPdf(L, shape);
     }
 
-    public static double[] gradLogPdf(WrappedMatrix L, double shape) {
+    private static double[] gradLogPdf(WrappedMatrix L, double shape) {
         int dim = L.getMajorDim();
         double shapeConst = 2 * shape - 2;
         double[] gradient = new double[dim * (dim - 1) / 2];

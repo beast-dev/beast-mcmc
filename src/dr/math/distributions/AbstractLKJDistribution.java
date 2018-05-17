@@ -35,27 +35,23 @@ public abstract class AbstractLKJDistribution implements MultivariateDistributio
 
     protected double shape;
     protected int dim;
-    protected double logNormalizationConstant;
+    double logNormalizationConstant;
 
     AbstractLKJDistribution(int dim, double shape) {
 
-        assert (shape < 0);
+        assert (shape > 0);
 
         this.shape = shape;
         this.dim = dim;
-        this.logNormalizationConstant = computelogNormalizationConstant();
+        this.logNormalizationConstant = computeLogNormalizationConstant();
 
     }
 
     AbstractLKJDistribution(int dim) { // returns a non-informative (uniform) density
-
-        this.shape = 1.0;
-        this.dim = dim;
-        this.logNormalizationConstant = computelogNormalizationConstant();
-
+        this(dim, 1.0);
     }
 
-    protected double computelogNormalizationConstant() {
+    private double computeLogNormalizationConstant() {
         // Lewandowski, Kurowicka, and Joe (2009)
         // See also Stan: http://mc-stan.org/math/db/d4f/lkj__corr__lpdf_8hpp_source.html
         // And: http://discourse.mc-stan.org/t/question-about-lkj-normalizing-constant/2001/11 (for the sign)
@@ -86,6 +82,9 @@ public abstract class AbstractLKJDistribution implements MultivariateDistributio
         return res;
     }
 
+    static int upperTriangularSize(int dim) {
+        return dim * (dim - 1) / 2;
+    }
 
     public double[][] getScaleMatrix() {
         throw new RuntimeException("Not yet implemented");

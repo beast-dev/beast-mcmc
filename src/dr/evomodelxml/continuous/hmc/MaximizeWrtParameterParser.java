@@ -43,6 +43,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String DENSITY = "densityWrtParameter";
     private static final String N_ITERATIONS = "nIterations";
     private static final String INITIAL_GUESS = "initialGuess";
+    private static final String PRINT_SCREEN = "printScreen";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -55,6 +56,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, 0));
         boolean initialGuess = xo.getAttribute(INITIAL_GUESS, true);
+        boolean printScreen = xo.getAttribute(PRINT_SCREEN, false);
 
         if (gradient != null) {
             parameter = gradient.getParameter();
@@ -68,7 +70,8 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         Transform transform = (Transform.MultivariableTransformWithParameter)
                 xo.getChild(Transform.MultivariableTransformWithParameter.class);
 
-        MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform, nIterations, initialGuess);
+        MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
+                nIterations, initialGuess, printScreen);
         maximizer.maximize();
 
         return maximizer;
@@ -106,5 +109,6 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             AttributeRule.newDoubleRule(N_ITERATIONS, true),
             AttributeRule.newBooleanRule(INITIAL_GUESS, true),
+            AttributeRule.newBooleanRule(PRINT_SCREEN, true),
     };
 }

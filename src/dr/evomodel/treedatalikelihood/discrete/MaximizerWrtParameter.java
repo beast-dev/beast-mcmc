@@ -55,7 +55,7 @@ public class MaximizerWrtParameter implements Reportable {
     private final Function function;
     private final int nIterations;
     private final boolean initialGuess;
-    private final boolean printScreen = false;
+    private final boolean printScreen;
 
     private long time = 0;
     private long count = 0;
@@ -67,7 +67,8 @@ public class MaximizerWrtParameter implements Reportable {
                                  GradientWrtParameterProvider gradient,
                                  Transform transform,
                                  int nIterations,
-                                 boolean initialGuess) {
+                                 boolean initialGuess,
+                                 boolean printScreen) {
         this.likelihood = likelihood;
         this.parameter = parameter;
         this.transform = transform;
@@ -83,6 +84,7 @@ public class MaximizerWrtParameter implements Reportable {
         this.function = constructFunction();
         this.nIterations = nIterations;
         this.initialGuess = initialGuess;
+        this.printScreen = printScreen;
     }
 
     public void maximize() {

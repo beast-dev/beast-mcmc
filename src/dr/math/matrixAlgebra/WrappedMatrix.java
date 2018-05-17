@@ -87,7 +87,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
             return dimMinor;
         }
 
-        final public int getDim() { return getMajorDim() * getMinorDim(); }
+        public int getDim() { return getMajorDim() * getMinorDim(); }
     }
 
     final class WrappedDenseMatrix extends Base  {
@@ -369,6 +369,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
 
             return W;
         }
+
+        @Override
+        final public int getDim() { return buffer.length; }
     }
 
     final class WrappedStrictlyUpperTriangularMatrix extends Abstract {
@@ -421,6 +424,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
             assert i < j;
             buffer[offset + pos(i, j)] = x;
         }
+
+        @Override
+        final public int getDim() { return buffer.length; }
 
         private int pos(int i, int j) {
             return i * (2 * dimMajor - i - 1) / 2 + (j - i - 1);

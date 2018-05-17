@@ -88,7 +88,7 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
 
         if (DEBUG) {
             System.err.println("R: " + compoundCorrelationSymmetricMatrix(values, dim));
-            System.err.println("L: " + new WrappedMatrix.WrappedUpperTriangularMatrix(L, dim));
+            System.err.println("L: " + new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(L, dim));
             System.err.println("Z: " + compoundCorrelationSymmetricMatrix(results, dim));
         }
 

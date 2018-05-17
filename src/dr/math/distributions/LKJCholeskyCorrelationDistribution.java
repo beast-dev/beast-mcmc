@@ -54,39 +54,32 @@ public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution 
     private double logPdf(WrappedMatrix L) {
         // See Stan manual, p. 558
         // See also: http://mc-stan.org/math/d7/d74/lkj__corr__cholesky__lpdf_8hpp_source.html
+        double shapeConst = 2 * shape - 2;
         double logDensity = 0.0;
-        if (shape == 1) {
-            for (int i = 1; i < dim; i++) {
-                logDensity += (dim - i - 1) * Math.log(L.get(i, i));
-            }
-        } else {
-            for (int i = 1; i < dim; i++) {
-                logDensity += (dim - i - 1 + 2 * shape - 2) * Math.log(L.get(i, i));
-            }
+        for (int i = 1; i < dim; i++) {
+            logDensity += (dim - i - 1 + shapeConst) * Math.log(L.get(i, i));
         }
         logDensity += logNormalizationConstant;
         return logDensity;
     }
 
-    public double[] gradLogPdf(double[] x) { // x must be of length dim*(dim+1)/2 [upper triangular]
-        WrappedMatrix.WrappedUpperTriangularMatrix L = new WrappedMatrix.WrappedUpperTriangularMatrix(x, dim);
+    public double[] gradLogPdf(double[] x) { // x must be of length dim*(dim-1)/2 [upper triangular]
+        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(x, dim);
         return gradLogPdf(L, shape);
     }
 
     public static double[] gradLogPdf(WrappedMatrix L, double shape) {
         int dim = L.getMajorDim();
-        WrappedMatrix.WrappedUpperTriangularMatrix gradient = new WrappedMatrix.WrappedUpperTriangularMatrix(dim);
-        if (shape == 1) {
-            for (int i = 0; i < dim; ++i) {
-                gradient.set(i, i, (dim - i - 1) / L.get(i, i));
+        double shapeConst = 2 * shape - 2;
+        double[] gradient = new double[dim * (dim - 1) / 2];
+        int k = 0;
+        for (int i = 0; i < dim - 1; i++) {
+            for (int j = i + 1; j < dim; j++) {
+                gradient[k] = -(dim - j - 1 + shapeConst) * L.get(i, j) / Math.pow(L.get(j, j), 2);
+                k++;
             }
-            return gradient.getBuffer();
-        } else {
-            for (int i = 0; i < dim; ++i) {
-                gradient.set(i, i, (dim - i - 1 + 2 * shape - 2) / L.get(i, i));
-            }
-            return gradient.getBuffer();
         }
+        return gradient;
     }
 
     public double[][] getScaleMatrix() {

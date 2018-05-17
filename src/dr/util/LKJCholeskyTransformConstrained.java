@@ -117,7 +117,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
         // values = untransformed (R)
         double[] transformedValues = transform(value);
-        // Jacobian of inverse
+        // Jacobian of inverse (transpose)
         double[][] jacobianInverse = computeJacobianMatrixInverse(transformedValues);
         // gradient of log jacobian of the inverse
         double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
@@ -158,7 +158,8 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
         double[] gradientLogJacobian = new double[values.length];
         int k = 0;
         for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
-            for (int j = i + 1; j < dim; j++) {
+            k++;
+            for (int j = i + 2; j < dim; j++) {
                 gradientLogJacobian[k] = -(j - i - 1) * values[k] / (1.0 - Math.pow(values[k], 2));
                 k++;
             }
@@ -177,7 +178,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
                 = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dim, 1.0);
 
         for (int j = 1; j < dim; j++) {
-            for (int k = 0; k < j + 1; k++) {
+            for (int k = 0; k < j; k++) {
                 recursionJacobian(jacobian, Z, k, j);
             }
         }
@@ -187,7 +188,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
 
     private void recursionJacobian(double[][] jacobian, WrappedMatrix.WrappedStrictlyUpperTriangularMatrix Z,
                                    int k, int j) {
-        // 0 <= k <= j
+        // 0 <= k < j
 
         WrappedMatrix.WrappedStrictlyUpperTriangularMatrix L
                 = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(jacobian[posStrict(k, j)], dim);
@@ -200,7 +201,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
             acc *= Math.sqrt(1 - Math.pow(Z.get(i, j), 2));
         }
         // k
-        if (k < j) L.set(k, j, acc);
+        L.set(k, j, acc);
         temp = Z.get(k, j);
         acc *= -temp / Math.sqrt(1 - Math.pow(temp, 2));
         // after k

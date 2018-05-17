@@ -357,7 +357,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
             WrappedMatrix.WrappedUpperTriangularMatrix W
                     = new WrappedMatrix.WrappedUpperTriangularMatrix(dim);
 
-            for (int j = 0; j < dim; j++) {
+            for (int j = 1; j < dim; j++) {
                 double sum = 0;
                 for (int i = 0; i < j; i++) {
                     double temp = V.get(i, j);

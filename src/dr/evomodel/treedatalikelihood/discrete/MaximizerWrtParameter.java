@@ -33,8 +33,10 @@ import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.Reportable;
+import com.github.lbfgs4j.liblbfgs.Lbfgs;
 import com.github.lbfgs4j.LbfgsMinimizer;
 import com.github.lbfgs4j.liblbfgs.Function;
+import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Param;
 
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
@@ -51,6 +53,8 @@ public class MaximizerWrtParameter implements Reportable {
     private final Likelihood likelihood;
     private final Transform transform;
     private final Function function;
+    private final int nIterations;
+    private final boolean initialGuess;
     private final boolean printScreen = false;
 
     private long time = 0;
@@ -61,7 +65,9 @@ public class MaximizerWrtParameter implements Reportable {
     public MaximizerWrtParameter(Likelihood likelihood,
                                  Parameter parameter,
                                  GradientWrtParameterProvider gradient,
-                                 Transform transform) {
+                                 Transform transform,
+                                 int nIterations,
+                                 boolean initialGuess) {
         this.likelihood = likelihood;
         this.parameter = parameter;
         this.transform = transform;
@@ -75,14 +81,28 @@ public class MaximizerWrtParameter implements Reportable {
         }
 
         this.function = constructFunction();
+        this.nIterations = nIterations;
+        this.initialGuess = initialGuess;
     }
 
     public void maximize() {
 
-        LbfgsMinimizer minimizer = new LbfgsMinimizer(printScreen);
+        LBFGS_Param paramsBFGS = Lbfgs.defaultParams();
+        paramsBFGS.max_iterations = nIterations;
+        LbfgsMinimizer minimizer = new LbfgsMinimizer(paramsBFGS, printScreen);
+        double[] x0 = null;
 
         long startTime = System.currentTimeMillis();
-        minimumPoint = minimizer.minimize(function);
+        if (initialGuess) {
+            x0 = parameter.getParameterValues();
+
+            if (transform != null) {
+                x0 = transform.inverse(x0, 0, x0.length);
+            }
+        }
+
+        minimumPoint = minimizer.minimize(function, x0);
+
         long endTime = System.currentTimeMillis();
 
         time = endTime - startTime;

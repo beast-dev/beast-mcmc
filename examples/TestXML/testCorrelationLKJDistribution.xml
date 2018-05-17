@@ -24,7 +24,7 @@
         <transformedparameterrandomwalkoperator windowSize="1.0" weight="1">
             <transformedmultivariateparameter>
                 <parameter idref="precision.correlation"/>
-                <lkjtransform dimension="4" cholesky="false"/>
+                <LKJTransform dimension="4" cholesky="false"/>
             </transformedmultivariateparameter>
         </transformedparameterrandomwalkoperator>
 	</operators>
@@ -33,23 +33,32 @@
         <transformedparameterrandomwalkoperator windowSize="1.0" weight="1">
             <transformedmultivariateparameter>
                 <parameter idref="precision.cholesky"/>
-                <lkjtransform dimension="4"/>
+                <LKJTransform dimension="4"/>
             </transformedmultivariateparameter>
         </transformedparameterrandomwalkoperator>
 	</operators>
 
-	<!-- <operators id="operators.hmcVanilla"> -->
+	<operators id="operators.hmcVanilla.correlation">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="prior.correlation"/>
+			</gradient>
+			<parameter idref="precision.correlation"/>
+            <LKJTransform dimension = "4" cholesky="false"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
 
- 		<!-- <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla" -->
- 			<!-- drawVariance="1.0"> -->
- 			<!-- <gradient> -->
-	<!-- 			<distributionLikelihood idref="precisionPrior"/> -->
-	<!-- 		</gradient> -->
-	<!-- 		<parameter idref="precision.offDiagonal"/> -->
-            <!-- <LKJTransform dimension = "4"/> -->
- 		<!-- </hamiltonianMonteCarloOperator> -->
-
-	<!-- </operators> -->
+	<operators id="operators.hmcVanilla.cholesky">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="prior.cholesky"/>
+			</gradient>
+			<parameter idref="precision.cholesky"/>
+            <LKJTransform dimension = "4"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
 
 	<mcmc id="mcmc.randomWalk.correlation" chainLength="60000000" autoOptimize="true">
         <posterior id="posterior.randomWalk.correlation">
@@ -70,11 +79,11 @@
                 <prior idref="prior.randomWalk.correlation"/>
 			</column>
 			<column label="Precision" dp="4" width="12">
-                <matrixParameter idref="precision.correlation"/>
+                <parameter idref="precision.correlation"/>
 			</column>
 		</log>
 		<log logEvery="100" fileName="testCorrelationLKJDistribution_randomWalk_correlation.log">
-            <matrixParameter idref="precision.correlation"/>
+            <parameter idref="precision.correlation"/>
 		</log>
 	</mcmc>
 
@@ -105,32 +114,59 @@
 		</log>
 	</mcmc>
 
-	<!-- <mcmc id="mcmc.hmcVanilla" chainLength="60000000" autoOptimize="true"> -->
-        <!-- <posterior id="posterior.hmcVanilla"> -->
-        	<!-- <dummyLikelihood id="likelihood.hmcVanilla"> -->
-                <!-- <parameter idref="precision.offDiagonal"/> -->
+	<!-- <mcmc id="mcmc.hmcVanilla.correlation" chainLength="30000000" autoOptimize="true"> -->
+        <!-- <posterior id="posterior.hmcVanilla.correlation"> -->
+        	<!-- <dummyLikelihood id="likelihood.hmcVanilla.correlation"> -->
+                <!-- <parameter idref="precision.correlation"/> -->
             <!-- </dummyLikelihood> -->
 
-            <!-- <prior id="prior.hmcVanilla"> -->
-                <!-- <LKJCorrelationPrior idref="precisionPrior"/> -->
+            <!-- <prior id="prior.hmcVanilla.correlation"> -->
+                <!-- <LKJCorrelationPrior idref="prior.correlation"/> -->
             <!-- </prior> -->
         <!-- </posterior> -->
 
-        <!-- <operators idref="operators.hmcVanilla"/> -->
+        <!-- <operators idref="operators.hmcVanilla.correlation"/> -->
 
 	<!-- 	<log logEvery="100"> -->
-	<!-- 		<column label="posterior.hmcVanilla" dp="4" width="12"> -->
-	<!-- 			<likelihood idref="likelihood.hmcVanilla"/> -->
-                <!-- <prior idref="prior.hmcVanilla"/> -->
+	<!-- 		<column label="posterior.hmcVanilla.correlation" dp="4" width="12"> -->
+	<!-- 			<likelihood idref="likelihood.hmcVanilla.correlation"/> -->
+                <!-- <prior idref="prior.hmcVanilla.correlation"/> -->
 	<!-- 		</column> -->
 	<!-- 		<column label="Precision" dp="4" width="12"> -->
-                <!-- <matrixParameter idref="precision.offDiagonal"/> -->
+                <!-- <matrixParameter idref="precision.correlation"/> -->
 	<!-- 		</column> -->
 	<!-- 	</log> -->
-	<!-- 	<log logEvery="100" fileName="testCorrelationLKJDistribution_hmcVanilla.log"> -->
-            <!-- <matrixParameter idref="precision.offDiagonal"/> -->
+	<!-- 	<log logEvery="100" fileName="testCorrelationLKJDistribution_hmcVanilla_correlation.log"> -->
+            <!-- <matrixParameter idref="precision.correlation"/> -->
 	<!-- 	</log> -->
 	<!-- </mcmc> -->
+
+	<mcmc id="mcmc.hmcVanilla.cholesky" chainLength="30000000" autoOptimize="true">
+        <posterior id="posterior.hmcVanilla.cholesky">
+        	<dummyLikelihood id="likelihood.hmcVanilla.cholesky">
+                <parameter idref="precision.cholesky"/>
+            </dummyLikelihood>
+
+            <prior id="prior.hmcVanilla.cholesky">
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.hmcVanilla.cholesky"/>
+
+		<log logEvery="100">
+			<column label="posterior.hmcVanilla.cholesky" dp="4" width="12">
+				<likelihood idref="likelihood.hmcVanilla.cholesky"/>
+                <prior idref="prior.hmcVanilla.cholesky"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="precision.cholesky"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testCorrelationLKJDistribution_hmcVanilla_cholesky.log">
+            <matrixParameter idref="precision.cholesky"/>
+		</log>
+	</mcmc>
 
 	<!-- <report> -->
 	<!-- 	<property name="timer"> -->

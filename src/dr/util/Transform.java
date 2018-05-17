@@ -394,9 +394,8 @@ public interface Transform {
 
         public double updateGradientLogDensity(double gradient, double value) {
             // 1 - value^2 : gradient of inverse
-            // 1 + value^2 : gradient of log jacobian of inverse
-            double square = value * value;
-            return (1.0 - square) * gradient + 1.0 + square;
+            // -1 - 2*value : gradient of log jacobian of inverse
+            return (1.0 - value * value) * gradient - 1.0 - 2 * value;
         }
 
         public String getTransformName() {

@@ -51,10 +51,10 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         GradientWrtParameterProvider gradient =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
-        Parameter parameter = null;
-        Likelihood likelihood = null;
+        Parameter parameter;
+        Likelihood likelihood;
 
-        int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, 0));
+        int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, -1));
         boolean initialGuess = xo.getAttribute(INITIAL_GUESS, true);
         boolean printScreen = xo.getAttribute(PRINT_SCREEN, false);
 
@@ -71,7 +71,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
                 xo.getChild(Transform.MultivariableTransformWithParameter.class);
 
         MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
-                nIterations, initialGuess, printScreen);
+                new MaximizerWrtParameter.Settings(nIterations, initialGuess, printScreen));
         maximizer.maximize();
 
         return maximizer;

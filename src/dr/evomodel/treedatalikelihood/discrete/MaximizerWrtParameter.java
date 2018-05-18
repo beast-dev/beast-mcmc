@@ -53,22 +53,34 @@ public class MaximizerWrtParameter implements Reportable {
     private final Likelihood likelihood;
     private final Transform transform;
     private final Function function;
-    private final int nIterations;
-    private final boolean initialGuess;
-    private final boolean printScreen;
+    private final Settings settings;
+
+//    private final int nIterations;
+//    private final boolean initialGuess;
+//    private final boolean printScreen;
 
     private long time = 0;
     private long count = 0;
     private double minimumValue = Double.NaN;
     private double[] minimumPoint = null;
 
+    public static class Settings {
+        int numberIterations;
+        boolean startAtCurrentState;
+        boolean printToScreen;
+        
+        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen) {
+            this.numberIterations = numberIterations;
+            this.startAtCurrentState = startAtCurrentState;
+            this.printToScreen = printToScreen;
+        }
+    }
+
     public MaximizerWrtParameter(Likelihood likelihood,
                                  Parameter parameter,
                                  GradientWrtParameterProvider gradient,
                                  Transform transform,
-                                 int nIterations,
-                                 boolean initialGuess,
-                                 boolean printScreen) {
+                                 Settings settings) {
         this.likelihood = likelihood;
         this.parameter = parameter;
         this.transform = transform;
@@ -82,20 +94,23 @@ public class MaximizerWrtParameter implements Reportable {
         }
 
         this.function = constructFunction();
-        this.nIterations = nIterations;
-        this.initialGuess = initialGuess;
-        this.printScreen = printScreen;
+        this.settings = settings;
     }
 
     public void maximize() {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();
-        paramsBFGS.max_iterations = nIterations;
-        LbfgsMinimizer minimizer = new LbfgsMinimizer(paramsBFGS, printScreen);
+
+        if (settings.numberIterations > 0) {
+            paramsBFGS.max_iterations = settings.numberIterations;
+        }
+
+        LbfgsMinimizer minimizer = new LbfgsMinimizer(paramsBFGS, settings.printToScreen);
         double[] x0 = null;
 
         long startTime = System.currentTimeMillis();
-        if (initialGuess) {
+
+        if (settings.startAtCurrentState) {
             x0 = parameter.getParameterValues();
 
             if (transform != null) {

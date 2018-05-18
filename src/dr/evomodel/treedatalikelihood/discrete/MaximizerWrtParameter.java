@@ -104,8 +104,6 @@ public class MaximizerWrtParameter implements Reportable {
         LbfgsMinimizer minimizer = new LbfgsMinimizer(paramsBFGS, settings.printToScreen);
         double[] x0 = null;
 
-        long startTime = System.currentTimeMillis();
-
         if (settings.startAtCurrentState) {
             x0 = parameter.getParameterValues();
 
@@ -113,6 +111,8 @@ public class MaximizerWrtParameter implements Reportable {
                 x0 = transform.inverse(x0, 0, x0.length);
             }
         }
+
+        long startTime = System.currentTimeMillis();
 
         minimumPoint = minimizer.minimize(function, x0);
 

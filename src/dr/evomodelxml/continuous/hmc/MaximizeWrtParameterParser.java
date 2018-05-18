@@ -42,8 +42,8 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String NAME = "maximizeWrtParameter";
     private static final String DENSITY = "densityWrtParameter";
     private static final String N_ITERATIONS = "nIterations";
-    private static final String INITIAL_GUESS = "initialGuess";
-    private static final String PRINT_SCREEN = "printScreen";
+    private static final String INITIAL_GUESS = "startAtCurrentState";
+    private static final String PRINT_SCREEN = "printToScreen";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -54,7 +54,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         Parameter parameter;
         Likelihood likelihood;
 
-        int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, -1));
+        int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, 0));
         boolean initialGuess = xo.getAttribute(INITIAL_GUESS, true);
         boolean printScreen = xo.getAttribute(PRINT_SCREEN, false);
 

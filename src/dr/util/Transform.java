@@ -192,6 +192,40 @@ public interface Transform {
         abstract public Parameter getParameter();
     }
 
+    abstract class MultivariateTransform extends MultivariableTransform {
+        // A class for a multivariate transform
+
+        public double[] transform(double[] values) {
+            return transform(values, 0, values.length);
+        }
+
+        public double[] inverse(double[] values) {
+            return inverse(values, 0, values.length);
+        }
+
+        public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            // values = untransformed (R)
+            double[] transformedValues = transform(value, 0, value.length);
+            // Jacobian of inverse (transpose)
+            double[][] jacobianInverse = computeJacobianMatrixInverse(transformedValues);
+            // gradient of log jacobian of the inverse
+            double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
+            // Matrix multiplication (upper triangular) + updated gradient
+            double[] updatedGradient = new double[gradient.length];
+            for (int i = 0; i < gradient.length; i++) {
+                for (int j = i; j < gradient.length; j++) {
+                    updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
+                }
+                updatedGradient[i] += gradientLogJacobianInverse[i];
+            }
+            return updatedGradient;
+        }
+
+        abstract protected double[] getGradientLogJacobianInverse(double[] values);
+
+        abstract public double[][] computeJacobianMatrixInverse(double[] values);
+    }
+
     class LogTransform extends UnivariableTransform {
 
         public double transform(double value) {

@@ -38,7 +38,7 @@ import static dr.math.matrixAlgebra.WrappedMatrix.WrappedUpperTriangularMatrix.f
  * @author Paul Bastide
  */
 
-public class CorrelationToCholesky extends Transform.MultivariableTransform {
+public class CorrelationToCholesky extends Transform.MultivariateTransform {
 
     // Transform a correlation matrix into a Cholesky matrix
 
@@ -46,14 +46,6 @@ public class CorrelationToCholesky extends Transform.MultivariableTransform {
 
     public CorrelationToCholesky(int dim) {
         this.dim = dim;
-    }
-
-    public double[] transform(double[] values) {
-        return transform(values, 0, values.length);
-    }
-
-    public double[] inverse(double[] values) {
-        return inverse(values, 0, values.length);
     }
 
     // values = cholesky
@@ -87,16 +79,11 @@ public class CorrelationToCholesky extends Transform.MultivariableTransform {
 
     @Override
     public double[] inverse(double[] values, int from, int to, double sum) {
-        throw new RuntimeException("Not relevant for the LKJ transform.");
+        throw new RuntimeException("Not relevant for the correlation to Cholesky transform.");
     }
 
     public String getTransformName() {
-        return "LKJTransform";
-    }
-
-    @Override
-    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented");
+        return "CorrelationToCholeskyTransform";
     }
 
     @Override

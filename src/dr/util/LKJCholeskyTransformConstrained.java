@@ -31,7 +31,7 @@ import dr.math.matrixAlgebra.WrappedMatrix;
  * @author Paul Bastide
  */
 
-public class LKJCholeskyTransformConstrained extends Transform.MultivariableTransform {
+public class LKJCholeskyTransformConstrained extends Transform.MultivariateTransform {
 
     // LKJ transform with CPCs constrained between -1 and 1.
     // transform: from cholesky of correlation matrix to constrained CPCs
@@ -40,14 +40,6 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
 
     public LKJCholeskyTransformConstrained(int dim) {
         this.dim = dim;
-    }
-
-    public double[] transform(double[] values) {
-        return transform(values, 0, values.length);
-    }
-
-    public double[] inverse(double[] values) {
-        return inverse(values, 0, values.length);
     }
 
     // values = CPCs
@@ -110,26 +102,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
     }
 
     public String getTransformName() {
-        return "LKJTransform";
-    }
-
-    @Override
-    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        // values = untransformed (R)
-        double[] transformedValues = transform(value);
-        // Jacobian of inverse (transpose)
-        double[][] jacobianInverse = computeJacobianMatrixInverse(transformedValues);
-        // gradient of log jacobian of the inverse
-        double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
-        // Matrix multiplication (upper triangular) + updated gradient
-        double[] updatedGradient = new double[gradient.length];
-        for (int i = 0; i < gradient.length; i++) {
-            for (int j = i; j < gradient.length; j++) {
-                updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
-            }
-            updatedGradient[i] += gradientLogJacobianInverse[i];
-        }
-        return updatedGradient;
+        return "LKJCholeskyTransform";
     }
 
     @Override
@@ -166,6 +139,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariableTran
         }
         return gradientLogJacobian;
     }
+
     // ************************************************************************* //
     // Computation of the jacobian matrix
     // ************************************************************************* //

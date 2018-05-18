@@ -53,8 +53,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         
         setupParallelServices(tree.getExternalNodeCount(), threadCount);
     }
-
-
+    
     @Override
     public double[] getProduct(Parameter vector) {
 

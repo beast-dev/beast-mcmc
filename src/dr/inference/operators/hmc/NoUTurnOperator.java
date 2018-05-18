@@ -152,7 +152,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             height++;
 
             if (height > options.maxHeight) {
-                throw new RuntimeException("Reach maximum tree height"); // TODO Handle more gracefully
+                trajectoryTree.flagContinue = false;
             }
         }
 
@@ -161,7 +161,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return endPosition;
     }
 
-    private double[] updateTrajectoryTree(TreeState trajectoryTree, int delpth, double logSliceU, double initialJointDensity) {
+    private double[] updateTrajectoryTree(TreeState trajectoryTree, int depth, double logSliceU, double initialJointDensity) {
 
         double[] endPosition = null;
 
@@ -170,9 +170,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         TreeState nextTrajectoryTree = buildTree(
                 trajectoryTree.getPosition(direction), trajectoryTree.getMomentum(direction),
-                direction, logSliceU, delpth, stepSizeInformation.stepSize, initialJointDensity);
-
-        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction);
+                direction, logSliceU, depth, stepSizeInformation.stepSize, initialJointDensity);
 
         if (nextTrajectoryTree.flagContinue) {
 
@@ -182,6 +180,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 endPosition = nextTrajectoryTree.getSample();
             }
         }
+
+        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction);
 
         return endPosition;
     }
@@ -367,7 +367,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         private TreeState(double[] position, double[] moment,
                          int numNodes, boolean flagContinue,
-                         double acceptProb, int numAcceptProbStates) {
+                         double cumAcceptProb, int numAcceptProbStates) {
             this.position = new double[3][];
             this.momentum = new double[3][];
 
@@ -381,7 +381,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.flagContinue = flagContinue;
 
             // Dual-averaging variables
-            this.cumAcceptProb = acceptProb;
+            this.cumAcceptProb = cumAcceptProb;
             this.numAcceptProbStates = numAcceptProbStates;
         }
 
@@ -395,10 +395,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         private double[] getSample() {
             /*
-            Returns a state chosen uniformly from the acceptable states along a hamiltonian dyanmics trajectory tree.
+            Returns a state chosen uniformly from the acceptable states along a hamiltonian dynamics trajectory tree.
             The sample is updated recursively while building trees.
             */
-            return this.position[getIndex(0)];
+            return position[getIndex(0)];
         }
 
         private void setPosition(int direction, double[] position) {
@@ -409,7 +409,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.momentum[getIndex(direction)] = momentum;
         }
 
-        private void setSample(double[] position) { this.setPosition(0, position); }
+        private void setSample(double[] position) { setPosition(0, position); }
 
         private int getIndex(int direction) { // valid directions: -1, 0, +1
             assert (direction >= -1 && direction <= 1);
@@ -418,23 +418,23 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         private void mergeNextTree(TreeState nextTree, int direction) {
 
-            this.setPosition(direction, nextTree.getPosition(direction));
-            this.setMomentum(direction, nextTree.getMomentum(direction));
+            setPosition(direction, nextTree.getPosition(direction));
+            setMomentum(direction, nextTree.getMomentum(direction));
             
-            this.updateSample(nextTree);
+            updateSample(nextTree);
 
-            this.numNodes += nextTree.numNodes;
-            this.flagContinue = computeStopCriterion(nextTree.flagContinue, this);
+            numNodes += nextTree.numNodes;
+            flagContinue = computeStopCriterion(nextTree.flagContinue, this);
 
-            this.cumAcceptProb += nextTree.cumAcceptProb;
-            this.numAcceptProbStates += nextTree.numAcceptProbStates;
+            cumAcceptProb += nextTree.cumAcceptProb;
+            numAcceptProbStates += nextTree.numAcceptProbStates;
         }
 
         private void updateSample(TreeState nextTree) {
             double uniform = MathUtils.nextDouble();
             if (nextTree.numNodes > 0
-                    && uniform < ((double) nextTree.numNodes / (double) (this.numNodes + nextTree.numNodes))) {
-                this.setSample(nextTree.getSample());
+                    && uniform < ((double) nextTree.numNodes / (double) (numNodes + nextTree.numNodes))) {
+                setSample(nextTree.getSample());
             }
         }
 

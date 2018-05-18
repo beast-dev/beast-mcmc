@@ -40,6 +40,14 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
         super(parameter, windowSize, bc, weight, mode);
     }
 
+    public TransformedParameterRandomWalkOperator(TransformedParameter parameter, RandomWalkOperator randomWalkOperator) {
+        super(parameter,
+                randomWalkOperator.getWindowSize(),
+                randomWalkOperator.getBoundaryCondition(),
+                randomWalkOperator.getWeight(),
+                randomWalkOperator.getMode());
+    }
+
     public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator) {
         super((TransformedParameter) randomWalkOperator.getParameter(),
                 randomWalkOperator.getWindowSize(),

@@ -20,23 +20,19 @@
 		</data>
 	</LKJCorrelationPrior>
 
-	<operators id="operators.randomWalk.correlation">
-        <transformedparameterrandomwalkoperator windowSize="1.0" weight="1">
-            <transformedmultivariateparameter>
-                <parameter idref="precision.correlation"/>
-                <LKJTransform dimension="4" cholesky="false"/>
-            </transformedmultivariateparameter>
-        </transformedparameterrandomwalkoperator>
-	</operators>
+    <operators id="operators.randomWalk.correlation">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.correlation"/>
+            <LKJTransform dimension="4" cholesky="false"/>
+        </randomWalkOperator>
+    </operators>
 
-	<operators id="operators.randomWalk.cholesky">
-        <transformedparameterrandomwalkoperator windowSize="1.0" weight="1">
-            <transformedmultivariateparameter>
-                <parameter idref="precision.cholesky"/>
-                <LKJTransform dimension="4"/>
-            </transformedmultivariateparameter>
-        </transformedparameterrandomwalkoperator>
-	</operators>
+    <operators id="operators.randomWalk.cholesky">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.cholesky"/>
+            <LKJTransform dimension="4"/>
+        </randomWalkOperator>
+    </operators>
 
 	<operators id="operators.hmcVanilla.correlation">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"

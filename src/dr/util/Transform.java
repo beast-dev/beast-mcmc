@@ -108,6 +108,11 @@ public interface Transform {
      */
     double getLogJacobian(double[] values, int from, int to);
 
+    /**
+     * @return true if the transform is multivatiate (i.e. components not independents)
+     */
+    boolean isMultivariate();
+
     abstract class UnivariableTransform implements Transform {
 
         public abstract double transform(double value);
@@ -163,6 +168,8 @@ public interface Transform {
             }
             return sum;
         }
+
+        public boolean isMultivariate() { return false;}
     }
 
     abstract class MultivariableTransform implements Transform {
@@ -224,6 +231,8 @@ public interface Transform {
         abstract protected double[] getGradientLogJacobianInverse(double[] values);
 
         abstract public double[][] computeJacobianMatrixInverse(double[] values);
+
+        public boolean isMultivariate() { return true;}
     }
 
     class LogTransform extends UnivariableTransform {
@@ -333,6 +342,8 @@ public interface Transform {
             }
             return sum;
         }
+
+        public boolean isMultivariate() { return true;}
 
         public static void main(String[] args) {
 
@@ -635,6 +646,8 @@ public interface Transform {
                     + outer.getLogJacobian(inner.transform(values, from, to), from, to);
         }
 
+        public boolean isMultivariate() { return outer.isMultivariate() || inner.isMultivariate();}
+
         private final MultivariableTransform outer;
         private final MultivariableTransform inner;
     }
@@ -720,6 +733,8 @@ public interface Transform {
             return -inner.getLogJacobian(inner.inverse(values, from, to), from, to);
         }
 
+        public boolean isMultivariate() { return inner.isMultivariate();}
+
         private final MultivariableTransform inner;
     }
 
@@ -804,6 +819,8 @@ public interface Transform {
               }
               return sum;
           }
+
+        public boolean isMultivariate() { return false;}
     }
 
     class Collection extends MultivariableTransformWithParameter {
@@ -938,6 +955,8 @@ public interface Transform {
 //            System.err.println("Log: " + sum + " " + segments.size());
             return sum;
         }
+
+        public boolean isMultivariate() { return false;}
 
 //        class Segment {
 //

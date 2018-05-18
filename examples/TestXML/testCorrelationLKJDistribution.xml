@@ -114,34 +114,34 @@
 		</log>
 	</mcmc>
 
-	<!-- <mcmc id="mcmc.hmcVanilla.correlation" chainLength="30000000" autoOptimize="true"> -->
-        <!-- <posterior id="posterior.hmcVanilla.correlation"> -->
-        	<!-- <dummyLikelihood id="likelihood.hmcVanilla.correlation"> -->
-                <!-- <parameter idref="precision.correlation"/> -->
-            <!-- </dummyLikelihood> -->
+	<mcmc id="mcmc.hmcVanilla.correlation" chainLength="10000000" autoOptimize="true">
+        <posterior id="posterior.hmcVanilla.correlation">
+        	<dummyLikelihood id="likelihood.hmcVanilla.correlation">
+                <parameter idref="precision.correlation"/>
+            </dummyLikelihood>
 
-            <!-- <prior id="prior.hmcVanilla.correlation"> -->
-                <!-- <LKJCorrelationPrior idref="prior.correlation"/> -->
-            <!-- </prior> -->
-        <!-- </posterior> -->
+            <prior id="prior.hmcVanilla.correlation">
+                <LKJCorrelationPrior idref="prior.correlation"/>
+            </prior>
+        </posterior>
 
-        <!-- <operators idref="operators.hmcVanilla.correlation"/> -->
+        <operators idref="operators.hmcVanilla.correlation"/>
 
-	<!-- 	<log logEvery="100"> -->
-	<!-- 		<column label="posterior.hmcVanilla.correlation" dp="4" width="12"> -->
-	<!-- 			<likelihood idref="likelihood.hmcVanilla.correlation"/> -->
-                <!-- <prior idref="prior.hmcVanilla.correlation"/> -->
-	<!-- 		</column> -->
-	<!-- 		<column label="Precision" dp="4" width="12"> -->
-                <!-- <matrixParameter idref="precision.correlation"/> -->
-	<!-- 		</column> -->
-	<!-- 	</log> -->
-	<!-- 	<log logEvery="100" fileName="testCorrelationLKJDistribution_hmcVanilla_correlation.log"> -->
-            <!-- <matrixParameter idref="precision.correlation"/> -->
-	<!-- 	</log> -->
-	<!-- </mcmc> -->
+		<log logEvery="100">
+			<column label="posterior.hmcVanilla.correlation" dp="4" width="12">
+				<likelihood idref="likelihood.hmcVanilla.correlation"/>
+                <prior idref="prior.hmcVanilla.correlation"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="precision.correlation"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testCorrelationLKJDistribution_hmcVanilla_correlation.log">
+            <matrixParameter idref="precision.correlation"/>
+		</log>
+	</mcmc>
 
-	<mcmc id="mcmc.hmcVanilla.cholesky" chainLength="30000000" autoOptimize="true">
+	<mcmc id="mcmc.hmcVanilla.cholesky" chainLength="10000000" autoOptimize="true">
         <posterior id="posterior.hmcVanilla.cholesky">
         	<dummyLikelihood id="likelihood.hmcVanilla.cholesky">
                 <parameter idref="precision.cholesky"/>

@@ -32,6 +32,8 @@ import dr.util.CorrelationToCholesky;
 import dr.util.LKJCholeskyTransformConstrained;
 import dr.util.LKJTransformConstrained;
 import dr.util.Transform;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.text.NumberFormat;
@@ -299,6 +301,40 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(jacobianDetBis));
     }
 
+    public void testJacobianCorrelationToCholesky() {
+        System.out.println("\nTest Correlation to Cholesky Jacobian.");
+
+        // Matrix
+        double[] cholValues = transformChol.inverse(CPCs);
+        double[][] jacobianMat = transformCorrToChol.computeJacobianMatrixInverse(cholValues);
+
+        Matrix Jac = new Matrix(jacobianMat);
+        System.out.println("Jacobian Matrix=" + Jac.transpose());
+
+        assertEquals("size Jacobian Matrix",
+                format.format(dim * (dim - 1) / 2),
+                format.format(Jac.rows()));
+
+        assertEquals("size Jacobian Matrix",
+                format.format(dim * (dim - 1) / 2),
+                format.format(Jac.columns()));
+
+        // Determinant
+        double jacobianDet = (new Transform.InverseMultivariable(transformCorrToChol)).getLogJacobian(cholValues, 0, cholValues.length);
+
+        double jacobianDetBis = 0;
+        for (int i = 0; i < jacobianMat[0].length; i++) {
+            jacobianDetBis += Math.log(jacobianMat[i][i]);
+        }
+
+        System.out.println("Log Jacobiant Det direct=" + jacobianDet);
+        System.out.println("Log Jacobiant Det matrix=" + jacobianDetBis);
+
+        assertEquals("jacobian log det",
+                format.format(jacobianDet),
+                format.format(jacobianDetBis));
+    }
+
     public void testJacobianComposition() {
         System.out.println("\nTest LKJ Composition Cholesky Jacobian.");
 
@@ -341,6 +377,38 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         assertEquals("jacobian log det",
                 format.format(jacobianDetCorrToCPC),
                 format.format(jacobianDetCorrToCPCComp));
+
+        // Matrices
+        DenseMatrix64F jacobianMatCholToCPC = new DenseMatrix64F(transformChol.computeJacobianMatrixInverse(CPCs));
+        DenseMatrix64F jacobianMatCorrToChol = new DenseMatrix64F(transformCorrToChol.computeJacobianMatrixInverse(cholValues));
+        DenseMatrix64F jacobianMatCorrToCPC = new DenseMatrix64F(transform.computeJacobianMatrixInverse(CPCs));
+
+        DenseMatrix64F jacobianMatComposition = new DenseMatrix64F(jacobianMatCorrToCPC.numRows, jacobianMatCorrToCPC.numCols);
+        CommonOps.mult(jacobianMatCholToCPC, jacobianMatCorrToChol, jacobianMatComposition);
+
+        System.out.println("Jacobiant Corr to CPC=" + jacobianMatCorrToCPC);
+        System.out.println("Jacobiant Composition=" + jacobianMatComposition);
+
+        for (int i = 0; i < jacobianMatCorrToCPC.numRows; i++) {
+            for (int j = i; j < jacobianMatCorrToCPC.numCols; j++) {
+                assertEquals("jacobian matrix compose (" + i + ", " + j + "): ",
+                        format.format(jacobianMatComposition.get(i, j)),
+                        format.format(jacobianMatCorrToCPC.get(i, j)));
+            }
+        }
+
+        // Update
+        double[] gradient = new double[CPCs.length];
+        System.arraycopy(CPCsLimit, 0, gradient, 0, CPCs.length);
+
+        double[] updated = transform.updateGradientLogDensity(gradient, corrValues, 0, gradient.length);
+        double[] updatedComposition = transformComposition.updateGradientLogDensity(gradient, corrValues, 0, gradient.length);
+
+        for (int k = 0; k < updated.length; k++) {
+            assertEquals("updated gradient " + k + ": ",
+                    format.format(updated[k]),
+                    format.format(updatedComposition[k]));
+        }
     }
 
 }

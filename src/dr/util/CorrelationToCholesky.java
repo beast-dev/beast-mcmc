@@ -103,5 +103,51 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
         return -logJacobian;
     }
 
+    @Override
+    protected double[] getGradientLogJacobianInverse(double[] values) {
+        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(values, dim);
+        double[] gradientLogJacobian = new double[values.length];
+        int k = 0;
+        for (int i = 0; i < dim - 1; i++) {
+            for (int j = i + 1; j < dim; j++) {
+                gradientLogJacobian[k] = -(dim - j - 1) * L.get(i, j) / Math.pow(L.get(j, j), 2);
+                k++;
+            }
+        }
+        return gradientLogJacobian;
+    }
+
+    // ************************************************************************* //
+    // Computation of the jacobian matrix
+    // ************************************************************************* //
+
+    // Returns the *transpose* of the Jacobian matrix: jacobian[posStrict(k, l)][posStrict(i, j)] = d R_{ij} / d V_{kl}
+    public double[][] computeJacobianMatrixInverse(double[] values) {
+        double[][] jacobian = new double[dim * (dim - 1) / 2][dim * (dim - 1) / 2];
+
+        WrappedMatrix.WrappedUpperTriangularMatrix W = fillDiagonal(values, dim);
+
+        for (int i = 0; i < dim - 1; i++) {
+            for (int j = i + 1; j < dim; j++) {
+                double temp = W.get(i, j) / W.get(i, i);
+                for (int k = 0; k < i; k++) {
+                    jacobian[posStrict(k, i)][posStrict(i, j)] = W.get(k, j) - W.get(k, i) * temp;
+                    jacobian[posStrict(k, j)][posStrict(i, j)] = W.get(k, i);
+                }
+                jacobian[posStrict(i, j)][posStrict(i, j)] = W.get(i, i);
+            }
+        }
+
+        return jacobian;
+    }
+
+    // ************************************************************************* //
+    // Helper functions to deal with upper triangular matrices
+    // ************************************************************************* //
+
+    private int posStrict(int i, int j) {
+        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+    }
+
 }
 

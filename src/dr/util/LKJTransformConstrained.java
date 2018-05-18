@@ -156,7 +156,7 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     }
 
     private void recursionJacobian(double[][] jacobian, double[] values) {
-        for (int i = 1; i < dim; i++) {
+        for (int i = 1; i < dim - 1; i++) {
             for (int j = i + 1; j < dim; j++) {
                 jacobian[pos(i, j)][pos(i, j)] = values[pos(i, j)];
                 for (int iota = 1; iota < i + 1; iota++) {
@@ -165,11 +165,9 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
                 // jacobian[pos(k, l)][pos(i, j)] = d R_{ij} / d Z_{kl}
                 for (int k = 0; k < i; k++) {
                     jacobian[pos(k, i)][pos(i, j)] = values[pos(i, j)];
-                    for (int iota = 1; iota < i + 1; iota++) {
-                        setUpperTriangular(jacobian[pos(k, i)], i, j, recursionFormulaJacobian(jacobian[pos(k, i)], values, i, j, iota, k, i));
-                    }
                     jacobian[pos(k, j)][pos(i, j)] = values[pos(i, j)];
                     for (int iota = 1; iota < i + 1; iota++) {
+                        setUpperTriangular(jacobian[pos(k, i)], i, j, recursionFormulaJacobian(jacobian[pos(k, i)], values, i, j, iota, k, i));
                         setUpperTriangular(jacobian[pos(k, j)], i, j, recursionFormulaJacobian(jacobian[pos(k, j)], values, i, j, iota, k, j));
                     }
                 }
@@ -190,7 +188,10 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
         if ((i - iota == k) && (j == l)) {
             return getUpperTriangular(trans, i, j) * (-Rimj / Math.sqrt((1 - Rimj * Rimj))) * Math.sqrt((1 - Rimi * Rimi)) + Rimi;
         }
-        return getUpperTriangular(trans, i, j) * Math.sqrt((1 - Rimi * Rimi) * (1 - Rimj * Rimj));
+        if ( i - iota < k ) {
+            return getUpperTriangular(trans, i, j) * Math.sqrt((1 - Rimi * Rimi) * (1 - Rimj * Rimj));
+        }
+        return getUpperTriangular(trans, i, j) * Math.sqrt((1 - Rimi * Rimi) * (1 - Rimj * Rimj)) + Rimi * Rimj;
     }
 
     // ************************************************************************* //

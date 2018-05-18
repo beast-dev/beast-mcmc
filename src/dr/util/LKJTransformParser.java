@@ -61,6 +61,10 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
             LKJTransform = new LKJCholeskyTransformConstrained(dim);
         } else {
             LKJTransform = new LKJTransformConstrained(dim);
+// Should work too, but a bit slower:
+//            LKJTransform = new Transform.ComposeMultivariable(
+//                    new LKJCholeskyTransformConstrained(dim),
+//                    new CorrelationToCholesky(dim));
         }
 
         // Compose

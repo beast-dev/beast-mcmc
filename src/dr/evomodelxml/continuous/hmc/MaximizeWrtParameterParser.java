@@ -54,7 +54,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         Parameter parameter;
         Likelihood likelihood;
 
-        int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, -1));
+        int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, 0));
         boolean initialGuess = xo.getAttribute(INITIAL_GUESS, true);
         boolean printScreen = xo.getAttribute(PRINT_SCREEN, false);
 

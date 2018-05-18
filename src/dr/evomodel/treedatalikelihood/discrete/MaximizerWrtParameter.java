@@ -55,10 +55,6 @@ public class MaximizerWrtParameter implements Reportable {
     private final Function function;
     private final Settings settings;
 
-//    private final int nIterations;
-//    private final boolean initialGuess;
-//    private final boolean printScreen;
-
     private long time = 0;
     private long count = 0;
     private double minimumValue = Double.NaN;
@@ -122,7 +118,7 @@ public class MaximizerWrtParameter implements Reportable {
 
         long endTime = System.currentTimeMillis();
 
-        time = endTime - startTime;
+        time += endTime - startTime;
         minimumValue = function.valueAt(minimumPoint);
 
         setParameter(new WrappedVector.Raw(minimumPoint), parameter);

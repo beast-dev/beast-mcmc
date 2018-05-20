@@ -25,11 +25,11 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.xml.*;
 
 /**
@@ -50,8 +50,8 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        ConjugateWishartStatisticsProvider wishartStatistics = (ConjugateWishartStatisticsProvider)
-                xo.getChild(ConjugateWishartStatisticsProvider.class);
+        WishartStatisticsWrapper wishartStatistics = (WishartStatisticsWrapper)
+                xo.getChild(WishartStatisticsWrapper.class);
 
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
 
@@ -67,7 +67,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(ConjugateWishartStatisticsProvider.class),
+            new ElementRule(WishartStatisticsWrapper.class),
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
     };

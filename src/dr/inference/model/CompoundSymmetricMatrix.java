@@ -62,15 +62,20 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
                 stats[index] = getParameterValue(i, j);
                 index++;
             }
-        }        
+        }
         return stats;
+    }
+
+    @Override
+    public String toString() {
+        return toStringCompoundParameter(dim * (dim + 1) / 2);
     }
 
     @Override
     public int getDimension() {
         return getColumnDimension() * getRowDimension();
     }
-    
+
     @Override
     public double getParameterValue(int index) {
         final int dim = getColumnDimension();

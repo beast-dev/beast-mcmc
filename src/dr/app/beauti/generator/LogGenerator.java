@@ -36,6 +36,7 @@ import dr.evomodel.branchratemodel.MixtureModelBranchRates;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
+import dr.inference.model.CompoundLikelihood;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -87,12 +88,12 @@ public class LogGenerator extends Generator {
         if (options.hasData()) {
             writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(ColumnsParser.LABEL, "Posterior"),
+                            new Attribute.Default<String>(ColumnsParser.LABEL, "Joint"),
                             new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
                             new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
-            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, "posterior");
+            writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
@@ -212,7 +213,7 @@ public class LogGenerator extends Generator {
                 });
 
         if (options.hasData()) {
-            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, "posterior");
+            writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
         }
         writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
         if (options.hasData()) {
@@ -334,7 +335,7 @@ public class LogGenerator extends Generator {
                 });
 
         if (options.hasData()) {
-            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, "posterior");
+            writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
         }
         writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
 
@@ -447,7 +448,7 @@ public class LogGenerator extends Generator {
 
             if (options.hasData()) {
                 // we have data...
-                writer.writeIDref("posterior", "posterior");
+                writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
             }
             writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         }
@@ -497,7 +498,7 @@ public class LogGenerator extends Generator {
 
             if (options.hasData()) {
                 // we have data...
-                writer.writeIDref("posterior", "posterior");
+                writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, tree, writer);

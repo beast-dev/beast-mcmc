@@ -332,7 +332,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
             if (ptpp != null) {
                 ptpp.setTreePriorChoices(options.useStarBEAST, options.getPartitionTreeModels().size() > 1,
-                        options.clockModelOptions.isTipCalibrated());
+                        options.useTipDates);
                 // setTreePriorChoices should be always before setOptions
                 ptpp.setOptions();
 //                    if (options.contains(Microsatellite.INSTANCE)) {

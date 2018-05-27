@@ -1324,6 +1324,8 @@ public class BeautiOptions extends ModelOptions {
     public Map<Taxa, Boolean> taxonSetsIncludeStem = new HashMap<Taxa, Boolean>();
     public Map<Taxa, PartitionTreeModel> taxonSetsTreeModel = new HashMap<Taxa, PartitionTreeModel>();
 
+    public boolean useTipDates = false;
+
     public DateUnitsType datesUnits = DateUnitsType.YEARS;
     public DateUnitsType datesDirection = DateUnitsType.FORWARDS;
     public double maximumTipHeight = 0.0;

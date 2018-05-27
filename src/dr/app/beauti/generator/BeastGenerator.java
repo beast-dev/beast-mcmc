@@ -752,7 +752,7 @@ public class BeastGenerator extends Generator {
             Taxon taxon = taxonList.getTaxon(i);
 
             boolean hasDate = false;
-            if (options.clockModelOptions.isTipCalibrated()) {
+            if (options.useTipDates) {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 

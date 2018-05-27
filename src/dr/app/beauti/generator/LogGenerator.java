@@ -34,8 +34,10 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.MixtureModelBranchRates;
 import dr.evomodel.tree.TMRCAStatistic;
+import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
+import dr.evomodelxml.tree.TreeLengthStatisticParser;
 import dr.inference.model.CompoundLikelihood;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
@@ -260,6 +262,11 @@ public class LogGenerator extends Generator {
                 writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + "age(root)");
             }
         }
+
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            writer.writeIDref(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC, model.getPrefix() + "treeLength");
+        }
+
         tmrcaStatisticsGenerator.writeTMRCAStatisticReferences(writer);
 
         if (options.useStarBEAST) {

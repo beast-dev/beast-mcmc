@@ -52,6 +52,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
     public static final String RANDOM_EFFECTS = "randomEffects";
     public static final String FIXED_EFFECTS = "fixedEffects";
     public static final String IN_LOG_SPACE = "inLogSpace";
+    public static final String TIME_COEFFICIENT = "branchTimeEffect";
 
     public String getParserName() {
         return COUNTABLE_CLOCK_BRANCH_RATES;
@@ -72,6 +73,12 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
         }
 
+        Parameter timeCoefficient;
+        if (xo.hasChildNamed(TIME_COEFFICIENT)){
+            timeCoefficient = (Parameter) xo.getElementFirstChild(TIME_COEFFICIENT);
+        } else {
+            timeCoefficient = null;
+        }
 
         Parameter allocationParameter = (Parameter) xo.getElementFirstChild(ALLOCATION);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -131,7 +138,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
         if (fixedEffects != null) {
             return new CountableModelMixtureBranchRates(cladeModel, treeModel, fixedEffects, randomEffects, inLogSpace);
         } else {
-            return new CountableMixtureBranchRates(cladeModel, treeModel, ratesParameter, randomEffects, inLogSpace);
+            return new CountableMixtureBranchRates(cladeModel, treeModel, ratesParameter, timeCoefficient, randomEffects, inLogSpace);
         }
     }
 
@@ -163,6 +170,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
                             "Fixed effects", false)
             ),
             new ElementRule(ALLOCATION, Parameter.class, "Allocation parameter", false),
+            new ElementRule(TIME_COEFFICIENT, Parameter.class, "The coefficient for the branch time-dependent rate function", true),
             new ElementRule(RANDOM_EFFECTS,
                     new XMLSyntaxRule[] {
                             new ElementRule(AbstractBranchRateModel.class, 0, Integer.MAX_VALUE),

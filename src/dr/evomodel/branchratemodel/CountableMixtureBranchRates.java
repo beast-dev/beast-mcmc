@@ -49,9 +49,10 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     private final TreeModel treeModel;
     private final List<AbstractBranchRateModel> randomEffectsModels;
     private final int categoryCount;
+    private final Parameter timeCoefficient;
 
     public CountableMixtureBranchRates(CountableBranchCategoryProvider rateCategories,
-                                       TreeModel treeModel, Parameter ratesParameter,
+                                       TreeModel treeModel, Parameter ratesParameter, Parameter timeCoefficient,
                                        List<AbstractBranchRateModel> randomEffects, boolean inLogSpace) {
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
@@ -65,6 +66,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         }
         this.ratesParameter = ratesParameter;
         addVariable(ratesParameter);
+
+        this.timeCoefficient = timeCoefficient;
+        if (timeCoefficient!=null){
+            addVariable(timeCoefficient);
+        }
 
         // Handle random effects
         this.randomEffectsModels = randomEffects;
@@ -145,6 +151,23 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
                 return getBranchRandomEffect(tree, node);
             }
         });
+        helper.addTrait(new TreeTrait.D() {
+
+            @Override
+            public String getTraitName() {
+                return getBranchTimeEffectTraitName();
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Double getTrait(Tree tree, NodeRef node) {
+                return getBranchTimeEffect(tree, node);
+            }
+        });
     }
 
     private String getCategoryTraitName() {
@@ -165,6 +188,10 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     private int getBranchCategory(Tree tree, NodeRef node) {
         return rateCategories.getBranchCategory(tree, node);
+    }
+
+    private String getBranchTimeEffectTraitName() {
+        return getTraitName() + ".time.effect";
     }
 
     private double getBranchCategoryRate(Tree tree, NodeRef node) {
@@ -200,6 +227,33 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             }
         }
         return effect;
+    }
+
+    private double getMidpointHeight(Tree tree, NodeRef node, boolean log){
+        double nodeHeight = tree.getNodeHeight(node);
+        double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
+        double midpoint = nodeHeight+(parentNodeHeight-nodeHeight)/2;
+        if(log){
+            return Math.log(midpoint);
+        } else {
+            return midpoint;
+        }
+    }
+
+    private double getBranchTimeEffect(Tree tree, NodeRef node) {
+        if (timeCoefficient!=null) {
+            if (modelInLogSpace) {
+                return timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true);
+            } else {
+                return Math.exp(timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true));
+            }
+        } else {
+            if (modelInLogSpace) {
+                return 0.0;
+            } else {
+                return 1;
+            }
+        }
     }
 
     public TreeTrait[] getTreeTraits() {
@@ -304,6 +358,15 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
         int rateCategory = rateCategories.getBranchCategory(tree, node);
         double effect = ratesParameter.getParameterValue(rateCategory);
+
+        if (timeCoefficient!=null) {
+            if (modelInLogSpace) {
+                effect += timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true);
+            } else {
+                effect *= Math.exp(timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true));
+            }
+        }
+
         if (randomEffectsModels != null) {
             for (AbstractBranchRateModel model : randomEffectsModels) {
                 if (modelInLogSpace) {

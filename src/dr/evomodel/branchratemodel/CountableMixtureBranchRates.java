@@ -242,10 +242,21 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     private double getBranchTimeEffect(Tree tree, NodeRef node) {
         if (timeCoefficient!=null) {
+            int rateCategory = rateCategories.getBranchCategory(tree, node);
+            double coefficient = timeCoefficient.getParameterValue(rateCategory);
+// attempt to implement a proportional time coefficient
+//            double coefficient;
+//            if (timeCoefficient.getDimension() == rateCategories.getCategoryCount()){
+//                coefficient = timeCoefficient.getParameterValue(rateCategory);
+//            } else  {
+//                coefficient = timeCoefficient.getParameterValue(0);
+//                coefficient *= ratesParameter.getParameterValue(0)/ratesParameter.getParameterValue(rateCategory);
+//            }
+
             if (modelInLogSpace) {
-                return timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true);
+                return coefficient * getMidpointHeight(tree, node, true);
             } else {
-                return Math.exp(timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true));
+                return Math.pow(coefficient,getMidpointHeight(tree, node, false));
             }
         } else {
             if (modelInLogSpace) {
@@ -359,11 +370,22 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         int rateCategory = rateCategories.getBranchCategory(tree, node);
         double effect = ratesParameter.getParameterValue(rateCategory);
 
+        double coefficient = timeCoefficient.getParameterValue(rateCategory);
+
+// attempt to implement a proportional time coefficient
+//        double coefficient;
+//        if (timeCoefficient.getDimension() == rateCategories.getCategoryCount()){
+//            coefficient = timeCoefficient.getParameterValue(rateCategory);
+//        } else  {
+//            coefficient = timeCoefficient.getParameterValue(0);
+//            coefficient *= ratesParameter.getParameterValue(0)/ratesParameter.getParameterValue(rateCategory);
+//        }
+
         if (timeCoefficient!=null) {
             if (modelInLogSpace) {
-                effect += timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true);
+                effect += coefficient * getMidpointHeight(tree, node, true);
             } else {
-                effect *= Math.exp(timeCoefficient.getParameterValue(0) * getMidpointHeight(tree, node, true));
+                effect *= Math.pow(coefficient,getMidpointHeight(tree, node, false));
             }
         }
 

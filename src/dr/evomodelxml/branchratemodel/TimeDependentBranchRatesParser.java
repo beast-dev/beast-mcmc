@@ -43,7 +43,7 @@ public class TimeDependentBranchRatesParser extends AbstractXMLObjectParser {
 
     public static final String TIME_DEPENDENT_BRANCH_RATES = "timeDependentBranchRates";
     public static final String INTERCEPT = "intercept";
-    public static final String TIME_COEFFICiENT = "branchTimeEffect";
+    public static final String TIME_COEFFICIENT = "branchTimeEffect";
     public static final String RANDOM_EFFECTS = "randomEffects";
     public static final String IN_LOG_SPACE = "inLogSpace";
 
@@ -54,7 +54,7 @@ public class TimeDependentBranchRatesParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter intercept = (Parameter) xo.getElementFirstChild(INTERCEPT);
-        Parameter timeCoefficient = (Parameter) xo.getElementFirstChild(TIME_COEFFICiENT);
+        Parameter timeCoefficient = (Parameter) xo.getElementFirstChild(TIME_COEFFICIENT);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
@@ -99,7 +99,7 @@ public class TimeDependentBranchRatesParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
             new ElementRule(INTERCEPT, Parameter.class, "The intercept for the branch time-dependent rate function", false),
-            new ElementRule(TIME_COEFFICiENT, Parameter.class, "The coefficient for the branch time-dependent rate function", false),
+            new ElementRule(TIME_COEFFICIENT, Parameter.class, "The coefficient for the branch time-dependent rate function", false),
 
             new ElementRule(RANDOM_EFFECTS,
                     new XMLSyntaxRule[] {

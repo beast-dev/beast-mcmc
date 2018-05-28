@@ -38,7 +38,8 @@ import java.util.logging.Logger;
 public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     public static final String COMPOUND_LIKELIHOOD = "compoundLikelihood";
     public static final String THREADS = "threads";
-    public static final String POSTERIOR = "posterior";
+    @Deprecated public static final String POSTERIOR = "posterior"; // replaced with JOINT
+    public static final String JOINT = "joint";
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
     public static final String PSEUDO_PRIOR = "pseudoPrior";
@@ -50,7 +51,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, REFERENCE_PRIOR, WORKING_PRIOR};
+        return new String[]{getParserName(), POSTERIOR, JOINT, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, REFERENCE_PRIOR, WORKING_PRIOR};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

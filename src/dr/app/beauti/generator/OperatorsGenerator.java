@@ -195,6 +195,9 @@ public class OperatorsGenerator extends Generator {
             case SUBTREE_LEAP:
                 writeSubtreeLeapOperator(operator, prefix, writer);
                 break;
+            case SUBTREE_JUMP:
+                writeSubtreeJumpOperator(operator, prefix, writer);
+                break;
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, prefix, writer);
                 break;
@@ -539,6 +542,18 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
+    }
+
+    private void writeSubtreeJumpOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(SubtreeJumpOperatorParser.SUBTREE_JUMP,
+                new Attribute[]{
+                // not tuneable at the moment.
+//                        new Attribute.Default<Double>("size", operator.getTuning()),
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeCloseTag(SubtreeJumpOperatorParser.SUBTREE_JUMP);
     }
 
     private void writeSubtreeSlideOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {

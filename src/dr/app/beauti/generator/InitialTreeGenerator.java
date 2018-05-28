@@ -311,7 +311,7 @@ public class InitialTreeGenerator extends Generator {
                 new Attribute[]{
 //                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
-                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.useTipDates)
                 }
         );
         writer.writeText(TreeUtils.newick(tree));
@@ -348,7 +348,7 @@ public class InitialTreeGenerator extends Generator {
 //                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
                         new Attribute.Default<Object>(DateParser.UNITS, options.units.toString()),
-                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.useTipDates)
                 }
         );
         writeSimpleNode(tree, tree.getRoot(), writer);

@@ -385,7 +385,7 @@ public class PartitionClockModel extends PartitionOptions {
 
         if (!rateParam.isPriorEdited()) {
             if (options.treeModelOptions.isNodeCalibrated(partition.treeModel) < 0
-                    && !options.clockModelOptions.isTipCalibrated()) {
+                    && !options.useTipDates) {
                 rateParam.setFixed(true);
             } else {
                 rateParam.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;

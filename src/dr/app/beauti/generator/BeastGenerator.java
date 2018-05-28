@@ -752,7 +752,7 @@ public class BeastGenerator extends Generator {
             Taxon taxon = taxonList.getTaxon(i);
 
             boolean hasDate = false;
-            if (options.clockModelOptions.isTipCalibrated()) {
+            if (options.useTipDates) {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 
@@ -898,7 +898,7 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag("mcmc", attributes);
 
         if (options.hasData()) {
-            writer.writeOpenTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
+            writer.writeOpenTag(CompoundLikelihoodParser.JOINT, new Attribute.Default<String>(XMLParser.ID, "joint"));
         }
 
         // write prior block
@@ -946,7 +946,7 @@ public class BeastGenerator extends Generator {
 
             writer.writeCloseTag(CompoundLikelihoodParser.LIKELIHOOD);
 
-            writer.writeCloseTag(CompoundLikelihoodParser.POSTERIOR);
+            writer.writeCloseTag(CompoundLikelihoodParser.JOINT);
         }
 
         writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");

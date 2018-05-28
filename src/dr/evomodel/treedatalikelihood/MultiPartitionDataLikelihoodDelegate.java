@@ -205,7 +205,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
                 scaleBufferHelper[i] = new BufferIndexHelper(getScaleBufferCount(), 0);
 
-                categoryRateBufferHelper[i] = new BufferIndexHelper(1, 0);
+                categoryRateBufferHelper[i] = new BufferIndexHelper(1, 0, i);
             }
 
             int eigenBufferCount = 0;

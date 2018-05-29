@@ -57,15 +57,13 @@ public class ParameterPriorGenerator extends Generator {
     /**
      * Write the priors for each parameter
      *
-     * @param useStarBEAST
      * @param writer       the writer
      */
-    public void writeParameterPriors(XMLWriter writer, boolean useStarBEAST) {
+    public void writeParameterPriors(XMLWriter writer) {
         boolean first = true;
 
-        Map<Taxa, Boolean> taxonSetsMono = useStarBEAST ? options.speciesSetsMono : options.taxonSetsMono;
 
-        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : taxonSetsMono.entrySet()) {
+        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
             if (taxaBooleanEntry.getValue()) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
@@ -81,34 +79,20 @@ public class ParameterPriorGenerator extends Generator {
 
         List<Parameter> parameters = options.selectParameters();
 
-        if (useStarBEAST) {
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
+
+        for (Parameter parameter : parameters) {
+            if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
+                    parameter.priorType == PriorType.NONE_FIXED ||
+                    parameter.priorType == PriorType.NONE_STATISTIC)) {
+                if (parameter.isCached) {
+                    writeCachedParameterPrior(parameter, writer);
+                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
+                    writeParameterPrior(parameter, writer);
                 }
             }
-
-        } else {
-
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
-                        parameter.priorType == PriorType.NONE_FIXED ||
-                        parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
-                }
-            }
-
         }
+
     }
 
     private void writeCachedParameterPrior(Parameter parameter, XMLWriter writer) {

@@ -161,10 +161,6 @@ public class BeautiOptions extends ModelOptions {
 //        priorOptions = new PriorOptions(this);
 
 //        traitsOptions = new TraitsOptions(this);
-        useStarBEAST = false;
-        speciesSets.clear();
-        speciesSetsMono.clear();
-        starBEASTOptions = new STARBEASTOptions(this);
 
         microsatelliteOptions = new MicrosatelliteOptions(this);
 
@@ -178,66 +174,39 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public void selectTaxonSetsStatistics(List<Parameter> params) {
-        if (useStarBEAST) {
-            if (speciesSets != null) {
-                for (Taxa taxa : speciesSets) {
-                    Parameter statistic = statistics.get(taxa);
-                    if (statistic == null) {
-                        statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for species set " + taxa.getId())
-                                .taxaId(taxa.getId()).isStatistic(true).isNodeHeight(true)
-                                .initial(Double.NaN).isNonNegative(true).build();
 
-                        statistics.put(taxa, statistic);
+        if (taxonSets != null) {
+            for (Taxa taxa : taxonSets) {
+                Parameter statistic = statistics.get(taxa);
+                PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
+                if (statistic == null) {
+                    // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
+                    statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set")
+                            .isStatistic(true).isNodeHeight(true)
+                            .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
+                    statistic.setPrefix(treeModel.getPrefix());
 
-                    } else {
-                        statistic.isCalibratedYule = getPartitionTreePriors().get(0).getNodeHeightPrior()
-                                == TreePriorType.SPECIES_YULE_CALIBRATION && speciesSetsMono.get(taxa);
-                    }
-                    params.add(statistic);
+                    statistics.put(taxa, statistic);
+
+                } else {
+                    statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
+                    statistic.setPrefix(treeModel.getPrefix()); // keep prefix consistent after link/unlink tree
+                    PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
+                    statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
+                            && taxonSetsMono.get(taxa);
                 }
-            } else {
-                System.err.println("SpeciesSets are null");
+                params.add(statistic);
             }
-
         } else {
-            if (taxonSets != null) {
-                for (Taxa taxa : taxonSets) {
-                    Parameter statistic = statistics.get(taxa);
-                    PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
-                    if (statistic == null) {
-                        // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
-                        statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set")
-                                .isStatistic(true).isNodeHeight(true)
-                                .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
-                        statistic.setPrefix(treeModel.getPrefix());
-
-                        statistics.put(taxa, statistic);
-
-                    } else {
-                        statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
-                        statistic.setPrefix(treeModel.getPrefix()); // keep prefix consistent after link/unlink tree
-                        PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
-                        statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
-                                && taxonSetsMono.get(taxa);
-                    }
-                    params.add(statistic);
-                }
-            } else {
-                System.err.println("TaxonSets are null");
-            }
-
+            System.err.println("TaxonSets are null");
         }
     }
 
     public boolean renameTMRCAStatistic(Taxa taxonSet) {
         Parameter statistic = statistics.get(taxonSet);
         if (statistic != null) {
-            if (useStarBEAST) {
-                statistic.taxaId = taxonSet.getId();
-            } else {
-                PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxonSet);
-                statistic.taxaId = treeModel.getPrefix() + taxonSet.getId();
-            }
+            PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxonSet);
+            statistic.taxaId = treeModel.getPrefix() + taxonSet.getId();
             return true;
         } else {
             return false;
@@ -314,10 +283,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectParameters(parameters);
         }
 
-        if (useStarBEAST) { // species
-            starBEASTOptions.selectParameters(parameters);
-        }
-
         if (contains(Microsatellite.INSTANCE)) {
             microsatelliteOptions.selectParameters(parameters);
         }
@@ -365,10 +330,6 @@ public class BeautiOptions extends ModelOptions {
 
         for (PartitionTreePrior prior : getPartitionTreePriors()) {
             prior.selectOperators(ops);
-        }
-
-        if (useStarBEAST) { // species
-            starBEASTOptions.selectOperators(ops);
         }
 
         if (contains(Microsatellite.INSTANCE)) {
@@ -1250,18 +1211,9 @@ public class BeautiOptions extends ModelOptions {
             message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
             message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");
 
-            if (starBEASTOptions.getSpeciesList() != null && useStarBEAST) {
-                int num = starBEASTOptions.getSpeciesList().size();
-                message += ", " + num + " species"; // species is both singular and plural
-            }
-
             if (userTrees.size() > 0) {
                 message += ", " + userTrees.size() + " user" +
                         (userTrees.size() > 1 ? " trees" : " tree");
-            }
-
-            if (useStarBEAST) {
-                message += "; Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
 //            if (hasPhylogeographic()) {
@@ -1303,13 +1255,6 @@ public class BeautiOptions extends ModelOptions {
     public int getTaxaIndex(String taxaName) {
         for (int i = 0; i < taxonSets.size(); i++) {
             if (taxonSets.get(i).getId().equalsIgnoreCase(taxaName)) return i;
-        }
-        return -1;
-    }
-
-    public int getSpeciesIndex(String speciesName) {
-        for (int i = 0; i < speciesSets.size(); i++) {
-            if (speciesSets.get(i).getId().equalsIgnoreCase(speciesName)) return i;
         }
         return -1;
     }
@@ -1391,11 +1336,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean classicOperatorsAndPriors = false;
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
-
-    public boolean useStarBEAST = false;
-    public List<Taxa> speciesSets = new ArrayList<Taxa>();
-    public Map<Taxa, Boolean> speciesSetsMono = new HashMap<Taxa, Boolean>();
-    public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
 

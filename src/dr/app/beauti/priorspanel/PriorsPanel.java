@@ -679,11 +679,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
                 if (options.treeModelOptions.isNodeCalibrated(parameter)) {
                     List<PartitionTreeModel> treeModels;
-                    if (options.useStarBEAST) {
-                        treeModels = options.getPartitionTreeModels();
-                    } else {
-                        treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
-                    }
+                    treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
 
                     for (PartitionTreeModel treeModel : treeModels) {
                         treeModel.setNodeCalibrations(true);

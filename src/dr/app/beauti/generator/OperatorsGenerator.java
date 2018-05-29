@@ -223,9 +223,6 @@ public class OperatorsGenerator extends Generator {
             case SKY_GRID_GIBBS_OPERATOR:
                 writeSkyGridGibbsOperator(operator, prefix, writer);
                 break;
-            case NODE_REHIGHT:
-                writeSpeciesTreeOperator(operator, writer);
-                break;
             case ADAPTIVE_MULTIVARIATE:
                 writeAdaptiveMultivariateOperator(operator, writer);
                 break;
@@ -566,15 +563,6 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
-    }
-
-    private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT,
-                new Attribute[]{getWeightAttribute(operator.getWeight())}
-        );
-        writer.writeIDref(TraitData.TRAIT_SPECIES, TraitData.TRAIT_SPECIES);
-        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, Generator.SP_TREE);
-        writer.writeCloseTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
     }
 
     private void writeUpDownOperator(String opTag, Operator operator, XMLWriter writer) {

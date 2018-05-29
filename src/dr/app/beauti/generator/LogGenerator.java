@@ -121,18 +121,6 @@ public class LogGenerator extends Generator {
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        if (options.useStarBEAST) { // species
-            writer.writeOpenTag(ColumnsParser.COLUMN,
-                    new Attribute[]{
-                            new Attribute.Default<String>(ColumnsParser.LABEL, "PopMean"),
-                            new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
-                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
-                    }
-            );
-            writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-            writer.writeCloseTag(ColumnsParser.COLUMN);
-        }
-
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
@@ -222,35 +210,6 @@ public class LogGenerator extends Generator {
             writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
         }
 
-        if (options.useStarBEAST) { // species
-            // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.TRAIT_SPECIES + "." + COALESCENT);
-            // prior on population sizes
-//            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
-            writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);
-//            } else {
-//                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
-//            }
-            // prior on species tree
-            writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
-
-            writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-            writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
-
-            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-            } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE ||
-                    options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-            } else {
-                throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
-            }
-
-            //Species Tree: tmrcaStatistic
-            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT);
-        }
-
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
         }
@@ -268,13 +227,6 @@ public class LogGenerator extends Generator {
         }
 
         tmrcaStatisticsGenerator.writeTMRCAStatisticReferences(writer);
-
-        if (options.useStarBEAST) {
-            for (Taxa taxa : options.speciesSets) {
-                // make tmrca(tree.name) eay to read in log for Tracer
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
-            }
-        }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             treePriorGenerator.writeParameterLog(prior, writer);
@@ -350,18 +302,11 @@ public class LogGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
-        if (options.useStarBEAST) {
-            for (Taxa taxa : options.speciesSets) {
-                // make tmrca(tree.name) eay to read in log for Tracer
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
-            }
-        } else {
             for (Taxa taxa : options.taxonSets) {
                 // make tmrca(tree.name) eay to read in log for Tracer
                 PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
                 writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
             }
-        }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
 //	        treePriorGenerator.setModelPrefix("");
@@ -440,34 +385,14 @@ public class LogGenerator extends Generator {
     public void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 
-        if (options.useStarBEAST) { // species
-            // species tree log
-            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
-                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
-                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME),
-                            new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
-                    });
-
-            writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
-
-            if (options.hasData()) {
-                // we have data...
-                writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
-            }
-            writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
-        }
-
         // gene tree log
         //TODO make code consistent to MCMCPanel
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
             String treeFileName;
             if (options.substTreeLog) {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
+                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(time).trees";
             } else {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
+                treeFileName = options.fileNameStem + "." + tree.getPrefix() + ".trees"; // stem.partitionName.tree
             }
 
             if (options.treeFileName.get(0).endsWith(".txt")) {
@@ -514,9 +439,6 @@ public class LogGenerator extends Generator {
         } // end For loop
 
         if (options.substTreeLog) {
-            if (options.useStarBEAST) { // species
-                //TODO: species sub tree
-            }
 
             // gene tree
             for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
@@ -527,7 +449,7 @@ public class LogGenerator extends Generator {
                                 new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
                                 new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
                                 new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + tree.getPrefix() +
-                                        "(subst)." + STARBEASTOptions.TREE_FILE_NAME),
+                                        "(subst).trees"),
                                 new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);

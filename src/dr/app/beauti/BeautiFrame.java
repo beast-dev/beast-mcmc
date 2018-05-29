@@ -52,12 +52,9 @@ import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.STARBEASTOptions;
-import dr.app.beauti.options.TraitData;
 import dr.app.beauti.priorspanel.DefaultPriorTableDialog;
 import dr.app.beauti.priorspanel.PriorsPanel;
 import dr.app.beauti.sitemodelspanel.SiteModelsPanel;
-import dr.app.beauti.taxonsetspanel.SpeciesSetPanel;
 import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
@@ -119,7 +116,6 @@ public class BeautiFrame extends DocumentFrame {
     private TipDatesPanel tipDatesPanel;
     private TraitsPanel traitsPanel;
     private TaxonSetPanel taxonSetPanel;
-    private SpeciesSetPanel speciesSetPanel;
     private SiteModelsPanel siteModelsPanel;
     private AncestralStatesPanel ancestralStatesPanel;
     private ClockModelsPanel clockModelsPanel;
@@ -183,7 +179,6 @@ public class BeautiFrame extends DocumentFrame {
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, dataPanel, getImportTraitsAction());
         taxonSetPanel = new TaxonSetPanel(this);
-        speciesSetPanel = new SpeciesSetPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         ancestralStatesPanel = new AncestralStatesPanel(this);
         clockModelsPanel = new ClockModelsPanel(this);
@@ -326,11 +321,7 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.setOptions(options);
             tipDatesPanel.setOptions(options);
             traitsPanel.setOptions(options);
-            if (options.useStarBEAST) {
-                speciesSetPanel.setOptions(options);
-            } else {
-                taxonSetPanel.setOptions(options);
-            }
+            taxonSetPanel.setOptions(options);
             siteModelsPanel.setOptions(options);
             clockModelsPanel.setOptions(options);
             treesPanel.setOptions(options);
@@ -363,11 +354,7 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.getOptions(options);
             tipDatesPanel.getOptions(options);
             traitsPanel.getOptions(options);
-            if (options.useStarBEAST) {
-                speciesSetPanel.getOptions(options);
-            } else {
-                taxonSetPanel.getOptions(options);
-            }
+            taxonSetPanel.getOptions(options);
             siteModelsPanel.getOptions(options);
             clockModelsPanel.getOptions(options);
             treesPanel.getOptions(options);
@@ -620,16 +607,6 @@ public class BeautiFrame extends DocumentFrame {
             return false;
         }
 
-        if (options.useStarBEAST && traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-            JOptionPane.showMessageDialog(this,
-                    "This trait name is already in used to denote species\n" +
-                            "for *BEAST. Please select a different name.",
-                    "Reserved trait name",
-                    JOptionPane.WARNING_MESSAGE);
-
-            return false;
-        }
-
         // check that the trait name doesn't exist
         if (options.traitExists(traitName)) {
             int option = JOptionPane.showConfirmDialog(this,
@@ -644,62 +621,6 @@ public class BeautiFrame extends DocumentFrame {
                 return false;
             }
         }
-
-        return true;
-    }
-
-    /**
-     * Attempts to set up starBEAST - returns true if successful
-     * @param useStarBEAST
-     * @return
-     */
-    public boolean setupStarBEAST(boolean useStarBEAST) {
-        if (useStarBEAST) {
-            if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-                if (!traitsPanel.addTrait(
-                        "<html><p>" +
-                                "StarBEAST requires a trait to give species designations<br>" +
-                                "for each taxon. Create or import a discrete trait<br>" +
-                                "labelled 'species'.</p></html>",
-                        TraitData.TRAIT_SPECIES,
-                        true /* isSpeciesTrait */
-                )) {
-                    return false;
-                }
-            } else if (options.getTraitPartitions(options.getTrait(TraitData.TRAIT_SPECIES)).size() > 0) {
-                int option = JOptionPane.showConfirmDialog(this,
-                        "The trait named '" + TraitData.TRAIT_SPECIES + "', used to denote species in *BEAST, is\n" +
-                                "already in use as a data partition. Do you wish to continue?",
-                        "Species trait already in use",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-                if (option == JOptionPane.NO_OPTION) {
-                    return false;
-                }
-
-            }
-
-            dataPanel.selectAll();
-            dataPanel.unlinkAll();
-
-            options.starBEASTOptions = new STARBEASTOptions(options);
-            options.fileNameStem = "StarBEASTLog";
-
-            tabbedPane.removeTabAt(1);
-            tabbedPane.insertTab("Species Sets", null, speciesSetPanel, null, 1);
-
-        } else { // remove species
-            options.fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
-
-            tabbedPane.removeTabAt(1);
-            tabbedPane.insertTab("Taxon Sets", null, taxonSetPanel, null, 1);
-        }
-
-        options.useStarBEAST = useStarBEAST;
-
-        treesPanel.updatePriorPanelForSpeciesAnalysis();
-
-        setStatusMessage();
 
         return true;
     }

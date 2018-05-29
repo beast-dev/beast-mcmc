@@ -308,11 +308,47 @@ public class XMLObject {
     }
 
     /**
+     * @return the named attribute
+     */
+    public String getAttribute(String name, String defaultValue) throws XMLParseException {
+        return (hasAttribute(name) ? getAttribute(name).toString() : defaultValue );
+    }
+
+    /**
+     * @return the named attribute as a boolean.
+     */
+    public boolean getAttribute(String name, boolean defaultValue) throws XMLParseException {
+        return (hasAttribute(name) ? getBoolean(name) : defaultValue );
+    }
+
+    /**
+     * @return the named attribute as an integer.
+     */
+    public int getAttribute(String name, int defaultValue) throws XMLParseException {
+        return (hasAttribute(name) ? getInteger(name) : defaultValue );
+    }
+
+    /**
+     * @return the named attribute as a long.
+     */
+    public long getAttribute(String name, long defaultValue) throws XMLParseException {
+        return (hasAttribute(name) ? getLongInteger(name) : defaultValue );
+    }
+
+    /**
+     * @return the named attribute as a double.
+     */
+    public double getAttribute(String name, double defaultValue) throws XMLParseException {
+        return (hasAttribute(name) ? getDouble(name) : defaultValue );
+    }
+
+    /**
      * @return the named attribute as a boolean.
      */
     public boolean getBooleanAttribute(String name) throws XMLParseException {
         return getBoolean(getAndTest(name));
     }
+
 
     /**
      * @return the named attribute as a double.

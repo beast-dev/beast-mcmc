@@ -47,6 +47,9 @@ public class UniformDistribution implements Distribution {
     public UniformDistribution(double lower, double upper) {
         this.lower = lower;
         this.upper = upper;
+
+        assert !Double.isInfinite(lower) : "bounds on a uniform distribution cannot be infinite";
+        assert !Double.isInfinite(upper) : "bounds on a uniform distribution cannot be infinite";
     }
 
     public double pdf(double x) {

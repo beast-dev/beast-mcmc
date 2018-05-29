@@ -127,19 +127,39 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        if (parameter.priorType != PriorType.NONE_FIXED && parameter.isTruncated) {
-            // if there is a truncation then put it at the top so it short-circuits any other prior
-            // calculations
+        if (parameter.priorType == PriorType.NONE_FIXED) {
+            return;
+        }
 
-            // todo: We should switch this to truncatedDistribution so that the density is normalized correctly
+        boolean isTruncated = parameter.isTruncated;
+        if (isTruncated) {
+            Attribute[] attributes = null;
 
-            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                    new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
-                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
-                    });
-            writeParameterIdref(writer, parameter);
-            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+            if (!Double.isInfinite(parameter.truncationLower)) {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                    };
+                }
+            } else {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    // both are infinite so there is no trunction
+                    isTruncated = false;
+                }
+            }
+
+            if (isTruncated) {
+                writer.writeOpenTag(PriorParsers.TRUNCATED, attributes);
+            }
         }
 
         switch (parameter.priorType) {
@@ -329,6 +349,11 @@ public class ParameterPriorGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }
+
+        if (isTruncated) {
+            writer.writeCloseTag(PriorParsers.TRUNCATED);
+        }
+
     }
 
     private void writeParameterIdref(XMLWriter writer, Parameter parameter) {

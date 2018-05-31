@@ -45,11 +45,13 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "locationScaleGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String USE_HESSIAN = "useHessian";
 
     public String getParserName(){ return NAME; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
+        boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         final Parameter locationScaleParameter = (Parameter) xo.getChild(Parameter.class);
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
@@ -65,7 +67,7 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-                return new NodeHeightGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, locationScaleParameter);
+                return new LocationScaleGradient(traitName, treeDataLikelihood, beagleData, locationScaleParameter, useHessian);
 
             } else {
                 throw new XMLParseException("Unknown likelihood delegate type");

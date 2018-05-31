@@ -204,7 +204,7 @@ public class DiscreteTraitBranchRateGradient
         }
     };
 
-    private boolean valuesAreSufficientlyLarge(double[] vector) {
+    protected boolean valuesAreSufficientlyLarge(double[] vector) {
         for (double x : vector) {
             if (x < SQRT_EPSILON * 1.2) {
                 return false;

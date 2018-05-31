@@ -54,7 +54,7 @@ import static dr.math.MachineAccuracy.SQRT_EPSILON;
  * @author Marc A. Suchard
  */
 public class DiscreteTraitBranchRateGradient
-implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
@@ -126,29 +126,30 @@ implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable
         double[] result = new double[rateParameter.getDimension()];
 
         //Do single call to traitProvider with node == null (get full tree)
-        double[] diagonalHessian =  (double[]) treeDataLikelihood.getTreeTrait("Hessian").getTrait(tree, null);
+        double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait("Hessian").getTrait(tree, null);
 
-        int v =0;
+        int v = 0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double branchLength = tree.getBranchLength(node);
-                result[destinationIndex] =  branchLength * diagonalHessian[v] * branchLength;
+                result[destinationIndex] = branchLength * diagonalHessian[v] * branchLength;
                 v++;
             }
         }
 
         return result;
     }
+
     public double[] getGradientLogDensity() {
 
         double[] result = new double[rateParameter.getDimension()];
 
         //Do single call to traitProvider with node == null (get full tree)
-        double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
+        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
-        int v =0;
+        int v = 0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
@@ -249,7 +250,7 @@ implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable
         sb.append("\n");
 
         if (useHessian) {
-            if (largeEnoughValues){
+            if (largeEnoughValues) {
                 sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
                 sb.append("\n");
             }

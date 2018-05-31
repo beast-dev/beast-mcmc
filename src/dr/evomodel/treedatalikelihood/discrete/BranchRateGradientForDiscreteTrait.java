@@ -1,5 +1,5 @@
 /*
- * TreeTipGradient.java
+ * BranchRateGradientForDiscreteTrait.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -278,7 +278,7 @@ public class BranchRateGradientForDiscreteTrait
         return sb.toString();
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private long getGradientLogDensityCount = 0;

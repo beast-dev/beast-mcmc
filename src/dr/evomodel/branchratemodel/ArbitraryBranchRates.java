@@ -93,6 +93,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         return transform.differential(rate);
     }
 
+    public BranchRateTransform getTransform() {
+        return transform;
+    }
+
     public double getBranchRate(final Tree tree, final NodeRef node) {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
@@ -296,6 +300,41 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 addVariable(scale);
 
                 this.transformKnown = false;
+            }
+
+            public double expLocationScaleDifferential(Parameter parameter, double rate) {
+                if (parameter == location) {
+                    return expLocationDifferential(rate);
+                } else if (parameter == scale) {
+                    return expScaleDifferential(rate);
+                } else {
+                    throw new IllegalArgumentException("Must be location or scale parameter.");
+                }
+            }
+
+            private double expLocationDifferential(double rate) {
+                if (!transformKnown) {
+                    setupTransform();
+                    transformKnown = true;
+                }
+
+                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
+
+                return rate / multiplier;
+            }
+
+            private double expScaleDifferential(double rate) {
+
+                if (!transformKnown) {
+                    setupTransform();
+                    transformKnown = true;
+                }
+
+                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
+                double raw = logNormalTransform(rate / multiplier,
+                        transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
+
+                return rate * Math.log(rate / multiplier) / transformSigma / scale.getParameterValue(0);
             }
 
             @Override

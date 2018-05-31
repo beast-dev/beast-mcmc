@@ -36,10 +36,6 @@ import dr.inference.model.Model;
 import java.util.Arrays;
 import java.util.List;
 
-import static dr.evolution.tree.TreeTrait.DA.factory;
-import static dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate.MatrixChoice.GRADIENT;
-import static dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate.MatrixChoice.HESSIAN;
-
 /**
  * AbstractDiscreteTraitDelegate - interface for a plugin delegate for data simulation on a tree.
  *
@@ -83,6 +79,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         this.grandNumerator = new double[patternCount];
         this.grandNumeratorIncrementLowerBound = new double[patternCount];
         this.grandNumeratorIncrementUpperBound = new double[patternCount];
+        this.gradient = new double[tree.getNodeCount() - 1];
 
     }
 
@@ -92,7 +89,12 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         //This function updates preOrder Partials for all nodes
         this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
         beagle.updatePrePartials(operations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
-        //TODO:error control
+
+        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+        getPatternGradientHessian(tree, patternGradient, null);
+        final double[] patternWeights = patternList.getPatternWeights();
+        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
+
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++simulateCount;
@@ -273,11 +275,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         simulationProcess.cacheSimulatedTraits(node);
 
 //        final double[] patternGradientOld = getTrait(tree, node, GRADIENT);
-        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
-        getPatternGradientHessian(tree, patternGradient, null);
-        final double[] patternWeights = patternList.getPatternWeights();
-        double[] gradient = new double[tree.getNodeCount() - 1];
-        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
+//        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+//        getPatternGradientHessian(tree, patternGradient, null);
+//        final double[] patternWeights = patternList.getPatternWeights();
+//        double[] gradient = new double[tree.getNodeCount() - 1];
+//        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
         return gradient;
     }
 
@@ -498,6 +500,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private final double[] grandNumerator;
     private final double[] grandNumeratorIncrementLowerBound;
     private final double[] grandNumeratorIncrementUpperBound;
+    private final double[] gradient;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private long simulateCount = 0;

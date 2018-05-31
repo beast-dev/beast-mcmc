@@ -69,16 +69,17 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 
         this.patternList = likelihoodDelegate.getPatternList();
 
-        this.postOrderPartial = new double[stateCount * patternCount * categoryCount];
-        this.preOrderPartial = new double[stateCount * patternCount * categoryCount];
-        this.rootPostOrderPartials = new double[stateCount * patternCount * categoryCount];
-        this.Q = new double[stateCount * stateCount];
-        this.cLikelihood = new double[categoryCount * patternCount];
+//        this.postOrderPartial = new double[stateCount * patternCount * categoryCount];
+//        this.preOrderPartial = new double[stateCount * patternCount * categoryCount];
+//        this.rootPostOrderPartials = new double[stateCount * patternCount * categoryCount];
+//        this.Q = new double[stateCount * stateCount];
+//        this.cLikelihood = new double[categoryCount * patternCount];
+//
+//        this.grandDenominator = new double[patternCount];
+//        this.grandNumerator = new double[patternCount];
+//        this.grandNumeratorIncrementLowerBound = new double[patternCount];
+//        this.grandNumeratorIncrementUpperBound = new double[patternCount];
 
-        this.grandDenominator = new double[patternCount];
-        this.grandNumerator = new double[patternCount];
-        this.grandNumeratorIncrementLowerBound = new double[patternCount];
-        this.grandNumeratorIncrementUpperBound = new double[patternCount];
         this.gradient = new double[tree.getNodeCount() - 1];
 
     }
@@ -305,109 +306,109 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
                 tree.getNodeCount() - 1, patternGradient, patternDiagonalHessian);
     }
 
-    private double[] getTrait(Tree tree, NodeRef node, MatrixChoice matrixChoice) {
-
-        assert (tree == this.tree);
-        assert (node == null); // Implies: get trait for all nodes at same time
-
-        //update all preOrder partials first
-        simulationProcess.cacheSimulatedTraits(node);
-
-        final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
-        final double[] categoryWeights = siteRateModel.getCategoryProportions();
-        final double[] categoryRates = siteRateModel.getCategoryRates();
-
-        beagle.getPartials(getPostOrderPartialIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostOrderPartials);
-
-        double[] derivative = new double[(tree.getNodeCount() - 1) * patternCount];
-
-        Arrays.fill(grandDenominator, 0.0);
-        for (int category = 0; category < categoryCount; category++) {
-            final double weight = categoryWeights[category];
-            for (int pattern = 0; pattern < patternCount; pattern++) {
-
-                final int patternIndex = category * patternCount + pattern;
-
-                double sumOverEndState = 0.0;
-                for (int k = 0; k < stateCount; k++) {
-                    sumOverEndState += frequencies[k] * rootPostOrderPartials[patternIndex * stateCount + k];
-                }
-
-                cLikelihood[patternIndex] = sumOverEndState;
-//                if (sumOverEndState < 1E-20){ // underflow occurred in postOrderPartials
-//                    System.err.println("Underflow error occurred in postOrder Partials, try turn on scalingScheme=\"always\"");
+//    private double[] getTrait(Tree tree, NodeRef node, MatrixChoice matrixChoice) {
+//
+//        assert (tree == this.tree);
+//        assert (node == null); // Implies: get trait for all nodes at same time
+//
+//        //update all preOrder partials first
+//        simulationProcess.cacheSimulatedTraits(node);
+//
+//        final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+//        final double[] categoryWeights = siteRateModel.getCategoryProportions();
+//        final double[] categoryRates = siteRateModel.getCategoryRates();
+//
+//        beagle.getPartials(getPostOrderPartialIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostOrderPartials);
+//
+//        double[] derivative = new double[(tree.getNodeCount() - 1) * patternCount];
+//
+//        Arrays.fill(grandDenominator, 0.0);
+//        for (int category = 0; category < categoryCount; category++) {
+//            final double weight = categoryWeights[category];
+//            for (int pattern = 0; pattern < patternCount; pattern++) {
+//
+//                final int patternIndex = category * patternCount + pattern;
+//
+//                double sumOverEndState = 0.0;
+//                for (int k = 0; k < stateCount; k++) {
+//                    sumOverEndState += frequencies[k] * rootPostOrderPartials[patternIndex * stateCount + k];
 //                }
-                grandDenominator[pattern] += weight * cLikelihood[patternIndex];
-            }
-        }
-
-        int index = 0;
-        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum) {
-
-            if (!tree.isRoot(tree.getNode(nodeNum))) {
-
-                Arrays.fill(grandNumerator, 0.0);
-                Arrays.fill(grandNumeratorIncrementLowerBound, 0.0);
-                Arrays.fill(grandNumeratorIncrementUpperBound, 0.0);
-
-                beagle.getPartials(getPostOrderPartialIndex(nodeNum), Beagle.NONE, postOrderPartial);
-                beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
-
-                matrixChoice.getMatrix(evolutionaryProcessDelegate.getSubstitutionModelForBranch(nodeNum), Q);
-
-                for (int category = 0; category < categoryCount; category++) {
-
-                    final double weightedRate = categoryWeights[category] * matrixChoice.getRateDifferential(categoryRates[category]);
-
-                    for (int pattern = 0; pattern < patternCount; pattern++) {
-
-                        final int patternOffset = category * patternCount + pattern;
-
-                        double numerator = 0.0;
-                        double denominator = 0.0;
-
-                        for (int k = 0; k < stateCount; k++) {
-
-                            double sumOverEndState = 0;
-                            for (int j = 0; j < stateCount; j++) {
-                                sumOverEndState += Q[k * stateCount + j]
-                                        * postOrderPartial[patternOffset * stateCount + j];
-                            }
-
-                            numerator += sumOverEndState * preOrderPartial[patternOffset * stateCount + k];
-                            denominator += postOrderPartial[patternOffset * stateCount + k]
-                                    * preOrderPartial[patternOffset * stateCount + k];
-                        }
-
-                        if (numerator != 0.0) {
-                            if (Math.abs(denominator) < 1E-10) {
-                                grandNumeratorIncrementLowerBound[pattern] += weightedRate * Math.min(numerator, 0.0);
-                                grandNumeratorIncrementUpperBound[pattern] += weightedRate * Math.max(numerator, 0.0);
-                            } else {
-                                grandNumerator[pattern] += weightedRate * cLikelihood[patternOffset] / denominator * numerator;
-                            }
-                        }
-
-                    }
-                }
-
-                for (int pattern = 0; pattern < patternCount; pattern++) {
-
-                    final double numerator = clampGradientNumerator(grandNumerator[pattern],
-                            grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
-
-                    derivative[index * patternCount + pattern] = numerator / grandDenominator[pattern];
-
-//                    if (Double.isNaN(derivative[index * patternCount + pattern]) && DEBUG) {
-//                        System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
+//
+//                cLikelihood[patternIndex] = sumOverEndState;
+////                if (sumOverEndState < 1E-20){ // underflow occurred in postOrderPartials
+////                    System.err.println("Underflow error occurred in postOrder Partials, try turn on scalingScheme=\"always\"");
+////                }
+//                grandDenominator[pattern] += weight * cLikelihood[patternIndex];
+//            }
+//        }
+//
+//        int index = 0;
+//        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum) {
+//
+//            if (!tree.isRoot(tree.getNode(nodeNum))) {
+//
+//                Arrays.fill(grandNumerator, 0.0);
+//                Arrays.fill(grandNumeratorIncrementLowerBound, 0.0);
+//                Arrays.fill(grandNumeratorIncrementUpperBound, 0.0);
+//
+//                beagle.getPartials(getPostOrderPartialIndex(nodeNum), Beagle.NONE, postOrderPartial);
+//                beagle.getPartials(getPreOrderPartialIndex(nodeNum), Beagle.NONE, preOrderPartial);
+//
+//                matrixChoice.getMatrix(evolutionaryProcessDelegate.getSubstitutionModelForBranch(nodeNum), Q);
+//
+//                for (int category = 0; category < categoryCount; category++) {
+//
+//                    final double weightedRate = categoryWeights[category] * matrixChoice.getRateDifferential(categoryRates[category]);
+//
+//                    for (int pattern = 0; pattern < patternCount; pattern++) {
+//
+//                        final int patternOffset = category * patternCount + pattern;
+//
+//                        double numerator = 0.0;
+//                        double denominator = 0.0;
+//
+//                        for (int k = 0; k < stateCount; k++) {
+//
+//                            double sumOverEndState = 0;
+//                            for (int j = 0; j < stateCount; j++) {
+//                                sumOverEndState += Q[k * stateCount + j]
+//                                        * postOrderPartial[patternOffset * stateCount + j];
+//                            }
+//
+//                            numerator += sumOverEndState * preOrderPartial[patternOffset * stateCount + k];
+//                            denominator += postOrderPartial[patternOffset * stateCount + k]
+//                                    * preOrderPartial[patternOffset * stateCount + k];
+//                        }
+//
+//                        if (numerator != 0.0) {
+//                            if (Math.abs(denominator) < 1E-10) {
+//                                grandNumeratorIncrementLowerBound[pattern] += weightedRate * Math.min(numerator, 0.0);
+//                                grandNumeratorIncrementUpperBound[pattern] += weightedRate * Math.max(numerator, 0.0);
+//                            } else {
+//                                grandNumerator[pattern] += weightedRate * cLikelihood[patternOffset] / denominator * numerator;
+//                            }
+//                        }
+//
 //                    }
-                }
-                index++;
-            }
-        }
-
-        return derivative;
-    }
+//                }
+//
+//                for (int pattern = 0; pattern < patternCount; pattern++) {
+//
+//                    final double numerator = clampGradientNumerator(grandNumerator[pattern],
+//                            grandNumeratorIncrementLowerBound[pattern], grandNumeratorIncrementUpperBound[pattern]);
+//
+//                    derivative[index * patternCount + pattern] = numerator / grandDenominator[pattern];
+//
+////                    if (Double.isNaN(derivative[index * patternCount + pattern]) && DEBUG) {
+////                        System.err.println("bad"); // OK, this should be invoked by underflow in lnL only now.
+////                    }
+//                }
+//                index++;
+//            }
+//        }
+//
+//        return derivative;
+//    }
 
     // TODO Delegate for alternative behavior, like least value in magnitude
     private double clampGradientNumerator(double unbounded, double lowerBound, double upperBound) {
@@ -490,16 +491,17 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private final int preOrderPartialOffset;
     private final int preOrderScaleBufferOffset;
 
-    private final double[] postOrderPartial;
-    private final double[] preOrderPartial;
-    private final double[] rootPostOrderPartials;
-    private final double[] Q;
-    private final double[] cLikelihood;
+//    private final double[] postOrderPartial;
+//    private final double[] preOrderPartial;
+//    private final double[] rootPostOrderPartials;
+//    private final double[] Q;
+//    private final double[] cLikelihood;
+//
+//    private final double[] grandDenominator;
+//    private final double[] grandNumerator;
+//    private final double[] grandNumeratorIncrementLowerBound;
+//    private final double[] grandNumeratorIncrementUpperBound;
 
-    private final double[] grandDenominator;
-    private final double[] grandNumerator;
-    private final double[] grandNumeratorIncrementLowerBound;
-    private final double[] grandNumeratorIncrementUpperBound;
     private final double[] gradient;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;

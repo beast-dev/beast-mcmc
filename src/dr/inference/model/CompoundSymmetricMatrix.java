@@ -25,6 +25,8 @@
 
 package dr.inference.model;
 
+import dr.util.CorrelationToCholesky;
+
 /**
  * @author Marc Suchard
  */
@@ -36,13 +38,18 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     private boolean asCorrelation = false;
     private int dim;
 
-    public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
+    public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
         super(MATRIX_PARAMETER);
         diagonalParameter = diagonals;
-        offDiagonalParameter = offDiagonal;
+        dim = diagonalParameter.getDimension();
+        if (!isCholesky) {
+            offDiagonalParameter = offDiagonal;
+        } else {
+            offDiagonalParameter
+                    = new TransformedMultivariateParameter(offDiagonal, new CorrelationToCholesky(dim), true);
+        }
         addParameter(diagonalParameter);
         addParameter(offDiagonal);
-        dim = diagonalParameter.getDimension();
         this.asCorrelation = asCorrelation;
     }
 
@@ -86,7 +93,7 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
                 return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col)) *
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
             }
-            return offDiagonalParameter.getParameterValue(0);
+            return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col));
         }
         return diagonalParameter.getParameterValue(row);
     }

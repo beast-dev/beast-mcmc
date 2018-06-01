@@ -97,7 +97,7 @@ public class LKJCorrelationDistribution extends AbstractLKJDistribution {
 
         double[] gradient = extractUpperTriangular((SymmetricMatrix) R.inverse());
         for (int i = 0; i < gradient.length; ++i) {
-            gradient[i] = (shape - 1) * gradient[i];
+            gradient[i] = 2 * (shape - 1) * gradient[i];
         }
 
         return gradient;

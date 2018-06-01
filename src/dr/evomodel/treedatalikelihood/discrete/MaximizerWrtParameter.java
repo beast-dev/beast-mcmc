@@ -108,7 +108,7 @@ public class MaximizerWrtParameter implements Reportable {
             x0 = parameter.getParameterValues();
 
             if (transform != null) {
-                x0 = transform.inverse(x0, 0, x0.length);
+                x0 = transform.transform(x0, 0, x0.length);
             }
         }
 

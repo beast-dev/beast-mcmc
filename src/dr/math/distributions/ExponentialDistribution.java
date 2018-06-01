@@ -61,6 +61,8 @@ public class ExponentialDistribution implements Distribution {
         return logPdf(x, lambda);
     }
 
+    public double gradLogPdf(double x) { return gradLogPdf(x, lambda); }
+
     public double cdf(double x) {
         return cdf(x, lambda);
     }
@@ -121,6 +123,12 @@ public class ExponentialDistribution implements Distribution {
     	if (x < 0) return Double.NEGATIVE_INFINITY;
     	
         return Math.log(lambda) - (lambda * x);
+    }
+
+    public static double gradLogPdf(double x, double lambda) {
+        if (x < 0) return Double.NEGATIVE_INFINITY;
+
+        return -lambda;
     }
 
     /**

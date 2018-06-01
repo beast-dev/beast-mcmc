@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.ExponentialDistribution;
 import org.w3c.dom.Document;
@@ -42,7 +39,8 @@ import org.w3c.dom.Element;
  * @version $Id: ExponentialDistributionModel.java,v 1.12 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class ExponentialDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class ExponentialDistributionModel extends AbstractModel implements
+        ParametricDistributionModel, GradientProvider {
 
     public static final String EXPONENTIAL_DISTRIBUTION_MODEL = "exponentialDistributionModel";
 
@@ -176,5 +174,27 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     private Variable<Double> mean = null;
     private double offset = 0.0;
 
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+
+        double[] x;
+        if (obj instanceof double[]) {
+            x = (double[]) obj;
+        } else {
+            x = new double[1];
+            x[0] = (Double) obj;
+        }
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = ExponentialDistribution.gradLogPdf(x[i] - offset, 1.0 / getMean());
+        }
+        return result;
+    }
 }
 

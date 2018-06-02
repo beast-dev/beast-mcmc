@@ -57,6 +57,11 @@ public class PrecisionMatrixByCorrelationGibbsOperator extends SimpleMCMCOperato
     private boolean wishartIsModel = false;
     private WishartGammalDistributionModel priorModel = null;
 
+    // TODO I think all you need (to start) is:
+    // TODO (1) a ConjugateWishartStatisticsProvider
+    // TODO (2) a correlation matrix (MatrixParameterInterface)
+    // TODO (3) the diagonal terms (Parameter)
+
     public PrecisionMatrixByCorrelationGibbsOperator(
             MultivariateDistributionLikelihood likelihood,
             WishartStatistics priorDistribution,

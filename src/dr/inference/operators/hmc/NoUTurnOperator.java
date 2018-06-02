@@ -50,11 +50,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double t0 = 10.0;
         private double gamma = 0.05;
         private double targetAcceptRate = 0.9;
-        private double logProbErrorTol = 1000.0;
+        private double logProbErrorTol = 100.0;
         private double muFactor = 10.0;
 
         private int findMax = 100;
-        private int maxDepth = 100;
+        private int maxHeight = 10;
         private int adaptLength = 1000;
     }
 
@@ -88,11 +88,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.mu = Math.log(options.muFactor * initialStepSize);
         }
 
-        private void update(long m, double alpha, double nAlpha, Options options) {
+        private void update(long m, double cumAcceptProb, double numAcceptProbStates, Options options) {
 
             if (m <= options.adaptLength) {
 
-                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.targetAcceptRate - (alpha / nAlpha));
+                h = (1 - 1 / (m + options.t0)) * h + 1 / (m + options.t0) * (options.targetAcceptRate - (cumAcceptProb / numAcceptProbStates));
                 logStepSize = mu - Math.sqrt(m) / options.gamma * h;
                 averageLogStepSize = Math.pow(m, -options.kappa) * logStepSize +
                         (1 - Math.pow(m, -options.kappa)) * averageLogStepSize;
@@ -137,70 +137,62 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
 
-        TreeState root = new TreeState(initialPosition, initialMomentum, 1, true);
+        TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum, 1, true);
+            // Trajectory of Hamiltonian dynamics endowed with a binary tree structure.
 
-        int j = 0;
+        int height = 0;
 
-        while (root.flagContinue) {
+        while (trajectoryTree.flagContinue) {
 
-            double[] tmp = updateRoot(root, j, logSliceU, initialJointDensity);
+            double[] tmp = updateTrajectoryTree(trajectoryTree, height, logSliceU, initialJointDensity);
             if (tmp != null) {
                 endPosition = tmp;
             }
 
-            j++;
+            height++;
 
-            if (j > options.maxDepth) {
-                throw new RuntimeException("Reach maximum tree depth"); // TODO Handle more gracefully
+            if (height > options.maxHeight) {
+                trajectoryTree.flagContinue = false;
             }
         }
 
-        stepSizeInformation.update(m, root.alpha, root.nAlpha, options);
+        stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates, options);
 
         return endPosition;
     }
 
-    private double[] updateRoot(TreeState root, int j, double logSliceU, double initialJointDensity) {
+    private double[] updateTrajectoryTree(TreeState trajectoryTree, int depth, double logSliceU, double initialJointDensity) {
 
         double[] endPosition = null;
 
         final double uniform1 = MathUtils.nextDouble();
         int direction = (uniform1 < 0.5) ? -1 : 1;
 
-        TreeState node = buildTree(root.getPosition(direction), root.getMomentum(direction), direction,
-                logSliceU, j, stepSizeInformation.stepSize, initialJointDensity);
+        TreeState nextTrajectoryTree = buildTree(
+                trajectoryTree.getPosition(direction), trajectoryTree.getMomentum(direction),
+                direction, logSliceU, depth, stepSizeInformation.stepSize, initialJointDensity);
 
-        root.setPosition(direction, node.getPosition(direction));
-        root.setMomentum(direction, node.getMomentum(direction));
-
-        if (node.flagContinue) {
+        if (nextTrajectoryTree.flagContinue) {
 
             final double uniform = MathUtils.nextDouble();
-            final double p = (double) node.numNodes / (double)root.numNodes;
-
-            if (uniform < p) {
-                endPosition = node.getPosition(0);
+            final double acceptProb = (double) nextTrajectoryTree.numNodes / (double) trajectoryTree.numNodes;
+            if (uniform < acceptProb) {
+                endPosition = nextTrajectoryTree.getSample();
             }
         }
 
-        // Recursion
-        root.numNodes += node.numNodes;
-        root.flagContinue = computeStopCriterion(node.flagContinue, root);
-
-        // Dual-averaging
-        root.alpha += node.alpha;
-        root.nAlpha += node.nAlpha;
+        trajectoryTree.mergeNextTree(nextTrajectoryTree, direction);
 
         return endPosition;
     }
 
     private TreeState buildTree(double[] position, double[] momentum, int direction,
-                                double logSliceU, int j, double stepSize, double initialJointDensity) {
+                                double logSliceU, int height, double stepSize, double initialJointDensity) {
 
-        if (j == 0) {
+        if (height == 0) {
             return buildBaseCase(position, momentum, direction, logSliceU, stepSize, initialJointDensity);
         } else {
-            return buildRecursiveCase(position, momentum, direction, logSliceU, j, stepSize, initialJointDensity);
+            return buildRecursiveCase(position, momentum, direction, logSliceU, height, stepSize, initialJointDensity);
         }
     }
 
@@ -231,44 +223,30 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         final boolean flagContinue = (logSliceU < options.logProbErrorTol + logJointProbAfter);
 
         // Values for dual-averaging
-        final double alpha = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));
-        final int nAlpha = 1;
+        final double acceptProb = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));
+        final int numAcceptProbStates = 1;
 
         leapFrogEngine.setParameter(inPosition);
 
-        return new TreeState(position, momentum, numNodes, flagContinue, alpha, nAlpha);
+        return new TreeState(position, momentum, numNodes, flagContinue, acceptProb, numAcceptProbStates);
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
-                                         double logSliceU, int j, double stepSize, double initialJointDensity) {
+                                         double logSliceU, int height, double stepSize, double initialJointDensity) {
 
-        TreeState node = buildTree(inPosition, inMomentum, direction, logSliceU,
-                j - 1, // Recursion
+        TreeState subtree = buildTree(inPosition, inMomentum, direction, logSliceU,
+                height - 1, // Recursion
                 stepSize, initialJointDensity);
 
-        if (node.flagContinue) {
+        if (subtree.flagContinue) {
 
-            TreeState child = buildTree(node.getPosition(direction), node.getMomentum(direction), direction,
-                    logSliceU, j - 1, stepSizeInformation.stepSize, initialJointDensity);
+            TreeState nextSubtree = buildTree(subtree.getPosition(direction), subtree.getMomentum(direction), direction,
+                    logSliceU, height - 1, stepSizeInformation.stepSize, initialJointDensity);
 
-            node.setPosition(direction, child.getPosition(direction));
-            node.setMomentum(direction, child.getMomentum(direction));
-
-            double uniform = MathUtils.nextDouble();
-            if (child.numNodes > 0
-                    && uniform <  ((double) child.numNodes / (double) (node.numNodes + child.numNodes))) {
-
-                node.setPosition(0, child.getPosition(0));
-            }
-
-            node.numNodes += child.numNodes;
-            node.flagContinue = computeStopCriterion(child.flagContinue, node);
-
-            node.alpha += child.alpha;
-            node.nAlpha += child.nAlpha;
+            subtree.mergeNextTree(nextSubtree, direction);
 
         }
-        return node;
+        return subtree;
     }
 
     private void doLeap(final double[] position,
@@ -389,7 +367,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         private TreeState(double[] position, double[] moment,
                          int numNodes, boolean flagContinue,
-                         double alpha, int nAlpha) {
+                         double cumAcceptProb, int numAcceptProbStates) {
             this.position = new double[3][];
             this.momentum = new double[3][];
 
@@ -403,8 +381,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.flagContinue = flagContinue;
 
             // Dual-averaging variables
-            this.alpha = alpha;
-            this.nAlpha = nAlpha;
+            this.cumAcceptProb = cumAcceptProb;
+            this.numAcceptProbStates = numAcceptProbStates;
         }
 
         private double[] getPosition(int direction) {
@@ -415,6 +393,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             return momentum[getIndex(direction)];
         }
 
+        private double[] getSample() {
+            /*
+            Returns a state chosen uniformly from the acceptable states along a hamiltonian dynamics trajectory tree.
+            The sample is updated recursively while building trees.
+            */
+            return position[getIndex(0)];
+        }
+
         private void setPosition(int direction, double[] position) {
             this.position[getIndex(direction)] = position;
         }
@@ -423,9 +409,33 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             this.momentum[getIndex(direction)] = momentum;
         }
 
+        private void setSample(double[] position) { setPosition(0, position); }
+
         private int getIndex(int direction) { // valid directions: -1, 0, +1
             assert (direction >= -1 && direction <= 1);
             return direction + 1;
+        }
+
+        private void mergeNextTree(TreeState nextTree, int direction) {
+
+            setPosition(direction, nextTree.getPosition(direction));
+            setMomentum(direction, nextTree.getMomentum(direction));
+            
+            updateSample(nextTree);
+
+            numNodes += nextTree.numNodes;
+            flagContinue = computeStopCriterion(nextTree.flagContinue, this);
+
+            cumAcceptProb += nextTree.cumAcceptProb;
+            numAcceptProbStates += nextTree.numAcceptProbStates;
+        }
+
+        private void updateSample(TreeState nextTree) {
+            double uniform = MathUtils.nextDouble();
+            if (nextTree.numNodes > 0
+                    && uniform < ((double) nextTree.numNodes / (double) (numNodes + nextTree.numNodes))) {
+                setSample(nextTree.getSample());
+            }
         }
 
         final private double[][] position;
@@ -434,8 +444,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private int numNodes;
         private boolean flagContinue;
 
-        private double alpha;
-        private int nAlpha;
+        private double cumAcceptProb;
+        private int numAcceptProbStates;
     }
 }
 

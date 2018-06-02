@@ -143,13 +143,5 @@ public interface ReadableVector {
 
             return Math.sqrt(innerProduct(vector, vector));
         }
-
-        public static double[] getBuffer(ReadableVector vector) {
-            double[] buffer = new double[vector.getDim()];
-            for (int i = 0; i < vector.getDim(); ++i) {
-                buffer[i] = vector.get(i);
-            }
-            return buffer;
-        } // TODO Remove? Defeats purpose
     }
 }

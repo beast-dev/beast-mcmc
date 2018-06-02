@@ -314,12 +314,7 @@ public class PrecisionMatrixByCorrelationGibbsOperator extends SimpleMCMCOperato
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                //outerProduct[i * dim + j] = getscalar(i) * getscalar(j) * outerProduct[i * dim + j];
-                System.err.println(outerProduct[j * dim + i]);
-                System.out.println("scalar 1 = " + scalarMatrix[i] + "scalar 2 = " + scalarMatrix[j]);
                 outerProduct[j * dim + i] = scalarMatrix[i] * scalarMatrix[j] * outerProduct[j * dim + i];
-                System.err.println(outerProduct[j * dim + i]);
-
             }
         }
     }
@@ -330,18 +325,8 @@ public class PrecisionMatrixByCorrelationGibbsOperator extends SimpleMCMCOperato
 
         final WishartSufficientStatistics sufficientStatistics = integratedLikelihood.getWishartStatistics();
         final double[] outerProducts = sufficientStatistics.getScaleMatrix();
-        if (DEBUG) {
-
-            System.err.println("OP used to be symme   = " + new Vector(outerProducts));
-        }
 
         rescaleOuterProduct(outerProducts);
-
-        if (DEBUG) {
-
-            System.err.println("OP not symme   = " + new Vector(outerProducts));
-        }
-
 
         final double df = sufficientStatistics.getDf();
 
@@ -364,10 +349,6 @@ public class PrecisionMatrixByCorrelationGibbsOperator extends SimpleMCMCOperato
             System.arraycopy(outerProducts, i * dim, S[i], 0, dim);
         }
         numberObservations = df;
-
-
-//        checkDiagonals(outerProducts);
-
 
     }
 
@@ -535,21 +516,7 @@ public class PrecisionMatrixByCorrelationGibbsOperator extends SimpleMCMCOperato
 
         double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
 
-        if (DEBUG) {
-            System.err.println("scale matrix for draw = " + new Matrix(scaleMatrix));
-        }
-
-//        if (DEBUG) {
-//            System.err.println("draw1 = " + new Matrix(draw));
-//        }
-        //todo : before setting R, renomailzie SIGMA TO R
         renormalizeGetInvCorr(draw);
-
-
-            System.err.println("draw2 = " + new Matrix(draw));
-            System.err.println("corr = " + new Matrix(draw).inverse());
-
-
 
         for (int i = 0; i < dim; i++) {
             Parameter column = precisionParam.getParameter(i);

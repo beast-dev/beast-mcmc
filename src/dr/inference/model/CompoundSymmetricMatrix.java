@@ -25,10 +25,13 @@
 
 package dr.inference.model;
 
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.util.CorrelationToCholesky;
+
 
 /**
  * @author Marc Suchard
+ * @author Paul Bastide
  */
 public class CompoundSymmetricMatrix extends MatrixParameter {
 
@@ -36,10 +39,12 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     private final Parameter offDiagonalParameter;
 
     private boolean asCorrelation = false;
+    private boolean isCholesky = false;
     private int dim;
 
     public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
         super(MATRIX_PARAMETER);
+        assert asCorrelation || !isCholesky; // cholesky only allowed when used as correlation.
         diagonalParameter = diagonals;
         dim = diagonalParameter.getDimension();
         if (!isCholesky) {
@@ -51,6 +56,7 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         addParameter(diagonalParameter);
         addParameter(offDiagonal);
         this.asCorrelation = asCorrelation;
+        this.isCholesky = isCholesky;
     }
 
     @Override
@@ -147,5 +153,49 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     @Override
     public void setParameterValue(int row, int column, double a) {
         throw new RuntimeException("Do not set entries of a CompoundSymmetricMatrix directly");
+    }
+
+    public boolean isCholesky() {
+        return isCholesky;
+    }
+
+    public boolean asCorrelation() {
+        return asCorrelation;
+    }
+
+    public double[] getDiagonal() {
+        return diagonalParameter.getParameterValues();
+    }
+
+    public double[][] getCorrelationMatrix() {
+        SymmetricMatrix correlation
+                = SymmetricMatrix.compoundCorrelationSymmetricMatrix(offDiagonalParameter.getParameterValues(), dim);
+        if (!asCorrelation) {
+            for (int i = 0; i < dim; i++) {
+                for (int j = i + 1; j < dim; j++) {
+                    correlation.setSymmetric(i, j,
+                            correlation.component(i, j) / Math.sqrt(diagonalParameter.getParameterValue(i) * diagonalParameter.getParameterValue(j)));
+                }
+            }
+        }
+        return correlation.toComponents();
+    }
+
+    public double[] updateGradientCorrelation(double[] gradient) {
+        if (!isCholesky) {
+            return gradient;
+        } else {
+            CorrelationToCholesky transform = new CorrelationToCholesky(dim);
+            double[][] jacobian
+                    = transform.computeJacobianMatrixInverse(((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues());
+            // Matrix multiplication (upper triangular)
+            double[] updatedGradient = new double[gradient.length];
+            for (int i = 0; i < gradient.length; i++) {
+                for (int j = i; j < gradient.length; j++) {
+                    updatedGradient[i] += jacobian[i][j] * gradient[j];
+                }
+            }
+            return updatedGradient;
+        }
     }
 }

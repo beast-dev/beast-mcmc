@@ -1,7 +1,7 @@
 /*
- * PrecisionGradient.java
+ * DiagonalPrecisionGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -34,13 +34,18 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  * @author Paul Bastide
  * @author Marc A. Suchard
  */
-public class PrecisionGradient extends AbstractPrecisionGradient {
+public class DiagonalPrecisionGradient extends AbstractPrecisionGradient {
 
-    public PrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
-                             Likelihood likelihood,
-                             CompoundSymmetricMatrix parameter) {
+    public DiagonalPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
+                                     Likelihood likelihood,
+                                     CompoundSymmetricMatrix parameter) {
 
         super(wishartStatistics, likelihood, parameter);
+    }
+
+    @Override
+    public int getDimension() {
+        return getDimensionDiagonal();
     }
 
     @Override
@@ -49,17 +54,8 @@ public class PrecisionGradient extends AbstractPrecisionGradient {
                                   SymmetricMatrix correlationPrecision,
                                   double[] precisionDiagonal) {
 
-        double[] gradientCorrelation = getGradientCorrelation(weightedSumOfSquares, numberTips,
+        return getGradientDiagonal(weightedSumOfSquares, numberTips,
                 correlationPrecision, precisionDiagonal);
-
-        double[] gradientDiagonal = getGradientDiagonal(weightedSumOfSquares, numberTips,
-                correlationPrecision, precisionDiagonal);
-
-        return mergeGradients(gradientDiagonal, gradientCorrelation);
-    }
-
-    private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {
-        throw new RuntimeException("Not yet implemented");
     }
 
 }

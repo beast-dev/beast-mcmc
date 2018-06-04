@@ -1,0 +1,150 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="X">10 11 12</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="X">2 3 4</attr>
+		</taxon>
+		<taxon id="C">
+			<attr name="X">2 4 3</attr>
+		</taxon>
+	</taxa>
+
+	<newick id="tree">
+		((A:1.1,B:1.1):1,C:2.1);
+	</newick>
+
+	<treeModel id="treeModel">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <compoundSymmetricMatrix id="precisionMatrix" asCorrelation="true" isCholesky="true">
+                <diagonal>
+                    <parameter id="precision.diagonal" value="1.0 1.0 1.0" lower="0.0 0.0 0.0"/>
+                </diagonal>
+                <offDiagonal>
+                    <parameter id="precision.correlation" value="0.0 0.0 0.0" />
+                </offDiagonal>
+            </compoundSymmetricMatrix>
+        </precisionMatrix>
+	</multivariateDiffusionModel>
+
+    <LKJCorrelationPrior id="precisionPrior.correlation" shapeParameter="1.0" dimension="3">
+		<data>
+            <parameter idref="precision.correlation"/>
+		</data>
+	</LKJCorrelationPrior>
+
+	<traitDataLikelihood id="bmLikelihood" traitName="X" forceFullPrecision="true">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+     	<conjugateRootPrior>
+            <meanParameter>
+                <parameter id="meanRoot"  value="-3.0 -1.0 1.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter id="sampleSizeRoot" value="10.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+	</traitDataLikelihood>
+
+    <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation">
+        <wishartStatistics  traitName="X">
+            <traitDataLikelihood idref="bmLikelihood"/>
+        </wishartStatistics>
+        <traitDataLikelihood idref="bmLikelihood"/>
+        <compoundSymmetricMatrix idref="precisionMatrix"/>
+    </precisionGradient>
+
+	<operators id="bmOperators">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient idref="precisionCorrelationGradient"/>
+			<parameter idref="precision.correlation"/>
+            <LKJTransform dimension = "3" cholesky="false"/>
+ 		</hamiltonianMonteCarloOperator>
+        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
+        <!--     <parameter idref="precision.correlation"/> -->
+        <!--     <LKJTransform dimension = "3"/> -->
+        <!-- </randomWalkOperator> -->
+        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
+        <!--     <parameter idref="precision.diagonal"/> -->
+        <!-- </randomWalkOperator> -->
+	</operators>
+
+	<!-- <report> -->
+	<!-- 	<integratedFactorModel idref="factorModel"/> -->
+	<!-- </report> -->
+
+	<mcmc id="bmMcmc" chainLength="1000000">
+		<posterior id="bmPosterior">
+            <prior id="prior">
+				<!-- <multivariateWishartPrior idref="precisionPrior"/> -->
+                <LKJCorrelationPrior idref="precisionPrior.correlation"/>
+                <logNormalPrior mean="0.0" stdev="1.0" offset="0.0" meanInRealSpace="false">
+                    <parameter idref="precision.diagonal"/>
+                </logNormalPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <traitDataLikelihood   idref="bmLikelihood"/>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators"/>
+
+		<log id="screenLog" logEvery="1000">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="bmPosterior"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+			<!-- <column label="meanRoot" dp="4" width="12"> -->
+                <!-- <parameter idref="meanRoot"/> -->
+			<!-- </column> -->
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="precisionMatrix"/>
+			</column>
+		</log>
+
+		<log logEvery="1000" fileName="testBM.log">
+			<traitLogger traitName="X" nodes="all">
+				<traitDataLikelihood   idref="bmLikelihood"/>
+<!-- 				<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/> -->
+				<treeModel idref="treeModel"/>
+			</traitLogger>
+			<traitDataLikelihood   idref="bmLikelihood"/>
+            <matrixParameter idref="precisionMatrix"/>
+			<parameter idref="meanRoot"/>
+			<parameter idref="sampleSizeRoot"/>
+		</log>
+
+		<logTree logEvery="1000" nexusFormat="true" fileName="testBM.trees">
+			<traitDataLikelihood   idref="bmLikelihood"/>
+			<treeModel idref="treeModel"/>
+		</logTree>
+	</mcmc>
+</beast>
+

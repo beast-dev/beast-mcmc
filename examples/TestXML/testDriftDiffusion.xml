@@ -3,13 +3,13 @@
 
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">10 11</attr>
+			<attr name="X">10 11 12</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">NA 3</attr>
+			<attr name="X">NA 3 5</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">2 4</attr>
+			<attr name="X">2 4 NA</attr>
 		</taxon>
 	</taxa>
 
@@ -28,17 +28,25 @@
 		<nodeHeights internalNodes="true" rootNode="true">
 			<parameter id="treeModel.allInternalNodeHeights"/>
 		</nodeHeights>
-		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3">
 			<parameter id="leafTraits"/>
 		</nodeTraits>
 	</treeModel>
 
     <multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
-			<matrixParameter id="precisionMatrix">
-				<parameter id="prec.col1" value="1.0 0.1"/>
-				<parameter id="prec.col2" value="0.1 2.0"/>
-			</matrixParameter>
+            <compoundSymmetricMatrix id="precisionMatrix" asCorrelation="true" isCholesky="true">
+                <diagonal>
+                    <parameter id="precision.diagonal" value="1.0 2.0 3.0" lower="0.0 0.0 0.0"/>
+                </diagonal>
+                <offDiagonal>
+                    <parameter id="precision.offDiagonal" value="0.5 0.5 0.5"/>
+                </offDiagonal>
+            </compoundSymmetricMatrix>
+			<!-- <matrixParameter id="precisionMatrix"> -->
+			<!-- 	<parameter id="prec.col1" value="1.0 0.1"/> -->
+			<!-- 	<parameter id="prec.col2" value="0.1 2.0"/> -->
+			<!-- </matrixParameter> -->
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
@@ -60,10 +68,15 @@
 					<parameter id="rate.2" value="2.0"/>
 				</rate>
 			</strictClockBranchRates>
+			<strictClockBranchRates>
+				<rate>
+					<parameter id="rate.3" value="3.0"/>
+				</rate>
+			</strictClockBranchRates>
 		</driftModels>
      	<conjugateRootPrior>
             <meanParameter>
-                <parameter id="meanRoot"  value="-3.0 -1.0"/>
+                <parameter id="meanRoot"  value="-3.0 -1.0 1.0"/>
             </meanParameter>
             <priorSampleSize>
                 <parameter id="sampleSizeRoot" value="10.0"/>
@@ -112,8 +125,9 @@
 			</traitLogger>
 			<parameter idref="rate.1"/>
 			<parameter idref="rate.2"/>
+			<parameter idref="rate.3"/>
 			<traitDataLikelihood idref="driftLikelihood"/>
-            <matrixParameter idref="precisionMatrix"/>
+            <parameter idref="precisionMatrix"/>
 			<parameter idref="meanRoot"/>
 			<parameter idref="sampleSizeRoot"/>
 		</log>

@@ -87,6 +87,11 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     }
 
     @Override
+    public double[] gradient(double[] values, int from, int to) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public double[] gradientInverse(double[] values, int from, int to) {
         throw new RuntimeException("Not yet implemented");
     }

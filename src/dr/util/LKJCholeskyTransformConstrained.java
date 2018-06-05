@@ -106,6 +106,11 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     }
 
     @Override
+    public double[] gradient(double[] values, int from, int to) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public double[] gradientInverse(double[] values, int from, int to) {
         throw new RuntimeException("Not yet implemented");
     }

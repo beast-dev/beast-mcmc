@@ -700,6 +700,11 @@ public interface Transform {
         }
 
         @Override
+        public double[] gradient(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
         public double[] gradientInverse(double[] values, int from, int to) {
             throw new RuntimeException("Not yet implemented.");
         }
@@ -789,6 +794,11 @@ public interface Transform {
 
         @Override
         public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
             throw new RuntimeException("Not yet implemented.");
         }
 

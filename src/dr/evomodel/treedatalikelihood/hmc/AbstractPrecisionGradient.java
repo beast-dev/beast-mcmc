@@ -32,6 +32,7 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
@@ -43,12 +44,11 @@ import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
 public abstract class AbstractPrecisionGradient implements GradientWrtParameterProvider, Reportable {
 
     private final ConjugateWishartStatisticsProvider wishartStatistics;
-    private final Likelihood likelihood;
-    private final CompoundSymmetricMatrix parameter;
+    final Likelihood likelihood;
+    final CompoundSymmetricMatrix parameter;
     private final int dim;
 
-
-    public AbstractPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
+    AbstractPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
                                      Likelihood likelihood,
                                      CompoundSymmetricMatrix parameter) {
         assert parameter.asCorrelation()
@@ -102,13 +102,35 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         // TODO Compute w.r.t. to precision
         // TODO Chain-rule w.r.t. to parametrization
 
-        return getGradientParameter(weightedSumOfSquares, numberTips,
+        if (CHECK_GRADIENT) {
+            System.err.println("Analytic at: \n" + new Vector(parameter.getOffDiagonalParameter().getParameterValues())
+                    + " " + new Vector(parameter.getDiagonal()));
+        }
+
+        double[] gradient = getGradientParameter(weightedSumOfSquares, numberTips,
                 correlationPrecision, precisionDiagonal);
+
+        if (CHECK_GRADIENT) {
+            System.err.println(checkNumeric(gradient));
+        }
+
+        return gradient;
     }
+
+    String getReportString(double[] analytic, double[] numeric) {
+
+        return getClass().getCanonicalName() + "\n" +
+                "analytic: " + new Vector(analytic) +
+                "\n" +
+                "numeric : " + new Vector(numeric) +
+                "\n";
+    }
+
+    abstract String checkNumeric(double[] analytic);
 
     @Override
     public String getReport() {
-        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
+        return checkNumeric(getGradientLogDensity());
     }
 
     abstract double[] getGradientParameter(SymmetricMatrix weightedSumOfSquares,
@@ -160,4 +182,6 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         return gradientDiagonal;
     }
+
+    private static final boolean CHECK_GRADIENT = true;
 }

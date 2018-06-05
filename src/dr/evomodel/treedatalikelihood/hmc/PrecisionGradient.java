@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.Likelihood;
+import dr.math.MultivariateFunction;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
@@ -61,5 +62,10 @@ public class PrecisionGradient extends AbstractPrecisionGradient {
     private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {
         throw new RuntimeException("Not yet implemented");
     }
+
+    MultivariateFunction getNumeric() { return null; }
+
+    @Override
+    String checkNumeric(double[] analytic) { return ""; }
 
 }

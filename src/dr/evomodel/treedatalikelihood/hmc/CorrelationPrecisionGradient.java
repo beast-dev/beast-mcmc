@@ -27,8 +27,11 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.Likelihood;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Paul Bastide
@@ -47,6 +50,52 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
     @Override
     public int getDimension() {
         return getDimensionCorrelation();
+    }
+
+    MultivariateFunction getNumeric() {
+
+        return new MultivariateFunction() {
+
+            @Override
+            public double evaluate(double[] argument) {
+
+                for (int i = 0; i < argument.length; ++i) {
+                    parameter.getOffDiagonalParameter().setParameterValue(i, argument[i]);
+                }
+
+                likelihood.makeDirty();
+                return likelihood.getLogLikelihood();
+            }
+
+            @Override
+            public int getNumArguments() {
+                return parameter.getOffDiagonalParameter().getDimension();
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return -1.0;
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return 1.0;
+            }
+        };
+    }
+
+    @Override
+    String checkNumeric(double[] analytic) {
+
+        System.err.println("Numeric at: \n" + new Vector(parameter.getOffDiagonalParameter().getParameterValues()));
+
+        double[] storedValues = parameter.getOffDiagonalParameter().getParameterValues();
+        double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
+        for (int i = 0; i < storedValues.length; ++i) {
+            parameter.getOffDiagonalParameter().setParameterValue(i, storedValues[i]);
+        }
+
+        return getReportString(analytic, testGradient);
     }
 
     @Override

@@ -38,8 +38,8 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     private final Parameter diagonalParameter;
     private final Parameter offDiagonalParameter;
 
-    private boolean asCorrelation = false;
-    private boolean isCholesky = false;
+    private boolean asCorrelation;
+    private boolean isCholesky;
     private int dim;
 
     public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
@@ -166,6 +166,10 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     public double[] getDiagonal() {
         return diagonalParameter.getParameterValues();
     }
+
+    public Parameter getDiagonalParameter() { return diagonalParameter; }
+
+    public Parameter getOffDiagonalParameter() { return offDiagonalParameter; }
 
     public double[][] getCorrelationMatrix() {
         SymmetricMatrix correlation

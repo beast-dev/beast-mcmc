@@ -74,10 +74,6 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
         saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
 
-        if (System.getProperty(FORCE_RESUME) != null) {
-            forceResume = Boolean.parseBoolean(FORCE_RESUME);
-        }
-
         final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 
         if (System.getProperty(SAVE_STATE_AT) != null) {
@@ -126,7 +122,14 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
 
     @Override
     public void checkLoadState(double savedLnL, double lnL) {
+
         if (CHECK_LOAD_STATE) {
+
+            if (System.getProperty(FORCE_RESUME) != null) {
+                forceResume = Boolean.parseBoolean(System.getProperty(FORCE_RESUME));
+                //System.out.println("FORCE_RESUME? " + System.getProperty(FORCE_RESUME) + " (" + forceResume + "");
+            }
+
             //first perform a simple check for equality of two doubles
             //when this test fails, go over the digits
             if (forceResume) {

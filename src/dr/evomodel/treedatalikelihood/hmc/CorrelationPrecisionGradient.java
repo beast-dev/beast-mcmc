@@ -90,7 +90,9 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
         System.err.println("Numeric at: \n" + new Vector(parameter.getOffDiagonalParameter().getParameterValues()));
 
         double[] storedValues = parameter.getOffDiagonalParameter().getParameterValues();
-        double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
+        double[] testGradient = parameter.updateGradientCorrelation(
+                NumericalDerivative.gradient(getNumeric(), storedValues)
+        );
         for (int i = 0; i < storedValues.length; ++i) {
             parameter.getOffDiagonalParameter().setParameterValue(i, storedValues[i]);
         }

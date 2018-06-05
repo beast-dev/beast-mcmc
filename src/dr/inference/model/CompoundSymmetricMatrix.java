@@ -38,9 +38,9 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     private final Parameter diagonalParameter;
     private final Parameter offDiagonalParameter;
 
-    private boolean asCorrelation;
-    private boolean isCholesky;
-    private int dim;
+    private final boolean asCorrelation;
+    private final boolean isCholesky;
+    private final int dim;
 
     public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
         super(MATRIX_PARAMETER);

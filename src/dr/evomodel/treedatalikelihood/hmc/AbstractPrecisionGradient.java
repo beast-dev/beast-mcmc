@@ -173,11 +173,12 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         for (int i = 0; i < dim; i++) {
             // Product
+            double innerProduct = 0.0;
             for (int j = 0; j < dim; j++) {
-                gradientDiagonal[i] += correlationPrecision.component(i, j) * weightedSumOfSquares.component(i, j);
+                innerProduct += correlationPrecision.component(i, j) * weightedSumOfSquares.component(i, j);
             }
             // diagonal
-            gradientDiagonal[i] = numberTips * 0.5 / precisionDiagonal[i] - 0.5 * gradientDiagonal[i];
+            gradientDiagonal[i] = numberTips * 0.5 / precisionDiagonal[i] - 0.5 * innerProduct;
         }
 
         return gradientDiagonal;

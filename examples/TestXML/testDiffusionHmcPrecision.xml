@@ -46,12 +46,6 @@
         </precisionMatrix>
 	</multivariateDiffusionModel>
 
-    <LKJCorrelationPrior id="precisionPrior.correlation" shapeParameter="1.0" dimension="3">
-		<data>
-            <parameter idref="precision.correlation"/>
-		</data>
-	</LKJCorrelationPrior>
-
 	<traitDataLikelihood id="bmLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
@@ -68,6 +62,9 @@
         </conjugateRootPrior>
 	</traitDataLikelihood>
 
+    <!-- ************************************************** -->
+    <!-- Correlation -->
+
     <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation">
         <wishartStatistics  traitName="X">
             <traitDataLikelihood idref="bmLikelihood"/>
@@ -76,75 +73,210 @@
         <compoundSymmetricMatrix idref="precisionMatrix"/>
     </precisionGradient>
 
-	<operators id="bmOperators">
+	<operators id="bmOperators.correlation.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
  			drawVariance="1.0">
  			<gradient idref="precisionCorrelationGradient"/>
 			<parameter idref="precision.correlation"/>
-            <LKJTransform dimension = "3" cholesky="false"/>
+            <LKJTransform dimension = "3"/>
  		</hamiltonianMonteCarloOperator>
-        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
-        <!--     <parameter idref="precision.correlation"/> -->
-        <!--     <LKJTransform dimension = "3"/> -->
-        <!-- </randomWalkOperator> -->
-        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
-        <!--     <parameter idref="precision.diagonal"/> -->
-        <!-- </randomWalkOperator> -->
 	</operators>
 
-	<!-- <report> -->
-	<!-- 	<integratedFactorModel idref="factorModel"/> -->
-	<!-- </report> -->
+	<operators id="bmOperators.correlation.randomWalk">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.correlation"/>
+            <LKJTransform dimension = "3"/>
+        </randomWalkOperator>
+	</operators>
 
-	<mcmc id="bmMcmc" chainLength="1000000">
-		<posterior id="bmPosterior">
-            <prior id="prior">
-				<!-- <multivariateWishartPrior idref="precisionPrior"/> -->
-                <LKJCorrelationPrior idref="precisionPrior.correlation"/>
-                <logNormalPrior mean="0.0" stdev="1.0" offset="0.0" meanInRealSpace="false">
-                    <parameter idref="precision.diagonal"/>
-                </logNormalPrior>
-            </prior>
-            <likelihood id="likelihood">
-                <traitDataLikelihood   idref="bmLikelihood"/>
+	<mcmc id="mcmc.correlation.hmcVanilla" chainLength="100000" autoOptimize="false">
+		<posterior>
+            <likelihood id="likelihood.correlation.hmcVanilla">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="precisionMatrix"/>
+                </dummyLikelihood>
             </likelihood>
 		</posterior>
-		<operators idref="bmOperators"/>
+		<operators idref="bmOperators.correlation.hmcVanilla"/>
 
-		<log id="screenLog" logEvery="1000">
-			<column label="Posterior" dp="4" width="12">
-				<posterior idref="bmPosterior"/>
-			</column>
-			<column label="Prior" dp="4" width="12">
-				<prior idref="prior"/>
-			</column>
+		<log logEvery="1000">
 			<column label="Likelihood" dp="4" width="12">
-				<likelihood idref="likelihood"/>
+				<likelihood idref="likelihood.correlation.hmcVanilla"/>
 			</column>
-			<!-- <column label="meanRoot" dp="4" width="12"> -->
-                <!-- <parameter idref="meanRoot"/> -->
-			<!-- </column> -->
 			<column label="precision" dp="4" width="12">
                 <matrixParameter idref="precisionMatrix"/>
 			</column>
 		</log>
-
-		<log logEvery="1000" fileName="testBM.log">
-			<traitLogger traitName="X" nodes="all">
-				<traitDataLikelihood   idref="bmLikelihood"/>
-<!-- 				<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/> -->
-				<treeModel idref="treeModel"/>
-			</traitLogger>
-			<traitDataLikelihood   idref="bmLikelihood"/>
-            <matrixParameter idref="precisionMatrix"/>
-			<parameter idref="meanRoot"/>
-			<parameter idref="sampleSizeRoot"/>
+		<log logEvery="100" fileName="testDiffusionCorrelationHmcVanilla.log">
+				<likelihood idref="likelihood.correlation.hmcVanilla"/>
+                <matrixParameter idref="precision.correlation"/>
 		</log>
-
-		<logTree logEvery="1000" nexusFormat="true" fileName="testBM.trees">
-			<traitDataLikelihood   idref="bmLikelihood"/>
-			<treeModel idref="treeModel"/>
-		</logTree>
 	</mcmc>
+
+	<mcmc id="mcmc.correlation.randomWalk" chainLength="1000000" autoOptimize="false">
+		<posterior>
+            <likelihood id="likelihood.correlation.randomWalk">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="precisionMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.correlation.randomWalk"/>
+
+		<log logEvery="10000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.correlation.randomWalk"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="precisionMatrix"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testDiffusionCorrelationRandomWalk.log">
+				<likelihood idref="likelihood.correlation.randomWalk"/>
+                <matrixParameter idref="precision.correlation"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.correlation.randomWalk"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionCorrelationRandomWalk.log" stdError="true"/>
+	
+	<report>
+		<property name="timer">
+			<object idref="mcmc.correlation.hmcVanilla"/>
+		</property>
+	</report>
+	
+	<traceAnalysis fileName="testDiffusionCorrelationHmcVanilla.log" stdError="true"/>
+
+<!--
+
+burnIn   <= 100000,   maxState  = 1000000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.correlation.randomWalk   -21.2659    1.3063  -20.9035    -23.7866    -19.756 901 -20.9821    -19.8559    
+precision.correlation1  -0.6402 0.0942  -0.6481 -0.8275 -0.4743 901 -0.7248 -0.6042 
+precision.correlation2  -0.4573 0.1202  -0.4617 -0.6929 -0.2378 901 -0.551  -0.3949 
+precision.correlation3  -0.8309 0.0685  -0.8402 -0.9472 -0.7034 901 -0.9022 -0.814  
+
+burnIn   <= 10000,   maxState  = 100000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.correlation.hmcVanilla   -21.2321    1.2277  -20.8871    -23.7126    -19.7818    901 -20.9194    -19.8375    
+precision.correlation1  -0.644  0.0881  -0.6489 -0.8035 -0.4719 885.1466    -0.718  -0.5987 
+precision.correlation2  -0.4539 0.1194  -0.4568 -0.6926 -0.2223 901 -0.528  -0.3728 
+precision.correlation3  -0.8319 0.0684  -0.8383 -0.9578 -0.6974 901 -0.8917 -0.8055 
+-->
+
+    <!-- ************************************************** -->
+    <!-- Diagonal -->
+
+    <precisionGradient id="precisionDiagonalGradient" parameter="precisionDiagonal">
+        <wishartStatistics  traitName="X">
+            <traitDataLikelihood idref="bmLikelihood"/>
+        </wishartStatistics>
+        <traitDataLikelihood idref="bmLikelihood"/>
+        <compoundSymmetricMatrix idref="precisionMatrix"/>
+    </precisionGradient>
+
+	<operators id="bmOperators.diagonal.hmcVanilla">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient idref="precisionDiagonalGradient"/>
+            <parameter idref="precision.diagonal"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<operators id="bmOperators.diagonal.randomWalk">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.diagonal"/>
+        </randomWalkOperator>
+	</operators>
+
+	<mcmc id="mcmc.diagonal.randomWalk" chainLength="1000000" autoOptimize="false">
+		<posterior>
+            <likelihood id="likelihood.diagonal.randomWalk">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="precisionMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.diagonal.randomWalk"/>
+
+		<log logEvery="10000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.diagonal.randomWalk"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="precisionMatrix"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testDiffusionDiagonalRandomWalk.log">
+				<likelihood idref="likelihood.diagonal.randomWalk"/>
+                <matrixParameter idref="precision.diagonal"/>
+		</log>
+	</mcmc>
+
+	<mcmc id="mcmc.diagonal.hmcVanilla" chainLength="1000000" autoOptimize="false">
+		<posterior>
+            <likelihood id="likelihood.diagonal.hmcVanilla">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="precisionMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.diagonal.hmcVanilla"/>
+
+		<log logEvery="10000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="precisionMatrix"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testDiffusionDiagonalHmcVanilla.log">
+				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
+                <matrixParameter idref="precision.diagonal"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.diagonal.randomWalk"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionDiagonalRandomWalk.log" stdError="true"/>
+	
+	<report>
+		<property name="timer">
+			<object idref="mcmc.diagonal.hmcVanilla"/>
+		</property>
+	</report>
+	
+	<traceAnalysis fileName="testDiffusionDiagonalHmcVanilla.log" stdError="true"/>
+
+<!--
+burnIn   <= 100000,   maxState  = 1000000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.randomWalk  -21.6665    1.3689  -21.3554    -24.5361    -19.9241    896.5488    -21.5338    -20.1595    
+precision.diagonal1 1.5632  0.6321  1.4925  0.5647  2.9091  747.9767    0.9358  1.7495  
+precision.diagonal2 1.8745  0.7588  1.7984  0.7024  3.4601  649.5262    1.1737  2.1515  
+precision.diagonal3 2.2155  0.907   2.0761  0.7348  3.9479  763.6206    1.3899  2.5428  
+
+burnIn   <= 100000,   maxState  = 1000000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.hmcVanilla  -21.5882    1.3283  -21.2757    -24.2463    -19.9363    857.93  -21.3205    -20.0124    
+precision.diagonal1 1.5078  0.6174  1.4317  0.4725  2.7538  756.4183    0.8941  1.6382  
+precision.diagonal2 1.7954  0.7249  1.6949  0.6048  3.2936  707.3862    0.9945  1.865   
+precision.diagonal3 2.1617  0.8787  2.0538  0.5379  3.813   642.07  1.3015  2.3943  
+-->
 </beast>
 

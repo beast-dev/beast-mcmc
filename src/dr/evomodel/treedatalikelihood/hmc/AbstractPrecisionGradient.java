@@ -155,7 +155,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 gradientDiagonal[i] += correlationPrecision.component(i, j) * weightedSumOfSquares.component(i, j);
             }
             // diagonal
-            gradientDiagonal[i] = -numberTips * 0.5 / precisionDiagonal[i] + 0.5 * precisionDiagonal[i];
+            gradientDiagonal[i] = -numberTips * 0.5 / precisionDiagonal[i] + 0.5 * gradientDiagonal[i];
         }
 
         return gradientDiagonal;

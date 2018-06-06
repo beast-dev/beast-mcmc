@@ -222,7 +222,7 @@ precision.correlation3  -0.8319 0.0684  -0.8383 -0.9578 -0.6974 901 -0.8917 -0.8
 		</log>
 	</mcmc>
 
-	<mcmc id="mcmc.diagonal.hmcVanilla" chainLength="1000000" autoOptimize="false">
+	<mcmc id="mcmc.diagonal.hmcVanilla" chainLength="100000" autoOptimize="false">
 		<posterior>
             <likelihood id="likelihood.diagonal.hmcVanilla">
                 <traitDataLikelihood idref="bmLikelihood"/>
@@ -233,7 +233,7 @@ precision.correlation3  -0.8319 0.0684  -0.8383 -0.9578 -0.6974 901 -0.8917 -0.8
 		</posterior>
 		<operators idref="bmOperators.diagonal.hmcVanilla"/>
 
-		<log logEvery="10000">
+		<log logEvery="1000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
 			</column>
@@ -241,7 +241,7 @@ precision.correlation3  -0.8319 0.0684  -0.8383 -0.9578 -0.6974 901 -0.8917 -0.8
                 <matrixParameter idref="precisionMatrix"/>
 			</column>
 		</log>
-		<log logEvery="1000" fileName="testDiffusionDiagonalHmcVanilla.log">
+		<log logEvery="100" fileName="testDiffusionDiagonalHmcVanilla.log">
 				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
                 <matrixParameter idref="precision.diagonal"/>
 		</log>
@@ -271,12 +271,12 @@ precision.diagonal1 1.5632  0.6321  1.4925  0.5647  2.9091  747.9767    0.9358  
 precision.diagonal2 1.8745  0.7588  1.7984  0.7024  3.4601  649.5262    1.1737  2.1515  
 precision.diagonal3 2.2155  0.907   2.0761  0.7348  3.9479  763.6206    1.3899  2.5428  
 
-burnIn   <= 100000,   maxState  = 1000000
+burnIn   <= 10000,   maxState  = 100000
 statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
-likelihood.diagonal.hmcVanilla  -21.5882    1.3283  -21.2757    -24.2463    -19.9363    857.93  -21.3205    -20.0124    
-precision.diagonal1 1.5078  0.6174  1.4317  0.4725  2.7538  756.4183    0.8941  1.6382  
-precision.diagonal2 1.7954  0.7249  1.6949  0.6048  3.2936  707.3862    0.9945  1.865   
-precision.diagonal3 2.1617  0.8787  2.0538  0.5379  3.813   642.07  1.3015  2.3943  
+likelihood.diagonal.hmcVanilla  -21.7098    1.3899  -21.3931    -24.4427    -19.9449    142.6371    -21.471 -20.0756    
+precision.diagonal1 1.5467  0.665   1.4512  0.4173  2.8261  127.0657    0.9646  1.7899  
+precision.diagonal2 1.8352  0.7529  1.7541  0.4997  3.2793  85.7296 1.1177  2.0961  *
+precision.diagonal3 2.2212  0.9211  2.0922  0.6555  3.9722  92.5297 1.3705  2.5848  *
 -->
 </beast>
 

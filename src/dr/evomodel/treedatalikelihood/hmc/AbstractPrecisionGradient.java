@@ -49,8 +49,8 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     private final int dim;
 
     AbstractPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
-                                     Likelihood likelihood,
-                                     CompoundSymmetricMatrix parameter) {
+                              Likelihood likelihood,
+                              CompoundSymmetricMatrix parameter) {
         assert parameter.asCorrelation()
                 : "PrecisionGradient can only be applied to a CompoundSymmetricMatrix with off-diagonal as correlation.";
 
@@ -175,7 +175,8 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             // Product
             double innerProduct = 0.0;
             for (int j = 0; j < dim; j++) {
-                innerProduct += correlationPrecision.component(i, j) * weightedSumOfSquares.component(i, j);
+                innerProduct += correlationPrecision.component(i, j) * weightedSumOfSquares.component(i, j)
+                        * Math.sqrt(precisionDiagonal[j] / precisionDiagonal[i]);
             }
             // diagonal
             gradientDiagonal[i] = numberTips * 0.5 / precisionDiagonal[i] - 0.5 * innerProduct;

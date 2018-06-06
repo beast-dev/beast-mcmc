@@ -47,10 +47,17 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     final Likelihood likelihood;
     final CompoundSymmetricMatrix parameter;
     private final int dim;
+    private final Parameterization parameterization;
 
     AbstractPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
                               Likelihood likelihood,
                               CompoundSymmetricMatrix parameter) {
+        this(wishartStatistics, likelihood, parameter, Parameterization.AS_PRECISION);
+    }
+
+    AbstractPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
+                              Likelihood likelihood,
+                              CompoundSymmetricMatrix parameter, Parameterization parameterization) {
         assert parameter.asCorrelation()
                 : "PrecisionGradient can only be applied to a CompoundSymmetricMatrix with off-diagonal as correlation.";
 
@@ -58,6 +65,25 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         this.likelihood = likelihood;
         this.parameter = parameter;
         this.dim = parameter.getColumnDimension();
+        this.parameterization = parameterization;
+    }
+
+    enum Parameterization {
+        AS_PRECISION {
+            @Override
+            double[] chainRule(double[] x) {
+                return x; // Do nothing
+            }
+        },
+        AS_VARIANCE {
+            @Override
+            double[] chainRule(double[] x) {
+                // TODO Handle matrix-inverse
+                return x;
+            }
+        };
+
+        abstract double[] chainRule(double[] x);
     }
 
     @Override
@@ -86,20 +112,17 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     @Override
     public double[] getGradientLogDensity() {
 
-        // TODO I believe we need:
-        // TODO (1) d log det(parameter) -- easy if parameter is a function of a triangular decomposition
-        // TODO (2) weightedSumOfSquares = Y' \Phi Y, where Y = fully observed / sampled tip trait matrix and \Phi is tree-precision
-
         // Statistics
         WishartSufficientStatistics statistics = wishartStatistics.getWishartStatistics();
         SymmetricMatrix weightedSumOfSquares = new SymmetricMatrix(statistics.getScaleMatrix(), dim);
         int numberTips = statistics.getDf();
 
+        // TODO For non-matrix-normal models, use sum of gradients w.r.t. branch-specific precisions
+
         // parameters
         SymmetricMatrix correlationPrecision = new SymmetricMatrix(parameter.getCorrelationMatrix());
         double[] precisionDiagonal = parameter.getDiagonal();
 
-        // TODO Compute w.r.t. to precision
         // TODO Chain-rule w.r.t. to parametrization
 
         if (CHECK_GRADIENT) {
@@ -156,6 +179,8 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             }
         }
 
+        // TODO Handle chain-rule for parameterization
+
         // If necessary, apply chain rule to get the gradient w.r.t. cholesky of correlation matrix
         gradientCorrelation = parameter.updateGradientCorrelation(gradientCorrelation);
 
@@ -181,6 +206,8 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             // diagonal
             gradientDiagonal[i] = numberTips * 0.5 / precisionDiagonal[i] - 0.5 * innerProduct;
         }
+
+        // TODO Handle chain-rule for parameterization
 
         return gradientDiagonal;
     }

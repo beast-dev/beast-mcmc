@@ -107,9 +107,10 @@ public class MaximizerWrtParameter implements Reportable {
         if (settings.startAtCurrentState) {
             x0 = parameter.getParameterValues();
 
-            if (transform != null) {
-                x0 = transform.inverse(x0, 0, x0.length);
-            }
+// PB: I don't think that this is needed.
+//            if (transform != null) {
+//                x0 = transform.inverse(x0, 0, x0.length);
+//            }
         }
 
         long startTime = System.currentTimeMillis();

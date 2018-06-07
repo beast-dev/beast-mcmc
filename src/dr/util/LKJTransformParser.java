@@ -38,7 +38,7 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
 
     public static final String NAME = "LKJTransform";
     public static final String DIMENSION = "dimension";
-    public static final String CHOLESKY = "cholesky";
+    private static final String CHOLESKY = "cholesky";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -69,12 +69,14 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
 
         // Compose
         return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);
+
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule(DIMENSION, true),
+                AttributeRule.newIntegerRule(DIMENSION, false),
+                AttributeRule.newBooleanRule(CHOLESKY, true),
         };
     }
 

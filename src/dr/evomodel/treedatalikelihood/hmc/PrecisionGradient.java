@@ -63,9 +63,13 @@ public class PrecisionGradient extends AbstractPrecisionGradient {
         throw new RuntimeException("Not yet implemented");
     }
 
-    MultivariateFunction getNumeric() { return null; }
+    MultivariateFunction getNumeric() {
+        return null;
+    }
 
     @Override
-    String checkNumeric(double[] analytic) { return ""; }
+    String checkNumeric(double[] analytic) {
+        return "";
+    }
 
 }

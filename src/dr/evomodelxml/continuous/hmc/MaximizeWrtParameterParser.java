@@ -67,8 +67,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             likelihood = (Likelihood) cxo.getChild(Likelihood.class);
         }
 
-        Transform transform = (Transform.MultivariableTransformWithParameter)
-                xo.getChild(Transform.MultivariableTransformWithParameter.class);
+        Transform transform = (Transform) xo.getChild(Transform.class);
 
         MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
                 new MaximizerWrtParameter.Settings(nIterations, initialGuess, printScreen));

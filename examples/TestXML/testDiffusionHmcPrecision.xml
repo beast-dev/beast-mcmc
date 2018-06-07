@@ -155,6 +155,18 @@
 	
 	<traceAnalysis fileName="testDiffusionCorrelationHmcVanilla.log" stdError="true"/>
 
+    <maximizeWrtParameter id="maximize.correlation"  nIteration="100" printToScreen="true">
+        <densityWrtParameter>
+            <traitDataLikelihood idref="bmLikelihood"/>
+            <matrixParameter idref="precision.correlation"/>
+        </densityWrtParameter>
+        <LKJTransform  dimension = "3"/>
+    </maximizeWrtParameter>
+
+    <report>
+        <maximizeWrtParameter idref="maximize.correlation"/> 
+    </report>
+
 <!--
 
 burnIn   <= 100000,   maxState  = 1000000
@@ -262,6 +274,20 @@ precision.correlation3  -0.8319 0.0684  -0.8383 -0.9578 -0.6974 901 -0.8917 -0.8
 	</report>
 	
 	<traceAnalysis fileName="testDiffusionDiagonalHmcVanilla.log" stdError="true"/>
+
+    <maximizeWrtParameter id="maximize.diagonal"  nIteration="100" printToScreen="true">
+        <densityWrtParameter>
+            <traitDataLikelihood idref="bmLikelihood"/>
+            <paramter idref="precision.diagonal"/>
+        </densityWrtParameter>
+        <signTransform>
+            <paramter idref="precision.diagonal"/>
+        </signTransform>
+    </maximizeWrtParameter>
+
+    <report>
+        <maximizeWrtParameter idref="maximize.diagonal"/> 
+    </report>
 
 <!--
 burnIn   <= 100000,   maxState  = 1000000

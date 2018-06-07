@@ -182,10 +182,11 @@ public class MaximizerWrtParameter implements Reportable {
                 double[] result = gradient.getGradientLogDensity();
 
                 if (transform != null) {
-                    double[] differential = transform.gradient(argument, 0, argument.length);
-                    for (int i = 0; i < result.length; ++i) {
-                        result[i] *= differential[i];
-                    }
+//                    double[] differential = transform.gradient(argument, 0, argument.length);
+//                    for (int i = 0; i < result.length; ++i) {
+//                        result[i] *= differential[i];
+//                    }
+                    result = transform.updateGradientInverse(result, argument, 0, argument.length);
 
                 }
                 for (int i = 0; i < result.length; ++i) {

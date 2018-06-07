@@ -85,6 +85,10 @@ public interface Transform {
 
     double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to);
 
+    double updateGradientInverse(double gradient, double value);
+
+    double[] updateGradientInverse(double[] gradient, double[] value, int from, int to);
+
     double gradient(double value);
 
     double[] gradient(double[] values, int from, int to);
@@ -153,7 +157,10 @@ public interface Transform {
             return result;
         }
 
-        public abstract double updateGradientLogDensity(double gradient, double value);
+        public double updateGradientLogDensity(double gradient, double value) {
+            // value : untransformed.
+            return updateGradientInverse(gradient, transform(value)) + getGradientLogJacobianInverse(transform(value));
+        }
 
         public double[] updateGradientLogDensity(double[] gradient, double[] value , int from, int to) {
             double[] result = value.clone();
@@ -162,6 +169,21 @@ public interface Transform {
             }
             return result;
         }
+
+        public double updateGradientInverse(double gradient, double value) {
+            // value is transformed
+            return gradient * gradientInverse(value);
+        }
+
+        public double[] updateGradientInverse(double[] gradient, double[] value, int from, int to) {
+            double[] result = value.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = updateGradientInverse(gradient[i], value[i]);
+            }
+            return result;
+        }
+
+        protected abstract double getGradientLogJacobianInverse(double value); // takes transformed value
 
         public abstract double gradient(double value);
 
@@ -201,6 +223,14 @@ public interface Transform {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
+        public double updateGradientInverse(double gradient, double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
         public double gradientInverse(double value) {
              throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
          }
@@ -232,24 +262,34 @@ public interface Transform {
         public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
             // values = untransformed (R)
             double[] transformedValues = transform(value, 0, value.length);
-            // Jacobian of inverse (transpose)
-            double[][] jacobianInverse = computeJacobianMatrixInverse(transformedValues);
+            // Transform Inverse
+            double[] updatedGradient = updateGradientInverse(gradient, transformedValues, from, to);
             // gradient of log jacobian of the inverse
             double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
-            // Matrix multiplication (upper triangular) + updated gradient
-            double[] updatedGradient = new double[gradient.length];
+            // Add gradient log jacobian
             for (int i = 0; i < gradient.length; i++) {
-                for (int j = i; j < gradient.length; j++) {
-                    updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
-                }
                 updatedGradient[i] += gradientLogJacobianInverse[i];
             }
             return updatedGradient;
         }
 
-        abstract protected double[] getGradientLogJacobianInverse(double[] values);
+        public double[] updateGradientInverse(double[] gradient, double[] value, int from, int to) {
+            // takes transformed values
+            // Jacobian of inverse (transpose)
+            double[][] jacobianInverse = computeJacobianMatrixInverse(value);
+            // Matrix multiplication (upper triangular)
+            double[] updatedGradient = new double[gradient.length];
+            for (int i = 0; i < gradient.length; i++) {
+                for (int j = i; j < gradient.length; j++) {
+                    updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
+                }
+            }
+            return updatedGradient;
+        }
 
-        abstract public double[][] computeJacobianMatrixInverse(double[] values);
+        abstract protected double[] getGradientLogJacobianInverse(double[] values); // transformed value
+
+        abstract public double[][] computeJacobianMatrixInverse(double[] values); // transformed values
 
         public boolean isMultivariate() { return true;}
     }
@@ -267,9 +307,13 @@ public interface Transform {
         public double gradientInverse(double value) { return Math.exp(value); }
 
         public double updateGradientLogDensity(double gradient, double value) {
-            // value == gradient of inverse()
+            // value == gradient of inverse() (value is untransformed)
             // 1.0 == gradient of log Jacobian of inverse()
             return gradient * value + 1.0;
+        }
+
+        protected double getGradientLogJacobianInverse(double value) {
+            return 1.0;
         }
 
         @Override
@@ -352,6 +396,10 @@ public interface Transform {
         }
 
         public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double[] updateGradientInverse(double[] gradient, double[] value, int from, int to) {
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -445,6 +493,10 @@ public interface Transform {
             throw new RuntimeException("Not yet implemented");
         }
 
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         @Override
         public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
@@ -473,18 +525,23 @@ public interface Transform {
         }
 
         public double gradientInverse(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return 1.0 - Math.pow(inverse(value), 2);
         }
 
         public double updateGradientLogDensity(double gradient, double value) {
-            // 1 - value^2 : gradient of inverse
+            // 1 - value^2 : gradient of inverse (value is untransformed)
             // -1 - 2*value : gradient of log jacobian of inverse
             return (1.0 - value * value) * gradient - 1.0 - 2 * value;
         }
 
+        protected double getGradientLogJacobianInverse(double value) {
+            // -1 - 2*value : gradient of log jacobian of inverse (value is transformed)
+            return - 1.0 - 2 * inverse(value);
+        }
+
         @Override
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return 1.0 / (1.0 - value) / (1.0 + value);
         }
 
         public String getTransformName() {
@@ -510,6 +567,10 @@ public interface Transform {
             // -1 == gradient of inverse()
             // 0.0 == gradient of log Jacobian of inverse()
             return -gradient;
+        }
+
+        protected double getGradientLogJacobianInverse(double value) {
+            return 0.0;
         }
 
         @Override
@@ -566,6 +627,16 @@ public interface Transform {
         }
 
         @Override
+        public double updateGradientInverse(double gradient, double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
         public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -588,6 +659,10 @@ public interface Transform {
 
         public double updateGradientLogDensity(double gradient, double value) {
             return gradient;
+        }
+
+        protected double getGradientLogJacobianInverse(double value) {
+            return 0.0;
         }
 
         @Override
@@ -651,6 +726,11 @@ public interface Transform {
         }
 
         @Override
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
         public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -700,6 +780,13 @@ public interface Transform {
         }
 
         @Override
+        public double[] updateGradientInverse(double gradient[], double[] value, int from, int to) {
+            return outer.updateGradientInverse(
+                    inner.updateGradientInverse(gradient, outer.inverse(value, from, to), from, to),
+                    value, from, to);
+        }
+
+        @Override
         public double[] gradient(double[] values, int from, int to) {
             throw new RuntimeException("Not yet implemented.");
         }
@@ -741,6 +828,11 @@ public interface Transform {
         @Override
         public double updateGradientLogDensity(double gradient, double value) {
             throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("not implemented yet");
         }
 
         @Override
@@ -788,6 +880,11 @@ public interface Transform {
         }
 
         @Override
+        public double[] updateGradientInverse(double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
         public double[] inverse(double[] values, int from, int to) {
             return inner.transform(values, from, to); // Purposefully switched
         }
@@ -799,12 +896,12 @@ public interface Transform {
 
         @Override
         public double[] gradient(double[] values, int from, int to) {
-            throw new RuntimeException("Not yet implemented.");
+            return inner.gradientInverse(values, from, to);
         }
 
         @Override
         public double[] gradientInverse(double[] values, int from, int to) {
-            throw new RuntimeException("Not yet implemented.");
+            return inner.gradient(values, from, to);
         }
 
         @Override
@@ -882,6 +979,17 @@ public interface Transform {
               }
               return result;
           }
+
+        @Override
+        public double[] updateGradientInverse(double[] gradient, double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (int i = from; i < to; ++i) {
+                result[i] = array.get(i).updateGradientInverse(gradient[i], values[i]);
+            }
+            return result;
+        }
 
         @Override
         public double[] gradient(double[] values, int from, int to) {
@@ -1017,6 +1125,23 @@ public interface Transform {
                     final int end = Math.min(segment.end, to);
                     for (int i = begin; i < end; ++i) {
                         result[i] = segment.transform.updateGradientLogDensity(gradient[i], values[i]);
+                    }
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public double[] updateGradientInverse(double[] gradient, double[] values, int from, int to) {
+
+            final double[] result = values.clone();
+
+            for (ParsedTransform segment : segments) {
+                if (from < segment.end && to >= segment.start) {
+                    final int begin = Math.max(segment.start, from);
+                    final int end = Math.min(segment.end, to);
+                    for (int i = begin; i < end; ++i) {
+                        result[i] = segment.transform.updateGradientInverse(gradient[i], values[i]);
                     }
                 }
             }

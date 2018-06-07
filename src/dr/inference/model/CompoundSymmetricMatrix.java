@@ -190,15 +190,9 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
             return gradient;
         } else {
             CorrelationToCholesky transform = new CorrelationToCholesky(dim);
-            double[][] jacobian
-                    = transform.computeJacobianMatrixInverse(((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues());
-            // Matrix multiplication (upper triangular)
-            double[] updatedGradient = new double[gradient.length];
-            for (int i = 0; i < gradient.length; i++) {
-                for (int j = i; j < gradient.length; j++) {
-                    updatedGradient[i] += jacobian[i][j] * gradient[j];
-                }
-            }
+            double[] updatedGradient = transform.updateGradientInverse(gradient,
+                    ((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues(),
+                    0, gradient.length);
             return updatedGradient;
         }
     }

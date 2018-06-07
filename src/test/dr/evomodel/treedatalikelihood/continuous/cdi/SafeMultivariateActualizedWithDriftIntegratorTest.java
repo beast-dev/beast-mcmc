@@ -1,5 +1,7 @@
-package dr.evomodel.treedatalikelihood.continuous.cdi;
+package test.dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
@@ -8,7 +10,7 @@ import org.ejml.interfaces.decomposition.EigenDecomposition;
 import org.ejml.ops.EigenOps;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Paul Bastide
@@ -34,12 +36,12 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
 
         abstract class Basic implements Instance {
 
-            private EigenDecomposition decomposeStrenghtOfSelection(double[] Aparam){
+            private EigenDecomposition decomposeStrenghtOfSelection(double[] Aparam) {
                 int n = getDimTrait();
                 DenseMatrix64F A = MissingOps.wrap(Aparam, 0, n, n);
                 // Decomposition
                 EigenDecomposition eigA = DecompositionFactory.eig(n, true, true);
-                if( !eigA.decompose(A) ) throw new RuntimeException("Eigen decomposition failed.");
+                if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
                 return eigA;
             }
 
@@ -50,7 +52,8 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
                 double[] eigA = new double[dim];
                 for (int p = 0; p < dim; ++p) {
                     Complex64F ev = eigenDecompositionStrengthOfSelection.getEigenvalue(p);
-                    if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+                    if (!ev.isReal())
+                        throw new RuntimeException("Selection strength A should only have real eigenvalues.");
                     eigA[p] = ev.real;
                 }
                 return eigA;
@@ -64,16 +67,17 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
     }
 
     /**
-     *     Results obtained using the following R code:
-     *
-     *     variance <- matrix(data = c(1, 0, 0, 1), 2, 2)
-     *     alpha <- matrix(data = c(1, 0, 0, 1), 2, 2)
-     *     gamma <- PylogeneticEM::compute_stationary_variance(variance, alpha)
-     *
+     * Results obtained using the following R code:
+     * <p>
+     * variance <- matrix(data = c(1, 0, 0, 1), 2, 2)
+     * alpha <- matrix(data = c(1, 0, 0, 1), 2, 2)
+     * gamma <- PylogeneticEM::compute_stationary_variance(variance, alpha)
      */
 
     Instance test0 = new Instance.Basic() {
-        public int getDimTrait(){ return 2;}
+        public int getDimTrait() {
+            return 2;
+        }
 
         public double[] getPrecision() {
             return new double[]{
@@ -98,7 +102,9 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
     };
 
     Instance test1 = new Instance.Basic() {
-        public int getDimTrait(){ return 2;}
+        public int getDimTrait() {
+            return 2;
+        }
 
         public double[] getPrecision() {
             return new double[]{
@@ -117,13 +123,15 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
         public double[] getStationaryVariance() {
             return new double[]{
                     0.1867037, -0.1309637,
-                    -0.1309637,  0.4922574
+                    -0.1309637, 0.4922574
             };
         }
     };
 
     Instance test2 = new Instance.Basic() {
-        public int getDimTrait(){ return 5;}
+        public int getDimTrait() {
+            return 5;
+        }
 
         public double[] getPrecision() {
             return new double[]{
@@ -147,11 +155,11 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
 
         public double[] getStationaryVariance() {
             return new double[]{
-                     2.55009871, -0.21879549,  0.064601442,  0.578712147, -2.94641261,
-                    -0.21879549,  0.33965614, -0.082974248, -0.024285677,  0.17602648,
-                     0.06460144, -0.08297425,  0.097219008, -0.004240138, -0.05931872,
-                     0.57871215, -0.02428568, -0.004240138,  0.357880727, -0.77676809,
-                    -2.94641261,  0.17602648, -0.059318715, -0.776768090,  3.68424701
+                    2.55009871, -0.21879549, 0.064601442, 0.578712147, -2.94641261,
+                    -0.21879549, 0.33965614, -0.082974248, -0.024285677, 0.17602648,
+                    0.06460144, -0.08297425, 0.097219008, -0.004240138, -0.05931872,
+                    0.57871215, -0.02428568, -0.004240138, 0.357880727, -0.77676809,
+                    -2.94641261, 0.17602648, -0.059318715, -0.776768090, 3.68424701
             };
         }
     };

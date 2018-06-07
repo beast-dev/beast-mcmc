@@ -131,65 +131,6 @@ public class TransformParsers {
         }
     };
 
-    public static XMLObjectParser COMPOSE_MULTIVARIABLE_PARSER = new AbstractXMLObjectParser() {
-
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject outerXo = xo.getChild(OUTER);
-            XMLObject innerXo = xo.getChild(INNER);
-
-            Transform.ParsedTransform outerPT = (Transform.ParsedTransform)
-                    outerXo.getChild(Transform.ParsedTransform.class);
-
-            Transform.ParsedTransform innerPT = (Transform.ParsedTransform)
-                    innerXo.getChild(Transform.ParsedTransform.class);
-
-            if (!outerPT.equivalent(innerPT)) {
-                throw new XMLParseException("Not equivalent transformations");
-            }
-
-            if (outerPT.transform instanceof Transform.UnivariableTransform &&
-                    innerPT.transform instanceof Transform.UnivariableTransform) {
-
-                Transform.ParsedTransform composition = outerPT.clone();
-                composition.transform = new Transform.Compose((Transform.UnivariableTransform) outerPT.transform,
-                        (Transform.UnivariableTransform) innerPT.transform);
-                return composition;
-
-            } else {
-                throw new XMLParseException("Not composable transform types");
-            }
-        }
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[] {
-                    new ElementRule(OUTER, new XMLSyntaxRule[] {
-                            new ElementRule(Transform.ParsedTransform.class),
-                    }),
-                    new ElementRule(INNER, new XMLSyntaxRule[] {
-                            new ElementRule(Transform.ParsedTransform.class),
-                    }),
-            };
-        }
-
-        @Override
-        public String getParserDescription() {
-            return null;
-        }
-
-        @Override
-        public Class getReturnType() {
-            return Transform.ParsedTransform.class;
-        }
-
-        @Override
-        public String getParserName() {
-            return COMPOSE;
-        }
-    };
-
     @SuppressWarnings("unused")
     public static XMLObjectParser INVERSE_PARSER = new AbstractXMLObjectParser() {
         @Override

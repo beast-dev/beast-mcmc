@@ -145,7 +145,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return getClass().getCanonicalName() + "\n" +
                 "analytic: " + new Vector(analytic) +
                 "\n" +
-                "numeric : " + new Vector(numeric) +
+                "numeric: " + new Vector(numeric) +
                 "\n";
     }
 
@@ -212,5 +212,5 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return gradientDiagonal;
     }
 
-    private static final boolean CHECK_GRADIENT = true;
+    private static final boolean CHECK_GRADIENT = false;
 }

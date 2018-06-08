@@ -33,6 +33,7 @@ import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
@@ -187,12 +188,87 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             }
         }
 
+        if (USE_CHAIN_RULE) {
+
+            double[] vecC = flatten(parameter.getCorrelationMatrix());
+            double[] diagD = sqrt(parameter.getDiagonal()); // TODO Reparameterize s.t. P = D^{1/2} C D^{1/2}, unless there is a more general case I am missing
+
+            double[] vecV = new SymmetricMatrix(parameter.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
+
+            System.err.println("V: " + new WrappedVector.Raw(vecV));
+            System.err.println("P: " + new WrappedVector.Raw(parameter.getParameterValues()));
+
+            WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
+            double[] vecS = wss.getScaleMatrix();
+            int n = wss.getDf();
+
+            System.err.println("S: " + new WrappedVector.Raw(vecS));
+
+            double[] gradient = getGradientWrtPrecision(vecV, n, vecS);
+
+            System.err.println("1: " + new WrappedVector.Raw(gradient));
+
+            gradient = chainCorrelation(gradient, diagD);
+
+            System.err.println("2: " + new WrappedVector.Raw(gradient));
+            System.err.println("   " + new WrappedVector.Raw(gradientCorrelation));
+            System.err.println();
+        }
+
         // TODO Handle chain-rule for parameterization
 
         // If necessary, apply chain rule to get the gradient w.r.t. cholesky of correlation matrix
         gradientCorrelation = parameter.updateGradientCorrelation(gradientCorrelation);
 
         return gradientCorrelation;
+    }
+
+    double[] chainCorrelation(double[] gradient, double[] diagD) {
+        MultivariateChainRule rule = new MultivariateChainRule.DecomposedCorrelation(diagD);
+        return rule.chainGradient(gradient);
+    }
+    
+    double[] getGradientWrtPrecision(double[] vecV, int n, double[] vecS) {
+
+        assert vecV.length == dim * dim;
+        assert vecS.length == dim * dim;
+        assert n > 0;
+
+        double[] gradient = new double[dim * dim];
+
+        for (int i = 0; i < dim * dim; ++i) {
+            gradient[i] = 0.5 * (n * vecV[i] - vecS[i]);
+        }
+
+        return gradient;
+    }
+
+    double[] flatten(double[][] matrix) {
+        int dim = 0;
+        for (int i = 0; i < matrix.length; ++i) {
+            dim += matrix[i].length;
+        }
+
+        double[] result = new double[dim];
+
+        int offset = 0;
+        for (int i = 0; i < matrix.length; ++i) {
+            System.arraycopy(matrix[i], 0, result, offset, matrix[i].length);
+            offset += matrix[i].length;
+        }
+
+        return result;
+    }
+
+    double[] sqrt(double[] vector) {
+
+        double[] result = new double[vector.length];
+
+        for (int i = 0; i < result.length; ++i) {
+            result[i] = Math.sqrt(vector[i]);
+        }
+
+        return result;
     }
 
     // Gradient w.r.t. diagonal
@@ -221,6 +297,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     }
 
     private static final boolean CHECK_GRADIENT = false;
+    private static final boolean USE_CHAIN_RULE = true;
 
     interface MultivariateChainRule {
 
@@ -246,7 +323,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 int k = 0;
                 for (int i = 0; i < dim - 1; ++i) {
                     for (int j = i + 1; j < dim; ++j) {
-                        vechuGradient[k] = vecX[i * dim + j] * diagD[i] * diagD[j];
+                        vechuGradient[k] = 2.0 * vecX[i * dim + j] * diagD[i] * diagD[j]; // TODO Why is there a 2 here?
                         ++k;
                     }
                 }

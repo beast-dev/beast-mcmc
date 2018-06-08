@@ -38,10 +38,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.distributions.InverseGammaDistribution;
-import dr.math.distributions.WishartDistribution;
-import dr.math.distributions.WishartStatistics;
-import dr.math.distributions.WishartSufficientStatistics;
+import dr.math.distributions.*;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -90,35 +87,35 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
     // TODO (2) a correlation matrix (MatrixParameterInterface)
     // TODO (3) the diagonal terms (Parameter)
 
-    public CorrelationMatrixGibbsOperator(
-            MultivariateDistributionLikelihood likelihood,
-            WishartStatistics priorDistribution,
-            double weight) {
-        super();
-
-        // Unnecessary variables
-        this.traitModel = null;
-        this.treeModel = null;
-        this.traitName = null;
-        this.conjugateWishartProvider = null;
-        this.isSampledTraitLikelihood = false;
-
-        this.multivariateLikelihood = likelihood;
-        MultivariateNormalDistributionModel density = (MultivariateNormalDistributionModel) likelihood.getDistribution();
-        this.meanParam = density.getMeanParameter();
-        this.inverseCorrelation = density.getPrecisionMatrixParameter();
-        this.dim = meanParam.getDimension();
-
-        setupWishartStatistics(priorDistribution); // TODO Deprecate
-        priorStatistics = setupStatistics(priorDistribution);
-
-        if (priorDistribution instanceof WishartGammalDistributionModel) {
-            wishartIsModel = true;
-            priorModel = (WishartGammalDistributionModel) priorDistribution;
-        }
-
-        setWeight(weight);
-    }
+//    public CorrelationMatrixGibbsOperator(
+//            MultivariateDistributionLikelihood likelihood,
+//            WishartStatistics priorDistribution,
+//            double weight) {
+//        super();
+//
+//        // Unnecessary variables
+//        this.traitModel = null;
+//        this.treeModel = null;
+//        this.traitName = null;
+//        this.conjugateWishartProvider = null;
+//        this.isSampledTraitLikelihood = false;
+//
+//        this.multivariateLikelihood = likelihood;
+//        MultivariateNormalDistributionModel density = (MultivariateNormalDistributionModel) likelihood.getDistribution();
+//        this.meanParam = density.getMeanParameter();
+//        this.inverseCorrelation = density.getPrecisionMatrixParameter();
+//        this.dim = meanParam.getDimension();
+//
+//        setupWishartStatistics(priorDistribution); // TODO Deprecate
+//        priorStatistics = setupStatistics(priorDistribution);
+//
+//        if (priorDistribution instanceof WishartGammalDistributionModel) {
+//            wishartIsModel = true;
+//            priorModel = (WishartGammalDistributionModel) priorDistribution;
+//        }
+//
+//        setWeight(weight);
+//    }
 
     private class Statistics {
         final double degreesOfFreedom;
@@ -154,6 +151,7 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
     private void normalizeToGetInverseCorrelation(double[][] precisionMatrix) {
 
         double[][] covarianceMatrix = new SymmetricMatrix(precisionMatrix).inverse().toComponents();
+        double[][] correlation = new double[dim][dim];
         double[] covarianceSqrtDiagonals = new double[dim];
 
         for (int i = 0; i < dim; i++) {
@@ -168,42 +166,42 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         }
     }
 
-    @Deprecated
-    public CorrelationMatrixGibbsOperator(
-            MatrixParameterInterface inverseCorrelation,
-            AbstractMultivariateTraitLikelihood traitModel,
-            WishartStatistics priorDistribution,
-            double weight) {
-        super();
-        this.traitModel = traitModel;
-        this.conjugateWishartProvider = null;
-        this.meanParam = null;
-        this.inverseCorrelation = inverseCorrelation;
-
-        setupWishartStatistics(priorDistribution); // TODO Deprecate
-        priorStatistics = setupStatistics(priorDistribution);
-
-        if (priorDistribution instanceof WishartGammalDistributionModel) {
-            wishartIsModel = true;
-            priorModel = (WishartGammalDistributionModel) priorDistribution;
-        }
-
-        setWeight(weight);
-
-        this.treeModel = traitModel.getTreeModel();
-        traitName = traitModel.getTraitName();
-        dim = inverseCorrelation.getRowDimension(); // assumed to be square
-
-        isSampledTraitLikelihood = (traitModel instanceof SampledMultivariateTraitLikelihood);
-
-        if (!isSampledTraitLikelihood &&
-                !(traitModel instanceof ConjugateWishartStatisticsProvider)) {
-            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood or " +
-                    "ConjugateWishartStatisticsProvider");
-        }
-
-        multivariateLikelihood = null;
-    }
+//    @Deprecated
+//    public CorrelationMatrixGibbsOperator(
+//            MatrixParameterInterface inverseCorrelation,
+//            AbstractMultivariateTraitLikelihood traitModel,
+//            WishartStatistics priorDistribution,
+//            double weight) {
+//        super();
+//        this.traitModel = traitModel;
+//        this.conjugateWishartProvider = null;
+//        this.meanParam = null;
+//        this.inverseCorrelation = inverseCorrelation;
+//
+//        setupWishartStatistics(priorDistribution); // TODO Deprecate
+//        priorStatistics = setupStatistics(priorDistribution);
+//
+//        if (priorDistribution instanceof WishartGammalDistributionModel) {
+//            wishartIsModel = true;
+//            priorModel = (WishartGammalDistributionModel) priorDistribution;
+//        }
+//
+//        setWeight(weight);
+//
+//        this.treeModel = traitModel.getTreeModel();
+//        traitName = traitModel.getTraitName();
+//        dim = inverseCorrelation.getRowDimension(); // assumed to be square
+//
+//        isSampledTraitLikelihood = (traitModel instanceof SampledMultivariateTraitLikelihood);
+//
+//        if (!isSampledTraitLikelihood &&
+//                !(traitModel instanceof ConjugateWishartStatisticsProvider)) {
+//            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood or " +
+//                    "ConjugateWishartStatisticsProvider");
+//        }
+//
+//        multivariateLikelihood = null;
+//    }
 
     public CorrelationMatrixGibbsOperator(
             ConjugateWishartStatisticsProvider wishartStatisticsProvider,
@@ -213,8 +211,10 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
             double weight,
             AbstractMultivariateTraitLikelihood debugModel) {
         super();
+
         this.traitModel = null;
         this.debugModel = debugModel;
+
         this.conjugateWishartProvider = wishartStatisticsProvider;
         this.meanParam = null;
         this.inverseCorrelation = (extraPrecisionParam != null ? extraPrecisionParam :
@@ -281,9 +281,15 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
     private double[] getDiagRescaleMatrix() {
 
         double[] scalarMatrix = new double[dim];
+//        for (int i = 0; i < dim; i++) {
+//            scalarMatrix[i] = Math.sqrt(InverseGammaDistribution.nextInverseGamma((dim + 1) / 2.0,
+//                    inverseCorrelation.getParameterValue(i, i) / 2.0));
+//        }
+
         for (int i = 0; i < dim; i++) {
-            scalarMatrix[i] = Math.sqrt(InverseGammaDistribution.nextInverseGamma((dim + 1) / 2.0,
-                    inverseCorrelation.getParameterValue(i, i) / 2.0));
+            double g = GammaDistribution.nextGamma((dim + 1) / 2.0,
+                    1.0);
+            scalarMatrix[i] = Math.sqrt(inverseCorrelation.getParameterValue(i, i)/(2.0 * g));
         }
 
         return scalarMatrix;
@@ -293,6 +299,7 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
     private void rescaleOuterProduct(double[] outerProduct) {
 
         double[] scalarMatrix = getDiagRescaleMatrix();
+        System.err.println("scalar matrix    = " + new Vector(scalarMatrix));
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
@@ -309,6 +316,8 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         rescaleOuterProduct(outerProducts);
+
+        System.err.println("OP rescaled    = " + new Vector(outerProducts));
 
         final double df = sufficientStatistics.getDf();
 
@@ -378,35 +387,35 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
 //        }
 //    }
 
-    private void incrementOuterProduct(double[][] S, NodeRef node) {
-
-        if (!treeModel.isRoot(node)) {
-
-            NodeRef parent = treeModel.getParent(node);
-            double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
-            double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
-            double time = traitModel.getRescaledBranchLengthForPrecision(node);
-
-            if (time > 0) {
-
-                double sqrtTime = Math.sqrt(time);
-
-                double[] delta = new double[dim];
-
-                for (int i = 0; i < dim; i++)
-                    delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime;
-
-                for (int i = 0; i < dim; i++) {            // symmetric matrix,
-                    for (int j = i; j < dim; j++)
-                        S[j][i] = S[i][j] += delta[i] * delta[j];
-                }
-                numberObservations += 1; // This assumes a *single* observation per tip
-            }
-        }
-        // recurse down tree
-        for (int i = 0; i < treeModel.getChildCount(node); i++)
-            incrementOuterProduct(S, treeModel.getChild(node, i));
-    }
+//    private void incrementOuterProduct(double[][] S, NodeRef node) {
+//
+//        if (!treeModel.isRoot(node)) {
+//
+//            NodeRef parent = treeModel.getParent(node);
+//            double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
+//            double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
+//            double time = traitModel.getRescaledBranchLengthForPrecision(node);
+//
+//            if (time > 0) {
+//
+//                double sqrtTime = Math.sqrt(time);
+//
+//                double[] delta = new double[dim];
+//
+//                for (int i = 0; i < dim; i++)
+//                    delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime;
+//
+//                for (int i = 0; i < dim; i++) {            // symmetric matrix,
+//                    for (int j = i; j < dim; j++)
+//                        S[j][i] = S[i][j] += delta[i] * delta[j];
+//                }
+//                numberObservations += 1; // This assumes a *single* observation per tip
+//            }
+//        }
+//        // recurse down tree
+//        for (int i = 0; i < treeModel.getChildCount(node); i++)
+//            incrementOuterProduct(S, treeModel.getChild(node, i));
+//    }
 
     private double[][] getOperationScaleMatrixAndSetObservationCount2() {
 
@@ -416,25 +425,27 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         SymmetricMatrix inverseS2 = null;
         numberObservations = 0; // Need to reset, as incrementOuterProduct can be recursive
 
-        if (isSampledTraitLikelihood) {
-            incrementOuterProduct(S, treeModel.getRoot());
-        } else { // IntegratedTraitLikelihood
-            if (traitModel != null) { // is a tree
-                incrementOuterProduct(S, (ConjugateWishartStatisticsProvider) traitModel); // TODO deprecate usage
-            } else if (conjugateWishartProvider != null) {
+//        if (isSampledTraitLikelihood) {
+//            incrementOuterProduct(S, treeModel.getRoot());
+//        } else { // IntegratedTraitLikelihood
+//            if (traitModel != null) { // is a tree
+//                incrementOuterProduct(S, (ConjugateWishartStatisticsProvider) traitModel); // TODO deprecate usage
+//            } else if (conjugateWishartProvider != null) {
                 incrementOuterProductWithRescale(S, conjugateWishartProvider); //todo zy: outer product
-            } else { // is a normal-normal-wishart model
-                incrementOuterProduct(S, multivariateLikelihood);
-            }
-        }
+//            } else { // is a normal-normal-wishart model
+//                incrementOuterProduct(S, multivariateLikelihood);
+//            }
+//        }
 
         try {
             S2 = new SymmetricMatrix(S);
-            if (pathWeight != 1.0) {
-                S2 = (SymmetricMatrix) S2.product(pathWeight);
-            }
-            if (priorInverseScaleMatrix != null)
+//            if (pathWeight != 1.0) {
+//                S2 = (SymmetricMatrix) S2.product(pathWeight);
+//            }
+            if (priorInverseScaleMatrix != null) {
                 S2 = priorInverseScaleMatrix.add(S2); //todo zy: new inverse scale matrix = prior inverse scale + outer product. S2 in add(S2) is the outer produt
+
+            }
             inverseS2 = (SymmetricMatrix) S2.inverse();
 
         } catch (IllegalDimension illegalDimension) {
@@ -446,43 +457,43 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         return inverseS2.toComponents();
     }
 
-    private double[][] getOperationScaleMatrixAndSetObservationCount() {
-
-        // calculate sum-of-the-weighted-squares matrix over tree
-        double[][] S = new double[dim][dim];
-        SymmetricMatrix S2;
-        SymmetricMatrix inverseS2 = null;
-        numberObservations = 0; // Need to reset, as incrementOuterProduct can be recursive
-
-        if (isSampledTraitLikelihood) {
-            incrementOuterProduct(S, treeModel.getRoot());
-        } else { // IntegratedTraitLikelihood
-            if (traitModel != null) { // is a tree
-                incrementOuterProduct(S, (ConjugateWishartStatisticsProvider) traitModel); // TODO deprecate usage
-            } else if (conjugateWishartProvider != null) {
-                incrementOuterProduct(S, conjugateWishartProvider); //todo zy: outer product
-            } else { // is a normal-normal-wishart model
-                incrementOuterProduct(S, multivariateLikelihood);
-            }
-        }
-
-        try {
-            S2 = new SymmetricMatrix(S);
-            if (pathWeight != 1.0) {
-                S2 = (SymmetricMatrix) S2.product(pathWeight);
-            }
-            if (priorInverseScaleMatrix != null)
-                S2 = priorInverseScaleMatrix.add(S2); //todo zy: new inverse scale matrix = prior inverse scale + outer product
-            inverseS2 = (SymmetricMatrix) S2.inverse();
-
-        } catch (IllegalDimension illegalDimension) {
-            illegalDimension.printStackTrace();
-        }
-
-        assert inverseS2 != null;
-
-        return inverseS2.toComponents();
-    }
+//    private double[][] getOperationScaleMatrixAndSetObservationCount() {
+//
+//        // calculate sum-of-the-weighted-squares matrix over tree
+//        double[][] S = new double[dim][dim];
+//        SymmetricMatrix S2;
+//        SymmetricMatrix inverseS2 = null;
+//        numberObservations = 0; // Need to reset, as incrementOuterProduct can be recursive
+//
+//        if (isSampledTraitLikelihood) {
+//            incrementOuterProduct(S, treeModel.getRoot());
+//        } else { // IntegratedTraitLikelihood
+//            if (traitModel != null) { // is a tree
+//                incrementOuterProduct(S, (ConjugateWishartStatisticsProvider) traitModel); // TODO deprecate usage
+//            } else if (conjugateWishartProvider != null) {
+//                incrementOuterProduct(S, conjugateWishartProvider); //todo zy: outer product
+//            } else { // is a normal-normal-wishart model
+//                incrementOuterProduct(S, multivariateLikelihood);
+//            }
+//        }
+//
+//        try {
+//            S2 = new SymmetricMatrix(S);
+//            if (pathWeight != 1.0) {
+//                S2 = (SymmetricMatrix) S2.product(pathWeight);
+//            }
+//            if (priorInverseScaleMatrix != null)
+//                S2 = priorInverseScaleMatrix.add(S2); //todo zy: new inverse scale matrix = prior inverse scale + outer product
+//            inverseS2 = (SymmetricMatrix) S2.inverse();
+//
+//        } catch (IllegalDimension illegalDimension) {
+//            illegalDimension.printStackTrace();
+//        }
+//
+//        assert inverseS2 != null;
+//
+//        return inverseS2.toComponents();
+//    }
 
     public double doOperation() {
 
@@ -505,6 +516,7 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
             for (int j = 0; j < dim; j++)
                 column.setParameterValueQuietly(j, draw[j][i]);
         }
+
         inverseCorrelation.fireParameterChangedEvent();
 
         return 0;
@@ -528,45 +540,45 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
-            AbstractMultivariateTraitLikelihood traitModel = (AbstractMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
+//            AbstractMultivariateTraitLikelihood traitModel = (AbstractMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
             ConjugateWishartStatisticsProvider ws = (ConjugateWishartStatisticsProvider) xo.getChild(ConjugateWishartStatisticsProvider.class);
-            if (ws == traitModel) {
-                ws = null;
-            }
+//            if (ws == traitModel) {
+//                ws = null;
+//            }
 
             MultivariateDistributionLikelihood prior = null;
             MatrixParameterInterface precMatrix = null;
             MultivariateDistributionLikelihood likelihood = null;
 
-            if (traitModel != null) {
-                precMatrix = traitModel.getDiffusionModel().getPrecisionParameter();
-                prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
-            }
-
-            if (ws != null) {
+//            if (traitModel != null) {
+//                precMatrix = traitModel.getDiffusionModel().getPrecisionParameter();
+//                prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
+//            }
+//
+//            if (ws != null) {
                 precMatrix = ws.getPrecisionParameter();
                 prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
-            }
+//            }
 
-            if (traitModel == null && ws == null) { // generic likelihood and prior
-                for (int i = 0; i < xo.getChildCount(); ++i) {
-                    MultivariateDistributionLikelihood density = (MultivariateDistributionLikelihood) xo.getChild(i);
-                    if (density.getDistribution() instanceof WishartStatistics) {
-                        prior = density;
-                    } else if (density.getDistribution() instanceof MultivariateNormalDistributionModel) {
-                        likelihood = density;
-                        precMatrix = ((MultivariateNormalDistributionModel)
-                                density.getDistribution()).getPrecisionMatrixParameter();
-                    }
-                }
-
-                if (prior == null || likelihood == null) {
-                    throw new XMLParseException(
-                            "Must provide a multivariate normal likelihood and Wishart prior in element '" +
-                                    xo.getName() + "'\n"
-                    );
-                }
-            }
+//            if (traitModel == null && ws == null) { // generic likelihood and prior
+//                for (int i = 0; i < xo.getChildCount(); ++i) {
+//                    MultivariateDistributionLikelihood density = (MultivariateDistributionLikelihood) xo.getChild(i);
+//                    if (density.getDistribution() instanceof WishartStatistics) {
+//                        prior = density;
+//                    } else if (density.getDistribution() instanceof MultivariateNormalDistributionModel) {
+//                        likelihood = density;
+//                        precMatrix = ((MultivariateNormalDistributionModel)
+//                                density.getDistribution()).getPrecisionMatrixParameter();
+//                    }
+//                }
+//
+//                if (prior == null || likelihood == null) {
+//                    throw new XMLParseException(
+//                            "Must provide a multivariate normal likelihood and Wishart prior in element '" +
+//                                    xo.getName() + "'\n"
+//                    );
+//                }
+//            }
 
             if (!(prior.getDistribution() instanceof WishartStatistics)) {
                 throw new XMLParseException("Only a Wishart distribution is conjugate for Gibbs sampling");
@@ -577,46 +589,46 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
                 throw new XMLParseException("The variance matrix is not square or of wrong dimension");
             }
 
-            if (traitModel != null && ws == null) {
-
-                if (precMatrix instanceof DiagonalConstrainedMatrixView) {
-                    precMatrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
-
-                    if (precMatrix == null) {
-                        throw new XMLParseException("Must provide unconstrained precision matrix");
-                    }
-                }
-
+//            if (traitModel != null && ws == null) {
+//
+//                if (precMatrix instanceof DiagonalConstrainedMatrixView) {
+//                    precMatrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+//
+//                    if (precMatrix == null) {
+//                        throw new XMLParseException("Must provide unconstrained precision matrix");
+//                    }
+//                }
+//
+//                return new CorrelationMatrixGibbsOperator(
+//                        precMatrix,
+//                        traitModel, (WishartStatistics) prior.getDistribution(), weight
+//                );
+//            } else if (ws != null) {
+//
+//                if (precMatrix instanceof DiagonalConstrainedMatrixView) {
+//                    precMatrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+//
+//                    if (precMatrix == null) {
+//                        throw new XMLParseException("Must provide unconstrained precision matrix");
+//                    }
+//                } else {
+//                    precMatrix = null;
+//                }
+//
+//                WishartStatistics workingDistribution = null;
+//                if (xo.hasChildNamed(WORKING)) {
+//                    workingDistribution = (WishartStatistics) xo.getElementFirstChild(WORKING);
+//                }
+//
                 return new CorrelationMatrixGibbsOperator(
-                        precMatrix,
-                        traitModel, (WishartStatistics) prior.getDistribution(), weight
-                );
-            } else if (ws != null) {
-
-                if (precMatrix instanceof DiagonalConstrainedMatrixView) {
-                    precMatrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
-
-                    if (precMatrix == null) {
-                        throw new XMLParseException("Must provide unconstrained precision matrix");
-                    }
-                } else {
-                    precMatrix = null;
-                }
-
-                WishartStatistics workingDistribution = null;
-                if (xo.hasChildNamed(WORKING)) {
-                    workingDistribution = (WishartStatistics) xo.getElementFirstChild(WORKING);
-                }
-
-                return new CorrelationMatrixGibbsOperator(
-                        ws, precMatrix, (WishartStatistics) prior.getDistribution(),
-                        workingDistribution,
-                        weight, traitModel
-                );
-
-            } else {
-                return new CorrelationMatrixGibbsOperator(likelihood, (WishartStatistics) prior.getDistribution(), weight);
-            }
+                    ws, precMatrix, (WishartStatistics) prior.getDistribution(),
+                    null,
+                    weight, null
+            );
+//
+//            } else {
+//                return new CorrelationMatrixGibbsOperator(likelihood, (WishartStatistics) prior.getDistribution(), weight);
+//            }
         }
 
         //************************************************************************

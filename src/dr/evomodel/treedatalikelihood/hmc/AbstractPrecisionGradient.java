@@ -190,28 +190,20 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         if (USE_CHAIN_RULE) {
 
-            double[] vecC = flatten(parameter.getCorrelationMatrix());
+            
             double[] diagD = sqrt(parameter.getDiagonal()); // TODO Reparameterize s.t. P = D^{1/2} C D^{1/2}, unless there is a more general case I am missing
 
             double[] vecV = new SymmetricMatrix(parameter.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
-
-            System.err.println("V: " + new WrappedVector.Raw(vecV));
-            System.err.println("P: " + new WrappedVector.Raw(parameter.getParameterValues()));
 
             WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
             double[] vecS = wss.getScaleMatrix();
             int n = wss.getDf();
 
-            System.err.println("S: " + new WrappedVector.Raw(vecS));
-
             double[] gradient = getGradientWrtPrecision(vecV, n, vecS);
-
-            System.err.println("1: " + new WrappedVector.Raw(gradient));
-
             gradient = chainCorrelation(gradient, diagD);
 
-            System.err.println("2: " + new WrappedVector.Raw(gradient));
-            System.err.println("   " + new WrappedVector.Raw(gradientCorrelation));
+            System.err.println("Correlation 2: " + new WrappedVector.Raw(gradient));
+            System.err.println("Correlation 1: " + new WrappedVector.Raw(gradientCorrelation));
             System.err.println();
         }
 
@@ -223,11 +215,18 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return gradientCorrelation;
     }
 
+    double[] chainDiagonal(double[] gradient, double[] diagD, double[] vecC, double[] diagQ) {
+        MultivariateChainRule ruleD = new MultivariateChainRule.DecomposedDiagonals(diagD, vecC);
+        gradient = ruleD.chainGradient(gradient);
+        MultivariateChainRule ruleQ = new MultivariateChainRule.SqrtDiagonals(diagQ);
+        return ruleQ.chainGradient(gradient);
+    }
+
     double[] chainCorrelation(double[] gradient, double[] diagD) {
         MultivariateChainRule rule = new MultivariateChainRule.DecomposedCorrelation(diagD);
         return rule.chainGradient(gradient);
     }
-    
+
     double[] getGradientWrtPrecision(double[] vecV, int n, double[] vecS) {
 
         assert vecV.length == dim * dim;
@@ -291,8 +290,26 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             gradientDiagonal[i] = numberTips * 0.5 / precisionDiagonal[i] - 0.5 * innerProduct;
         }
 
-        // TODO Handle chain-rule for parameterization
+        if (USE_CHAIN_RULE) {
 
+            double[] vecC = flatten(parameter.getCorrelationMatrix());
+            double[] diagQ = parameter.getDiagonal();
+            double[] diagD = sqrt(diagQ); // TODO Reparameterize s.t. P = D^{1/2} C D^{1/2}, unless there is a more general case I am missing
+
+            double[] vecV = new SymmetricMatrix(parameter.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
+            
+            WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
+            double[] vecS = wss.getScaleMatrix();
+            int n = wss.getDf();
+
+            double[] gradient = getGradientWrtPrecision(vecV, n, vecS);
+            gradient = chainDiagonal(gradient, diagD, vecC, diagQ);
+
+            System.err.println("vecC: " + new WrappedVector.Raw(vecC));
+            System.err.println("Diagonal 2: " + new WrappedVector.Raw(gradient));
+            System.err.println("Diagonal 1: " + new WrappedVector.Raw(gradientDiagonal));
+            System.err.println();
+        }
         return gradientDiagonal;
     }
 
@@ -323,7 +340,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 int k = 0;
                 for (int i = 0; i < dim - 1; ++i) {
                     for (int j = i + 1; j < dim; ++j) {
-                        vechuGradient[k] = 2.0 * vecX[i * dim + j] * diagD[i] * diagD[j]; // TODO Why is there a 2 here?
+                        vechuGradient[k] = 2.0 * vecX[i * dim + j] * diagD[i] * diagD[j];
                         ++k;
                     }
                 }
@@ -356,7 +373,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 for (int i = 0; i < dim; ++i) {
                     double sum = 0.0;
                     for (int k = 0; k < dim; ++k) {
-                        sum += vecX[i * dim + k] * (diagD[i] + diagD[k]) * vecC[k * dim + i];
+                        sum += 2.0 * vecX[i * dim + k] * diagD[k] * vecC[i * dim + k];
                     }
 
                     diagGradient[i] = sum;

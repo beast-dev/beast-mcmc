@@ -109,6 +109,14 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return dim;
     }
 
+    static int getVechDimension(int dim) {
+        return dim * (dim + 1) / 2;
+    }
+
+    static int getVechuDimension(int dim) {
+        return dim * (dim - 1) / 2;
+    }
+
     @Override
     public double[] getGradientLogDensity() {
 
@@ -213,4 +221,98 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     }
 
     private static final boolean CHECK_GRADIENT = false;
+
+    interface MultivariateChainRule {
+
+        double[] chainGradient(double[] lhs);
+
+        class DecomposedCorrelation implements MultivariateChainRule {
+
+            private final double[] diagD;
+            private final int dim;
+
+            DecomposedCorrelation(double[] diagD) {
+                this.diagD = diagD;
+                this.dim = diagD.length;
+            }
+
+            @Override
+            public double[] chainGradient(double[] vecX) {
+
+                assert vecX.length == dim * dim;
+
+                double[] vechuGradient = new double[getVechuDimension(dim)];
+
+                int k = 0;
+                for (int i = 0; i < dim - 1; ++i) {
+                    for (int j = i + 1; j < dim; ++j) {
+                        vechuGradient[k] = vecX[i * dim + j] * diagD[i] * diagD[j];
+                        ++k;
+                    }
+                }
+
+                return vechuGradient;
+            }
+        }
+
+        class DecomposedDiagonals implements  MultivariateChainRule {
+
+            private final double[] diagD;
+            private final double[] vecC;
+            private final int dim;
+
+            DecomposedDiagonals(double[] diagD, double[] vecC) {
+                this.diagD = diagD;
+                this.vecC = vecC;
+                this.dim = diagD.length;
+
+                assert vecC.length == dim * dim;
+            }
+
+            @Override
+            public double[] chainGradient(double[] vecX) {
+
+                assert vecX.length == dim * dim;
+
+                double[] diagGradient = new double[dim];
+
+                for (int i = 0; i < dim; ++i) {
+                    double sum = 0.0;
+                    for (int k = 0; k < dim; ++k) {
+                        sum += vecX[i * dim + k] * (diagD[i] + diagD[k]) * vecC[k * dim + i];
+                    }
+
+                    diagGradient[i] = sum;
+                }
+
+                return diagGradient;
+            }
+        }
+
+        class SqrtDiagonals implements MultivariateChainRule {
+
+            private final double[] diagQ;
+            private final int dim;
+
+            SqrtDiagonals(double[] diagQ) {
+                this.diagQ = diagQ;
+                this.dim = diagQ.length;
+            }
+
+
+            @Override
+            public double[] chainGradient(double[] diagX) {
+
+                assert diagX.length == dim;
+
+                double[] diagGradient = new double[dim];
+
+                for (int i = 0; i < dim; ++i) {
+                    diagGradient[i] = 0.5 * diagX[i] / Math.sqrt(diagQ[i]);
+                }
+
+                return diagGradient;
+            }
+        }
+    }
 }

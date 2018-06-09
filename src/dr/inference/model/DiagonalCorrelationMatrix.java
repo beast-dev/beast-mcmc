@@ -28,12 +28,11 @@ package dr.inference.model;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.util.CorrelationToCholesky;
 
-
 /**
  * @author Marc Suchard
  * @author Paul Bastide
  */
-public class DiagonalCorrelationMatrix extends MatrixParameter {
+public class DiagonalCorrelationMatrix extends CompoundParameter implements MatrixParameterInterface {
     
     // TODO This is going to be a cleaner, more generic version of CompoundSymmetricMatrix
 
@@ -42,7 +41,7 @@ public class DiagonalCorrelationMatrix extends MatrixParameter {
         INVERSE
     }
 
-    enum CorrelationParameterization {
+    enum CorrelationParametrization {
         AS_CORRELATION,
         AS_CHOLESKY
     }
@@ -54,8 +53,11 @@ public class DiagonalCorrelationMatrix extends MatrixParameter {
     private final boolean isCholesky;
     private final int dim;
 
-    public DiagonalCorrelationMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
-        super(MATRIX_PARAMETER);
+    public DiagonalCorrelationMatrix(String name,
+                                     Parameter diagonals, Parameter offDiagonal,
+                                     boolean asCorrelation, boolean isCholesky) {
+        super(name, new Parameter[] { diagonals, offDiagonal});
+
         assert asCorrelation || !isCholesky; // cholesky only allowed when used as correlation.
         diagonalParameter = diagonals;
         dim = diagonalParameter.getDimension();
@@ -158,6 +160,31 @@ public class DiagonalCorrelationMatrix extends MatrixParameter {
     }
 
     @Override
+    public int getUniqueParameterCount() {
+        return 0;
+    }
+
+    @Override
+    public Parameter getUniqueParameter(int index) {
+        return null;
+    }
+
+    @Override
+    public void copyParameterValues(double[] destination, int offset) {
+
+    }
+
+    @Override
+    public void setAllParameterValuesQuietly(double[] values, int offset) {
+
+    }
+
+    @Override
+    public String toSymmetricString() {
+        return null;
+    }
+
+    @Override
     public void setParameterValue(int index, double a) {
         throw new RuntimeException("Do not set entries of a DiagonalCorrelationMatrix directly");
     }
@@ -165,6 +192,21 @@ public class DiagonalCorrelationMatrix extends MatrixParameter {
     @Override
     public void setParameterValue(int row, int column, double a) {
         throw new RuntimeException("Do not set entries of a DiagonalCorrelationMatrix directly");
+    }
+
+    @Override
+    public void setParameterValueQuietly(int row, int col, double value) {
+
+    }
+
+    @Override
+    public void setParameterValueNotifyChangedAll(int row, int col, double value) {
+
+    }
+
+    @Override
+    public double[] getColumnValues(int col) {
+        return new double[0];
     }
 
     public boolean isCholesky() {

@@ -33,7 +33,7 @@ import java.util.Arrays;
  * @author Marc A. Suchard
  */
 
-public interface WrappedMatrix extends ReadableMatrix, WritableVector {
+public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableMatrix {
 
     void set(final int i, final int j, final double x);
 

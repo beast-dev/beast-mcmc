@@ -408,5 +408,21 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 return diagGradient;
             }
         }
+
+        class Inverse implements MultivariateChainRule {
+
+            private final double[] vecP;
+            private final int dim;
+
+            Inverse(double[] vecP) {
+                this.vecP = vecP;
+                this.dim = (int) Math.sqrt(vecP.length);
+            }
+
+            @Override
+            public double[] chainGradient(double[] lhs) {
+                return new double[0];
+            }
+        }
     }
 }

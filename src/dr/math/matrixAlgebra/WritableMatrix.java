@@ -31,9 +31,11 @@ package dr.math.matrixAlgebra;
 
 public interface WritableMatrix extends WritableVector {
 
-    double set(final int i, final int j, final double value);
+    void set(final int i, final int j, final double value);
 
     int getMajorDim();
 
     int getMinorDim();
+
+    int getDim();
 }

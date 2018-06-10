@@ -147,7 +147,6 @@ public abstract class DataType implements Serializable {
     public static DataType guessDataType(String sequence) {
         // count A, C, G, T, U, N
         long numNucs = 0;
-        long numGaps = 0;
         long numChars = 0;
         long numBins = 0;
         for (int i = 0; i < sequence.length(); i++) {
@@ -160,20 +159,14 @@ public abstract class DataType implements Serializable {
 
             if (c != '-' && c != '?') {
                 numChars++;
-            } else {
-                numGaps++;
             }
 
             if (c == '0' || c == '1') numBins++;
         }
 
         if (numChars == 0) {
-            if (numGaps > 0 ) {
-                // if only gaps and ? then assume nucleotide
-                return Nucleotides.INSTANCE;
-            }
-
-            numChars = 1;
+            // if empty or only gaps and ? then assume nucleotide
+            return Nucleotides.INSTANCE;
         }
 
         // more than 85 % frequency advocates nucleotide data

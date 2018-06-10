@@ -26,6 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
@@ -38,6 +39,7 @@ import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.tree.TreeLengthStatisticParser;
+import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.inference.model.CompoundLikelihood;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
@@ -51,6 +53,8 @@ import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
+import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
+import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -302,11 +306,11 @@ public class LogGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
-            for (Taxa taxa : options.taxonSets) {
-                // make tmrca(tree.name) eay to read in log for Tracer
-                PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
-                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
-            }
+        for (Taxa taxa : options.taxonSets) {
+            // make tmrca(tree.name) eay to read in log for Tracer
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
+        }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
 //	        treePriorGenerator.setModelPrefix("");
@@ -432,6 +436,22 @@ public class LogGenerator extends Generator {
                 // we have data...
                 writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
             }
+
+            // TODO: for complete history logging a link to the markovJumpTreeLikelihood is required
+            // but we don't have a one to one link. We probably need to create a specific log file for
+            // each partition that is complete history logging.
+            /*
+            AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                    .getComponentOptions(AncestralStatesComponentOptions.class);
+            if (ancestralStatesOptions.usingAncestralStates(partition) &&
+                    ancestralStatesOptions.isCountingStates(partition) &&
+                    !ancestralStatesOptions.dNdSRobustCounting(partition) &&
+                    ancestralStatesOptions.isCompleteHistoryLogging(partition)) {
+                String idString = prefix + id;
+
+                writer.writeIDref(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD, idString);
+            }
+            */
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, tree, writer);
 

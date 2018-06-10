@@ -167,7 +167,7 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
 
         // Random local clock
-        createScaleOperator(ClockType.LOCAL_CLOCK + ".relativeRates", demoTuning, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + ".changes", OperatorType.BITFLIP, 1, treeWeights);
         createDiscreteStatistic("rateChanges", "number of random local clocks"); // POISSON_PRIOR
 

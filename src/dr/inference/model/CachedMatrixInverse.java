@@ -98,6 +98,10 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
 
     private void computeInverse() {
 
+        if (DEBUG) {
+            System.err.println("CachedMatrixInverse.computeInverse()");
+        }
+        
         if (EMJL) {
             // TODO Avoid multiple copies
             DenseMatrix64F source = new DenseMatrix64F(base.getParameterAsMatrix());
@@ -208,5 +212,16 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
         for (int i = 0; i < length; ++i) {
             destination.set(i, source.get(i));
         }
+    }
+
+    @Override
+    public String getReport() {
+        return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
+    }
+
+    private static final boolean DEBUG = true;
+
+    public MatrixParameterInterface getBaseParameter() {
+        return base;
     }
 }

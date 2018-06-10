@@ -26,6 +26,7 @@
 package dr.inference.model;
 
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.CorrelationToCholesky;
 
 
@@ -195,5 +196,10 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
                     0, gradient.length);
             return updatedGradient;
         }
+    }
+
+    @Override
+    public String getReport() {
+        return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
     }
 }

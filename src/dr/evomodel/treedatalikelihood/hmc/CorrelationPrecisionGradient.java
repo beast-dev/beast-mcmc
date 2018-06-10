@@ -25,8 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
-import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameterInterface;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
@@ -41,7 +41,7 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
 
     public CorrelationPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
                                         Likelihood likelihood,
-                                        CompoundSymmetricMatrix parameter) {
+                                        MatrixParameterInterface parameter) {
 
         super(wishartStatistics, likelihood, parameter);
     }
@@ -60,7 +60,7 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
             public double evaluate(double[] argument) {
 
                 for (int i = 0; i < argument.length; ++i) {
-                    parameter.getOffDiagonalParameter().setParameterValue(i, argument[i]);
+                    compoundSymmetricMatrix.getOffDiagonalParameter().setParameterValue(i, argument[i]);
                 }
 
                 likelihood.makeDirty();
@@ -69,7 +69,7 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
 
             @Override
             public int getNumArguments() {
-                return parameter.getOffDiagonalParameter().getDimension();
+                return compoundSymmetricMatrix.getOffDiagonalParameter().getDimension();
             }
 
             @Override
@@ -87,14 +87,14 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
     @Override
     String checkNumeric(double[] analytic) {
 
-        System.err.println("Numeric at: \n" + new Vector(parameter.getOffDiagonalParameter().getParameterValues()));
+        System.err.println("Numeric at: \n" + new Vector(compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues()));
 
-        double[] storedValues = parameter.getOffDiagonalParameter().getParameterValues();
-        double[] testGradient = parameter.updateGradientCorrelation(
+        double[] storedValues = compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues();
+        double[] testGradient = compoundSymmetricMatrix.updateGradientCorrelation(
                 NumericalDerivative.gradient(getNumeric(), storedValues)
         );
         for (int i = 0; i < storedValues.length; ++i) {
-            parameter.getOffDiagonalParameter().setParameterValue(i, storedValues[i]);
+            compoundSymmetricMatrix.getOffDiagonalParameter().setParameterValue(i, storedValues[i]);
         }
 
         return getReportString(analytic, testGradient);

@@ -29,7 +29,6 @@ import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodel.treedatalikelihood.hmc.CorrelationPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.DiagonalPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
-import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
@@ -75,8 +74,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
 
-        // TODO Get information about precision parametrization
-        CompoundSymmetricMatrix parameter = (CompoundSymmetricMatrix) xo.getChild(CompoundSymmetricMatrix.class);
+        MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
         int parameterMode = parseParameterMode(xo);
         if (parameterMode == 0) {

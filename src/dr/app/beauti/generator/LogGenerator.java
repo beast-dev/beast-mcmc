@@ -389,133 +389,113 @@ public class LogGenerator extends Generator {
     public void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 
-        // gene tree log
-        //TODO make code consistent to MCMCPanel
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            String treeFileName;
+            String treeLogFileName;
             if (options.substTreeLog) {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(time).trees";
+                treeLogFileName = options.fileNameStem + "." + tree.getPrefix() + "(time).trees";
             } else {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + ".trees"; // stem.partitionName.tree
+                treeLogFileName = options.fileNameStem + "." + tree.getPrefix() + "trees"; // stem.partitionName.tree
             }
 
             if (options.treeFileName.get(0).endsWith(".txt")) {
-                treeFileName += ".txt";
+                treeLogFileName += ".txt";
             }
 
-            List<Attribute> attributes = new ArrayList<Attribute>();
-
-            attributes.add(new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + TREE_FILE_LOG)); // partionName.treeFileLog
-            attributes.add(new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""));
-            attributes.add(new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"));
-            attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName));
-            attributes.add(new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true"));
-
-            //if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO && tree.containsUncorrelatedRelaxClock()) { //TODO: Sibon's discretized branch length stuff
-            //    double aveFixedRate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels());
-            //    attributes.add(new Attribute.Default<String>(TreeLoggerParser.NORMALISE_MEAN_RATE_TO, Double.toString(aveFixedRate)));
-            //}
-
-            // generate <logTree>
-            writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
-
-//            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + TREE_FILE_LOG), // partionName.treeFileLog
-//                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
-//                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-//                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName),
-//                            new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
-//                    });
-
-            writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
-
-            writeTreeTraits(writer, tree);
-
-            if (options.hasData()) {
-                // we have data...
-                writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
-            }
-
-            // TODO: for complete history logging a link to the markovJumpTreeLikelihood is required
-            // but we don't have a one to one link. We probably need to create a specific log file for
-            // each partition that is complete history logging.
-            /*
-            AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
-                    .getComponentOptions(AncestralStatesComponentOptions.class);
-            if (ancestralStatesOptions.usingAncestralStates(partition) &&
-                    ancestralStatesOptions.isCountingStates(partition) &&
-                    !ancestralStatesOptions.dNdSRobustCounting(partition) &&
-                    ancestralStatesOptions.isCompleteHistoryLogging(partition)) {
-                String idString = prefix + id;
-
-                writer.writeIDref(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD, idString);
-            }
-            */
-
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, tree, writer);
-
-            writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
-        } // end For loop
+            writeTreeLogToFile(writer, treeLogFileName, tree);
+        }
 
         if (options.substTreeLog) {
-
             // gene tree
             for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-                // write tree log to file
-                writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + SUB_TREE_FILE_LOG),
-                                new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
-                                new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-                                new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + tree.getPrefix() +
-                                        "(subst).trees"),
-                                new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
-                        });
-                writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
-
-                PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
-                String tag = "";
-                String id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
-
-                switch (model.getClockType()) {
-                    case STRICT_CLOCK:
-                        tag = StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES;
-                        break;
-
-                    case UNCORRELATED:
-                        if (model.performModelAveraging()) {
-                            tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
-                        } else {
-                            tag = model.isContinuousQuantile() ?
-                                    ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
-                                    DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
-                        }
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-                        tag = RandomLocalClockModelParser.LOCAL_BRANCH_RATES;
-                        break;
-
-                    case FIXED_LOCAL_CLOCK:
-                        tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
-                        break;
-                    case AUTOCORRELATED:
-                        tag = ACLikelihoodParser.AC_LIKELIHOOD;
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
+                String treeLogFileName = options.fileNameStem + "." + tree.getPrefix() +
+                        "(subst).trees";
+                if (options.treeFileName.get(0).endsWith(".txt")) {
+                    treeLogFileName += ".txt";
                 }
-                writer.writeIDref(tag, id);
-                writeTreeTrait(writer, tag, id, BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
 
-                writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+                writeSubstTreeLogToFile(writer, treeLogFileName, tree);
             }
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREES_LOG, writer);
     }
+
+    private void writeTreeLogToFile(XMLWriter writer, String treeLogFileName, PartitionTreeModel tree) {
+        List<Attribute> attributes = new ArrayList<Attribute>();
+
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + TREE_FILE_LOG)); // partionName.treeFileLog
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeLogFileName));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true"));
+
+        writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
+
+        writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
+
+        writeTreeTraits(writer, tree);
+
+        if (options.hasData()) {
+            // we have data...
+            writer.writeIDref(CompoundLikelihoodParser.JOINT, "joint");
+        }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, tree, writer);
+
+        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+    }
+
+    private void writeSubstTreeLogToFile(XMLWriter writer, String treeLogFileName, PartitionTreeModel tree) {
+        // write tree log to file
+        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + SUB_TREE_FILE_LOG),
+                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeLogFileName),
+                        new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
+                });
+        writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
+
+        PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
+        String tag = "";
+        String id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+
+        switch (model.getClockType()) {
+            case STRICT_CLOCK:
+                tag = StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES;
+                break;
+
+            case UNCORRELATED:
+                if (model.performModelAveraging()) {
+                    tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
+                } else {
+                    tag = model.isContinuousQuantile() ?
+                            ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                            DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                }
+                break;
+
+            case RANDOM_LOCAL_CLOCK:
+                tag = RandomLocalClockModelParser.LOCAL_BRANCH_RATES;
+                break;
+
+            case FIXED_LOCAL_CLOCK:
+                tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
+                break;
+            case AUTOCORRELATED:
+                tag = ACLikelihoodParser.AC_LIKELIHOOD;
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+        writer.writeIDref(tag, id);
+        writeTreeTrait(writer, tag, id, BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
+
+        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+    }
+
 
     private void writeTreeTraits(XMLWriter writer, PartitionTreeModel tree) {
         for (PartitionClockModel model : options.getPartitionClockModels(options.getDataPartitions(tree))) {

@@ -30,6 +30,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.Version;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,7 +60,7 @@ public class BeastVersion implements Version, Citable {
     private static final boolean IS_PRERELEASE = true;
 
     // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "aa873a7";
+    private static final String REVISION = "8f265d5";
 
     public String getVersion() {
         return VERSION;
@@ -144,20 +145,36 @@ public class BeastVersion implements Version, Citable {
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
+        return Arrays.asList(CITATIONS);
     }
 
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("AJ", "Drummond"),
-                    new Author("MA", "Suchard"),
-                    new Author("Dong", "Xie"),
-                    new Author("A", "Rambaut")
-            },
-            "Bayesian phylogenetics with BEAUti and the BEAST 1.7",
-            2012,
-            "Mol Biol Evol",
-            29, 1969, 1973,
-            "10.1093/molbev/mss075");
+    public static Citation[] CITATIONS = new Citation[] {
+            new Citation(
+                    new Author[]{
+                            new Author("MA", "Suchard"),
+                            new Author("P", "Lemey"),
+                            new Author("G", "Baele"),
+                            new Author("DL", "Ayres"),
+                            new Author("AJ", "Drummond"),
+                            new Author("A", "Rambaut")
+                    },
+                    "Bayesian phylogenetic and phylodynamic data integration using BEAST 1.10",
+                    2018,
+                    "Virus Evolution",
+                    4, "vey016",
+                    "10.1093/ve/vey016"),
+            new Citation(
+                    new Author[]{
+                            new Author("AJ", "Drummond"),
+                            new Author("MA", "Suchard"),
+                            new Author("Dong", "Xie"),
+                            new Author("A", "Rambaut")
+                    },
+                    "Bayesian phylogenetics with BEAUti and the BEAST 1.7",
+                    2012,
+                    "Mol Biol Evol",
+                    29, 1969, 1973,
+                    "10.1093/molbev/mss075")
+    };
 
 }

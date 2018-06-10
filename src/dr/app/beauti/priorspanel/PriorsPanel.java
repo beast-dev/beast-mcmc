@@ -195,7 +195,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         Action classicPriorsAction = new AbstractAction("Use classic priors/operators") {
             public void actionPerformed(ActionEvent actionEvent) {
-                options.classicOperatorsAndPriors = classicPriorsCheck.isSelected();
+                options.useClassicOperatorsAndPriors = classicPriorsCheck.isSelected();
                 priorTableModel.fireTableDataChanged();
                 frame.setAllOptions();
             }

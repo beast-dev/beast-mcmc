@@ -55,19 +55,19 @@ import dr.inference.operators.OperatorSchedule;
 public class BeautiOptions extends ModelOptions {
 
     // Switches to a dirichlet prior & delta exchange on nus
-    public static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = true;
+    private static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = true;
 
     // Switches to a dirichlet prior & delta exchange on relative rates
-    public static final boolean NEW_GTR_PARAMETERIZATION = false;
+    private static final boolean NEW_GTR_PARAMETERIZATION = true;
 
     // Makes sets the initial state of PartitionClockModel.continuousQuantile
     public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = true;
 
     // Uses a logit transformed random walk on pInv parameters
-    public static final boolean LOGIT_PINV_KERNEL = true;
+    private static final boolean LOGIT_PINV_KERNEL = true;
 
     // Switches to a dirichlet prior & delta exchange on state frequencies
-    public static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
+    private static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
 
     private static final long serialVersionUID = -3676802825545741012L;
 
@@ -253,21 +253,21 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
-            Parameter allMus = model.getParameter(!classicOperatorsAndPriors && NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus" );
-            allMus.clearSubParameters();
+            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus" );
+            allMuNus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
 
                 int totalWeight = 0;
                 for (Parameter mu : relativeRateParameters) {
-                    allMus.addSubParameter(mu);
+                    allMuNus.addSubParameter(mu);
                     totalWeight += mu.getDimensionWeight();
                 }
-                parameters.add(allMus);
+                parameters.add(allMuNus);
 
                 // add the total weight of all mus/nus to the allMus parameter
-                allMus.setDimensionWeight(totalWeight);
-                allMus.maintainedSum = (!classicOperatorsAndPriors && NEW_RELATIVE_RATE_PARAMETERIZATION ? 1.0 : relativeRateParameters.size());
-                allMus.isMaintainedSum = true;
+                allMuNus.setDimensionWeight(totalWeight);
+                allMuNus.maintainedSum = (useNuRelativeRates() ? 1.0 : relativeRateParameters.size());
+                allMuNus.isMaintainedSum = true;
             }
 
             model.selectParameters(parameters);
@@ -1333,9 +1333,25 @@ public class BeautiOptions extends ModelOptions {
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
 
-    public boolean classicOperatorsAndPriors = false;
+    public boolean useClassicOperatorsAndPriors = false;
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
+
+    public boolean useClassicOperatorsAndPriors() {
+        return useClassicOperatorsAndPriors;
+    }
+    
+    public boolean useNuRelativeRates() {
+        return !useClassicOperatorsAndPriors() || !NEW_RELATIVE_RATE_PARAMETERIZATION;
+    }
+
+    public boolean useNewGTR() {
+        return !useClassicOperatorsAndPriors() || !NEW_GTR_PARAMETERIZATION;
+    }
+
+    public boolean useNewFrequenciesPrior() {
+        return !useClassicOperatorsAndPriors() || !FREQUENCIES_DIRICHLET_PRIOR;
+    }
 
     public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
 

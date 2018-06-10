@@ -625,7 +625,7 @@ public class OperatorsGenerator extends Generator {
                             constrainedList.add(parameter);
                         } else {
                             System.out.println("Parameter " + parameter + " should likely be equipped with a Dirichlet prior.");
-                            System.out.println("Use of a Dirichlet prior for frequencies is set to: " + BeautiOptions.FREQUENCIES_DIRICHLET_PRIOR);
+                            System.out.println("Use of a Dirichlet prior for frequencies is set to: " + options.useNewFrequenciesPrior());
                             throw new UnsupportedOperationException("Parameter " + parameter.getName() + " with unidentified transformation.");
                         }
                     }

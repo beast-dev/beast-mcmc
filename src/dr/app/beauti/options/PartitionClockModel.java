@@ -189,7 +189,7 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        if (!options.classicOperatorsAndPriors) {
+        if (!options.useClassicOperatorsAndPriors()) {
             createOperator("rwBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
                     "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 1, branchWeights / 3);
         } else {
@@ -508,7 +508,7 @@ public class PartitionClockModel extends PartitionOptions {
                         }
 
                         if (isContinuousQuantile()) {
-                            if (!options.classicOperatorsAndPriors) {
+                            if (!options.useClassicOperatorsAndPriors()) {
                                 ops.add(getOperator("rwBranchRateQuantiles"));
                             } else {
                                 ops.add(getOperator("uniformBranchRateQuantiles"));
@@ -530,10 +530,10 @@ public class PartitionClockModel extends PartitionOptions {
             }
         }
 
-        Parameter allMusNus = getParameter(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus");
+        Parameter allMuNus = getParameter(options.useNuRelativeRates() ? "allNus" : "allMus");
 
-        if (allMusNus.getSubParameters().size() > 1) {
-            ops.add(getOperator(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "deltaNus" : "deltaMus"));
+        if (allMuNus.getSubParameters().size() > 1) {
+            ops.add(getOperator(options.useNuRelativeRates() ? "deltaNus" : "deltaMus"));
         }
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {

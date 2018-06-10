@@ -428,7 +428,7 @@ public class MCMCPanel extends BeautiPanel {
     }
 
     private String getTreeFileName(String treeName) {
-        return options.fileNameStem + "." + treeName + ".trees";
+        return options.fileNameStem + "." + treeName + "trees";
     }
 
     private String displayTreeList(List<String> treeList) {

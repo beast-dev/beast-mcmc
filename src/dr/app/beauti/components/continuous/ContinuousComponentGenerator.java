@@ -25,6 +25,7 @@
 
 package dr.app.beauti.components.continuous;
 
+import com.sun.javafx.tools.packager.Param;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;
@@ -33,6 +34,7 @@ import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.ContinuousDiffusionStatistic;
 import dr.evomodelxml.tree.TreeLoggerParser;
+import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
 
@@ -398,7 +400,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
             writer.writeOpenTag("driftModels");
-            for (int i = 0; i < traitDimension; i++) { 
+            for (int i = 0; i < traitDimension; i++) {
                 writer.writeOpenTag("strictClockBranchRates");
                 writer.writeTag("parameter", new Attribute[]{
                         new Attribute.Default<String>("id", partitionData.getName() + "." + ContinuousComponentOptions.DRIFT_RATE +
@@ -568,6 +570,14 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             }
             writer.writeIDref("matrixInverse", prefix + "varCovar");
             writer.writeIDref(ContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC, prefix + "diffusionRate");
+
+            if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ContinuousComponentOptions.HALF_DF);
+            } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.LOGNORMAL_RRW) {
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ContinuousComponentOptions.STDEV);
+            } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ContinuousComponentOptions.DRIFT_RATE);
+            }
 
             if (component.useLambda(model)) {
                 writer.writeIDref("parameter", model.getName() + "." + ContinuousComponentOptions.LAMBDA);

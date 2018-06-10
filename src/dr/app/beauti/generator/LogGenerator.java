@@ -258,8 +258,12 @@ public class LogGenerator extends Generator {
         // coalescentLikelihood
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
-            treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
-            writer.writeText("");
+            if (prior.getNodeHeightPrior() != TreePriorType.EXTENDED_SKYLINE &&
+                prior.getNodeHeightPrior() != TreePriorType.SKYGRID) {
+                // if not using a multi-locus model...
+                treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+                writer.writeText("");
+            }
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {

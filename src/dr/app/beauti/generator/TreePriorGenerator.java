@@ -631,6 +631,8 @@ public class TreePriorGenerator extends Generator {
 
         switch (treePrior) {
             case CONSTANT:
+                writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, priorPrefix + "constant");
+                break;
             case EXPONENTIAL:
                 writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, priorPrefix + "exponential");
                 break;

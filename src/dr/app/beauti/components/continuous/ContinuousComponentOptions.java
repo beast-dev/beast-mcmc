@@ -60,8 +60,11 @@ public class ContinuousComponentOptions implements ComponentOptions {
             String prefix = partitionData.getName() + ".";
 
             if (!modelOptions.parameterExists(prefix + HALF_DF)) {
-                modelOptions.createParameterGammaPrior(prefix + HALF_DF, "half DF of 1 parameter gamma distributed RRW",
-                        PriorScaleType.NONE, 0.5, 0.001, 1000.0, false);
+//                modelOptions.createParameterGammaPrior(prefix + HALF_DF, "half DF of 1 parameter gamma distributed RRW",
+//                        PriorScaleType.NONE, 0.5, 0.001, 1000.0, false);
+                // responding to Issue #941 suggesting a exp(10) prior
+                modelOptions.createParameterExponentialPrior(prefix + HALF_DF, "half DF of 1 parameter gamma distributed RRW",
+                        PriorScaleType.NONE, 0.5, 10, 0.0, false);
                 modelOptions.createScaleOperator(prefix + HALF_DF, modelOptions.demoTuning, 1.0);
             }
 

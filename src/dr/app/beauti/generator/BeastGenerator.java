@@ -405,7 +405,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
         try {
-            if (!options.samplePriorOnly) {
+            // Construct pattern lists even if sampling from a null alignment
+            //if (!options.samplePriorOnly) {
                 List<Microsatellite> microsatList = new ArrayList<Microsatellite>();
                 for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
                     if (partition.getTaxonList() != null) {
@@ -434,7 +435,7 @@ public class BeastGenerator extends Generator {
                         writer.writeText("");
                     }
                 }
-            }
+            //}
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Pattern lists generation has failed:\n" + e.getMessage());

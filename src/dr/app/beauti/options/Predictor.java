@@ -130,6 +130,32 @@ public class Predictor implements Serializable {
         isStandardized = standardized;
     }
 
+    public boolean hasZeroValues() {
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data.length; j++) {
+                if (data[i][j] == 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isBinary() {
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data.length; j++) {
+                if (data[i][j] != 0 &&
+                        data[i][j] != 1) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+
     public double[][] getMatrixValues(Type predictorType) {
         double[][] matrixValues = new double[data.length][];
 

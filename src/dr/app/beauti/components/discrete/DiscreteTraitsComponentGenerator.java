@@ -82,6 +82,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 if (model.getTraitData().getIncludedPredictors().size() < 1) {
                     throw new GeneratorException("The GLM model for trait, " + model.getTraitData().getName() + ", has no predictors included.");
                 }
+
+                for (Predictor predictor : model.getTraitData().getIncludedPredictors()) {
+                    if (predictor.isLogged() && predictor.hasZeroValues()) {
+                        throw new GeneratorException("The GLM predictor, " + predictor.getName() + ", for trait, " + model.getTraitData().getName() + ", has zero values and therefore should not be logged.");
+                    }
+                    if (predictor.isStandardized() && predictor.isBinary()) {
+                        throw new GeneratorException("The GLM predictor, " + predictor.getName() + ", for trait, " + model.getTraitData().getName() + ", is binary and therefore should not be standardized.");
+                    }
+                }
             }
         }
     }

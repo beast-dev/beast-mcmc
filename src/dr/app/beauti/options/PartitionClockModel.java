@@ -449,6 +449,7 @@ public class PartitionClockModel extends PartitionOptions {
                 switch (clockType) {
                     case STRICT_CLOCK:
                         ops.add(rateOperator);
+                        addUpDownOperator(ops, rateOperator);
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
@@ -471,19 +472,19 @@ public class PartitionClockModel extends PartitionOptions {
                             case LOGNORMAL:
                                 ops.add(rateOperator = getOperator(ClockType.UCLD_MEAN));
                                 ops.add(getOperator(ClockType.UCLD_STDEV));
-                                isOperatorParameterFixed(ops, rateOperator);
+                                addUpDownOperator(ops, rateOperator);
                                 break;
                             case GAMMA:
                                 ops.add(rateOperator = getOperator(ClockType.UCGD_MEAN));
                                 ops.add(getOperator(ClockType.UCGD_SHAPE));
-                                isOperatorParameterFixed(ops, rateOperator);
+                                addUpDownOperator(ops, rateOperator);
                                 break;
                             case CAUCHY:
 //                                throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
                                 break;
                             case EXPONENTIAL:
                                 ops.add(rateOperator = getOperator(ClockType.UCED_MEAN));
-                                isOperatorParameterFixed(ops, rateOperator);
+                                addUpDownOperator(ops, rateOperator);
                                 break;
                             case MODEL_AVERAGING:
                                 ops.add(getOperator(ClockType.UCLD_MEAN));
@@ -549,7 +550,7 @@ public class PartitionClockModel extends PartitionOptions {
         return ops;
     }
 
-    private void isOperatorParameterFixed(List<Operator> ops, Operator rateOperator) {
+    private void addUpDownOperator(List<Operator> ops, Operator rateOperator) {
         if (!rateOperator.isParameterFixed()) {
             Operator upDownOperator = getUpDownOperator();
             // need to set the node heights parameter again in case the treeModel has changed and

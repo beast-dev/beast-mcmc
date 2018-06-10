@@ -25,7 +25,6 @@
 
 package dr.app.beauti.components.continuous;
 
-import com.sun.javafx.tools.packager.Param;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;

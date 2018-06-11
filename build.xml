@@ -563,7 +563,7 @@
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub   "
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub_BEAST"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="${jvm_version}"

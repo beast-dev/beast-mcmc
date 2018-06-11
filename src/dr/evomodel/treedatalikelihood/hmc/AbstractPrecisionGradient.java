@@ -60,7 +60,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         if (parameter instanceof CachedMatrixInverse) {
 
             this.compoundSymmetricMatrix = (CompoundSymmetricMatrix)
-                                ((CachedMatrixInverse) parameter).getBaseParameter();
+                    ((CachedMatrixInverse) parameter).getBaseParameter();
             this.variance = compoundSymmetricMatrix;
             this.parametrization = Parametrization.AS_VARIANCE;
 
@@ -171,6 +171,17 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 "\n";
     }
 
+    String getReportString(double[] analytic, double[] numeric, double[] numericTrans) {
+
+        return getClass().getCanonicalName() + "\n" +
+                "analytic: " + new Vector(analytic) +
+                "\n" +
+                "numeric (no Cholesky): " + new Vector(numeric) +
+                "\n" +
+                "numeric (with Cholesky): " + new Vector(numericTrans) +
+                "\n";
+    }
+
     abstract String checkNumeric(double[] analytic);
 
     @Override
@@ -203,17 +214,18 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         if (USE_CHAIN_RULE) {
 
-            
+
             double[] diagQ = compoundSymmetricMatrix.getDiagonal();
 
-            double[] vecV = new SymmetricMatrix(compoundSymmetricMatrix.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
+            double[] vecV = new SymmetricMatrix(precision.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
+            double[] vecP = flatten(precision.getParameterAsMatrix());
 
             WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
             double[] vecS = wss.getScaleMatrix();
             int n = wss.getDf();
 
             double[] gradient = getGradientWrtPrecision(vecV, n, vecS);
-            gradient = chainCorrelation(gradient, diagQ);
+            gradient = chainCorrelation(gradient, vecP, diagQ);
 
             System.err.println("Correlation 2: " + new WrappedVector.Raw(gradient));
             System.err.println("Correlation 1: " + new WrappedVector.Raw(gradientCorrelation));
@@ -242,7 +254,12 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return ruleQ.chainGradient(gradient);
     }
 
-    private double[] chainCorrelation(double[] gradient, double[] diagQ) {
+    private double[] chainCorrelation(double[] gradient, double[] vecP, double[] diagQ) {
+        if (parametrization == Parametrization.AS_VARIANCE) { // TODO Delegate
+            MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
+            gradient = ruleI.chainGradient(gradient);
+        }
+
         MultivariateChainRule rule = new MultivariateChainRule.DecomposedCorrelation(diagQ);
         return rule.chainGradient(gradient);
     }
@@ -279,16 +296,16 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return result;
     }
 
-    private double[] sqrt(double[] vector) {
-
-        double[] result = new double[vector.length];
-
-        for (int i = 0; i < result.length; ++i) {
-            result[i] = Math.sqrt(vector[i]);
-        }
-
-        return result;
-    }
+//    private double[] sqrt(double[] vector) {
+//
+//        double[] result = new double[vector.length];
+//
+//        for (int i = 0; i < result.length; ++i) {
+//            result[i] = Math.sqrt(vector[i]);
+//        }
+//
+//        return result;
+//    }
 
     // Gradient w.r.t. diagonal
     double[] getGradientDiagonal(SymmetricMatrix weightedSumOfSquares,
@@ -318,7 +335,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
             double[] vecV = new SymmetricMatrix(precision.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
             double[] vecP = flatten(precision.getParameterAsMatrix());
-            
+
             WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
             double[] vecS = wss.getScaleMatrix();
             int n = wss.getDf();
@@ -484,6 +501,39 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
                 for (int i = 0; i < dim * dim; ++i) {
                     gradient[i] = -lhs[i] * vecP[i] / vecV[i];
+                }
+
+                return gradient;
+            }
+        }
+
+        class InverseGeneral implements MultivariateChainRule {
+
+            private final double[] vecP;
+            private final int dim;
+
+            InverseGeneral(double[] vecP) {
+                this.vecP = vecP;
+                this.dim = (int) Math.sqrt(vecP.length);
+            }
+
+            @Override
+            public double[] chainGradient(double[] lhs) {
+
+                assert lhs.length == dim * dim;
+
+                double[] gradient = new double[dim * dim];
+
+                for (int i = 0; i < dim; i++) {
+                    for (int j = 0; j < dim; j++) {
+                        double sum = 0.0;
+                        for (int k = 0; k < dim; k++) {
+                            for (int l = 0; l < dim; l++) {
+                                sum += vecP[i * dim + l] * lhs[l * dim + k] * vecP[k * dim + j];
+                            }
+                        }
+                        gradient[i * dim + j] = -sum;
+                    }
                 }
 
                 return gradient;

@@ -90,14 +90,13 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
         System.err.println("Numeric at: \n" + new Vector(compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues()));
 
         double[] storedValues = compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues();
-        double[] testGradient = compoundSymmetricMatrix.updateGradientCorrelation(
-                NumericalDerivative.gradient(getNumeric(), storedValues)
-        );
+        double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
+        double[] testGradientTrans = compoundSymmetricMatrix.updateGradientCorrelation(testGradient);
         for (int i = 0; i < storedValues.length; ++i) {
             compoundSymmetricMatrix.getOffDiagonalParameter().setParameterValue(i, storedValues[i]);
         }
 
-        return getReportString(analytic, testGradient);
+        return getReportString(analytic, testGradient, testGradientTrans);
     }
 
     @Override

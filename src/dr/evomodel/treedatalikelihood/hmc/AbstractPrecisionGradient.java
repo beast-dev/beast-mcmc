@@ -217,7 +217,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
             double[] diagQ = compoundSymmetricMatrix.getDiagonal();
 
-            double[] vecV = new SymmetricMatrix(precision.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
+            double[] vecV = flatten(variance.getParameterAsMatrix());
             double[] vecP = flatten(precision.getParameterAsMatrix());
 
             WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
@@ -333,7 +333,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             double[] diagQ = compoundSymmetricMatrix.getDiagonal();
 //            double[] diagD = sqrt(diagQ); //DONE //TODO Reparameterize s.t. P = D^{1/2} C D^{1/2}, unless there is a more general case I am missing
 
-            double[] vecV = new SymmetricMatrix(precision.getParameterAsMatrix()).inverse().toArrayComponents(); // TODO Make inverse accessible from `parameter` to avoid recomputation
+            double[] vecV = flatten(variance.getParameterAsMatrix());
             double[] vecP = flatten(precision.getParameterAsMatrix());
 
             WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();

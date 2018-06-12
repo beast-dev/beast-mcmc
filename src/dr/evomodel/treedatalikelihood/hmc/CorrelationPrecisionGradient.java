@@ -29,20 +29,20 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
-import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Paul Bastide
  * @author Marc A. Suchard
  */
+
 public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
 
-    public CorrelationPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
+    public CorrelationPrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                                         Likelihood likelihood,
                                         MatrixParameterInterface parameter) {
 
-        super(wishartStatistics, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter);
     }
 
 
@@ -99,10 +99,10 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
     }
 
     @Override
-    double[] getGradientParameter(double[] vecS, int numberTips,
+    double[] getGradientParameter(double[] gradient,
                                   double[] vecP, double[] vecV,
                                   double[] diagQ, double[] vecC) {
-        return getGradientCorrelation(vecS, numberTips, vecP, vecV, diagQ);
+        return getGradientCorrelation(gradient, vecP, vecV, diagQ);
     }
 
 }

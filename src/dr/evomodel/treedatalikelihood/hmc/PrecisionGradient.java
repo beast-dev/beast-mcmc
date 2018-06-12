@@ -28,7 +28,6 @@ package dr.evomodel.treedatalikelihood.hmc;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.MultivariateFunction;
-import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 
 /**
  * @author Paul Bastide
@@ -36,21 +35,21 @@ import dr.math.interfaces.ConjugateWishartStatisticsProvider;
  */
 public class PrecisionGradient extends AbstractPrecisionGradient {
 
-    public PrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
+    public PrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                              Likelihood likelihood,
                              MatrixParameterInterface parameter) {
 
-        super(wishartStatistics, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter);
     }
 
     @Override
-    double[] getGradientParameter(double[] vecS, int numberTips,
+    double[] getGradientParameter(double[] gradient,
                                   double[] vecP, double[] vecV,
                                   double[] diagQ, double[] vecC) {
 
-        double[] gradientCorrelation = getGradientCorrelation(vecS, numberTips, vecP, vecV, diagQ);
+        double[] gradientCorrelation = getGradientCorrelation(gradient, vecP, vecV, diagQ);
 
-        double[] gradientDiagonal = getGradientDiagonal(vecS, numberTips, vecP, vecV, diagQ, vecC);
+        double[] gradientDiagonal = getGradientDiagonal(gradient, vecP, vecV, diagQ, vecC);
 
         return mergeGradients(gradientDiagonal, gradientCorrelation);
     }

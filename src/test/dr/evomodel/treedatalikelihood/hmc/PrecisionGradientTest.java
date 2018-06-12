@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.hmc.CorrelationPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.DiagonalPrecisionGradient;
+import dr.evomodel.treedatalikelihood.hmc.GradientWrtPrecisionProvider;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
@@ -164,8 +165,10 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
                 = new WishartStatisticsWrapper("wishart", "trait", dataLikelihood,
                 (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate());
 
+        GradientWrtPrecisionProvider gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+
         // Correlation Gradient
-        CorrelationPrecisionGradient gradientProvider = new CorrelationPrecisionGradient(wishartStatistics, dataLikelihood, precisionMatrix);
+        CorrelationPrecisionGradient gradientProvider = new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrix);
 
         String s = gradientProvider.getReport();
         System.err.println(s);
@@ -181,7 +184,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         }
 
         // Diagonal Gradient
-        DiagonalPrecisionGradient gradientDiagonalProvider = new DiagonalPrecisionGradient(wishartStatistics, dataLikelihood, precisionMatrix);
+        DiagonalPrecisionGradient gradientDiagonalProvider = new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrix);
 
         String sDiag = gradientDiagonalProvider.getReport();
         System.err.println(sDiag);
@@ -239,8 +242,10 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
                 = new WishartStatisticsWrapper("wishart", "trait", dataLikelihood,
                 (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate());
 
+        GradientWrtPrecisionProvider gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+
         // Correlation Gradient
-        CorrelationPrecisionGradient gradientProvider = new CorrelationPrecisionGradient(wishartStatistics, dataLikelihood, precisionMatrixInv);
+        CorrelationPrecisionGradient gradientProvider = new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrixInv);
 
         String s = gradientProvider.getReport();
         System.err.println(s);
@@ -256,7 +261,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         }
 
         // Diagonal Gradient
-        DiagonalPrecisionGradient gradientDiagonalProvider = new DiagonalPrecisionGradient(wishartStatistics, dataLikelihood, precisionMatrixInv);
+        DiagonalPrecisionGradient gradientDiagonalProvider = new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrixInv);
 
         String sDiag = gradientDiagonalProvider.getReport();
         System.err.println(sDiag);

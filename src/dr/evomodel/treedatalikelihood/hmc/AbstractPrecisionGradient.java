@@ -28,7 +28,6 @@ package dr.evomodel.treedatalikelihood.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.distributions.WishartSufficientStatistics;
-import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -42,18 +41,19 @@ import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
  * @author Paul Bastide
  * @author Marc A. Suchard
  */
+
 public abstract class AbstractPrecisionGradient implements GradientWrtParameterProvider, Reportable {
 
-    private final ConjugateWishartStatisticsProvider wishartStatistics;
+    private final GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
     final Likelihood likelihood;
     final CompoundSymmetricMatrix compoundSymmetricMatrix;
     private final int dim;
-    private final Parametrization parametrization;
+    Parametrization parametrization;
 
     private final MatrixParameterInterface precision;
     private final MatrixParameterInterface variance;
 
-    AbstractPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
+    AbstractPrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                               Likelihood likelihood,
                               MatrixParameterInterface parameter) {
 
@@ -79,7 +79,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         assert compoundSymmetricMatrix.asCorrelation()
                 : "PrecisionGradient can only be applied to a CompoundSymmetricMatrix with off-diagonal as correlation.";
 
-        this.wishartStatistics = wishartStatistics;
+        this.gradientWrtPrecisionProvider = gradientWrtPrecisionProvider;
         this.likelihood = likelihood;
         this.dim = parameter.getColumnDimension();
     }
@@ -87,19 +87,26 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     enum Parametrization {
         AS_PRECISION {
             @Override
-            double[] chainRule(double[] x) {
+            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
                 return x; // Do nothing
             }
         },
         AS_VARIANCE {
             @Override
-            double[] chainRule(double[] x) {
-                // TODO Handle matrix-inverse
-                return x;
+            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+                MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
+                return ruleI.chainGradient(x);
+            }
+        },
+        AS_VARIANCE_DIAGONAL {
+            @Override
+            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+                MultivariateChainRule ruleI = new MultivariateChainRule.Inverse(vecP, vecV);
+                return ruleI.chainGradient(x);
             }
         };
 
-        abstract double[] chainRule(double[] x);
+        abstract double[] chainRule(double[] x, double[] vecP, double[] vecV);
     }
 
     @Override
@@ -136,18 +143,19 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     @Override
     public double[] getGradientLogDensity() {
 
-        // Statistics
-        WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
-        double[] vecS = wss.getScaleMatrix();
-        int numberTips = wss.getDf();
-
-        // TODO For non-matrix-normal models, use sum of gradients w.r.t. branch-specific precisions
-
         // parameters
         double[] vecV = flatten(variance.getParameterAsMatrix());
         double[] vecP = flatten(precision.getParameterAsMatrix());
         double[] diagQ = compoundSymmetricMatrix.getDiagonal();
         double[] vecC = flatten(compoundSymmetricMatrix.getCorrelationMatrix());
+
+        // Gradient w.r.t. precision
+        double[] gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV);
+
+        // TODO For non-matrix-normal models, use sum of gradients w.r.t. branch-specific precisions
+
+        // Handle inverse
+        gradient = parametrization.chainRule(gradient, vecP, vecV);
 
         // TODO Chain-rule w.r.t. to parametrization
 
@@ -156,7 +164,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                     + " " + new Vector(compoundSymmetricMatrix.getDiagonal()));
         }
 
-        double[] gradient = getGradientParameter(vecS, numberTips, vecP, vecV, diagQ, vecC);
+        gradient = getGradientParameter(gradient, vecP, vecV, diagQ, vecC);
 
         if (CHECK_GRADIENT) {
             System.err.println(checkNumeric(gradient));
@@ -192,18 +200,20 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return checkNumeric(getGradientLogDensity());
     }
 
-    abstract double[] getGradientParameter(double[] vecS, int numberTips,
+    abstract double[] getGradientParameter(double[] gradient,
                                            double[] vecP, double[] vecV,
                                            double[] diagQ, double[] vecC);
 
     // Gradient w.r.t. correlation
-    double[] getGradientCorrelation(double[] vecS, int numberTips, double[] vecP, double[] vecV, double[] diagQ) {
+    double[] getGradientCorrelation(double[] gradient, double[] vecP, double[] vecV, double[] diagQ) {
 
-        double[] gradient = getGradientWrtPrecision(vecV, numberTips, vecS);
         gradient = chainCorrelation(gradient, vecP, diagQ);
 
         if (!USE_CHAIN_RULE) {
 
+            WishartSufficientStatistics wss = gradientWrtPrecisionProvider.getWishartStatistic().getWishartStatistics();
+            double[] vecS = wss.getScaleMatrix();
+            int numberTips = wss.getDf();
             SymmetricMatrix weightedSumOfSquares = new SymmetricMatrix(vecS, dim);
             SymmetricMatrix correlation = new SymmetricMatrix(compoundSymmetricMatrix.getCorrelationMatrix());
             double[] diagonal = compoundSymmetricMatrix.getDiagonal();
@@ -234,23 +244,20 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     }
 
     private double[] chainCorrelation(double[] gradient, double[] vecP, double[] diagQ) {
-        if (parametrization == Parametrization.AS_VARIANCE) { // TODO Delegate
-            MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
-            gradient = ruleI.chainGradient(gradient);
-        }
-
         MultivariateChainRule rule = new MultivariateChainRule.DecomposedCorrelation(diagQ);
         return rule.chainGradient(gradient);
     }
 
     // Gradient w.r.t. diagonal
-    double[] getGradientDiagonal(double[] vecS, int numberTips, double[] vecP, double[] vecV, double[] diagQ, double[] vecC) {
+    double[] getGradientDiagonal(double[] gradient, double[] vecP, double[] vecV, double[] diagQ, double[] vecC) {
 
-        double[] gradient = getGradientWrtPrecision(vecV, numberTips, vecS);
         gradient = chainDiagonal(gradient, vecP, vecV, vecC, diagQ);
 
         if (!USE_CHAIN_RULE) {
 
+            WishartSufficientStatistics wss = gradientWrtPrecisionProvider.getWishartStatistic().getWishartStatistics();
+            double[] vecS = wss.getScaleMatrix();
+            int numberTips = wss.getDf();
             SymmetricMatrix weightedSumOfSquares = new SymmetricMatrix(vecS, dim);
             SymmetricMatrix correlationPrecision = new SymmetricMatrix(compoundSymmetricMatrix.getCorrelationMatrix());
             double[] precisionDiagonal = compoundSymmetricMatrix.getDiagonal();
@@ -280,31 +287,10 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     private double[] chainDiagonal(double[] gradient, double[] vecP, double[] vecV,
                                    double[] vecC, double[] diagQ) {
-
-        if (parametrization == Parametrization.AS_VARIANCE) { // TODO Delegate
-            MultivariateChainRule ruleI = new MultivariateChainRule.Inverse(vecP, vecV);
-            gradient = ruleI.chainGradient(gradient);
-        }
-
 //        MultivariateChainRule ruleD = new MultivariateChainRule.DecomposedDiagonals(diagD, vecC);
 //        gradient = ruleD.chainGradient(gradient);
         MultivariateChainRule ruleQ = new MultivariateChainRule.DecomposedSqrtDiagonals(diagQ, vecC);
         return ruleQ.chainGradient(gradient);
-    }
-
-    private double[] getGradientWrtPrecision(double[] vecV, int n, double[] vecS) {
-
-        assert vecV.length == dim * dim;
-        assert vecS.length == dim * dim;
-        assert n > 0;
-
-        double[] gradient = new double[dim * dim];
-
-        for (int i = 0; i < dim * dim; ++i) {
-            gradient[i] = 0.5 * (n * vecV[i] - vecS[i]);
-        }
-
-        return gradient;
     }
 
     private double[] flatten(double[][] matrix) {

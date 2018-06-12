@@ -25,9 +25,11 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodel.treedatalikelihood.hmc.CorrelationPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.DiagonalPrecisionGradient;
+import dr.evomodel.treedatalikelihood.hmc.GradientWrtPrecisionProvider;
 import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
@@ -44,7 +46,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     private final static String PARAMETER = "parameter";
     private final static String PRECISION_CORRELATION = "precisioncorrelation";
     private final static String PRECISION_DIAGONAL = "precisiondiagonal";
-    private final static String PRECISION_BOTH = "precision";
+    private final static String PRECISION_BOTH = "precisionBoth";
 
     @Override
     public String getParserName() {
@@ -72,17 +74,29 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
         WishartStatisticsWrapper wishartStatistics = (WishartStatisticsWrapper)
                 xo.getChild(WishartStatisticsWrapper.class);
 
+        BranchRateGradient branchRateGradient = (BranchRateGradient)
+                xo.getChild(BranchRateGradient.class);
+
+        GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
+        if ((wishartStatistics == null) == (branchRateGradient == null)) {
+            throw new XMLParseException("Exactly one of 'wishartStatistics' or 'branchRateGradient' must be included." );
+        } else if (wishartStatistics != null) {
+            gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+        } else {
+            gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.BranchRateGradientWrtPrecisionProvider(branchRateGradient);
+        }
+
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
 
         MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
         int parameterMode = parseParameterMode(xo);
         if (parameterMode == 0) {
-            return new PrecisionGradient(wishartStatistics, likelihood, parameter);
+            return new PrecisionGradient(gradientWrtPrecisionProvider, likelihood, parameter);
         } else if (parameterMode == 1) {
-            return new CorrelationPrecisionGradient(wishartStatistics, likelihood, parameter);
+            return new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, likelihood, parameter);
         } else {
-            return new DiagonalPrecisionGradient(wishartStatistics, likelihood, parameter);
+            return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, likelihood, parameter);
         }
     }
 
@@ -92,7 +106,8 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(WishartStatisticsWrapper.class),
+            new ElementRule(WishartStatisticsWrapper.class, true),
+            new ElementRule(BranchRateGradient.class, true),
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
     };

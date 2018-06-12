@@ -29,20 +29,23 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
-import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Paul Bastide
  * @author Marc A. Suchard
  */
+
 public class DiagonalPrecisionGradient extends AbstractPrecisionGradient {
 
-    public DiagonalPrecisionGradient(ConjugateWishartStatisticsProvider wishartStatistics,
+    public DiagonalPrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                                      Likelihood likelihood,
                                      MatrixParameterInterface parameter) {
 
-        super(wishartStatistics, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter);
+        if (parametrization == AbstractPrecisionGradient.Parametrization.AS_VARIANCE) {
+            parametrization = AbstractPrecisionGradient.Parametrization.AS_VARIANCE_DIAGONAL;
+        }
     }
 
     @Override
@@ -51,10 +54,10 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient {
     }
 
     @Override
-    double[] getGradientParameter(double[] vecS, int numberTips,
+    double[] getGradientParameter(double[] gradient,
                                   double[] vecP, double[] vecV,
                                   double[] diagQ, double[] vecC) {
-        return getGradientDiagonal(vecS, numberTips, vecP, vecV, diagQ, vecC);
+        return getGradientDiagonal(gradient, vecP, vecV, diagQ, vecC);
     }
 
     MultivariateFunction getNumeric() {

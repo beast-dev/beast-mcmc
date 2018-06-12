@@ -29,7 +29,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.MultivariateFunction;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 
 /**
  * @author Paul Bastide
@@ -45,16 +44,13 @@ public class PrecisionGradient extends AbstractPrecisionGradient {
     }
 
     @Override
-    double[] getGradientParameter(SymmetricMatrix weightedSumOfSquares,
-                                  int numberTips,
-                                  SymmetricMatrix correlationPrecision,
-                                  double[] precisionDiagonal) {
+    double[] getGradientParameter(double[] vecS, int numberTips,
+                                  double[] vecP, double[] vecV,
+                                  double[] diagQ, double[] vecC) {
 
-        double[] gradientCorrelation = getGradientCorrelation(weightedSumOfSquares, numberTips,
-                correlationPrecision, precisionDiagonal);
+        double[] gradientCorrelation = getGradientCorrelation(vecS, numberTips, vecP, vecV, diagQ);
 
-        double[] gradientDiagonal = getGradientDiagonal(weightedSumOfSquares, numberTips,
-                correlationPrecision, precisionDiagonal);
+        double[] gradientDiagonal = getGradientDiagonal(vecS, numberTips, vecP, vecV, diagQ, vecC);
 
         return mergeGradients(gradientDiagonal, gradientCorrelation);
     }

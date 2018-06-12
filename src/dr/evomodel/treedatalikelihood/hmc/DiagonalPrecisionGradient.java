@@ -30,7 +30,6 @@ import dr.inference.model.MatrixParameterInterface;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 
 /**
@@ -52,13 +51,10 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient {
     }
 
     @Override
-    double[] getGradientParameter(SymmetricMatrix weightedSumOfSquares,
-                                  int numberTips,
-                                  SymmetricMatrix correlationPrecision,
-                                  double[] precisionDiagonal) {
-
-        return getGradientDiagonal(weightedSumOfSquares, numberTips,
-                correlationPrecision, precisionDiagonal);
+    double[] getGradientParameter(double[] vecS, int numberTips,
+                                  double[] vecP, double[] vecV,
+                                  double[] diagQ, double[] vecC) {
+        return getGradientDiagonal(vecS, numberTips, vecP, vecV, diagQ, vecC);
     }
 
     MultivariateFunction getNumeric() {

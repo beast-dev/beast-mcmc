@@ -33,6 +33,8 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
 
@@ -522,21 +524,16 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
                 assert lhs.length == dim * dim;
 
-                double[] gradient = new double[dim * dim];
+                DenseMatrix64F gradient = new DenseMatrix64F(dim, dim);
 
-                for (int i = 0; i < dim; i++) {
-                    for (int j = 0; j < dim; j++) {
-                        double sum = 0.0;
-                        for (int k = 0; k < dim; k++) {
-                            for (int l = 0; l < dim; l++) {
-                                sum += vecP[i * dim + l] * lhs[l * dim + k] * vecP[k * dim + j];
-                            }
-                        }
-                        gradient[i * dim + j] = -sum;
-                    }
-                }
+                DenseMatrix64F P = new DenseMatrix64F(dim, dim, true, vecP);
+                DenseMatrix64F LHS = new DenseMatrix64F(dim, dim, true, lhs);
+                
+                DenseMatrix64F temp = new DenseMatrix64F(dim, dim);
+                CommonOps.mult(P, LHS, temp);
+                CommonOps.mult(-1, temp, P, gradient);
 
-                return gradient;
+                return gradient.data;
             }
         }
     }

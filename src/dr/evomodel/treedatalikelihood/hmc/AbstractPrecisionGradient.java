@@ -479,12 +479,15 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         class InverseGeneral implements MultivariateChainRule {
 
-            private final double[] vecP;
+            private final DenseMatrix64F vecP;
+            private final DenseMatrix64F temp;
             private final int dim;
 
+
             InverseGeneral(double[] vecP) {
-                this.vecP = vecP;
                 this.dim = (int) Math.sqrt(vecP.length);
+                this.vecP = DenseMatrix64F.wrap(dim, dim, vecP);
+                this.temp = new DenseMatrix64F(dim, dim);
             }
 
             @Override
@@ -494,14 +497,11 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
                 DenseMatrix64F gradient = new DenseMatrix64F(dim, dim);
 
-                DenseMatrix64F P = new DenseMatrix64F(dim, dim, true, vecP);
-                DenseMatrix64F LHS = new DenseMatrix64F(dim, dim, true, lhs);
+                DenseMatrix64F LHS = DenseMatrix64F.wrap(dim, dim, lhs);
+                CommonOps.mult(vecP, LHS, temp);
+                CommonOps.mult(-1, temp, vecP, gradient);
 
-                DenseMatrix64F temp = new DenseMatrix64F(dim, dim);
-                CommonOps.mult(P, LHS, temp);
-                CommonOps.mult(-1, temp, P, gradient);
-
-                return gradient.data;
+                return gradient.getData();
             }
         }
     }

@@ -328,6 +328,24 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         double[] chainGradient(double[] lhs);
 
+        class Chain implements MultivariateChainRule {
+
+            private final MultivariateChainRule[] rules;
+
+            Chain(MultivariateChainRule[] rules) {
+                this.rules = rules;
+            }
+
+            @Override
+            public double[] chainGradient(double[] gradient) {
+
+                for (MultivariateChainRule rule : rules) {
+                    gradient = rule.chainGradient(gradient);
+                }
+                return gradient;
+            }
+        }
+
         class DecomposedCorrelation implements MultivariateChainRule {
 
             private final double[] diagQ;

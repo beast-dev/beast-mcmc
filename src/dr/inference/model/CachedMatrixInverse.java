@@ -219,7 +219,7 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
         return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public MatrixParameterInterface getBaseParameter() {
         return base;

@@ -483,7 +483,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             break;
                         case GTR:
                             if (options.useNewGTR()) {
-                                params.add(getParameter("gtr"));
+                                params.add(getParameter(GTR_RATES));
                             } else {
 
                                 for (String rateName : GTR_RATE_NAMES) {

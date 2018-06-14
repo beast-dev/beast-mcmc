@@ -204,7 +204,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         classicPriorsCheck = new JCheckBox(classicPriorsAction);
         classicPriorsCheck.setVisible(true);
         classicPriorsCheck.setEnabled(true);
-        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8.4) prior and operator combinations.</html>");
+        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8 style) prior and operator combinations.</html>");
 
 
         setOpaque(false);

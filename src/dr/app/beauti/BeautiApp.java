@@ -182,12 +182,16 @@ public class BeautiApp extends MultiDocApplication {
                 javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
                     public void run() {
                         try {
+                            System.setProperty(
+                                    "Quaqua.design","Sierra"
+                            );
+
                             try {
                                 // We need to do this using dynamic class loading to avoid other platforms
                                 // having to link to this class. If the Quaqua library is not on the classpath
                                 // it simply won't be used.
                                 Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-
+//
 //                                Method method = qm.getMethod("setIncludedUIs", Set.class);
 //                                Set<String> includes = new HashSet<String>();
 //                                includes.add("ColorChooser");
@@ -195,12 +199,14 @@ public class BeautiApp extends MultiDocApplication {
 //                                includes.add("Button");
 //                                includes.add("SplitPane");
 //                                includes.add("Table");
-//                                includes.add("TitleBorder");
+//                                includes.add("Panel");
 //                                method.invoke(null, includes);
 
                                 Method method = qm.getMethod("setExcludedUIs", Set.class);
                                 Set<String> excludes = new HashSet<String>();
                                 excludes.add("RootPane");
+//                                excludes.add("Table");
+                                excludes.add("TextField");
                                 method.invoke(null, excludes);
 
                             }

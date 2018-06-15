@@ -266,7 +266,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     }
 
     @SuppressWarnings("unchecked")
-    private TreeTrait<List<WrappedMeanPrecision>> castTreeTrait(TreeTrait trait) {
+    public static TreeTrait<List<WrappedMeanPrecision>> castTreeTrait(TreeTrait trait) {
         return trait;
     }
 

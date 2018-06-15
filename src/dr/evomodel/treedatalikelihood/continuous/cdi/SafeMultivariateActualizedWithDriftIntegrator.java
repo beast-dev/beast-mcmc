@@ -71,6 +71,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         matrixQdiPip = new DenseMatrix64F(dimTrait, dimTrait);
         matrixQdjPjp = new DenseMatrix64F(dimTrait, dimTrait);
+
+        matrixNiacc = new DenseMatrix64F(dimTrait, 1);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -185,15 +187,37 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     /// Tree-traversal functions
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public void updatePreOrderPartial(
-            final int kBuffer, // parent
-            final int iBuffer, // node
-            final int iMatrix,
-            final int jBuffer, // sibling
-            final int jMatrix) {
+//    @Override
+//    public void updatePreOrderPartial(
+//            final int kBuffer, // parent
+//            final int iBuffer, // node
+//            final int iMatrix,
+//            final int jBuffer, // sibling
+//            final int jMatrix) {
+//
+//        throw new RuntimeException("Not yet implemented");
+//    }
 
-        throw new RuntimeException("Not yet implemented");
+    @Override
+    void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int jmo, int jdo) {
+        final DenseMatrix64F Qdj = wrap(actualizations, jmo, dimTrait, dimTrait);
+        scalePrecision(Qdj, Pjp, QjPjp, Pjp);
+    }
+
+    @Override
+    void scaleAndDriftMean(int ibo, int imo, int ido) {
+        for (int g = 0; g < dimTrait; ++g) {
+            preOrderPartials[ibo + g] -= displacements[ido + g];
+        }
+
+        final DenseMatrix64F Qdi = wrap(actualizations, imo, dimTrait, dimTrait);
+        final DenseMatrix64F ni = wrap(preOrderPartials, ibo, dimTrait, 1);
+        final DenseMatrix64F QdiInv = matrixQdiPip;
+        final DenseMatrix64F niacc = matrixNiacc;
+        CommonOps.invert(Qdi, QdiInv);
+        CommonOps.mult(QdiInv, ni, niacc);
+        unwrap(niacc, preOrderPartials, ibo);
+
     }
 
     @Override
@@ -204,15 +228,13 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         final DenseMatrix64F Qdj = wrap(actualizations, jmo, dimTrait, dimTrait);
 
         final DenseMatrix64F QdiPip = matrixQdiPip;
-        CommonOps.multTransA(Qdi, Pip, QdiPip);
-
-        final DenseMatrix64F QdjPjp = matrixQdjPjp;
-        CommonOps.multTransA(Qdj, Pjp, QdjPjp);
-
         final DenseMatrix64F QdiPipQdi = matrix0;
+        scalePrecision(Qdi, Pip, QdiPip, QdiPipQdi);
+
         final DenseMatrix64F QdjPjpQdj = matrix1;
-        CommonOps.mult(QdiPip, Qdi, QdiPipQdi);
-        CommonOps.mult(QdjPjp, Qdj, QdjPjpQdj);
+        final DenseMatrix64F QdjPjp = matrixQdjPjp;
+        scalePrecision(Qdj, Pjp, QdjPjp, QdjPjpQdj);
+
         CommonOps.add(QdiPipQdi, QdjPjpQdj, Pk);
 
         if (DEBUG) {
@@ -225,6 +247,13 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         }
     }
 
+    private void scalePrecision(DenseMatrix64F Q, DenseMatrix64F P,
+                                DenseMatrix64F QtP, DenseMatrix64F QtPQ) {
+        CommonOps.multTransA(Q, P, QtP);
+        CommonOps.mult(QtP, Q, QtPQ);
+    }
+
+
     @Override
     void computeWeightedSum(final double[] ipartial,
                             final double[] jpartial,
@@ -236,4 +265,5 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     private double[] actualizations;
     private DenseMatrix64F matrixQdiPip;
     private DenseMatrix64F matrixQdjPjp;
+    private DenseMatrix64F matrixNiacc;
 }

@@ -83,8 +83,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
 //    ShowAction showAction = new ShowAction();
 
-    public JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
-
     SelectModelDialog selectModelDialog = null;
     SelectClockDialog selectClockDialog = null;
     SelectTreeDialog selectTreeDialog = null;
@@ -212,18 +210,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
-        useStarBEASTCheck.setEnabled(false);
-        useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
-        useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (!frame.setupStarBEAST(useStarBEASTCheck.isSelected())) {
-                    useStarBEASTCheck.setSelected(false); // go back to unchecked
-                }
-
-                dataTableModel.fireTableDataChanged();
-            }
-        });
-
     }
 
     private void showAlignment() {
@@ -343,9 +329,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
-        boolean traitAvailable = options.traits != null && options.traits.size() > 0 && (!options.useStarBEAST);
+        boolean traitAvailable = options.traits != null && options.traits.size() > 0;
 
-        useStarBEASTCheck.setEnabled(taxaAvailable);
         createTraitPartitionAction.setEnabled(traitAvailable);
 
         dataTableModel.fireTableDataChanged();
@@ -373,8 +358,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.dataPartitions.size() == 0) {
             // all data partitions removed so reset the taxa
             options.reset();
-            useStarBEASTCheck.setSelected(false);
-            frame.setupStarBEAST(false);
             frame.statusLabel.setText("");
             frame.setAllOptions();
             frame.getExportAction().setEnabled(false);

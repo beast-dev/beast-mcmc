@@ -26,15 +26,12 @@
 package dr.app.beauti.tipdatepanel;
 
 import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.components.RealNumberField;
 import jam.mac.Utils;
 import jam.panels.OptionsPanel;
 
 
-import java.io.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;

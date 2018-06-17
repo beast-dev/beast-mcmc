@@ -182,21 +182,36 @@ public class BeautiApp extends MultiDocApplication {
                 javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
                     public void run() {
                         try {
-//                                try {
-//                                    // We need to do this using dynamic class loading to avoid other platforms
-//                                    // having to link to this class. If the Quaqua library is not on the classpath
-//                                    // it simply won't be used.
-//                                    Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-//                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
+                            System.setProperty(
+                                    "Quaqua.design","Sierra"
+                            );
+
+                            try {
+                                // We need to do this using dynamic class loading to avoid other platforms
+                                // having to link to this class. If the Quaqua library is not on the classpath
+                                // it simply won't be used.
+                                Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
 //
-//                                    Set<String> excludes = new HashSet<String>();
-//                                    excludes.add("Button");
-//                                    excludes.add("ToolBar");
-//                                    method.invoke(null, excludes);
-//
-//                                }
-//                                catch (Throwable e) {
-//                                }
+//                                Method method = qm.getMethod("setIncludedUIs", Set.class);
+//                                Set<String> includes = new HashSet<String>();
+//                                includes.add("ColorChooser");
+//                                includes.add("FileChooser");
+//                                includes.add("Button");
+//                                includes.add("SplitPane");
+//                                includes.add("Table");
+//                                includes.add("Panel");
+//                                method.invoke(null, includes);
+
+                                Method method = qm.getMethod("setExcludedUIs", Set.class);
+                                Set<String> excludes = new HashSet<String>();
+                                excludes.add("RootPane");
+//                                excludes.add("Table");
+                                excludes.add("TextField");
+                                method.invoke(null, excludes);
+
+                            }
+                            catch (Throwable e) {
+                            }
 
                             //set the Quaqua Look and Feel in the UIManager
                             UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");

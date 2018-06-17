@@ -262,7 +262,8 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
                 //TODO: think about turning this around. One can imagine setting backbone rates and then additional rates based on clade definitions
                 for (CladeContainer trunk : trunkSetList) {
                     for (NodeRef node : treeModel.getNodes()) {
-                        if (onAncestralPath(treeModel, node, trunk.getLeafSet())) {
+                        //TODO: add xml argument for tip exclusion
+                        if (onAncestralPath(treeModel, node, trunk.getLeafSet(), trunk.getExcludeClade(), false)) {
                             if (node != treeModel.getRoot()) {
                                 setNodeValue(treeModel, node, trunk.getRateCategory());
                             }
@@ -272,9 +273,11 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
             }
         }
 
-        private boolean onAncestralPath(Tree tree, NodeRef node, Set targetSet) {
+        private boolean onAncestralPath(Tree tree, NodeRef node, Set targetSet, boolean excludeClade, boolean excludeTips) {
 
-            if (tree.isExternal(node)) return false;
+            if (excludeTips){
+                if (tree.isExternal(node)) return false;
+            }
 
             Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
             int size = leafSet.size();
@@ -283,18 +286,26 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
             if (leafSet.size() > 0) {
 
-                // if all leaves below are in target then check just above.
-                if (leafSet.size() == size) {
+                if (excludeClade) {
 
-                    Set superLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
-                    superLeafSet.removeAll(targetSet);
+                    if (leafSet.size() == size) {
 
-                    // the branch is on ancestral path if the super tree has some non-targets in it
-                    return (superLeafSet.size() > 0);
+                        Set superLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
+                        superLeafSet.removeAll(targetSet);
 
-                } else return true;
+                        // the branch is on ancestral path if the super tree has some non-targets in it
+                        return (superLeafSet.size() > 0);
 
+                    } else return true;
+
+                } else {
+                    if (leafSet.size() > 0) {
+                        return true;
+                    }
+                    else return false;
+                }
             } else return false;
+
         }
 
         public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade, boolean trunk) throws TreeUtils.MissingTaxonException {

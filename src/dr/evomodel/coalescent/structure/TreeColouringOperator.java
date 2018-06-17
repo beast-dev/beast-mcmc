@@ -34,6 +34,7 @@ import dr.xml.*;
  *
  * @version $Id: TreeColouringOperator.java,v 1.8 2006/08/12 12:55:44 gerton Exp $
  */
+@Deprecated
 public class TreeColouringOperator extends SimpleMCMCOperator {
 
     public static final String TREE_COLOURING_OPERATOR = "treeColouringOperator";

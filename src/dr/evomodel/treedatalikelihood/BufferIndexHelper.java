@@ -93,8 +93,6 @@ public class BufferIndexHelper implements Serializable {
     public void storeState() {
         Arrays.fill(indexOffsetsFlipped, false);
         System.arraycopy(indexOffsets, 0, storedIndexOffsets, 0, indexOffsets.length);
-
-        resetMultipleFlips();
     }
 
     public void restoreState() {

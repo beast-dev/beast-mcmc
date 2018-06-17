@@ -156,8 +156,8 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
             partitionsList.add(partition);
         }// END: partitions loop
 
-        msg += "\n\t" + partitionsList.size() + " partitions:";
-        msg += "\n\t\t" + siteCount + ((siteCount > 1) ? " replications " : " replication");
+        msg += "\n\t" + partitionsList.size() + " partitions with a total of ";
+        msg += siteCount + ((siteCount > 1) ? " replications " : " replication");
         if (msg.length() > 0) {
             Logger.getLogger("dr.app.beagle.tools").info("\nUsing Beagle Sequence Simulator: " + msg + "\n");
         }

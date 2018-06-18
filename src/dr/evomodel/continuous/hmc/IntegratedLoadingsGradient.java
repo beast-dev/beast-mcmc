@@ -11,6 +11,8 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistribu
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
@@ -25,6 +27,8 @@ import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductPro
 public class IntegratedLoadingsGradient implements GradientWrtParameterProvider, Reportable {
 
     private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
+
+    private final TreeDataLikelihood treeDataLikelihood;
     private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
     private final int dim;
     private final Tree tree;
@@ -33,6 +37,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                                ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood) {
 
+        this.treeDataLikelihood = treeDataLikelihood;
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
 
         String traitName = factorAnalysisLikelihood.getModelName(); // TODO Is this correct?
@@ -73,8 +78,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     fullConditionalDensity.getTrait(tree, tree.getExternalNode(i));
 
             for (WrappedMeanPrecision meanPrecision : statistics) {
-                meanPrecision.getMean();
-                meanPrecision.getPrecision();
+                System.err.println(i + " : " + meanPrecision.getMean());
+                System.err.println(i + " : " + meanPrecision.getPrecision());
             }
         }
 
@@ -90,12 +95,56 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return getReport(getGradientLogDensity());
     }
 
+    private MultivariateFunction numeric = new MultivariateFunction() {
+
+        // TODO Handle vech(loadings)
+        // TODO Transform each parameter into (-\infty,\infty)
+
+        @Override
+        public double evaluate(double[] argument) {
+
+            for (int i = 0; i < argument.length; ++i) {
+                factorAnalysisLikelihood.getLoadings().setParameterValue(i, argument[i]);
+            }
+
+            treeDataLikelihood.makeDirty();
+            factorAnalysisLikelihood.makeDirty();
+
+            return treeDataLikelihood.getLogLikelihood() + factorAnalysisLikelihood.getLogLikelihood();
+        }
+
+        @Override
+        public int getNumArguments() {
+            return factorAnalysisLikelihood.getLoadings().getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
     private String getReport(double[] gradient) {
 
         String result = new WrappedVector.Raw(gradient).toString();
 
          if (DEBUG) {
-             result += "Debug info: \n";
+
+             Parameter loadings = factorAnalysisLikelihood.getLoadings();
+             double[] savedValues = loadings.getParameterValues();
+             double[] testGradient = NumericalDerivative.gradient(numeric, loadings.getParameterValues());
+             for (int i = 0; i < savedValues.length; ++i) {
+                 loadings.setParameterValue(i, savedValues[i]);
+             }
+
+             result += "\nDebug info: \n" +
+                     new WrappedVector.Raw(testGradient) +
+                     " @ " + new WrappedVector.Raw(loadings.getParameterValues());
          }
 
          return result;

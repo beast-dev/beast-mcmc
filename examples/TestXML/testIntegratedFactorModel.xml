@@ -196,12 +196,31 @@
 	</operators>
 
 	<report>
-<!-- 		logL = <multivariateTraitLikelihood idref="traitLikelihood"/> -->
 		<integratedFactorModel idref="factorModel"/>
-<!-- 		<traitDataLikelihood idref="traitLikelihood"/> -->
+	</report>
+
+	<traitGradientOnTree traitName="X">
+		<traitDataLikelihood idref="traitLikelihood"/>
+	</traitGradientOnTree>
+
+	<report>
+		<traitLogger traitName="fcd.X" nodes="external">
+			<traitDataLikelihood idref="traitLikelihood"/>
+			<treeModel idref="treeModel"/>
+		</traitLogger>
+	</report>
+
+	<integratedFactorAnalysisLoadingsGradient id="gradient">
+		<integratedFactorModel idref="factorModel"/>
+		<traitDataLikelihood idref="traitLikelihood"/>
+	</integratedFactorAnalysisLoadingsGradient>
+
+	<report>
+		<integratedFactorAnalysisLoadingsGradient idref="gradient"/>
 	</report>
 
 
+<!--
 	<mcmc id="mcmc" chainLength="1000000">
 		<posterior id="posterior">
 			<integratedFactorModel idref="factorModel"/>
@@ -222,6 +241,7 @@
 			<treeModel idref="treeModel"/>
 		</logTree>
 	</mcmc>
+ -->
 
 
 </beast>

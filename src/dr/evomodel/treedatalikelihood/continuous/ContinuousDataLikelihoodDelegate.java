@@ -900,7 +900,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         ProcessSimulationDelegate gradientDelegate = new TipGradientViaFullConditionalDelegate(traitName,
                 (MutableTreeModel) getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
-                (ContinuousTraitDataModel) getDataModel(), getRootPrior(),
+                getDataModel(), getRootPrior(),
                 getRateTransformation(), this);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);

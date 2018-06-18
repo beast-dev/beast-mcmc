@@ -28,7 +28,8 @@ public class WrappedMeanPrecision {
             this.precision = new WrappedMatrix.Raw(Pd.getData(), 0, dim, dim);
             this.precisionScalar = buffer[partialOffset + dim];
         } else {
-            throw new RuntimeException("Not yet implemented");
+            this.precisionScalar = 1.0;
+            this.precision = new WrappedMatrix.Raw(buffer, partialOffset + dim, dim, dim);
         }
     }
 

@@ -513,8 +513,12 @@ public class SubstitutionModelGenerator extends Generator {
                                 }
                             }
                         } else {
-                            for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
+                            if (options.useNewGTR()) {
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + PartitionSubstitutionModel.GTR_RATES);
+                            } else {
+                                for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
+                                }
                             }
                         }
                         break;

@@ -9,6 +9,7 @@ import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelih
 import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -16,6 +17,7 @@ import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider.castTreeTrait;
@@ -30,8 +32,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
-    private final int dim;
+    private final int dimTrait;
+    private final int dimFactors;
     private final Tree tree;
+    private final Likelihood likelihood;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -49,22 +53,30 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
         this.tree = treeDataLikelihood.getTree();
-        this.dim = factorAnalysisLikelihood.getTraitDimension();
+
+        this.dimTrait = factorAnalysisLikelihood.getTraitDimension();
+        this.dimFactors = factorAnalysisLikelihood.getNumberOfFactors();
+
+        List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+        likelihoodList.add(treeDataLikelihood);
+        likelihoodList.add(factorAnalysisLikelihood);
+        this.likelihood = new CompoundLikelihood(likelihoodList);
+
     }
 
     @Override
     public Likelihood getLikelihood() {
-        return null;    // TODO Return CompoundLikelihood{factorAnalysisLikelihood, treeDataLikelihood}
+        return likelihood;
     }
 
     @Override
     public Parameter getParameter() {
-        return factorAnalysisLikelihood.getLoadings(); // TODO May need to work with vec(L)
+        return factorAnalysisLikelihood.getLoadings(); // TODO May need to work with vech(L)
     }
 
     @Override
     public int getDimension() {
-        return dim * dim; // TODO May need to work with vec(L)
+        return dimTrait * dimTrait; // TODO May need to work with vech(L)
     }
 
     @Override
@@ -72,7 +84,22 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         double[] gradient = new double[getDimension()];
 
+        Parameter gamma = factorAnalysisLikelihood.getPrecision();
+        assert (gamma.getDimension() == dimTrait);
+
+        // [E(F) Y^t + E(FF^t)L]\Gamma
+
+        // Y: N x P
+        // F: N x K
+        // L: K x P
+
+        // (K x N)(N x P)(P x P) - (K x N)(N x K)(K x P)(P x P)
+        // sum_{N} (K x 1)(1 x P)(P x P) - (K x 1)(1 x K)(K x P)(P x P)
+        
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+
+            WrappedVector y = getTipData(i);
+
             // TODO Work with fullConditionalDensity
             List<WrappedMeanPrecision> statistics =
                     fullConditionalDensity.getTrait(tree, tree.getExternalNode(i));
@@ -94,6 +121,17 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     public String getReport() {
         return getReport(getGradientLogDensity());
     }
+
+    private WrappedVector getTipData(int taxonIndex) {
+        return new WrappedVector.Raw(factorAnalysisLikelihood.getTipPartial(taxonIndex, false),
+                0, dimTrait);
+    }
+
+//    private WrappedMeanPrecision getTipData(int tipIndex) {
+//        double[] buffer = factorAnalysisLikelihood.getTipPartial(tipIndex, false);
+//
+//        return new WrappedMeanPrecision(buffer, 0, dimTrait, null, PrecisionType.FULL);
+//    }
 
     private MultivariateFunction numeric = new MultivariateFunction() {
 

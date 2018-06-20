@@ -16,7 +16,7 @@ public class WrappedMeanPrecision {
     private final WrappedMatrix precision;
     private final double precisionScalar;
 
-    WrappedMeanPrecision(double[] buffer,
+    public WrappedMeanPrecision(double[] buffer,
                          int index,
                          int dim,
                          DenseMatrix64F Pd,

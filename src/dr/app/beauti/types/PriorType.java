@@ -269,7 +269,7 @@ public enum PriorType {
 
         if (parameter.priorType == NONE_FIXED) {
             buffer.append(", value=").append(NumberUtil.formatDecimal(parameter.getInitial(), 10, 6));
-        } else if (parameter.priorType.isInitializable && parameter.getInitial() != Double.NaN) {
+        } else if (parameter.priorType.isInitializable && !Double.isNaN(parameter.getInitial())) {
             buffer.append(", initial=").append(NumberUtil.formatDecimal(parameter.getInitial(), 10, 6));
         }
 

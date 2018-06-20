@@ -3,6 +3,7 @@ package dr.inferencexml.model;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
@@ -11,6 +12,7 @@ import dr.xml.*;
 public class ScaleData extends AbstractXMLObjectParser{
 
     public final static String SCALE_DATA = "scaleData";
+    public final static String CONTINUOUS = "continuous";
 
     @Override
     public String getParserName() {
@@ -28,6 +30,13 @@ public class ScaleData extends AbstractXMLObjectParser{
             temp = (CompoundParameter) xo.getChild(CompoundParameter.class);
             scaling = MatrixParameter.recast(temp.getParameterName(), temp);
         }
+        Parameter continuous;
+        if(xo.hasChildNamed(CONTINUOUS))
+            continuous = (Parameter) xo.getChild(CONTINUOUS).getChild(Parameter.class);
+        else
+            continuous = new Parameter.Default(scaling.getColumnDimension(), 1);
+
+        System.out.println(continuous.getParameterValue(11));
 
         double[][] aData = scaling.getParameterAsMatrix();
         double[] meanList = new double[scaling.getRowDimension()];
@@ -42,10 +51,10 @@ public class ScaleData extends AbstractXMLObjectParser{
             }
         }
         for (int i = 0; i < scaling.getRowDimension(); i++) {
-//            if (continuous.getParameterValue(i) == 1)
+            if (continuous.getParameterValue(i) == 1)
                 meanList[i] = meanList[i] / count[i];
-//            else
-//                meanList[i] = 0;
+             else
+                meanList[i] = 0;
         }
 
         double[][] answerTemp = new double[scaling.getRowDimension()][scaling.getColumnDimension()];
@@ -65,13 +74,13 @@ public class ScaleData extends AbstractXMLObjectParser{
         }
 
         for (int i = 0; i < scaling.getRowDimension(); i++) {
-//            if (continuous.getParameterValue(i) == 1) {
+            if (continuous.getParameterValue(i) == 1) {
                 varList[i] = varList[i] / (count[i] - 1);
                 varList[i] = StrictMath.sqrt(varList[i]);
+            } else {
+                varList[i] = 1;
             }
-//            else {
-//                varList[i] = 1;
-//            }
+        }
 
 //        System.out.println(data.getColumnDimension());
 //        System.out.println(data.getRowDimension());
@@ -94,7 +103,10 @@ public class ScaleData extends AbstractXMLObjectParser{
         return rules;
     }
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new XORRule(new ElementRule(MatrixParameterInterface.class), new ElementRule(CompoundParameter.class))};
+            new OrRule(new ElementRule(MatrixParameterInterface.class), new ElementRule(CompoundParameter.class)),
+     new ElementRule(CONTINUOUS, new XMLSyntaxRule[]{
+            new ElementRule(Parameter.class)
+    }, true)};
 
     @Override
     public String getParserDescription() {

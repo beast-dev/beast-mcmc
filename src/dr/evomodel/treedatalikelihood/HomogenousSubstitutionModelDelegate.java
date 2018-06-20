@@ -30,13 +30,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.util.Timer;
 
 import java.io.Serializable;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
 
 /**
  * A simple substitution model delegate with the same substitution model over the whole tree
@@ -75,8 +70,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
-
-
+        
         nodeCount = tree.getNodeCount();
 
         // two eigen buffers for each decomposition for store and restore.
@@ -140,6 +134,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                 ed.getEigenVectors(),
                 ed.getInverseEigenVectors(),
                 ed.getEigenValues());
+    }
+
+    @Override
+    public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
+        return substitutionModel;
     }
 
     @Override

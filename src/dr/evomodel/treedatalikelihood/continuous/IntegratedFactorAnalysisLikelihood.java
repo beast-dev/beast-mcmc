@@ -290,7 +290,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             observedArray = new HashedMissingArray(observed);
             hashedPrecision = precisionMatrixMap.get(observedArray);
         }
-        
+
         // TODO Only need to compute for each unique set of observed[] << numTaxa
 
         if (!USE_CACHE || hashedPrecision == null) {
@@ -421,7 +421,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private void computePartialsAndRemainders() {
-        
+
         final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
         final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
 
@@ -493,7 +493,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                         nuggetDensity;
 
             }
-            
+
             // store in precision, variance and normalization constant
             unwrap(precision, partials, partialsOffset + numFactors);
 
@@ -670,6 +670,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         if (delegate != null) {
 
+            double logInc = delegate.getCallbackLikelihood().getLogLikelihood();
+
             final Tree tree = delegate.getCallbackLikelihood().getTree();
             final BranchRates branchRates = delegate.getCallbackLikelihood().getBranchRateModel();
             sb.append(tree.toString());
@@ -683,6 +685,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append(new Matrix(treeStructure));
             sb.append("\n\n");
 
+            double[][] treeSharedLengths = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, normalization, Double.POSITIVE_INFINITY);
+
             double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, branchRates, normalization, priorSampleSize);
 
             Matrix treeV = new Matrix(treeVariance);
@@ -693,20 +697,29 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append("Tree precision:\n");
             sb.append(treeP);
             sb.append("\n\n");
-            
+
             Matrix Lt = new Matrix(loadings.getParameterAsMatrix());
             sb.append("Loadings:\n");
             sb.append(Lt);
             sb.append("\n\n");
+
+            double[][] diffusionPrecision = delegate.getDiffusionModel().getPrecisionmatrix();
+            Matrix diffusionVariance = new Matrix(diffusionPrecision).inverse();
+
             Matrix loadingsVariance = null;
             try {
-                loadingsVariance = Lt.product(Lt.transpose());
+                loadingsVariance = Lt.product(diffusionVariance.product(Lt.transpose()));
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();
             }
             sb.append("Loadings variance:\n");
             sb.append(loadingsVariance);
             sb.append("\n\n");
+
+
+            Matrix loadingsFactorsVariance = MultivariateTraitDebugUtilities.getJointVarianceFactor(priorSampleSize,
+                    treeVariance, treeSharedLengths, loadingsVariance.toComponents(), diffusionVariance.toComponents(),
+                    delegate.getDiffusionProcessDelegate(), Lt);
 
             Matrix gamma = buildDiagonalMatrix(traitPrecision.getParameterValues());
             sb.append("Trait precision:\n");
@@ -717,8 +730,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             double[] tmp = new double[tree.getExternalNodeCount()];
             Arrays.fill(tmp, 1.0);
             Matrix identity = buildDiagonalMatrix(tmp);
-            assert loadingsVariance != null;
-            Matrix loadingsFactorsVariance = new Matrix(KroneckerOperation.product(treeVariance, loadingsVariance.toComponents()));
             Matrix errorVariance = new Matrix(KroneckerOperation.product(identity.toComponents(), gammaVariance.toComponents()));
 
             sb.append("Loadings-factors variance:\n");
@@ -750,6 +761,22 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 }
             }
 
+            double[] priorMean = delegate.getRootPrior().getMean();
+            Matrix treeDrift = new Matrix(MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, delegate.getIntegrator(), delegate.getDiffusionProcessDelegate()));
+
+            if (delegate.getDiffusionProcessDelegate().hasDrift()) {
+                sb.append("Tree drift (including root mean):\n");
+                sb.append(new Matrix(treeDrift.toComponents()));
+                sb.append("\n\n");
+            }
+
+            try {
+                loadingsFactorsVariance = treeDrift.product(Lt.transpose());
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+            double[] drift = KroneckerOperation.vectorize(loadingsFactorsVariance.toComponents());
+
             int[] notMissingIndices = new int[notMissing.size()];
             double[] data = new double[notMissing.size()];
             for (int i = 0; i < notMissing.size(); ++i) {
@@ -765,6 +792,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 totalPrecision = totalVariance.inverse();
             }
 
+            drift = Matrix.gatherEntries(drift, notMissingIndices);
+
             sb.append("Total variance:\n");
             sb.append(totalVariance);
             sb.append("\n\n");
@@ -776,9 +805,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append(new Vector(data));
             sb.append("\n\n");
 
+            sb.append("Expectations:\n");
+            sb.append(new Vector(drift));
+            sb.append("\n\n");
+
             MultivariateNormalDistribution mvn = null;
             if (totalPrecision != null) {
-                mvn = new MultivariateNormalDistribution(new double[data.length],
+                mvn = new MultivariateNormalDistribution(drift,
                         totalPrecision.toComponents());
             }
 
@@ -788,7 +821,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
             sb.append("logMultiVariateNormalDensity = ").append(logDensity).append("\n\n");
 
-            double logInc = delegate.getCallbackLikelihood().getLogLikelihood();
             sb.append("traitDataLikelihood = ").append(logInc).append("\n");
             logComponents += logInc;
         }
@@ -798,7 +830,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (logComponents != 0.0) {
             sb.append("total likelihood = ").append((getLogLikelihood() + logComponents)).append("\n");
         }
-        
+
         return sb.toString();
     }
 }

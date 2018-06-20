@@ -1,7 +1,7 @@
 /*
  * RootedBranchScoreMetric.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,24 +28,22 @@
  */
 package dr.evolution.tree.treemetrics;
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Clade;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
-import jebl.evolution.graphs.Node;
-import jebl.evolution.taxa.Taxon;
-import jebl.evolution.trees.RootedTree;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Guy Baele
  *
  */
-public class RootedBranchScoreMetric extends BranchScoreMetric {
+public class RootedBranchScoreMetric extends BranchScoreMetric implements Citable {
+
     public static Type TYPE = Type.ROOTED_BRANCH_SCORE;
 
     public RootedBranchScoreMetric() {
@@ -54,7 +52,7 @@ public class RootedBranchScoreMetric extends BranchScoreMetric {
     @Override
     public double getMetric(Tree tree1, Tree tree2) {
 
-        Utils.checkTreeTaxa(tree1, tree2);
+        TreeMetric.Utils.checkTreeTaxa(tree1, tree2);
 
         List<Clade> clades1 = Clade.getCladeList(tree1);
         List<Clade> clades2 = Clade.getCladeList(tree2);
@@ -89,5 +87,33 @@ public class RootedBranchScoreMetric extends BranchScoreMetric {
     public String toString() {
         return getType().getShortName();
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_METRICS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Normalized Rooted Branch Score";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("J", "Heled"),
+                    new Author("AJ", "Drummond")
+            },
+            "Bayesian inference of species trees from multilocus data",
+            2010,
+            "Mol. Biol. Evol.",
+            27,
+            570, 580,
+            Citation.Status.PUBLISHED
+    );
 
 }

@@ -25,6 +25,8 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.NodeRef;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
@@ -46,7 +48,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
                                   double weight, Options runtimeOptions, Parameter mask) {
         super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
     }
-    
+
     @Override
     public String getOperatorName() {
         return "Bouncy particle operator";
@@ -63,10 +65,10 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
             ReadableVector Phi_v = getPrecisionProduct(velocity);
 
-            double v_Phi_x = - innerProduct(velocity, gradient);
+            double v_Phi_x = -innerProduct(velocity, gradient);
             double v_Phi_v = innerProduct(velocity, Phi_v);
 
-            double tMin = Math.max(0.0, - v_Phi_x / v_Phi_v);
+            double tMin = Math.max(0.0, -v_Phi_x / v_Phi_v);
             double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
 
             double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
@@ -143,8 +145,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         for (int i = 0, len = position.getDim(); i < len; ++i) {
 
             double travelTime = Math.abs(position.get(i) / velocity.get(i));
-
-            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i))) {
+            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
 
                 if (travelTime < minTime) {
                     index = i;

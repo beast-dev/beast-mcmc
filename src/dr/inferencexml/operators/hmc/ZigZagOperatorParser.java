@@ -25,6 +25,7 @@
 
 package dr.inferencexml.operators.hmc;
 
+import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -71,6 +72,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         Parameter mask = parseMask(xo);
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
+        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
         return new ZigZagOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask);
     }

@@ -1,5 +1,6 @@
 package dr.math.matrixAlgebra.missingData;
 
+import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
@@ -33,6 +34,25 @@ public class MissingOps {
                                               final double[] buffer) {
         System.arraycopy(source, offset, buffer, 0, numRows * numCols);
         return DenseMatrix64F.wrap(numRows, numCols, buffer);
+    }
+
+    public static DenseMatrix64F wrap(MatrixParameterInterface A) {
+        return wrap(A.getParameterValues(), 0, A.getRowDimension(), A.getColumnDimension());
+    }
+
+    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
+                                              final int dim) {
+        double[] buffer = new double[dim * dim];
+        return wrapDiagonal(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
+                                              final int dim,
+                                              final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
     }
 
     public static DenseMatrix64F copy(ReadableMatrix source) {
@@ -431,13 +451,6 @@ public class MissingOps {
         }
     }
 
-    private void junk() {
-
-        DenseMatrix64F mat;
-
-
-    }
-
     private static double[] buffer = new double[16];
 
     public static void safeWeightedAverage(final WrappedVector mi,
@@ -534,6 +547,28 @@ public class MissingOps {
             for (int h = 0; h < dimTrait; ++h) {
                 sum += Pi.unsafe_get(g, h) * ipartial[ibo + h];
                 sum += Pj.unsafe_get(g, h) * jpartial[jbo + h];
+            }
+            out[g] = sum;
+        }
+    }
+
+    public static void weightedSumActualized(final double[] ipartial,
+                                             final int ibo,
+                                             final DenseMatrix64F Pi,
+                                             final double[] iactualization,
+                                             final int ido,
+                                             final double[] jpartial,
+                                             final int jbo,
+                                             final DenseMatrix64F Pj,
+                                             final double[] jactualization,
+                                             final int jdo,
+                                             final int dimTrait,
+                                             final double[] out) {
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            for (int h = 0; h < dimTrait; ++h) {
+                sum += iactualization[ido + g] * Pi.unsafe_get(g, h) * ipartial[ibo + h];
+                sum += jactualization[jdo + g] * Pj.unsafe_get(g, h) * jpartial[jbo + h];
             }
             out[g] = sum;
         }

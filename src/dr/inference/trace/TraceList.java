@@ -43,6 +43,11 @@ public interface TraceList {
     String getName();
 
     /**
+     * @return the the full name of this trace list (possibly the path)
+     */
+    String getFullName();
+
+    /**
      * @return the number of traces in this trace list
      */
     int getTraceCount();

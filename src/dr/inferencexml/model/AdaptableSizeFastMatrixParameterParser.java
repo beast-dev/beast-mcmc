@@ -24,7 +24,7 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
         int MaxColumnSize = xo.getAttribute(MAX_COL_SIZE, 1);
         int rowDimension = xo.getAttribute(ROWS, 1);
         int columnDimension = xo.getAttribute(COLUMNS, 1);
-        String name = xo.getName();
+        String name = xo.getId();
         double startingValue = 1;
         if(xo.hasAttribute(STARTING_VALUE))
             startingValue = xo.getDoubleAttribute(STARTING_VALUE);

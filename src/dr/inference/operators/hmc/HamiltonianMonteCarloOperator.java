@@ -105,7 +105,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private long count = 0;
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     
     static class NumericInstabilityException extends Exception { }
 

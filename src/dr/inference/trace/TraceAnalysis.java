@@ -332,6 +332,14 @@ public class TraceAnalysis {
         } else return formatter2.format(value);
     }
 
+    public static String formattedNumber(double value, int decimalPlaces) {
+        String pattern = "####0.";
+        for (int i = 0; i < decimalPlaces; i++) {
+            pattern += "#";
+        }
+        return new DecimalFormat(pattern).format(value);
+    }
+
     static final String[] colNamesNumeric = {"mean", "stderr_of_mean", "stdev", "variance", "median", "min", "max",
             "quantile1", "quantile3", "95_hpd_lower", "95_hpd_upper", "ACT", "ESS", "num_samples", "geometric_mean"};
     static final String[] colNamesCategorical = {"mode", "mode_frequency", "mode_probability",

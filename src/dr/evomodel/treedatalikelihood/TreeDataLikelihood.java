@@ -341,12 +341,14 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (hasInitialized) {
             StringBuilder sb = new StringBuilder();
 
+            double loglik = getLogLikelihood();
+
             String delegateString = likelihoodDelegate.getReport();
             if (delegateString != null) {
                 sb.append(delegateString);
             }
 
-            sb.append(getClass().getName()).append("(").append(getLogLikelihood()).append(")");
+            sb.append(getClass().getName()).append("(").append(loglik).append(")");
 
             if (COUNT_TOTAL_OPERATIONS)
                 sb.append("\n  total operations = ").append(totalOperationCount).append(

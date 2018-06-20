@@ -73,19 +73,30 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
         }
 
         //operators
-        BitFlipOperator sparsityOperator = null;
+        SimpleMCMCOperator sparsityOperator = null;
         if (xo.getChild(BitFlipOperator.class) != null)
             sparsityOperator = (BitFlipOperator) xo.getChild(BitFlipOperator.class);
+        if(xo.getChild(LoadingsSparsityOperator.class) != null){
+            sparsityOperator = (LoadingsSparsityOperator) xo.getChild(LoadingsSparsityOperator.class);
+        }
         SimpleMCMCOperator loadingsOperator = (SimpleMCMCOperator) xo.getChild(LOADINGS_OPERATOR).getChild(SimpleMCMCOperator.class);
         SimpleMCMCOperator factorOperator = null;
         if(xo.getChild(FACTOR_OPERATOR) != null)
             factorOperator = (SimpleMCMCOperator) xo.getChild(FACTOR_OPERATOR).getChild(FactorTreeGibbsOperator.class);
 
+        LatentFactorModelPrecisionGibbsOperator precisionGibbsOperator = null;
+        if(xo.getChild(LatentFactorModelPrecisionGibbsOperator.class) != null){
+            System.out.println("here");
+            precisionGibbsOperator = (LatentFactorModelPrecisionGibbsOperator) xo.getChild(LatentFactorModelPrecisionGibbsOperator.class);
+        }
 
 
 
 
-        return new FactorRJMCMCOperator(weight, sizeParameter, chainLength, factors, loadings, cutoffs, loadingsSparcity, LFM, DPP, loadingsPrior, loadingsOperator, factorOperator, sparsityOperator, NOp, rowPrior);
+        return new FactorRJMCMCOperator(weight, sizeParameter, chainLength, factors,
+                loadings, cutoffs, loadingsSparcity, LFM, DPP,
+                loadingsPrior, loadingsOperator, factorOperator,
+                sparsityOperator, NOp, rowPrior, precisionGibbsOperator);
     }
 
     @Override
@@ -97,8 +108,9 @@ public class FactorRJMCMCOperatorParser extends AbstractXMLObjectParser{
                     new ElementRule(SimpleMCMCOperator.class)}),
             new ElementRule(FACTOR_OPERATOR, new XMLSyntaxRule[]{
                     new ElementRule(SimpleMCMCOperator.class)}, true),
-            new ElementRule(BitFlipOperator.class, true),
+            new OrRule(new ElementRule(BitFlipOperator.class, true), new ElementRule(LoadingsSparsityOperator.class, true)),
             new ElementRule(AbstractModelLikelihood.class),
+            new ElementRule(LatentFactorModelPrecisionGibbsOperator.class, true),
             new ElementRule(SPARSITY_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DeterminentalPointProcessPrior.class)}, true),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{

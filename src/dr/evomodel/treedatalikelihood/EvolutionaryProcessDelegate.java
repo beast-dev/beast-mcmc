@@ -48,6 +48,8 @@ public interface EvolutionaryProcessDelegate {
 
     SubstitutionModel getSubstitutionModel(int index);
 
+    SubstitutionModel getSubstitutionModelForBranch(int branchIndex);
+
     int getEigenIndex(int bufferIndex);
 
     int getMatrixIndex(int branchIndex);

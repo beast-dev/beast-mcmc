@@ -37,6 +37,7 @@ public class LatentFactorModelPrecisionGibbsOperatorParser extends AbstractXMLOb
     public final String LATENT_FACTOR_MODEL_PRECISION_OPERATOR = "latentFactorModelPrecisionOperator";
     public final String WEIGHT = "weight";
     public final String RANDOM_SCAN = "randomScan";
+    public final String PATH_PARAMETER = "pathParameter";
 
 
     @Override
@@ -46,8 +47,13 @@ public class LatentFactorModelPrecisionGibbsOperatorParser extends AbstractXMLOb
         LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
+        LatentFactorModelPrecisionGibbsOperator lfmOp = new LatentFactorModelPrecisionGibbsOperator(LFM, prior, weight, randomScan);
+        if(xo.hasAttribute(PATH_PARAMETER)){
+            System.out.println("WARNING: Setting Path Parameter is intended for debugging purposes only!");
+            lfmOp.setPathParameter(xo.getDoubleAttribute(PATH_PARAMETER));
+        }
 
-        return new LatentFactorModelPrecisionGibbsOperator(LFM, prior, weight, randomScan);
+        return lfmOp;
 
 
     }
@@ -62,6 +68,7 @@ public class LatentFactorModelPrecisionGibbsOperatorParser extends AbstractXMLOb
             new ElementRule(DistributionLikelihood.class),
 //            new ElementRule(CompoundParameter.class),
             AttributeRule.newDoubleRule(WEIGHT),
+            AttributeRule.newDoubleRule(PATH_PARAMETER, true),
     };
 
     @Override

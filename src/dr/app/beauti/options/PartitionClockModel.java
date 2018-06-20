@@ -191,7 +191,7 @@ public class PartitionClockModel extends PartitionOptions {
 
         if (!options.classicOperatorsAndPriors) {
             createOperator("rwBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
-                    "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 0, branchWeights / 3);
+                    "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 1, branchWeights / 3);
         } else {
             createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
                     "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);

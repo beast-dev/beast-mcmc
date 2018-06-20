@@ -80,6 +80,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         return mask;
     }
 
+
     static AbstractParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {
 
         double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);

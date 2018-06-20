@@ -1,7 +1,7 @@
 /*
  * BufferIndexHelper.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood;
 
 import java.io.Serializable;
+import java.util.*;
 
 /**
  * BufferIndexHelper - helper for double buffering of intermediate computation at nodes.
@@ -50,12 +51,12 @@ public class BufferIndexHelper implements Serializable {
      * @param bufferSetNumber provides a total offset of bufferSetNumber * bufferCount
      */
     public BufferIndexHelper(int maxIndexValue, int minIndexValue, int bufferSetNumber) {
-        this.maxIndexValue = maxIndexValue;
         this.minIndexValue = minIndexValue;
 
         doubleBufferCount = maxIndexValue - minIndexValue;
         indexOffsets = new int[doubleBufferCount];
         storedIndexOffsets = new int[doubleBufferCount];
+        flippedSinceLastReset = new boolean[doubleBufferCount];
 
         this.constantOffset = bufferSetNumber * getBufferCount();
     }
@@ -67,7 +68,11 @@ public class BufferIndexHelper implements Serializable {
     public void flipOffset(int i) {
         assert(i >= minIndexValue) : "shouldn't be trying to flip the first 'static' indices";
 
-        indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
+        final int index = i - minIndexValue;
+        if (!flippedSinceLastReset[index]) {
+            indexOffsets[index] = doubleBufferCount - indexOffsets[index];
+            flippedSinceLastReset[index] = true;
+        }
     }
 
     public int getOffsetIndex(int i) {
@@ -77,29 +82,38 @@ public class BufferIndexHelper implements Serializable {
         return indexOffsets[i - minIndexValue] + i + constantOffset;
     }
 
-    public void getIndices(int[] outIndices) {
-        for (int i = 0; i < maxIndexValue; i++) {
-            outIndices[i] = getOffsetIndex(i);
-        }
+    private int getStoredOffsetIndex(int i) {
+        assert (i >= minIndexValue);
+        return storedIndexOffsets[i - minIndexValue] + i + constantOffset;
+    }
+
+    public boolean isSafeUpdate(int i) {
+        return getStoredOffsetIndex(i) != getOffsetIndex(i);
     }
 
     public void storeState() {
         System.arraycopy(indexOffsets, 0, storedIndexOffsets, 0, indexOffsets.length);
 
+        resetMultipleFlips();
     }
 
     public void restoreState() {
         int[] tmp = storedIndexOffsets;
         storedIndexOffsets = indexOffsets;
         indexOffsets = tmp;
+
+        resetMultipleFlips();
     }
 
-    private final int maxIndexValue;
+    private void resetMultipleFlips() {
+        Arrays.fill(flippedSinceLastReset, false);
+    }
+
     private final int minIndexValue;
     private final int constantOffset;
     private final int doubleBufferCount;
+    private final boolean[] flippedSinceLastReset;
 
     private int[] indexOffsets;
     private int[] storedIndexOffsets;
-
-}//END: class
+}

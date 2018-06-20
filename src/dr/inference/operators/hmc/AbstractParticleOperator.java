@@ -47,8 +47,8 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
-                                    PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                    double weight, Options runtimeOptions, Parameter mask) {
+                             PrecisionMatrixVectorProductProvider multiplicationProvider,
+                             double weight, Options runtimeOptions, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -59,7 +59,23 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.preconditioning = setupPreconditioning();
 
         setWeight(weight);
+        setMissingDataMask();
         checkParameterBounds(parameter);
+    }
+
+    private void setMissingDataMask() {
+
+        int dim = parameter.getDimension();
+        missingDataMask = new double[dim];
+        assert (dim == parameter.getBounds().getBoundsDimension());
+
+        for (int i = 0; i < dim; ++i) {
+
+            missingDataMask[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
+                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY) ? 1 : 0;//now value = 1.0 in
+            // the mask means missing observation;
+
+        }
     }
 
     @Override
@@ -144,8 +160,13 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new WrappedVector.Raw(product);
     }
 
-    static boolean headingTowardsBoundary(double position, double velocity) {
-        return position * velocity < 0.0;
+    boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
+
+        if (missingDataMask[positionIndex] == 1.0) {
+            return false;
+        } else {
+            return position * velocity < 0.0;
+        }
     }
 
     private WrappedVector getInitialPosition() {
@@ -227,4 +248,5 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final Parameter mask;
 
     Preconditioning preconditioning;
+    private double[] missingDataMask;
 }

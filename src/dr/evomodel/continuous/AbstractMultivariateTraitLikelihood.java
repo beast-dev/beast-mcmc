@@ -765,22 +765,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             List<BranchRateModel> driftModels = parseDriftModels(xo, diffusionModel);
 
-            List<BranchRateModel> optimalValues = null;
+            List<BranchRateModel> optimalValues = parseOptimalValuesModels(xo, diffusionModel);
+
             BranchRateModel strengthOfSelection = null;
 
-            if (xo.hasChildNamed(OPTIMAL_TRAITS)) {
-                optimalValues = new ArrayList<BranchRateModel>();
-                XMLObject cxo = xo.getChild(OPTIMAL_TRAITS);
-                final int numberModels = cxo.getChildCount();
-                if (numberModels != diffusionModel.getPrecisionmatrix().length) {
-                    throw new XMLParseException("Wrong number of optimal trait models (" + numberModels + ") for a trait of" +
-                            " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
-                    );
-                }
-                for (int i = 0; i < numberModels; ++i) {
-                    optimalValues.add((BranchRateModel) cxo.getChild(i));
-                }
-            }
 
             if (xo.hasChildNamed(STRENGTH_OF_SELECTION)) {
                 XMLObject cxo = xo.getChild(STRENGTH_OF_SELECTION);
@@ -849,7 +837,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             List<RestrictedPartials> restrictedPartialsList = parseRestrictedPartials(xo, integrate);
-            
+
             AbstractMultivariateTraitLikelihood like;
 
             if (integrate) {
@@ -1063,9 +1051,36 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         return driftModels;
     }
 
+
+    public static List<BranchRateModel> parseOptimalValuesModels(XMLObject xo,
+                                                                 MultivariateDiffusionModel diffusionModel)
+            throws XMLParseException {
+
+        List<BranchRateModel> optimalValues = null;
+
+        if (xo.hasChildNamed(OPTIMAL_TRAITS)) {
+            optimalValues = new ArrayList<BranchRateModel>();
+            XMLObject cxo = xo.getChild(OPTIMAL_TRAITS);
+
+            final int numberModels = cxo.getChildCount();
+
+            if (numberModels != diffusionModel.getPrecisionmatrix().length) {
+                throw new XMLParseException("Wrong number of optimal trait models (" + numberModels + ") for a trait of" +
+                        " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
+                );
+            }
+
+            for (int i = 0; i < numberModels; ++i) {
+                optimalValues.add((BranchRateModel) cxo.getChild(i));
+            }
+        }
+
+        return optimalValues;
+    }
+
     public static List<RestrictedPartials> parseRestrictedPartials(XMLObject xo, boolean integrate)
             throws XMLParseException {
-        
+
         List<RestrictedPartials> restrictedPartialsList = null;
         for (int i = 0; i < xo.getChildCount(); ++i) {
             Object cxo = xo.getChild(i);

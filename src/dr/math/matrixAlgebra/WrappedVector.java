@@ -26,6 +26,8 @@
 package dr.math.matrixAlgebra;
 
 
+import dr.inference.model.Variable;
+
 /**
  * @author Marc A. Suchard
  */
@@ -90,6 +92,22 @@ public interface WrappedVector extends ReadableVector, WritableVector {
         final public void set(final int i, final double x) {
             buffer[offset + i] = x;
         }
+    }
+
+    final class Parameter extends Abstract {
+
+        private final Variable<Double> variable;
+
+        public Parameter(Variable<Double> variable) {
+            super(null, 0, variable.getSize());
+            this.variable = variable;
+        }
+
+        @Override
+        final public double get(final int i) { return variable.getValue(i); }
+
+        @Override
+        final public void set(final int i, final double x) { variable.setValue(i, x); }
     }
 
     final class Indexed extends Abstract {

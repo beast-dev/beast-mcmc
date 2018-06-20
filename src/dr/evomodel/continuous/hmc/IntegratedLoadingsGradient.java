@@ -6,7 +6,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundLikelihood;
@@ -14,6 +14,9 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.math.matrixAlgebra.ReadableMatrix;
+import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
@@ -28,7 +31,7 @@ import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductPro
  */
 public class IntegratedLoadingsGradient implements GradientWrtParameterProvider, Reportable {
 
-    private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
+    private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
@@ -79,34 +82,73 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return dimTrait * dimTrait; // TODO May need to work with vech(L)
     }
 
+    private ReadableMatrix shiftToSecondMoment(WrappedMatrix variance, ReadableVector mean) {
+
+        assert(variance.getMajorDim() == variance.getMinorDim());
+        assert(variance.getMajorDim()== mean.getDim());
+
+        final int dim = variance.getMajorDim();
+
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                variance.set(i,j, variance.get(i,j) - mean.get(i) * mean.get(j));
+            }
+        }
+
+        return variance;
+    }
+
     @Override
     public double[] getGradientLogDensity() {
 
         double[] gradient = new double[getDimension()];
 
-        Parameter gamma = factorAnalysisLikelihood.getPrecision();
-        assert (gamma.getDimension() == dimTrait);
+        ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
+        ReadableMatrix loadings = new WrappedMatrix.MatrixParameter(factorAnalysisLikelihood.getLoadings());
 
-        // [E(F) Y^t + E(FF^t)L]\Gamma
+        assert (gamma.getDim() == dimTrait);
+        assert (loadings.getMajorDim() == dimFactors);
+        assert (loadings.getMinorDim() == dimTrait);
+
+        // [E(F) Y^t - E(FF^t)L]\Gamma
+        // E(FF^t) = V(F) - E(F)E(F)^t
 
         // Y: N x P
         // F: N x K
         // L: K x P
 
         // (K x N)(N x P)(P x P) - (K x N)(N x K)(K x P)(P x P)
-        // sum_{N} (K x 1)(1 x P)(P x P) - (K x 1)(1 x K)(K x P)(P x P)
+        // sum_{N} (K x 1)(1 x P)(P x P) - (K x K)(K x P)(P x P)
         
-        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+        for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
 
-            WrappedVector y = getTipData(i);
+            WrappedVector y = getTipData(taxon);
 
             // TODO Work with fullConditionalDensity
-            List<WrappedMeanPrecision> statistics =
-                    fullConditionalDensity.getTrait(tree, tree.getExternalNode(i));
+            List<WrappedNormalSufficientStatistics> statistics =
+                    fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
 
-            for (WrappedMeanPrecision meanPrecision : statistics) {
-                System.err.println(i + " : " + meanPrecision.getMean());
-                System.err.println(i + " : " + meanPrecision.getPrecision());
+            for (WrappedNormalSufficientStatistics statistic : statistics) {
+
+                ReadableVector mean = statistic.getMean();
+                WrappedMatrix variance = statistic.getVariance();
+
+                ReadableMatrix secondMoment = shiftToSecondMoment(variance, mean);
+                ReadableMatrix product = ReadableMatrix.Utils.productProxy(secondMoment,loadings);
+
+                System.err.println(taxon + " : " + mean);
+                System.err.println(taxon + " : " + statistic.getPrecision());
+                System.err.println(taxon + " : " + variance);
+                System.err.println(taxon + " : " + secondMoment);
+                System.err.println(taxon + " : " + product);
+
+                for (int factor = 0; factor < dimFactors; ++factor) {
+                    for (int trait = 0; trait < dimTrait; ++trait) {
+                        gradient[factor * dimTrait + trait] +=
+                                (mean.get(factor) * y.get(trait) - product.get(factor, trait))
+                                        * gamma.get(trait);
+                    }
+                }
             }
         }
 
@@ -127,10 +169,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 0, dimTrait);
     }
 
-//    private WrappedMeanPrecision getTipData(int tipIndex) {
+//    private WrappedNormalSufficientStatistics getTipData(int tipIndex) {
 //        double[] buffer = factorAnalysisLikelihood.getTipPartial(tipIndex, false);
 //
-//        return new WrappedMeanPrecision(buffer, 0, dimTrait, null, PrecisionType.FULL);
+//        return new WrappedNormalSufficientStatistics(buffer, 0, dimTrait, null, PrecisionType.FULL);
 //    }
 
     private MultivariateFunction numeric = new MultivariateFunction() {

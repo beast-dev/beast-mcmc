@@ -25,16 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-/**
- * BeagleDataLikelihoodDelegate
- *
- * A DataLikelihoodDelegate that uses BEAGLE
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- * @version $Id$
- */
-
 import beagle.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -57,6 +47,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+/**
+ * BeagleDataLikelihoodDelegate
+ *
+ * A DataLikelihoodDelegate that uses BEAGLE
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @version $Id$
+ */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
     // This property is a comma-delimited list of resource numbers (0 == CPU) to

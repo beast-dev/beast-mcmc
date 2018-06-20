@@ -59,5 +59,70 @@ public interface ReadableMatrix extends ReadableVector {
 
             return new WrappedVector.Raw(result);
         }
+
+        public static ReadableMatrix productProxy(final ReadableMatrix lhs, final ReadableMatrix rhs) {
+            final int majorDim = lhs.getMajorDim();
+            final int innerDim = lhs.getMinorDim();
+            final int minorDim = rhs.getMinorDim();
+
+            assert (innerDim == rhs.getMajorDim());
+
+            return new ReadableMatrix() {
+
+                @Override
+                public double get(int i, int j) {
+
+                    double sum = 0.0;
+                    for (int k = 0; k < innerDim; ++k) {
+                        sum += lhs.get(i, k) * rhs.get(k,j);
+                    }
+
+                    return sum;
+                }
+
+                @Override
+                public int getMajorDim() {
+                    return majorDim;
+                }
+
+                @Override
+                public int getMinorDim() {
+                    return minorDim;
+                }
+
+                @Override
+                public double get(int i) {
+                    return get(i / majorDim, i % majorDim);
+                }
+
+                @Override
+                public int getDim() {
+                    return majorDim * minorDim;
+                }
+            };
+        }
+
+        public static WrappedVector product(ReadableMatrix lhs, ReadableMatrix rhs) {
+
+            final int majorDim = lhs.getMajorDim();
+            final int innerDim = lhs.getMinorDim();
+            final int minorDim = rhs.getMinorDim();
+
+            assert (innerDim == rhs.getMajorDim());
+
+            final double[] result = new double[majorDim * minorDim];
+
+            for (int row = 0; row < majorDim; ++row) {
+                for (int col = 0; col < minorDim; ++col) {
+                    double sum = 0.0;
+                    for (int inner = 0; inner < innerDim; ++inner) {
+                        sum += lhs.get(row, inner) * rhs.get(inner, col);
+                    }
+                    result[row * minorDim + col] = sum;
+                }
+            }
+
+            return new WrappedVector.Raw(result);
+        }
     }
 }

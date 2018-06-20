@@ -2,13 +2,13 @@
 <beast>
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">-0.9216947747262308 -3.702180755908974</attr>
+			<attr name="X">0.9 -1.0</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">NA -3.1486519648571036</attr>
+			<attr name="X">NA -0.1</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">3.2120639563878823 -3.8426078209966636</attr>
+			<attr name="X">-0.9 NA</attr>
 		</taxon>
 	</taxa>
 
@@ -58,25 +58,25 @@
 		<repeatedMeasuresModel idref="repeatedMeasures"/>
 		<conjugateRootPrior>
 			<meanParameter>
-				<parameter id="mean" value="-1.0 -3.0"/>
+				<parameter id="mean" value="0.0 0.0"/>
 			</meanParameter>
 			<priorSampleSize>
-				<parameter value="10.0"/>
+				<parameter value="0.001"/>
 			</priorSampleSize>
 		</conjugateRootPrior>
 	</traitDataLikelihood>
 
-	<multivariateWishartPrior id="precisionPrior" df="2">
-		<scaleMatrix>
-			<matrixParameter>
-				<parameter value="1 0"/>
-				<parameter value="0 1"/>
-			</matrixParameter>
-		</scaleMatrix>
-		<data>
-			<matrixParameter idref="precisionMatrix"/>
-		</data>
-	</multivariateWishartPrior>
+	<!--<multivariateWishartPrior id="precisionPrior" df="2">-->
+		<!--<scaleMatrix>-->
+			<!--<matrixParameter>-->
+				<!--<parameter value="1 0"/>-->
+				<!--<parameter value="0 1"/>-->
+			<!--</matrixParameter>-->
+		<!--</scaleMatrix>-->
+		<!--<data>-->
+			<!--<matrixParameter idref="precisionMatrix"/>-->
+		<!--</data>-->
+	<!--</multivariateWishartPrior>-->
 
 	<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">
 		<parameter idref="gamma"/>
@@ -97,12 +97,12 @@
 			</prior>
 		</normalGammaPrecisionGibbsOperator>
 
-		<precisionGibbsOperator weight="1">
-			<wishartStatistics  traitName="X">
-				<traitDataLikelihood idref="traitLikelihood"/>
-			</wishartStatistics>
-			<multivariateWishartPrior idref="precisionPrior"/>
-		</precisionGibbsOperator>
+		<!--<precisionGibbsOperator weight="1">-->
+			<!--<wishartStatistics  traitName="X">-->
+				<!--<traitDataLikelihood idref="traitLikelihood"/>-->
+			<!--</wishartStatistics>-->
+			<!--<multivariateWishartPrior idref="precisionPrior"/>-->
+		<!--</precisionGibbsOperator>-->
 	</operators>
 
 	<report>
@@ -110,11 +110,11 @@
 		<traitDataLikelihood idref="traitLikelihood"/>
 	</report>
 
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<gammaPrior idref="gammaPrior"/>
-				<multivariateWishartPrior idref="precisionPrior"/>
+				<!--<multivariateWishartPrior idref="precisionPrior"/>-->
 			</prior>
 			<likelihood>
 				<traitDataLikelihood idref="traitLikelihood"/>
@@ -132,12 +132,13 @@
 				<matrixParameter idref="precisionMatrix"/>
 			</column>
 		</log>
-		<!--<log id="fileLog" logEvery="1000" fileName="precision_log.log">-->
-			<!--<posterior idref="posterior"/>-->
-			<!--<prior idref="prior"/>-->
-			<!--<likelihood idref="likelihood"/>-->
-			<!--<parameter idref="gamma"/>-->
-		<!--</log>-->
+		<log id="fileLog" logEvery="1000" fileName="precision_log.log">
+			<posterior idref="posterior"/>
+			<prior idref="prior"/>
+			<likelihood idref="traitLikelihood"/>
+			<parameter idref="gamma"/>
+			<matrixParameter idref="precisionMatrix"/>
+		</log>
 	</mcmc>
 
 </beast>

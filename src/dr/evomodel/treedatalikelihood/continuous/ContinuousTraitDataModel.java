@@ -36,6 +36,7 @@ import java.util.*;
 public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider {
 
     private final CompoundParameter parameter;
+    //TODO: fix missingIndices so that it stores a boolean value for each rather than an array of missing inds
     private final List<Integer> missingIndices;
     private final List<Integer> originalMissingIndices;
 

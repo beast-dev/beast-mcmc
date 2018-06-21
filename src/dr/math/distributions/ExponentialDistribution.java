@@ -131,6 +131,10 @@ public class ExponentialDistribution implements Distribution {
         return -lambda;
     }
 
+    public static double hessianLogPdf(double x, double lambda) {
+        return 0.0;
+    }
+
     /**
      * cumulative density function of the exponential distribution
      *

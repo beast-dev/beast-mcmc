@@ -36,7 +36,10 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @version $Id$
  */
 
-import dr.evolution.tree.*;
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -457,21 +460,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double[] driftDatum = drift;
 
             int[] notMissingIndices;
-            if (missing.size() > 0) {
-                notMissingIndices = new int[datumLength - missing.size()];
-                int offsetNotMissing = 0;
-                for (int i = 0; i < datumLength; ++i) {
-                    if (!missing.contains(i)) {
-                        notMissingIndices[offsetNotMissing] = i;
-                        ++offsetNotMissing;
-                    }
+            notMissingIndices = new int[datumLength - missing.size()];
+            int offsetNotMissing = 0;
+            for (int i = 0; i < datumLength; ++i) {
+                if (!missing.contains(i)) {
+                    notMissingIndices[offsetNotMissing] = i;
+                    ++offsetNotMissing;
                 }
-
-                datum = Matrix.gatherEntries(rawDatum, notMissingIndices);
-                varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, notMissingIndices, notMissingIndices);
-
-                driftDatum = Matrix.gatherEntries(drift, notMissingIndices);
             }
+
+            datum = Matrix.gatherEntries(rawDatum, notMissingIndices);
+            varianceDatum = Matrix.gatherRowsAndColumns(jointVariance, notMissingIndices, notMissingIndices);
+
+            driftDatum = Matrix.gatherEntries(drift, notMissingIndices);
 
             sb.append("datum : ").append(new dr.math.matrixAlgebra.Vector(datum)).append("\n");
 
@@ -523,22 +524,34 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             // Compute full conditional distributions
             sb.append("Full conditional distributions:\n");
 
-
-            int[] cMissing = new int[dimTrait];
-            int[] cNotMissing = new int[tipCount * dimTrait - dimTrait];
+            int offsetNotMissing2 = 0;
 
             for (int tip = 0; tip < tipCount; ++tip) {
 
+                int offset = tip * dimTrait;
+                int dimTip = 0;
+                for (int cTrait = 0; cTrait < dimTrait; cTrait++) {
+                    if ((offsetNotMissing2 + cTrait < notMissingIndices.length)
+                            && notMissingIndices[offsetNotMissing2 + cTrait] < offset + dimTrait) {
+                        dimTip++;
+                    }
+                }
+
+                int[] cMissing = new int[dimTrait];
+                int[] cNotMissing = new int[notMissingIndices.length - dimTip];
+
                 for (int cTrait = 0; cTrait < dimTrait; ++cTrait) {
-                    cMissing[cTrait] = tip * dimTrait + cTrait;
+                    cMissing[cTrait] = offset + cTrait;
                 }
 
-                for (int m = 0; m < tip * dimTrait; ++m) {
-                    cNotMissing[m] = m;
+                for (int m = 0; m < offsetNotMissing2; ++m) {
+                    cNotMissing[m] = notMissingIndices[m];
                 }
 
-                for (int m = (tip + 1) * dimTrait; m < tipCount * dimTrait; ++m) {
-                    cNotMissing[m - dimTrait] = m;
+                offsetNotMissing2 += dimTip;
+
+                for (int m = offsetNotMissing2; m < notMissingIndices.length; ++m) {
+                    cNotMissing[m - dimTip] = notMissingIndices[m];
                 }
 
                 ConditionalVarianceAndTransform cVariance = new ConditionalVarianceAndTransform(
@@ -553,6 +566,20 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
 
         return sb.toString();
+    }
+
+    private int[] getMissingTip(int tip, int[] notMissingIndices, int offsetNotMissing) {
+        int offset = tip * dimTrait;
+        int dimTip = 0;
+        for (int cTrait = 0; cTrait < dimTrait; cTrait++) {
+            if (notMissingIndices[offsetNotMissing + cTrait] < offset + dimTrait) dimTip++;
+        }
+        int[] cMissing = new int[dimTip];
+        for (int cTrait = 0; cTrait < dimTip; ++cTrait) {
+            cMissing[cTrait] = notMissingIndices[offsetNotMissing + cTrait];
+        }
+        offsetNotMissing += dimTrait;
+        return cMissing;
     }
 
     @Override

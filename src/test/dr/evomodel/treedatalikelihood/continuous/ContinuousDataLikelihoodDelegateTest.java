@@ -13,6 +13,7 @@ import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
+import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -31,6 +32,9 @@ import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
 
 public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert {
 
+    private int dimTrait;
+    private int nTips;
+
     private MultivariateDiffusionModel diffusionModel;
     private ContinuousTraitPartialsProvider dataModel;
     private ConjugateRootTraitPrior rootPrior;
@@ -48,6 +52,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
     public void setUp() throws Exception {
         super.setUp();
 
+        dimTrait = 3;
+
         format.setMaximumFractionDigits(5);
 
         // Tree
@@ -55,6 +61,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         treeModel = createPrimateTreeModel();
 
         // Data
+        nTips = 6;
         Parameter[] dataTraits = new Parameter[6];
         dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
         dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
@@ -74,7 +81,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         //// Standard Model //// ***************************************************************************************
 
         // Diffusion
-        Parameter[] precisionParameters = new Parameter[3];
+        Parameter[] precisionParameters = new Parameter[dimTrait];
         precisionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1, 0.2});
         precisionParameters[1] = new Parameter.Default(new double[]{0.1, 2.0, 0.0});
         precisionParameters[2] = new Parameter.Default(new double[]{0.2, 0.0, 3.0});
@@ -91,7 +98,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
                 missingIndices, true,
-                3, precisionType);
+                dimTrait, precisionType);
 
         //// Factor Model //// *****************************************************************************************
         // Diffusion
@@ -164,6 +171,18 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,0.458075216795976,2.650535598209761,3.4693334367360538,0.5,2.6420628558588306,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsBM", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
 
     }
 
@@ -1030,5 +1049,32 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         assertEquals("likelihoodFullDiagonalOUFactor",
                 format.format(likelihoodFactorData + likelihoodFactorDiffusion),
                 format.format(likelihoodFactorDataDiagonal + likelihoodFactorDiffusionDiagonal));
+    }
+
+    private double[] parseVector(String s, String sep) {
+        String[] vectorString = s.split(sep);
+        double[] gradient = new double[vectorString.length];
+        for (int i = 0; i < gradient.length; i++) {
+            gradient[i] = Double.parseDouble(vectorString[i]);
+        }
+        return gradient;
+    }
+
+    private void testCMeans(String s, String name, double[] partials) {
+        int offset = 0;
+        int indBeg = 0;
+        for (int tip = 0; tip < nTips; tip++) {
+            indBeg = s.indexOf(name, indBeg + 1) + name.length() + 4;
+            int indEnd = s.indexOf("]", indBeg);
+            double[] vector = parseVector(s.substring(indBeg, indEnd), ",");
+            for (int i = 0; i < vector.length; i++) {
+                System.out.println("cMean Mat: " + vector[i]);
+                System.out.println("cMean preorder: " + partials[offset + i]);
+                assertEquals("cMean " + tip + "; " + i,
+                        format.format(partials[offset + i]),
+                        format.format(vector[i]));
+            }
+            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+        }
     }
 }

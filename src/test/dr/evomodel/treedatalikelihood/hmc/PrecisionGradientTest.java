@@ -41,7 +41,10 @@ import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipRealizedValuesViaFullConditionalDelegate;
-import dr.inference.model.*;
+import dr.inference.model.CachedMatrixInverse;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.CompoundSymmetricMatrix;
+import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.text.NumberFormat;
@@ -280,10 +283,14 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     private double[] parseGradient(String s, String name) {
         int indBeg = s.indexOf(name) + name.length() + 3;
         int indEnd = s.indexOf("]", indBeg);
-        String[] gradientString = (s.substring(indBeg, indEnd)).split(",");
-        double[] gradient = new double[gradientString.length];
+        return parseVector(s.substring(indBeg, indEnd), ",");
+    }
+
+    private double[] parseVector(String s, String sep) {
+        String[] vectorString = s.split(sep);
+        double[] gradient = new double[vectorString.length];
         for (int i = 0; i < gradient.length; i++) {
-            gradient[i] = Double.parseDouble(gradientString[i]);
+            gradient[i] = Double.parseDouble(vectorString[i]);
         }
         return gradient;
     }

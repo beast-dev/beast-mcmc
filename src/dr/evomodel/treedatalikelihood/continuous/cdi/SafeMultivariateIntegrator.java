@@ -143,6 +143,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         if (DEBUG) {
             System.err.println("updatePreOrderPartial for node " + iBuffer);
             System.err.println("\tVdj: " + Vdj);
+            System.err.println("\tVdi: " + Vdi);
         }
 
         // For each trait // TODO in parallel
@@ -202,6 +203,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 System.err.println("pP: " + Pk);
                 System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
                 System.err.println("sV: " + Vj);
+                System.err.println("sP: " + new WrappedVector.Raw(partials, jbo + dimTrait, dimTrait * dimTrait));
                 System.err.println("sVp: " + Vjp);
                 System.err.println("sPp: " + Pjp);
                 System.err.println("Pip: " + Pip);
@@ -327,7 +329,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             // C. Store precision
             unwrap(Pk, partials, kbo + dimTrait);
             final DenseMatrix64F Vk = matrix0;
-            safeInvert(Pk, Vk, true); // TODO only if necessary
+            safeInvert(Pk, Vk, false); // TODO only if necessary
             unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
 
             if (TIMING) {

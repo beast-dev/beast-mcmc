@@ -131,7 +131,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
     @Override
     void scaleAndDriftMean(int ibo, int imo, int ido) {
         for (int g = 0; g < dimTrait; ++g) {
-            preOrderPartials[ibo + g] -= displacements[ido + g];
+            preOrderPartials[ibo + g] += displacements[ido + g];
         }
     }
 

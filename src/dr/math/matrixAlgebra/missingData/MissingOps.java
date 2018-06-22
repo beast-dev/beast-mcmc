@@ -14,9 +14,7 @@ import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
 
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.FULLY_OBSERVED;
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.PARTIALLY_OBSERVED;
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
 
 /**
  * @author Marc A. Suchard
@@ -104,6 +102,19 @@ public class MissingOps {
             for (int j = 0; j < colLength; ++j) {
                 destination.unsafe_set(rowIndex, colIndices[j], in[index]);
                 ++index;
+            }
+        }
+    }
+
+    private static void fillDiagonalsMissing(final DenseMatrix64F source, final DenseMatrix64F destination) {
+        final int length = source.getNumCols();
+
+        for (int i = 0; i < length; ++i) {
+            final double d = source.unsafe_get(i, i);
+            if (Double.isInfinite(d)) {
+                destination.unsafe_set(i, i, 0.0);
+            } else if (d == 0.0) {
+                destination.unsafe_set(i, i, Double.POSITIVE_INFINITY);
             }
         }
     }
@@ -393,6 +404,11 @@ public class MissingOps {
     }
 
     public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
+        return safeInvert(source, destination, getDeterminant, false);
+    }
+
+    public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant,
+                                             boolean tweakDiagonal) {
 
         final int dim = source.getNumCols();
         final int finiteCount = countFiniteNonZeroDiagonals(source);
@@ -424,6 +440,8 @@ public class MissingOps {
                 }
 
                 scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
+
+                if (tweakDiagonal) fillDiagonalsMissing(source, destination);
 
                 return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
             }

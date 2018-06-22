@@ -329,7 +329,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             // C. Store precision
             unwrap(Pk, partials, kbo + dimTrait);
             final DenseMatrix64F Vk = matrix0;
-            safeInvert(Pk, Vk, false); // TODO only if necessary
+            safeInvert(Pk, Vk, false, true); // TODO only if necessary
             unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
 
             if (TIMING) {

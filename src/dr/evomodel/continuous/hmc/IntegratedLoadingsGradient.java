@@ -91,7 +91,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
-                variance.set(i,j, variance.get(i,j) - mean.get(i) * mean.get(j));
+                variance.set(i,j, variance.get(i,j) + mean.get(i) * mean.get(j));
             }
         }
 
@@ -112,6 +112,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         // [E(F) Y^t - E(FF^t)L]\Gamma
         // E(FF^t) = V(F) - E(F)E(F)^t
+        // error in comment ^ could indicate error in implementation
 
         // Y: N x P
         // F: N x K

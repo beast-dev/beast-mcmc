@@ -25,9 +25,7 @@
 
 package dr.inference.hmc;
 
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Vector;
 
 import java.util.ArrayList;
@@ -38,7 +36,7 @@ import java.util.List;
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
-public class SumDerivative implements GradientWrtParameterProvider {
+public class SumDerivative implements GradientWrtParameterProvider, HessianWrtParameterProvider {
 
     private final int dimension;
     private final Likelihood likelihood;
@@ -90,10 +88,14 @@ public class SumDerivative implements GradientWrtParameterProvider {
     }
 
     @Override
-    public double[] getGradientLogDensity() {
+    public double[] getDiagonalHessianLogDensity() {
+        return getDerivativeLogDensity(DerivativeType.HESSIAN);
+    }
+
+    private double[] getDerivativeLogDensity(DerivativeType derivativeType) {
         int size = derivativeList.size();
 
-        final double[] derivative = derivativeList.get(0).getGradientLogDensity();
+        final double[] derivative = derivativeType.getDerivativeLogDensity(derivativeList.get(0));
 
         if (DEBUG) {
             // stop timer
@@ -106,7 +108,7 @@ public class SumDerivative implements GradientWrtParameterProvider {
         for (int i = 1; i < size; i++) {
 
 
-            final double[] temp = derivativeList.get(i).getGradientLogDensity();
+            final double[] temp = derivativeType.getDerivativeLogDensity(derivativeList.get(i));
 
             if (DEBUG) {
                 String name = derivativeList.get(i).getLikelihood().getId();
@@ -128,6 +130,67 @@ public class SumDerivative implements GradientWrtParameterProvider {
         return derivative;
     }
 
+    @Override
+    public double[] getGradientLogDensity() {
+//        int size = derivativeList.size();
+//
+//        final double[] derivative = derivativeList.get(0).getGradientLogDensity();
+//
+//        if (DEBUG) {
+//            // stop timer
+//
+//            String name = derivativeList.get(0).getLikelihood().getId();
+//            System.err.println(name);
+//            System.err.println(new Vector(derivative));
+//        }
+//
+//        for (int i = 1; i < size; i++) {
+//
+//
+//            final double[] temp = derivativeList.get(i).getGradientLogDensity();
+//
+//            if (DEBUG) {
+//                String name = derivativeList.get(i).getLikelihood().getId();
+//                System.err.println(name);
+//                System.err.println(new Vector(temp));
+//            }
+//
+//            for (int j = 0; j < temp.length; j++) {
+//                derivative[j] += temp[j];
+//            }
+//        }
+//
+//        if (DEBUG) {
+//            if (DEBUG_KILL) {
+//                System.exit(-1);
+//            }
+//        }
+        return getDerivativeLogDensity(DerivativeType.GRADIENT);
+    }
+
     private static final boolean DEBUG = false;
     private static final boolean DEBUG_KILL = false;
+
+    private enum DerivativeType {
+        GRADIENT("gradient") {
+            @Override
+            public double[] getDerivativeLogDensity(GradientWrtParameterProvider gradientWrtParameterProvider) {
+                return gradientWrtParameterProvider.getGradientLogDensity();
+            }
+        },
+        HESSIAN("hessian") {
+            @Override
+            public double[] getDerivativeLogDensity(GradientWrtParameterProvider gradientWrtParameterProvider) {
+                return ((HessianWrtParameterProvider) gradientWrtParameterProvider).getDiagonalHessianLogDensity();
+            }
+        };
+
+        private String type;
+
+        DerivativeType(String type) {
+            this.type = type;
+        }
+
+        public abstract double[] getDerivativeLogDensity(GradientWrtParameterProvider gradientWrtParameterProvider);
+    }
 }

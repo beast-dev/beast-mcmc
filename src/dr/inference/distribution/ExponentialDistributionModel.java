@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.ExponentialDistribution;
@@ -40,7 +41,7 @@ import org.w3c.dom.Element;
  */
 
 public class ExponentialDistributionModel extends AbstractModel implements
-        ParametricDistributionModel, GradientProvider {
+        ParametricDistributionModel, GradientProvider, HessianProvider {
 
     public static final String EXPONENTIAL_DISTRIBUTION_MODEL = "exponentialDistributionModel";
 
@@ -180,7 +181,29 @@ public class ExponentialDistributionModel extends AbstractModel implements
     }
 
     @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        return getDerivativeLogDensity(obj, DerivativeType.HESSIAN);
+    }
+
+    @Override
     public double[] getGradientLogDensity(Object obj) {
+
+//        double[] x;
+//        if (obj instanceof double[]) {
+//            x = (double[]) obj;
+//        } else {
+//            x = new double[1];
+//            x[0] = (Double) obj;
+//        }
+//
+//        double[] result = new double[x.length];
+//        for (int i = 0; i < x.length; ++i) {
+//            result[i] = ExponentialDistribution.gradLogPdf(x[i] - offset, 1.0 / getMean());
+//        }
+        return getDerivativeLogDensity(obj, DerivativeType.GRADIENT);
+    }
+
+    private double[] getDerivativeLogDensity(Object obj, DerivativeType derivativeType) {
 
         double[] x;
         if (obj instanceof double[]) {
@@ -192,9 +215,32 @@ public class ExponentialDistributionModel extends AbstractModel implements
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {
-            result[i] = ExponentialDistribution.gradLogPdf(x[i] - offset, 1.0 / getMean());
+            result[i] = derivativeType.getDerivativeLogPdf(x[i] - offset, 1.0 / getMean());
         }
         return result;
+    }
+
+    private enum DerivativeType {
+        GRADIENT("gradient") {
+            @Override
+            public double getDerivativeLogPdf(double x, double lambda) {
+                return ExponentialDistribution.gradLogPdf(x, lambda);
+            }
+        },
+        HESSIAN("hessian") {
+            @Override
+            public double getDerivativeLogPdf(double x, double lambda) {
+                return ExponentialDistribution.hessianLogPdf(x, lambda);
+            }
+        };
+
+        private String type;
+
+        DerivativeType(String type) {
+            this.type = type;
+        }
+
+        public abstract double getDerivativeLogPdf(double x, double lambda);
     }
 }
 

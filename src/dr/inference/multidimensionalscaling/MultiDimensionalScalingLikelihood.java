@@ -149,8 +149,17 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         int u = 0;
         for (int i = 0; i < rowCount; i++) {
             for (int j = 0; j < rowCount; j++) {
-                observations[u] = (i == j ? 0 : tmp[i][j]);
-                observationTypes[u] = ObservationType.POINT;
+                if (i == j) {
+                    observations[u] = 0.0;
+                    observationTypes[u] = ObservationType.POINT;
+                } else {
+                    observations[u] = tmp[i][j];
+                    if (Double.isNaN(observations[u])) {
+                        observationTypes[u] = ObservationType.MISSING;
+                    } else {
+                        observationTypes[u] = ObservationType.POINT;
+                    }
+                }
                 u++;
             }
         }
@@ -253,7 +262,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         addVariable(mdsPrecision);
 
         mdsCore.setParameters(mdsPrecisionParameter.getParameterValues());
-        mdsCore.setPairwiseData(observations);
+        mdsCore.setPairwiseData(observations); // TODO Set missingness information
 
         updateAllLocations(locationsParameter);
 

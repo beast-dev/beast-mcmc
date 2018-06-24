@@ -155,9 +155,9 @@ public class DiscreteTraitBranchRateGradient
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double nodeResult = gradient[v] * tree.getBranchLength(node);
-                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-                    System.err.println("Check Gradient calculation please.");
-                }
+//                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
+//                    System.err.println("Check Gradient calculation please.");
+//                }
                 result[destinationIndex] = nodeResult;
                 v++;
             }
@@ -239,26 +239,26 @@ public class DiscreteTraitBranchRateGradient
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
+        sb.append("Gradient Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
         sb.append("\n");
 
         if (testGradient != null && largeEnoughValues) {
-            sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+            sb.append("Gradient numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         } else {
-            sb.append("mumeric: too close to 0");
+            sb.append("Gradient mumeric: too close to 0");
         }
         sb.append("\n");
 
         if (useHessian) {
             if (largeEnoughValues) {
-                sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+                sb.append("Hessian Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
                 sb.append("\n");
             }
 
             if (testHessian != null && largeEnoughValues) {
-                sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
+                sb.append("Hessian numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
             } else {
-                sb.append("mumeric: too close to 0");
+                sb.append("Hessian mumeric: too close to 0");
             }
             sb.append("\n");
         }

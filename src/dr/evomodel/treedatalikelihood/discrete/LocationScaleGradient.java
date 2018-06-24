@@ -82,9 +82,9 @@ public class LocationScaleGradient extends DiscreteTraitBranchRateGradient
                     final double rate = branchRateModel.getBranchRate(tree, node);
                     final double differential = locationScaleTransform.expLocationScaleDifferential(parameter, rate);
                     final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
-                    if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-                        System.err.println("Check Gradient calculation please.");
-                    }
+//                    if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
+//                        System.err.println("Check Gradient calculation please.");
+//                    }
                     sumOverNodeGradient += nodeResult;
                     v++;
                 }

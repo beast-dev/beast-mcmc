@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;

@@ -91,10 +91,10 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
         beagle.updatePrePartials(operations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
 
-        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
-        getPatternGradientHessian(tree, patternGradient, null);
-        final double[] patternWeights = patternList.getPatternWeights();
-        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
+//        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+//        getPatternGradientHessian(tree, patternGradient, null);
+//        final double[] patternWeights = patternList.getPatternWeights();
+//        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
 
 
         if (COUNT_TOTAL_OPERATIONS) {
@@ -276,11 +276,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         simulationProcess.cacheSimulatedTraits(node);
 
 //        final double[] patternGradientOld = getTrait(tree, node, GRADIENT);
-//        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
-//        getPatternGradientHessian(tree, patternGradient, null);
-//        final double[] patternWeights = patternList.getPatternWeights();
-//        double[] gradient = new double[tree.getNodeCount() - 1];
-//        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
+        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+        getPatternGradientHessian(tree, patternGradient, null);
+        final double[] patternWeights = patternList.getPatternWeights();
+        double[] gradient = new double[tree.getNodeCount() - 1];
+        sumOverPatterns(tree, patternWeights, patternGradient, gradient);
         return gradient;
     }
 

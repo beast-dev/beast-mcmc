@@ -31,6 +31,8 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
+import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
+
 /**
  * @author Marc A. Suchard
  */
@@ -50,15 +52,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
     abstract class Base implements WrappedMatrix {
 
         final public String toString() {
-            StringBuilder sb = new StringBuilder("[ ");
-            if (getDim() > 0) {
-                sb.append(get(0));
-            }
-            for (int i = 1; i < getDim(); ++i) {
-                sb.append(", ").append(get(i));
-            }
-            sb.append(" ]");
-            return sb.toString();
+            return makeString(this);
         }
     }
 
@@ -306,6 +300,18 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
     }
 
     final class Utils {
+
+        public static String makeString(ReadableMatrix matrix) {
+            StringBuilder sb = new StringBuilder("[ ");
+            if (matrix.getDim() > 0) {
+                sb.append(matrix.get(0));
+            }
+            for (int i = 1; i < matrix.getDim(); ++i) {
+                sb.append(", ").append(matrix.get(i));
+            }
+            sb.append(" ]");
+            return sb.toString();
+        }
 
         public static void gatherRowsAndColumns(final WrappedMatrix source, final WrappedMatrix destination,
                                                 final int[] rowIndices, final int[] colIndices) {

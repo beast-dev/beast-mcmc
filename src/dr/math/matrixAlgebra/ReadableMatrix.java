@@ -25,6 +25,8 @@
 
 package dr.math.matrixAlgebra;
 
+import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
+
 /**
  * @author Marc A. Suchard
  */
@@ -98,6 +100,11 @@ public interface ReadableMatrix extends ReadableVector {
                 @Override
                 public int getDim() {
                     return majorDim * minorDim;
+                }
+
+                @Override
+                public String toString() {
+                    return makeString(this);
                 }
             };
         }

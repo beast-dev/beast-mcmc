@@ -106,6 +106,11 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
         ReadableMatrix loadings = new WrappedMatrix.MatrixParameter(factorAnalysisLikelihood.getLoadings());
 
+        if (DEBUG) {
+            System.err.println("G : " + gamma);
+            System.err.println("L : " + loadings);
+        }
+
         assert (gamma.getDim() == dimTrait);
         assert (loadings.getMajorDim() == dimFactors);
         assert (loadings.getMinorDim() == dimTrait);
@@ -125,6 +130,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
             WrappedVector y = getTipData(taxon);
 
+            if (DEBUG) {
+                System.err.println("Y" + taxon + " : " + y);
+            }
+
             // TODO Work with fullConditionalDensity
             List<WrappedNormalSufficientStatistics> statistics =
                     fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
@@ -134,22 +143,47 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 ReadableVector mean = statistic.getMean();
                 WrappedMatrix variance = statistic.getVariance();
 
+                if (DEBUG) {
+                    System.err.println("M" + taxon + " : " + mean);
+                    System.err.println("P" + taxon + " : " + statistic.getPrecision());
+                    System.err.println("V" + taxon + " : " + variance);
+                }
+
                 ReadableMatrix secondMoment = shiftToSecondMoment(variance, mean);
                 ReadableMatrix product = ReadableMatrix.Utils.productProxy(secondMoment,loadings);
 
-                System.err.println(taxon + " : " + mean);
-                System.err.println(taxon + " : " + statistic.getPrecision());
-                System.err.println(taxon + " : " + variance);
-                System.err.println(taxon + " : " + secondMoment);
-                System.err.println(taxon + " : " + product);
+                if (DEBUG) {
+                    System.err.println("S" + taxon + " : " + secondMoment);
+                    System.err.println("P" + taxon + " : " + product);
+                }
+
+                double[] contribution;
+
+                if (DEBUG) {
+                        contribution = new double[dimTrait * dimFactors];
+                }
 
                 for (int factor = 0; factor < dimFactors; ++factor) {
                     for (int trait = 0; trait < dimTrait; ++trait) {
+
+                        if (DEBUG) {
+                            contribution[factor * dimTrait + trait] =
+                                    (mean.get(factor) * y.get(trait) - product.get(factor, trait))
+                                            * gamma.get(trait);
+                        }
+
+
                         gradient[factor * dimTrait + trait] +=
                                 (mean.get(factor) * y.get(trait) - product.get(factor, trait))
                                         * gamma.get(trait);
                     }
                 }
+
+                if (DEBUG) {
+                    System.err.println("C" + taxon + " : " + new WrappedVector.Raw(contribution));
+                    System.err.println();
+                }
+
             }
         }
 
@@ -225,7 +259,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
              result += "\nDebug info: \n" +
                      new WrappedVector.Raw(testGradient) +
-                     " @ " + new WrappedVector.Raw(loadings.getParameterValues());
+                     " @ " + new WrappedVector.Raw(loadings.getParameterValues()) + "\n";
          }
 
          return result;

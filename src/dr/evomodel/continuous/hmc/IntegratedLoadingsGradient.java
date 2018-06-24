@@ -79,7 +79,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     @Override
     public int getDimension() {
-        return dimTrait * dimTrait; // TODO May need to work with vech(L)
+        return dimFactors * dimTrait; // TODO May need to work with vech(L)
     }
 
     private ReadableMatrix shiftToSecondMoment(WrappedMatrix variance, ReadableVector mean) {
@@ -200,6 +200,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     }
 
     private WrappedVector getTipData(int taxonIndex) {
+
+        // TODO This is not correct! Probably need to add data access method to factorAnalysisLikelihood
+
         return new WrappedVector.Raw(factorAnalysisLikelihood.getTipPartial(taxonIndex, false),
                 0, dimTrait);
     }

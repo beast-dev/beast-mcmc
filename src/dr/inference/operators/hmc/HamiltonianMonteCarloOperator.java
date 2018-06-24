@@ -84,7 +84,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             throw new IllegalArgumentException("Must provide a HessianProvider for preConditioning.");
         }
         sigmaSquaredInverse = new double[gradientProvider.getDimension()];
-        this.drawDistribution = new ArrayList<>();
+        this.drawDistribution = new ArrayList<NormalDistribution>();
         setSigmaSquaredInverseAndDistribution(drawVariance);
     }
 

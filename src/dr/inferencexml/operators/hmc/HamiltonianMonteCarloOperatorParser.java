@@ -50,6 +50,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String NUTS = "nuts";
     private final static String VANILLA = "vanilla";
     private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
+    private final static String PRECONDITIONING = "preConditioning";
 
     @Override
     public String getParserName() {
@@ -72,6 +73,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
         int runMode = parseRunMode(xo);
+        boolean preConditioning = xo.getAttribute(PRECONDITIONING, false);
 
         double randomStepFraction = Math.abs(xo.getAttribute(RANDOM_STEP_FRACTION, 0.0));
         if (randomStepFraction > 1) {
@@ -96,7 +98,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
-                    stepSize, nSteps, drawVariance, randomStepFraction);
+                    stepSize, nSteps, drawVariance, randomStepFraction, preConditioning);
         } else {
             return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
                     stepSize, nSteps, drawVariance);
@@ -114,6 +116,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
             new ElementRule(Parameter.class),

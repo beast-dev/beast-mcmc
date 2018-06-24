@@ -25,7 +25,12 @@
 
 package dr.inference.operators.hmc;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
@@ -44,13 +49,24 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     protected double stepSize;
     protected final int nSteps;
     private final double randomStepCountFraction;
-    final NormalDistribution drawDistribution;
+    final List<NormalDistribution> drawDistribution;
     final LeapFrogEngine leapFrogEngine;
+    final boolean preConditioning;
+    double[] sigmaSquaredInverse;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
                                          double stepSize, int nSteps, double drawVariance,
                                          double randomStepCountFraction) {
+        this(mode, weight, gradientProvider, parameter, transform,
+                stepSize, nSteps, drawVariance, randomStepCountFraction, false);
+    }
+
+    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                                         Parameter parameter, Transform transform,
+                                         double stepSize, int nSteps, double drawVariance,
+                                         double randomStepCountFraction,
+                                         boolean preConditioning) {
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
@@ -59,12 +75,50 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.stepSize = stepSize;
         this.nSteps = nSteps;
         this.randomStepCountFraction = randomStepCountFraction;
-        this.drawDistribution = new NormalDistribution(0, Math.sqrt(drawVariance));
+
         this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform, getDefaultInstabilityHandler()) :
                 new LeapFrogEngine.Default(parameter, getDefaultInstabilityHandler()));
-
+        this.preConditioning = preConditioning;
+        if (preConditioning && !(gradientProvider instanceof HessianWrtParameterProvider)) {
+            throw new IllegalArgumentException("Must provide a HessianProvider for preConditioning.");
+        }
+        sigmaSquaredInverse = new double[gradientProvider.getDimension()];
+        this.drawDistribution = new ArrayList<>();
+        setSigmaSquaredInverseAndDistribution(drawVariance);
     }
+
+    private void setSigmaSquaredInverseAndDistribution(double drawVariance) {
+        if (preConditioning) {
+            sigmaSquaredInverse = ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity();
+            double min, max, median;
+            min = max = Math.abs(sigmaSquaredInverse[0]);
+            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                sigmaSquaredInverse[i] = Math.abs(sigmaSquaredInverse[i]);
+                if (sigmaSquaredInverse[i] > max) max = sigmaSquaredInverse[i];
+                if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
+            }
+            median = (max + min) / 2.0;
+            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                sigmaSquaredInverse[i] = boundSigmaInverse(sigmaSquaredInverse[i] / median) / drawVariance;
+            }
+        } else {
+            Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
+        }
+        for (int i = 0; i < sigmaSquaredInverse.length; i++)
+            drawDistribution.add(new NormalDistribution(0, Math.sqrt(1.0/sigmaSquaredInverse[i])));
+    }
+
+    private double boundSigmaInverse(double sigmaSquaredInverse) {
+        double result = sigmaSquaredInverse;
+        if (result > 1E1) {
+            result = 1E1;
+        } else if (result < 1E-1) {
+            result = 1E-1;
+        }
+        return result;
+    }
+
 
     @Override
     public String getPerformanceSuggestion() {
@@ -77,19 +131,20 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     static double getScaledDotProduct(final double[] momentum,
-                                      final double sigmaSquared) {
+                                      final double[] sigmaSquaredInverse) {
         double total = 0.0;
-        for (double m : momentum) {
-            total += m * m;
+        assert(momentum.length == sigmaSquaredInverse.length);
+        for (int i = 0; i < momentum.length; i++) {
+            total += momentum[i] * momentum[i] * sigmaSquaredInverse[i] / 2.0;
         }
 
-        return total / (2 * sigmaSquared);
+        return total;
     }
 
-    static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim) {
+    static double[] drawInitialMomentum(final List<NormalDistribution> distributionList, final int dim) {
         double[] momentum = new double[dim];
         for (int i = 0; i < dim; i++) {
-            momentum[i] = (Double) distribution.nextRandom();
+            momentum[i] = (Double) distributionList.get(i).nextRandom();
         }
         return momentum;
     }
@@ -129,12 +184,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         final int dim = gradientProvider.getDimension();
 
-        final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
+//        final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
 
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);
         final double[] position = leapFrogEngine.getInitialPosition();
 
-        final double prop = getScaledDotProduct(momentum, sigmaSquared) +
+        final double prop = getScaledDotProduct(momentum, sigmaSquaredInverse) +
                 leapFrogEngine.getParameterLogJacobian();
 
         leapFrogEngine.updateMomentum(position, momentum,
@@ -144,7 +199,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         for (int i = 0; i < nStepsThisLeap; i++) { // Leap-frog
 
-            leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquared);
+            leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquaredInverse);
 
             if (i < (nStepsThisLeap - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum,
@@ -155,7 +210,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-        final double res = getScaledDotProduct(momentum, sigmaSquared) +
+        final double res = getScaledDotProduct(momentum, sigmaSquaredInverse) +
                 leapFrogEngine.getParameterLogJacobian();
 
         return prop - res; //hasting ratio
@@ -227,7 +282,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         void updatePosition(final double[] position,
                             final double[] momentum,
                             final double functionalStepSize,
-                            final double sigmaSquared);
+                            final double[] sigmaSquaredInverse);
 
         void setParameter(double[] position);
 
@@ -264,11 +319,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
             @Override
             public void updatePosition(double[] position, double[] momentum,
-                                       double functionalStepSize, double sigmaSquared) {
+                                       double functionalStepSize, double[] sigmaSquaredInverse) {
 
                 final int dim = momentum.length;
                 for (int j = 0; j < dim; j++) {
-                    position[j] += functionalStepSize * momentum[j] / sigmaSquared;
+                    position[j] += functionalStepSize * momentum[j] * sigmaSquaredInverse[j];
                 }
 
                 setParameter(position);

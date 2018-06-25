@@ -49,10 +49,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     protected double stepSize;
     protected final int nSteps;
     private final double randomStepCountFraction;
-    final List<NormalDistribution> drawDistribution;
+    final NormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
     final boolean preConditioning;
     double[] sigmaSquaredInverse;
+    double[] sigmaList;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
@@ -84,7 +85,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             throw new IllegalArgumentException("Must provide a HessianProvider for preConditioning.");
         }
         sigmaSquaredInverse = new double[gradientProvider.getDimension()];
-        this.drawDistribution = new ArrayList<NormalDistribution>();
+        sigmaList = new double[gradientProvider.getDimension()];
+        this.drawDistribution = new NormalDistribution(0, 1.0);
         setSigmaSquaredInverseAndDistribution(drawVariance);
     }
 
@@ -101,12 +103,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             median = (max + min) / 2.0;
             for (int i = 0; i < sigmaSquaredInverse.length; i++) {
                 sigmaSquaredInverse[i] = boundSigmaInverse(sigmaSquaredInverse[i] / median) / drawVariance;
+                sigmaList[i] = Math.sqrt(1.0 / sigmaSquaredInverse[i]);
             }
         } else {
             Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
+            Arrays.fill(sigmaList, Math.sqrt(drawVariance));
         }
-        for (int i = 0; i < sigmaSquaredInverse.length; i++)
-            drawDistribution.add(new NormalDistribution(0, Math.sqrt(1.0/sigmaSquaredInverse[i])));
+//        for (int i = 0; i < sigmaSquaredInverse.length; i++)
+//            drawDistribution.add(new NormalDistribution(0, Math.sqrt(1.0/sigmaSquaredInverse[i])));
     }
 
     private double boundSigmaInverse(double sigmaSquaredInverse) {
@@ -141,10 +145,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return total;
     }
 
-    static double[] drawInitialMomentum(final List<NormalDistribution> distributionList, final int dim) {
+    static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim, final double[] sigmaList) {
         double[] momentum = new double[dim];
         for (int i = 0; i < dim; i++) {
-            momentum[i] = (Double) distributionList.get(i).nextRandom();
+            momentum[i] = (Double) distribution.nextRandom() * sigmaList[i];
         }
         return momentum;
     }
@@ -186,7 +190,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
 //        final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
 
-        final double[] momentum = drawInitialMomentum(drawDistribution, dim);
+        final double[] momentum = drawInitialMomentum(drawDistribution, dim, sigmaList);
         final double[] position = leapFrogEngine.getInitialPosition();
 
         final double prop = getScaledDotProduct(momentum, sigmaSquaredInverse) +

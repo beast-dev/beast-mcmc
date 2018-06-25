@@ -136,7 +136,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         final DenseMatrix64F Vdj = wrap(variances, jmo, dimTrait, dimTrait);
 
 //        final DenseMatrix64F Pdi = wrap(precisions, imo, dimTrait, dimTrait); // TODO Only if needed
-//        final DenseMatrix64F Pdj = wrap(precisions, jmo, dimTrait, dimTrait); // TODO Only if needed
+        final DenseMatrix64F Pdj = wrap(precisions, jmo, dimTrait, dimTrait); // TODO Only if needed
 
 //        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
@@ -154,14 +154,12 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //            final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
 
 //            final DenseMatrix64F Vk = wrap(preOrderPartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
             // B. Inflate variance along sibling branch using matrix inversion
             final DenseMatrix64F Vjp = matrix0;
-            inflateBranch(Vj, Vdj, Vjp);
-
             final DenseMatrix64F Pjp = matrixPjp;
-            safeInvert(Vjp, Pjp, false);
+            increaseVariances(jbo, Vdj, Pdj, Pjp, false);
 
             // Actualize
             final DenseMatrix64F QjPjp = matrixQjPjp;
@@ -187,11 +185,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             // C. Inflate variance along node branch
             final DenseMatrix64F Vi = Vip;
+            actualizeVariance(Vip, ibo, imo, ido);
             inflateBranch(Vdi, Vip, Vi);
 
             final DenseMatrix64F Pi = matrixPk;
             safeInvert(Vi, Pi, false);
-            actualizePrecisionAndInverse(Vi, Pi, QjPjp, ibo, imo, ido);
 
             // X. Store precision results for node
             unwrap(Pi, preOrderPartials, ibo + dimTrait);
@@ -202,8 +200,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 System.err.println("pM: " + new WrappedVector.Raw(preOrderPartials, kbo, dimTrait));
                 System.err.println("pP: " + Pk);
                 System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
-                System.err.println("sV: " + Vj);
-                System.err.println("sP: " + new WrappedVector.Raw(partials, jbo + dimTrait, dimTrait * dimTrait));
+                DenseMatrix64F Pj = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+                DenseMatrix64F Vj = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.invert(Pj, Vj);
+                System.err.println("sP: " + Vj);
+                System.err.println("sP: " + Pj);
                 System.err.println("sVp: " + Vjp);
                 System.err.println("sPp: " + Pjp);
                 System.err.println("Pip: " + Pip);
@@ -227,8 +228,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         CommonOps.scale(1.0, P, QP);
     }
 
-    void actualizePrecisionAndInverse(DenseMatrix64F V, DenseMatrix64F P, DenseMatrix64F QP, int jbo, int jmo, int jdo) {
-        actualizePrecision(P, QP, jbo, jmo, jdo);
+    void actualizeVariance(DenseMatrix64F V, int ibo, int imo, int ido) {
+        // Do nothing
     }
 
     void scaleAndDriftMean(int ibo, int imo, int ido) {
@@ -301,8 +302,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Pjp = matrixPjp;
 
 
-            InversionResult ci = increaseVariances(ibo, Vdi, Pdi, Pip);
-            InversionResult cj = increaseVariances(jbo, Vdj, Pdj, Pjp);
+            InversionResult ci = increaseVariances(ibo, Vdi, Pdi, Pip, true);
+            InversionResult cj = increaseVariances(jbo, Vdj, Pdj, Pjp, true);
 
             if (TIMING) {
                 endTime("peel2");
@@ -328,9 +329,6 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             // C. Store precision
             unwrap(Pk, partials, kbo + dimTrait);
-            final DenseMatrix64F Vk = matrix0;
-            safeInvert(Pk, Vk, false, true); // TODO only if necessary
-            unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
 
             if (TIMING) {
                 endTime("peel5");
@@ -425,7 +423,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     private InversionResult increaseVariances(int ibo,
                                               final DenseMatrix64F Vdi,
                                               final DenseMatrix64F Pdi,
-                                              final DenseMatrix64F Pip) {
+                                              final DenseMatrix64F Pip,
+                                              final boolean getDeterminant) {
         if (TIMING) {
             startTime("peel1");
         }
@@ -441,7 +440,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         // B. Integrate along branch using two matrix inversions
 
         final boolean useVariancei = anyDiagonalInfinities(Pi);
-        InversionResult ci;
+        InversionResult ci = null;
 
         if (useVariancei) {
 
@@ -449,7 +448,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 //                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
             CommonOps.add(Vi, Vdi, Vip);
-            ci = safeInvert(Vip, Pip, true);
+            ci = safeInvert(Vip, Pip, getDeterminant);
 
         } else {
 
@@ -461,7 +460,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             CommonOps.mult(PiPlusPdInv, Pi, Pip);
             CommonOps.mult(Pi, Pip, PiPlusPdInv);
             CommonOps.add(Pi, -1, PiPlusPdInv, Pip);
-            ci = safeDeterminant(Pip, false);
+            if (getDeterminant) ci = safeDeterminant(Pip, false);
         }
 
         if (TIMING) {

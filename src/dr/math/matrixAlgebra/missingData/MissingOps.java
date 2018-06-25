@@ -106,19 +106,6 @@ public class MissingOps {
         }
     }
 
-    private static void fillDiagonalsMissing(final DenseMatrix64F source, final DenseMatrix64F destination) {
-        final int length = source.getNumCols();
-
-        for (int i = 0; i < length; ++i) {
-            final double d = source.unsafe_get(i, i);
-            if (Double.isInfinite(d)) {
-                destination.unsafe_set(i, i, 0.0);
-            } else if (d == 0.0) {
-                destination.unsafe_set(i, i, Double.POSITIVE_INFINITY);
-            }
-        }
-    }
-
     public static void unwrap(final DenseMatrix64F source, final double[] destination, final int offset) {
         System.arraycopy(source.getData(), 0, destination, offset, source.getNumElements());
     }
@@ -404,11 +391,6 @@ public class MissingOps {
     }
 
     public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
-        return safeInvert(source, destination, getDeterminant, false);
-    }
-
-    public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant,
-                                             boolean tweakDiagonal) {
 
         final int dim = source.getNumCols();
         final int finiteCount = countFiniteNonZeroDiagonals(source);
@@ -440,8 +422,6 @@ public class MissingOps {
                 }
 
                 scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
-
-                if (tweakDiagonal) fillDiagonalsMissing(source, destination);
 
                 return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
             }

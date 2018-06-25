@@ -6,6 +6,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -213,6 +214,11 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     private WrappedVector getTipData(int taxonIndex) {
         return new WrappedVector.Parameter(data, taxonIndex * dimTrait, dimTrait);
+    }
+
+    private WrappedNormalSufficientStatistics getTipKernel(int taxonIndex) {
+        double[] buffer = factorAnalysisLikelihood.getTipPartial(taxonIndex, false);
+        return new WrappedNormalSufficientStatistics(buffer, 0, dimTrait, null, PrecisionType.FULL);
     }
 
     private MultivariateFunction numeric = new MultivariateFunction() {

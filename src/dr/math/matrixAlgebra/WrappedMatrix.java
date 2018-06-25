@@ -37,7 +37,7 @@ import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
  * @author Marc A. Suchard
  */
 
-public interface WrappedMatrix extends ReadableMatrix, WritableVector {
+public interface WrappedMatrix extends ReadableMatrix, WritableMatrix {
 
     void set(final int i, final int j, final double x);
 

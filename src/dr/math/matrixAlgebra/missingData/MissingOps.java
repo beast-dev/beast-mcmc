@@ -520,6 +520,31 @@ public class MissingOps {
         }
     }
 
+    public static void weightedAverage(final ReadableVector mi,
+                                       final ReadableMatrix Pi,
+                                       final ReadableVector mj,
+                                       final ReadableMatrix Pj,
+                                       final WritableVector mk,
+                                       final ReadableMatrix Vk,
+                                       final int dimTrait) {
+        final double[] tmp = new double[dimTrait];
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            for (int h = 0; h < dimTrait; ++h) {
+                sum += Pi.get(g, h) * mi.get(h);
+                sum += Pj.get(g, h) * mj.get(h);
+            }
+            tmp[g] = sum;
+        }
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            for (int h = 0; h < dimTrait; ++h) {
+                sum += Vk.get(g, h) * tmp[h];
+            }
+            mk.set(g, sum);
+        }
+    }
+
     public static void weightedAverage(final double[] ipartial,
                                        final int ibo,
                                        final DenseMatrix64F Pi,
@@ -673,4 +698,17 @@ public class MissingOps {
     }
 
 
+    public static void add(ReadableMatrix p1,
+                           ReadableMatrix p2,
+                           WritableMatrix p12) {
+
+        assert (p1.getDim() == p2.getDim());
+        assert (p1.getDim() == p12.getDim());
+
+        final int dim = p12.getDim();
+
+        for (int i = 0; i < dim; ++i) {
+            p12.set(i, p1.get(i) + p2.get(i));
+        }
+    }
 }

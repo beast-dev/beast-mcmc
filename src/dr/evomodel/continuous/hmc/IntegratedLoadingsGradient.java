@@ -15,16 +15,17 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.ReadableMatrix;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider.castTreeTrait;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.weightedAverage;
 
 /**
  * @author Marc A. Suchard
@@ -105,6 +106,30 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return variance;
     }
 
+    private WrappedNormalSufficientStatistics getWeightedAverage(ReadableVector m1, ReadableMatrix p1,
+                                                                 ReadableVector m2, ReadableMatrix p2) {
+
+        assert (m1.getDim() == m2.getDim());
+        assert (p1.getDim() == p2.getDim());
+
+        assert (m1.getDim() == p1.getMinorDim());
+        assert (m1.getDim() == p1.getMajorDim());
+
+        final WrappedVector m12 = new WrappedVector.Raw(new double[m1.getDim()], 0, dimTrait);
+        final DenseMatrix64F p12 = new DenseMatrix64F(dimFactors, dimFactors);
+        final DenseMatrix64F v12 = new DenseMatrix64F(dimFactors, dimFactors);
+
+        final WrappedMatrix wP12 = new WrappedMatrix.WrappedDenseMatrix(p12);
+        final WrappedMatrix wV12 = new WrappedMatrix.WrappedDenseMatrix(v12);
+
+        MissingOps.add(p1, p2, wP12);
+        safeInvert(p12, v12, false);
+
+        weightedAverage(m1, p1, m2, p2, m12, wV12, dimFactors);
+
+        return new WrappedNormalSufficientStatistics(m12, wP12, wV12);
+    }
+
     @Override
     public double[] getGradientLogDensity() {
 
@@ -136,9 +161,15 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
 
             WrappedVector y = getTipData(taxon);
+            WrappedNormalSufficientStatistics dataKernel = getTipKernel(taxon);
+
+            ReadableVector meanKernel = dataKernel.getMean();
+            ReadableMatrix precisionKernel = dataKernel.getPrecision();
 
             if (DEBUG) {
-                System.err.println("Y" + taxon + " : " + y);
+                System.err.println("Y " + taxon + " : " + y);
+                System.err.println("YM" + taxon + " : " + meanKernel);
+                System.err.println("YP" + taxon + " : " + precisionKernel);
             }
 
             // TODO Work with fullConditionalDensity
@@ -147,13 +178,28 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
             for (WrappedNormalSufficientStatistics statistic : statistics) {
 
-                ReadableVector mean = statistic.getMean();
-                WrappedMatrix variance = statistic.getVariance();
+                ReadableVector meanFactor = statistic.getMean();
+                WrappedMatrix precisionFactor = statistic.getPrecision();
+                WrappedMatrix varianceFactor = statistic.getVariance();
 
                 if (DEBUG) {
-                    System.err.println("M" + taxon + " : " + mean);
-                    System.err.println("P" + taxon + " : " + statistic.getPrecision());
-                    System.err.println("V" + taxon + " : " + variance);
+                    System.err.println("FM" + taxon + " : " + meanFactor);
+                    System.err.println("FP" + taxon + " : " + precisionFactor);
+                    System.err.println("FV" + taxon + " : " + varianceFactor);
+                }
+
+                WrappedNormalSufficientStatistics convolution = getWeightedAverage(
+                        meanFactor, precisionFactor,
+                        meanKernel, precisionKernel);
+
+                ReadableVector mean = convolution.getMean();
+                ReadableMatrix precision = convolution.getPrecision();
+                WrappedMatrix variance = convolution.getVariance();
+
+                if (DEBUG) {
+                    System.err.println("CM" + taxon + " : " + mean);
+                    System.err.println("CP" + taxon + " : " + precision);
+                    System.err.println("CV" + taxon + " : " + variance);
                 }
 
                 ReadableMatrix secondMoment = shiftToSecondMoment(variance, mean);

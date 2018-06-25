@@ -17,7 +17,16 @@ public class WrappedNormalSufficientStatistics {
     private final WrappedMatrix variance;
     private final double precisionScalar;
 
-    WrappedNormalSufficientStatistics(double[] buffer,
+    public WrappedNormalSufficientStatistics(WrappedVector mean,
+                                             WrappedMatrix precision,
+                                             WrappedMatrix variance) {
+        this.mean = mean;
+        this.precision = precision;
+        this.variance = variance;
+        this.precisionScalar = 1.0;
+    }
+
+    public WrappedNormalSufficientStatistics(double[] buffer,
                                              int index,
                                              int dim,
                                              DenseMatrix64F Pd,

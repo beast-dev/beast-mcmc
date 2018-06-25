@@ -40,6 +40,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final Tree tree;
     private final Likelihood likelihood;
 
+    private final Parameter data;
+    private final List<Integer> missingIndices;
+
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood) {
@@ -59,6 +62,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         this.dimTrait = factorAnalysisLikelihood.getTraitDimension();
         this.dimFactors = factorAnalysisLikelihood.getNumberOfFactors();
+
+        this.data = factorAnalysisLikelihood.getParameter();
+        this.missingIndices = factorAnalysisLikelihood.getMissingIndices();
 
         List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
         likelihoodList.add(treeDataLikelihood);
@@ -163,8 +169,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                         contribution = new double[dimTrait * dimFactors];
                 }
 
+                int offset = 0;
                 for (int factor = 0; factor < dimFactors; ++factor) {
                     for (int trait = 0; trait < dimTrait; ++trait) {
+
+                        // TODO Handle missing values with ...
+                        missingIndices.contains(offset);
 
                         if (DEBUG) {
                             contribution[factor * dimTrait + trait] =
@@ -176,6 +186,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                         gradient[factor * dimTrait + trait] +=
                                 (mean.get(factor) * y.get(trait) - product.get(factor, trait))
                                         * gamma.get(trait);
+
+                        ++offset;
                     }
                 }
 
@@ -200,18 +212,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     }
 
     private WrappedVector getTipData(int taxonIndex) {
-
-        // TODO This is not correct! Probably need to add data access method to factorAnalysisLikelihood
-
-        return new WrappedVector.Raw(factorAnalysisLikelihood.getTipPartial(taxonIndex, false),
-                0, dimTrait);
+        return new WrappedVector.Parameter(data, taxonIndex * dimTrait, dimTrait);
     }
-
-//    private WrappedNormalSufficientStatistics getTipData(int tipIndex) {
-//        double[] buffer = factorAnalysisLikelihood.getTipPartial(tipIndex, false);
-//
-//        return new WrappedNormalSufficientStatistics(buffer, 0, dimTrait, null, PrecisionType.FULL);
-//    }
 
     private MultivariateFunction numeric = new MultivariateFunction() {
 

@@ -99,15 +99,19 @@ public interface WrappedVector extends ReadableVector, WritableVector {
         private final Variable<Double> variable;
 
         public Parameter(Variable<Double> variable) {
-            super(null, 0, variable.getSize());
+            this(variable, 0, variable.getSize());
+        }
+
+        public Parameter(Variable<Double> variable, int offset, int dim) {
+            super(null, offset, dim);
             this.variable = variable;
         }
 
         @Override
-        final public double get(final int i) { return variable.getValue(i); }
+        final public double get(final int i) { return variable.getValue(offset + i); }
 
         @Override
-        final public void set(final int i, final double x) { variable.setValue(i, x); }
+        final public void set(final int i, final double x) { variable.setValue(offset + i, x); }
     }
 
     final class Indexed extends Abstract {

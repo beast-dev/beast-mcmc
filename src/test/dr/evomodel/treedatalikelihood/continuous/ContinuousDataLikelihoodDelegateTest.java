@@ -179,7 +179,6 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
                 TreeTraitLogger.NodeRestriction.EXTERNAL);
 
-
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
@@ -240,7 +239,6 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
                 TreeTraitLogger.NodeRestriction.EXTERNAL);
-
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -307,7 +305,6 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
                 TreeTraitLogger.NodeRestriction.EXTERNAL);
 
-
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
@@ -365,6 +362,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,1.0369622398437415,2.065450266793184,0.6174755164694558,0.5,2.0829935706195615,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsDiagonalOU", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
     }
 
     public void testLikelihoodDiagonalOURelaxed() {
@@ -425,6 +433,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,1.8118034244410623,0.6837595819961084,-1.0607909328094163,0.5,3.8623525502275142,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsDiagonalOURelaxed", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
     }
 
     public void testLikelihoodFullOU() {
@@ -483,6 +502,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,1.0427958776637958,2.060317467842191,0.5916377446549422,0.5,2.072498288954417,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsFullOU", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
     }
 
     public void testLikelihoodFullOURelaxed() {
@@ -546,6 +576,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,1.6349449153945848,2.867671853831362,-1.06534124185145,0.5,3.366188378600915,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsFullOURelaxed", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
     }
 
     public void testLikelihoodFullAndDiagonalOU() {

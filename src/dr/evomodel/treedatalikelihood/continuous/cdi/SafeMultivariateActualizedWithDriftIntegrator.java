@@ -205,18 +205,23 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     }
 
     @Override
-    void scaleAndDriftMean(int ibo, int imo, int ido) {
-        for (int g = 0; g < dimTrait; ++g) {
-            preOrderPartials[ibo + g] -= displacements[ido + g];
-        }
+    void actualizeVariance(DenseMatrix64F Vip, int ibo, int imo, int ido) {
+        final DenseMatrix64F Qdi = wrap(actualizations, imo, dimTrait, dimTrait);
+        final DenseMatrix64F QiVip = matrixQdiPip;
+        scalePrecision(Qdi, Vip, QiVip, Vip);
+    }
 
+    @Override
+    void scaleAndDriftMean(int ibo, int imo, int ido) {
         final DenseMatrix64F Qdi = wrap(actualizations, imo, dimTrait, dimTrait);
         final DenseMatrix64F ni = wrap(preOrderPartials, ibo, dimTrait, 1);
-        final DenseMatrix64F QdiInv = matrixQdiPip;
         final DenseMatrix64F niacc = matrixNiacc;
-        CommonOps.invert(Qdi, QdiInv);
-        CommonOps.mult(QdiInv, ni, niacc);
+        CommonOps.mult(Qdi, ni, niacc);
         unwrap(niacc, preOrderPartials, ibo);
+
+        for (int g = 0; g < dimTrait; ++g) {
+            preOrderPartials[ibo + g] += displacements[ido + g];
+        }
 
     }
 
@@ -252,7 +257,6 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         CommonOps.multTransA(Q, P, QtP);
         CommonOps.mult(QtP, Q, QtPQ);
     }
-
 
     @Override
     void computeWeightedSum(final double[] ipartial,

@@ -305,7 +305,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 //    }
 
     @Override
-    void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int imo, int jdo) {
+    void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int jmo, int jdo) {
         final double[] diagQdj = vectorDiagQdj;
         System.arraycopy(diagonalActualizations, jdo, diagQdj, 0, dimTrait);
         diagonalProduct(Pjp, diagQdj, QjPjp);
@@ -313,15 +313,16 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     }
 
     @Override
-    void actualizePrecisionAndInverse(DenseMatrix64F V, DenseMatrix64F P, DenseMatrix64F QP, int jbo, int jmo, int jdo) {
-        actualizePrecision(P, QP, jbo, jmo, jdo);
-        safeInvert(P, V, false);
+    void actualizeVariance(DenseMatrix64F Vip, int ibo, int imo, int ido) {
+        final double[] diagQdi = vectorDiagQdi;
+        System.arraycopy(diagonalActualizations, ido, diagQdi, 0, dimTrait);
+        diagonalDoubleProduct(Vip, diagQdi, Vip);
     }
 
     @Override
     void scaleAndDriftMean(int ibo, int imo, int ido) {
         for (int g = 0; g < dimTrait; ++g) {
-            preOrderPartials[ibo + g] = (preOrderPartials[ibo + g] - displacements[ido + g]) / diagonalActualizations[ido + g];
+            preOrderPartials[ibo + g] = diagonalActualizations[ido + g] * preOrderPartials[ibo + g] + displacements[ido + g];
         }
     }
 

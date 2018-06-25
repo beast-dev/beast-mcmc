@@ -17,6 +17,7 @@ public class WrappedNormalSufficientStatistics {
     private final WrappedMatrix variance;
     private final double precisionScalar;
 
+<<<<<<< Updated upstream
     public WrappedNormalSufficientStatistics(WrappedVector mean,
                                              WrappedMatrix precision,
                                              WrappedMatrix variance) {
@@ -26,6 +27,8 @@ public class WrappedNormalSufficientStatistics {
         this.precisionScalar = 1.0;
     }
 
+=======
+>>>>>>> Stashed changes
     public WrappedNormalSufficientStatistics(double[] buffer,
                                              int index,
                                              int dim,

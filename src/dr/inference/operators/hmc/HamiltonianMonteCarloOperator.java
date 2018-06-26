@@ -113,10 +113,18 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
         }
         sum = 0.0;
-        for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-            sigmaSquaredInverse[i] = Math.exp((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0);
-            sum += sigmaSquaredInverse[i];
+        if (max - min > 4.0) {
+            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                sigmaSquaredInverse[i] = Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
+                sum += sigmaSquaredInverse[i];
+            }
+        } else {
+            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                sigmaSquaredInverse[i] = Math.exp(-sigmaSquaredInverse[i]); //Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
+                sum += sigmaSquaredInverse[i];
+            }
         }
+
         mean = sum / sigmaSquaredInverse.length;
         for (int i = 0; i < sigmaSquaredInverse.length; i++) {
             sigmaSquaredInverse[i] /= mean;

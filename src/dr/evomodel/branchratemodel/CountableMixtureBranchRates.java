@@ -370,7 +370,10 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         int rateCategory = rateCategories.getBranchCategory(tree, node);
         double effect = ratesParameter.getParameterValue(rateCategory);
 
-        double coefficient = timeCoefficient.getParameterValue(rateCategory);
+        double coefficient = 0;
+        if (timeCoefficient!=null){
+            coefficient = timeCoefficient.getParameterValue(rateCategory);
+        }
 
 // attempt to implement a proportional time coefficient
 //        double coefficient;

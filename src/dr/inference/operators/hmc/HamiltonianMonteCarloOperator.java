@@ -25,10 +25,7 @@
 
 package dr.inference.operators.hmc;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
@@ -52,6 +49,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     final NormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
     final boolean preConditioning;
+    final double drawVariance;
     double[] sigmaSquaredInverse;
     double[] sigmaList;
 
@@ -86,41 +84,43 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         }
         sigmaSquaredInverse = new double[gradientProvider.getDimension()];
         sigmaList = new double[gradientProvider.getDimension()];
-        this.drawDistribution = new NormalDistribution(0, 1.0);
-        setSigmaSquaredInverseAndDistribution(drawVariance);
+        drawDistribution = new NormalDistribution(0, 1.0);
+
+        this.drawVariance = drawVariance;
+        setSigmas();
     }
 
-    private void setSigmaSquaredInverseAndDistribution(double drawVariance) {
+    private void setSigmas() {
         if (preConditioning) {
             sigmaSquaredInverse = ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity();
-            double min, max, median;
-            min = max = Math.abs(sigmaSquaredInverse[0]);
+            boundSigmaInverse(sigmaSquaredInverse);
             for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                sigmaSquaredInverse[i] = Math.abs(sigmaSquaredInverse[i]);
-                if (sigmaSquaredInverse[i] > max) max = sigmaSquaredInverse[i];
-                if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
-            }
-            median = (max + min) / 2.0;
-            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                sigmaSquaredInverse[i] = boundSigmaInverse(sigmaSquaredInverse[i] / median) / drawVariance;
                 sigmaList[i] = Math.sqrt(1.0 / sigmaSquaredInverse[i]);
             }
         } else {
             Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
             Arrays.fill(sigmaList, Math.sqrt(drawVariance));
         }
-//        for (int i = 0; i < sigmaSquaredInverse.length; i++)
-//            drawDistribution.add(new NormalDistribution(0, Math.sqrt(1.0/sigmaSquaredInverse[i])));
     }
 
-    private double boundSigmaInverse(double sigmaSquaredInverse) {
-        double result = sigmaSquaredInverse;
-        if (result > 1E1) {
-            result = 1E1;
-        } else if (result < 1E-1) {
-            result = 1E-1;
+    private void boundSigmaInverse(double[] sigmaSquaredInverse) {
+
+        double min, max, mean, sum;
+        min = max =  Math.log(Math.abs(sigmaSquaredInverse[0]) / drawVariance);
+        for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+            sigmaSquaredInverse[i] = Math.log(Math.abs(sigmaSquaredInverse[i]) / drawVariance);
+            if (sigmaSquaredInverse[i] > max) max = sigmaSquaredInverse[i];
+            if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
         }
-        return result;
+        sum = 0.0;
+        for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+            sigmaSquaredInverse[i] = Math.exp((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0);
+            sum += sigmaSquaredInverse[i];
+        }
+        mean = sum / sigmaSquaredInverse.length;
+        for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+            sigmaSquaredInverse[i] /= mean;
+        }
     }
 
 
@@ -189,6 +189,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         final int dim = gradientProvider.getDimension();
 
 //        final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
+        if (preConditioning) {
+            setSigmas();
+        }
 
         final double[] momentum = drawInitialMomentum(drawDistribution, dim, sigmaList);
         final double[] position = leapFrogEngine.getInitialPosition();

@@ -94,7 +94,7 @@ public interface ReadableMatrix extends ReadableVector {
 
                 @Override
                 public double get(int i) {
-                    return get(i / majorDim, i % majorDim);
+                    return get(i / minorDim, i % minorDim);
                 }
 
                 @Override

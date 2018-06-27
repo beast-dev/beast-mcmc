@@ -116,12 +116,12 @@ public interface WrappedMatrix extends ReadableMatrix, WritableMatrix {
 
         @Override
         public int getMajorDim() {
-            return matrix.getNumCols();
+            return matrix.getNumRows();
         }
 
         @Override
         public int getMinorDim() {
-            return matrix.getNumRows();
+            return matrix.getNumCols();
         }
 
         @Override

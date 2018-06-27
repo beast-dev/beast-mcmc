@@ -62,7 +62,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
         this.tree = treeDataLikelihood.getTree();
 
-        this.dimTrait = factorAnalysisLikelihood.getTraitDimension();
+        this.dimTrait = factorAnalysisLikelihood.getDataDimension();
         this.dimFactors = factorAnalysisLikelihood.getNumberOfFactors();
 
         this.data = factorAnalysisLikelihood.getParameter();
@@ -115,7 +115,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         assert (m1.getDim() == p1.getMinorDim());
         assert (m1.getDim() == p1.getMajorDim());
 
-        final WrappedVector m12 = new WrappedVector.Raw(new double[m1.getDim()], 0, dimTrait);
+        final WrappedVector m12 = new WrappedVector.Raw(new double[m1.getDim()], 0, dimFactors);
         final DenseMatrix64F p12 = new DenseMatrix64F(dimFactors, dimFactors);
         final DenseMatrix64F v12 = new DenseMatrix64F(dimFactors, dimFactors);
 
@@ -148,7 +148,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         assert (loadings.getMinorDim() == dimTrait);
 
         // [E(F) Y^t - E(FF^t)L]\Gamma
-        // E(FF^t) = V(F) - E(F)E(F)^t
+        // E(FF^t) = V(F) + E(F)E(F)^t
         // error in comment ^ could indicate error in implementation
 
         // Y: N x P
@@ -204,8 +204,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
                 ReadableMatrix secondMoment = shiftToSecondMoment(variance, mean);
                 ReadableMatrix product = ReadableMatrix.Utils.productProxy(
-                        loadings, secondMoment
-//                        secondMoment,loadings
+                        secondMoment,loadings
                 );
 
                 if (DEBUG) {
@@ -267,7 +266,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     private WrappedNormalSufficientStatistics getTipKernel(int taxonIndex) {
         double[] buffer = factorAnalysisLikelihood.getTipPartial(taxonIndex, false);
-        return new WrappedNormalSufficientStatistics(buffer, 0, dimTrait, null, PrecisionType.FULL);
+        return new WrappedNormalSufficientStatistics(buffer, 0, dimFactors, null, PrecisionType.FULL);
     }
 
     private MultivariateFunction numeric = new MultivariateFunction() {

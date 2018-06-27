@@ -68,9 +68,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
-        assert(dimTrait == loadings.getRowDimension());
+        this.numFactors = loadings.getRowDimension();
+        
+        assert(dimTrait == loadings.getColumnDimension());
 
-        this.numFactors = loadings.getColumnDimension();
         this.dimPartial =  numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
 
         addVariable(traitParameter);
@@ -96,6 +97,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     @Override
     public int getTraitCount() {
         return 1;
+    }
+
+    public int getDataDimension() {
+        return dimTrait;
     }
 
     @Override
@@ -303,9 +308,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     for (int k = 0; k < dimTrait; ++k) {
                         double thisPrecision = (observed[k] == 1.0) ?
                                 traitPrecision.getParameterValue(k) : nuggetPrecision;
-                        sum += loadings.getParameterValue(k, row) *
+                        sum += loadings.getParameterValue(row, k) *
                                 thisPrecision *
-                                loadings.getParameterValue(k, col);
+                                loadings.getParameterValue(col, k);
                     }
                     precision.unsafe_set(row, col, sum);
                 }
@@ -340,7 +345,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         for (int row = 0; row < numFactors; ++row) {
             double sum = 0;
             for (int k = 0; k < dimTrait; ++k) {
-                sum += loadings.getParameterValue(k, row) *
+                sum += loadings.getParameterValue(row, k) *
                         observed[k] * traitPrecision.getParameterValue(k) *
                         Y.getParameterValue(k);
             }
@@ -699,9 +704,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append(treeP);
             sb.append("\n\n");
 
-            Matrix Lt = new Matrix(loadings.getParameterAsMatrix());
+            Matrix L = new Matrix(loadings.getParameterAsMatrix());
             sb.append("Loadings:\n");
-            sb.append(Lt);
+            sb.append(L);
             sb.append("\n\n");
 
             double[][] diffusionPrecision = delegate.getDiffusionModel().getPrecisionmatrix();
@@ -709,7 +714,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             Matrix loadingsVariance = null;
             try {
-                loadingsVariance = Lt.product(diffusionVariance.product(Lt.transpose()));
+                loadingsVariance = L.transpose().product(diffusionVariance.product(L));
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();
             }
@@ -720,7 +725,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             Matrix loadingsFactorsVariance = MultivariateTraitDebugUtilities.getJointVarianceFactor(priorSampleSize,
                     treeVariance, treeSharedLengths, loadingsVariance.toComponents(), diffusionVariance.toComponents(),
-                    delegate.getDiffusionProcessDelegate(), Lt);
+                    delegate.getDiffusionProcessDelegate(), L.transpose());
 
             Matrix gamma = buildDiagonalMatrix(traitPrecision.getParameterValues());
             sb.append("Trait precision:\n");
@@ -772,7 +777,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
 
             try {
-                loadingsFactorsVariance = treeDrift.product(Lt.transpose());
+                loadingsFactorsVariance = treeDrift.product(L);
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();
             }

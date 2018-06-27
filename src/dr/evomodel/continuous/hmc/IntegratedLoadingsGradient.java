@@ -203,7 +203,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 }
 
                 ReadableMatrix secondMoment = shiftToSecondMoment(variance, mean);
-                ReadableMatrix product = ReadableMatrix.Utils.productProxy(secondMoment,loadings);
+                ReadableMatrix product = ReadableMatrix.Utils.productProxy(
+                        loadings, secondMoment
+//                        secondMoment,loadings
+                );
 
                 if (DEBUG) {
                     System.err.println("S" + taxon + " : " + secondMoment);

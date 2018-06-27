@@ -104,8 +104,8 @@
 	<integratedFactorModel id="factorModel" traitName="X" nugget="0">
 		<loadings>
 			<matrixParameter id="loadings">
+				<parameter value="1 0"/>
 				<parameter value="1 1"/>
-				<parameter value="0 1"/>
 			</matrixParameter>
 <!--
 			<matrixParameter id="loadings">
@@ -152,6 +152,46 @@
 
 	</traitDataLikelihood>
 
+<!--
+	<traitDataLikelihood id="directLikelihood" traitName="X" forceFullPrecision="false">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="100000.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+	</traitDataLikelihood>
+
+	<traitGradientOnTree traitName="X">
+		<traitDataLikelihood idref="directLikelihood"/>
+	</traitGradientOnTree>
+
+	<traitGradientOnTree traitName="factors">
+		<traitDataLikelihood idref="traitLikelihood"/>
+	</traitGradientOnTree>
+
+	<report>
+		<traitLogger traitName="fcd.X" nodes="external">
+			<traitDataLikelihood idref="directLikelihood"/>
+			<treeModel idref="treeModel"/>
+		</traitLogger>
+	</report>
+
+	<report>
+		<traitLogger traitName="fcd.factors" nodes="external">
+			<traitDataLikelihood idref="traitLikelihood"/>
+			<treeModel idref="treeModel"/>
+		</traitLogger>
+	</report>
+ -->
+
 	<operators id="operators">
 
 <!--
@@ -195,10 +235,12 @@
 
 	</operators>
 
+
 	<report>
 		<integratedFactorModel idref="factorModel"/>
 	</report>
 
+<!--
 	<traitGradientOnTree traitName="X">
 		<traitDataLikelihood idref="traitLikelihood"/>
 	</traitGradientOnTree>
@@ -209,6 +251,7 @@
 			<treeModel idref="treeModel"/>
 		</traitLogger>
 	</report>
+-->
 
 	<integratedFactorAnalysisLoadingsGradient id="gradient">
 		<integratedFactorModel idref="factorModel"/>
@@ -218,7 +261,6 @@
 	<report>
 		<integratedFactorAnalysisLoadingsGradient idref="gradient"/>
 	</report>
-
 
 <!--
 	<mcmc id="mcmc" chainLength="1000000">

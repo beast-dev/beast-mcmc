@@ -43,11 +43,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final Likelihood likelihood;
 
     private final Parameter data;
-    private final List<Integer> missingIndices;
+
+    private final boolean[] missing;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
-                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                               IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood) {
+                                       ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                       IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
@@ -66,7 +67,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         this.dimFactors = factorAnalysisLikelihood.getNumberOfFactors();
 
         this.data = factorAnalysisLikelihood.getParameter();
-        this.missingIndices = factorAnalysisLikelihood.getMissingIndices();
+        this.missing = getMissing(factorAnalysisLikelihood.getMissingDataIndices(), data.getDimension());
 
         List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
         likelihoodList.add(treeDataLikelihood);
@@ -75,19 +76,27 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     }
 
+    private boolean[] getMissing(List<Integer> missingIndices, int length) {
+        boolean[] missing = new boolean[length];
+
+        for (int i : missingIndices) {
+            missing[i] = true;
+        }
+
+        return missing;
+    }
+
     @Override
     public Likelihood getLikelihood() {
         return likelihood;
     }
 
     @Override
-    public Parameter getParameter() {
-        return factorAnalysisLikelihood.getLoadings(); // TODO May need to work with vech(L)
-    }
+    public Parameter getParameter() { return factorAnalysisLikelihood.getLoadings(); }
 
     @Override
     public int getDimension() {
-        return dimFactors * dimTrait; // TODO May need to work with vech(L)
+        return dimFactors * dimTrait;
     }
 
     private ReadableMatrix shiftToSecondMoment(WrappedMatrix variance, ReadableVector mean) {
@@ -212,18 +221,14 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 }
 
 
-                int offset = 0;
                 for (int trait = 0; trait < dimTrait; ++trait) {
-                    for (int factor = 0; factor < dimFactors; ++factor) {
+                    if (!missing[taxon * dimTrait + trait]) {
+                        for (int factor = 0; factor < dimFactors; ++factor) {
+                            gradient[trait * dimFactors + factor] +=
+                                    (mean.get(factor) * y.get(trait) - product.get(factor, trait))
+                                            * gamma.get(trait);
 
-                        // TODO Handle missing values with ...
-                        missingIndices.contains(offset);
-
-                        gradient[trait * dimFactors + factor] +=
-                                (mean.get(factor) * y.get(trait) - product.get(factor, trait))
-                                        * gamma.get(trait);
-
-                        ++offset;
+                        }
                     }
                 }
             }

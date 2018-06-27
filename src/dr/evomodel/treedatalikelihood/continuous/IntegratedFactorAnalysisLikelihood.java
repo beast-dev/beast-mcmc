@@ -78,7 +78,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         addVariable(loadings);
         addVariable(traitPrecision);
 
-        this.observedIndicators = setupObservedIndicators(missingIndices, numTaxa, dimTrait);
+        this.missingDataIndices = missingIndices;
+        this.observedIndicators = setupObservedIndicators(missingDataIndices, numTaxa, dimTrait);
         this.observedDimensions = setupObservedDimensions(observedIndicators);
 
         this.missingFactorIndices = new ArrayList<Integer>();
@@ -130,6 +131,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     public List<Integer> getMissingIndices() {
         return missingFactorIndices;
     }
+
+    public List<Integer> getMissingDataIndices() { return missingDataIndices; }
 
     @Override
     public CompoundParameter getParameter() {
@@ -578,6 +581,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final MatrixParameterInterface loadings;
     private final Parameter traitPrecision;
     private final List<Integer> missingFactorIndices;
+    private final List<Integer> missingDataIndices;
 
     private final double[][] observedIndicators;
     private final int[] observedDimensions;

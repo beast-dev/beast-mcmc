@@ -23,7 +23,7 @@
 			<attr name="X">11 12 1</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">2 1 1</attr> <!-- NA 1 TODO Change include missing value -->
+			<attr name="X">NA 1 1</attr> <!-- NA 1 TODO Change include missing value -->
 		</taxon>
 		<taxon id="C">
 			<attr name="X">3 3 1</attr>

@@ -72,6 +72,10 @@ public abstract class AbstractFullConditionalDistributionDelegate
                                 final int siblingNumber,
                                 final int siblingMatrix) {
 
+        if (nodeNumber == 7) {
+            System.err.println("HERE");
+        }
+
         cdi.updatePreOrderPartial(
                 parentNumber,
                 nodeNumber,
@@ -87,6 +91,6 @@ public abstract class AbstractFullConditionalDistributionDelegate
         }
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
 }

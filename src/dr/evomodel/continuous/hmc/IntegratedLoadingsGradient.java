@@ -149,7 +149,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         // [E(F) Y^t - E(FF^t)L]\Gamma
         // E(FF^t) = V(F) + E(F)E(F)^t
-        // error in comment ^ could indicate error in implementation
 
         // Y: N x P
         // F: N x K
@@ -231,7 +230,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                                             * gamma.get(trait);
                         }
 
-
                         gradient[factor * dimTrait + trait] +=
                                 (mean.get(factor) * y.get(trait) - product.get(factor, trait))
                                         * gamma.get(trait);
@@ -244,7 +242,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     System.err.println("C" + taxon + " : " + new WrappedVector.Raw(contribution));
                     System.err.println();
                 }
-
             }
         }
 

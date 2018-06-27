@@ -131,7 +131,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     private double[] takeOneStep(long m, double[] initialPosition) {
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
-        final double[] initialMomentum = drawInitialMomentum(drawDistribution, dim, sigmaList);
+        final double[] initialMomentum = drawInitialMomentum(drawDistribution, dim);
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
@@ -260,7 +260,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     private StepSize findReasonableStepSize(double[] initialPosition) {
 
         double stepSize = 1;
-        double[] momentum = drawInitialMomentum(drawDistribution, dim, sigmaList);
+        double[] momentum = drawInitialMomentum(drawDistribution, dim);
         int count = 1;
 
         double[] position = Arrays.copyOf(initialPosition, dim);

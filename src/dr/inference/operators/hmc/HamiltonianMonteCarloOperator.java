@@ -32,7 +32,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.Transform;
 
 /**
@@ -46,12 +46,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     protected double stepSize;
     protected final int nSteps;
     private final double randomStepCountFraction;
-    final NormalDistribution drawDistribution;
+    final MultivariateNormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
     final boolean preConditioning;
     final double drawVariance;
     double[] sigmaSquaredInverse;
-    double[] sigmaList;
+//    double[] sigmaList;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
@@ -83,23 +83,39 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             throw new IllegalArgumentException("Must provide a HessianProvider for preConditioning.");
         }
         sigmaSquaredInverse = new double[gradientProvider.getDimension()];
-        sigmaList = new double[gradientProvider.getDimension()];
-        drawDistribution = new NormalDistribution(0, 1.0);
+//        sigmaList = new double[gradientProvider.getDimension()];
 
         this.drawVariance = drawVariance;
         setSigmas();
+        drawDistribution = setDrawDistribution(drawVariance);
+    }
+
+    private MultivariateNormalDistribution setDrawDistribution(double drawVariance){
+        double[] mean = new double[gradientProvider.getDimension()];
+        Arrays.fill(mean, 0.0);
+        MultivariateNormalDistribution result;
+        if (preConditioning) {
+            double [][] precision = new double[gradientProvider.getDimension()][gradientProvider.getDimension()];
+            for (int i = 0; i < gradientProvider.getDimension(); i++) {
+                precision[i][i] = sigmaSquaredInverse[i];
+            }
+            result = new MultivariateNormalDistribution(mean, precision);
+        } else {
+            result = new MultivariateNormalDistribution(mean, 1.0/drawVariance);
+        }
+        return result;
     }
 
     private void setSigmas() {
         if (preConditioning) {
             sigmaSquaredInverse = ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity();
             boundSigmaInverse(sigmaSquaredInverse);
-            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                sigmaList[i] = Math.sqrt(1.0 / sigmaSquaredInverse[i]);
-            }
+//            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+//                sigmaList[i] = Math.sqrt(1.0 / sigmaSquaredInverse[i]);
+//            }
         } else {
             Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
-            Arrays.fill(sigmaList, Math.sqrt(drawVariance));
+//            Arrays.fill(sigmaList, Math.sqrt(drawVariance));
         }
     }
 
@@ -153,11 +169,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return total;
     }
 
-    static double[] drawInitialMomentum(final NormalDistribution distribution, final int dim, final double[] sigmaList) {
+    static double[] drawInitialMomentum(final MultivariateNormalDistribution distribution, final int dim) {
         double[] momentum = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            momentum[i] = (Double) distribution.nextRandom() * sigmaList[i];
-        }
+//        for (int i = 0; i < dim; i++) {
+//            momentum[i] = (Double) distribution.nextRandom() * sigmaList[i];
+//        }
+        momentum = (double[]) distribution.nextRandom();
         return momentum;
     }
 
@@ -201,7 +218,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             setSigmas();
         }
 
-        final double[] momentum = drawInitialMomentum(drawDistribution, dim, sigmaList);
+        final double[] momentum = drawInitialMomentum(drawDistribution, dim);
         final double[] position = leapFrogEngine.getInitialPosition();
 
         final double prop = getScaledDotProduct(momentum, sigmaSquaredInverse) +

@@ -46,13 +46,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     protected double stepSize;
     protected final int nSteps;
     private final double randomStepCountFraction;
-    final MultivariateNormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
-    final boolean preConditioning;
-    final double drawVariance;
-    double[] sigmaSquaredInverse;
-    double[][] massMatrixInverse;
-//    double[] sigmaList;
+    final MomentumProvider momentumProvider;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
@@ -79,107 +74,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform, getDefaultInstabilityHandler()) :
                 new LeapFrogEngine.Default(parameter, getDefaultInstabilityHandler()));
-        this.preConditioning = preConditioning;
-        if (preConditioning && !(gradientProvider instanceof HessianWrtParameterProvider)) {
-            throw new IllegalArgumentException("Must provide a HessianProvider for preConditioning.");
-        }
-        sigmaSquaredInverse = new double[gradientProvider.getDimension()];
-//        sigmaList = new double[gradientProvider.getDimension()];
 
-        this.drawVariance = drawVariance;
-        setSigmaSquaredInverse();
-        massMatrixInverse = new double[gradientProvider.getDimension()][gradientProvider.getDimension()];
-        setMassMatrixInverse(massMatrixInverse);
-        drawDistribution = setDrawDistribution(drawVariance);
+        this.momentumProvider = (preConditioning ?
+                new MomentumProvider.PreConditioning(drawVariance, (HessianWrtParameterProvider) gradientProvider) :
+                new MomentumProvider.Default(gradientProvider.getDimension(), drawVariance));
     }
-
-    private MultivariateNormalDistribution setDrawDistribution(double drawVariance){
-        double[] mean = new double[gradientProvider.getDimension()];
-        Arrays.fill(mean, 0.0);
-        MultivariateNormalDistribution result;
-        if (preConditioning) {
-//            double [][] precision = new double[gradientProvider.getDimension()][gradientProvider.getDimension()];
-//            for (int i = 0; i < gradientProvider.getDimension(); i++) {
-//                precision[i][i] = sigmaSquaredInverse[i];
-//            }
-            result = new MultivariateNormalDistribution(mean, massMatrixInverse);
-        } else {
-            result = new MultivariateNormalDistribution(mean, 1.0/drawVariance);
-        }
-        return result;
-    }
-
-    private void updateMassMatrixInverse() {
-        setMassMatrixInverse(massMatrixInverse);
-        drawDistribution.updatePrecision(massMatrixInverse);
-    }
-
-    private void setMassMatrixInverse(double[][] massMatrixInverse) {
-        if (preConditioning) {
-            setMassMatrixInverse(massMatrixInverse, ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity(), drawVariance);
-        } else {
-            setMassMatrixInverse(massMatrixInverse, drawVariance);
-        }
-    }
-
-    private void setMassMatrixInverse(double[][] massMatrixInverse, double[] diagonalHessian, double drawVariance) {
-        for (int i = 0; i < gradientProvider.getDimension(); i++) {
-            Arrays.fill(massMatrixInverse[i], 0.0);
-        }
-        boundSigmaSquaredInverse(diagonalHessian, drawVariance);
-        double mean, sum = 0.0;
-        for (int i = 0; i < gradientProvider.getDimension(); i++) {
-            massMatrixInverse[i][i] = diagonalHessian[i];
-        }
-    }
-
-    private void setMassMatrixInverse(double[][] massMatrixInverse, double[][] fullHessian, double drawVariance) {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    private void setMassMatrixInverse(double[][] massMatrixInverse, double drawVariance) {
-        for (int i = 0; i < gradientProvider.getDimension(); i++) {
-            massMatrixInverse[i][i] = 1.0 / drawVariance;
-        }
-    }
-
-    private void setSigmaSquaredInverse() {
-        if (preConditioning) {
-            sigmaSquaredInverse = ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity();
-            boundSigmaSquaredInverse(sigmaSquaredInverse, drawVariance);
-        } else {
-            Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
-        }
-    }
-
-    private void boundSigmaSquaredInverse(double[] sigmaSquaredInverse, double drawVariance) {
-
-        double min, max, mean, sum;
-        min = max =  Math.log(Math.abs(sigmaSquaredInverse[0]) / drawVariance);
-        for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-            sigmaSquaredInverse[i] = Math.log(Math.abs(sigmaSquaredInverse[i]) / drawVariance);
-            if (sigmaSquaredInverse[i] > max) max = sigmaSquaredInverse[i];
-            if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
-        }
-        sum = 0.0;
-        if (max - min > 4.0) {
-            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                sigmaSquaredInverse[i] = Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
-                sum += sigmaSquaredInverse[i];
-            }
-        } else {
-            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                sigmaSquaredInverse[i] = Math.exp(-sigmaSquaredInverse[i]); //Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
-                sum += sigmaSquaredInverse[i];
-            }
-        }
-
-        mean = sum / sigmaSquaredInverse.length;
-        for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-            sigmaSquaredInverse[i] /= mean;
-        }
-    }
-
 
     @Override
     public String getPerformanceSuggestion() {
@@ -189,26 +88,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     @Override
     public String getOperatorName() {
         return "Vanilla HMC operator";
-    }
-
-    static double getScaledDotProduct(final double[] momentum,
-                                      final double[] sigmaSquaredInverse) {
-        double total = 0.0;
-        assert(momentum.length == sigmaSquaredInverse.length);
-        for (int i = 0; i < momentum.length; i++) {
-            total += momentum[i] * momentum[i] * sigmaSquaredInverse[i] / 2.0;
-        }
-
-        return total;
-    }
-
-    static double[] drawInitialMomentum(final MultivariateNormalDistribution distribution, final int dim) {
-        double[] momentum = new double[dim];
-//        for (int i = 0; i < dim; i++) {
-//            momentum[i] = (Double) distribution.nextRandom() * sigmaList[i];
-//        }
-        momentum = (double[]) distribution.nextRandom();
-        return momentum;
     }
 
     @Override
@@ -244,17 +123,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             ++count;
         }
 
-        final int dim = gradientProvider.getDimension();
-        
-        if (preConditioning) {
-            setSigmaSquaredInverse();
-            updateMassMatrixInverse();
-        }
-
-        final double[] momentum = drawInitialMomentum(drawDistribution, dim);
+        final double[] momentum = momentumProvider.drawInitialMomentum();
         final double[] position = leapFrogEngine.getInitialPosition();
 
-        final double prop = getScaledDotProduct(momentum, sigmaSquaredInverse) +
+        final double prop = momentumProvider.getScaledDotProduct(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
 
         leapFrogEngine.updateMomentum(position, momentum,
@@ -264,7 +136,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         for (int i = 0; i < nStepsThisLeap; i++) { // Leap-frog
 
-            leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquaredInverse);
+            leapFrogEngine.updatePosition(position, momentum, stepSize, momentumProvider.getMassInverse());
 
             if (i < (nStepsThisLeap - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum,
@@ -275,7 +147,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         leapFrogEngine.updateMomentum(position, momentum,
                 gradientProvider.getGradientLogDensity(), stepSize / 2);
 
-        final double res = getScaledDotProduct(momentum, sigmaSquaredInverse) +
+        final double res = momentumProvider.getScaledDotProduct(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
 
         return prop - res; //hasting ratio
@@ -442,5 +314,145 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 super.setParameter(unTransformedPosition);
             }
         }
+    }
+
+    protected interface MomentumProvider {
+
+        double[] drawInitialMomentum();
+
+        double getScaledDotProduct(double[] momentum);
+
+        double[] getMassInverse();
+
+        class Default implements MomentumProvider {
+            final double drawVariance;
+            final int dim;
+            MultivariateNormalDistribution drawDistribution;
+
+            Default(int dim, double drawVariance) {
+                this.dim = dim;
+                this.drawVariance = drawVariance;
+                this.drawDistribution = setDrawDistribution(drawVariance);
+            }
+
+            private MultivariateNormalDistribution setDrawDistribution(double drawVariance) {
+                double[] mean = new double[dim];
+                Arrays.fill(mean, 0.0);
+                return new MultivariateNormalDistribution(mean, 1.0/drawVariance);
+            }
+
+            @Override
+            public double[] drawInitialMomentum() {
+                return (double[]) drawDistribution.nextRandom();
+            }
+
+            @Override
+            public double getScaledDotProduct(double[] momentum) {
+                double total = 0.0;
+                for (int i = 0; i < momentum.length; i++) {
+                    total += momentum[i] * momentum[i] / (2.0 * drawVariance);
+                }
+                return total;
+            }
+
+            @Override
+            public double[] getMassInverse() {
+                double[] sigmaSquaredInverse = new double[dim];
+                Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
+                return sigmaSquaredInverse;
+            }
+        }
+
+        class PreConditioning extends Default {
+
+            final HessianWrtParameterProvider hessianWrtParameterProvider;
+            double[][] massMatrixInverse;
+
+            PreConditioning(double drawVariance, HessianWrtParameterProvider hessianWrtParameterProvider) {
+                super(hessianWrtParameterProvider.getDimension(), drawVariance);
+                if (!(hessianWrtParameterProvider instanceof HessianWrtParameterProvider)) {
+                    throw new IllegalArgumentException("Must provide a HessianProvider for preConditioning.");
+                }
+                this.hessianWrtParameterProvider = hessianWrtParameterProvider;
+                this.massMatrixInverse = new double[dim][dim];
+                setMassMatrixInverse();
+            }
+
+            public void setMassMatrixInverse() {
+                assert(dim * dim == massMatrixInverse.length);
+                for (int i = 0; i < dim; i++) {
+                    Arrays.fill(massMatrixInverse[i], 0.0);
+                }
+                double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
+                boundSigmaSquaredInverse(diagonalHessian, drawVariance);
+                for (int i = 0; i < dim; i++) {
+                    massMatrixInverse[i][i] = diagonalHessian[i];
+                }
+            }
+
+            private MultivariateNormalDistribution setDrawDistribution(double drawVariance) {
+                double[] mean = new double[dim];
+                Arrays.fill(mean, 0.0);
+                return new MultivariateNormalDistribution(mean, massMatrixInverse);
+            }
+
+            @Override
+            public double[] drawInitialMomentum() {
+                updateMassMatrixInverse();
+                return (double[]) drawDistribution.nextRandom();
+            }
+
+            private void updateMassMatrixInverse() {
+                setMassMatrixInverse();
+                this.drawDistribution = setDrawDistribution(drawVariance);
+            }
+
+            @Override
+            public double[] getMassInverse() {
+                double[] sigmaSquaredInverse = new double[dim];
+                for (int i = 0; i < dim; i++) {
+                    sigmaSquaredInverse[i] = massMatrixInverse[i][i];
+                }
+                return sigmaSquaredInverse;
+            }
+
+            @Override
+            public double getScaledDotProduct(double[] momentum) {
+                double total = 0.0;
+                for (int i = 0; i < momentum.length; i++) {
+                    total += momentum[i] * momentum[i] * massMatrixInverse[i][i] / 2.0;
+                }
+                return total;
+            }
+
+            private void boundSigmaSquaredInverse(double[] sigmaSquaredInverse, double drawVariance) {
+
+                double min, max, mean, sum;
+                min = max =  Math.log(Math.abs(sigmaSquaredInverse[0]) / drawVariance);
+                for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                    sigmaSquaredInverse[i] = Math.log(Math.abs(sigmaSquaredInverse[i]) / drawVariance);
+                    if (sigmaSquaredInverse[i] > max) max = sigmaSquaredInverse[i];
+                    if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
+                }
+                sum = 0.0;
+                if (max - min > 4.0) {
+                    for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                        sigmaSquaredInverse[i] = Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
+                        sum += sigmaSquaredInverse[i];
+                    }
+                } else {
+                    for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                        sigmaSquaredInverse[i] = Math.exp(-sigmaSquaredInverse[i]); //Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
+                        sum += sigmaSquaredInverse[i];
+                    }
+                }
+
+                mean = sum / sigmaSquaredInverse.length;
+                for (int i = 0; i < sigmaSquaredInverse.length; i++) {
+                    sigmaSquaredInverse[i] /= mean;
+                }
+            }
+        }
+
     }
 }

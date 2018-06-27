@@ -131,7 +131,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     private double[] takeOneStep(long m, double[] initialPosition) {
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
-        final double[] initialMomentum = drawInitialMomentum(drawDistribution, dim);
+        final double[] initialMomentum = momentumProvider.drawInitialMomentum();
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
@@ -253,14 +253,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                         final double[] momentum,
                         final double stepSize) throws NumericInstabilityException {
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, stepSize, sigmaSquaredInverse);
+        leapFrogEngine.updatePosition(position, momentum, stepSize, momentumProvider.getMassInverse());
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
     }
 
     private StepSize findReasonableStepSize(double[] initialPosition) {
 
         double stepSize = 1;
-        double[] momentum = drawInitialMomentum(drawDistribution, dim);
+        double[] momentum = momentumProvider.drawInitialMomentum();
         int count = 1;
 
         double[] position = Arrays.copyOf(initialPosition, dim);
@@ -354,7 +354,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         assert (gradientProvider != null);
         assert (momentum != null);
 
-        return gradientProvider.getLikelihood().getLogLikelihood() - getScaledDotProduct(momentum, sigmaSquaredInverse)
+        return gradientProvider.getLikelihood().getLogLikelihood() - momentumProvider.getScaledDotProduct(momentum)
                 - leapFrogEngine.getParameterLogJacobian();
     }
 

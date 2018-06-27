@@ -378,7 +378,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 setMassMatrixInverse();
             }
 
-            public void setMassMatrixInverse() {
+            private void setMassMatrixInverse() {
                 assert(dim * dim == massMatrixInverse.length);
                 for (int i = 0; i < dim; i++) {
                     Arrays.fill(massMatrixInverse[i], 0.0);

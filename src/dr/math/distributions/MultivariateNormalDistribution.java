@@ -44,7 +44,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     public static final String TYPE = "MultivariateNormal";
 
     private final double[] mean;
-    private double[][] precision;
+    private final double[][] precision;
     private double[][] variance = null;
     private double[][] cholesky = null;
     private Double logDet = null;
@@ -69,13 +69,6 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         for (int i = 0; i < dim; ++i) {
             this.precision[i][i] = singlePrecision;
         }
-    }
-
-    public void updatePrecision(double[][] precision) {
-        this.precision = precision;
-        this.variance = null;
-        this.cholesky = null;
-        this.logDet = null;
     }
 
     public String getType() {

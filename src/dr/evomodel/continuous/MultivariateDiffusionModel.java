@@ -85,6 +85,16 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return null;
     }
 
+    public double[] getPrecisionmatrixAsVector() {
+        double[][] precisionMatrix = getPrecisionmatrix();
+        int dim = precisionMatrix.length;
+        double[] precisionVector = new double[dim * dim];
+        for (int i = 0; i < dim; ++i) {
+            System.arraycopy(precisionMatrix[i], 0, precisionVector, i * dim, dim);
+        }
+        return precisionVector;
+    }
+
     public double getDeterminantPrecisionMatrix() {
         checkVariableChanged();
         return determinatePrecisionMatrix;

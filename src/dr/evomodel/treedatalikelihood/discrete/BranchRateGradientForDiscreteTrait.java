@@ -160,12 +160,17 @@ public class BranchRateGradientForDiscreteTrait
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double rate = branchRateModel.getBranchRate(tree, node);
                 final double differential = branchRateModel.getBranchRateDifferential(rate);
-                final double tmpResult = gradient[v] * differential * tree.getBranchLength(node);
-                if (Double.isNaN(tmpResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-                    System.err.println("bad");
+                final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
+                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
+                    System.err.println("Check Gradient calculation please.");
                 }
-                result[destinationIndex] = gradient[v++] * differential * tree.getBranchLength(node);
+                result[destinationIndex] = nodeResult;
+                v++;
             }
+        }
+
+        if (COUNT_TOTAL_OPERATIONS) {
+            ++getGradientLogDensityCount;
         }
 
         return result;
@@ -250,24 +255,33 @@ public class BranchRateGradientForDiscreteTrait
         }
         sb.append("\n");
 
-        if (useHessian && largeEnoughValues){
-            sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+        if (useHessian) {
+            if (largeEnoughValues){
+                sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+                sb.append("\n");
+            }
+
+            if (testHessian != null && largeEnoughValues) {
+                sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
+            } else {
+                sb.append("mumeric: too close to 0");
+            }
             sb.append("\n");
         }
 
-        if (testHessian != null && largeEnoughValues) {
-            sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
-        } else {
-            sb.append("mumeric: too close to 0");
+        if (COUNT_TOTAL_OPERATIONS) {
+            sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount).append("\n");
+            sb.append(treeTraitProvider.toString()).append("\n");
+            sb.append(treeDataLikelihood.getReport());
         }
-        sb.append("\n");
-
-//        treeDataLikelihood.makeDirty();
 
         return sb.toString();
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
+
+    private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private long getGradientLogDensityCount = 0;
 
     @Override
     public LogColumn[] getColumns() {

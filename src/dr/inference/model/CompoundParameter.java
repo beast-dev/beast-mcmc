@@ -248,12 +248,16 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public String toString() {
+        return toStringCompoundParameter(getDimension());
+    }
+
+    protected String toStringCompoundParameter(int dim) {
         StringBuilder buffer = new StringBuilder(String.valueOf(getParameterValue(0)));
         final Bounds bounds = getBounds();
         buffer.append("[").append(String.valueOf(bounds.getLowerLimit(0)));
         buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
 
-        for (int i = 1; i < getDimension(); i++) {
+        for (int i = 1; i < dim; i++) {
             buffer.append(", ").append(String.valueOf(getParameterValue(i)));
             buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
             buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");

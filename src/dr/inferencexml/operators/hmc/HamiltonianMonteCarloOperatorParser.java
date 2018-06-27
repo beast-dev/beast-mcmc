@@ -85,8 +85,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        Transform transform = (Transform.MultivariableTransformWithParameter)
-                xo.getChild(Transform.MultivariableTransformWithParameter.class);
+        Transform transform = (Transform)
+                xo.getChild(Transform.class);
 
         if (derivative.getDimension() != parameter.getDimension()) {
             throw new XMLParseException("Gradient (" + derivative.getDimension() +

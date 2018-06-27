@@ -36,4 +36,6 @@ public interface WritableMatrix extends WritableVector {
     int getMajorDim();
 
     int getMinorDim();
+
+    int getDim();
 }

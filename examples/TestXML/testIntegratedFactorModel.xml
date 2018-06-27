@@ -20,13 +20,13 @@
 
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">11 12</attr>
+			<attr name="X">11 12 1</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">2 1</attr> <!-- NA 1 TODO Change include missing value -->
+			<attr name="X">2 1 1</attr> <!-- NA 1 TODO Change include missing value -->
 		</taxon>
 		<taxon id="C">
-			<attr name="X">3 3</attr>
+			<attr name="X">3 3 1</attr>
 		</taxon>
 	</taxa>
 
@@ -68,22 +68,23 @@
 		<nodeHeights internalNodes="true" rootNode="true">
 			<parameter id="treeModel.allInternalNodeHeights"/>
 		</nodeHeights>
-		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3">
 			<parameter id="leafTraits"/>
 		</nodeTraits>
 	</treeModel>
 
     <multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
-<!--
 			<matrixParameter id="precisionMatrix">
-				<parameter id="col1" value="1.00 0.00"/>
-				<parameter id="col2" value="0.00 1.00"/>
+				<parameter id="col1" value="2.00 0.00"/>
+				<parameter id="col2" value="0.00 3.00"/>
 			</matrixParameter>
- -->
+
+<!--
 			<matrixParameter id="precisionMatrix">
 				<parameter id="col1" value="1.00"/>
 			</matrixParameter>
+ -->
 
 		</precisionMatrix>
 	</multivariateDiffusionModel>
@@ -102,22 +103,24 @@
 	</multivariateWishartPrior>
  -->
 
+
 	<integratedFactorModel id="factorModel" traitName="X" nugget="0">
 		<loadings>
-<!--
-			<matrixParameter id="loadings">
-				<parameter value="1 0"/>
+			<matrixParameter id="loadings"> <!-- parameters are column-major -->
+				<parameter value="2 0"/>
 				<parameter value="1 1"/>
+				<parameter value="-1 1"/>
 			</matrixParameter>
- -->
+<!--
 			<matrixParameter id="loadings">
 				<parameter value="1"/>
 				<parameter value="2"/>
 			</matrixParameter>
+ -->
 
 		</loadings>
 		<precision>
-			<parameter id="precision" value="1 1"/>
+			<parameter id="precision" value="1.0 2.0 3.0"/>
 		</precision>
 		<treeModel idref="treeModel"/>
 		<traitParameter>
@@ -129,20 +132,16 @@
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<integratedFactorModel idref="factorModel"/>
-<!--
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
- -->
         <conjugateRootPrior>
-<!--
             <meanParameter>
                 <parameter value="0.0 0.0"/>
             </meanParameter>
- -->
+
+<!--
              <meanParameter>
                 <parameter value="0.0"/>
             </meanParameter>
+ -->
 
             <priorSampleSize>
                 <parameter value="3.0"/>
@@ -155,46 +154,6 @@
  -->
 
 	</traitDataLikelihood>
-
-<!--
-	<traitDataLikelihood id="directLikelihood" traitName="X" forceFullPrecision="false">
-		<multivariateDiffusionModel idref="diffusionModel"/>
-		<treeModel idref="treeModel"/>
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
-        <conjugateRootPrior>
-            <meanParameter>
-                <parameter value="0.0 0.0"/>
-            </meanParameter>
-            <priorSampleSize>
-                <parameter value="100000.0"/>
-            </priorSampleSize>
-        </conjugateRootPrior>
-	</traitDataLikelihood>
-
-	<traitGradientOnTree traitName="X">
-		<traitDataLikelihood idref="directLikelihood"/>
-	</traitGradientOnTree>
-
-	<traitGradientOnTree traitName="factors">
-		<traitDataLikelihood idref="traitLikelihood"/>
-	</traitGradientOnTree>
-
-	<report>
-		<traitLogger traitName="fcd.X" nodes="external">
-			<traitDataLikelihood idref="directLikelihood"/>
-			<treeModel idref="treeModel"/>
-		</traitLogger>
-	</report>
-
-	<report>
-		<traitLogger traitName="fcd.factors" nodes="external">
-			<traitDataLikelihood idref="traitLikelihood"/>
-			<treeModel idref="treeModel"/>
-		</traitLogger>
-	</report>
- -->
 
 	<operators id="operators">
 
@@ -240,24 +199,10 @@
 	</operators>
 
 
-<!--
 	<report>
 		<integratedFactorModel idref="factorModel"/>
 	</report>
- -->
 
-<!--
-	<traitGradientOnTree traitName="X">
-		<traitDataLikelihood idref="traitLikelihood"/>
-	</traitGradientOnTree>
-
-	<report>
-		<traitLogger traitName="fcd.X" nodes="external">
-			<traitDataLikelihood idref="traitLikelihood"/>
-			<treeModel idref="treeModel"/>
-		</traitLogger>
-	</report>
--->
 
 	<integratedFactorAnalysisLoadingsGradient id="gradient">
 		<integratedFactorModel idref="factorModel"/>

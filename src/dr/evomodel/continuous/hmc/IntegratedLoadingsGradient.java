@@ -211,42 +211,22 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     System.err.println("P" + taxon + " : " + product);
                 }
 
-                double[] contribution;
-
-                if (DEBUG) {
-                        contribution = new double[dimTrait * dimFactors];
-                }
 
                 int offset = 0;
-                for (int factor = 0; factor < dimFactors; ++factor) {
-                    for (int trait = 0; trait < dimTrait; ++trait) {
+                for (int trait = 0; trait < dimTrait; ++trait) {
+                    for (int factor = 0; factor < dimFactors; ++factor) {
 
                         // TODO Handle missing values with ...
                         missingIndices.contains(offset);
 
-                        if (DEBUG) {
-                            contribution[factor * dimTrait + trait] =
-                                    (mean.get(factor) * y.get(trait) - product.get(factor, trait))
-                                            * gamma.get(trait);
-                        }
-
-                        gradient[factor * dimTrait + trait] +=
+                        gradient[trait * dimFactors + factor] +=
                                 (mean.get(factor) * y.get(trait) - product.get(factor, trait))
                                         * gamma.get(trait);
 
                         ++offset;
                     }
                 }
-
-                if (DEBUG) {
-                    System.err.println("C" + taxon + " : " + new WrappedVector.Raw(contribution));
-                    System.err.println();
-                }
             }
-        }
-
-        if (DEBUG) {
-            System.err.println(getReport(gradient));
         }
 
         return gradient;
@@ -304,7 +284,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         String result = new WrappedVector.Raw(gradient).toString();
 
-         if (DEBUG) {
+         if (NUMERICAL_CHECK) {
 
              Parameter loadings = factorAnalysisLikelihood.getLoadings();
              double[] savedValues = loadings.getParameterValues();
@@ -313,7 +293,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                  loadings.setParameterValue(i, savedValues[i]);
              }
 
-             result += "\nDebug info: \n" +
+             result += "\nNumerical estimate: \n" +
                      new WrappedVector.Raw(testGradient) +
                      " @ " + new WrappedVector.Raw(loadings.getParameterValues()) + "\n";
          }
@@ -321,7 +301,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
          return result;
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
+    private static final boolean NUMERICAL_CHECK = true;
 
     private static final String PARSER_NAME = "integratedFactorAnalysisLoadingsGradient";
 

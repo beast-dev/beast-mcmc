@@ -51,6 +51,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     final boolean preConditioning;
     final double drawVariance;
     double[] sigmaSquaredInverse;
+    double[][] massMatrixInverse;
 //    double[] sigmaList;
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
@@ -86,7 +87,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 //        sigmaList = new double[gradientProvider.getDimension()];
 
         this.drawVariance = drawVariance;
-        setSigmas();
+        setSigmaSquaredInverse();
+        massMatrixInverse = new double[gradientProvider.getDimension()][gradientProvider.getDimension()];
+        setMassMatrixInverse(massMatrixInverse);
         drawDistribution = setDrawDistribution(drawVariance);
     }
 
@@ -95,31 +98,61 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         Arrays.fill(mean, 0.0);
         MultivariateNormalDistribution result;
         if (preConditioning) {
-            double [][] precision = new double[gradientProvider.getDimension()][gradientProvider.getDimension()];
-            for (int i = 0; i < gradientProvider.getDimension(); i++) {
-                precision[i][i] = sigmaSquaredInverse[i];
-            }
-            result = new MultivariateNormalDistribution(mean, precision);
+//            double [][] precision = new double[gradientProvider.getDimension()][gradientProvider.getDimension()];
+//            for (int i = 0; i < gradientProvider.getDimension(); i++) {
+//                precision[i][i] = sigmaSquaredInverse[i];
+//            }
+            result = new MultivariateNormalDistribution(mean, massMatrixInverse);
         } else {
             result = new MultivariateNormalDistribution(mean, 1.0/drawVariance);
         }
         return result;
     }
 
-    private void setSigmas() {
+    private void updateMassMatrixInverse() {
+        setMassMatrixInverse(massMatrixInverse);
+        drawDistribution.updatePrecision(massMatrixInverse);
+    }
+
+    private void setMassMatrixInverse(double[][] massMatrixInverse) {
         if (preConditioning) {
-            sigmaSquaredInverse = ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity();
-            boundSigmaInverse(sigmaSquaredInverse);
-//            for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-//                sigmaList[i] = Math.sqrt(1.0 / sigmaSquaredInverse[i]);
-//            }
+            setMassMatrixInverse(massMatrixInverse, ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity(), drawVariance);
         } else {
-            Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
-//            Arrays.fill(sigmaList, Math.sqrt(drawVariance));
+            setMassMatrixInverse(massMatrixInverse, drawVariance);
         }
     }
 
-    private void boundSigmaInverse(double[] sigmaSquaredInverse) {
+    private void setMassMatrixInverse(double[][] massMatrixInverse, double[] diagonalHessian, double drawVariance) {
+        for (int i = 0; i < gradientProvider.getDimension(); i++) {
+            Arrays.fill(massMatrixInverse[i], 0.0);
+        }
+        boundSigmaSquaredInverse(diagonalHessian, drawVariance);
+        double mean, sum = 0.0;
+        for (int i = 0; i < gradientProvider.getDimension(); i++) {
+            massMatrixInverse[i][i] = diagonalHessian[i];
+        }
+    }
+
+    private void setMassMatrixInverse(double[][] massMatrixInverse, double[][] fullHessian, double drawVariance) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    private void setMassMatrixInverse(double[][] massMatrixInverse, double drawVariance) {
+        for (int i = 0; i < gradientProvider.getDimension(); i++) {
+            massMatrixInverse[i][i] = 1.0 / drawVariance;
+        }
+    }
+
+    private void setSigmaSquaredInverse() {
+        if (preConditioning) {
+            sigmaSquaredInverse = ((HessianWrtParameterProvider) gradientProvider).getDiagonalHessianLogDensity();
+            boundSigmaSquaredInverse(sigmaSquaredInverse, drawVariance);
+        } else {
+            Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
+        }
+    }
+
+    private void boundSigmaSquaredInverse(double[] sigmaSquaredInverse, double drawVariance) {
 
         double min, max, mean, sum;
         min = max =  Math.log(Math.abs(sigmaSquaredInverse[0]) / drawVariance);
@@ -212,10 +245,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         }
 
         final int dim = gradientProvider.getDimension();
-
-//        final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
+        
         if (preConditioning) {
-            setSigmas();
+            setSigmaSquaredInverse();
+            updateMassMatrixInverse();
         }
 
         final double[] momentum = drawInitialMomentum(drawDistribution, dim);

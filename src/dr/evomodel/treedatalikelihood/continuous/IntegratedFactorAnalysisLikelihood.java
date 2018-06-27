@@ -43,6 +43,7 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.*;
 
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
 import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
 
@@ -497,10 +498,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             // store in precision, variance and normalization constant
             unwrap(precision, partials, partialsOffset + numFactors);
 
-//            if (STORE_VARIANCE) {
-//                safeInvert(precision, variance, true);
-//                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
-//            }
+            if (STORE_VARIANCE) {
+                safeInvert(precision, variance, true);
+                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
+            }
 
             normalizationConstants[taxon] = constant;
 
@@ -508,7 +509,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
     }
 
-//    private static final boolean STORE_VARIANCE = false;
+    private static final boolean STORE_VARIANCE = true;
     private static final boolean DEBUG = false;
 
     private void checkStatistics() {

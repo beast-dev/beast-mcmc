@@ -63,14 +63,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         super(name);
 
         this.traitParameter = traitParameter;
-        this.loadings = loadings;
+        this.loadingsTransposed = loadings;
         this.traitPrecision = traitPrecision;
 
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
-        this.numFactors = loadings.getRowDimension();
+        this.numFactors = loadings.getColumnDimension();
         
-        assert(dimTrait == loadings.getColumnDimension());
+        assert(dimTrait == loadings.getRowDimension());
 
         this.dimPartial =  numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
 
@@ -166,7 +166,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == loadings || variable == traitPrecision) {
+        if (variable == loadingsTransposed || variable == traitPrecision) {
             statisticsKnown = false;
             likelihoodKnown = false;
             fireModelChanged(this);
@@ -218,7 +218,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     public int getNumberOfTraits() { return dimTrait; }
 
-    public MatrixParameterInterface getLoadings() { return loadings; }
+    public MatrixParameterInterface getLoadings() { return loadingsTransposed; }
 
     public Parameter getPrecision() { return traitPrecision; }
 
@@ -311,9 +311,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     for (int k = 0; k < dimTrait; ++k) {
                         double thisPrecision = (observed[k] == 1.0) ?
                                 traitPrecision.getParameterValue(k) : nuggetPrecision;
-                        sum += loadings.getParameterValue(row, k) *
+                        sum += loadingsTransposed.getParameterValue(k, row) *
                                 thisPrecision *
-                                loadings.getParameterValue(col, k);
+                                loadingsTransposed.getParameterValue(k, col);
                     }
                     precision.unsafe_set(row, col, sum);
                 }
@@ -348,7 +348,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         for (int row = 0; row < numFactors; ++row) {
             double sum = 0;
             for (int k = 0; k < dimTrait; ++k) {
-                sum += loadings.getParameterValue(row, k) *
+                sum += loadingsTransposed.getParameterValue(k, row) *
                         observed[k] * traitPrecision.getParameterValue(k) *
                         Y.getParameterValue(k);
             }
@@ -578,7 +578,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final int dimPartial;
     private final int numFactors;
     private final CompoundParameter traitParameter;
-    private final MatrixParameterInterface loadings;
+    private final MatrixParameterInterface loadingsTransposed;
     private final Parameter traitPrecision;
     private final List<Integer> missingFactorIndices;
     private final List<Integer> missingDataIndices;
@@ -708,9 +708,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append(treeP);
             sb.append("\n\n");
 
-            Matrix L = new Matrix(loadings.getParameterAsMatrix());
+            Matrix Lt = new Matrix(loadingsTransposed.getParameterAsMatrix());
             sb.append("Loadings:\n");
-            sb.append(L);
+            sb.append(Lt.transpose());
             sb.append("\n\n");
 
             double[][] diffusionPrecision = delegate.getDiffusionModel().getPrecisionmatrix();
@@ -718,7 +718,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             Matrix loadingsVariance = null;
             try {
-                loadingsVariance = L.transpose().product(diffusionVariance.product(L));
+                loadingsVariance = Lt.product(diffusionVariance.product(Lt.transpose()));
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();
             }
@@ -726,10 +726,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append(loadingsVariance);
             sb.append("\n\n");
 
+            assert (loadingsVariance != null);
 
             Matrix loadingsFactorsVariance = MultivariateTraitDebugUtilities.getJointVarianceFactor(priorSampleSize,
                     treeVariance, treeSharedLengths, loadingsVariance.toComponents(), diffusionVariance.toComponents(),
-                    delegate.getDiffusionProcessDelegate(), L.transpose());
+                    delegate.getDiffusionProcessDelegate(), Lt);
 
             Matrix gamma = buildDiagonalMatrix(traitPrecision.getParameterValues());
             sb.append("Trait precision:\n");
@@ -781,7 +782,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
 
             try {
-                loadingsFactorsVariance = treeDrift.product(L);
+                loadingsFactorsVariance = treeDrift.product(Lt.transpose());
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();
             }

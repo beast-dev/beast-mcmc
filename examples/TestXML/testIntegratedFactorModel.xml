@@ -106,11 +106,17 @@
 
 	<integratedFactorModel id="factorModel" traitName="X" nugget="0">
 		<loadings>
-			<matrixParameter id="loadings"> <!-- parameters are column-major -->
+<!--
+			<matrixParameter id="loadings"> <!~~ parameters are column-major ~~>
 				<parameter value="2 0"/>
 				<parameter value="1 1"/>
 				<parameter value="-1 1"/>
 			</matrixParameter>
+ -->
+ 			<matrixParameter id="loadings"> <!-- this is really L^t -->
+ 				<parameter value="2 1 -1"/>
+ 				<parameter value="0 1 1"/>
+ 			</matrixParameter>
 <!--
 			<matrixParameter id="loadings">
 				<parameter value="1"/>

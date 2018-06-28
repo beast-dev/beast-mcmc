@@ -145,7 +145,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         double[] gradient = new double[getDimension()];
 
         ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
-        ReadableMatrix loadings = new WrappedMatrix.MatrixParameter(factorAnalysisLikelihood.getLoadings());
+        ReadableMatrix loadings = ReadableMatrix.Utils.transposeProxy(
+                new WrappedMatrix.MatrixParameter(factorAnalysisLikelihood.getLoadings()));
 
         if (DEBUG) {
             System.err.println("G : " + gamma);
@@ -220,11 +221,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     System.err.println("P" + taxon + " : " + product);
                 }
 
-
-                for (int trait = 0; trait < dimTrait; ++trait) {
-                    if (!missing[taxon * dimTrait + trait]) {
-                        for (int factor = 0; factor < dimFactors; ++factor) {
-                            gradient[trait * dimFactors + factor] +=
+                for (int factor = 0; factor < dimFactors; ++factor) {
+                    for (int trait = 0; trait < dimTrait; ++trait) {
+                        if (!missing[taxon * dimTrait + trait]) {
+                            gradient[factor * dimTrait + trait] +=
                                     (mean.get(factor) * y.get(trait) - product.get(factor, trait))
                                             * gamma.get(trait);
 
@@ -252,9 +252,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     }
 
     private MultivariateFunction numeric = new MultivariateFunction() {
-
-        // TODO Handle vech(loadings)
-        // TODO Transform each parameter into (-\infty,\infty)
 
         @Override
         public double evaluate(double[] argument) {
@@ -312,6 +309,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private static final String PARSER_NAME = "integratedFactorAnalysisLoadingsGradient";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 

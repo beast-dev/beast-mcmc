@@ -62,6 +62,35 @@ public interface ReadableMatrix extends ReadableVector {
             return new WrappedVector.Raw(result);
         }
 
+        public static ReadableMatrix transposeProxy(final ReadableMatrix matrix) {
+            return new ReadableMatrix() {
+                @Override
+                public double get(int i, int j) {
+                    return matrix.get(j, i);
+                }
+
+                @Override
+                public int getMajorDim() {
+                    return matrix.getMinorDim();
+                }
+
+                @Override
+                public int getMinorDim() {
+                    return matrix.getMajorDim();
+                }
+
+                @Override
+                public double get(int i) {
+                    throw new RuntimeException("Not yet implemented");
+                }
+
+                @Override
+                public int getDim() {
+                    return matrix.getDim();
+                }
+            };
+        }
+
         public static ReadableMatrix productProxy(final ReadableMatrix lhs, final ReadableMatrix rhs) {
             final int majorDim = lhs.getMajorDim();
             final int innerDim = lhs.getMinorDim();

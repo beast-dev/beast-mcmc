@@ -75,9 +75,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 new LeapFrogEngine.WithTransform(parameter, transform, getDefaultInstabilityHandler()) :
                 new LeapFrogEngine.Default(parameter, getDefaultInstabilityHandler()));
 
-        this.momentumProvider = (preConditioning ?
-                new MomentumProvider.PreConditioning(drawVariance, (HessianWrtParameterProvider) gradientProvider) :
-                new MomentumProvider.Default(gradientProvider.getDimension(), drawVariance));
+        this.momentumProvider = (!preConditioning ?
+                new MomentumProvider.Default(gradientProvider.getDimension(), drawVariance) :
+                (transform != null ?
+                        new MomentumProvider.PreConditioningWithTransform(drawVariance, (HessianWrtParameterProvider) gradientProvider, transform) :
+                        new MomentumProvider.PreConditioning(drawVariance, (HessianWrtParameterProvider) gradientProvider))
+                );
     }
 
     @Override
@@ -123,8 +126,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             ++count;
         }
 
-        final double[] momentum = momentumProvider.drawInitialMomentum();
         final double[] position = leapFrogEngine.getInitialPosition();
+        final double[] momentum = momentumProvider.drawInitialMomentum();
 
         final double prop = momentumProvider.getScaledDotProduct(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
@@ -375,15 +378,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 }
                 this.hessianWrtParameterProvider = hessianWrtParameterProvider;
                 this.massMatrixInverse = new double[dim][dim];
-                setMassMatrixInverse();
+                setMassMatrixInverse(hessianWrtParameterProvider.getDiagonalHessianLogDensity());
             }
 
-            private void setMassMatrixInverse() {
+            private void setMassMatrixInverse(double[] diagonalHessian) {
                 assert(dim * dim == massMatrixInverse.length);
                 for (int i = 0; i < dim; i++) {
                     Arrays.fill(massMatrixInverse[i], 0.0);
                 }
-                double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
+//                double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
                 boundSigmaSquaredInverse(diagonalHessian, drawVariance);
                 for (int i = 0; i < dim; i++) {
                     massMatrixInverse[i][i] = diagonalHessian[i];
@@ -403,7 +406,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             }
 
             private void updateMassMatrixInverse() {
-                setMassMatrixInverse();
+                setMassMatrixInverse(hessianWrtParameterProvider.getDiagonalHessianLogDensity());
                 this.drawDistribution = setDrawDistribution(drawVariance);
             }
 
@@ -451,6 +454,24 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 for (int i = 0; i < sigmaSquaredInverse.length; i++) {
                     sigmaSquaredInverse[i] /= mean;
                 }
+            }
+        }
+
+        class PreConditioningWithTransform extends PreConditioning {
+
+            final Transform transform;
+
+            PreConditioningWithTransform(double drawVariance, HessianWrtParameterProvider hessianWrtParameterProvider,
+                                         Transform transform) {
+                super(drawVariance, hessianWrtParameterProvider);
+                this.transform = transform;
+            }
+
+            private void setMassMatrixInverse(double[] diagonalHessian, double[] unTransformedPosition) {
+                diagonalHessian = transform.updateDiagonalHessianLogDensity(
+                        diagonalHessian, super.hessianWrtParameterProvider.getGradientLogDensity(), unTransformedPosition,
+                        0, diagonalHessian.length);
+                super.setMassMatrixInverse(diagonalHessian);
             }
         }
 

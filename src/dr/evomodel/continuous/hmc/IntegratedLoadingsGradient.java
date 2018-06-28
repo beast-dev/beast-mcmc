@@ -53,7 +53,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         this.treeDataLikelihood = treeDataLikelihood;
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
 
-        String traitName = factorAnalysisLikelihood.getModelName(); // TODO Is this correct?
+        String traitName = factorAnalysisLikelihood.getModelName();
 
         String fcdName = WrappedTipFullConditionalDistributionDelegate.getName(traitName);
         if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
@@ -181,7 +181,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 System.err.println("YP" + taxon + " : " + precisionKernel);
             }
 
-            // TODO Work with fullConditionalDensity
             List<WrappedNormalSufficientStatistics> statistics =
                     fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
 

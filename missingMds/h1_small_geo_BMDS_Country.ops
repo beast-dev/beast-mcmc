@@ -1,0 +1,8 @@
+
+Operator analysis
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept) 
+empiricalTreeDistributionOperator                         14         24       1.71     1.0         
+precisionGibbsOperator                                    91         104      1.14     1.0         
+Vanilla HMC operator                              0.0     880        300334   341.29   0.2182      
+scale(mds.residual.precision)                     0.898   15         6        0.4      0.2         
+

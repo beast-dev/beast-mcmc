@@ -253,7 +253,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                         final double[] momentum,
                         final double stepSize) throws NumericInstabilityException {
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, stepSize, momentumProvider.getMassInverse());
+        leapFrogEngine.updatePosition(position, momentumProvider.weightMomentum(momentum), stepSize);
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
     }
 

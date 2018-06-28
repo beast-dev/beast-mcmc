@@ -139,7 +139,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         for (int i = 0; i < nStepsThisLeap; i++) { // Leap-frog
 
-            leapFrogEngine.updatePosition(position, momentum, stepSize, momentumProvider.getMassInverse());
+            leapFrogEngine.updatePosition(position, momentumProvider.weightMomentum(momentum), stepSize);
 
             if (i < (nStepsThisLeap - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum,
@@ -221,8 +221,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         void updatePosition(final double[] position,
                             final double[] momentum,
-                            final double functionalStepSize,
-                            final double[] sigmaSquaredInverse);
+                            final double functionalStepSize);
 
         void setParameter(double[] position);
 
@@ -259,11 +258,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
             @Override
             public void updatePosition(double[] position, double[] momentum,
-                                       double functionalStepSize, double[] sigmaSquaredInverse) {
+                                       double functionalStepSize) {
 
                 final int dim = momentum.length;
                 for (int j = 0; j < dim; j++) {
-                    position[j] += functionalStepSize * momentum[j] * sigmaSquaredInverse[j];
+                    position[j] += functionalStepSize * momentum[j];
                 }
 
                 setParameter(position);

@@ -188,7 +188,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                 numTraits,
                                 dimTrait,
                                 partialBufferCount,
-                                matrixBufferCount
+                                matrixBufferCount,
+                                ((OrnsteinUhlenbeckDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
                         );
                     } else {
                         if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {

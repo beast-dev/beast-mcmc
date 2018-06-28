@@ -34,13 +34,15 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
 
         double[] getEigenVectorsStrengthOfSelection();
 
+        boolean isASymmetric();
+
         abstract class Basic implements Instance {
 
             private EigenDecomposition decomposeStrenghtOfSelection(double[] Aparam) {
                 int n = getDimTrait();
                 DenseMatrix64F A = MissingOps.wrap(Aparam, 0, n, n);
                 // Decomposition
-                EigenDecomposition eigA = DecompositionFactory.eig(n, true, true);
+                EigenDecomposition eigA = DecompositionFactory.eig(n, true, false);
                 if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
                 return eigA;
             }
@@ -69,14 +71,18 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
     /**
      * Results obtained using the following R code:
      * <p>
-     * variance <- matrix(data = c(1, 0, 0, 1), 2, 2)
+     * variance <- solve(matrix(data = c(1, 0, 0, 1), 2, 2))
      * alpha <- matrix(data = c(1, 0, 0, 1), 2, 2)
-     * gamma <- PylogeneticEM::compute_stationary_variance(variance, alpha)
+     * gamma <- PhylogeneticEM::compute_stationary_variance(variance, alpha)
      */
 
     Instance test0 = new Instance.Basic() {
         public int getDimTrait() {
             return 2;
+        }
+
+        public boolean isASymmetric() {
+            return true;
         }
 
         public double[] getPrecision() {
@@ -106,6 +112,10 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
             return 2;
         }
 
+        public boolean isASymmetric() {
+            return true;
+        }
+
         public double[] getPrecision() {
             return new double[]{
                     1.4, 0.4,
@@ -131,6 +141,10 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
     Instance test2 = new Instance.Basic() {
         public int getDimTrait() {
             return 5;
+        }
+
+        public boolean isASymmetric() {
+            return true;
         }
 
         public double[] getPrecision() {
@@ -164,7 +178,38 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
         }
     };
 
-    Instance[] all = {test0, test1, test2};
+    Instance test3 = new Instance.Basic() {
+        public int getDimTrait() {
+            return 2;
+        }
+
+        public boolean isASymmetric() {
+            return false;
+        }
+
+        public double[] getPrecision() {
+            return new double[]{
+                    1.4, 0.4,
+                    0.4, 1.0
+            };
+        }
+
+        public double[] getSelectionStrength() {
+            return new double[]{
+                    2.3, 1.0,
+                    0.2, 1.2
+            };
+        }
+
+        public double[] getStationaryVariance() {
+            return new double[]{
+                    0.2862183, -0.2550763,
+                    -0.2550763,  0.5129428
+            };
+        }
+    };
+
+    Instance[] all = {test0, test1, test2, test3};
 
     @Test
     public void setDiffusionStationaryVariance() throws Exception {
@@ -180,7 +225,8 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
                     numTraits,
                     dimTrait,
                     partialBufferCount,
-                    matrixBufferCount
+                    matrixBufferCount,
+                    test.isASymmetric()
             );
 
             double precision[] = test.getPrecision();

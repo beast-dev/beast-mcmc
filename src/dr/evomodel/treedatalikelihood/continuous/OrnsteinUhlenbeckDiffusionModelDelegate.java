@@ -25,11 +25,9 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.Complex64F;
@@ -57,8 +55,10 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
     // PB: See newly created classes AbstractDrift* and AbstractOU* to factorize the code.
 
 
-    private MatrixParameterInterface strengthOfSelectionMatrixParameter;
-    private EigenDecomposition eigenDecompositionStrengthOfSelection;
+    private final MatrixParameterInterface strengthOfSelectionMatrixParameter;
+    private final EigenDecomposition eigenDecompositionStrengthOfSelection;
+
+    private final boolean isSymmetric;
 
 
     public OrnsteinUhlenbeckDiffusionModelDelegate(Tree tree,
@@ -79,18 +79,17 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
         this.strengthOfSelectionMatrixParameter = strengthOfSelectionMatrixParam;
         addVariable(strengthOfSelectionMatrixParameter);
         // Eigen decomposition
-        this.eigenDecompositionStrengthOfSelection = decomposeStrenghtOfSelection(strengthOfSelectionMatrixParam);
+        DenseMatrix64F A = MissingOps.wrap(strengthOfSelectionMatrixParam);
+        this.isSymmetric = MatrixFeatures.isSymmetric(A);
+        this.eigenDecompositionStrengthOfSelection = decomposeStrenghtOfSelection(A);
     }
 
-    private EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface Aparam) {
-        DenseMatrix64F A = MissingOps.wrap(Aparam);
+    private EigenDecomposition decomposeStrenghtOfSelection(DenseMatrix64F A) {
         int n = A.numCols;
         // Checks
         if (n != A.numRows) throw new RuntimeException("Selection strength A matrix must be square.");
-        if (!MatrixFeatures.isSymmetric(A))
-            throw new RuntimeException("Selection strength A matrix must be symmetric."); // TODO : this is not strictly necessary, but might be good to impose the constraint ?
         // Decomposition
-        EigenDecomposition eigA = DecompositionFactory.eig(n, true, true);
+        EigenDecomposition eigA = DecompositionFactory.eig(n, true, isSymmetric);
         if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
         return eigA;
     }
@@ -105,7 +104,8 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
         double[] eigA = new double[dim];
         for (int p = 0; p < dim; ++p) {
             Complex64F ev = eigenDecompositionStrengthOfSelection.getEigenvalue(p);
-            if (!ev.isReal()) throw new RuntimeException("Selection strength A should only have real eigenvalues.");
+            assert ev.isReal() : "Selection strength A should only have real eigenvalues.";
+            assert ev.real > 0 : "Selection strength A should only have positive real eigenvalues.";
             eigA[p] = ev.real;
         }
         return eigA;
@@ -113,7 +113,11 @@ public final class OrnsteinUhlenbeckDiffusionModelDelegate extends AbstractOUDif
 
     @Override
     public double[] getEigenVectorsStrengthOfSelection() {
-        return EigenOps.createMatrixV(eigenDecompositionStrengthOfSelection).data;
+        return EigenOps.createMatrixV(eigenDecompositionStrengthOfSelection).getData();
+    }
+
+    public boolean isSymmetric() {
+        return isSymmetric;
     }
 
     @Override

@@ -500,7 +500,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{-1.0,2.0,0.0,1.0427958776637958,2.060317467842191,0.5916377446549422,0.5,2.072498288954417,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
+        String expectedTraits = "{-1.0,2.0,0.0,1.0427958776637942,2.060317467842191,0.591637744654942,0.5,2.0724982889544163,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsFullOU", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
 
         // Conditional moments (preorder)
@@ -574,7 +574,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{-1.0,2.0,0.0,1.6349449153945848,2.867671853831362,-1.06534124185145,0.5,3.366188378600915,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
+        String expectedTraits = "{-1.0,2.0,0.0,1.6349449153945854,2.867671853831363,-1.06534124185145,0.5,3.3661883786009157,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsFullOURelaxed", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
 
         // Conditional moments (preorder)
@@ -641,6 +641,125 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         assertEquals("likelihoodFullDiagonalOU",
                 format.format(dataLikelihood.getLogLikelihood()),
                 format.format(dataLikelihoodDiagonal.getLogLikelihood()));
+    }
+
+    public void testLikelihoodFullNonSymmetricOU() {
+        System.out.println("\nTest Likelihood using Full Non symmetric OU:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[3];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.0, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 100.0, 0.1});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{10.0, 0.1, 50.5});
+        MatrixParameter strengthOfSelectionMatrixParam
+                = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, strengthOfSelectionMatrixParam);
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+
+        assertEquals("likelihoodFullNonSymmetricOU",
+                format.format(logDatumLikelihood),
+                format.format(dataLikelihood.getLogLikelihood()));
+
+        System.out.println("likelihoodFullNonSymmetricOU: " + format.format(logDatumLikelihood));
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+    }
+
+    public void testLikelihoodFullOUNonSymmetricRelaxed() {
+        System.out.println("\nTest Likelihood using Full Non symmetric OU Relaxed:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
+                new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
+                transform, false));
+        optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
+                new Parameter.Default("rate.2", new double[]{0, -1, 2, -3, 4, -5, 6, -7, 8, -9}),
+                transform, false));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[3];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.0, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 100.0, 0.1});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{10.0, 0.1, 50.5});
+        MatrixParameter strengthOfSelectionMatrixParam
+                = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, strengthOfSelectionMatrixParam);
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+
+        assertEquals("likelihoodFullNonSymmetricOURelaxed",
+                format.format(logDatumLikelihood),
+                format.format(dataLikelihood.getLogLikelihood()));
+
+        System.out.println("likelihoodFullNonSymmetricOURelaxed: " + format.format(logDatumLikelihood));
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
     }
 
     //// Factor Model //// *********************************************************************************************
@@ -983,7 +1102,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{0.4889263054598221,1.8661431255221095,0.418452091077759,1.9784574437115363,0.5589398189015325,1.8942177991552118,0.9699471556784255,2.0423474270630155,0.3288819110219144,1.9759942582707215,0.8081782260054756,2.0382998496818923}";
+        String expectedTraits = "{0.4889263054598221,1.8661431255221095,0.418452091077759,1.9784574437115363,0.5589398189015325,1.8942177991552118,0.9699471556784257,2.0423474270630155,0.3288819110219144,1.9759942582707215,0.8081782260054756,2.0382998496818923}";
+
         assertEquals("traitsFullOUFactor", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
     }
 
@@ -1048,7 +1168,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{0.6074917696668025,1.4240248941610953,0.5818653246406656,1.5452377789936966,0.7248840308905068,1.4623057820376761,1.0961030597302799,1.6036947179866612,0.4428093776772083,1.5374906898020693,0.9206989847358957,1.6011019734876792}";
+        String expectedTraits = "{0.6074917696668026,1.4240248941610953,0.5818653246406656,1.5452377789936966,0.7248840308905068,1.4623057820376761,1.0961030597302797,1.6036947179866612,0.4428093776772083,1.5374906898020693,0.9206989847358957,1.6011019734876792}";
         assertEquals("traitsFullOURelaxedFactor", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
     }
 
@@ -1133,8 +1253,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
             int indEnd = s.indexOf("]", indBeg);
             double[] vector = parseVector(s.substring(indBeg, indEnd), ",");
             for (int i = 0; i < vector.length; i++) {
-                System.out.println("cMean Mat: " + vector[i]);
-                System.out.println("cMean preorder: " + partials[offset + i]);
+//                System.out.println("cMean Mat: " + vector[i]);
+//                System.out.println("cMean preorder: " + partials[offset + i]);
                 assertEquals("cMean " + tip + "; " + i,
                         format.format(partials[offset + i]),
                         format.format(vector[i]));

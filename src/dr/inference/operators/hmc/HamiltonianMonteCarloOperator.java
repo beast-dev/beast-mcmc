@@ -275,7 +275,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     parameter.setParameterValueQuietly(j, position[j]);
                 }
                 parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
-//                parameter.setParameterValueNotifyChangedAll(0, position[0]);
             }
         }
 
@@ -324,8 +323,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         double getScaledDotProduct(double[] momentum);
 
-        double[] getMassInverse();
-
         double[] weightMomentum(double[] momentum);
 
         class Default implements MomentumProvider {
@@ -357,13 +354,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     total += momentum[i] * momentum[i] / (2.0 * drawVariance);
                 }
                 return total;
-            }
-
-            @Override
-            public double[] getMassInverse() {
-                double[] sigmaSquaredInverse = new double[dim];
-                Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
-                return sigmaSquaredInverse;
             }
 
             @Override
@@ -417,15 +407,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             private void updateMassMatrixInverse() {
                 setMassMatrixInverse(hessianWrtParameterProvider.getDiagonalHessianLogDensity());
                 this.drawDistribution = setDrawDistribution(drawVariance);
-            }
-
-            @Override
-            public double[] getMassInverse() {
-                double[] sigmaSquaredInverse = new double[dim];
-                for (int i = 0; i < dim; i++) {
-                    sigmaSquaredInverse[i] = massMatrixInverse[i][i];
-                }
-                return sigmaSquaredInverse;
             }
 
             @Override

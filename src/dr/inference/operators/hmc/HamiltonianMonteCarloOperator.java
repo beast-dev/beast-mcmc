@@ -327,6 +327,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         double[] getMassInverse();
 
+        double[] weightMomentum(double[] momentum);
+
         class Default implements MomentumProvider {
             final double drawVariance;
             final int dim;
@@ -364,6 +366,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 Arrays.fill(sigmaSquaredInverse, 1.0 / drawVariance);
                 return sigmaSquaredInverse;
             }
+
+            @Override
+            public double[] weightMomentum(double[] momentum) {
+                double[] weightedMomentum = new double[dim];
+                for (int i = 0; i < dim; i++) {
+                    weightedMomentum[i] = momentum[i] / drawVariance;
+                }
+                return weightedMomentum;
+            }
         }
 
         class PreConditioning extends Default {
@@ -378,15 +389,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 }
                 this.hessianWrtParameterProvider = hessianWrtParameterProvider;
                 this.massMatrixInverse = new double[dim][dim];
-                setMassMatrixInverse(hessianWrtParameterProvider.getDiagonalHessianLogDensity());
+//                setMassMatrixInverse(hessianWrtParameterProvider.getDiagonalHessianLogDensity());
             }
 
-            private void setMassMatrixInverse(double[] diagonalHessian) {
+            public void setMassMatrixInverse(double[] diagonalHessian) {
                 assert(dim * dim == massMatrixInverse.length);
                 for (int i = 0; i < dim; i++) {
                     Arrays.fill(massMatrixInverse[i], 0.0);
                 }
-//                double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
                 boundSigmaSquaredInverse(diagonalHessian, drawVariance);
                 for (int i = 0; i < dim; i++) {
                     massMatrixInverse[i][i] = diagonalHessian[i];
@@ -428,6 +438,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 return total;
             }
 
+            @Override
+            public double[] weightMomentum(double[] momentum) {
+                double[] weightedMomentum = new double[dim];
+                for (int i = 0; i < dim; i++) {
+                    weightedMomentum[i] = massMatrixInverse[i][i] * momentum[i];
+                }
+                return weightedMomentum;
+            }
+
             private void boundSigmaSquaredInverse(double[] sigmaSquaredInverse, double drawVariance) {
 
                 double min, max, mean, sum;
@@ -467,9 +486,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 this.transform = transform;
             }
 
-            private void setMassMatrixInverse(double[] diagonalHessian, double[] unTransformedPosition) {
-                diagonalHessian = transform.updateDiagonalHessianLogDensity(
-                        diagonalHessian, super.hessianWrtParameterProvider.getGradientLogDensity(), unTransformedPosition,
+            public void setMassMatrixInverse(double[] diagonalHessian) {
+                double[] gradient = hessianWrtParameterProvider.getGradientLogDensity();
+                double[] unTransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();
+                diagonalHessian = transform.updateDiagonalHessianLogDensity(diagonalHessian, gradient, unTransformedPosition,
                         0, diagonalHessian.length);
                 super.setMassMatrixInverse(diagonalHessian);
             }

@@ -153,7 +153,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         try {
 
             int compactPartialsCount = tipCount;
-            if (useAmbiguities || usePreOrder) {
+            if (useAmbiguities) {
                 // if we are using ambiguities then we don't use tip partials
                 compactPartialsCount = 0;
             }
@@ -162,10 +162,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
-            scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
+            scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
+
+            if (usePreOrder) {
+                evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel, 0, true);
+            } else {
+                evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+            }
 
             int numPartials = partialBufferHelper.getBufferCount();
             int numScaleBuffers = scaleBufferHelper.getBufferCount();
+            int numMatrices = evolutionaryProcessDelegate.getMatrixBufferCount();
             this.usePreOrder = false;
 
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
@@ -173,9 +180,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 this.usePreOrder = true;
                 numPartials += nodeCount;
                 numScaleBuffers += nodeCount - 1; // don't need to rescale at root
+                numMatrices += evolutionaryProcessDelegate.getInfinitesimalMatrixBufferCount();
             }
-
-            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
@@ -313,7 +319,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     stateCount,
                     patternCount,
                     evolutionaryProcessDelegate.getEigenBufferCount(),
-                    evolutionaryProcessDelegate.getMatrixBufferCount(),
+                    numMatrices,
                     categoryCount,
                     numScaleBuffers, // Always allocate; they may become necessary
                     resourceList,
@@ -369,7 +375,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
                             ", is not found in patternList, " + patternList.getId());
                 } else {
-                    if (useAmbiguities || usePreOrder) {
+                    if (useAmbiguities) {
                         setPartials(beagle, patternList, index, i);
                     } else {
                         setStates(beagle, patternList, index, i);
@@ -480,7 +486,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return order;
     }
 
-    private int getScaleBufferCount() {
+    private int getSingleScaleBufferCount() {
         return internalNodeCount + 1;
     }
 
@@ -700,7 +706,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-            if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum)) {
+            if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum) && !recomputeScaleFactors) {
                 System.err.println("Stored partial should not be updated!");
             }
 
@@ -950,6 +956,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     public final int getPartialBufferIndex(int nodeNumber) {
         return partialBufferHelper.getOffsetIndex(nodeNumber);
+    }
+
+    public final int getScaleBufferCount() {
+        return scaleBufferHelper.getBufferCount();
     }
 
     public final int getPartialBufferCount() {

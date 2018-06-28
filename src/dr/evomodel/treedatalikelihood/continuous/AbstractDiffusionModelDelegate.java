@@ -117,7 +117,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         }
 
         cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
-                diffusionModel.getPrecisionParameter().getParameterValues(),
+                diffusionModel.getPrecisionmatrixAsVector(),
                 Math.log(diffusionModel.getDeterminantPrecisionMatrix())
 
         );

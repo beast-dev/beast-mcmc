@@ -158,6 +158,17 @@ public class MissingOps {
         return count;
     }
 
+    public static boolean allZeroDiagonals(DenseMatrix64F source) {
+        final int length = source.getNumCols();
+
+        for (int i = 0; i < length; ++i) {
+            if (source.unsafe_get(i,i) != 0.0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static void getFiniteDiagonalIndices(final DenseMatrix64F source, final int[] indices) {
         final int length = source.getNumCols();
 

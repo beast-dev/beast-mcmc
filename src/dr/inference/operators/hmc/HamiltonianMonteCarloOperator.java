@@ -516,14 +516,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                         massMatrixInverse[i][j] = -hessianInverse[i][j];
                     }
                 }
-                double[] diagonalInverseHessian = new double[dim];
-                for (int i = 0; i < dim; i++) {
-                    diagonalInverseHessian[i] = hessianInverse[i][i];
-                }
-                super.boundSigmaSquaredInverse(diagonalInverseHessian, drawVariance);
-                for (int i = 0; i < dim; i++) {
-                    massMatrixInverse[i][i] = diagonalInverseHessian[i];
-                }
+//                double[] diagonalInverseHessian = new double[dim];
+//                for (int i = 0; i < dim; i++) {
+//                    diagonalInverseHessian[i] = hessianInverse[i][i];
+//                }
+//                super.boundSigmaSquaredInverse(diagonalInverseHessian, drawVariance);
+//                for (int i = 0; i < dim; i++) {
+//                    massMatrixInverse[i][i] = diagonalInverseHessian[i];
+//                }
             }
 
             @Override

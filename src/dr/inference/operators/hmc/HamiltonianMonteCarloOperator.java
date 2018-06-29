@@ -33,7 +33,6 @@ import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.math.MathUtils;
 import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
@@ -379,39 +378,32 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             @Override
             public double[] getMass() {
                 double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
-                boundSigmaSquaredInverse(diagonalHessian, 1.0);
-                for (int i = 0; i < dim; i++) {
-                    diagonalHessian[i] = 1.0 / diagonalHessian[i];
-                }
-                return diagonalHessian;
+                return boundMass(diagonalHessian);
             }
 
-            private void boundSigmaSquaredInverse(double[] sigmaSquaredInverse, double drawVariance) {
+            private double[] boundMass(double[] diagonalHessian) {
 
-                double min, max, mean, sum;
-                min = max =  Math.log(Math.abs(sigmaSquaredInverse[0]) / drawVariance);
-                for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                    sigmaSquaredInverse[i] = Math.log(Math.abs(sigmaSquaredInverse[i]) / drawVariance);
-                    if (sigmaSquaredInverse[i] > max) max = sigmaSquaredInverse[i];
-                    if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
-                }
-                sum = 0.0;
-                if (max - min > 4.0) {
-                    for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                        sigmaSquaredInverse[i] = Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
-                        sum += sigmaSquaredInverse[i];
-                    }
-                } else {
-                    for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                        sigmaSquaredInverse[i] = Math.exp(-sigmaSquaredInverse[i]); //Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
-                        sum += sigmaSquaredInverse[i];
-                    }
-                }
+                double sum = 0.0;
+                final double lowerBound = 1E-2;
+                final double upperBound = 1E2;
+                double[] boundedMass = new double[dim];
 
-                mean = sum / sigmaSquaredInverse.length;
-                for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                    sigmaSquaredInverse[i] /= mean;
+                for (int i = 0; i < dim; i++) {
+                    boundedMass[i] = -diagonalHessian[i];
+                    if (boundedMass[i] < lowerBound) {
+                        boundedMass[i] = lowerBound;
+                    } else if (boundedMass[i] > upperBound) {
+                        boundedMass[i] = upperBound;
+                    } else {
+                        boundedMass[i] = -diagonalHessian[i];
+                    }
+                    sum += 1.0 / boundedMass[i];
                 }
+                final double mean = sum / dim;
+                for (int i = 0; i < dim; i++) {
+                    boundedMass[i] = mean * boundedMass[i];
+                }
+                return boundedMass;
             }
         }
 
@@ -433,11 +425,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 diagonalHessian = transform.updateDiagonalHessianLogDensity(diagonalHessian, gradient, unTransformedPosition,
                         0, diagonalHessian.length);
 //                double[] testHessian = NumericalDerivative.diagonalHessian(numeric1, transform.transform(hessianWrtParameterProvider.getParameter().getParameterValues(), 0, dim));
-                super.boundSigmaSquaredInverse(diagonalHessian, 1.0);
-                for (int i = 0; i < dim; i++) {
-                    diagonalHessian[i] = 1.0 / diagonalHessian[i];
-                }
-                return diagonalHessian;
+                return super.boundMass(diagonalHessian);
 //                return setArbitraryMatrix(dim);
             }
 //            private double[] setArbitraryMatrix(int dim) {

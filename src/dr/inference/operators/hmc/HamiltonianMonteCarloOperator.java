@@ -26,16 +26,20 @@
 package dr.inference.operators.hmc;
 
 import java.util.Arrays;
+
+import cern.colt.matrix.DoubleFactory2D;
+import cern.colt.matrix.DoubleMatrix1D;
+import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
-import dr.math.MachineAccuracy;
-import dr.math.MathUtils;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
+import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.util.Transform;
 
@@ -53,7 +57,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     final LeapFrogEngine leapFrogEngine;
     final MomentumProvider momentumProvider;
 
-    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+    HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
                                          double stepSize, int nSteps, double drawVariance,
                                          double randomStepCountFraction) {
@@ -367,8 +371,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             @Override
             public double getScaledDotProduct(double[] momentum) {
                 double total = 0.0;
-                for (int i = 0; i < momentum.length; i++) {
-                    total += momentum[i] * momentum[i] / (2.0 * drawVariance);
+                for (double m : momentum) {
+                    total += m * m / (2.0 * drawVariance);
                 }
                 return total;
             }
@@ -417,7 +421,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             @Override
             public double[] drawInitialMomentum() {
                 updateMassMatrixInverse();
-                return (double[]) drawDistribution.nextRandom();
+                return drawDistribution.nextMultivariateNormal();
             }
 
             private void updateMassMatrixInverse() {
@@ -552,6 +556,38 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 return total;
             }
 
+            private static final double MIN_EIGENVALUE = -0.5; // TODO Bad magic number
+
+            private void boundEigenvalues(DoubleMatrix1D eigenvalues) {
+
+                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                    if (eigenvalues.get(i) > MIN_EIGENVALUE) {
+                        eigenvalues.set(i, MIN_EIGENVALUE);
+                    }
+                }
+            }
+
+            private void scaleEigenvalues(DoubleMatrix1D eigenvalues) {
+                double sum = 0.0;
+                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                    sum += eigenvalues.get(i);
+                }
+
+                double mean = -sum / eigenvalues.cardinality();
+
+                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                    eigenvalues.set(i, eigenvalues.get(i) / mean);
+                }
+            }
+
+            private void normalizeEigenvalues(DoubleMatrix1D eigenvalues) {
+                boundEigenvalues(eigenvalues);
+                scaleEigenvalues(eigenvalues);
+            }
+
+            private DoubleMatrix1D eigenvalues;
+            private DoubleMatrix2D H;
+
             private SymmetricMatrix getNumericalHessian() {
                 double[][] hessian = new double[dim][dim];
                 double[] oldUntransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();
@@ -576,7 +612,51 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                         hessian[j][i] = hessian[i][j] = (gradientPlus[i][j] - gradientMinus[i][j]) / (4.0 * h[j]) + (gradientPlus[j][i] - gradientMinus[j][i]) / (4.0 * h[i]);
                     }
                 }
-                return new SymmetricMatrix(hessian);
+
+//                DoubleMatrix2D
+                        H = new DenseDoubleMatrix2D(hessian);
+                RobustEigenDecomposition decomposition = new RobustEigenDecomposition(H);
+
+                Algebra algebra = new Algebra();
+
+//                DoubleMatrix1D
+                        eigenvalues = decomposition.getRealEigenvalues();
+
+                DoubleMatrix2D V = decomposition.getV();
+                DoubleMatrix2D Vi = algebra.inverse(V);
+//                DoubleMatrix2D D = decomposition.getD();
+//
+//                DoubleMatrix2D tmp = algebra.mult(algebra.mult(V,  DoubleFactory2D.dense.diagonal(decomposition.getRealEigenvalues())), Vi);
+//
+//                System.err.println(tmp);
+//                System.err.println();
+//                System.err.println(H);
+//                System.exit(-1);
+//                                , D);
+//                V.zMult()
+
+//                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+//                    if (eigenvalues.get(i) > 0.0) {
+//                        eigenvalues.set(i, -0.1); // TODO Bad magic number
+//                    }
+//                }
+
+                normalizeEigenvalues(eigenvalues);
+
+                DoubleMatrix2D tmp2 = algebra.mult(algebra.mult(V,  DoubleFactory2D.dense.diagonal(eigenvalues)), Vi);
+
+//                System.err.println(H);
+//                System.err.println(tmp2);
+//                System.exit(-1);
+
+
+
+//                decomposition.get
+//
+//                System.err.println(decomposition.getRealEigenvalues());
+//                System.err.println(decomposition.getImagEigenvalues());
+
+                return new SymmetricMatrix(tmp2.toArray());
             }
 
             private MultivariateFunction numeric1 = new MultivariateFunction() {

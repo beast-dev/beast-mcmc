@@ -585,9 +585,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 scaleEigenvalues(eigenvalues);
             }
 
-            private DoubleMatrix1D eigenvalues;
-            private DoubleMatrix2D H;
-
             private SymmetricMatrix getNumericalHessian() {
                 double[][] hessian = new double[dim][dim];
                 double[] oldUntransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();
@@ -613,50 +610,21 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     }
                 }
 
-//                DoubleMatrix2D
-                        H = new DenseDoubleMatrix2D(hessian);
-                RobustEigenDecomposition decomposition = new RobustEigenDecomposition(H);
-
                 Algebra algebra = new Algebra();
 
-//                DoubleMatrix1D
-                        eigenvalues = decomposition.getRealEigenvalues();
-
-                DoubleMatrix2D V = decomposition.getV();
-                DoubleMatrix2D Vi = algebra.inverse(V);
-//                DoubleMatrix2D D = decomposition.getD();
-//
-//                DoubleMatrix2D tmp = algebra.mult(algebra.mult(V,  DoubleFactory2D.dense.diagonal(decomposition.getRealEigenvalues())), Vi);
-//
-//                System.err.println(tmp);
-//                System.err.println();
-//                System.err.println(H);
-//                System.exit(-1);
-//                                , D);
-//                V.zMult()
-
-//                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
-//                    if (eigenvalues.get(i) > 0.0) {
-//                        eigenvalues.set(i, -0.1); // TODO Bad magic number
-//                    }
-//                }
+                DoubleMatrix2D H = new DenseDoubleMatrix2D(hessian);
+                RobustEigenDecomposition decomposition = new RobustEigenDecomposition(H);
+                DoubleMatrix1D eigenvalues = decomposition.getRealEigenvalues();
 
                 normalizeEigenvalues(eigenvalues);
 
-                DoubleMatrix2D tmp2 = algebra.mult(algebra.mult(V,  DoubleFactory2D.dense.diagonal(eigenvalues)), Vi);
+                DoubleMatrix2D V = decomposition.getV();
+                DoubleMatrix2D newHessian = algebra.mult(
+                        algebra.mult(V,  DoubleFactory2D.dense.diagonal(eigenvalues)),
+                        algebra.inverse(V)
+                );
 
-//                System.err.println(H);
-//                System.err.println(tmp2);
-//                System.exit(-1);
-
-
-
-//                decomposition.get
-//
-//                System.err.println(decomposition.getRealEigenvalues());
-//                System.err.println(decomposition.getImagEigenvalues());
-
-                return new SymmetricMatrix(tmp2.toArray());
+                return new SymmetricMatrix(newHessian.toArray());
             }
 
             private MultivariateFunction numeric1 = new MultivariateFunction() {
@@ -667,7 +635,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                         hessianWrtParameterProvider.getParameter().setParameterValue(i, Math.exp(argument[i]));
                     }
 
-//            treeDataLikelihood.makeDirty();
                     return hessianWrtParameterProvider.getLikelihood().getLogLikelihood();
                 }
 

@@ -539,6 +539,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 return weightedMomentum;
             }
 
+            @Override
+            public double getScaledDotProduct(double[] momentum) {
+                double total = 0.0;
+                double[] weightedMomentum = weightMomentum(momentum);
+                for (int i = 0; i < momentum.length; i++) {
+                    total += momentum[i] * weightedMomentum[i] / 2.0;
+                }
+                if (total < 0.0) {
+                    System.err.println("Kinetic energy < 0! ");
+                }
+                return total;
+            }
+
             private SymmetricMatrix getNumericalHessian() {
                 double[][] hessian = new double[dim][dim];
                 double[] oldUntransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();

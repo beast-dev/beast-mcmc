@@ -131,8 +131,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     private double[] takeOneStep(long m, double[] initialPosition) {
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
-        final double[] mass = massProvider.getMass();
-        final double[] initialMomentum = drawInitialMomentum(drawDistribution, dim, mass);
+        final double[] mass = momentumProvider.getMass();
+        final double[] initialMomentum = momentumProvider.drawInitialMomentum();
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
@@ -212,7 +212,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         // "one frog jump!"
         try {
-            doLeap(position, momentum, massProvider.getMass(), direction * stepSize);
+            doLeap(position, momentum, momentumProvider.getMass(), direction * stepSize);
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
@@ -255,15 +255,15 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                         final double[] mass,
                         final double stepSize) throws NumericInstabilityException {
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, mass, stepSize);
+        leapFrogEngine.updatePosition(position, momentum, stepSize);
         leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
     }
 
     private StepSize findReasonableStepSize(double[] initialPosition) {
 
         double stepSize = 1;
-        final double[] mass = massProvider.getMass();
-        double[] momentum = drawInitialMomentum(drawDistribution, dim, mass);
+//        final double[] mass = massProvider.getMass();
+        double[] momentum = momentumProvider.drawInitialMomentum();
         int count = 1;
 
         double[] position = Arrays.copyOf(initialPosition, dim);
@@ -271,7 +271,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         double probBefore = getJointProbability(gradientProvider, momentum);
 
         try {
-            doLeap(position, momentum, mass, stepSize);
+            doLeap(position, momentum, momentumProvider.getMass(), stepSize);
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
@@ -288,7 +288,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             //"one frog jump!"
             try {
-                doLeap(position, momentum, mass, stepSize);
+                doLeap(position, momentum, momentumProvider.getMass(), stepSize);
             } catch (NumericInstabilityException e) {
                 handleInstability();
             }
@@ -357,7 +357,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         assert (gradientProvider != null);
         assert (momentum != null);
 
-        return gradientProvider.getLikelihood().getLogLikelihood() - getScaledDotProduct(momentum, massProvider.getMass())
+        return gradientProvider.getLikelihood().getLogLikelihood() - momentumProvider.getScaledDotProduct(momentum)
                 - leapFrogEngine.getParameterLogJacobian();
     }
 
@@ -423,7 +423,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             setPosition(direction, nextTree.getPosition(direction));
             setMomentum(direction, nextTree.getMomentum(direction));
-            
+
             updateSample(nextTree);
 
             numNodes += nextTree.numNodes;

@@ -509,7 +509,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 //                        0, diagonalHessian.length);
 //
 //                double[] testHessian = NumericalDerivative.diagonalHessian(numeric1, transform.transform(hessianWrtParameterProvider.getParameter().getParameterValues(), 0, dim));
-                SymmetricMatrix hessian = getNumericalHessian();
+                SymmetricMatrix hessian = getNumericalHessianCentral();
                 double[][] hessianInverse = hessian.inverse().toComponents();
 
 
@@ -585,7 +585,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 scaleEigenvalues(eigenvalues);
             }
 
-            private SymmetricMatrix getNumericalHessian() {
+            private SymmetricMatrix getNumericalHessianCentral() {
                 double[][] hessian = new double[dim][dim];
                 double[] oldUntransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();
                 double[] oldTransformedPosition = transform.transform(oldUntransformedPosition, 0, dim);
@@ -609,7 +609,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                         hessian[j][i] = hessian[i][j] = (gradientPlus[i][j] - gradientMinus[i][j]) / (4.0 * h[j]) + (gradientPlus[j][i] - gradientMinus[j][i]) / (4.0 * h[i]);
                     }
                 }
-
+//                double[] gradient = hessianWrtParameterProvider.getGradientLogDensity();
+//                double[] unTransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();
+//                double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
+//                diagonalHessian = transform.updateDiagonalHessianLogDensity(diagonalHessian, gradient, unTransformedPosition,
+//                        0, diagonalHessian.length);
+//                double[][] hessianCheck = getNumericalHessianCheck(numeric1,
+//                        transform.transform(hessianWrtParameterProvider.getParameter().getParameterValues(), 0, dim));
+//                double[][] hessianCheck2 = getNumericalHessianCheckForward(dim,
+//                        transform.transform(hessianWrtParameterProvider.getParameter().getParameterValues(), 0, dim));
                 Algebra algebra = new Algebra();
 
                 DoubleMatrix2D H = new DenseDoubleMatrix2D(hessian);
@@ -625,6 +633,68 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 );
 
                 return new SymmetricMatrix(newHessian.toArray());
+            }
+
+            private double[][] getNumericalHessianCheckForward(int dim, double[] x) {
+                double[][] hessian = new double[dim][dim];
+                double[][] gradientMatrix = new double[dim][dim];
+                final double[] gradient = transform.updateGradientLogDensity(hessianWrtParameterProvider.getGradientLogDensity(),
+                        hessianWrtParameterProvider.getParameter().getParameterValues(), 0, dim);
+                double[] oldUntransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();
+                double[] oldTransformedPosition = transform.transform(oldUntransformedPosition, 0, dim);
+                double[] h = new double[dim];
+                for (int i = 0; i < dim; i++) {
+                    h[i] = MachineAccuracy.SQRT_EPSILON * (Math.abs(x[i]) + 1.0);
+                    hessianWrtParameterProvider.getParameter().setParameterValue(i, Math.exp(oldTransformedPosition[i] + h[i]));
+                    double[] gradientTmp = hessianWrtParameterProvider.getGradientLogDensity();
+                    gradientMatrix[i] = transform.updateGradientLogDensity(gradientTmp, hessianWrtParameterProvider.getParameter().getParameterValues(),
+                            0, dim);
+                    hessianWrtParameterProvider.getParameter().setParameterValue(i, Math.exp(oldTransformedPosition[i]));
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        hessian[i][j] = hessian[j][i] = (gradientMatrix[j][i] - gradient[i]) / (2.0 * h[j]) + (gradientMatrix[i][j] - gradient[j]) / (2.0 * h[i]);
+                    }
+                }
+                return hessian;
+            }
+
+            private double[][] getNumericalHessianCheck(MultivariateFunction f, double[] x) {
+                double[][] hessian = new double[f.getNumArguments()][f.getNumArguments()];
+                for (int i = 0; i < f.getNumArguments(); i++) {
+                    double hi = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(x[i]) + 1.0);
+                    double oldXi = x[i];
+                    double f__ = f.evaluate(x);
+                    x[i] = oldXi + hi;
+                    double fp_ = f.evaluate(x);
+                    x[i] = oldXi - hi;
+                    double fm_ = f.evaluate(x);
+                    x[i] = oldXi + 2.0 * hi;
+                    double fpp = f.evaluate(x);
+                    x[i] = oldXi - 2.0 * hi;
+                    double fmm = f.evaluate(x);
+                    hessian[i][i] = (-fpp + 16.0 * fp_ - 30.0 * f__ + 16.0 * fm_ - fmm) / (12.0 * hi * hi);
+                    for (int j = i + 1; j < f.getNumArguments(); j++) { //forward difference approximation
+                        double hj = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(x[j]) + 1.0);
+                        double oldXj = x[j];
+                        x[i] = oldXi + hi;
+                        x[j] = oldXj + hj;
+                        fpp = f.evaluate(x);
+                        x[i] = oldXi + hi;
+                        x[j] = oldXj - hj;
+                        double fpm = f.evaluate(x);
+                        x[i] = oldXi - hi;
+                        x[j] = oldXj + hj;
+                        double fmp = f.evaluate(x);
+                        x[i] = oldXi - hi;
+                        x[j] = oldXj - hj;
+                        fmm = f.evaluate(x);
+                        x[i] = oldXi;
+                        x[j] = oldXj;
+                        hessian[i][j] = hessian[j][i] = (fpp - fpm - fmp + fmm) / (4.0 * hi * hj);
+                    }
+                }
+                return hessian;
             }
 
             private MultivariateFunction numeric1 = new MultivariateFunction() {

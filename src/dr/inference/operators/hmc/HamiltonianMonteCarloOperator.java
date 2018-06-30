@@ -603,6 +603,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     tempGradient = hessianWrtParameterProvider.getGradientLogDensity();
                     gradientMinus[i] = transform.updateGradientLogDensity(tempGradient, hessianWrtParameterProvider.getParameter().getParameterValues(),
                             0, dim);
+                    hessianWrtParameterProvider.getParameter().setParameterValue(i, Math.exp(oldTransformedPosition[i]));
                 }
                 for (int i = 0; i < dim; i++) {
                     for (int j = i; j < dim; j++) {

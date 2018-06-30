@@ -362,15 +362,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     protected interface MassProvider {
 
-        @Deprecated
-        double[] drawInitialMomentum();
-
-        @Deprecated
-        double getScaledDotProduct(double[] momentum);
-
-        @Deprecated
-        double[] weightMomentum(double[] momentum);
-
         double[][] getMass();
 
         double[][] getMassInverse();
@@ -418,29 +409,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             public void updateMass() {
                 // Do nothing;
             }
-
-            @Override
-            public double[] drawInitialMomentum() {
-                return (double[]) drawDistribution.nextRandom();
-            }
-
-            @Override
-            public double getScaledDotProduct(double[] momentum) {
-                double total = 0.0;
-                for (double m : momentum) {
-                    total += m * m / (2.0 * drawVariance);
-                }
-                return total;
-            }
-
-            @Override
-            public double[] weightMomentum(double[] momentum) {
-                double[] weightedMomentum = new double[dim];
-                for (int i = 0; i < dim; i++) {
-                    weightedMomentum[i] = momentum[i] / drawVariance;
-                }
-                return weightedMomentum;
-            }
         }
 
         class PreConditioning extends Default {
@@ -460,17 +428,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 for (int i = 0; i < dim; i++) {
                     Arrays.fill(massInverse[i], 0.0);
                 }
-                boundSigmaSquaredInverse(diagonalHessian, drawVariance);
+                double[] boundedMassInverse = boundMassInverse(diagonalHessian);
                 for (int i = 0; i < dim; i++) {
-                    massInverse[i][i] = diagonalHessian[i];
+                    massInverse[i][i] = boundedMassInverse[i];
                     mass[i][i] = 1.0 / massInverse[i][i];
                 }
-            }
-
-            private MultivariateNormalDistribution setDrawDistribution(double drawVariance) {
-                double[] mean = new double[dim];
-                Arrays.fill(mean, 0.0);
-                return new MultivariateNormalDistribution(mean, massInverse);
             }
 
             @Override
@@ -478,70 +440,29 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 setMassMatrices(hessianWrtParameterProvider.getDiagonalHessianLogDensity());
             }
 
-            @Override
-            public double[] drawInitialMomentum() {
-                updateMassMatrixInverse();
-                return drawDistribution.nextMultivariateNormal();
-            }
+            private double[] boundMassInverse(double[] diagonalHessian) {
 
-            private void updateMassMatrixInverse() {
-                setMassMatrices(hessianWrtParameterProvider.getDiagonalHessianLogDensity());
-                this.drawDistribution = setDrawDistribution(drawVariance);
-            }
+                double sum = 0.0;
+                final double lowerBound = 1E-2;
+                final double upperBound = 1E2;
+                double[] boundedMassInverse = new double[dim];
 
-            @Override
-            public double getScaledDotProduct(double[] momentum) {
-                double total = 0.0;
-                for (int i = 0; i < momentum.length; i++) {
-                    total += momentum[i] * momentum[i] * massInverse[i][i] / 2.0;
-                }
-                return total;
-            }
-
-            @Override
-            public double[] weightMomentum(double[] momentum) {
-                double[] weightedMomentum = new double[dim];
                 for (int i = 0; i < dim; i++) {
-                    weightedMomentum[i] = massInverse[i][i] * momentum[i];
+                    boundedMassInverse[i] = -1.0 / diagonalHessian[i];
+                    if (boundedMassInverse[i] < lowerBound) {
+                        boundedMassInverse[i] = lowerBound;
+                    } else if (boundedMassInverse[i] > upperBound) {
+                        boundedMassInverse[i] = upperBound;
+                    }
+                    sum += 1.0 / boundedMassInverse[i];
                 }
-                return weightedMomentum;
+                final double mean = sum / dim;
+                for (int i = 0; i < dim; i++) {
+                    boundedMassInverse[i] = boundedMassInverse[i] * mean;
+                }
+                return boundedMassInverse;
             }
 
-//            private void boundMass(double[] mass) {
-//
-//            }
-//
-//            public double[] getMass() {
-//                return null;
-//            }
-
-            private void boundSigmaSquaredInverse(double[] sigmaSquaredInverse, double drawVariance) {
-
-                double min, max, mean, sum;
-                min = max =  Math.log(Math.abs(sigmaSquaredInverse[0]) / drawVariance);
-                for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                    sigmaSquaredInverse[i] = Math.log(Math.abs(sigmaSquaredInverse[i]) / drawVariance);
-                    if (sigmaSquaredInverse[i] > max) max = sigmaSquaredInverse[i];
-                    if (sigmaSquaredInverse[i] < min) min = sigmaSquaredInverse[i];
-                }
-                sum = 0.0;
-                if (max - min > 4.0) {
-                    for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                        sigmaSquaredInverse[i] = Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
-                        sum += sigmaSquaredInverse[i];
-                    }
-                } else {
-                    for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                        sigmaSquaredInverse[i] = Math.exp(-sigmaSquaredInverse[i]); //Math.exp(-((sigmaSquaredInverse[i] - min) / (max - min) * 4.0 - 2.0));
-                        sum += sigmaSquaredInverse[i];
-                    }
-                }
-
-                mean = sum / sigmaSquaredInverse.length;
-                for (int i = 0; i < sigmaSquaredInverse.length; i++) {
-                    sigmaSquaredInverse[i] /= mean;
-                }
-            }
         }
 
         class PreConditioningWithTransform extends PreConditioning {
@@ -578,42 +499,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 for (int i = 0; i < dim; i++) {
                     for (int j = 0; j < dim; j++) {
                         massInverse[i][j] = -hessianInverse[i][j];
+                        mass[i][j] = -hessian.component(i, j);
                     }
                 }
-//                double[] diagonalInverseHessian = new double[dim];
-//                for (int i = 0; i < dim; i++) {
-//                    diagonalInverseHessian[i] = hessianInverse[i][i];
-//                }
-//                super.boundSigmaSquaredInverse(diagonalInverseHessian, drawVariance);
-//                for (int i = 0; i < dim; i++) {
-//                    massMatrixInverse[i][i] = diagonalInverseHessian[i];
-//                }
-            }
-
-            @Override
-            public double[] weightMomentum(double[] momentum) {
-                double[] weightedMomentum = new double[dim];
-                for (int i = 0; i < dim; i++) {
-                    double sum = 0;
-                    for (int j = 0; j < dim; j++) {
-                        sum += massInverse[i][j] * momentum[j];
-                    }
-                    weightedMomentum[i] = sum;
-                }
-                return weightedMomentum;
-            }
-
-            @Override
-            public double getScaledDotProduct(double[] momentum) {
-                double total = 0.0;
-                double[] weightedMomentum = weightMomentum(momentum);
-                for (int i = 0; i < momentum.length; i++) {
-                    total += momentum[i] * weightedMomentum[i] / 2.0;
-                }
-                if (total < 0.0) {
-                    System.err.println("Kinetic energy < 0! ");
-                }
-                return total;
             }
 
             private static final double MIN_EIGENVALUE = -0.5; // TODO Bad magic number

@@ -12,145 +12,174 @@ public interface MassPreconditioner {
 
     // It looks like my interface is slowly reverting to something close to what Xiang had previously
 
-     WrappedVector drawInitialMomentum();
+    WrappedVector drawInitialMomentum();
 
-     double getKineticEnergy(ReadableVector momentum);
+    double getKineticEnergy(ReadableVector momentum);
 
-     double getVelocity(int index, ReadableVector momentum);
+    double getVelocity(int index, ReadableVector momentum);
 
-     class NoPreconditioning implements MassPreconditioner {
+    void storeSecant(ReadableVector gradient, ReadableVector position);
 
-         final int dim;
+    class NoPreconditioning implements MassPreconditioner {
 
-         NoPreconditioning(int dim) { this.dim = dim; }
+        final int dim;
 
-         @Override
-         public WrappedVector drawInitialMomentum() {
+        NoPreconditioning(int dim) { this.dim = dim; }
 
-             double[] momentum = new double[dim];
+        @Override
+        public WrappedVector drawInitialMomentum() {
 
-             for (int i = 0; i < dim; ++i) {
-                 momentum[i] = MathUtils.nextGaussian();
-             }
+            double[] momentum = new double[dim];
 
-             return new WrappedVector.Raw(momentum);
-         }
+            for (int i = 0; i < dim; ++i) {
+                momentum[i] = MathUtils.nextGaussian();
+            }
 
-         @Override
-         public double getKineticEnergy(ReadableVector momentum) {
-             double total = 0.0;
-             for (int i = 0; i < dim; i++) {
-                 total += momentum.get(i) * momentum.get(i) / 2.0;
-             }
-             return total;
-         }
+            return new WrappedVector.Raw(momentum);
+        }
 
-         @Override
-         public double getVelocity(int i, ReadableVector momentum) {
-             return momentum.get(i);
-         }
-     }
+        @Override
+        public double getKineticEnergy(ReadableVector momentum) {
+            double total = 0.0;
+            for (int i = 0; i < dim; i++) {
+                total += momentum.get(i) * momentum.get(i) / 2.0;
+            }
+            return total;
+        }
 
-     class DiagonalPreconditioning implements MassPreconditioner {
+        @Override
+        public double getVelocity(int i, ReadableVector momentum) {
+            return momentum.get(i);
+        }
 
-         final int dim;
-         WrappedVector mass = null;
-         WrappedVector massInverse = null;
-         final HessianWrtParameterProvider hessianWrtParameterProvider;
+        @Override
+        public void storeSecant(ReadableVector gradient, ReadableVector position) { }
+    }
 
-         DiagonalPreconditioning(int dim, HessianWrtParameterProvider hessianWrtParameterProvider) {
-             this.dim = dim;
-             this.hessianWrtParameterProvider = hessianWrtParameterProvider;
-         }
+    abstract class HessianBased implements MassPreconditioner {
+        final protected int dim;
+        final protected HessianWrtParameterProvider hessian;
+        final protected ReadableVector massTODO;
 
-         @Override
-         public WrappedVector drawInitialMomentum() {
+        HessianBased(HessianWrtParameterProvider hessian) {
+            this.dim = hessian.getDimension();
+            this.hessian = hessian;
+            this.massTODO = null;
+        }
 
-             if (mass == null || massInverse == null) {
-                 updateMass();
-             }
+        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+            // Do nothing
+        }
+    }
 
-             double[] momentum = new double[dim];
+    class DiagonalPreconditioning extends HessianBased {
 
-             for (int i = 0; i < dim; i++) {
-                 momentum[i] = MathUtils.nextGaussian() * Math.sqrt(mass.get(i));
-             }
+        WrappedVector mass = null;
+        WrappedVector massInverse = null;
 
-             return new WrappedVector.Raw(momentum);
-         }
+        DiagonalPreconditioning(int dim, HessianWrtParameterProvider hessian) {
+            super(hessian);
+            // TODO Make mass final (an const class ... which is easier to reason about)
+        }
 
-         private void updateMass() {
-             double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
-             double[] boundedMassInverse = boundMassInverse(diagonalHessian);
-             for (int i = 0; i < dim; i++) {
-                 massInverse.set(i, boundedMassInverse[i]);
-                 mass.set(i, 1.0 / massInverse.get(i));
-             }
-         }
+        @Override
+        public WrappedVector drawInitialMomentum() {
 
-         private double[] boundMassInverse(double[] diagonalHessian) {
+            if (mass == null || massInverse == null) {
+                updateMass();  // TODO Compute mass once per class instantiation
+            }
 
-             double sum = 0.0;
-             final double lowerBound = 1E-2; //TODO bad magic numbers
-             final double upperBound = 1E2;
-             double[] boundedMassInverse = new double[dim];
+            double[] momentum = new double[dim];
 
-             for (int i = 0; i < dim; i++) {
-                 boundedMassInverse[i] = -1.0 / diagonalHessian[i];
-                 if (boundedMassInverse[i] < lowerBound) {
-                     boundedMassInverse[i] = lowerBound;
-                 } else if (boundedMassInverse[i] > upperBound) {
-                     boundedMassInverse[i] = upperBound;
-                 }
-                 sum += 1.0 / boundedMassInverse[i];
-             }
-             final double mean = sum / dim;
-             for (int i = 0; i < dim; i++) {
-                 boundedMassInverse[i] = boundedMassInverse[i] * mean;
-             }
-             return boundedMassInverse;
-         }
+            for (int i = 0; i < dim; i++) {
+                momentum[i] = MathUtils.nextGaussian() * Math.sqrt(mass.get(i));
+            }
 
-         @Override
-         public double getKineticEnergy(ReadableVector momentum) {
-             double total = 0.0;
-             for (int i = 0; i < dim; i++) {
-                 total += momentum.get(i) * momentum.get(i) / (2.0 * mass.get(i));
-             }
-             return total;
-         }
+            return new WrappedVector.Raw(momentum);
+        }
 
-         @Override
-         public double getVelocity(int i, ReadableVector momentum) {
-             return momentum.get(i) / mass.get(i);
-         }
-     }
+        private void updateMass() {
+            double[] diagonalHessian = hessian.getDiagonalHessianLogDensity();
+            double[] boundedMassInverse = boundMassInverse(diagonalHessian);
+            for (int i = 0; i < dim; i++) {
+                massInverse.set(i, boundedMassInverse[i]);
+                mass.set(i, 1.0 / massInverse.get(i));
+            }
+        }
 
-     class FullPreconditioning implements MassPreconditioner {
+        private double[] boundMassInverse(double[] diagonalHessian) {
 
-         final int dim;
-         WrappedVector mass;
-         WrappedVector massInverse;
-         HessianWrtParameterProvider hessianWrtParameterProvider;
+            double sum = 0.0;
+            final double lowerBound = 1E-2; //TODO bad magic numbers
+            final double upperBound = 1E2;
+            double[] boundedMassInverse = new double[dim];
 
-         FullPreconditioning(int dim, HessianWrtParameterProvider hessianWrtParameterProvider) {
-             this.dim = dim;
-             this.hessianWrtParameterProvider = hessianWrtParameterProvider;
-         }
+            for (int i = 0; i < dim; i++) {
+                boundedMassInverse[i] = -1.0 / diagonalHessian[i];
+                if (boundedMassInverse[i] < lowerBound) {
+                    boundedMassInverse[i] = lowerBound;
+                } else if (boundedMassInverse[i] > upperBound) {
+                    boundedMassInverse[i] = upperBound;
+                }
+                sum += 1.0 / boundedMassInverse[i];
+            }
+            final double mean = sum / dim;
+            for (int i = 0; i < dim; i++) {
+                boundedMassInverse[i] = boundedMassInverse[i] * mean;
+            }
+            return boundedMassInverse;
+        }
 
-         @Override
-         public WrappedVector drawInitialMomentum() {
-             return null;
-         }
+        @Override
+        public double getKineticEnergy(ReadableVector momentum) {
+            double total = 0.0;
+            for (int i = 0; i < dim; i++) {
+                total += momentum.get(i) * momentum.get(i) / (2.0 * mass.get(i));
+            }
+            return total;
+        }
 
-         @Override
-         public double getKineticEnergy(ReadableVector momentum) {
-             return 0.0;
-         }
+        @Override
+        public double getVelocity(int i, ReadableVector momentum) {
+            return momentum.get(i) / mass.get(i);
+        }
+    }
 
-         @Override
-         public double getVelocity(int i, ReadableVector momentum) {
-             return 0.0; // M^{-1}_{i} momentum
-         }
-     }
+    class FullPreconditioning extends HessianBased {
+
+        WrappedVector mass;
+        WrappedVector massInverse;
+
+        FullPreconditioning(HessianWrtParameterProvider hessian) {
+            super(hessian);
+        }
+
+        @Override
+        public WrappedVector drawInitialMomentum() {
+            return null;
+        }
+
+        @Override
+        public double getKineticEnergy(ReadableVector momentum) {
+            return 0.0;
+        }
+
+        @Override
+        public double getVelocity(int i, ReadableVector momentum) {
+            return 0.0; // M^{-1}_{i} momentum
+        }
+    }
+
+    abstract // TODO Implement interface
+    class SecantPreconditioing extends HessianBased {
+
+        SecantPreconditioing(HessianWrtParameterProvider hessian) {
+            super(hessian);
+        }
+
+        @Override
+        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+            // TODO Do something
+        }
+    }
 }

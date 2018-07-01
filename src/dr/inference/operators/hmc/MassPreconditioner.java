@@ -145,6 +145,7 @@ public interface MassPreconditioner {
         }
     }
 
+    // TODO Implement
     class FullPreconditioning extends HessianBased {
 
         WrappedVector mass;
@@ -173,13 +174,34 @@ public interface MassPreconditioner {
     abstract // TODO Implement interface
     class SecantPreconditioing extends HessianBased {
 
-        SecantPreconditioing(HessianWrtParameterProvider hessian) {
+        private final Secant[] queue;
+        private int secantIndex;
+        private int secantUpdateCount;
+
+        SecantPreconditioing(HessianWrtParameterProvider hessian, int secantSize) {
             super(hessian);
+
+            this.queue = new Secant[secantSize];
+            this.secantIndex = 0;
+            this.secantUpdateCount = 0;
         }
 
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
-            // TODO Do something
+            queue[secantIndex] = new Secant(gradient, position);
+            secantIndex = (secantIndex + 1) % queue.length;
+            ++secantUpdateCount;
+        }
+
+        private class Secant { // TODO Inner class because we may change the storage depending on efficiency
+
+            ReadableVector gradient;
+            ReadableVector position;
+
+            Secant(ReadableVector gradient, ReadableVector position) {
+                this.gradient = gradient;
+                this.position = position;
+            }
         }
     }
 }

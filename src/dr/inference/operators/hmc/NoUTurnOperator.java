@@ -32,6 +32,7 @@ import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
 import dr.inference.operators.GibbsOperator;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
 import java.util.Arrays;
@@ -212,7 +213,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         // "one frog jump!"
         try {
-            doLeap(position, momentum, massProvider.getMassInverse(), direction * stepSize);
+            doLeap(position, new WrappedVector.Raw(momentum), direction * stepSize);
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
@@ -251,32 +252,31 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     private void doLeap(final double[] position,
-                        final double[] momentum,
-                        final double[][] massInverse,
+                        final WrappedVector momentum,
                         final double stepSize) throws NumericInstabilityException {
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, massInverse, stepSize);
-        leapFrogEngine.updateMomentum(position, momentum, gradientProvider.getGradientLogDensity(), stepSize / 2);
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(), gradientProvider.getGradientLogDensity(), stepSize / 2);
+        leapFrogEngine.updatePosition(position, preconditioning.getVelocity(momentum), stepSize);
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(), gradientProvider.getGradientLogDensity(), stepSize / 2);
     }
 
     private StepSize findReasonableStepSize(double[] initialPosition) {
 
         double stepSize = 1;
 //        final double[] mass = massProvider.getMass();
-        double[] momentum = drawInitialMomentum(drawDistribution);
+        WrappedVector momentum = preconditioning.drawInitialMomentum();
         int count = 1;
 
         double[] position = Arrays.copyOf(initialPosition, dim);
 
-        double probBefore = getJointProbability(gradientProvider, momentum);
+        double probBefore = getJointProbability(gradientProvider, momentum.getBuffer());
 
         try {
-            doLeap(position, momentum, massProvider.getMassInverse(), stepSize);
+            doLeap(position, momentum,  stepSize);
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
 
-        double probAfter = getJointProbability(gradientProvider, momentum);
+        double probAfter = getJointProbability(gradientProvider, momentum.getBuffer());
 
         double a = ((probAfter - probBefore) > Math.log(0.5) ? 1 : -1);
 
@@ -288,12 +288,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
             //"one frog jump!"
             try {
-                doLeap(position, momentum, massProvider.getMassInverse(), stepSize);
+                doLeap(position, momentum, stepSize);
             } catch (NumericInstabilityException e) {
                 handleInstability();
             }
 
-            probAfter = getJointProbability(gradientProvider, momentum);
+            probAfter = getJointProbability(gradientProvider, momentum.getBuffer());
             probRatio = Math.exp(probAfter - probBefore);
 
             stepSize = Math.pow(2, a) * stepSize;

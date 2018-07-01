@@ -112,10 +112,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     private boolean shouldUpdatePreconditioning() {
-        return (runtimeOptions == null ?
-                false :
-                runtimeOptions.preconditioningUpdateFrequency > 0
-                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0));
+        return (runtimeOptions != null && (runtimeOptions.preconditioningUpdateFrequency > 0
+                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)));
     }
 
     @Override

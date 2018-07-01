@@ -193,10 +193,13 @@ interface MassProvider {
 
         private SymmetricMatrix getNumericalHessianCentral() {
             double[][] hessian = new double[dim][dim];
+
             double[] oldUntransformedPosition = hessianWrtParameterProvider.getParameter().getParameterValues();
             double[] oldTransformedPosition = transform.transform(oldUntransformedPosition, 0, dim);
+
             double[][] gradientPlus = new double[dim][dim];
             double[][] gradientMinus = new double[dim][dim];
+            
             double[] h = new double[dim];
             for (int i = 0; i < dim; i++) {
                 h[i] = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(oldTransformedPosition[i]) + 1.0);

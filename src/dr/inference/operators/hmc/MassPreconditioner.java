@@ -2,12 +2,14 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.MathUtils;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
+ * @author Xiang Ji
  */
 public interface MassPreconditioner {
 
@@ -84,8 +86,9 @@ public interface MassPreconditioner {
     class DiagonalPreconditioning extends HessianBased {
 
 
-        DiagonalPreconditioning(HessianWrtParameterProvider hessian) {
-            super(hessian, null);
+        DiagonalPreconditioning(HessianWrtParameterProvider hessian,
+                                Transform transform) {
+            super(hessian, transform);
         }
 
         @Override
@@ -104,21 +107,27 @@ public interface MassPreconditioner {
         protected double[] computeInverseMass() {
 
             double[] diagonalHessian = hessian.getDiagonalHessianLogDensity();
+
+            // TODO Check transformation
+            if (transform != null) {
+
+                double[] untransformedValues = transform.inverse(
+                        hessian.getParameter().getParameterValues(), 0, dim
+                );
+
+                double[] gradient = hessian.getGradientLogDensity();
+
+                diagonalHessian = transform.updateDiagonalHessianLogDensity(
+                        diagonalHessian, gradient, untransformedValues, 0, dim
+
+                );
+            }
+
             double[] boundedMassInverse = boundMassInverse(diagonalHessian);
 
             return boundedMassInverse;
         }
-
-        protected int getMassSize() { return dim; }
-
-//        private void updateMass() {
-//            double[] diagonalHessian = hessian.getDiagonalHessianLogDensity();
-//            double[] boundedMassInverse = boundMassInverse(diagonalHessian);
-//            for (int i = 0; i < dim; i++) {
-//                mass[i] = 1.0 / boundedMassInverse[i];
-//            }
-//        }
-
+        
         private double[] boundMassInverse(double[] diagonalHessian) {
 
             double sum = 0.0;
@@ -160,8 +169,9 @@ public interface MassPreconditioner {
     // TODO Implement
     class FullPreconditioning extends HessianBased {
 
-        FullPreconditioning(HessianWrtParameterProvider hessian) {
-            super(hessian, null);
+        FullPreconditioning(HessianWrtParameterProvider hessian,
+                            Transform transform) {
+            super(hessian, transform);
         }
 
         @Override
@@ -171,17 +181,48 @@ public interface MassPreconditioner {
 
         @Override
         public WrappedVector drawInitialMomentum() {
-            return null;
+
+            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(
+                    new double[dim], toArray(inverseMass, dim, dim)
+            );
+
+            return new WrappedVector.Raw(mvn.nextMultivariateNormal());
         }
 
         @Override
         public double getKineticEnergy(ReadableVector momentum) {
-            return 0.0;
+            double energy = 0.0;
+
+            for (int i = 0; i < dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    energy += momentum.get(i) * inverseMass[i * dim +j] * momentum.get(j);
+                }
+            }
+
+            return energy / 2.0;
         }
 
         @Override
         public double getVelocity(int i, ReadableVector momentum) {
-            return 0.0; // M^{-1}_{i} momentum
+            double velocity = 0.0;
+
+            for (int j = 0; j < dim; ++j) {
+                velocity += inverseMass[i * dim + j] * momentum.get(j);
+            }
+
+            return velocity;
+        }
+
+        private static double[][] toArray(double[] vector, int rowDim, int colDim) {
+            double[][] array = new double[rowDim][];
+
+            for (int row = 0; row < rowDim; ++row) {
+                array[row] = new double[colDim];
+                System.arraycopy(vector, colDim * row,
+                        array[row], 0, colDim);
+            }
+
+            return array;
         }
     }
 

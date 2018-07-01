@@ -59,53 +59,58 @@ public interface MassPreconditioner {
     abstract class HessianBased implements MassPreconditioner {
         final protected int dim;
         final protected HessianWrtParameterProvider hessian;
-        final protected ReadableVector massTODO;
+        final protected double[] inverseMass;
 
         HessianBased(HessianWrtParameterProvider hessian) {
             this.dim = hessian.getDimension();
             this.hessian = hessian;
-            this.massTODO = null;
+            this.inverseMass = computeInverseMass();
         }
 
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
         }
+
+        abstract protected double[] computeInverseMass();
     }
 
     class DiagonalPreconditioning extends HessianBased {
 
-        WrappedVector mass = null;
-        WrappedVector massInverse = null;
 
         DiagonalPreconditioning(int dim, HessianWrtParameterProvider hessian) {
             super(hessian);
-            // TODO Make mass final (an const class ... which is easier to reason about)
         }
 
         @Override
         public WrappedVector drawInitialMomentum() {
 
-            if (mass == null || massInverse == null) {
-                updateMass();  // TODO Compute mass once per class instantiation
-            }
-
             double[] momentum = new double[dim];
 
             for (int i = 0; i < dim; i++) {
-                momentum[i] = MathUtils.nextGaussian() * Math.sqrt(mass.get(i));
+                momentum[i] = MathUtils.nextGaussian() * Math.sqrt(1.0 / inverseMass[i]);
             }
 
             return new WrappedVector.Raw(momentum);
         }
 
-        private void updateMass() {
+        @Override
+        protected double[] computeInverseMass() {
+
             double[] diagonalHessian = hessian.getDiagonalHessianLogDensity();
             double[] boundedMassInverse = boundMassInverse(diagonalHessian);
-            for (int i = 0; i < dim; i++) {
-                massInverse.set(i, boundedMassInverse[i]);
-                mass.set(i, 1.0 / massInverse.get(i));
-            }
+
+            return boundedMassInverse;
         }
+
+        protected int getMassSize() { return dim; }
+
+//        private void updateMass() {
+//            double[] diagonalHessian = hessian.getDiagonalHessianLogDensity();
+//            double[] boundedMassInverse = boundMassInverse(diagonalHessian);
+//            for (int i = 0; i < dim; i++) {
+//                mass[i] = 1.0 / boundedMassInverse[i];
+//            }
+//        }
 
         private double[] boundMassInverse(double[] diagonalHessian) {
 
@@ -134,25 +139,27 @@ public interface MassPreconditioner {
         public double getKineticEnergy(ReadableVector momentum) {
             double total = 0.0;
             for (int i = 0; i < dim; i++) {
-                total += momentum.get(i) * momentum.get(i) / (2.0 * mass.get(i));
+                total += momentum.get(i) * momentum.get(i) * inverseMass[i];
             }
-            return total;
+            return total / 2.0;
         }
 
         @Override
         public double getVelocity(int i, ReadableVector momentum) {
-            return momentum.get(i) / mass.get(i);
+            return momentum.get(i) * inverseMass[i];
         }
     }
 
     // TODO Implement
     class FullPreconditioning extends HessianBased {
 
-        WrappedVector mass;
-        WrappedVector massInverse;
-
         FullPreconditioning(HessianWrtParameterProvider hessian) {
             super(hessian);
+        }
+
+        @Override
+        protected double[] computeInverseMass() {
+            return new double[dim * dim];
         }
 
         @Override

@@ -19,7 +19,7 @@ public interface MassPreconditioner {
 
     double getKineticEnergy(ReadableVector momentum);
 
-    double getVelocity(int index, ReadableVector momentum);
+    double[] getVelocity(ReadableVector momentum);
 
     void storeSecant(ReadableVector gradient, ReadableVector position);
 
@@ -51,8 +51,12 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public double getVelocity(int i, ReadableVector momentum) {
-            return momentum.get(i);
+        public double[] getVelocity(ReadableVector momentum) {
+            double[] velocity = new double[momentum.getDim()];
+            for (int i = 0; i < momentum.getDim(); i++) {
+                velocity[i] = momentum.get(i);
+            }
+            return velocity;
         }
 
         @Override
@@ -161,8 +165,12 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public double getVelocity(int i, ReadableVector momentum) {
-            return momentum.get(i) * inverseMass[i];
+        public double[] getVelocity(ReadableVector momentum) {
+            double[] velocity = new double[momentum.getDim()];
+            for (int i = 0; i < momentum.getDim(); i++) {
+                velocity[i] = momentum.get(i) * inverseMass[i];
+            }
+            return velocity;
         }
     }
 
@@ -203,11 +211,15 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public double getVelocity(int i, ReadableVector momentum) {
-            double velocity = 0.0;
+        public double[] getVelocity(ReadableVector momentum) {
+            double[] velocity = new double[momentum.getDim()];
 
-            for (int j = 0; j < dim; ++j) {
-                velocity += inverseMass[i * dim + j] * momentum.get(j);
+            for (int i = 0; i < dim; i++) {
+                double sum = 0.0;
+                for (int j = 0; j < dim; ++j) {
+                    sum += inverseMass[i * dim + j] * momentum.get(j);
+                }
+                velocity[i] = sum;
             }
 
             return velocity;

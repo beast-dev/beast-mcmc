@@ -133,13 +133,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
 //        final double[][] mass = massProvider.getMass();
-        final double[] initialMomentum = drawInitialMomentum(drawDistribution);
+        final WrappedVector initialMomentum = preconditioning.drawInitialMomentum();
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
         double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
 
-        TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum, 1, true);
+        TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum.getBuffer(), 1, true);
             // Trajectory of Hamiltonian dynamics endowed with a binary tree structure.
 
         int height = 0;
@@ -207,13 +207,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         // Make deep copy of position and momentum
         double[] position = Arrays.copyOf(inPosition, inPosition.length);
-        double[] momentum = Arrays.copyOf(inMomentum, inMomentum.length);
+        WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
 
         leapFrogEngine.setParameter(position);
 
         // "one frog jump!"
         try {
-            doLeap(position, new WrappedVector.Raw(momentum), direction * stepSize);
+            doLeap(position, momentum, direction * stepSize);
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
@@ -230,7 +230,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         leapFrogEngine.setParameter(inPosition);
 
-        return new TreeState(position, momentum, numNodes, flagContinue, acceptProb, numAcceptProbStates);
+        return new TreeState(position, momentum.getBuffer(), numNodes, flagContinue, acceptProb, numAcceptProbStates);
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
@@ -268,7 +268,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double[] position = Arrays.copyOf(initialPosition, dim);
 
-        double probBefore = getJointProbability(gradientProvider, momentum.getBuffer());
+        double probBefore = getJointProbability(gradientProvider, momentum);
 
         try {
             doLeap(position, momentum,  stepSize);
@@ -276,7 +276,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             handleInstability();
         }
 
-        double probAfter = getJointProbability(gradientProvider, momentum.getBuffer());
+        double probAfter = getJointProbability(gradientProvider, momentum);
 
         double a = ((probAfter - probBefore) > Math.log(0.5) ? 1 : -1);
 
@@ -293,7 +293,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 handleInstability();
             }
 
-            probAfter = getJointProbability(gradientProvider, momentum.getBuffer());
+            probAfter = getJointProbability(gradientProvider, momentum);
             probRatio = Math.exp(probAfter - probBefore);
 
             stepSize = Math.pow(2, a) * stepSize;
@@ -352,12 +352,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return result;
     }
 
-    private  double getJointProbability(GradientWrtParameterProvider gradientProvider, double[] momentum) {
+    private  double getJointProbability(GradientWrtParameterProvider gradientProvider, WrappedVector momentum) {
 
         assert (gradientProvider != null);
         assert (momentum != null);
 
-        return gradientProvider.getLikelihood().getLogLikelihood() - getScaledDotProduct(momentum, massProvider.getMassInverse())
+        return gradientProvider.getLikelihood().getLogLikelihood() - preconditioning.getKineticEnergy(momentum)
                 - leapFrogEngine.getParameterLogJacobian();
     }
 

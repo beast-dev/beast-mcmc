@@ -115,9 +115,7 @@ public interface MassPreconditioner {
             // TODO Check transformation
             if (transform != null) {
 
-                double[] untransformedValues = transform.inverse(
-                        hessian.getParameter().getParameterValues(), 0, dim
-                );
+                double[] untransformedValues = hessian.getParameter().getParameterValues();
 
                 double[] gradient = hessian.getGradientLogDensity();
 
@@ -202,9 +200,11 @@ public interface MassPreconditioner {
             double energy = 0.0;
 
             for (int i = 0; i < dim; ++i) {
+                double sum = 0.0;
                 for (int j = 0; j < dim; ++j) {
-                    energy += momentum.get(i) * inverseMass[i * dim +j] * momentum.get(j);
+                    sum += inverseMass[i * dim +j] * momentum.get(j);
                 }
+                energy += sum * momentum.get(i);
             }
 
             return energy / 2.0;

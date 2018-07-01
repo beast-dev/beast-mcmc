@@ -4,6 +4,7 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
@@ -59,11 +60,17 @@ public interface MassPreconditioner {
     abstract class HessianBased implements MassPreconditioner {
         final protected int dim;
         final protected HessianWrtParameterProvider hessian;
+        final protected Transform transform;
         final protected double[] inverseMass;
 
-        HessianBased(HessianWrtParameterProvider hessian) {
+        // TODO Should probably make a TransformedHessian so that this class does not need to know about transformations
+        HessianBased(HessianWrtParameterProvider hessian,
+                     Transform transform) {
+            
             this.dim = hessian.getDimension();
             this.hessian = hessian;
+            this.transform = transform;
+
             this.inverseMass = computeInverseMass();
         }
 
@@ -77,8 +84,8 @@ public interface MassPreconditioner {
     class DiagonalPreconditioning extends HessianBased {
 
 
-        DiagonalPreconditioning(int dim, HessianWrtParameterProvider hessian) {
-            super(hessian);
+        DiagonalPreconditioning(HessianWrtParameterProvider hessian) {
+            super(hessian, null);
         }
 
         @Override
@@ -154,7 +161,7 @@ public interface MassPreconditioner {
     class FullPreconditioning extends HessianBased {
 
         FullPreconditioning(HessianWrtParameterProvider hessian) {
-            super(hessian);
+            super(hessian, null);
         }
 
         @Override
@@ -186,7 +193,7 @@ public interface MassPreconditioner {
         private int secantUpdateCount;
 
         SecantPreconditioing(HessianWrtParameterProvider hessian, int secantSize) {
-            super(hessian);
+            super(hessian, null);
 
             this.queue = new Secant[secantSize];
             this.secantIndex = 0;

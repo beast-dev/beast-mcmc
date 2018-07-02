@@ -5,6 +5,7 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -26,6 +27,47 @@ public interface MassPreconditioner {
     void storeSecant(ReadableVector gradient, ReadableVector position);
 
     void updateMass();
+
+    enum Type {
+
+        NONE("none") {
+            @Override
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+                return new NoPreconditioning(gradient.getDimension());
+            }
+        },
+        DIAGONAL("diagonal") {
+            @Override
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+                return new DiagonalPreconditioning((HessianWrtParameterProvider) gradient, transform);
+            }
+        },
+        FULL("full") {
+            @Override
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+                return new FullPreconditioning((HessianWrtParameterProvider) gradient, transform);
+            }
+        };
+
+        private final String name;
+
+        Type(String name) {
+            this.name = name;
+        }
+
+        public abstract MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform);
+
+        public String getName() { return name; }
+
+        public static Type parseFromString(String text) {
+            for (Type type : Type.values()) {
+                if (type.name.compareToIgnoreCase(text) == 0) {
+                    return type;
+                }
+            }
+            return Type.NONE;
+        }
+    }
 
     abstract class Base implements MassPreconditioner {
         // TODO Remove
@@ -77,7 +119,7 @@ public interface MassPreconditioner {
             this.hessian = hessian;
             this.transform = transform;
 
-            this.inverseMass = computeInverseMass();
+            updateMass();
         }
 
         public void storeSecant(ReadableVector gradient, ReadableVector position) {

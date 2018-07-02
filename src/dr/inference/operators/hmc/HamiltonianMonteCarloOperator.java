@@ -26,7 +26,6 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
@@ -44,46 +43,34 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
-    protected final int nSteps;
-    private final double randomStepCountFraction;
-//    MultivariateNormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
-//    final MassProvider massProvider;
     final MassPreconditioner preconditioning;
-    final AbstractParticleOperator.Options runtimeOptions;
+    private final Options runtimeOptions;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
-                                         double stepSize, int nSteps, double drawVariance,
+                                         double stepSize, int nSteps,
                                          double randomStepCountFraction) {
         this(mode, weight, gradientProvider, parameter, transform,
-                stepSize, nSteps, drawVariance, randomStepCountFraction, 0);
+                new Options(stepSize, nSteps, randomStepCountFraction, 0), MassPreconditioner.Type.NONE
+        );
     }
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
-                                         double stepSize, int nSteps, double drawVariance,
-                                         double randomStepCountFraction,
-                                         int preconditioningCase) {
+                                         Options runtimeOptions,
+                                         MassPreconditioner.Type preconditioningType) {
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
 
         this.gradientProvider = gradientProvider;
-        this.stepSize = stepSize;
-        this.nSteps = nSteps;
-        this.randomStepCountFraction = randomStepCountFraction;
 
-        this.runtimeOptions = (preconditioningCase == 0 ?
-                new AbstractParticleOperator.Options(preconditioningCase, 0) : // TODO: adjust the option class to store preconditioning case (0: none, 1: diagonal, 2:full)
-                new AbstractParticleOperator.Options(preconditioningCase, 1));
+        // TODO Do not pass type-less ints as arguments, pass type-safe classes and enums
+        this.runtimeOptions = runtimeOptions;
+        this.stepSize = runtimeOptions.initialStepSize;
 
-        this.preconditioning = (runtimeOptions.preconditioningUpdateFrequency == 0 ?
-                new MassPreconditioner.NoPreconditioning(gradientProvider.getDimension()) :
-                (runtimeOptions.randomTimeWidth == 1 ?
-                        new MassPreconditioner.DiagonalPreconditioning((HessianWrtParameterProvider) gradientProvider, transform) :
-                        new MassPreconditioner.FullPreconditioning((HessianWrtParameterProvider) gradientProvider, transform)
-                ));
+        this.preconditioning = preconditioningType.factory(gradientProvider, transform);
 
         this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform,
@@ -102,23 +89,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     public String getOperatorName() {
         return "Vanilla HMC operator";
     }
-
-//    @Deprecated
-//    private MassPreconditioner setupPreconditioning() {
-//
-//        return setupPreconditioning(leapFrogEngine.getTransform());
-//
-//    }
-//
-//    private MassPreconditioner setupPreconditioning(Transform transform) {
-//
-//        return (runtimeOptions.preconditioningUpdateFrequency == 0 ?
-//                new MassPreconditioner.NoPreconditioning(gradientProvider.getDimension()) :
-//                (runtimeOptions.randomTimeWidth == 1 ?
-//                        new MassPreconditioner.DiagonalPreconditioning((HessianWrtParameterProvider) gradientProvider, transform) :
-//                        new MassPreconditioner.FullPreconditioning((HessianWrtParameterProvider) gradientProvider, transform)
-//                ));
-//    }
 
     private boolean shouldUpdatePreconditioning() {
         return ((runtimeOptions.preconditioningUpdateFrequency > 0
@@ -145,18 +115,33 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private static final boolean DEBUG = false;
 
+    public static class Options {
+
+        final double initialStepSize;
+        final int nSteps;
+        final double randomStepCountFraction;
+        final int preconditioningUpdateFrequency;
+
+        public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency) {
+            this.initialStepSize = initialStepSize;
+            this.nSteps = nSteps;
+            this.randomStepCountFraction = randomStepCountFraction;
+            this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+        }
+    }
+
     static class NumericInstabilityException extends Exception { }
 
     private int getNumberOfSteps() {
-        int count = nSteps;
-        if (randomStepCountFraction > 0.0) {
-            double draw = count * (1.0 + randomStepCountFraction * (MathUtils.nextDouble() - 0.5));
+        int count = runtimeOptions.nSteps;
+        if (runtimeOptions.randomStepCountFraction > 0.0) {
+            double draw = count * (1.0 + runtimeOptions.randomStepCountFraction * (MathUtils.nextDouble() - 0.5));
             count = Math.max(1, (int) draw);
         }
         return count;
     }
 
-    protected double getKineticEnergy(ReadableVector momentum) {
+    double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();
 
@@ -167,33 +152,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return energy / 2.0;
     }
 
-//    @Deprecated
-//    static double getScaledDotProduct(final double[] momentum,
-//                                      final double[][] massInverse) {
-//        double total = 0.0;
-//        for (int i = 0; i < momentum.length; i++) {
-//            double sum = 0.0;
-//            for (int j = 0; j < momentum.length; j++) {
-//                sum += massInverse[i][j] * momentum[j];
-//            }
-//            total += momentum[i] * sum / 2.0;
-//        }
-//        return total;
-//    }
-
-//    @Deprecated
-//    static double[] drawInitialMomentum(final MultivariateNormalDistribution distribution) {
-//        return distribution.nextMultivariateNormal();
-//    }
-//
-//    @Deprecated
-//    private void setPreconditioning(MassProvider massProvider){
-//        double[] mean = new double[gradientProvider.getDimension()];
-//        Arrays.fill(mean, 0.0);
-//        massProvider.updateMass();
-//        this.drawDistribution = new MultivariateNormalDistribution(mean, massProvider.getMassInverse());
-//    }
-
     private double leapFrog() throws NumericInstabilityException {
 
         if (DEBUG) {
@@ -202,8 +160,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             }
             ++count;
         }
-
-//        setPreconditioning(massProvider);
 
         final double[] position = leapFrogEngine.getInitialPosition();
         final WrappedVector momentum = preconditioning.drawInitialMomentum();

@@ -13,17 +13,17 @@ import dr.util.Transform;
  */
 public interface MassPreconditioner {
 
-    // It looks like my interface is slowly reverting to something close to what Xiang had previously
-
     WrappedVector drawInitialMomentum();
-
-    double getKineticEnergy(ReadableVector momentum);
 
     double getVelocity(int index, ReadableVector momentum);
 
     void storeSecant(ReadableVector gradient, ReadableVector position);
 
-    class NoPreconditioning implements MassPreconditioner {
+    abstract class Base implements MassPreconditioner {
+        // TODO Remove
+    }
+
+    class NoPreconditioning extends  Base implements MassPreconditioner {
 
         final int dim;
 
@@ -42,15 +42,6 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public double getKineticEnergy(ReadableVector momentum) {
-            double total = 0.0;
-            for (int i = 0; i < dim; i++) {
-                total += momentum.get(i) * momentum.get(i) / 2.0;
-            }
-            return total;
-        }
-
-        @Override
         public double getVelocity(int i, ReadableVector momentum) {
             return momentum.get(i);
         }
@@ -59,11 +50,11 @@ public interface MassPreconditioner {
         public void storeSecant(ReadableVector gradient, ReadableVector position) { }
     }
 
-    abstract class HessianBased implements MassPreconditioner {
+    abstract class HessianBased extends Base implements MassPreconditioner {
         final protected int dim;
         final protected HessianWrtParameterProvider hessian;
         final protected Transform transform;
-        final protected double[] inverseMass;
+        final double[] inverseMass;
 
         // TODO Should probably make a TransformedHessian so that this class does not need to know about transformations
         HessianBased(HessianWrtParameterProvider hessian,
@@ -123,9 +114,7 @@ public interface MassPreconditioner {
                 );
             }
 
-            double[] boundedMassInverse = boundMassInverse(diagonalHessian);
-
-            return boundedMassInverse;
+            return boundMassInverse(diagonalHessian);
         }
         
         private double[] boundMassInverse(double[] diagonalHessian) {
@@ -149,15 +138,6 @@ public interface MassPreconditioner {
                 boundedMassInverse[i] = boundedMassInverse[i] * mean;
             }
             return boundedMassInverse;
-        }
-
-        @Override
-        public double getKineticEnergy(ReadableVector momentum) {
-            double total = 0.0;
-            for (int i = 0; i < dim; i++) {
-                total += momentum.get(i) * momentum.get(i) * inverseMass[i];
-            }
-            return total / 2.0;
         }
 
         @Override
@@ -187,19 +167,6 @@ public interface MassPreconditioner {
             );
 
             return new WrappedVector.Raw(mvn.nextMultivariateNormal());
-        }
-
-        @Override
-        public double getKineticEnergy(ReadableVector momentum) {
-            double energy = 0.0;
-
-            for (int i = 0; i < dim; ++i) {
-                for (int j = 0; j < dim; ++j) {
-                    energy += momentum.get(i) * inverseMass[i * dim +j] * momentum.get(j);
-                }
-            }
-
-            return energy / 2.0;
         }
 
         @Override

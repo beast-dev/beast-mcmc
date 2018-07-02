@@ -34,6 +34,7 @@ import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.ReadableVector;
 import dr.util.Transform;
 
 /**
@@ -139,6 +140,17 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             count = Math.max(1, (int) draw);
         }
         return count;
+    }
+
+    private double getKineticEnergy(ReadableVector momentum) {
+
+        final int dim = momentum.getDim();
+
+        double energy = 0.0;
+        for (int i = 0; i < dim; i++) {
+            energy += momentum.get(i) * preconditioning.getVelocity(i, momentum);
+        }
+        return energy / 2.0;
     }
 
     static double getScaledDotProduct(final double[] momentum,

@@ -214,6 +214,7 @@ interface MassProvider {
                         0, dim);
                 hessianWrtParameterProvider.getParameter().setParameterValue(i, Math.exp(oldTransformedPosition[i]));
             }
+            
             for (int i = 0; i < dim; i++) {
                 for (int j = i; j < dim; j++) {
                     hessian[j][i] = hessian[i][j] = (gradientPlus[i][j] - gradientMinus[i][j]) / (4.0 * h[j]) + (gradientPlus[j][i] - gradientMinus[j][i]) / (4.0 * h[i]);

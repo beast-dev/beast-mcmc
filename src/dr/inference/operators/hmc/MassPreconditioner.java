@@ -189,6 +189,9 @@ public interface MassPreconditioner {
         @Override
         protected double[] computeInverseMass() {
             double[][] hessianMatrix = hessian.getHessianLogDensity();
+            if (transform != null) {
+                //TODO: hessianMatrix transform
+            }
 
             Algebra algebra = new Algebra();
 

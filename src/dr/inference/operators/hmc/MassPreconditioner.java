@@ -61,7 +61,7 @@ public interface MassPreconditioner {
 
         public static Type parseFromString(String text) {
             for (Type type : Type.values()) {
-                if (type.name.compareToIgnoreCase(text) == 0) {
+                if (type.name.toLowerCase().compareToIgnoreCase(text) == 0) {
                     return type;
                 }
             }

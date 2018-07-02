@@ -68,7 +68,7 @@
 	<operators id="operators.hmc.diagonalPreconditioning">
 
 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
-									   drawVariance="1.0" autoOptimize="true" preConditioning="diagonal">
+									   drawVariance="1.0" autoOptimize="true" preconditioning="diagonal">
 			<hessian>
 				<distributionLikelihood idref="distribution"/>
 			</hessian>
@@ -80,7 +80,7 @@
     <operators id="operators.hmc.fullPreconditioning">
 
         <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
-                                       drawVariance="1.0" autoOptimize="true" preConditioning="full">
+                                       drawVariance="1.0" autoOptimize="true" preconditioning="full">
             <hessian>
                 <distributionLikelihood idref="distribution"/>
             </hessian>

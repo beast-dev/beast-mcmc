@@ -142,6 +142,11 @@ public class DiscreteTraitBranchRateGradient
         return result;
     }
 
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     public double[] getGradientLogDensity() {
 
         double[] result = new double[rateParameter.getDimension()];

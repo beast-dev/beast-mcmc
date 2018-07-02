@@ -204,6 +204,35 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return gradient;
     }
 
+    public double[][] hessianLogPdf(double[] x) {
+        if (hasSinglePrecision) {
+            return hessianLogPdf(x, mean, singlePrecision);
+        } else {
+            return hessianLogPdf(x, mean, precision);
+        }
+    }
+
+    public static double[][] hessianLogPdf(double[] x, double[] mean, double singlePrecision) {
+
+        final int dim = x .length;
+        final double[][] hessian = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            hessian[i][i] = -singlePrecision;
+        }
+        return hessian;
+    }
+
+    public static double[][] hessianLogPdf(double[] x, double[] mean, double[][] precision) {
+
+        final int dim = x .length;
+        final double[][] hessian = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                hessian[i][j] = -precision[i][j];
+            }
+        }
+        return hessian;
+    }
 
     public double[] diagonalHessianLogPdf(double[] x) {
         if (hasSinglePrecision) {
@@ -498,5 +527,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     @Override
     public double[] getDiagonalHessianLogDensity(Object x) {
         return diagonalHessianLogPdf((double[]) x);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        return hessianLogPdf((double[]) x);
     }
 }

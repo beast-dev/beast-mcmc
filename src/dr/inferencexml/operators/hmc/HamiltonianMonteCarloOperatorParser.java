@@ -51,6 +51,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String VANILLA = "vanilla";
     private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
     private final static String PRECONDITIONING = "preConditioning";
+    private final static String NONE_PRECONDITIONING = "none";
+    private final static String DIAGONAL_PRECONDITIONING = "diagonal";
+    private final static String FULL_PRECONDITIONING = "full";
 
     @Override
     public String getParserName() {
@@ -65,6 +68,16 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         return mode;
     }
 
+    private int parsePreconditioning(XMLObject xo) throws XMLParseException {
+        int preconditioning = 0;
+        if (xo.getAttribute(PRECONDITIONING, NONE_PRECONDITIONING).toLowerCase().compareTo(DIAGONAL_PRECONDITIONING) == 0) {
+            preconditioning = 1;
+        } else if (xo.getAttribute(PRECONDITIONING, NONE_PRECONDITIONING).toLowerCase().compareTo(FULL_PRECONDITIONING) == 0) {
+            preconditioning = 2;
+        }
+        return preconditioning;
+    }
+
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -73,7 +86,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
         int runMode = parseRunMode(xo);
-        boolean preConditioning = xo.getAttribute(PRECONDITIONING, false);
+        int preConditioning = parsePreconditioning(xo);
 
         double randomStepFraction = Math.abs(xo.getAttribute(RANDOM_STEP_FRACTION, 0.0));
         if (randomStepFraction > 1) {
@@ -116,7 +129,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
-            AttributeRule.newBooleanRule(PRECONDITIONING, true),
+            AttributeRule.newStringRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
             new ElementRule(Parameter.class),

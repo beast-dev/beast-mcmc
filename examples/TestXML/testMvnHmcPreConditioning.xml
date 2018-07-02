@@ -65,10 +65,10 @@
 
 	</operators>
 
-	<operators id="operators.hmc.preConditioning">
+	<operators id="operators.hmc.diagonalPreconditioning">
 
 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
-									   drawVariance="1.0" autoOptimize="true" preConditioning="true">
+									   drawVariance="1.0" autoOptimize="true" preConditioning="diagonal">
 			<hessian>
 				<distributionLikelihood idref="distribution"/>
 			</hessian>
@@ -77,9 +77,21 @@
 
 	</operators>
 
-    <mcmc id="mcmc.hmc.preConditioning" chainLength="50000" autoOptimize="true">
+    <operators id="operators.hmc.fullPreconditioning">
+
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true" preConditioning="full">
+            <hessian>
+                <distributionLikelihood idref="distribution"/>
+            </hessian>
+            <parameter idref="draw"/>
+        </hamiltonianMonteCarloOperator>
+
+    </operators>
+
+    <mcmc id="mcmc.hmc.fullPreconditioning" chainLength="50000" autoOptimize="true">
         <posterior>
-            <likelihood id="likelihood.hmc.preConditioning">
+            <likelihood id="likelihood.hmc.fullPreconditioning">
                 <distributionLikelihood idref="distribution"/>
                 <dummyLikelihood>
                     <distributionLikelihood idref="distribution"/>
@@ -87,24 +99,55 @@
                 </dummyLikelihood>
             </likelihood>
         </posterior>
-        <operators idref="operators.hmc.preConditioning"/>
+        <operators idref="operators.hmc.fullPreconditioning"/>
         <log logEvery="100000">
             <column label="posterior" dp="4" width="12">
-                <likelihood idref="likelihood.hmc.preConditioning"/>
+                <likelihood idref="likelihood.hmc.fullPreconditioning"/>
             </column>
             <column label="Draw" sf="6" width="12">
                 <parameter idref="draw"/>
             </column>
         </log>
-        <log logEvery="1" fileName="testMvnHmcPreConditioning.log">
-            <likelihood idref="likelihood.hmc.preConditioning"/>
+        <log logEvery="1" fileName="testMvnHmcFullPreconditioning.log">
+            <likelihood idref="likelihood.hmc.fullPreconditioning"/>
             <parameter idref="draw"/>
         </log>
     </mcmc>
 
     <report>
         <property name="timer">
-            <object idref="mcmc.hmc.preConditioning"/>
+            <object idref="mcmc.hmc.fullPreconditioning"/>
+        </property>
+    </report>
+
+    <mcmc id="mcmc.hmc.diagonalPreconditioning" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc.diagonalPreconditioning">
+                <distributionLikelihood idref="distribution"/>
+                <dummyLikelihood>
+                    <distributionLikelihood idref="distribution"/>
+                    <parameter idref="draw"/>
+                </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc.diagonalPreconditioning"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmc.diagonalPreconditioning"/>
+            </column>
+            <column label="Draw" sf="6" width="12">
+                <parameter idref="draw"/>
+            </column>
+        </log>
+        <log logEvery="1" fileName="testMvnHmcDiagonalPreconditioning.log">
+            <likelihood idref="likelihood.hmc.diagonalPreconditioning"/>
+            <parameter idref="draw"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc.hmc.diagonalPreconditioning"/>
         </property>
     </report>
 
@@ -173,7 +216,8 @@
 
 	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>
 	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>
-    <traceAnalysis fileName="testMvnHmcPreConditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcDiagonalPreconditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcFullPreconditioning.log" stdError="true"/>
  <!--&ndash;&gt;-->
 
 </beast>
@@ -181,48 +225,63 @@
 <!--
 burnIn   <= 5000,   maxState  = 50000
 statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.rw	-15.965	2.2144	-15.6673	-20.4713	-12.4214	56.7134	-16.2554	-13.4078	*
-draw1	9.1339	3.2067	9.2171	1.6339	14.2284	10.8849	7.7761	11.5218	*
-draw2	8.9917	0.1208	8.979	8.7654	9.1783	82.2634	8.8857	9.0383	*
-draw3	8.4563	2.261	8.587	4.088	12.4231	37.4563	7.5434	10.853	*
-draw4	7.5712	2.1653	7.7544	3.3272	11.372	34.1992	6.9953	10.0348	*
-draw5	6.4637	2.6165	6.5018	1.9461	11.6082	9.3608	5.0423	8.7738	*
-draw6	5.8209	2.2627	5.8086	2.1031	9.7896	7.0354	3.4443	6.7641	*
-draw7	5.2825	2.2824	5.2785	1.0562	10.025	7.1598	3.1912	6.0451	*
-draw8	3.4496	2.6818	3.3008	-1.5924	8.4513	16.6602	1.5247	5.1031	*
-draw9	1.442	3.5149	1.5745	-5.1466	7.6123	14.8453	-0.3664	4.2583	*
-draw10	0.2163	2.3783	0.3724	-6.0352	3.8377	14.0293	-1.0859	1.419	*
+likelihood.rw	-15.5879	2.2892	-15.2766	-19.7247	-11.6027	117.647	-15.8378	-13.1595
+draw1	9.6331	3.0162	9.5952	3.4522	14.467	26.4293	8.1115	12.1473	*
+draw2	8.9903	0.1116	8.9832	8.746	9.2061	149.2823	8.9185	9.0345
+draw3	8.691	1.992	8.8611	4.5569	12.2159	62.6641	7.5096	10.1741	*
+draw4	7.6291	1.7974	7.6161	4.424	11.2276	58.1122	6.5991	9.0529	*
+draw5	5.9329	1.9775	5.8493	2.1647	9.8703	31.309	4.6965	7.2004	*
+draw6	5.0642	1.4888	4.9608	2.4833	7.7724	15.423	3.5439	5.6431	*
+draw7	4.7103	2.4955	4.2212	0.9779	10.2708	12.4573	2.3513	5.4058	*
+draw8	3.2981	2.4979	3.2181	-1.3636	8.0566	49.9533	0.6416	4.2673	*
+draw9	1.4695	3.2059	1.8161	-5.5639	6.445	25.7356	-0.1281	3.9721	*
+draw10	0.0242	1.729	0.0516	-3.3767	2.9537	17.774	-0.6605	1.7023	*
 
  * WARNING: The results of this MCMC analysis may be invalid as
             one or more statistics had very low effective sample sizes (ESS)
 
 burnIn   <= 5000,   maxState  = 50000
 statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.hmc	-16.1205	2.287	-15.7739	-20.6193	-12.2204	4916.4246	-16.6646	-13.8348
-draw1	10.1449	3.4837	10.125	3.1905	16.9566	1305.3432	7.5832	12.246
-draw2	8.9997	0.1294	8.9997	8.7401	9.2492	45001	8.9063	9.0815
-draw3	7.941	2.1287	7.9329	3.678	12.0318	2664.4392	6.4417	9.3028
-draw4	6.9455	2.3002	6.9332	2.4623	11.4526	1789.9799	5.3522	8.4605
-draw5	6.07	3.0392	6.1058	-0.0881	11.8339	1273.3885	4.1571	8.2465
-draw6	5.014	2.7114	5.0601	-0.4832	10.1651	1177.6387	3.3596	7.0052
-draw7	3.9578	3.0226	3.9464	-1.8276	10.0248	1897.4569	1.9389	5.9977
-draw8	2.9042	2.5571	2.9228	-2.2088	7.8304	1614.5897	1.2062	4.6601
-draw9	1.9994	3.5129	2.0204	-4.7035	9.0316	1623.122	-0.3243	4.3583
-draw10	1.0834	2.5098	1.0995	-3.7983	5.9758	1969.8294	-0.5805	2.8365
+likelihood.hmc	-16.0811	2.2946	-15.7455	-20.5835	-12.1966	3837.378	-16.5203	-13.6749
+draw1	10.0608	3.5335	10.1064	2.9709	16.9425	1113.3648	7.7693	12.4427
+draw2	8.9999	0.1289	8.9999	8.743	9.2509	45001	8.9155	9.0883
+draw3	7.9706	2.0991	7.9741	3.8478	12.1086	2697.583	6.4625	9.2698
+draw4	6.9636	2.3054	6.9508	2.3438	11.4207	1574.6756	5.4064	8.4965
+draw5	6.1195	3.0999	6.1193	-0.0909	12.0478	1132.0454	4.077	8.2414
+draw6	5.0354	2.7971	5.0088	-0.3205	10.6818	992.9462	3.1466	6.8975
+draw7	3.9367	3.0994	3.9696	-2.0795	10.0178	1937.1318	1.8231	6.0444
+draw8	3.0242	2.5648	3.0099	-1.8255	8.2409	1642.2172	1.1731	4.6444
+draw9	1.84	3.4682	1.8447	-4.9281	8.5998	1659.3363	-0.596	4.061
+draw10	0.9922	2.4933	0.974	-3.8782	5.8172	1912.6781	-0.5679	2.8015
 
 
 burnIn   <= 5000,   maxState  = 50000
 statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.hmc.preConditioning	-16.06	2.2784	-15.7229	-20.551	-12.2087	9205.9508	-16.5451	-13.7644
-draw1	10.0903	3.4638	10.0967	3.3954	17.0024	3423.5332	7.8424	12.4972
-draw2	9	0.1167	9	8.7731	9.2296	4176.038	8.9189	9.0765
-draw3	8.0194	2.1137	8.0009	3.8123	12.0874	11925.6879	6.5567	9.3854
-draw4	7.0578	2.299	7.0576	2.4662	11.4711	5054.8754	5.465	8.5521
-draw5	5.9059	3.0844	5.9101	-0.14	11.9728	2885.202	3.7744	7.9027
-draw6	4.9111	2.77	4.9319	-0.4944	10.3798	2084.317	3.0508	6.7542
-draw7	3.9657	3.1152	3.9492	-2.2031	9.8847	4207.4254	1.9735	6.1948
-draw8	2.9688	2.5585	2.9591	-2.1037	7.9112	6511.0996	1.2416	4.708
-draw9	1.9335	3.5202	1.9364	-4.869	8.8586	4574.4479	-0.3962	4.3619
-draw10	0.9558	2.4941	0.9645	-3.8102	5.9276	4052.2558	-0.6009	2.7811
+likelihood.hmc.diagonalPreconditioning	-16.0406	2.2683	-15.7129	-20.6182	-12.2496	10433.0518	-16.631	-13.8349
+draw1	10.0125	3.4434	10.0075	3.1576	16.6611	3723.9963	7.7563	12.3919
+draw2	9.0002	0.1173	9.0002	8.765	9.2245	8174.0939	8.9171	9.0754
+draw3	7.9701	2.1031	7.994	3.8073	12.0062	11374.6617	6.6856	9.5386
+draw4	6.9666	2.268	6.9562	2.4888	11.3815	4793.8538	5.6181	8.6476
+draw5	6.055	3.0268	6.0585	0.0434	11.8592	2751.5818	4.0579	8.1606
+draw6	5.0327	2.7045	5.0242	-0.3042	10.2898	2198.2923	3.1194	6.7807
+draw7	4.0186	3.0372	4.0226	-1.8955	9.9518	3861.7764	1.827	5.9239
+draw8	3.0148	2.547	3.0001	-1.9761	7.9918	7060.4176	1.3133	4.7428
+draw9	1.994	3.5378	2.002	-5.009	8.9406	4613.4287	-0.3299	4.4459
+draw10	1.0144	2.4855	1.0369	-3.7687	5.9905	4378.9507	-0.5791	2.7453
+
+
+burnIn   <= 5000,   maxState  = 50000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmc.fullPreconditioning	-16.096	2.2823	-15.7722	-20.5461	-12.2022	2380.32	-16.6582	-13.8239
+draw1	9.9856	3.5497	9.9779	2.8727	16.8422	45001	7.4673	12.2515
+draw2	8.9999	0.1266	9	8.7455	9.2416	38578.2085	8.9063	9.0766
+draw3	7.9934	2.0833	7.9872	3.9815	12.1442	13227.114	6.5338	9.3042
+draw4	7.0008	2.3102	7.0161	2.5347	11.5744	30195.163	5.5912	8.7143
+draw5	5.9823	3.1629	5.9761	-0.3388	12.1064	45001	3.9292	8.1797
+draw6	4.9927	2.8534	4.9733	-0.7208	10.4616	45001	3.0323	6.8419
+draw7	4.0229	3.0867	3.9958	-1.9083	10.1727	18752.7585	1.863	6.0184
+draw8	3.0079	2.5861	3.0223	-1.9536	8.1329	22309.6296	1.3554	4.8304
+draw9	2.0241	3.5573	2.0171	-5.0552	8.8401	45001	-0.3696	4.4256
+draw10	0.9877	2.4955	0.9881	-3.9007	5.9159	29515.5387	-0.5997	2.7216
 
 -->

@@ -89,7 +89,48 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        return getDerivativeLogDensity(DerivativeType.HESSIAN);
+        return getDerivativeLogDensity(DerivativeType.DIAGONAL_HESSIAN);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        assert (derivativeList.get(0) instanceof HessianWrtParameterProvider);
+        int size = derivativeList.size();
+
+        final double[][] hessian = ((HessianWrtParameterProvider) derivativeList.get(0)).getHessianLogDensity();
+
+        if (DEBUG) {
+            // stop timer
+            String name = derivativeList.get(0).getLikelihood().getId();
+            System.err.println(name);
+            System.err.println(hessian.toString());
+        }
+
+        for (int i = 1; i < size; i++) {
+            assert (derivativeList.get(i) instanceof HessianWrtParameterProvider);
+
+            final double[][] temp = ((HessianWrtParameterProvider) derivativeList.get(i)).getHessianLogDensity();
+
+            if (DEBUG) {
+                String name = derivativeList.get(i).getLikelihood().getId();
+                System.err.println(name);
+                System.err.println(temp.toString());
+            }
+
+            for (int j = 0; j < temp[0].length; j++) {
+                for (int k = 0; k < temp[0].length; k++) {
+                    hessian[j][k] += temp[j][k];
+                }
+            }
+        }
+
+        if (DEBUG) {
+            if (DEBUG_KILL) {
+                System.exit(-1);
+            }
+        }
+
+        return hessian;
     }
 
     private double[] getDerivativeLogDensity(DerivativeType derivativeType) {
@@ -132,39 +173,6 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
 
     @Override
     public double[] getGradientLogDensity() {
-//        int size = derivativeList.size();
-//
-//        final double[] derivative = derivativeList.get(0).getGradientLogDensity();
-//
-//        if (DEBUG) {
-//            // stop timer
-//
-//            String name = derivativeList.get(0).getLikelihood().getId();
-//            System.err.println(name);
-//            System.err.println(new Vector(derivative));
-//        }
-//
-//        for (int i = 1; i < size; i++) {
-//
-//
-//            final double[] temp = derivativeList.get(i).getGradientLogDensity();
-//
-//            if (DEBUG) {
-//                String name = derivativeList.get(i).getLikelihood().getId();
-//                System.err.println(name);
-//                System.err.println(new Vector(temp));
-//            }
-//
-//            for (int j = 0; j < temp.length; j++) {
-//                derivative[j] += temp[j];
-//            }
-//        }
-//
-//        if (DEBUG) {
-//            if (DEBUG_KILL) {
-//                System.exit(-1);
-//            }
-//        }
         return getDerivativeLogDensity(DerivativeType.GRADIENT);
     }
 
@@ -178,7 +186,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
                 return gradientWrtParameterProvider.getGradientLogDensity();
             }
         },
-        HESSIAN("hessian") {
+        DIAGONAL_HESSIAN("diagonalHessian") {
             @Override
             public double[] getDerivativeLogDensity(GradientWrtParameterProvider gradientWrtParameterProvider) {
                 return ((HessianWrtParameterProvider) gradientWrtParameterProvider).getDiagonalHessianLogDensity();

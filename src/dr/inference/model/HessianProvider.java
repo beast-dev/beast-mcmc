@@ -34,4 +34,6 @@ public interface HessianProvider extends GradientProvider{
 //    int getDimension();
 
     double[] getDiagonalHessianLogDensity(Object x);
+
+    double[][] getHessianLogDensity(Object x);
 }

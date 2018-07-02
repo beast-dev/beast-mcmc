@@ -43,6 +43,8 @@ public interface HessianWrtParameterProvider extends GradientWrtParameterProvide
 
     double[] getDiagonalHessianLogDensity();
 
+    double[][] getHessianLogDensity();
+
     class ParameterWrapper implements HessianWrtParameterProvider {
 
         final HessianProvider provider;
@@ -78,6 +80,11 @@ public interface HessianWrtParameterProvider extends GradientWrtParameterProvide
         @Override
         public double[] getDiagonalHessianLogDensity() {
             return provider.getDiagonalHessianLogDensity(parameter.getParameterValues());
+        }
+
+        @Override
+        public double[][] getHessianLogDensity() {
+            return provider.getHessianLogDensity(parameter.getParameterValues());
         }
     }
 

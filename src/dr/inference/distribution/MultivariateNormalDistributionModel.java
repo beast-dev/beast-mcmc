@@ -196,4 +196,10 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         checkDistribution();
         return distribution.getDiagonalHessianLogDensity(x);
     }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        checkDistribution();
+        return distribution.getHessianLogDensity(x);
+    }
 }

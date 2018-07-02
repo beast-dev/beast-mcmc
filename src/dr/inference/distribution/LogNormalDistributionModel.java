@@ -372,21 +372,17 @@ public class LogNormalDistributionModel extends AbstractModel implements
     }
 
     @Override
+    public double[][] getHessianLogDensity(Object x) {
+        double[] diagonalHessian = getDiagonalHessianLogDensity(x);
+        double[][] result = new double[diagonalHessian.length][diagonalHessian.length];
+        for (int i = 0; i < diagonalHessian.length; i++) {
+            result[i][i] = diagonalHessian[i]; //TODO: not generic
+        }
+        return result;
+    }
+
+    @Override
     public double[] getGradientLogDensity(Object obj) {
-//
-//        double[] x;
-//        if (obj instanceof double[]) {
-//            x = (double[]) obj;
-//        } else {
-//            x = new double[1];
-//            x[0] = (Double) obj;
-//        }
-//
-//        double[] result = new double[x.length];
-//        for (int i = 0; i < x.length; ++i) {
-//            result[i] = (NormalDistribution.gradLogPdf(Math.log(x[i]), getMu(), getSigma()) - 1) / x[i];
-//        }
-//        return result;
         return getDerivativeLogDensity(obj, DerivativeType.GRADIENT);
     }
 
@@ -440,7 +436,7 @@ public class LogNormalDistributionModel extends AbstractModel implements
     @Override
     public double logPdf(double[] x) {
 
-        return logPdf(x[0]);
+        return logPdf(x[0]); //TODO correct this?
     }
 
     @Override

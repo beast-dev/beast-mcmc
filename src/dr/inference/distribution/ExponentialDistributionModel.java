@@ -25,7 +25,6 @@
 
 package dr.inference.distribution;
 
-import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.ExponentialDistribution;
@@ -182,24 +181,22 @@ public class ExponentialDistributionModel extends AbstractModel implements
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object obj) {
-        return getDerivativeLogDensity(obj, DerivativeType.HESSIAN);
+        return getDerivativeLogDensity(obj, DerivativeType.DIAGONAL_HESSIAN);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+
+        double[] diagonalHessian = getDiagonalHessianLogDensity(obj);
+        double[][] result = new double[diagonalHessian.length][diagonalHessian.length];
+        for (int i = 0; i < diagonalHessian.length; i++) {
+            result[i][i] = diagonalHessian[i]; //TODO: not generic
+        }
+        return result;
     }
 
     @Override
     public double[] getGradientLogDensity(Object obj) {
-
-//        double[] x;
-//        if (obj instanceof double[]) {
-//            x = (double[]) obj;
-//        } else {
-//            x = new double[1];
-//            x[0] = (Double) obj;
-//        }
-//
-//        double[] result = new double[x.length];
-//        for (int i = 0; i < x.length; ++i) {
-//            result[i] = ExponentialDistribution.gradLogPdf(x[i] - offset, 1.0 / getMean());
-//        }
         return getDerivativeLogDensity(obj, DerivativeType.GRADIENT);
     }
 
@@ -227,7 +224,7 @@ public class ExponentialDistributionModel extends AbstractModel implements
                 return ExponentialDistribution.gradLogPdf(x, lambda);
             }
         },
-        HESSIAN("hessian") {
+        DIAGONAL_HESSIAN("diagonalHessian") {
             @Override
             public double getDerivativeLogPdf(double x, double lambda) {
                 return ExponentialDistribution.hessianLogPdf(x, lambda);

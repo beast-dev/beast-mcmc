@@ -25,6 +25,8 @@ public interface MassPreconditioner {
 
     void storeSecant(ReadableVector gradient, ReadableVector position);
 
+    void updateMass();
+
     abstract class Base implements MassPreconditioner {
         // TODO Remove
     }
@@ -54,18 +56,23 @@ public interface MassPreconditioner {
 
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) { }
+
+        @Override
+        public void updateMass() {
+            // Do nothing
+        }
     }
 
     abstract class HessianBased extends Base implements MassPreconditioner {
         final protected int dim;
         final protected HessianWrtParameterProvider hessian;
         final protected Transform transform;
-        final double[] inverseMass;
+        double[] inverseMass;
 
         // TODO Should probably make a TransformedHessian so that this class does not need to know about transformations
         HessianBased(HessianWrtParameterProvider hessian,
                      Transform transform) {
-            
+
             this.dim = hessian.getDimension();
             this.hessian = hessian;
             this.transform = transform;
@@ -78,6 +85,10 @@ public interface MassPreconditioner {
         }
 
         abstract protected double[] computeInverseMass();
+
+        public void updateMass() {
+            this.inverseMass = computeInverseMass();
+        }
     }
 
     class DiagonalPreconditioning extends HessianBased {
@@ -120,7 +131,7 @@ public interface MassPreconditioner {
 
             return boundMassInverse(diagonalHessian);
         }
-        
+
         private double[] boundMassInverse(double[] diagonalHessian) {
 
             double sum = 0.0;

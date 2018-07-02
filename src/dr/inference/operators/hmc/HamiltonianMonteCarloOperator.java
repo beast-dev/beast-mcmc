@@ -97,6 +97,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return "Vanilla HMC operator";
     }
 
+    @Deprecated
     private MassPreconditioner setupPreconditioning() {
 
         return setupPreconditioning(leapFrogEngine.getTransform());
@@ -122,8 +123,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     public double doOperation() {
 
         if (shouldUpdatePreconditioning()) {
-            preconditioning = setupPreconditioning();
-            leapFrogEngine.updatePreconditioning(preconditioning);
+//            preconditioning = setupPreconditioning();
+            preconditioning.updateMass();
+//            leapFrogEngine.updatePreconditioning(preconditioning);
         }
 
         try {
@@ -298,13 +300,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         Transform getTransform();
 
-        void updatePreconditioning(MassPreconditioner preconditioner);
-
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
             final private InstabilityHandler instabilityHandler;
-            private MassPreconditioner preconditioning;
+            final private MassPreconditioner preconditioning;
 
             protected Default(Parameter parameter, InstabilityHandler instabilityHandler,
                               MassPreconditioner preconditioning) {
@@ -360,10 +360,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 return null;
             }
 
-            @Override
-            public void updatePreconditioning(MassPreconditioner preconditioner) {
-                this.preconditioning = preconditioner;
-            }
         }
 
         class WithTransform extends Default {

@@ -190,7 +190,7 @@ public class ExponentialDistributionModel extends AbstractModel implements
         double[] diagonalHessian = getDiagonalHessianLogDensity(obj);
         double[][] result = new double[diagonalHessian.length][diagonalHessian.length];
         for (int i = 0; i < diagonalHessian.length; i++) {
-            result[i][i] = diagonalHessian[i]; //TODO: not generic
+            result[i][i] = diagonalHessian[i];
         }
         return result;
     }

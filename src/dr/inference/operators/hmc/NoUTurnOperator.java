@@ -254,9 +254,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     private void doLeap(final double[] position,
                         final WrappedVector momentum,
                         final double stepSize) throws NumericInstabilityException {
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(), gradientProvider.getGradientLogDensity(), stepSize / 2);
-        leapFrogEngine.updatePosition(position, preconditioning.getVelocity(momentum), stepSize);
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(), gradientProvider.getGradientLogDensity(), stepSize / 2);
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                gradientProvider.getGradientLogDensity(), stepSize / 2);
+        leapFrogEngine.updatePosition(position, momentum, stepSize);
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                gradientProvider.getGradientLogDensity(), stepSize / 2);
     }
 
     private StepSize findReasonableStepSize(double[] initialPosition) {
@@ -357,7 +359,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         assert (gradientProvider != null);
         assert (momentum != null);
 
-        return gradientProvider.getLikelihood().getLogLikelihood() - preconditioning.getKineticEnergy(momentum)
+        return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum)
                 - leapFrogEngine.getParameterLogJacobian();
     }
 

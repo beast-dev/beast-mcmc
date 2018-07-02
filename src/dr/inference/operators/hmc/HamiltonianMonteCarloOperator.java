@@ -74,6 +74,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.nSteps = nSteps;
         this.randomStepCountFraction = randomStepCountFraction;
 
+        this.runtimeOptions = (preconditioningCase == 0 ?
+                new AbstractParticleOperator.Options(preconditioningCase, 0) : // TODO: adjust the option class to store preconditioning case (0: none, 1: diagonal, 2:full)
+                new AbstractParticleOperator.Options(preconditioningCase, 1));
         this.preconditioning = setupPreconditioning();
 
         this.leapFrogEngine = (transform != null ?
@@ -89,9 +92,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 //                        new MassProvider.PreConditioning(drawVariance, (HessianWrtParameterProvider) gradientProvider)));
 //        double[] mean = new double[gradientProvider.getDimension()];
 //        this.drawDistribution = new MultivariateNormalDistribution(mean, massProvider.getMass());
-        this.runtimeOptions = (preconditioningCase == 0 ?
-                new AbstractParticleOperator.Options(preconditioningCase, 0) : // TODO: adjust the option class to store preconditioning case (0: none, 1: diagonal, 2:full)
-                new AbstractParticleOperator.Options(preconditioningCase, 1));
+
 
     }
 
@@ -149,7 +150,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return count;
     }
 
-    private double getKineticEnergy(ReadableVector momentum) {
+    protected double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();
 

@@ -65,10 +65,10 @@
 
 	</operators>
 
-	<operators id="operators.hmc.preConditioning">
+	<operators id="operators.hmc.diagonalPreconditioning">
 
 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
-									   drawVariance="1.0" autoOptimize="true" preConditioning="true">
+									   drawVariance="1.0" autoOptimize="true" preConditioning="diagonal">
 			<hessian>
 				<distributionLikelihood idref="distribution"/>
 			</hessian>
@@ -77,9 +77,21 @@
 
 	</operators>
 
-    <mcmc id="mcmc.hmc.preConditioning" chainLength="50000" autoOptimize="true">
+    <operators id="operators.hmc.fullPreconditioning">
+
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true" preConditioning="full">
+            <hessian>
+                <distributionLikelihood idref="distribution"/>
+            </hessian>
+            <parameter idref="draw"/>
+        </hamiltonianMonteCarloOperator>
+
+    </operators>
+
+    <mcmc id="mcmc.hmc.fullPreconditioning" chainLength="50000" autoOptimize="true">
         <posterior>
-            <likelihood id="likelihood.hmc.preConditioning">
+            <likelihood id="likelihood.hmc.fullPreconditioning">
                 <distributionLikelihood idref="distribution"/>
                 <dummyLikelihood>
                     <distributionLikelihood idref="distribution"/>
@@ -87,24 +99,55 @@
                 </dummyLikelihood>
             </likelihood>
         </posterior>
-        <operators idref="operators.hmc.preConditioning"/>
+        <operators idref="operators.hmc.fullPreconditioning"/>
         <log logEvery="100000">
             <column label="posterior" dp="4" width="12">
-                <likelihood idref="likelihood.hmc.preConditioning"/>
+                <likelihood idref="likelihood.hmc.fullPreconditioning"/>
             </column>
             <column label="Draw" sf="6" width="12">
                 <parameter idref="draw"/>
             </column>
         </log>
-        <log logEvery="1" fileName="testMvnHmcPreConditioning.log">
-            <likelihood idref="likelihood.hmc.preConditioning"/>
+        <log logEvery="1" fileName="testMvnHmcFullPreconditioning.log">
+            <likelihood idref="likelihood.hmc.fullPreconditioning"/>
             <parameter idref="draw"/>
         </log>
     </mcmc>
 
     <report>
         <property name="timer">
-            <object idref="mcmc.hmc.preConditioning"/>
+            <object idref="mcmc.hmc.fullPreconditioning"/>
+        </property>
+    </report>
+
+    <mcmc id="mcmc.hmc.diagonalPreconditioning" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc.diagonalPreconditioning">
+                <distributionLikelihood idref="distribution"/>
+                <dummyLikelihood>
+                    <distributionLikelihood idref="distribution"/>
+                    <parameter idref="draw"/>
+                </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc.diagonalPreconditioning"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmc.diagonalPreconditioning"/>
+            </column>
+            <column label="Draw" sf="6" width="12">
+                <parameter idref="draw"/>
+            </column>
+        </log>
+        <log logEvery="1" fileName="testMvnHmcDiagonalPreconditioning.log">
+            <likelihood idref="likelihood.hmc.diagonalPreconditioning"/>
+            <parameter idref="draw"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc.hmc.diagonalPreconditioning"/>
         </property>
     </report>
 
@@ -173,7 +216,8 @@
 
 	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>
 	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>
-    <traceAnalysis fileName="testMvnHmcPreConditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcDiagonalPreconditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcFullPreconditioning.log" stdError="true"/>
  <!--&ndash;&gt;-->
 
 </beast>

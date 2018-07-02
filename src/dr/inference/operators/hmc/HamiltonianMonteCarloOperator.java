@@ -59,14 +59,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                                          double stepSize, int nSteps, double drawVariance,
                                          double randomStepCountFraction) {
         this(mode, weight, gradientProvider, parameter, transform,
-                stepSize, nSteps, drawVariance, randomStepCountFraction, false);
+                stepSize, nSteps, drawVariance, randomStepCountFraction, 0);
     }
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
                                          double stepSize, int nSteps, double drawVariance,
                                          double randomStepCountFraction,
-                                         boolean preConditioning) {
+                                         int preconditioningCase) {
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
@@ -87,9 +87,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 //                        new MassProvider.PreConditioning(drawVariance, (HessianWrtParameterProvider) gradientProvider)));
 //        double[] mean = new double[gradientProvider.getDimension()];
 //        this.drawDistribution = new MultivariateNormalDistribution(mean, massProvider.getMass());
-        this.runtimeOptions = (preConditioning ?
-                new AbstractParticleOperator.Options(0.0, 1) :
-                new AbstractParticleOperator.Options(0.0, 0));
+        this.runtimeOptions = (preconditioningCase == 0 ?
+                new AbstractParticleOperator.Options(preconditioningCase, 0) : // TODO: adjust the option class to store preconditioning case (0: none, 1: diagonal, 2:full)
+                new AbstractParticleOperator.Options(preconditioningCase, 1));
         this.preconditioning = setupPreconditioning();
     }
 
@@ -107,7 +107,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         return (runtimeOptions.preconditioningUpdateFrequency == 0 ?
                 new MassPreconditioner.NoPreconditioning(gradientProvider.getDimension()) :
-                new MassPreconditioner.DiagonalPreconditioning((HessianWrtParameterProvider) gradientProvider, leapFrogEngine.getTransform()));
+                (runtimeOptions.randomTimeWidth == 1 ?
+                        new MassPreconditioner.DiagonalPreconditioning((HessianWrtParameterProvider) gradientProvider, leapFrogEngine.getTransform()) :
+                        new MassPreconditioner.FullPreconditioning((HessianWrtParameterProvider) gradientProvider, leapFrogEngine.getTransform())
+                ));
     }
 
     private boolean shouldUpdatePreconditioning() {

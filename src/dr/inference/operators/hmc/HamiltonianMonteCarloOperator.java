@@ -49,7 +49,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 //    MultivariateNormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
 //    final MassProvider massProvider;
-    MassPreconditioner preconditioning;
+    final MassPreconditioner preconditioning;
     final AbstractParticleOperator.Options runtimeOptions;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
@@ -77,7 +77,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         this.runtimeOptions = (preconditioningCase == 0 ?
                 new AbstractParticleOperator.Options(preconditioningCase, 0) : // TODO: adjust the option class to store preconditioning case (0: none, 1: diagonal, 2:full)
                 new AbstractParticleOperator.Options(preconditioningCase, 1));
-        this.preconditioning = setupPreconditioning(transform);
+
+        this.preconditioning = (runtimeOptions.preconditioningUpdateFrequency == 0 ?
+                new MassPreconditioner.NoPreconditioning(gradientProvider.getDimension()) :
+                (runtimeOptions.randomTimeWidth == 1 ?
+                        new MassPreconditioner.DiagonalPreconditioning((HessianWrtParameterProvider) gradientProvider, transform) :
+                        new MassPreconditioner.FullPreconditioning((HessianWrtParameterProvider) gradientProvider, transform)
+                ));
 
         this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform,
@@ -97,22 +103,22 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         return "Vanilla HMC operator";
     }
 
-    @Deprecated
-    private MassPreconditioner setupPreconditioning() {
-
-        return setupPreconditioning(leapFrogEngine.getTransform());
-
-    }
-
-    private MassPreconditioner setupPreconditioning(Transform transform) {
-
-        return (runtimeOptions.preconditioningUpdateFrequency == 0 ?
-                new MassPreconditioner.NoPreconditioning(gradientProvider.getDimension()) :
-                (runtimeOptions.randomTimeWidth == 1 ?
-                        new MassPreconditioner.DiagonalPreconditioning((HessianWrtParameterProvider) gradientProvider, transform) :
-                        new MassPreconditioner.FullPreconditioning((HessianWrtParameterProvider) gradientProvider, transform)
-                ));
-    }
+//    @Deprecated
+//    private MassPreconditioner setupPreconditioning() {
+//
+//        return setupPreconditioning(leapFrogEngine.getTransform());
+//
+//    }
+//
+//    private MassPreconditioner setupPreconditioning(Transform transform) {
+//
+//        return (runtimeOptions.preconditioningUpdateFrequency == 0 ?
+//                new MassPreconditioner.NoPreconditioning(gradientProvider.getDimension()) :
+//                (runtimeOptions.randomTimeWidth == 1 ?
+//                        new MassPreconditioner.DiagonalPreconditioning((HessianWrtParameterProvider) gradientProvider, transform) :
+//                        new MassPreconditioner.FullPreconditioning((HessianWrtParameterProvider) gradientProvider, transform)
+//                ));
+//    }
 
     private boolean shouldUpdatePreconditioning() {
         return ((runtimeOptions.preconditioningUpdateFrequency > 0

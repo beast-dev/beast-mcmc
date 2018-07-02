@@ -1,9 +1,15 @@
 package dr.inference.operators.hmc;
 
+import cern.colt.matrix.DoubleFactory2D;
+import cern.colt.matrix.DoubleMatrix1D;
+import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
@@ -182,7 +188,68 @@ public interface MassPreconditioner {
 
         @Override
         protected double[] computeInverseMass() {
-            return new double[dim * dim];
+            double[][] hessianMatrix = hessian.getHessianLogDensity();
+
+            Algebra algebra = new Algebra();
+
+            DoubleMatrix2D H = new DenseDoubleMatrix2D(hessianMatrix);
+            RobustEigenDecomposition decomposition = new RobustEigenDecomposition(H);
+            DoubleMatrix1D eigenvalues = decomposition.getRealEigenvalues();
+
+            normalizeEigenvalues(eigenvalues);
+
+            DoubleMatrix2D V = decomposition.getV();
+
+            inverseNegateEigenvalues(eigenvalues);
+
+            double[][] negativeHessianInverse = algebra.mult(
+                    algebra.mult(V, DoubleFactory2D.dense.diagonal(eigenvalues)),
+                    algebra.inverse(V)
+            ).toArray();
+
+            double[] inverseMassArray = new double[hessian.getDimension() * hessian.getDimension()];
+            for (int i = 0; i < hessian.getDimension(); i++) {
+                System.arraycopy(negativeHessianInverse[i], 0, inverseMassArray, i * hessian.getDimension(), hessian.getDimension());
+            }
+            return inverseMassArray;
+        }
+
+        private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
+        private static final double MAX_EIGENVALUE = -0.1; // TODO Bad magic number
+
+        private void boundEigenvalues(DoubleMatrix1D eigenvalues) {
+
+            for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                if (eigenvalues.get(i) > MAX_EIGENVALUE) {
+                    eigenvalues.set(i, MAX_EIGENVALUE);
+                } else if (eigenvalues.get(i) < MIN_EIGENVALUE) {
+                    eigenvalues.set(i, MIN_EIGENVALUE);
+                }
+            }
+        }
+
+        private void scaleEigenvalues(DoubleMatrix1D eigenvalues) {
+            double sum = 0.0;
+            for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                sum += eigenvalues.get(i);
+            }
+
+            double mean = -sum / eigenvalues.cardinality();
+
+            for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                eigenvalues.set(i, eigenvalues.get(i) / mean);
+            }
+        }
+
+        private void normalizeEigenvalues(DoubleMatrix1D eigenvalues) {
+            boundEigenvalues(eigenvalues);
+            scaleEigenvalues(eigenvalues);
+        }
+
+        private void inverseNegateEigenvalues(DoubleMatrix1D eigenvalues) {
+            for (int i = 0; i < eigenvalues.cardinality(); i++) {
+                eigenvalues.set(i, -1.0 / eigenvalues.get(i));
+            }
         }
 
         @Override

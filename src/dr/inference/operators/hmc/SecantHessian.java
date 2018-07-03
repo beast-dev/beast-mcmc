@@ -38,8 +38,11 @@ class SecantHessian implements HessianWrtParameterProvider {
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        // TODO Why not?
-        throw new RuntimeException("DiagonalHessian not permitted for secant Hessian approximation.");
+        double[] diagonalHessian = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            diagonalHessian[i] = secantHessian[i][i];
+        }
+        return diagonalHessian;
     }
 
     @Override

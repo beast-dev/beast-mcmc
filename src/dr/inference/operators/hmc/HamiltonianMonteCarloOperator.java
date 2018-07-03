@@ -99,9 +99,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     public double doOperation() {
 
         if (shouldUpdatePreconditioning()) {
-//            preconditioning = setupPreconditioning();
             preconditioning.updateMass();
-//            leapFrogEngine.updatePreconditioning(preconditioning);
         }
 
         try {
@@ -177,8 +175,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             leapFrogEngine.updatePosition(position, momentum, stepSize);
 
             if (i < (nStepsThisLeap - 1)) {
+                double[] gradient = gradientProvider.getGradientLogDensity();
                 leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                        gradientProvider.getGradientLogDensity(), stepSize);
+                        gradient, stepSize);
+                preconditioning.storeSecant(new WrappedVector.Raw(gradient.clone()), new WrappedVector.Raw(position.clone()));
             }
         }
 
@@ -260,7 +260,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         void setParameter(double[] position);
 
-        Transform getTransform();
 
         class Default implements LeapFrogEngine {
 
@@ -317,11 +316,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
             }
 
-            @Override
-            public Transform getTransform() {
-                return null;
-            }
-
         }
 
         class WithTransform extends Default {
@@ -363,10 +357,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 super.setParameter(unTransformedPosition);
             }
 
-            @Override
-            public Transform getTransform(){
-                return transform;
-            }
         }
     }
 }

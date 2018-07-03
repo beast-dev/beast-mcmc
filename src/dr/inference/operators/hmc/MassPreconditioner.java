@@ -47,6 +47,13 @@ public interface MassPreconditioner {
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
                 return new FullPreconditioning((HessianWrtParameterProvider) gradient, transform);
             }
+        },
+        SECANT("secant") {
+            @Override
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+                SecantHessian secantHessian = new SecantHessian(gradient, 3);
+                return new FullPreconditioning(secantHessian, transform);
+            }
         };
 
         private final String name;
@@ -212,6 +219,13 @@ public interface MassPreconditioner {
         }
 
         @Override
+        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+            if (hessian instanceof SecantHessian) {
+                ((SecantHessian) hessian).storeSecant(gradient, position);
+            }
+        }
+
+        @Override
         protected double[] computeInverseMass() {
             double[][] hessianMatrix = hessian.getHessianLogDensity();
             if (transform != null) {
@@ -314,37 +328,5 @@ public interface MassPreconditioner {
         }
     }
 
-    abstract // TODO Implement interface
-    class SecantPreconditioing extends HessianBased {
 
-        private final Secant[] queue;
-        private int secantIndex;
-        private int secantUpdateCount;
-
-        SecantPreconditioing(HessianWrtParameterProvider hessian, int secantSize) {
-            super(hessian, null);
-
-            this.queue = new Secant[secantSize];
-            this.secantIndex = 0;
-            this.secantUpdateCount = 0;
-        }
-
-        @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) {
-            queue[secantIndex] = new Secant(gradient, position);
-            secantIndex = (secantIndex + 1) % queue.length;
-            ++secantUpdateCount;
-        }
-
-        private class Secant { // TODO Inner class because we may change the storage depending on efficiency
-
-            ReadableVector gradient;
-            ReadableVector position;
-
-            Secant(ReadableVector gradient, ReadableVector position) {
-                this.gradient = gradient;
-                this.position = position;
-            }
-        }
-    }
 }

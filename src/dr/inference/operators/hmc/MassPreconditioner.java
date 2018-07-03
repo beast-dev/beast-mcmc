@@ -8,8 +8,6 @@ import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.MathUtils;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
@@ -164,7 +162,6 @@ public interface MassPreconditioner {
 
             double[] diagonalHessian = hessian.getDiagonalHessianLogDensity();
 
-            // TODO Check transformation
             if (transform != null) {
 
                 double[] untransformedValues = hessian.getParameter().getParameterValues();
@@ -218,42 +215,11 @@ public interface MassPreconditioner {
 
         @Override
         protected double[] computeInverseMass() {
-//            MultivariateFunction numeric1 = new MultivariateFunction() {
-//                @Override
-//                public double evaluate(double[] argument) {
-//
-//                    for (int i = 0; i < argument.length; ++i) {
-//                        hessian.getParameter().setParameterValue(i, Math.exp(argument[i]));
-//                    }
-//
-//                    return hessian.getLikelihood().getLogLikelihood();
-//                }
-//
-//                @Override
-//                public int getNumArguments() {
-//                    return hessian.getDimension();
-//                }
-//
-//                @Override
-//                public double getLowerBound(int n) {
-//                    return Double.NEGATIVE_INFINITY;
-//                }
-//
-//                @Override
-//                public double getUpperBound(int n) {
-//                    return Double.POSITIVE_INFINITY;
-//                }
-//            };
-//
-//            NumericalHessianFromGradient numericalHessianProvider = new NumericalHessianFromGradient(hessian);
-//            double[][] numericalHessian = numericalHessianProvider.getHessianLogDensity();
+
             double[][] hessianMatrix = hessian.getHessianLogDensity();
-//            double[][] numericalTransformedHessian = NumericalDerivative.getNumericalHessian(numeric1, transform.transform(hessian.getParameter().getParameterValues(), 0, dim));
 
             if (transform != null) {
                 hessianMatrix = transform.updateHessianLogDensity(hessianMatrix, new double[dim][dim], hessian.getGradientLogDensity(), hessian.getParameter().getParameterValues(), 0, dim);
-//                double[][] transformedNumericalHessian = transform.updateHessianLogDensity(numericalHessian, new double[dim][dim], hessian.getGradientLogDensity(), hessian.getParameter().getParameterValues(), 0, dim);
-                double sum = 0.0;
             }
 
             Algebra algebra = new Algebra();

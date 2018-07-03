@@ -178,7 +178,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 double[] gradient = gradientProvider.getGradientLogDensity();
                 leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
                         gradient, stepSize);
-                preconditioning.storeSecant(new WrappedVector.Raw(gradient.clone()), new WrappedVector.Raw(position.clone()));
+                preconditioning.storeSecant(new WrappedVector.Raw(gradient), new WrappedVector.Raw(position));
             }
         }
 

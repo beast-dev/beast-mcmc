@@ -51,8 +51,8 @@ public interface MassPreconditioner {
         SECANT("secant") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
-                SecantHessian secantHessian = new SecantHessian(gradient, 3);
-                return new FullPreconditioning(secantHessian, transform);
+                SecantHessian secantHessian = new SecantHessian(gradient, 3);  // TODO make size an option
+                return new Secant(secantHessian, transform);
             }
         };
 
@@ -76,11 +76,8 @@ public interface MassPreconditioner {
         }
     }
 
-    abstract class Base implements MassPreconditioner {
-        // TODO Remove
-    }
 
-    class NoPreconditioning extends  Base implements MassPreconditioner {
+    class NoPreconditioning implements MassPreconditioner {
 
         final int dim;
 
@@ -112,7 +109,7 @@ public interface MassPreconditioner {
         }
     }
 
-    abstract class HessianBased extends Base implements MassPreconditioner {
+    abstract class HessianBased implements MassPreconditioner {
         final protected int dim;
         final protected HessianWrtParameterProvider hessian;
         final protected Transform transform;
@@ -210,7 +207,6 @@ public interface MassPreconditioner {
         }
     }
 
-    // TODO Implement
     class FullPreconditioning extends HessianBased {
 
         FullPreconditioning(HessianWrtParameterProvider hessian,
@@ -218,12 +214,13 @@ public interface MassPreconditioner {
             super(hessian, transform);
         }
 
-        @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) {
-            if (hessian instanceof SecantHessian) {
-                ((SecantHessian) hessian).storeSecant(gradient, position);
-            }
-        }
+//        @Override
+//        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+//            // TODO No need to check *every* time; how about once at construction?
+//            if (hessian instanceof SecantHessian) {
+//                ((SecantHessian) hessian).storeSecant(gradient, position);
+//            }
+//        }
 
         @Override
         protected double[] computeInverseMass() {
@@ -328,5 +325,18 @@ public interface MassPreconditioner {
         }
     }
 
+    class Secant extends FullPreconditioning {
 
+        private final SecantHessian secantHessian;
+
+        Secant(SecantHessian secantHessian, Transform transform) {
+            super(secantHessian, transform);
+            this.secantHessian = secantHessian;
+        }
+
+        @Override
+        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+            secantHessian.storeSecant(gradient, position);
+        }
+    }
 }

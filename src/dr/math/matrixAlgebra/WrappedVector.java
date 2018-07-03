@@ -107,4 +107,15 @@ public interface WrappedVector extends ReadableVector, WritableVector {
         @Override
         final public void set(int i, double x) { buffer[offset + indices[i]] = x; }
     }
+
+    final class Utils {
+
+        public static WrappedVector copy(ReadableVector vector) {
+            double[] buffer = new double[vector.getDim()];
+            for (int i = 0; i < buffer.length; ++i) {
+                buffer[i] = vector.get(i);
+            }
+            return new WrappedVector.Raw(buffer);
+        }
+    }
 }

@@ -5,6 +5,7 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
@@ -37,7 +38,8 @@ class SecantHessian implements HessianWrtParameterProvider {
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        throw new RuntimeException("DiagonalHessian not permitted for seacant Hessian approximation, exiting ...");
+        // TODO Why not?
+        throw new RuntimeException("DiagonalHessian not permitted for secant Hessian approximation.");
     }
 
     @Override
@@ -71,15 +73,13 @@ class SecantHessian implements HessianWrtParameterProvider {
         ReadableVector position;
 
         Secant(ReadableVector gradient, ReadableVector position) {
-            this.gradient = gradient;
-            this.position = position;
+            this.gradient = WrappedVector.Utils.copy(gradient);
+            this.position = WrappedVector.Utils.copy(position);
         }
 
-        public double getPosition(int index) {
-            return position.get(index);
-        }
+        double getPosition(int index) { return position.get(index); }
 
-        public double getGradient(int index) {
+        double getGradient(int index) {
             return gradient.get(index);
         }
     }

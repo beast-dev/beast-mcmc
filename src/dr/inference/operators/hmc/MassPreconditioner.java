@@ -8,6 +8,8 @@ import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.MathUtils;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
@@ -214,19 +216,44 @@ public interface MassPreconditioner {
             super(hessian, transform);
         }
 
-//        @Override
-//        public void storeSecant(ReadableVector gradient, ReadableVector position) {
-//            // TODO No need to check *every* time; how about once at construction?
-//            if (hessian instanceof SecantHessian) {
-//                ((SecantHessian) hessian).storeSecant(gradient, position);
-//            }
-//        }
-
         @Override
         protected double[] computeInverseMass() {
+//            MultivariateFunction numeric1 = new MultivariateFunction() {
+//                @Override
+//                public double evaluate(double[] argument) {
+//
+//                    for (int i = 0; i < argument.length; ++i) {
+//                        hessian.getParameter().setParameterValue(i, Math.exp(argument[i]));
+//                    }
+//
+//                    return hessian.getLikelihood().getLogLikelihood();
+//                }
+//
+//                @Override
+//                public int getNumArguments() {
+//                    return hessian.getDimension();
+//                }
+//
+//                @Override
+//                public double getLowerBound(int n) {
+//                    return Double.NEGATIVE_INFINITY;
+//                }
+//
+//                @Override
+//                public double getUpperBound(int n) {
+//                    return Double.POSITIVE_INFINITY;
+//                }
+//            };
+//
+//            NumericalHessianFromGradient numericalHessianProvider = new NumericalHessianFromGradient(hessian);
+//            double[][] numericalHessian = numericalHessianProvider.getHessianLogDensity();
             double[][] hessianMatrix = hessian.getHessianLogDensity();
+//            double[][] numericalTransformedHessian = NumericalDerivative.getNumericalHessian(numeric1, transform.transform(hessian.getParameter().getParameterValues(), 0, dim));
+
             if (transform != null) {
-                //TODO: hessianMatrix transform
+                hessianMatrix = transform.updateHessianLogDensity(hessianMatrix, new double[dim][dim], hessian.getGradientLogDensity(), hessian.getParameter().getParameterValues(), 0, dim);
+//                double[][] transformedNumericalHessian = transform.updateHessianLogDensity(numericalHessian, new double[dim][dim], hessian.getGradientLogDensity(), hessian.getParameter().getParameterValues(), 0, dim);
+                double sum = 0.0;
             }
 
             Algebra algebra = new Algebra();
@@ -254,7 +281,7 @@ public interface MassPreconditioner {
         }
 
         private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
-        private static final double MAX_EIGENVALUE = -0.1; // TODO Bad magic number
+        private static final double MAX_EIGENVALUE = -0.5; // TODO Bad magic number
 
         private void boundEigenvalues(DoubleMatrix1D eigenvalues) {
 

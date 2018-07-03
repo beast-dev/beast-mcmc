@@ -89,6 +89,10 @@ public interface Transform {
 
     double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to);
 
+    double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to);
+
+    double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ);
+
     double gradient(double value);
 
     double[] gradient(double[] values, int from, int to);
@@ -170,6 +174,20 @@ public interface Transform {
             return result;
         }
 
+        public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
+
+            final int dim = to - from;
+            double[][] updatedHessian = new double[dim][dim];
+
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    if (i == j) updatedHessian[i][j] = updateDiagonalHessianLogDensity(hessian[i][j], gradient[i], value[i]);
+                    else updatedHessian[i][j] = updateOffdiagonalHessianLogDensity(hessian[i][j], transformationHessian[i][j], gradient[i], gradient[j], value[i], value[j]);
+                }
+            }
+            return updatedHessian;
+        }
+
         public abstract double gradient(double value);
 
         @Override
@@ -207,6 +225,10 @@ public interface Transform {
         }
 
         public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
@@ -251,6 +273,11 @@ public interface Transform {
             // diagonalHessian == hessian of inverse()
             // gradient == gradient of inverse()
             return value * (gradient + value * diagonalHessian);
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transfomationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            return offdiagonalHessian * valueI * valueJ + gradientJ * transfomationHessian;
         }
 
         @Override
@@ -338,6 +365,16 @@ public interface Transform {
 
         @Override
         public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -435,6 +472,11 @@ public interface Transform {
         }
 
         @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
         public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -475,6 +517,11 @@ public interface Transform {
         }
 
         @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
         public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -506,6 +553,11 @@ public interface Transform {
 
         @Override
         public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -568,6 +620,11 @@ public interface Transform {
         }
 
         @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
         public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -595,6 +652,11 @@ public interface Transform {
         @Override
         public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
             return diagonalHessian;
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            return offdiagonalHessian;
         }
 
         @Override
@@ -663,6 +725,11 @@ public interface Transform {
         }
 
         @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
         public double gradient(double value) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -700,6 +767,11 @@ public interface Transform {
 
         @Override
         public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -801,6 +873,24 @@ public interface Transform {
                 result[i] = array.get(i).updateDiagonalHessianLogDensity(diagonalHessian[i], gradient[i], values[i]);
             }
             return result;
+        }
+
+        @Override
+        public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
+
+            final int dim = to - from;
+            double[][] updatedHessian = new double[dim][dim];
+
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    if (i == j) updatedHessian[i][j] = array.get(i).updateDiagonalHessianLogDensity(hessian[i][j], gradient[i], value[i]);
+                    else {
+                        assert(array.get(i).getClass().equals(array.get(j).getClass()));  // TODO: more generic implementation
+                        updatedHessian[i][j] = array.get(i).updateOffdiagonalHessianLogDensity(hessian[i][j], transformationHessian[i][j], gradient[i], gradient[j], value[i], value[j]);
+                    }
+                }
+            }
+            return updatedHessian;
         }
 
         @Override
@@ -956,6 +1046,11 @@ public interface Transform {
                 }
             }
             return result;
+        }
+
+        @Override
+        public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
         }
 
         @Override

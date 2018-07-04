@@ -53,6 +53,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+    private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
 
     @Override
     public String getParserName() {
@@ -91,6 +92,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         int preconditioningUpdateFrequency = xo.getAttribute(PRECONDITIONING_UPDATE_FREQUENCY, 0);
 
+        int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
+
         CoercionMode coercionMode = CoercionMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
@@ -107,7 +110,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         }
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
-                stepSize, nSteps, randomStepFraction, preconditioningUpdateFrequency
+                stepSize, nSteps, randomStepFraction, preconditioningUpdateFrequency, preconditioningDelay
         );
 
         if (runMode == 0) {

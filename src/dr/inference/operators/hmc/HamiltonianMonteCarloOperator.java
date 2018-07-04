@@ -52,7 +52,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                                          double stepSize, int nSteps,
                                          double randomStepCountFraction) {
         this(mode, weight, gradientProvider, parameter, transform,
-                new Options(stepSize, nSteps, randomStepCountFraction, 0), MassPreconditioner.Type.NONE
+                new Options(stepSize, nSteps, randomStepCountFraction, 0, 0), MassPreconditioner.Type.NONE
         );
     }
 
@@ -92,7 +92,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
     private boolean shouldUpdatePreconditioning() {
         return ((runtimeOptions.preconditioningUpdateFrequency > 0
-                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)));
+                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0))
+                && (getCount() > runtimeOptions.preconditioningDelay));
     }
 
     @Override
@@ -119,12 +120,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         final int nSteps;
         final double randomStepCountFraction;
         final int preconditioningUpdateFrequency;
+        final int preconditioningDelay;
 
-        public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency) {
+        public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency,
+                       int preconditioningDelay) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+            this.preconditioningDelay = preconditioningDelay;
         }
     }
 

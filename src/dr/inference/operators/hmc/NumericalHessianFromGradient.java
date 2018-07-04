@@ -6,6 +6,10 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MachineAccuracy;
 
+/**
+ * @author Marc A. Suchard
+ * @author Xiang Ji
+ */
 public class NumericalHessianFromGradient implements HessianWrtParameterProvider {
     GradientWrtParameterProvider gradientProvider;
 

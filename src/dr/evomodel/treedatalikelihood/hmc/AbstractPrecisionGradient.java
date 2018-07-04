@@ -321,7 +321,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 //        return result;
 //    }
 
-    private static final boolean CHECK_GRADIENT = false;
+    private static final boolean CHECK_GRADIENT = true;
     private static final boolean USE_CHAIN_RULE = true;
 
     interface MultivariateChainRule {

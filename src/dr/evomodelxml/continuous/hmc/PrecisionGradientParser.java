@@ -25,15 +25,20 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
-import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
+import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.hmc.CorrelationPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.DiagonalPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.GradientWrtPrecisionProvider;
 import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
+
+import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * @author Paul Bastide
@@ -47,6 +52,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     private final static String PRECISION_CORRELATION = "precisioncorrelation";
     private final static String PRECISION_DIAGONAL = "precisiondiagonal";
     private final static String PRECISION_BOTH = "precisionBoth";
+    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
     public String getParserName() {
@@ -71,32 +77,40 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        WishartStatisticsWrapper wishartStatistics = (WishartStatisticsWrapper)
-                xo.getChild(WishartStatisticsWrapper.class);
-
-        BranchRateGradient branchRateGradient = (BranchRateGradient)
-                xo.getChild(BranchRateGradient.class);
-
-        GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
-        if ((wishartStatistics == null) == (branchRateGradient == null)) {
-            throw new XMLParseException("Exactly one of 'wishartStatistics' or 'branchRateGradient' must be included." );
-        } else if (wishartStatistics != null) {
-            gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
-        } else {
-            gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.BranchRateGradientWrtPrecisionProvider(branchRateGradient);
-        }
-
-        Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
+        String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
 
         MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
+        TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
+        GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
+        WishartStatisticsWrapper wishartStatistics = (WishartStatisticsWrapper)
+                xo.getChild(WishartStatisticsWrapper.class);
+        if (wishartStatistics != null) {
+            gradientWrtPrecisionProvider = new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+        } else {
+            DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+            int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+            Tree tree = treeDataLikelihood.getTree();
+
+            ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
+                    new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                            dim, tree, continuousData,
+                            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+            BranchSpecificGradient branchSpecificGradient =
+                    new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
+
+            gradientWrtPrecisionProvider = new GradientWrtPrecisionProvider.BranchSpecificGradientWrtPrecisionProvider(branchSpecificGradient);
+        }
+
         int parameterMode = parseParameterMode(xo);
         if (parameterMode == 0) {
-            return new PrecisionGradient(gradientWrtPrecisionProvider, likelihood, parameter);
+            return new PrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
         } else if (parameterMode == 1) {
-            return new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, likelihood, parameter);
+            return new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
         } else {
-            return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, likelihood, parameter);
+            return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
         }
     }
 

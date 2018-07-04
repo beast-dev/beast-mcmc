@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
+import org.ejml.data.DenseMatrix64F;
 
 /**
  * Implementations of this interface are used to delegate control of diffusion
@@ -66,6 +67,8 @@ public interface DiffusionProcessDelegate extends Model {
     boolean hasActualization();
 
     boolean hasDiagonalActualization();
+
+    void getGradientPrecision(int i, ContinuousDiffusionIntegrator cdi, DenseMatrix64F gradient);
 
     void storeState();
 

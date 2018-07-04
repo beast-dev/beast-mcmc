@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -56,7 +57,9 @@ public abstract class AbstractOUDiffusionModelDelegate extends AbstractDriftDiff
     }
 
     @Override
-    public boolean hasActualization() { return true; }
+    public boolean hasActualization() {
+        return true;
+    }
 
     abstract double[][] getStrengthOfSelection();
 
@@ -93,5 +96,10 @@ public abstract class AbstractOUDiffusionModelDelegate extends AbstractDriftDiff
                 getEigenValuesStrengthOfSelection(),
                 getEigenVectorsStrengthOfSelection(),
                 updateCount);
+    }
+
+    @Override
+    public void getGradientPrecision(int i, ContinuousDiffusionIntegrator cdi, DenseMatrix64F gradient) {
+        throw new RuntimeException("not yet implemented");
     }
 }

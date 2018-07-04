@@ -70,9 +70,6 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
         this.parameter = parameter;
         this.branchProvider = branchProvider;
 
-//        BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
-//        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
-
         // TODO Move into different constructor / parser
         String bcdName = BranchConditionalDistributionDelegate.getName(traitName);
         if (treeDataLikelihood.getTreeTrait(bcdName) == null) {
@@ -136,7 +133,9 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
 
                 final int destinationIndex = getParameterIndexFromNode(node);
                 assert (destinationIndex != -1);
-                System.arraycopy(gradient, 0, result, destinationIndex * dimGradient, dimGradient);
+                for (int j = 0; j < dimGradient; j++) {
+                    result[destinationIndex * dimGradient + j] += gradient[j];
+                }
             }
         }
 

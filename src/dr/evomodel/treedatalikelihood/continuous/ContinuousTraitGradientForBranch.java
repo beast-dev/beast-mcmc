@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -46,6 +47,8 @@ public interface ContinuousTraitGradientForBranch {
 
     double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node);
 
+    double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node, boolean getGradientQ, boolean getGradientN);
+
     int getParameterIndexFromNode(NodeRef node);
 
     int getDimension();
@@ -56,7 +59,7 @@ public interface ContinuousTraitGradientForBranch {
         private final DenseMatrix64F matrixGradientN;
         private final DenseMatrix64F vector0;
 
-        private final int dim;
+        final int dim;
         final Tree tree;
 
         public Default(int dim, Tree tree) {
@@ -75,6 +78,12 @@ public interface ContinuousTraitGradientForBranch {
 
         @Override
         public double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node) {
+            return getGradientForBranch(statistics, node, true, true);
+        }
+
+        @Override
+        public double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node,
+                                             boolean getGradientQ, boolean getGradientN) {
             // Joint Statistics
             final NormalSufficientStatistics child = statistics.getChild();
             final NormalSufficientStatistics parent = statistics.getParent();
@@ -108,16 +117,16 @@ public interface ContinuousTraitGradientForBranch {
             }
 
             DenseMatrix64F gradQ = matrixGradientQ;
-            getGradientQForBranch(Wi, Vi, delta, gradQ);
-
             DenseMatrix64F gradN = matrixGradientN;
-            getGradientNForBranch(Qi, delta, gradN);
+            if (getGradientQ) getGradientQForBranch(Wi, Vi, delta, gradQ);
+            if (getGradientN) getGradientNForBranch(Qi, delta, gradN);
 
-            return chainRule(statistics, node, gradQ.getData(), gradN.getData());
+            return chainRule(statistics, node, gradQ, gradN);
 
         }
 
-        abstract double[] chainRule(BranchSufficientStatistics statistics, NodeRef node, double[] gradQ, double[] gradN);
+        abstract double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
+                                    DenseMatrix64F gradQ, DenseMatrix64F gradN);
 
         private void getGradientQForBranch(DenseMatrix64F Wi, DenseMatrix64F Vi, DenseMatrix64F delta,
                                            DenseMatrix64F grad) {
@@ -166,7 +175,7 @@ public interface ContinuousTraitGradientForBranch {
             return new NormalSufficientStatistics(mean, totalP, totalV);
         }
 
-        private static final boolean DEBUG = false;
+        static final boolean DEBUG = false;
     }
 
     class RateGradient extends Default {
@@ -199,7 +208,7 @@ public interface ContinuousTraitGradientForBranch {
 
         @Override
         public double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
-                                  double[] gradQ, double[] gradN) {
+                                  DenseMatrix64F gradQ, DenseMatrix64F gradN) {
 
             final double rate = branchRateModel.getBranchRate(tree, node);
             final double differential = branchRateModel.getBranchRateDifferential(rate);
@@ -218,19 +227,105 @@ public interface ContinuousTraitGradientForBranch {
 
             double[] gradient = new double[1];
             for (int i = 0; i < gradVecQ.length; i++) {
-                gradient[0] += gradVecQ[i] * gradQ[i];
+                gradient[0] += gradVecQ[i] * gradQ.get(i);
             }
 
             // n_i w.r.t. rate
             // TODO: Fix delegate to (possibly) un-link drift from arbitrary rate
             DenseMatrix64F gradMatN = matrixJacobianN;
-            CommonOps.scale(scaling, statistics.getBranch().getRawMean(), gradMatN);
+            CommonOps.scale(scaling, statistics.getBranch().getRawDisplacement(), gradMatN);
             for (int i = 0; i < gradMatN.numRows; i++) {
-                gradient[0] += gradMatN.get(i) * gradN[i];
+                gradient[0] += gradMatN.get(i) * gradN.get(i);
             }
 
             return gradient;
 
         }
     }
+
+    class ContinuousProcessParameterGradient extends Default {
+        final DenseMatrix64F matrixJacobianQ;
+        final DenseMatrix64F matrixJacobianN;
+        final DenseMatrix64F matrix0;
+
+        ContinuousDataLikelihoodDelegate likelihoodDelegate;
+        ContinuousDiffusionIntegrator cdi;
+        DiffusionProcessDelegate diffusionProcessDelegate;
+
+        final DerivationParameter derivationParameter;
+
+        public ContinuousProcessParameterGradient(int dim, Tree tree,
+                                                  ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                  DerivationParameter derivationParameter) {
+            super(dim, tree);
+
+            this.likelihoodDelegate = likelihoodDelegate;
+            this.cdi = likelihoodDelegate.getIntegrator();
+            this.diffusionProcessDelegate = likelihoodDelegate.getDiffusionProcessDelegate();
+            this.derivationParameter = derivationParameter;
+
+            matrixJacobianQ = new DenseMatrix64F(dim, dim);
+            matrixJacobianN = new DenseMatrix64F(dim, 1);
+            matrix0 = new DenseMatrix64F(dim, dim);
+        }
+
+        @Override
+        public int getParameterIndexFromNode(NodeRef node) {
+            return 0;
+        }
+
+        @Override
+        public int getDimension() {
+            return dim * dim;
+        }
+
+        public enum DerivationParameter {
+            WRT_PRECISION {
+                @Override
+                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi,
+                                                      BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+                    cdi.getPrecisionPreOrderDerivative(statistics, gradientQ);
+                }
+            },
+            WRT_DRIFT {
+                @Override
+                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+                    throw new RuntimeException("not yet implemented");
+                }
+            },
+            WRT_SELECTION_STRENGTH {
+                @Override
+                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+                    throw new RuntimeException("not yet implemented");
+                }
+            };
+
+            abstract void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ);
+        }
+
+        @Override
+        public double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
+                                  DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+
+            derivationParameter.preOrderGradientPrecision(cdi, statistics, gradQ);
+
+            diffusionProcessDelegate.getGradientPrecision(getActiveMatrixIndex(node), cdi, gradQ);
+
+            if (DEBUG) {
+                System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQ));
+            }
+
+            return gradQ.getData();
+
+        }
+
+//        private int getPreOrderPartialIndex(NodeRef node) {
+//            return likelihoodDelegate.getPartialBufferCount() + node.getNumber();
+//        }
+
+        private int getActiveMatrixIndex(NodeRef node) {
+            return likelihoodDelegate.getActiveMatrixIndex(node.getNumber());
+        }
+    }
+
 }

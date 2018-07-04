@@ -6,11 +6,11 @@ package dr.evomodel.treedatalikelihood.preorder;
 public class BranchSufficientStatistics {
 
     private final NormalSufficientStatistics child;
-    private final NormalSufficientStatistics branch;
+    private final MatrixSufficientStatistics branch;
     private final NormalSufficientStatistics parent;
 
     BranchSufficientStatistics(NormalSufficientStatistics child,
-                               NormalSufficientStatistics branch,
+                               MatrixSufficientStatistics branch,
                                NormalSufficientStatistics parent) {
         this.child = child;
         this.branch = branch;
@@ -19,7 +19,7 @@ public class BranchSufficientStatistics {
 
     public NormalSufficientStatistics getChild() { return child; }
 
-    public NormalSufficientStatistics getBranch() { return branch; }
+    public MatrixSufficientStatistics getBranch() { return branch; }
 
     public NormalSufficientStatistics getParent() { return parent; }
 

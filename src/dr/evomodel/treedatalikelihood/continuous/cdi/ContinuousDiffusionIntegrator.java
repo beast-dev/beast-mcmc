@@ -25,12 +25,14 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.*;
+import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
 /**
  * @author Marc A. Suchard
@@ -108,6 +110,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex);
 
     int getBufferCount();
+
+    void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
 
     class Basic implements ContinuousDiffusionIntegrator {
 
@@ -872,6 +876,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 sb.append(" ").append(operations[offset + i]);
             }
             return sb.toString();
+        }
+
+        public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+            throw new RuntimeException("Not implemented for unsafe integrators.");
         }
 
         private static boolean DEBUG = false;

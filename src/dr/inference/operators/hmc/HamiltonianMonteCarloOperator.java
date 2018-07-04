@@ -66,7 +66,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         this.gradientProvider = gradientProvider;
 
-        // TODO Do not pass type-less ints as arguments, pass type-safe classes and enums
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
 
@@ -179,10 +178,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             leapFrogEngine.updatePosition(position, momentum, stepSize);
 
             if (i < (nStepsThisLeap - 1)) {
-                double[] gradient = gradientProvider.getGradientLogDensity();
                 leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                        gradient, stepSize);
-                preconditioning.storeSecant(new WrappedVector.Raw(gradient), new WrappedVector.Raw(position));
+                        gradientProvider.getGradientLogDensity(), stepSize);
             }
         }
 
@@ -239,6 +236,16 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
         abstract void checkValue(double x) throws NumericInstabilityException;
     }
 
+    @Override
+    public void accept(double deviation) {
+
+        super.accept(deviation);
+        preconditioning.storeSecant(
+                new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
+                new WrappedVector.Raw(leapFrogEngine.getLastPosition())
+        );
+    }
+
     protected InstabilityHandler getDefaultInstabilityHandler() {
         if (DEBUG) {
             return InstabilityHandler.DEBUG;
@@ -264,12 +271,17 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
         void setParameter(double[] position);
 
+        double[] getLastGradient();
+        double[] getLastPosition();
 
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
             final private InstabilityHandler instabilityHandler;
             final private MassPreconditioner preconditioning;
+
+            double[] lastGradient;
+            double[] lastPosition;
 
             protected Default(Parameter parameter, InstabilityHandler instabilityHandler,
                               MassPreconditioner preconditioning) {
@@ -289,6 +301,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             }
 
             @Override
+            public double[] getLastGradient() { return lastGradient; }
+
+            @Override
+            public double[] getLastPosition() { return lastPosition; }
+
+            @Override
             public void updateMomentum(double[] position, double[] momentum, double[] gradient,
                                        double functionalStepSize) throws NumericInstabilityException {
 
@@ -297,6 +315,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                     momentum[i] += functionalStepSize  * gradient[i];
                     instabilityHandler.checkValue(momentum[i]);
                 }
+
+                lastGradient = gradient;
+                lastPosition = position;
             }
 
             @Override
@@ -305,8 +326,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
 
                 final int dim = momentum.getDim();
                 for (int i = 0; i < dim; i++) {
-                    position[i] += functionalStepSize * preconditioning.getVelocity(i,
-                            momentum); // TODO Pass ReadableVector
+                    position[i] += functionalStepSize * preconditioning.getVelocity(i, momentum);
                 }
                 setParameter(position);
             }
@@ -319,7 +339,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 }
                 parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
             }
-
         }
 
         class WithTransform extends Default {

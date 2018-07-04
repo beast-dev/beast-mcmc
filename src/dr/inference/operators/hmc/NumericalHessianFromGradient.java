@@ -5,7 +5,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MachineAccuracy;
-import dr.util.Transform;
 
 public class NumericalHessianFromGradient implements HessianWrtParameterProvider {
     GradientWrtParameterProvider gradientProvider;
@@ -49,7 +48,7 @@ public class NumericalHessianFromGradient implements HessianWrtParameterProvider
         final int dim = gradientProvider.getDimension();
         double[][] hessian = new double[dim][dim];
 
-        double[] oldValues = gradientProvider.getParameter().getParameterValues();
+        final double[] oldValues = gradientProvider.getParameter().getParameterValues();
 
         double[][] gradientPlus = new double[dim][dim];
         double[][] gradientMinus = new double[dim][dim];
@@ -67,7 +66,7 @@ public class NumericalHessianFromGradient implements HessianWrtParameterProvider
 
         for (int i = 0; i < dim; i++) {
             for (int j = i; j < dim; j++) {
-                hessian[j][i] = hessian[i][j] = (gradientPlus[i][j] - gradientMinus[i][j]) / (4.0 * h[j]) + (gradientPlus[j][i] - gradientMinus[j][i]) / (4.0 * h[i]);
+                hessian[j][i] = hessian[i][j] = (gradientPlus[j][i] - gradientMinus[j][i]) / (4.0 * h[j]) + (gradientPlus[i][j] - gradientMinus[i][j]) / (4.0 * h[i]);
             }
         }
 

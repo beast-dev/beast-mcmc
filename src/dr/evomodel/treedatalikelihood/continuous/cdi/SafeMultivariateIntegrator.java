@@ -51,6 +51,18 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 precision, 0, dimTrait * dimTrait);
     }
 
+    @Override
+    public void getRootPrecision(int priorBufferIndex, double[] precision) {
+
+        assert (precision != null);
+        assert (precision.length >= dimTrait * dimTrait);
+
+        int priorOffset = dimPartial * priorBufferIndex;
+
+        System.arraycopy(partials, priorOffset + dimTrait,
+                precision, 0, dimTrait * dimTrait);
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     /// Setting variances, displacement and actualization vectors
     ///////////////////////////////////////////////////////////////////////////
@@ -498,7 +510,6 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
 
-
 //    private final Map<String, Long> startTimes = new HashMap<String, Long>();
 //
 //    private void startTime(String key) {
@@ -536,9 +547,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
                                            boolean incrementOuterProducts) {
-        assert(logLikelihoods.length == numTraits);
+        assert (logLikelihoods.length == numTraits);
 
-        assert(!incrementOuterProducts);
+        assert (!incrementOuterProducts);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

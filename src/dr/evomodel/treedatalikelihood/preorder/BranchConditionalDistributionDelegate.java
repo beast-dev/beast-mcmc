@@ -98,7 +98,12 @@ public class BranchConditionalDistributionDelegate extends
         List<BranchSufficientStatistics> statistics = new ArrayList<BranchSufficientStatistics>();
 
         cdi.getPostOrderPartial(nodeNumber, childPartial);
-        cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
+        if (tree.isRoot(node)){
+            cdi.getRootMatrices(likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(),
+                    branchPrecision, branchDisplacement, branchActualization);
+        } else {
+            cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
+        }
         cdi.getPreOrderPartial(nodeNumber, parentPartial);
 
 

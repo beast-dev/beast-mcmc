@@ -61,6 +61,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement, double[] expectation);
 
+    void getRootMatrices(int priorBufferIndex, final double[] precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
+
+    void getRootPrecision(int priorBufferIndex, double[] precision);
+
     @SuppressWarnings("unused")
     void setPreOrderPartial(int bufferIndex, final double[] partial);
 
@@ -241,10 +245,14 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void getBranchDisplacement(int bufferIndex, double[] displacement) {
-
             if (bufferIndex == -1) {
                 throw new RuntimeException("Not yet implemented");
             }
+
+            getDefaultDisplacement(displacement);
+        }
+
+        private void getDefaultDisplacement(double[] displacement) {
 
             assert (displacement != null);
             assert (displacement.length >= dimTrait);
@@ -278,6 +286,43 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
             for (int i = 0; i < dimTrait; ++i) {
                 actualization[i] = 1.0;
+            }
+        }
+
+        private void getDefaultActualization(double[] actualization) {
+
+            assert (actualization != null);
+            assert (actualization.length >= dimTrait);
+
+            if (actualization.length >= dimTrait * dimTrait) {
+                for (int i = 0; i < dimTrait; ++i) {
+                    actualization[i * dimTrait + i] = 1.0;
+                }
+            } else {
+                for (int i = 0; i < dimTrait; ++i) {
+                    actualization[i] = 1.0;
+                }
+            }
+        }
+
+        @Override
+        public void getRootMatrices(int priorBufferIndex, double[] precision, double[] displacement, double[] actualization) {
+
+            getRootPrecision(priorBufferIndex, precision);
+            getDefaultDisplacement(displacement);
+            getDefaultActualization(actualization);
+        }
+
+        @Override
+        public void getRootPrecision(int priorBufferIndex, double[] precision) {
+
+            assert (precision != null);
+            assert (precision.length >= dimTrait * dimTrait);
+
+            int priorOffset = dimPartial * priorBufferIndex;
+            final double priorScalar = partials[priorOffset + dimTrait];
+            for (int i = 0; i < dimTrait * dimTrait; ++i) {
+                precision[i] = priorScalar * diffusions[precisionOffset + i];
             }
         }
 

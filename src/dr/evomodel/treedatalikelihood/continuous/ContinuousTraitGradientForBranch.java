@@ -121,12 +121,17 @@ public interface ContinuousTraitGradientForBranch {
             if (getGradientQ) getGradientQForBranch(Wi, Vi, delta, gradQ);
             if (getGradientN) getGradientNForBranch(Qi, delta, gradN);
 
-            return chainRule(statistics, node, gradQ, gradN);
-
+            if (tree.isRoot(node)) {
+                return chainRuleRoot(node, gradQ, gradN);
+            } else {
+                return chainRule(statistics, node, gradQ, gradN);
+            }
         }
 
         abstract double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
                                     DenseMatrix64F gradQ, DenseMatrix64F gradN);
+
+        abstract double[] chainRuleRoot(NodeRef node, DenseMatrix64F gradQ, DenseMatrix64F gradN);
 
         private void getGradientQForBranch(DenseMatrix64F Wi, DenseMatrix64F Vi, DenseMatrix64F delta,
                                            DenseMatrix64F grad) {
@@ -198,6 +203,7 @@ public interface ContinuousTraitGradientForBranch {
 
         @Override
         public int getParameterIndexFromNode(NodeRef node) {
+            if (tree.isRoot(node)) return 0;
             return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
         }
 
@@ -239,6 +245,13 @@ public interface ContinuousTraitGradientForBranch {
             }
 
             return gradient;
+
+        }
+
+        @Override
+        public double[] chainRuleRoot(NodeRef node, DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+
+            return new double[1];
 
         }
     }
@@ -309,7 +322,14 @@ public interface ContinuousTraitGradientForBranch {
 
             derivationParameter.preOrderGradientPrecision(cdi, statistics, gradQ);
 
-            diffusionProcessDelegate.getGradientPrecision(getActiveMatrixIndex(node), cdi, gradQ);
+            return chainRuleRoot(node, gradQ, gradN);
+
+        }
+
+        @Override
+        public double[] chainRuleRoot(NodeRef node, DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+
+            diffusionProcessDelegate.getGradientPrecision(getScalarNode(node), gradQ);
 
             if (DEBUG) {
                 System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQ));
@@ -325,6 +345,14 @@ public interface ContinuousTraitGradientForBranch {
 
         private int getActiveMatrixIndex(NodeRef node) {
             return likelihoodDelegate.getActiveMatrixIndex(node.getNumber());
+        }
+
+        private double getScalarNode(NodeRef node) {
+            if (tree.isRoot(node)) {
+                return likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
+            } else {
+                return cdi.getInverseBranchLength(getActiveMatrixIndex(node));
+            }
         }
     }
 

@@ -164,42 +164,84 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
 
         // Wishart Statistic
+        ContinuousDataLikelihoodDelegate cdld = (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
         WishartStatisticsWrapper wishartStatistics
                 = new WishartStatisticsWrapper("wishart", "trait", dataLikelihood,
-                (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate());
+                cdld);
 
-        GradientWrtPrecisionProvider gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+        GradientWrtPrecisionProvider gPPWiwhart = new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+
+        // Branch Specific
+        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
+                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                        dim, treeModel, cdld,
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+        BranchSpecificGradient branchSpecificGradient =
+                new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrix);
+
+        GradientWrtPrecisionProvider gPPBranchSpecific = new GradientWrtPrecisionProvider.BranchSpecificGradientWrtPrecisionProvider(branchSpecificGradient);
+
 
         // Correlation Gradient
-        CorrelationPrecisionGradient gradientProvider = new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrix);
+        CorrelationPrecisionGradient gradientProviderWishart = new CorrelationPrecisionGradient(gPPWiwhart, dataLikelihood, precisionMatrix);
 
-        String s = gradientProvider.getReport();
-        System.err.println(s);
-        double[] gradientAnalytical = parseGradient(s, "analytic");
-        double[] gradientNumeric = parseGradient(s, "numeric (with Cholesky):");
+        String sW = gradientProviderWishart.getReport();
+        System.err.println(sW);
+        double[] gradientAnalyticalW = parseGradient(sW, "analytic");
+        double[] gradientNumeric = parseGradient(sW, "numeric (with Cholesky):");
 
-        assertEquals("Sizes", gradientAnalytical.length, gradientNumeric.length);
+        assertEquals("Sizes", gradientAnalyticalW.length, gradientNumeric.length);
 
-        for (int k = 0; k < gradientAnalytical.length; k++) {
+        for (int k = 0; k < gradientAnalyticalW.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientAnalytical[k]),
+                    format.format(gradientAnalyticalW[k]),
                     format.format(gradientNumeric[k]));
         }
 
+        // Correlation Gradient Branch Specific
+        CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrix);
+
+        String sBS = gradientProviderBranchSpecific.getReport();
+        System.err.println(sBS);
+        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
+
+        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+
+        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    format.format(gradientAnalyticalBS[k]),
+                    format.format(gradientAnalyticalW[k]));
+        }
+
         // Diagonal Gradient
-        DiagonalPrecisionGradient gradientDiagonalProvider = new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrix);
+        DiagonalPrecisionGradient gradientDiagonalProviderW = new DiagonalPrecisionGradient(gPPWiwhart, dataLikelihood, precisionMatrix);
 
-        String sDiag = gradientDiagonalProvider.getReport();
-        System.err.println(sDiag);
-        double[] gradientDiagonalAnalytical = parseGradient(sDiag, "analytic");
-        double[] gradientDiagonalNumeric = parseGradient(sDiag, "numeric:");
+        String sDiagW = gradientDiagonalProviderW.getReport();
+        System.err.println(sDiagW);
+        double[] gradientDiagonalAnalyticalW = parseGradient(sDiagW, "analytic");
+        double[] gradientDiagonalNumeric = parseGradient(sDiagW, "numeric:");
 
-        assertEquals("Sizes", gradientDiagonalAnalytical.length, gradientDiagonalNumeric.length);
+        assertEquals("Sizes", gradientDiagonalAnalyticalW.length, gradientDiagonalNumeric.length);
 
-        for (int k = 0; k < gradientDiagonalAnalytical.length; k++) {
+        for (int k = 0; k < gradientDiagonalAnalyticalW.length; k++) {
             assertEquals("gradient diagonal k=" + k,
-                    format.format(gradientDiagonalAnalytical[k]),
+                    format.format(gradientDiagonalAnalyticalW[k]),
                     format.format(gradientDiagonalNumeric[k]));
+        }
+
+        // Diagonal Gradient Branch Specific
+        DiagonalPrecisionGradient gradientDiagonalProviderBS = new DiagonalPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrix);
+
+        String sDiagBS = gradientDiagonalProviderBS.getReport();
+        System.err.println(sDiagBS);
+        double[] gradientDiagonalAnalyticalBS = parseGradient(sDiagBS, "analytic");
+
+        assertEquals("Sizes", gradientDiagonalAnalyticalBS.length, gradientDiagonalAnalyticalW.length);
+
+        for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    format.format(gradientDiagonalAnalyticalBS[k]),
+                    format.format(gradientDiagonalAnalyticalW[k]));
         }
     }
 
@@ -241,42 +283,82 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
 
         // Wishart Statistic
+        ContinuousDataLikelihoodDelegate cdld = (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
         WishartStatisticsWrapper wishartStatistics
-                = new WishartStatisticsWrapper("wishart", "trait", dataLikelihood,
-                (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate());
+                = new WishartStatisticsWrapper("wishart", "trait", dataLikelihood, cdld);
 
-        GradientWrtPrecisionProvider gradientWrtPrecisionProvider = (GradientWrtPrecisionProvider) new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+        GradientWrtPrecisionProvider gradientWrtPrecisionProvider = new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
+
+        // Branch Specific
+        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
+                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                        dim, treeModel, cdld,
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+        BranchSpecificGradient branchSpecificGradient =
+                new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrix);
+
+        GradientWrtPrecisionProvider gPPBranchSpecific = new GradientWrtPrecisionProvider.BranchSpecificGradientWrtPrecisionProvider(branchSpecificGradient);
 
         // Correlation Gradient
-        CorrelationPrecisionGradient gradientProvider = new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrixInv);
+        CorrelationPrecisionGradient gradientProviderW = new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrixInv);
 
-        String s = gradientProvider.getReport();
-        System.err.println(s);
-        double[] gradientAnalytical = parseGradient(s, "analytic");
-        double[] gradientNumeric = parseGradient(s, "numeric (with Cholesky):");
+        String sW = gradientProviderW.getReport();
+        System.err.println(sW);
+        double[] gradientAnalyticalW = parseGradient(sW, "analytic");
+        double[] gradientNumeric = parseGradient(sW, "numeric (with Cholesky):");
 
-        assertEquals("Sizes", gradientAnalytical.length, gradientNumeric.length);
+        assertEquals("Sizes", gradientAnalyticalW.length, gradientNumeric.length);
 
-        for (int k = 0; k < gradientAnalytical.length; k++) {
+        for (int k = 0; k < gradientAnalyticalW.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientAnalytical[k]),
+                    format.format(gradientAnalyticalW[k]),
                     format.format(gradientNumeric[k]));
         }
 
+        // Correlation Gradient Branch Specific
+        CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrixInv);
+
+        String sBS = gradientProviderBranchSpecific.getReport();
+        System.err.println(sBS);
+        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
+
+        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+
+        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    format.format(gradientAnalyticalBS[k]),
+                    format.format(gradientAnalyticalW[k]));
+        }
+
         // Diagonal Gradient
-        DiagonalPrecisionGradient gradientDiagonalProvider = new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrixInv);
+        DiagonalPrecisionGradient gradientDiagonalProviderW = new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, dataLikelihood, precisionMatrixInv);
 
-        String sDiag = gradientDiagonalProvider.getReport();
-        System.err.println(sDiag);
-        double[] gradientDiagonalAnalytical = parseGradient(sDiag, "analytic");
-        double[] gradientDiagonalNumeric = parseGradient(sDiag, "numeric:");
+        String sDiagW = gradientDiagonalProviderW.getReport();
+        System.err.println(sDiagW);
+        double[] gradientDiagonalAnalyticalW = parseGradient(sDiagW, "analytic");
+        double[] gradientDiagonalNumeric = parseGradient(sDiagW, "numeric:");
 
-        assertEquals("Sizes", gradientDiagonalAnalytical.length, gradientDiagonalNumeric.length);
+        assertEquals("Sizes", gradientDiagonalAnalyticalW.length, gradientDiagonalNumeric.length);
 
-        for (int k = 0; k < gradientDiagonalAnalytical.length; k++) {
+        for (int k = 0; k < gradientDiagonalAnalyticalW.length; k++) {
             assertEquals("gradient diagonal k=" + k,
-                    format.format(gradientDiagonalAnalytical[k]),
+                    format.format(gradientDiagonalAnalyticalW[k]),
                     format.format(gradientDiagonalNumeric[k]));
+        }
+
+        // Diagonal Gradient Branch Specific
+        DiagonalPrecisionGradient gradientDiagonalProviderBS = new DiagonalPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrixInv);
+
+        String sDiagBS = gradientDiagonalProviderBS.getReport();
+        System.err.println(sDiagBS);
+        double[] gradientDiagonalAnalyticalBS = parseGradient(sDiagBS, "analytic");
+
+        assertEquals("Sizes", gradientDiagonalAnalyticalBS.length, gradientDiagonalAnalyticalW.length);
+
+        for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    format.format(gradientDiagonalAnalyticalBS[k]),
+                    format.format(gradientDiagonalAnalyticalW[k]));
         }
     }
 

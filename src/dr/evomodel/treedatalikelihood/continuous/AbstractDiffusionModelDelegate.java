@@ -195,7 +195,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
-    public void getGradientPrecision(int i, ContinuousDiffusionIntegrator cdi, DenseMatrix64F gradient) {
-        CommonOps.scale(cdi.getInverseBranchLength(i), gradient);
+    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
+        CommonOps.scale(scalar, gradient);
     }
 }

@@ -52,7 +52,7 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
     private final TreeTrait<List<BranchSufficientStatistics>> treeTraitProvider;
     private final Tree tree;
     private final int nTraits;
-//    private final int dim;
+    //    private final int dim;
     private final Parameter parameter;
     //    private final ArbitraryBranchRates branchRateModel;
     private final ContinuousTraitGradientForBranch branchProvider;
@@ -120,23 +120,23 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
 
-            if (!tree.isRoot(node)) {
+//            if (!tree.isRoot(node)) {
 
-                List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
+            List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
 
-                assert (statisticsForNode.size() == nTraits);
+            assert (statisticsForNode.size() == nTraits);
 
-                double[] gradient;
+            double[] gradient;
 //                for (int trait = 0; trait < nTraits; ++trait) { // TODO deal with several traits
-                gradient = branchProvider.getGradientForBranch(statisticsForNode.get(0), node);
+            gradient = branchProvider.getGradientForBranch(statisticsForNode.get(0), node);
 //                }
 
-                final int destinationIndex = getParameterIndexFromNode(node);
-                assert (destinationIndex != -1);
-                for (int j = 0; j < dimGradient; j++) {
-                    result[destinationIndex * dimGradient + j] += gradient[j];
-                }
+            final int destinationIndex = getParameterIndexFromNode(node);
+            assert (destinationIndex != -1);
+            for (int j = 0; j < dimGradient; j++) {
+                result[destinationIndex * dimGradient + j] += gradient[j];
             }
+//            }
         }
 
         return result;

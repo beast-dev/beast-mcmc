@@ -68,7 +68,7 @@ public interface DiffusionProcessDelegate extends Model {
 
     boolean hasDiagonalActualization();
 
-    void getGradientPrecision(int i, ContinuousDiffusionIntegrator cdi, DenseMatrix64F gradient);
+    void getGradientPrecision(double scalar, DenseMatrix64F gradient);
 
     void storeState();
 

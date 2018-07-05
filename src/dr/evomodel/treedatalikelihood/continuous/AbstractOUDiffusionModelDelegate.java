@@ -99,7 +99,7 @@ public abstract class AbstractOUDiffusionModelDelegate extends AbstractDriftDiff
     }
 
     @Override
-    public void getGradientPrecision(int i, ContinuousDiffusionIntegrator cdi, DenseMatrix64F gradient) {
+    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
         throw new RuntimeException("not yet implemented");
     }
 }

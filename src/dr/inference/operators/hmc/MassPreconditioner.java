@@ -7,11 +7,12 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.math.AdaptableCovariance;
 import dr.math.MathUtils;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
 
 /**
@@ -53,6 +54,13 @@ public interface MassPreconditioner {
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
                 SecantHessian secantHessian = new SecantHessian(gradient, 3);  // TODO make size an option
                 return new Secant(secantHessian, transform);
+            }
+        },
+        ADAPTIVE("adaptive") {
+            @Override
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+                AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
+                return new AdaptivePreconditioning(adaptableCovariance, transform, gradient.getDimension());
             }
         };
 
@@ -119,7 +127,12 @@ public interface MassPreconditioner {
         HessianBased(HessianWrtParameterProvider hessian,
                      Transform transform) {
 
-            this.dim = hessian.getDimension();
+            this(hessian, transform, hessian.getDimension());
+
+        }
+
+        HessianBased(HessianWrtParameterProvider hessian, Transform transform, int dim) {
+            this.dim = dim;
             this.hessian = hessian;
             this.transform = transform;
 
@@ -213,18 +226,20 @@ public interface MassPreconditioner {
             super(hessian, transform);
         }
 
-        @Override
-        protected double[] computeInverseMass() {
+        FullPreconditioning(HessianWrtParameterProvider hessian, Transform transform, int dim) {
+            super(hessian, transform, dim);
+        }
 
-            double[][] hessianMatrix = hessian.getHessianLogDensity();
+        private double[] computeInverseMass(WrappedMatrix.ArrayOfArray hessianMatrix) {
+
+            double[][] transformedHessian = hessianMatrix.getArrays();
 
             if (transform != null) {
-                hessianMatrix = transform.updateHessianLogDensity(hessianMatrix, new double[dim][dim], hessian.getGradientLogDensity(), hessian.getParameter().getParameterValues(), 0, dim);
+                transformedHessian = transform.updateHessianLogDensity(transformedHessian, new double[dim][dim], hessian.getGradientLogDensity(), hessian.getParameter().getParameterValues(), 0, dim);
             }
-
             Algebra algebra = new Algebra();
 
-            DoubleMatrix2D H = new DenseDoubleMatrix2D(hessianMatrix);
+            DoubleMatrix2D H = new DenseDoubleMatrix2D(transformedHessian);
             RobustEigenDecomposition decomposition = new RobustEigenDecomposition(H);
             DoubleMatrix1D eigenvalues = decomposition.getRealEigenvalues();
 
@@ -239,11 +254,19 @@ public interface MassPreconditioner {
                     algebra.inverse(V)
             ).toArray();
 
-            double[] inverseMassArray = new double[hessian.getDimension() * hessian.getDimension()];
-            for (int i = 0; i < hessian.getDimension(); i++) {
-                System.arraycopy(negativeHessianInverse[i], 0, inverseMassArray, i * hessian.getDimension(), hessian.getDimension());
+            double[] inverseMassArray = new double[dim * dim];
+            for (int i = 0; i < dim; i++) {
+                System.arraycopy(negativeHessianInverse[i], 0, inverseMassArray, i * dim, dim);
             }
             return inverseMassArray;
+        }
+
+        @Override
+        protected double[] computeInverseMass() {
+            //TODO: change to ReadableMatrix
+            WrappedMatrix.ArrayOfArray hessianMatrix = new WrappedMatrix.ArrayOfArray(hessian.getHessianLogDensity());
+
+            return computeInverseMass(hessianMatrix);
         }
 
         private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
@@ -330,6 +353,39 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             secantHessian.storeSecant(gradient, position);
+        }
+    }
+
+    class AdaptivePreconditioning extends FullPreconditioning {
+
+        private final AdaptableCovariance adaptableCovariance;
+
+        AdaptivePreconditioning(AdaptableCovariance adaptableCovariance, Transform transform, int dim) {
+            super(null, transform, dim);
+            this.adaptableCovariance = adaptableCovariance;
+        }
+
+        @Override
+        protected double[] computeInverseMass() {
+
+            if (adaptableCovariance != null) {
+
+                WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
+
+                return super.computeInverseMass(covariance);
+            } else {
+                double[] output = new double[dim * dim];
+                for (int i = 0; i < dim; i++) {
+                    output[i * dim + i] = 1.0;
+                }
+                return output;
+            }
+
+        }
+
+        @Override
+        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+            adaptableCovariance.update(gradient);
         }
     }
 }

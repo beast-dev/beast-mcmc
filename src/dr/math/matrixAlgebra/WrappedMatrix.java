@@ -194,6 +194,10 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
             throw new RuntimeException("Not yet implemented");
         }
 
+        public double[][] getArrays() {
+            return arrays;
+        }
+
         @Override
         public int getOffset() {
             return 0;

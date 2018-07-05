@@ -60,7 +60,7 @@ public interface MassPreconditioner {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
                 AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
-                return new AdaptivePreconditioning(adaptableCovariance, transform, gradient.getDimension());
+                return new AdaptivePreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension());
             }
         };
 
@@ -230,12 +230,12 @@ public interface MassPreconditioner {
             super(hessian, transform, dim);
         }
 
-        private double[] computeInverseMass(WrappedMatrix.ArrayOfArray hessianMatrix) {
+        private double[] computeInverseMass(WrappedMatrix.ArrayOfArray hessianMatrix, GradientWrtParameterProvider gradientProvider) {
 
             double[][] transformedHessian = hessianMatrix.getArrays();
 
-            if (transform != null) {
-                transformedHessian = transform.updateHessianLogDensity(transformedHessian, new double[dim][dim], hessian.getGradientLogDensity(), hessian.getParameter().getParameterValues(), 0, dim);
+            if (transform != null) { // TODO: change 0 matrix into general TransformationHessian
+                transformedHessian = transform.updateHessianLogDensity(transformedHessian, new double[dim][dim], gradientProvider.getGradientLogDensity(), gradientProvider.getParameter().getParameterValues(), 0, dim);
             }
             Algebra algebra = new Algebra();
 
@@ -266,7 +266,7 @@ public interface MassPreconditioner {
             //TODO: change to ReadableMatrix
             WrappedMatrix.ArrayOfArray hessianMatrix = new WrappedMatrix.ArrayOfArray(hessian.getHessianLogDensity());
 
-            return computeInverseMass(hessianMatrix);
+            return computeInverseMass(hessianMatrix, hessian);
         }
 
         private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
@@ -359,10 +359,12 @@ public interface MassPreconditioner {
     class AdaptivePreconditioning extends FullPreconditioning {
 
         private final AdaptableCovariance adaptableCovariance;
+        private final GradientWrtParameterProvider gradientProvider;
 
-        AdaptivePreconditioning(AdaptableCovariance adaptableCovariance, Transform transform, int dim) {
+        AdaptivePreconditioning(GradientWrtParameterProvider gradientProvider, AdaptableCovariance adaptableCovariance, Transform transform, int dim) {
             super(null, transform, dim);
             this.adaptableCovariance = adaptableCovariance;
+            this.gradientProvider = gradientProvider;
         }
 
         @Override
@@ -372,7 +374,7 @@ public interface MassPreconditioner {
 
                 WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
 
-                return super.computeInverseMass(covariance);
+                return super.computeInverseMass(covariance, gradientProvider);
             } else {
                 double[] output = new double[dim * dim];
                 for (int i = 0; i < dim; i++) {

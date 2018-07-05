@@ -101,6 +101,49 @@
 
     </operators>
 
+    <operators id="operators.hmc.adaptivePreconditioning">
+
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true" preconditioning="secant" preconditioningUpdateFrequency="1">
+            <gradient>
+                <distributionLikelihood idref="distribution"/>
+            </gradient>
+            <parameter idref="draw"/>
+        </hamiltonianMonteCarloOperator>
+
+    </operators>
+
+    <mcmc id="mcmc.hmc.adaptivePreconditioning" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc.adaptivePreconditioning">
+                <distributionLikelihood idref="distribution"/>
+                <dummyLikelihood>
+                    <distributionLikelihood idref="distribution"/>
+                    <parameter idref="draw"/>
+                </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc.adaptivePreconditioning"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmc.adaptivePreconditioning"/>
+            </column>
+            <column label="Draw" sf="6" width="12">
+                <parameter idref="draw"/>
+            </column>
+        </log>
+        <log logEvery="1" fileName="testMvnHmcAdaptivePreconditioning.log">
+            <likelihood idref="likelihood.hmc.adaptivePreconditioning"/>
+            <parameter idref="draw"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc.hmc.adaptivePreconditioning"/>
+        </property>
+    </report>
+
     <mcmc id="mcmc.hmc.secantPreconditioning" chainLength="50000" autoOptimize="true">
         <posterior>
             <likelihood id="likelihood.hmc.secantPreconditioning">
@@ -262,6 +305,7 @@
     <traceAnalysis fileName="testMvnHmcDiagonalPreconditioning.log" stdError="true"/>
     <traceAnalysis fileName="testMvnHmcFullPreconditioning.log" stdError="true"/>
     <traceAnalysis fileName="testMvnHmcSecantPreconditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcAdaptivePreconditioning.log" stdError="true"/>
  <!--&ndash;&gt;-->
 
 </beast>

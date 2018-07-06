@@ -262,7 +262,7 @@ public interface MassPreconditioner {
                     inverseNegateEigenvalues(eigenvalues);
                 }
             },
-            None("Transform matrix into a PD matrix") {
+            Default("Transform matrix into a PD matrix") {
                 @Override
                 protected void transformEigenvalues(DoubleMatrix1D eigenvalues) {
                     negateEigenvalues(eigenvalues);
@@ -435,7 +435,7 @@ public interface MassPreconditioner {
 
             WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
 
-            return super.computeInverseMass(covariance, gradientProvider, PDTransformMatrix.None);
+            return super.computeInverseMass(covariance, gradientProvider, PDTransformMatrix.Default);
 
         }
 

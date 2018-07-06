@@ -8,6 +8,7 @@ import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.AdaptableCovariance;
+import dr.math.AdaptableVector;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
@@ -152,12 +153,12 @@ public interface MassPreconditioner {
 
     class DiagonalPreconditioning extends HessianBased {
 
-        AdaptableCovariance adaptableCovariance;  //TODO: make an AdaptableVector class
+        private AdaptableVector.Default adaptiveDiagonalHessian;
 
         DiagonalPreconditioning(HessianWrtParameterProvider hessian,
                                 Transform transform) {
             super(hessian, transform);
-            this.adaptableCovariance = new AdaptableCovariance(hessian.getDimension());
+            this.adaptiveDiagonalHessian = new AdaptableVector.Default(hessian.getDimension());
         }
 
         @Override
@@ -199,9 +200,9 @@ public interface MassPreconditioner {
                 );
             }
 
-            adaptableCovariance.update(new WrappedVector.Raw(newDiagonalHessian));
+            adaptiveDiagonalHessian.update(new WrappedVector.Raw(newDiagonalHessian));
 
-            return boundMassInverse(((WrappedVector)adaptableCovariance.getMean()).getBuffer());
+            return boundMassInverse(((WrappedVector) adaptiveDiagonalHessian.getMean()).getBuffer());
         }
 
         private double[] boundMassInverse(double[] diagonalHessian) {

@@ -14,16 +14,14 @@ public class AdaptableCovariance {
 
     final private int dim;
     final private double[][] empirical;
-    final private double[] oldMeans;
-    final private double[] newMeans;
+    final private AdaptableVector.Default means;
 
     private int updates;
 
     public AdaptableCovariance(int dim) {
         this.dim = dim;
         this.empirical = new double[dim][dim];
-        this.oldMeans = new double[dim];
-        this.newMeans = new double[dim];
+        this.means = new AdaptableVector.Default(dim);
 
         updates = 0;
     }
@@ -38,7 +36,7 @@ public class AdaptableCovariance {
 
             ++updates;
 
-            updateMean(x);
+            means.update(x);
 
             if (updates > 1) {
                 updateVariance(x);
@@ -51,17 +49,10 @@ public class AdaptableCovariance {
     }
 
     public ReadableVector getMean() {
-        return new WrappedVector.Raw(newMeans);
+        return means.getMean();
     }
 
     protected boolean shouldUpdate() { return true; }
-
-    private void updateMean(ReadableVector x) {
-        for (int i = 0; i < dim; i++) {
-            oldMeans[i] = newMeans[i];
-            newMeans[i] = ((oldMeans[i] * (updates - 1)) + x.get(i)) / updates;
-        }
-    }
 
     private void updateVariance(ReadableVector x) {
         for (int i = 0; i < dim; i++) {
@@ -76,7 +67,7 @@ public class AdaptableCovariance {
 
         double result = currentMatrixEntry * (updates - 2);
         result += (values.get(firstIndex) * values.get(secondIndex));
-        result += ((updates - 1) * oldMeans[firstIndex] * oldMeans[secondIndex] - updates * newMeans[firstIndex] * newMeans[secondIndex]);
+        result += ((updates - 1) * means.getOldMeans(firstIndex) * means.getOldMeans(secondIndex) - updates * means.getNewMeans(firstIndex) * means.getNewMeans(secondIndex));
         result /= ((double)(updates - 1));
 
         return result;

@@ -3,6 +3,7 @@ package dr.math;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
@@ -49,10 +50,15 @@ public class AdaptableCovariance {
         return new WrappedMatrix.ArrayOfArray(empirical);
     }
 
+    public ReadableVector getMean() {
+        return new WrappedVector.Raw(newMeans);
+    }
+
     protected boolean shouldUpdate() { return true; }
 
     private void updateMean(ReadableVector x) {
         for (int i = 0; i < dim; i++) {
+            oldMeans[i] = newMeans[i];
             newMeans[i] = ((oldMeans[i] * (updates - 1)) + x.get(i)) / updates;
         }
     }

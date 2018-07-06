@@ -9,8 +9,6 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.math.AdaptableCovariance;
 import dr.math.MathUtils;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
@@ -136,12 +134,14 @@ public interface MassPreconditioner {
             this.hessian = hessian;
             this.transform = transform;
 
-            updateMass();
+            initializeMass();
         }
 
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
         }
+
+        abstract protected void initializeMass();
 
         abstract protected double[] computeInverseMass();
 
@@ -152,10 +152,22 @@ public interface MassPreconditioner {
 
     class DiagonalPreconditioning extends HessianBased {
 
+        AdaptableCovariance adaptableCovariance;  //TODO: make an AdaptableVector class
 
         DiagonalPreconditioning(HessianWrtParameterProvider hessian,
                                 Transform transform) {
             super(hessian, transform);
+            this.adaptableCovariance = new AdaptableCovariance(hessian.getDimension());
+        }
+
+        @Override
+        protected void initializeMass() {
+
+            double[] result = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                result[i] = 1.0;
+            }
+            inverseMass = result;
         }
 
         @Override
@@ -173,7 +185,7 @@ public interface MassPreconditioner {
         @Override
         protected double[] computeInverseMass() {
 
-            double[] diagonalHessian = hessian.getDiagonalHessianLogDensity();
+            double[] newDiagonalHessian = hessian.getDiagonalHessianLogDensity();
 
             if (transform != null) {
 
@@ -181,13 +193,15 @@ public interface MassPreconditioner {
 
                 double[] gradient = hessian.getGradientLogDensity();
 
-                diagonalHessian = transform.updateDiagonalHessianLogDensity(
-                        diagonalHessian, gradient, untransformedValues, 0, dim
+                newDiagonalHessian = transform.updateDiagonalHessianLogDensity(
+                        newDiagonalHessian, gradient, untransformedValues, 0, dim
 
                 );
             }
 
-            return boundMassInverse(diagonalHessian);
+            adaptableCovariance.update(new WrappedVector.Raw(newDiagonalHessian));
+
+            return boundMassInverse(((WrappedVector)adaptableCovariance.getMean()).getBuffer());
         }
 
         private double[] boundMassInverse(double[] diagonalHessian) {
@@ -230,35 +244,122 @@ public interface MassPreconditioner {
             super(hessian, transform, dim);
         }
 
-        private double[] computeInverseMass(WrappedMatrix.ArrayOfArray hessianMatrix, GradientWrtParameterProvider gradientProvider) {
+        @Override
+        protected void initializeMass() {
+
+            double[] result = new double[dim * dim];
+            for (int i = 0; i < dim; i++) {
+                result[i * dim + i] = 1.0;
+            }
+            inverseMass = result;
+
+        }
+
+        enum PDTransformMatrix{
+            Invert("Transform inverse matrix into a PD matrix") {
+                @Override
+                protected void transformEigenvalues(DoubleMatrix1D eigenvalues) {
+                    inverseNegateEigenvalues(eigenvalues);
+                }
+            },
+            None("Transform matrix into a PD matrix") {
+                @Override
+                protected void transformEigenvalues(DoubleMatrix1D eigenvalues) {
+                    negateEigenvalues(eigenvalues);
+                }
+            };
+
+            String desc;
+
+            PDTransformMatrix(String s) {
+                desc = s;
+            }
+
+            public String toString() {
+                return desc;
+            }
+
+            private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
+            private static final double MAX_EIGENVALUE = -0.5; // TODO Bad magic number
+
+            private void boundEigenvalues(DoubleMatrix1D eigenvalues) {
+
+                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                    if (eigenvalues.get(i) > MAX_EIGENVALUE) {
+                        eigenvalues.set(i, MAX_EIGENVALUE);
+                    } else if (eigenvalues.get(i) < MIN_EIGENVALUE) {
+                        eigenvalues.set(i, MIN_EIGENVALUE);
+                    }
+                }
+            }
+
+            private void scaleEigenvalues(DoubleMatrix1D eigenvalues) {
+                double sum = 0.0;
+                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                    sum += eigenvalues.get(i);
+                }
+
+                double mean = -sum / eigenvalues.cardinality();
+
+                for (int i = 0; i < eigenvalues.cardinality(); ++i) {
+                    eigenvalues.set(i, eigenvalues.get(i) / mean);
+                }
+            }
+
+            protected void normalizeEigenvalues(DoubleMatrix1D eigenvalues) {
+                boundEigenvalues(eigenvalues);
+                scaleEigenvalues(eigenvalues);
+            }
+
+            protected void inverseNegateEigenvalues(DoubleMatrix1D eigenvalues) {
+                for (int i = 0; i < eigenvalues.cardinality(); i++) {
+                    eigenvalues.set(i, -1.0 / eigenvalues.get(i));
+                }
+            }
+
+            protected void negateEigenvalues(DoubleMatrix1D eigenvalues) {
+                for (int i = 0; i < eigenvalues.cardinality(); i++) {
+                    eigenvalues.set(i, -eigenvalues.get(i));
+                }
+            }
+
+            public double[] transformMatrix(double[][] inputMatrix, int dim) {
+                Algebra algebra = new Algebra();
+
+                DoubleMatrix2D H = new DenseDoubleMatrix2D(inputMatrix);
+                RobustEigenDecomposition decomposition = new RobustEigenDecomposition(H);
+                DoubleMatrix1D eigenvalues = decomposition.getRealEigenvalues();
+
+                normalizeEigenvalues(eigenvalues);
+
+                DoubleMatrix2D V = decomposition.getV();
+
+                transformEigenvalues(eigenvalues);
+
+                double[][] negativeHessianInverse = algebra.mult(
+                        algebra.mult(V, DoubleFactory2D.dense.diagonal(eigenvalues)),
+                        algebra.inverse(V)
+                ).toArray();
+
+                double[] massArray = new double[dim * dim];
+                for (int i = 0; i < dim; i++) {
+                    System.arraycopy(negativeHessianInverse[i], 0, massArray, i * dim, dim);
+                }
+                return massArray;
+            }
+
+            abstract protected  void transformEigenvalues(DoubleMatrix1D eigenvalues);
+        }
+
+        private double[] computeInverseMass(WrappedMatrix.ArrayOfArray hessianMatrix, GradientWrtParameterProvider gradientProvider, PDTransformMatrix pdTransformMatrix) {
 
             double[][] transformedHessian = hessianMatrix.getArrays();
 
             if (transform != null) { // TODO: change 0 matrix into general TransformationHessian
                 transformedHessian = transform.updateHessianLogDensity(transformedHessian, new double[dim][dim], gradientProvider.getGradientLogDensity(), gradientProvider.getParameter().getParameterValues(), 0, dim);
             }
-            Algebra algebra = new Algebra();
 
-            DoubleMatrix2D H = new DenseDoubleMatrix2D(transformedHessian);
-            RobustEigenDecomposition decomposition = new RobustEigenDecomposition(H);
-            DoubleMatrix1D eigenvalues = decomposition.getRealEigenvalues();
-
-            normalizeEigenvalues(eigenvalues);
-
-            DoubleMatrix2D V = decomposition.getV();
-
-            inverseNegateEigenvalues(eigenvalues);
-
-            double[][] negativeHessianInverse = algebra.mult(
-                    algebra.mult(V, DoubleFactory2D.dense.diagonal(eigenvalues)),
-                    algebra.inverse(V)
-            ).toArray();
-
-            double[] inverseMassArray = new double[dim * dim];
-            for (int i = 0; i < dim; i++) {
-                System.arraycopy(negativeHessianInverse[i], 0, inverseMassArray, i * dim, dim);
-            }
-            return inverseMassArray;
+            return pdTransformMatrix.transformMatrix(transformedHessian, dim);
         }
 
         @Override
@@ -266,45 +367,7 @@ public interface MassPreconditioner {
             //TODO: change to ReadableMatrix
             WrappedMatrix.ArrayOfArray hessianMatrix = new WrappedMatrix.ArrayOfArray(hessian.getHessianLogDensity());
 
-            return computeInverseMass(hessianMatrix, hessian);
-        }
-
-        private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
-        private static final double MAX_EIGENVALUE = -0.5; // TODO Bad magic number
-
-        private void boundEigenvalues(DoubleMatrix1D eigenvalues) {
-
-            for (int i = 0; i < eigenvalues.cardinality(); ++i) {
-                if (eigenvalues.get(i) > MAX_EIGENVALUE) {
-                    eigenvalues.set(i, MAX_EIGENVALUE);
-                } else if (eigenvalues.get(i) < MIN_EIGENVALUE) {
-                    eigenvalues.set(i, MIN_EIGENVALUE);
-                }
-            }
-        }
-
-        private void scaleEigenvalues(DoubleMatrix1D eigenvalues) {
-            double sum = 0.0;
-            for (int i = 0; i < eigenvalues.cardinality(); ++i) {
-                sum += eigenvalues.get(i);
-            }
-
-            double mean = -sum / eigenvalues.cardinality();
-
-            for (int i = 0; i < eigenvalues.cardinality(); ++i) {
-                eigenvalues.set(i, eigenvalues.get(i) / mean);
-            }
-        }
-
-        private void normalizeEigenvalues(DoubleMatrix1D eigenvalues) {
-            boundEigenvalues(eigenvalues);
-            scaleEigenvalues(eigenvalues);
-        }
-
-        private void inverseNegateEigenvalues(DoubleMatrix1D eigenvalues) {
-            for (int i = 0; i < eigenvalues.cardinality(); i++) {
-                eigenvalues.set(i, -1.0 / eigenvalues.get(i));
-            }
+            return computeInverseMass(hessianMatrix, hessian, PDTransformMatrix.Invert);
         }
 
         @Override
@@ -370,24 +433,16 @@ public interface MassPreconditioner {
         @Override
         protected double[] computeInverseMass() {
 
-            if (adaptableCovariance != null) {
+            WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
 
-                WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
-
-                return super.computeInverseMass(covariance, gradientProvider);
-            } else {
-                double[] output = new double[dim * dim];
-                for (int i = 0; i < dim; i++) {
-                    output[i * dim + i] = 1.0;
-                }
-                return output;
-            }
+            return super.computeInverseMass(covariance, gradientProvider, PDTransformMatrix.None);
 
         }
 
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
-            adaptableCovariance.update(gradient);
+//            adaptableCovariance.update(gradient);
+            adaptableCovariance.update(position);
         }
     }
 }

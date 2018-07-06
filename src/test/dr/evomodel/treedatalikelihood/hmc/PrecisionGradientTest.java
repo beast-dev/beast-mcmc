@@ -29,6 +29,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -375,5 +376,93 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
             gradient[i] = Double.parseDouble(vectorString[i]);
         }
         return gradient;
+    }
+
+    public void testGradientPrecisionWithDrift() {
+        System.out.println("\nTest gradient precision.");
+
+        // Diffusion
+        diffusionModel = new MultivariateDiffusionModel(precisionMatrix);
+        List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{0.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{200.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-200.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.4", new double[]{1.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.5", new double[]{200.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.6", new double[]{-200.0})));
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, true);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        ProcessSimulationDelegate simulationDelegate =
+                likelihoodDelegate.getPrecisionType() == PrecisionType.SCALAR ?
+                        new ConditionalOnTipsRealizedDelegate("trait", treeModel,
+                                diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate) :
+                        new MultivariateConditionalOnTipsRealizedDelegate("trait", treeModel,
+                                diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(dataLikelihood, simulationDelegate);
+
+        dataLikelihood.addTraits(traitProvider.getTreeTraits());
+
+        ProcessSimulationDelegate fullConditionalDelegate = new TipRealizedValuesViaFullConditionalDelegate(
+                "trait", treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
+
+        dataLikelihood.addTraits(new ProcessSimulation(dataLikelihood, fullConditionalDelegate).getTreeTraits());
+
+        // Branch Specific
+        ContinuousDataLikelihoodDelegate cdld = (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
+
+        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
+                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                        dim, treeModel, cdld,
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+        BranchSpecificGradient branchSpecificGradient =
+                new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrix);
+
+        GradientWrtPrecisionProvider gPPBranchSpecific = new GradientWrtPrecisionProvider.BranchSpecificGradientWrtPrecisionProvider(branchSpecificGradient);
+
+        // Correlation Gradient Branch Specific
+        CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrix);
+
+        String sBS = gradientProviderBranchSpecific.getReport();
+        System.err.println(sBS);
+        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
+        double[] gradientNumeric = parseGradient(sBS, "numeric (with Cholesky):");
+
+        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+
+        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    format.format(gradientAnalyticalBS[k]),
+                    format.format(gradientNumeric[k]));
+        }
+
+        // Diagonal Gradient Branch Specific
+        DiagonalPrecisionGradient gradientDiagonalProviderBS = new DiagonalPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrix);
+
+        String sDiagBS = gradientDiagonalProviderBS.getReport();
+        System.err.println(sDiagBS);
+        double[] gradientDiagonalAnalyticalBS = parseGradient(sDiagBS, "analytic");
+        double[] gradientDiagonalNumeric = parseGradient(sDiagBS, "numeric:");
+
+        assertEquals("Sizes", gradientDiagonalAnalyticalBS.length, gradientDiagonalNumeric.length);
+
+        for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    format.format(gradientDiagonalAnalyticalBS[k]),
+                    format.format(gradientDiagonalNumeric[k]));
+        }
     }
 }

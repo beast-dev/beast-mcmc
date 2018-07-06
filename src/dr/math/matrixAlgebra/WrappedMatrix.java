@@ -364,6 +364,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     W.set(i, j, temp);
                     sum += temp * temp;
                 }
+                if (sum > 1) {
+                    throw new RuntimeException("In Cholesky parametrization: the row squared sum of the off-diagonal coefficients cannot be greater than 1.O");
+                }
                 W.set(j, j, Math.sqrt(1 - sum));
             }
 

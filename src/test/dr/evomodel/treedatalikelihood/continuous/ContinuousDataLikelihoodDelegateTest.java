@@ -182,6 +182,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
 
     }
 
@@ -243,6 +244,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodDriftRelaxed() {
@@ -308,6 +310,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodDiagonalOU() {
@@ -373,6 +376,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodDiagonalOURelaxed() {
@@ -444,6 +448,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullOU() {
@@ -513,6 +518,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullOURelaxed() {
@@ -587,6 +593,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullAndDiagonalOU() {
@@ -698,6 +705,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullOUNonSymmetricRelaxed() {
@@ -760,6 +768,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
         testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     //// Factor Model //// *********************************************************************************************
@@ -1257,6 +1266,24 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 //                System.out.println("cMean preorder: " + partials[offset + i]);
                 assertEquals("cMean " + tip + "; " + i,
                         format.format(partials[offset + i]),
+                        format.format(vector[i]));
+            }
+            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+        }
+    }
+
+    private void testCVariances(String s, String name, double[] partials) {
+        int offset = 0;
+        int indBeg = 0;
+        for (int tip = 0; tip < nTips; tip++) {
+            indBeg = s.indexOf(name, indBeg + 1) + name.length() + 3;
+            int indEnd = s.indexOf("]", indBeg);
+            double[] vector = parseVector(s.substring(indBeg, indEnd - 2), "\\s+|\\}\\n\\{ ");
+            for (int i = 0; i < vector.length; i++) {
+//                System.out.println("cMean Mat: " + vector[i]);
+//                System.out.println("cMean preorder: " + partials[offset + dimTrait + dimTrait * dimTrait + i]);
+                assertEquals("cVar " + tip + "; " + i,
+                        format.format(partials[offset + dimTrait + dimTrait * dimTrait + i]),
                         format.format(vector[i]));
             }
             offset += dimTrait + 2 * dimTrait * dimTrait + 1;

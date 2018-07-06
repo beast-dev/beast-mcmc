@@ -43,7 +43,7 @@ public interface AdaptableVector {
 
         @Override
         public void update(ReadableVector x) {
-            for (int i = 0; i < dim; i++) {
+            for (int i = 0; i < dim; i++) { //TODO: swap the pointers
                 oldMeans[i] = newMeans[i];
                 newMeans[i] = ((oldMeans[i] * (updates - 1)) + x.get(i)) / updates;
             }

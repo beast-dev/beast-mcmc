@@ -75,15 +75,50 @@ class SecantHessian implements HessianWrtParameterProvider {
         ReadableVector gradient;
         ReadableVector position;
 
+        WrappedVector sk; // sk = dk = x_{k+1} - x_k
+        WrappedVector yk; // yk = g_{k+1} - g_k  As defined in 7.18 on page 177 of Numerical Optimization 2nd by Nocedal and Wright
+        private double reciprocalInnerProduct;
+
         Secant(ReadableVector gradient, ReadableVector position) {
             this.gradient = WrappedVector.Utils.copy(gradient);
             this.position = WrappedVector.Utils.copy(position);
+
+            this.sk = new WrappedVector.Raw(new double[position.getDim()]);
+            this.yk = new WrappedVector.Raw(new double[position.getDim()]);
+            this.reciprocalInnerProduct = 0.0;
         }
 
         double getPosition(int index) { return position.get(index); }
 
         double getGradient(int index) {
             return gradient.get(index);
+        }
+
+        void updateSkYk(Secant newSecant) {
+
+            reciprocalInnerProduct = 0.0;
+
+            for (int i = 0; i < dim; i++) {
+                double ski = newSecant.getPosition(i) - getPosition(i);
+                double yki = newSecant.getGradient(i) - getGradient(i);
+                sk.set(i, ski);
+                yk.set(i, yki);
+                reciprocalInnerProduct += sk.get(i) * yk.get(i);
+            }
+
+            reciprocalInnerProduct = 1.0 / reciprocalInnerProduct;
+        }
+
+        double getReciprocalInnerProduct() {
+            return reciprocalInnerProduct;
+        }
+
+        double getYk(int i) {
+            return yk.get(i);
+        }
+
+        double getSk(int i) {
+            return sk.get(i);
         }
     }
 
@@ -123,32 +158,38 @@ class SecantHessian implements HessianWrtParameterProvider {
             /*
             Implementation of formula 11.17 on Page 281 of Ken Lange's Optimization book.
              */
-        double[] d = new double[dim];
-        double[] g = new double[dim];
+//        double[] d = new double[dim];
+//        double[] g = new double[dim];
         double[] Hd = new double[dim];
-        double b = 0.0;
+//        double b = 0.0;
         double c = 0.0;
 
-        for (int i = 0; i < dim; i++) {
-            d[i] = currentSecant.getPosition(i) - lastSecant.getPosition(i);
-            g[i] = currentSecant.getGradient(i) - lastSecant.getGradient(i);
-            b += d[i] * g[i];
-        }
-        b = 1.0 / b;
+//        for (int i = 0; i < dim; i++) {
+//            d[i] = currentSecant.getPosition(i) - lastSecant.getPosition(i);
+//            g[i] = currentSecant.getGradient(i) - lastSecant.getGradient(i);
+//            b += d[i] * g[i];
+//        }
+//        b = 1.0 / b;
+
+        lastSecant.updateSkYk(currentSecant);
+        double b = lastSecant.getReciprocalInnerProduct();
 
         for (int i = 0; i < dim; i++) {
             double sum = 0.0;
             for (int j =0; j < dim; j++) {
-                sum += secantHessian[i][j] * d[j];
+//                sum += secantHessian[i][j] * d[j];
+                sum += secantHessian[i][j] * lastSecant.getSk(j);
             }
             Hd[i] = sum;
-            c += d[i] * Hd[i];
+//            c += d[i] * Hd[i];
+            c += lastSecant.getSk(i) * Hd[i];
         }
         c = -1.0 / c;
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                secantHessian[i][j] += b * g[i] * g[j] + c * Hd[i] * Hd[j];
+//                secantHessian[i][j] += b * g[i] * g[j] + c * Hd[i] * Hd[j];
+                secantHessian[i][j] += b * lastSecant.getYk(i) * lastSecant.getYk(j) + c * Hd[i] * Hd[j];
             }
         }
     }

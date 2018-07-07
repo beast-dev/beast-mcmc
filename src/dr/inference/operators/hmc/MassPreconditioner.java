@@ -58,6 +58,7 @@ public interface MassPreconditioner {
         ADAPTIVE("adaptive") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+//                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension());
                 AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
                 return new AdaptivePreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension());
             }
@@ -268,6 +269,18 @@ public interface MassPreconditioner {
                 protected void transformEigenvalues(DoubleMatrix1D eigenvalues) {
                     negateEigenvalues(eigenvalues);
                 }
+            },
+            Negate("Transform negative matrix into a PD matrix") {
+                @Override
+                protected void transformEigenvalues(DoubleMatrix1D eigenvalues) {
+                    negateEigenvalues(eigenvalues);
+                }
+                @Override
+                protected void normalizeEigenvalues(DoubleMatrix1D eigenvalues) {
+                    negateEigenvalues(eigenvalues);
+                    boundEigenvalues(eigenvalues);
+                    scaleEigenvalues(eigenvalues);
+                }
             };
 
             String desc;
@@ -283,7 +296,7 @@ public interface MassPreconditioner {
             private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
             private static final double MAX_EIGENVALUE = -0.5; // TODO Bad magic number
 
-            private void boundEigenvalues(DoubleMatrix1D eigenvalues) {
+            protected void boundEigenvalues(DoubleMatrix1D eigenvalues) {
 
                 for (int i = 0; i < eigenvalues.cardinality(); ++i) {
                     if (eigenvalues.get(i) > MAX_EIGENVALUE) {
@@ -294,7 +307,7 @@ public interface MassPreconditioner {
                 }
             }
 
-            private void scaleEigenvalues(DoubleMatrix1D eigenvalues) {
+            protected void scaleEigenvalues(DoubleMatrix1D eigenvalues) {
                 double sum = 0.0;
                 for (int i = 0; i < eigenvalues.cardinality(); ++i) {
                     sum += eigenvalues.get(i);
@@ -436,7 +449,7 @@ public interface MassPreconditioner {
 
             WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
 
-            return super.computeInverseMass(covariance, gradientProvider, PDTransformMatrix.Default);
+            return super.computeInverseMass(covariance, gradientProvider, PDTransformMatrix.Negate);
 
         }
 

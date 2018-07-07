@@ -58,8 +58,8 @@ public interface MassPreconditioner {
         ADAPTIVE("adaptive") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
-//                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension());
-                AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
+                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension(), 1000);
+//                AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
                 return new AdaptivePreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension());
             }
         };
@@ -274,6 +274,18 @@ public interface MassPreconditioner {
                 @Override
                 protected void transformEigenvalues(DoubleMatrix1D eigenvalues) {
                     negateEigenvalues(eigenvalues);
+                }
+                @Override
+                protected void normalizeEigenvalues(DoubleMatrix1D eigenvalues) {
+                    negateEigenvalues(eigenvalues);
+                    boundEigenvalues(eigenvalues);
+                    scaleEigenvalues(eigenvalues);
+                }
+            },
+            NegateInvert("Transform negative inverse matrix into a PD matrix") {
+                @Override
+                protected void transformEigenvalues(DoubleMatrix1D eigenvalues) {
+                    inverseNegateEigenvalues(eigenvalues);
                 }
                 @Override
                 protected void normalizeEigenvalues(DoubleMatrix1D eigenvalues) {

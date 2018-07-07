@@ -17,6 +17,7 @@ public class AdaptableCovariance {
     final private AdaptableVector.Default means;
 
     protected int updates;
+    protected int counts;
 
     public AdaptableCovariance(int dim) {
         this.dim = dim;
@@ -24,6 +25,7 @@ public class AdaptableCovariance {
         this.means = new AdaptableVector.Default(dim);
 
         updates = 0;
+        counts = 0;
         for (int i = 0; i < dim; i++) {
             empirical[i][i] = 1.0;
         }
@@ -34,6 +36,7 @@ public class AdaptableCovariance {
     public void update(ReadableVector x) {
 
         assert (x.getDim() == dim);
+        counts++;
 
         if (shouldUpdate()) {
 
@@ -68,6 +71,9 @@ public class AdaptableCovariance {
                 empirical[j][i] = empirical[i][j];
             }
         }
+        if (updates > 100) {
+            double stop = 0.0;
+        }
     }
 
     private double calculateCovariance(double currentMatrixEntry, ReadableVector values, int firstIndex, int secondIndex) {
@@ -82,17 +88,21 @@ public class AdaptableCovariance {
 
     public static class WithSubsampling extends AdaptableCovariance {
 
-        final int maxUpdates = 1000;
+//        final int maxUpdates;
+        final int minCounts;
 
-        public WithSubsampling(int dim) {
+        public WithSubsampling(int dim, int minCounts) {
             super(dim);
+            this.minCounts = minCounts;
+//            this.maxUpdates = maxUpdates;
         }
 
         @Override
         protected boolean shouldUpdate() {
              // TODO Add logic in subclass to control how often updates are made
 //             return true;
-            return updates < maxUpdates;
+//            return minUpdates < counts && counts < maxUpdates;
+            return minCounts < counts;
          }
 
     }

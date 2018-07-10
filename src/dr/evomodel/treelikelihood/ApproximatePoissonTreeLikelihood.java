@@ -28,6 +28,7 @@ package dr.evomodel.treelikelihood;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -49,13 +50,13 @@ import dr.xml.Reportable;
  * @author Andrew Rambaut
  */
 
-public abstract class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood implements Reportable {
+public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
-    public ApproximatePoissonTreeLikelihood(String name, Tree dataTree, TreeModel treeModel, BranchRateModel branchRateModel) {
+    public ApproximatePoissonTreeLikelihood(String name, Tree dataTree, int sequenceLength, TreeModel treeModel, BranchRateModel branchRateModel) {
 
         super(name);
 
-        this.dataTree = dataTree;
+        this.sequenceLength = sequenceLength;
 
         this.treeModel = treeModel;
         addModel(treeModel);
@@ -64,18 +65,23 @@ public abstract class ApproximatePoissonTreeLikelihood extends AbstractModelLike
         addModel(branchRateModel);
 
         updateNode = new boolean[treeModel.getNodeCount()];
+        branchLengths = new double[treeModel.getNodeCount()];
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             updateNode[i] = true;
+
+            if (!dataTree.isRoot(dataTree.getNode(i))) {
+                // Adding a small epsilon to avoid zeros.
+                branchLengths[i] = dataTree.getBranchLength(dataTree.getNode(i)) * sequenceLength + 1.0E-8;
+            }
         }
 
         branchLogL = new double[treeModel.getNodeCount()];
         storedBranchLogL = new double[treeModel.getNodeCount()];
-        
+
         likelihoodKnown = false;
 
         gamma = new GammaDistribution(1.0, 1.0);
     }
-
 
     /**
      * Set update flag for a node only
@@ -131,11 +137,50 @@ public abstract class ApproximatePoissonTreeLikelihood extends AbstractModelLike
     }
 
     // **************************************************************
-    // Model IMPLEMENTATION
+    // ModelListener IMPLEMENTATION
     // **************************************************************
 
+    /**
+     * Handles model changed events from the submodels.
+     */
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        likelihoodKnown = false;
+
+        fireModelChanged();
+
+        if (model == treeModel) {
+            if (object instanceof TreeChangedEvent) {
+
+                if (((TreeChangedEvent) object).isNodeChanged()) {
+                    // If a node event occurs the node and its two child nodes
+                    // are flagged for updating (this will result in everything
+                    // above being updated as well. Node events occur when a node
+                    // is added to a branch, removed from a branch or its height or
+                    // rate changes.
+                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
+
+                } else if (((TreeChangedEvent) object).isTreeChanged()) {
+                    // Full tree events result in a complete updating of the tree likelihood
+                    // This event type is now used for EmpiricalTreeDistributions.
+//                    System.err.println("Full tree update event - these events currently aren't used\n" +
+//                            "so either this is in error or a new feature is using them so remove this message.");
+                    updateAllNodes();
+                } else {
+                    // Other event types are ignored (probably trait changes).
+                    //System.err.println("Another tree event has occured (possibly a trait change).");
+                }
+            }
+
+        } else if (model == branchRateModel) {
+            if (index == -1) {
+                updateAllNodes();
+            } else {
+                updateNode(treeModel.getNode(index));
+            }
+
+        } else {
+
+            throw new RuntimeException("Unknown componentChangedEvent");
+        }
     }
 
     /**
@@ -167,16 +212,36 @@ public abstract class ApproximatePoissonTreeLikelihood extends AbstractModelLike
     // **************************************************************
 
     private double calculateLogLikelihood() {
-        double logL = 0.0;
 
+//        makeDirty();
+
+        int root = treeModel.getRoot().getNumber();
+        int rootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
+        int rootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
+
+        //
+        updateNode[rootChild1] = updateNode[rootChild1] || updateNode[rootChild2];
+
+        double logL = 0.0;
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            if (updateNode[i]) {
+            if (updateNode[i] && i != root && i != rootChild2) {
                 NodeRef node = treeModel.getNode(i);
+                // skip the root and the second child of the root (this is added to the first child)
+
                 double shape = treeModel.getBranchLength(node) * branchRateModel.getBranchRate(treeModel, node);
-                gamma.setShape(shape);
+                double x = branchLengths[i];
+
+                if (i == rootChild1) {
+                    // sum the branches on both sides of the root
+                    NodeRef node2 = treeModel.getNode(rootChild2);
+                    shape += treeModel.getBranchLength(node2) * branchRateModel.getBranchRate(treeModel, node2);
+                    x += branchLengths[rootChild2];
+                }
+                gamma.setShape(shape * sequenceLength);
                 gamma.setScale(1.0);
-                branchLogL[i] = gamma.logPdf(dataTree.getBranchLength(dataTree.getNode(i)));
+                branchLogL[i] = gamma.logPdf(x);
             }
+            updateNode[i] = false;
             logL += branchLogL[i];
         }
 
@@ -203,10 +268,6 @@ public abstract class ApproximatePoissonTreeLikelihood extends AbstractModelLike
         updateAllNodes();
     }
 
-    public boolean isLikelihoodKnown() {
-        return likelihoodKnown;
-    }
-
     public String getReport() {
         return getClass().getName() + "(" + getLogLikelihood() + ")";
     }
@@ -222,10 +283,9 @@ public abstract class ApproximatePoissonTreeLikelihood extends AbstractModelLike
 
     private final BranchRateModel branchRateModel;
 
-    /**
-     * the data tree
-     */
-    private final Tree dataTree;
+    private final int sequenceLength;
+
+    private final double[] branchLengths;
 
     private final GammaDistribution gamma;
 

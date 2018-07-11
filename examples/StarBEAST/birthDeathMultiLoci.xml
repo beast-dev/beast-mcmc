@@ -1330,7 +1330,7 @@
 	<!-- Species Tree: Birth Death Model                                         -->
 	<birthDeathModel id="birthDeath" units="substitutions">
 		<birthMinusDeathRate>
-			<parameter id="species.birthDeath.meanGrowthRate" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="species.birthDeath.meanGrowthRate" value="1.0" lower="0.0"/>
 		</birthMinusDeathRate>
 		<relativeDeathRate>
 			<parameter id="species.birthDeath.relativeDeathRate" value="0.5" lower="0.0" upper="1.0"/>
@@ -1668,9 +1668,9 @@
 		<scaleOperator scaleFactor="0.75" weight="3">
 			<parameter idref="species.birthDeath.meanGrowthRate"/>
 		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
+		<randomWalkOperator windowSize="0.75" weight="3" boundaryCondition="logit">
 			<parameter idref="species.birthDeath.relativeDeathRate"/>
-		</scaleOperator>
+		</randomWalkOperator>
 		<scaleOperator scaleFactor="0.5" weight="94">
 			<parameter idref="speciesTree.splitPopSize"/>
 		</scaleOperator>
@@ -1687,27 +1687,53 @@
 				<speciesCoalescent idref="species.coalescent"/>
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
-				<oneOnXPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="26.kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="26.frequencies"/>
+				</dirichletPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="29.kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="29.frequencies"/>
+				</dirichletPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="47.kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="47.frequencies"/>
+				</dirichletPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="53.kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="53.frequencies"/>
+				</dirichletPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="59.kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="64.kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="64.frequencies"/>
+				</dirichletPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="72.kappa"/>
-				</oneOnXPrior>
+				</logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="72.frequencies"/>
+				</dirichletPrior>
+
 				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
 					<parameter idref="29.clock.rate"/>
 				</gammaPrior>
@@ -1726,19 +1752,20 @@
 				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
 					<parameter idref="72.clock.rate"/>
 				</gammaPrior>
-				<oneOnXPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
+					<parameter idref="speciesTree.splitPopSize"/>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="species.popMean"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="species.birthDeath.meanGrowthRate"/>
-				</oneOnXPrior>
-				
-				
-				
-				
-				
-				
-				
+				</logNormalPrior>
+				<uniformPrior lower="0.0" upper="1.0">
+					<parameter idref="species.birthDeath.relativeDeathRate"/>
+				</uniformPrior>
+
 			</prior>
 			<likelihood id="likelihood">
 				<treeLikelihood idref="26.26.treeLikelihood"/>
@@ -1751,8 +1778,9 @@
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
+
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000000">
+		<log id="screenLog" logEvery="10000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -1784,6 +1812,7 @@
 				<parameter idref="72.clock.rate"/>
 			</column>
 		</log>
+
 		<!-- write log to file                                                       -->
 		<log id="fileLog" logEvery="1000" fileName="g11.log">
 			<posterior idref="posterior"/>
@@ -1832,14 +1861,8 @@
 			<treeLikelihood idref="59.59.treeLikelihood"/>
 			<treeLikelihood idref="64.64.treeLikelihood"/>
 			<treeLikelihood idref="72.72.treeLikelihood"/>
-			
-			
-			
-			
-			
-			
-			
 		</log>
+
 		<!-- write tree log to file                                                  -->
 		<logTree id="species.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.species.trees" sortTranslationTable="true">
 			<speciesTree idref="sptree"/>

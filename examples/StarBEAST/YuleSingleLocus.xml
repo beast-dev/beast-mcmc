@@ -107,7 +107,7 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="substitutions">
 		<populationSize>
-			<parameter id="constant.popSize" value="0.018" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="0.018" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 	
@@ -150,7 +150,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="kappa" value="1.0" lower="1.0E-8" upper="Infinity"/>
+			<parameter id="kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	
@@ -212,7 +212,7 @@
 	<!-- Species Tree: Yule Model                                                -->
 	<yuleModel id="yule" units="substitutions">
 		<birthRate>
-			<parameter id="species.yule.birthRate" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="species.yule.birthRate" value="1.0" lower="0.0"/>
 		</birthRate>
 	</yuleModel>
 	<!-- Species Tree: Likelihood of species tree                                -->
@@ -337,22 +337,24 @@
 				<speciesCoalescent idref="species.coalescent"/>
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
-				<oneOnXPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="species.popMean"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="species.yule.birthRate"/>
-				</oneOnXPrior>
-				
+				</logNormalPrior>
 			</prior>
 			<likelihood id="likelihood">
 				<treeLikelihood idref="Darwins-finches.treeLikelihood"/>
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
+
 		<!-- write log to screen                                                     -->
 		<log id="screenLog" logEvery="100000">
 			<column label="Posterior" dp="4" width="12">
@@ -374,6 +376,7 @@
 				<parameter idref="clock.rate"/>
 			</column>
 		</log>
+
 		<!-- write log to file                                                       -->
 		<log id="fileLog" logEvery="1000" fileName="x10.log">
 			<posterior idref="posterior"/>
@@ -391,8 +394,8 @@
 			<parameter idref="frequencies"/>
 			<parameter idref="clock.rate"/>
 			<treeLikelihood idref="Darwins-finches.treeLikelihood"/>
-			
 		</log>
+
 		<!-- write tree log to file                                                  -->
 		<logTree id="species.treeFileLog" logEvery="1000" nexusFormat="true" fileName="x10.species.trees" sortTranslationTable="true">
 			<speciesTree idref="sptree"/>

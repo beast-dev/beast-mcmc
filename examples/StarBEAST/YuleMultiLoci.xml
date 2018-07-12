@@ -676,7 +676,7 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="substitutions">
 		<populationSize>
-			<parameter id="constant.popSize" value="0.018" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="0.018" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 	
@@ -845,28 +845,28 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="29.branchRates">
 		<rate>
-			<parameter id="29.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="29.clock.rate" value="1.0" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="47.branchRates">
 		<rate>
-			<parameter id="47.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="47.clock.rate" value="1.0" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="53.branchRates">
 		<rate>
-			<parameter id="53.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.clock.rate" value="1.0" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="59.branchRates">
 		<rate>
-			<parameter id="59.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="59.clock.rate" value="1.0" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 	
@@ -880,7 +880,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="26.CP1.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="26.CP1.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
@@ -893,7 +893,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="26.CP2.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="26.CP2.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
@@ -906,7 +906,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="26.CP3.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="26.CP3.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	
@@ -920,7 +920,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="29.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="29.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	
@@ -935,7 +935,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="47.CP1+2.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="47.CP1+2.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
@@ -949,7 +949,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="47.CP3.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="47.CP3.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	
@@ -963,19 +963,19 @@
 			</frequencyModel>
 		</frequencies>
 		<rateAC>
-			<parameter id="53.CP1+2.ac" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP1+2.ac" value="1.0" lower="0.0"/>
 		</rateAC>
 		<rateAG>
-			<parameter id="53.CP1+2.ag" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP1+2.ag" value="1.0" lower="0.0"/>
 		</rateAG>
 		<rateAT>
-			<parameter id="53.CP1+2.at" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP1+2.at" value="1.0" lower="0.0"/>
 		</rateAT>
 		<rateCG>
-			<parameter id="53.CP1+2.cg" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP1+2.cg" value="1.0" lower="0.0"/>
 		</rateCG>
 		<rateGT>
-			<parameter id="53.CP1+2.gt" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP1+2.gt" value="1.0" lower="0.0"/>
 		</rateGT>
 	</gtrModel>
 	<!-- The general time reversible (GTR) substitution model                    -->
@@ -988,19 +988,19 @@
 			</frequencyModel>
 		</frequencies>
 		<rateAC>
-			<parameter id="53.CP3.ac" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP3.ac" value="1.0" lower="0.0"/>
 		</rateAC>
 		<rateAG>
-			<parameter id="53.CP3.ag" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP3.ag" value="1.0" lower="0.0"/>
 		</rateAG>
 		<rateAT>
-			<parameter id="53.CP3.at" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP3.at" value="1.0" lower="0.0"/>
 		</rateAT>
 		<rateCG>
-			<parameter id="53.CP3.cg" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP3.cg" value="1.0" lower="0.0"/>
 		</rateCG>
 		<rateGT>
-			<parameter id="53.CP3.gt" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP3.gt" value="1.0" lower="0.0"/>
 		</rateGT>
 	</gtrModel>
 	
@@ -1014,7 +1014,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="59.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="59.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	
@@ -1024,7 +1024,7 @@
 			<HKYModel idref="26.CP1.hky"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="26.CP1.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="26.CP1.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 	</siteModel>
 	<!-- site model                                                              -->
@@ -1033,7 +1033,7 @@
 			<HKYModel idref="26.CP2.hky"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="26.CP2.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="26.CP2.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 	</siteModel>
 	<!-- site model                                                              -->
@@ -1042,7 +1042,7 @@
 			<HKYModel idref="26.CP3.hky"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="26.CP3.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="26.CP3.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 	</siteModel>
 
@@ -1065,10 +1065,10 @@
 			<HKYModel idref="47.CP1+2.hky"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="47.CP1+2.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="47.CP1+2.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 		<gammaShape gammaCategories="4">
-			<parameter id="47.CP1+2.alpha" value="0.5" lower="0.0" upper="1000.0"/>
+			<parameter id="47.CP1+2.alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
 	</siteModel>
 	<!-- site model                                                              -->
@@ -1077,10 +1077,10 @@
 			<HKYModel idref="47.CP3.hky"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="47.CP3.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="47.CP3.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 		<gammaShape gammaCategories="4">
-			<parameter id="47.CP3.alpha" value="0.5" lower="0.0" upper="1000.0"/>
+			<parameter id="47.CP3.alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
 	</siteModel>
 
@@ -1095,7 +1095,7 @@
 			<gtrModel idref="53.CP1+2.gtr"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="53.CP1+2.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP1+2.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 	</siteModel>
 	<!-- site model                                                              -->
@@ -1104,7 +1104,7 @@
 			<gtrModel idref="53.CP3.gtr"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="53.CP3.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="53.CP3.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 	</siteModel>
 
@@ -1418,24 +1418,25 @@
 	<mcmc id="mcmc" chainLength="10000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
-				<gammaPrior shape="0.05" scale="40.0" offset="0.0">
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="26.CP1.kappa"/>
-				</gammaPrior>
-				<gammaPrior shape="0.05" scale="40.0" offset="0.0">
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="26.CP2.kappa"/>
-				</gammaPrior>
-				<gammaPrior shape="0.05" scale="40.0" offset="0.0">
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="26.CP3.kappa"/>
-				</gammaPrior>
-				<gammaPrior shape="0.05" scale="40.0" offset="0.0">
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="29.kappa"/>
-				</gammaPrior>
-				<gammaPrior shape="0.05" scale="40.0" offset="0.0">
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="47.CP1+2.kappa"/>
-				</gammaPrior>
-				<gammaPrior shape="0.05" scale="40.0" offset="0.0">
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="47.CP3.kappa"/>
-				</gammaPrior>
+				</logNormalPrior>
+
 				<gammaPrior shape="0.05" scale="10.0" offset="0.0">
 					<parameter idref="53.CP1+2.ac"/>
 				</gammaPrior>
@@ -1451,6 +1452,7 @@
 				<gammaPrior shape="0.05" scale="10.0" offset="0.0">
 					<parameter idref="53.CP1+2.gt"/>
 				</gammaPrior>
+
 				<gammaPrior shape="0.05" scale="10.0" offset="0.0">
 					<parameter idref="53.CP3.ac"/>
 				</gammaPrior>
@@ -1466,22 +1468,20 @@
 				<gammaPrior shape="0.05" scale="10.0" offset="0.0">
 					<parameter idref="53.CP3.gt"/>
 				</gammaPrior>
-				<gammaPrior shape="0.05" scale="40.0" offset="0.0">
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="59.kappa"/>
-				</gammaPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="constant.popSize"/>
-				</oneOnXPrior>
+				</logNormalPrior>
+
 				<coalescentLikelihood idref="26.coalescent"/>
-				
 				<coalescentLikelihood idref="29.coalescent"/>
-				
 				<coalescentLikelihood idref="47.coalescent"/>
-				
 				<coalescentLikelihood idref="53.coalescent"/>
-				
 				<coalescentLikelihood idref="59.coalescent"/>
-				
 			</prior>
 			<likelihood id="likelihood">
 				<treeLikelihood idref="26.CP1.26.treeLikelihood"/>
@@ -1496,6 +1496,7 @@
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
+
 		<!-- write log to screen                                                     -->
 		<log id="screenLog" logEvery="1000">
 			<column label="Posterior" dp="4" width="12">
@@ -1538,6 +1539,7 @@
 				<parameter idref="59.clock.rate"/>
 			</column>
 		</log>
+
 		<!-- write log to file                                                       -->
 		<log id="fileLog" logEvery="1000" fileName="g10.log">
 			<posterior idref="posterior"/>
@@ -1593,16 +1595,12 @@
 			<treeLikelihood idref="53.CP3.53.treeLikelihood"/>
 			<treeLikelihood idref="59.treeLikelihood"/>
 			<coalescentLikelihood idref="26.coalescent"/>
-			
 			<coalescentLikelihood idref="29.coalescent"/>
-			
 			<coalescentLikelihood idref="47.coalescent"/>
-			
 			<coalescentLikelihood idref="53.coalescent"/>
-			
 			<coalescentLikelihood idref="59.coalescent"/>
-			
 		</log>
+
 		<!-- write tree log to file                                                  -->
 		<logTree id="26.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.26.trees" sortTranslationTable="true">
 			<treeModel idref="26.treeModel"/>

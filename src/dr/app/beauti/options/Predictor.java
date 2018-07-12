@@ -130,11 +130,16 @@ public class Predictor implements Serializable {
         isStandardized = standardized;
     }
 
-    public boolean hasZeroValues() {
+    public boolean hasZeroValues(boolean ignoreDiagonals) {
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data.length; j++) {
                 if (data[i][j] == 0) {
-                    return true;
+                    if (i != j){
+                        return true;
+                    } else if (!ignoreDiagonals){
+                        return true;
+                    }
+
                 }
             }
         }

@@ -107,7 +107,7 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="substitutions">
 		<populationSize>
-			<parameter id="constant.popSize" value="0.018" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="0.018" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 	
@@ -151,7 +151,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="kappa" value="1.0" lower="1.0E-8" upper="Infinity"/>
+			<parameter id="kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	
@@ -161,7 +161,7 @@
 			<HKYModel idref="hky"/>
 		</substitutionModel>
 		<proportionInvariant>
-			<parameter id="pInv" value="0.5" lower="0.0" upper="1.0"/>
+			<parameter id="pInv" value="0.5" lower="0.0"/>
 		</proportionInvariant>
 	</siteModel>
 	
@@ -216,10 +216,10 @@
 	<!-- Species Tree: Birth Death Model                                         -->
 	<birthDeathModel id="birthDeath" units="substitutions">
 		<birthMinusDeathRate>
-			<parameter id="species.birthDeath.meanGrowthRate" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="species.birthDeath.meanGrowthRate" value="1.0" lower="0.0"/>
 		</birthMinusDeathRate>
 		<relativeDeathRate>
-			<parameter id="species.birthDeath.relativeDeathRate" value="0.5" lower="0.0" upper="1.0"/>
+			<parameter id="species.birthDeath.relativeDeathRate" value="0.5" lower="0.0"/>
 		</relativeDeathRate>
 	</birthDeathModel>
 	<!-- Species Tree: Likelihood of species tree                                -->
@@ -278,14 +278,15 @@
 			<parameter value="1 1 1 1 0 0 0 0 0 0"/>
 		</indicators>
 	</mixedDistributionLikelihood>
+
 	<!-- Define operators                                                        -->
 	<operators id="operators">
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="kappa"/>
 		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
+		<randomWalkOperator windowSize="0.75" weight="1" boundaryCondition="logit">
 			<parameter idref="pInv"/>
-		</scaleOperator>
+		</randomWalkOperator>
 		<upDownOperator scaleFactor="0.75" weight="30">
 			<up>
 				<parameter idref="species.birthDeath.meanGrowthRate"/>
@@ -328,9 +329,9 @@
 		<scaleOperator scaleFactor="0.75" weight="3">
 			<parameter idref="species.birthDeath.meanGrowthRate"/>
 		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="species.birthDeath.relativeDeathRate"/>
-		</scaleOperator>
+		<randomWalkOperator windowSize="0.75" weight="3" boundaryCondition="logit">
+			<parameter idref="pInv"/>
+		</randomWalkOperator>
 		<scaleOperator scaleFactor="0.5" weight="94">
 			<parameter idref="speciesTree.splitPopSize"/>
 		</scaleOperator>
@@ -347,22 +348,34 @@
 				<speciesCoalescent idref="species.coalescent"/>
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
-				<oneOnXPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="kappa"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
+					<parameter idref="speciesTree.splitPopSize"/>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="species.popMean"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="species.birthDeath.meanGrowthRate"/>
-				</oneOnXPrior>
-				
+				</logNormalPrior>
+				<uniformPrior lower="0.0" upper="1.0">
+					<parameter idref="species.birthDeath.relativeDeathRate"/>
+				</uniformPrior>
+
+				<uniformPrior lower="0.0" upper="1.0">
+					<parameter idref="pInv"/>
+				</uniformPrior>
 			</prior>
 			<likelihood id="likelihood">
 				<treeLikelihood idref="Darwins-finches.treeLikelihood"/>
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
+
 		<!-- write log to screen                                                     -->
 		<log id="screenLog" logEvery="100000">
 			<column label="Posterior" dp="4" width="12">
@@ -384,6 +397,7 @@
 				<parameter idref="clock.rate"/>
 			</column>
 		</log>
+
 		<!-- write log to file                                                       -->
 		<log id="fileLog" logEvery="1000" fileName="x11.log">
 			<posterior idref="posterior"/>
@@ -403,13 +417,14 @@
 			<parameter idref="pInv"/>
 			<parameter idref="clock.rate"/>
 			<treeLikelihood idref="Darwins-finches.treeLikelihood"/>
-			
 		</log>
+
 		<!-- write tree log to file                                                  -->
 		<logTree id="species.treeFileLog" logEvery="1000" nexusFormat="true" fileName="x11.species.trees" sortTranslationTable="true">
 			<speciesTree idref="sptree"/>
 			<posterior idref="posterior"/>
 		</logTree>
+
 		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="x11.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<strictClockBranchRates idref="branchRates"/>

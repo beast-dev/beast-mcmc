@@ -681,6 +681,73 @@ public interface Transform {
         }
     }
 
+    class NoTransformMultivariable extends MultivariableTransform {
+
+        @Override
+        public String getTransformName() {
+            return "NoTransformMultivariate";
+        }
+
+        @Override
+        public double[] transform(double[] values, int from, int to) {
+            return subArray(values, from, to);
+        }
+
+        private double[] subArray(double[] values, int from, int to) {
+            int length = to - from;
+            if (length == values.length) return values;
+            double[] result = new double[length];
+            System.arraycopy(values, to, result, 0, length);
+            return result;
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to) {
+            return subArray(values, from, to);
+        }
+
+        @Override
+        public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            return subArray(gradient, from, to);
+        }
+
+        @Override
+        public double[] updateGradientInverse(double[] gradient, double[] value, int from, int to) {
+            return subArray(gradient, from, to);
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Not implemented.");
+        }
+
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
+            return arrayValue(1.0, from, to);
+        }
+
+        private double[] arrayValue(double value, int from, int to) {
+            int length = to - from;
+            double[] result = new double[length];
+            for (int i = 0; i < length; i++) {
+                result[i] = value;
+            }
+            return result;
+        }
+
+        @Override
+        public double[] gradientInverse(double[] values, int from, int to) {
+            return arrayValue(1.0, from, to);
+        }
+
+        @Override
+        public double getLogJacobian(double[] values, int from, int to) {
+            return 0.0;
+        }
+
+        public boolean isMultivariate() { return false;}
+    }
+
     class Compose extends UnivariableTransform  {
 
         public Compose(UnivariableTransform outer, UnivariableTransform inner) {

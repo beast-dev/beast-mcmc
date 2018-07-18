@@ -253,7 +253,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(Jac.columns()));
 
         // Determinant
-        double jacobianDet = (new Transform.InverseMultivariable(transform)).getLogJacobian(CPCs, 0, CPCs.length);
+        double jacobianDet = (new Transform.InverseMultivariate(transform)).getLogJacobian(CPCs, 0, CPCs.length);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {
@@ -286,7 +286,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(Jac.columns()));
 
         // Determinant
-        double jacobianDet = (new Transform.InverseMultivariable(transformChol)).getLogJacobian(CPCs, 0, CPCs.length);
+        double jacobianDet = (new Transform.InverseMultivariate(transformChol)).getLogJacobian(CPCs, 0, CPCs.length);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {
@@ -320,7 +320,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(Jac.columns()));
 
         // Determinant
-        double jacobianDet = (new Transform.InverseMultivariable(transformCorrToChol)).getLogJacobian(cholValues, 0, cholValues.length);
+        double jacobianDet = (new Transform.InverseMultivariate(transformCorrToChol)).getLogJacobian(cholValues, 0, cholValues.length);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {

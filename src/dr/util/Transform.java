@@ -27,6 +27,7 @@ package dr.util;
 
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.Matrix;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -259,6 +260,10 @@ public interface Transform {
             return inverse(values, 0, values.length);
         }
 
+        public double getLogJacobian(double[] values) {
+            return getLogJacobian(values, 0, values.length);
+        }
+
         public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
             // values = untransformed (R)
             double[] transformedValues = transform(value, 0, value.length);
@@ -277,10 +282,14 @@ public interface Transform {
             // takes transformed values
             // Jacobian of inverse (transpose)
             double[][] jacobianInverse = computeJacobianMatrixInverse(value);
-            // Matrix multiplication (upper triangular)
+            return updateGradientJacobian(gradient, jacobianInverse);
+        }
+
+        double[] updateGradientJacobian(double[] gradient, double[][] jacobianInverse) {
+            // Matrix multiplication
             double[] updatedGradient = new double[gradient.length];
             for (int i = 0; i < gradient.length; i++) {
-                for (int j = i; j < gradient.length; j++) {
+                for (int j = 0; j < gradient.length; j++) {
                     updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
                 }
             }
@@ -925,9 +934,9 @@ public interface Transform {
         private final UnivariableTransform inner;
     }
 
-    class InverseMultivariable extends MultivariableTransform {
+    class InverseMultivariate extends MultivariateTransform {
 
-        public InverseMultivariable(MultivariableTransform inner) {
+        public InverseMultivariate(MultivariateTransform inner) {
             this.inner = inner;
         }
 
@@ -942,23 +951,13 @@ public interface Transform {
         }
 
         @Override
-        public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("Not yet implemented.");
-        }
-
-        @Override
-        public double[] updateGradientInverse(double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("not implemented yet");
-        }
-
-        @Override
         public double[] inverse(double[] values, int from, int to) {
             return inner.transform(values, from, to); // Purposefully switched
         }
 
         @Override
         public double[] inverse(double[] values, int from, int to, double sum) {
-            throw new RuntimeException("Not yet implemented.");
+            throw new RuntimeException("Not relevant.");
         }
 
         @Override
@@ -976,9 +975,140 @@ public interface Transform {
             return -inner.getLogJacobian(inner.inverse(values, from, to), from, to);
         }
 
-        public boolean isMultivariate() { return inner.isMultivariate();}
+//        @Override
+//        public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+//            throw new RuntimeException("Not yet implemented.");
+//        }
 
-        private final MultivariableTransform inner;
+//        @Override
+//        public double[] updateGradientInverse(double[] gradient, double[] value, int from, int to) {
+//            throw new RuntimeException("not implemented yet");
+//        }
+
+        @Override
+        public double[] updateGradientLogDensity(double[] gradient, double[] transformedValues, int from, int to) {
+            // transformedValues = transformed
+            assert from == 0 && to == transformedValues.length : "The transform function can only be applied to the whole array of values.";
+            // gradient of log jacobian of the inverse
+            double[] gradientLogJacobianInverse = inner.getGradientLogJacobianInverse(transformedValues);
+            // Add gradient log jacobian
+            double[] updatedGradient = new double[gradient.length];
+            for (int i = 0; i < gradient.length; i++) {
+                updatedGradient[i] = gradient[i] - gradientLogJacobianInverse[i];
+            }
+            // Jacobian
+            double[][] jacobian = computeJacobianMatrix(transformedValues);
+            // Matrix Multiplication
+            return updateGradientJacobian(updatedGradient, jacobian);
+        }
+
+        private double[][] computeJacobianMatrix(double[] transformedValues) {
+            Matrix jacobianInverse = new Matrix(inner.computeJacobianMatrixInverse(transformedValues));
+            return jacobianInverse.inverse().transpose().toComponents();
+        }
+
+        @Override
+        public double[][] computeJacobianMatrixInverse(double[] values) {
+            // values : untransformed
+            Matrix jacobianInverse = new Matrix(inner.computeJacobianMatrixInverse(inner.transform(values)));
+            return jacobianInverse.inverse().transpose().toComponents();
+        }
+
+        @Override
+        protected double[] getGradientLogJacobianInverse(double[] transformedValues) {
+            double[] gradient = inner.getGradientLogJacobianInverse(transformedValues);
+            for (int i = 0; i < gradient.length; i++) {
+                gradient[i] = - gradient[i];
+            }
+            return gradient;
+        }
+
+        private final MultivariateTransform inner;
+    }
+
+    class PositiveOrdered extends MultivariateTransform {
+        @Override
+        // x (positive ordered) -> y (unconstrained)
+        public double[] transform(double[] values, int from, int to) {
+            int dim = values.length;
+            assert from == 0 && to == dim : "The transform function can only be applied to the whole array of values.";
+
+            double[] result = new double[dim];
+            result[0] = Math.log(values[0]);
+            for (int i = 1; i < dim; i++) {
+                result[i] = Math.log(values[i] - values[i-1]);
+            }
+            return result;
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to) {
+            int dim = values.length;
+            assert from == 0 && to == dim : "The transform function can only be applied to the whole array of values.";
+
+            double[] result = new double[dim];
+            result[0] = Math.exp(values[0]);
+            for (int i = 1; i < dim; i++) {
+                result[i] = result[i-1] + Math.exp(values[i]);
+            }
+            return result;
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Not relevant.");
+        }
+
+        public String getTransformName() {
+            return "PositiveOrdered";
+        }
+
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double[] gradientInverse(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double getLogJacobian(double[] values, int from, int to) {
+            int dim = values.length;
+            assert from == 0 && to == dim : "The transform function can only be applied to the whole array of values.";
+
+            double result = Math.log(values[0]);
+            for (int i = 1; i < dim; i++) {
+                result += Math.log(values[i] - values[i-1]);
+            }
+            return -result;
+        }
+
+        @Override
+        public double[] getGradientLogJacobianInverse(double[] values) {
+            int dim = values.length;
+            double[] result = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                result[i] = 1.0;
+            }
+            return result;
+        }
+
+        @Override
+        // jacobian[j][i] = d x_i / d y_j
+        public double[][] computeJacobianMatrixInverse(double[] values) {
+            int dim = values.length;
+            double[][] jacobian = new double[dim][dim];
+            for (int i = 0; i < dim; i++) {
+                for (int j = i; j < dim; j++) {
+                    jacobian[j][i] = Math.exp(values[j]);
+                }
+            }
+            return jacobian;
+        }
+
+
     }
 
 
@@ -1326,6 +1456,7 @@ public interface Transform {
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
+    PositiveOrdered POSITIVE_ORDERED = new PositiveOrdered();
 
     enum Type {
         NONE("none", new NoTransform()),
@@ -1335,7 +1466,8 @@ public interface Transform {
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
         LOGIT("logit", new LogitTransform()),
         FISHER_Z("fisherZ",new FisherZTransform()),
-        POWER("power", new PowerTransform());
+        POWER("power", new PowerTransform()),
+        POSITIVE_ORDERED("positiveOrdered",new PositiveOrdered());
 
         Type(String name, Transform transform) {
             this.name = name;

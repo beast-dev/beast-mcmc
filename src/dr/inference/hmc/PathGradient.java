@@ -2,12 +2,12 @@ package dr.inference.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.PathDependentOperator;
+import dr.inference.operators.PathDependent;
 
 /**
  * @author Marc A. Suchard
  */
-public class PathGradient implements GradientWrtParameterProvider, PathDependentOperator {
+public class PathGradient implements GradientWrtParameterProvider, PathDependent {
 
     private final int dimension;
     private final Likelihood likelihood;

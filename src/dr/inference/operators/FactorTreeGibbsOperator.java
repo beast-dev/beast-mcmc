@@ -12,7 +12,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 /**
  * Created by max on 5/16/16.
  */
-public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator {
+public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements PathDependent, GibbsOperator {
 
     private final LatentFactorModel lfm;
     private double pathParameter = 1;

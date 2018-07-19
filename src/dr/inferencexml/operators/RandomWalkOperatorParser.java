@@ -33,7 +33,7 @@ import dr.inference.operators.*;
 import dr.util.Transform;
 import dr.xml.*;
 
-import static dr.util.Transform.parseTransform;
+import static dr.util.Transform.Util.parseTransform;
 
 /**
  */

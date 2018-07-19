@@ -36,7 +36,7 @@ import dr.xml.*;
 
 import java.util.logging.Logger;
 
-import static dr.util.Transform.parseTransform;
+import static dr.util.Transform.Util.parseTransform;
 
 
 /**

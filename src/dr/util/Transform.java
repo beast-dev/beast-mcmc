@@ -1448,6 +1448,14 @@ public interface Transform {
             }
             return transforms;
         }
+
+        public static Transform parseTransform(XMLObject xo) {
+            final Transform transform = (Transform) xo.getChild(Transform.class);
+            final Transform.ParsedTransform parsedTransform
+                    = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
+            if (transform == null && parsedTransform != null) return parsedTransform.transform;
+            return transform;
+        }
     }
 
     NoTransform NONE = new NoTransform();
@@ -1485,14 +1493,6 @@ public interface Transform {
 
         private Transform transform;
         private String name;
-    }
-
-    static Transform parseTransform(XMLObject xo) {
-        final Transform transform = (Transform) xo.getChild(Transform.class);
-        final Transform.ParsedTransform parsedTransform
-                = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
-        if (transform == null && parsedTransform != null) return parsedTransform.transform;
-        return transform;
     }
 //    String TRANSFORM = "transform";
 //    String TYPE = "type";

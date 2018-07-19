@@ -33,6 +33,8 @@ import dr.inference.operators.*;
 import dr.util.Transform;
 import dr.xml.*;
 
+import static dr.util.Transform.parseTransform;
+
 /**
  */
 public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
@@ -106,7 +108,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
                 randomWalk = new RandomWalkOperator(parameter, null, windowSize, condition, weight, mode);
             }
 
-            final Transform transform = (Transform) xo.getChild(Transform.class);
+            final Transform transform = parseTransform(xo);
 
             if (transform == null) {
                 return randomWalk;

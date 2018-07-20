@@ -25,8 +25,9 @@
 
 package dr.inference.hmc;
 
-import dr.inference.model.*;
-import dr.math.matrixAlgebra.Vector;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,8 +46,6 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
     private final List<GradientWrtParameterProvider> derivativeList;
 
     public SumDerivative(List<GradientWrtParameterProvider> derivativeList){
-
-        // TODO Check that parameters are the same
 
         this.derivativeList = derivativeList;
 
@@ -138,33 +137,12 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
 
         final double[] derivative = derivativeType.getDerivativeLogDensity(derivativeList.get(0));
 
-        if (DEBUG) {
-            // stop timer
-
-            String name = derivativeList.get(0).getLikelihood().getId();
-            System.err.println(name);
-            System.err.println(new Vector(derivative));
-        }
-
         for (int i = 1; i < size; i++) {
-
 
             final double[] temp = derivativeType.getDerivativeLogDensity(derivativeList.get(i));
 
-            if (DEBUG) {
-                String name = derivativeList.get(i).getLikelihood().getId();
-                System.err.println(name);
-                System.err.println(new Vector(temp));
-            }
-
             for (int j = 0; j < temp.length; j++) {
                 derivative[j] += temp[j];
-            }
-        }
-
-        if (DEBUG) {
-            if (DEBUG_KILL) {
-                System.exit(-1);
             }
         }
 

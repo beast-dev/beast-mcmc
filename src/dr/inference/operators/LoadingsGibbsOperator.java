@@ -28,7 +28,6 @@ package dr.inference.operators;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.IndependentNormalDistributionModel;
 import dr.inference.distribution.LatentFactorModelInterface;
-import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -50,7 +49,7 @@ import java.util.concurrent.Executors;
  * Time: 2:23 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LoadingsGibbsOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator {
+public class LoadingsGibbsOperator extends SimpleMCMCOperator implements PathDependent, GibbsOperator {
     NormalDistribution prior;
     IndependentNormalDistributionModel prior3;
     NormalDistribution workingPrior;

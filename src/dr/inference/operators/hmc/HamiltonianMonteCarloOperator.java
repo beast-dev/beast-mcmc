@@ -25,13 +25,16 @@
 
 package dr.inference.operators.hmc;
 
+import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
-import dr.math.*;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.inference.operators.PathDependent;
+import dr.math.MathUtils;
+import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
 /**
@@ -39,7 +42,7 @@ import dr.util.Transform;
  * @author Marc A. Suchard
  */
 
-public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
+public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator implements PathDependent {
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
@@ -107,6 +110,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
             return leapFrog();
         } catch (NumericInstabilityException e) {
             return Double.NEGATIVE_INFINITY;
+        }
+    }
+
+    @Override
+    public void setPathParameter(double beta) {
+        if (gradientProvider instanceof PathGradient) {
+            ((PathGradient) gradientProvider).setPathParameter(beta);
         }
     }
 

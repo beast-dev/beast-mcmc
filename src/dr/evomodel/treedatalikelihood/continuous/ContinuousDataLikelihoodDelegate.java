@@ -355,12 +355,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());
 
-        for (int tip = 0; tip < tipCount; ++tip){
-            double [] partial = dataModel.getTipPartial(tip, false);
-            WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-            for (int row = 0; row < dimTrait; ++row){
-                for (int col = 0; col < dimTrait; ++col){
-                    jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+        if (dataModel instanceof RepeatedMeasuresTraitDataModel) {
+            for (int tip = 0; tip < tipCount; ++tip) {
+                double[] partial = dataModel.getTipPartial(tip, false);
+                WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+                for (int row = 0; row < dimTrait; ++row) {
+                    for (int col = 0; col < dimTrait; ++col) {
+                        jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+                    }
                 }
             }
         }
@@ -900,7 +902,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         ProcessSimulationDelegate gradientDelegate = new TipGradientViaFullConditionalDelegate(traitName,
                 (MutableTreeModel) getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
-                (ContinuousTraitDataModel) getDataModel(), getRootPrior(),
+                getDataModel(), getRootPrior(),
                 getRateTransformation(), this);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);

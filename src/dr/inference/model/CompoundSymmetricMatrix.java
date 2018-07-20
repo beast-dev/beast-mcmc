@@ -25,8 +25,14 @@
 
 package dr.inference.model;
 
+import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.util.CorrelationToCholesky;
+
+
 /**
  * @author Marc Suchard
+ * @author Paul Bastide
  */
 public class CompoundSymmetricMatrix extends MatrixParameter {
 
@@ -34,16 +40,24 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     private final Parameter offDiagonalParameter;
 
     private final boolean asCorrelation;
+    private final boolean isCholesky;
     private final int dim;
 
-    public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
+    public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
         super(MATRIX_PARAMETER);
+        assert asCorrelation || !isCholesky; // cholesky only allowed when used as correlation.
         diagonalParameter = diagonals;
-        offDiagonalParameter = offDiagonal;
+        dim = diagonalParameter.getDimension();
+        if (!isCholesky) {
+            offDiagonalParameter = offDiagonal;
+        } else {
+            offDiagonalParameter
+                    = new TransformedMultivariateParameter(offDiagonal, new CorrelationToCholesky(dim), true);
+        }
         addParameter(diagonalParameter);
         addParameter(offDiagonal);
-        dim = diagonalParameter.getDimension();
         this.asCorrelation = asCorrelation;
+        this.isCholesky = isCholesky;
     }
 
     @Override
@@ -55,15 +69,20 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
                 stats[index] = getParameterValue(i, j);
                 index++;
             }
-        }        
+        }
         return stats;
+    }
+
+    @Override
+    public String toString() {
+        return toStringCompoundParameter(dim * (dim + 1) / 2);
     }
 
     @Override
     public int getDimension() {
         return getColumnDimension() * getRowDimension();
     }
-    
+
     @Override
     public double getParameterValue(int index) {
         final int dim = getColumnDimension();
@@ -83,12 +102,25 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     public double getParameterValue(int row, int col) {
         if (row != col) {
             if (asCorrelation) {
-                return offDiagonalParameter.getParameterValue(0) *
+                return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col)) *
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
             }
-            return offDiagonalParameter.getParameterValue(0);
+            return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col));
         }
         return diagonalParameter.getParameterValue(row);
+    }
+
+    private int getUpperTriangularIndex(int i, int j) {
+        assert i != j;
+        if (i < j) {
+            return upperTriangularTransformation(i, j);
+        } else {
+            return upperTriangularTransformation(j, i);
+        }
+    }
+
+    private int upperTriangularTransformation(int i, int j) {
+        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
     }
 
     @Override
@@ -122,5 +154,52 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     @Override
     public void setParameterValue(int row, int column, double a) {
         throw new RuntimeException("Do not set entries of a CompoundSymmetricMatrix directly");
+    }
+
+    public boolean isCholesky() {
+        return isCholesky;
+    }
+
+    public boolean asCorrelation() {
+        return asCorrelation;
+    }
+
+    public double[] getDiagonal() {
+        return diagonalParameter.getParameterValues();
+    }
+
+    public Parameter getDiagonalParameter() { return diagonalParameter; }
+
+    public Parameter getOffDiagonalParameter() { return offDiagonalParameter; }
+
+    public double[][] getCorrelationMatrix() {
+        SymmetricMatrix correlation
+                = SymmetricMatrix.compoundCorrelationSymmetricMatrix(offDiagonalParameter.getParameterValues(), dim);
+        if (!asCorrelation) {
+            for (int i = 0; i < dim; i++) {
+                for (int j = i + 1; j < dim; j++) {
+                    correlation.setSymmetric(i, j,
+                            correlation.component(i, j) / Math.sqrt(diagonalParameter.getParameterValue(i) * diagonalParameter.getParameterValue(j)));
+                }
+            }
+        }
+        return correlation.toComponents();
+    }
+
+    public double[] updateGradientCorrelation(double[] gradient) {
+        if (!isCholesky) {
+            return gradient;
+        } else {
+            CorrelationToCholesky transform = new CorrelationToCholesky(dim);
+            double[] updatedGradient = transform.updateGradientInverse(gradient,
+                    ((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues(),
+                    0, gradient.length);
+            return updatedGradient;
+        }
+    }
+
+    @Override
+    public String getReport() {
+        return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
     }
 }

@@ -368,6 +368,7 @@ public class BeastMain {
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
                         new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
+                        new Arguments.Option("force_resume", "Force resuming from a dumped state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
@@ -584,6 +585,10 @@ public class BeastMain {
         if (arguments.hasOption("save_dump")) {
             String debugStateFile = arguments.getStringOption("save_dump");
             System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, debugStateFile);
+        }
+
+        if (arguments.hasOption("force_resume")) {
+            System.setProperty("force.resume", Boolean.TRUE.toString());
         }
 
         if (arguments.hasOption("citations_file")) {

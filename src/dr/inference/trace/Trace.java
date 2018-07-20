@@ -50,12 +50,15 @@ public class Trace {
     private List<Double> values = new ArrayList<Double>();
     private String name;
 
-    protected List<String> categoryValueList = new ArrayList<String>();
-    protected Map<Integer, String> categoryLabelMap = null;
-    protected OrderType orderType = OrderType.DEFAULT;
-    protected List<Integer> categoryOrder = null;
+    private boolean isConstant = true;
+    private double constantValue = Double.NaN;
 
-    protected Set<Integer> uniqueValues = new TreeSet<Integer>();
+    private List<String> categoryValueList = new ArrayList<String>();
+    private Map<Integer, String> categoryLabelMap = null;
+    private OrderType orderType = OrderType.DEFAULT;
+    private List<Integer> categoryOrder = null;
+
+    private Set<Integer> uniqueValues = new TreeSet<Integer>();
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
         this.name = name;
@@ -73,6 +76,13 @@ public class Trace {
         if (uniqueValues.size() < MAX_UNIQUE_VALUES) {
             // unique values are treated as integers
             uniqueValues.add(value.intValue());
+        }
+
+        // check if the trace is still constant
+        if (isConstant && value != constantValue) {
+            isConstant = false;
+        } else if (Double.isNaN(constantValue)) {
+            constantValue = value;
         }
 
         values.add(value);
@@ -96,7 +106,16 @@ public class Trace {
             uniqueValues.add(value);
         }
 
-        values.add(value.doubleValue());
+        double d = value.doubleValue();
+
+        // check if the trace is still constant
+        if (isConstant && d != constantValue) {
+            isConstant = false;
+        } else if (Double.isNaN(constantValue)) {
+            constantValue = d;
+        }
+
+        values.add(d);
     }
 
     /**
@@ -271,6 +290,10 @@ public class Trace {
 
     public void setTraceType(TraceType traceType) {
         this.traceType = traceType;
+    }
+
+    public boolean isConstant() {
+        return isConstant;
     }
 
     //******************** TraceCorrelation ****************************

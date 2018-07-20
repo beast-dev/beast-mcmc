@@ -25,6 +25,8 @@
 
 package dr.math.matrixAlgebra;
 
+import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
+
 /**
  * @author Marc A. Suchard
  */
@@ -55,6 +57,105 @@ public interface ReadableMatrix extends ReadableVector {
                     sum += matrix.get(row, col) * vector.get(col);
                 }
                 result[row] = sum;
+            }
+
+            return new WrappedVector.Raw(result);
+        }
+
+        public static ReadableMatrix transposeProxy(final ReadableMatrix matrix) {
+            return new ReadableMatrix() {
+                @Override
+                public double get(int i, int j) {
+                    return matrix.get(j, i);
+                }
+
+                @Override
+                public int getMajorDim() {
+                    return matrix.getMinorDim();
+                }
+
+                @Override
+                public int getMinorDim() {
+                    return matrix.getMajorDim();
+                }
+
+                @Override
+                public double get(int i) {
+                    throw new RuntimeException("Not yet implemented");
+                }
+
+                @Override
+                public int getDim() {
+                    return matrix.getDim();
+                }
+            };
+        }
+
+        public static ReadableMatrix productProxy(final ReadableMatrix lhs, final ReadableMatrix rhs) {
+            final int majorDim = lhs.getMajorDim();
+            final int innerDim = lhs.getMinorDim();
+            final int minorDim = rhs.getMinorDim();
+
+            assert (innerDim == rhs.getMajorDim());
+
+            return new ReadableMatrix() {
+
+                @Override
+                public double get(int i, int j) {
+
+                    double sum = 0.0;
+                    for (int k = 0; k < innerDim; ++k) {
+                        sum += lhs.get(i, k) * rhs.get(k,j);
+                    }
+
+                    return sum;
+                }
+
+                @Override
+                public int getMajorDim() {
+                    return majorDim;
+                }
+
+                @Override
+                public int getMinorDim() {
+                    return minorDim;
+                }
+
+                @Override
+                public double get(int i) {
+                    return get(i / minorDim, i % minorDim);
+                }
+
+                @Override
+                public int getDim() {
+                    return majorDim * minorDim;
+                }
+
+                @Override
+                public String toString() {
+                    return makeString(this);
+                }
+            };
+        }
+
+        public static WrappedVector product(ReadableMatrix lhs, ReadableMatrix rhs) {
+
+            final int majorDim = lhs.getMajorDim();
+            final int innerDim = lhs.getMinorDim();
+            final int minorDim = rhs.getMinorDim();
+
+            assert (innerDim == rhs.getMajorDim());
+
+            final double[] result = new double[majorDim * minorDim];
+
+            for (int row = 0; row < majorDim; ++row) {
+                for (int col = 0; col < minorDim; ++col) {
+                    double sum = 0.0;
+                    for (int inner = 0; inner < innerDim; ++inner) {
+                        sum += lhs.get(row, inner) * rhs.get(inner, col);
+                    }
+                    result[row * minorDim + col] = sum;
+                }
             }
 
             return new WrappedVector.Raw(result);

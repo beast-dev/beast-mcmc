@@ -3,7 +3,7 @@ package dr.evomodel.continuous.hmc;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -25,7 +25,7 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.norm;
  */
 public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionTraitProductProvider {
 
-    private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
+    private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
 
     private static final boolean DEBUG = false;
     private static final boolean NEW_DATA = false; // Maybe not useful
@@ -65,7 +65,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         if (pool == null) { // single-threaded
 
-            final List<WrappedMeanPrecision> allStatistics;
+            final List<WrappedNormalSufficientStatistics> allStatistics;
             if (NEW_DATA) {
                 allStatistics = fullConditionalDensity.getTrait(tree, null);
                 assert (allStatistics.size() == tree.getExternalNodeCount());
@@ -73,11 +73,11 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
             for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
 
-                final WrappedMeanPrecision statistic;
+                final WrappedNormalSufficientStatistics statistic;
                 if (NEW_DATA) {
                     statistic = allStatistics.get(taxon);
                 } else {
-                    List<WrappedMeanPrecision> statistics = fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
+                    List<WrappedNormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
                     assert (statistics.size() == 1);
                     statistic = statistics.get(0);
                 }
@@ -87,7 +87,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         } else {
 
-            final List<WrappedMeanPrecision> allStatistics = fullConditionalDensity.getTrait(tree, null);
+            final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(tree, null);
             assert (allStatistics.size() == tree.getExternalNodeCount());
 
             List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
@@ -137,7 +137,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     }
 
     private void computeProductForOneTaxon(final int taxon,
-                                          final WrappedMeanPrecision statistic,
+                                          final WrappedNormalSufficientStatistics statistic,
                                           final double[] result) {
 
         final ReadableVector mean = statistic.getMean();
@@ -266,7 +266,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     }
 
     @SuppressWarnings("unchecked")
-    private TreeTrait<List<WrappedMeanPrecision>> castTreeTrait(TreeTrait trait) {
+    public static TreeTrait<List<WrappedNormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
         return trait;
     }
 

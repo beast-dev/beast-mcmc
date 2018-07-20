@@ -141,6 +141,15 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //                final DenseMatrix64F Vk = wrap(prePartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
+            if (allZeroDiagonals(Vj)) {
+
+                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+
+                assert (!allZeroDiagonals(Pj));
+
+                safeInvert(Pj, Vj, false);
+            }
+
             // B. Inflate variance along sibling branch using matrix inversion
 //                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Vjp = matrix1;

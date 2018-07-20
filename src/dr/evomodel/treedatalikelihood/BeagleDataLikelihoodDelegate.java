@@ -25,16 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-/**
- * BeagleDataLikelihoodDelegate
- *
- * A DataLikelihoodDelegate that uses BEAGLE
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- * @version $Id$
- */
-
 import beagle.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -57,6 +47,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+/**
+ * BeagleDataLikelihoodDelegate
+ *
+ * A DataLikelihoodDelegate that uses BEAGLE
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @version $Id$
+ */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
@@ -301,6 +301,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
+            if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                ||
+                (resourceList != null && resourceList[0] > 0)) {
+                // non-CPU implementations don't have SSE so remove default preference for SSE
+                // when using non-CPU preferences or prioritising non-CPU resource
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
 
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
@@ -405,6 +415,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+
+        instanceCount++;
     }
 
     @Override
@@ -494,7 +506,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
-            
+
             if (patternList instanceof UncertainSiteList) {
                 ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
                 v += stateCount;

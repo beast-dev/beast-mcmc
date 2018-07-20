@@ -62,13 +62,14 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
     private final TreeTrait<List<BranchSufficientStatistics>> treeTraitProvider;
     private final Tree tree;
     private final int nTraits;
-    private final int dim;
+//    private final int dim;
     private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
+    private final ContinuousTraitGradientForBranch branchProvider;
 
-    private final DenseMatrix64F matrix0;
-    private final DenseMatrix64F matrix1;
-    private final DenseMatrix64F vector0;
+//    private final DenseMatrix64F matrix0;
+//    private final DenseMatrix64F matrix1;
+//    private final DenseMatrix64F vector0;
 
     public BranchRateGradient(String traitName,
                               TreeDataLikelihood treeDataLikelihood,
@@ -100,15 +101,17 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
-        dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+        final int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
 
         if (likelihoodDelegate.getIntegrator() instanceof SafeMultivariateWithDriftIntegrator) {
             throw new RuntimeException("Not yet implemented with drift");
         }
 
-        matrix0 = new DenseMatrix64F(dim, dim);
-        matrix1 = new DenseMatrix64F(dim, dim);
-        vector0 = new DenseMatrix64F(dim, 1);
+        branchProvider = new ContinuousTraitGradientForBranch.Default(dim);
+
+//        matrix0 = new DenseMatrix64F(dim, dim);
+//        matrix1 = new DenseMatrix64F(dim, dim);
+//        vector0 = new DenseMatrix64F(dim, 1);
     }
 
     @Override
@@ -150,7 +153,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
 
                 double gradient = 0.0;
                 for (int trait = 0; trait < nTraits; ++trait) {
-                    gradient += getGradientForBranch(statisticsForNode.get(trait), scaling);
+                    gradient += branchProvider.getGradientForBranch(statisticsForNode.get(trait), scaling);
                 }
 
                 final int destinationIndex = getParameterIndexFromNode(node);
@@ -166,104 +169,126 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
     private int getParameterIndexFromNode(NodeRef node) {
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
-    
-    @SuppressWarnings("deprecation")
-    private NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics child,
-                                                              NormalSufficientStatistics parent) {
 
-        DenseMatrix64F totalP = new DenseMatrix64F(dim, dim);
-        CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
+    interface ContinuousTraitGradientForBranch {
 
-        DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
-        safeInvert(totalP, totalV, false);
+        double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling);
 
-        DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
-        safeWeightedAverage(
-                new WrappedVector.Raw(child.getRawMean().getData(), 0, dim),
-                child.getRawPrecision(),
-                new WrappedVector.Raw(parent.getRawMean().getData(), 0, dim),
-                parent.getRawPrecision(),
-                new WrappedVector.Raw(mean.getData(), 0, dim),
-                totalV,
-                dim);
+        class Default implements ContinuousTraitGradientForBranch {
 
-        return new NormalSufficientStatistics(mean, totalP, totalV);
-    }
+            private final DenseMatrix64F matrix0;
+            private final DenseMatrix64F matrix1;
+            private final DenseMatrix64F vector0;
 
-    @SuppressWarnings("deprecation")
-    private double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
+            private final int dim;
 
-        final NormalSufficientStatistics child = statistics.getChild();
-        final NormalSufficientStatistics branch = statistics.getBranch();
-        final NormalSufficientStatistics parent = statistics.getParent();
+            public Default(int dim) {
+                this.dim = dim;
+                
+                matrix0 = new DenseMatrix64F(dim, dim);
+                matrix1 = new DenseMatrix64F(dim, dim);
+                vector0 = new DenseMatrix64F(dim, 1);
+            }
 
-        if (DEBUG) {
-            System.err.println("B = " + statistics.toVectorizedString());
-        }
+            @Override
+            public double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
 
-        DenseMatrix64F Qi = parent.getRawPrecision();
-        DenseMatrix64F Si = matrix1; //new DenseMatrix64F(dim, dim); // matrix1;
-        CommonOps.scale(differentialScaling, branch.getRawVariance(), Si);
+                final NormalSufficientStatistics child = statistics.getChild();
+                final NormalSufficientStatistics branch = statistics.getBranch();
+                final NormalSufficientStatistics parent = statistics.getParent();
 
-        if (DEBUG) {
-            System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
-            System.err.println("\tSi = " + NormalSufficientStatistics.toVectorizedString(Si));
-        }
+                if (DEBUG) {
+                    System.err.println("B = " + statistics.toVectorizedString());
+                }
 
-        DenseMatrix64F logDetComponent = matrix0; //new DenseMatrix64F(dim, dim); //matrix0;
-        CommonOps.mult(Qi, Si, logDetComponent);
+                DenseMatrix64F Qi = parent.getRawPrecision();
+                DenseMatrix64F Si = matrix1; //new DenseMatrix64F(dim, dim); // matrix1;
+                CommonOps.scale(differentialScaling, branch.getRawVariance(), Si);
 
-        double grad1 = 0.0;
-        for (int row = 0; row < dim; ++row) {
-            grad1 -= 0.5 * logDetComponent.unsafe_get(row, row);
-        }
+                if (DEBUG) {
+                    System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
+                    System.err.println("\tSi = " + NormalSufficientStatistics.toVectorizedString(Si));
+                }
 
-        if (DEBUG) {
-            System.err.println("grad1 = " + grad1);
-        }
+                DenseMatrix64F logDetComponent = matrix0; //new DenseMatrix64F(dim, dim); //matrix0;
+                CommonOps.mult(Qi, Si, logDetComponent);
 
-        DenseMatrix64F quadraticComponent = matrix1; //new DenseMatrix64F(dim, dim); //matrix1;
-        CommonOps.mult(logDetComponent, Qi, quadraticComponent);
+                double grad1 = 0.0;
+                for (int row = 0; row < dim; ++row) {
+                    grad1 -= 0.5 * logDetComponent.unsafe_get(row, row);
+                }
 
-        if (DEBUG) {
-            System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
-            System.err.println("\tQQ = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
-        }
+                if (DEBUG) {
+                    System.err.println("grad1 = " + grad1);
+                }
 
-        NormalSufficientStatistics jointStatistics = computeJointStatistics(child, parent);
+                DenseMatrix64F quadraticComponent = matrix1; //new DenseMatrix64F(dim, dim); //matrix1;
+                CommonOps.mult(logDetComponent, Qi, quadraticComponent);
 
-        DenseMatrix64F additionalVariance = matrix0; //new DenseMatrix64F(dim, dim);
-        CommonOps.mult(quadraticComponent, jointStatistics.getRawVariance(), additionalVariance);
+                if (DEBUG) {
+                    System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
+                    System.err.println("\tQQ = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
+                }
 
-        DenseMatrix64F delta = vector0;
-        for (int row = 0; row < dim; ++row) {
-            delta.unsafe_set(row, 0,
-                    jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row) // TODO Correct for drift
-            );
-        }
+                NormalSufficientStatistics jointStatistics = computeJointStatistics(child, parent);
 
-        double grad2 = 0.0;
-        for (int row = 0; row < dim; ++row) {
-            for (int col = 0; col < dim; ++col) {
+                DenseMatrix64F additionalVariance = matrix0; //new DenseMatrix64F(dim, dim);
+                CommonOps.mult(quadraticComponent, jointStatistics.getRawVariance(), additionalVariance);
 
-                grad2 += 0.5 * delta.unsafe_get(row, 0)
-                        * quadraticComponent.unsafe_get(row, col)
-                        * delta.unsafe_get(col, 0);
+                DenseMatrix64F delta = vector0;
+                for (int row = 0; row < dim; ++row) {
+                    delta.unsafe_set(row, 0,
+                            jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row) // TODO Correct for drift
+                    );
+                }
+
+                double grad2 = 0.0;
+                for (int row = 0; row < dim; ++row) {
+                    for (int col = 0; col < dim; ++col) {
+
+                        grad2 += 0.5 * delta.unsafe_get(row, 0)
+                                * quadraticComponent.unsafe_get(row, col)
+                                * delta.unsafe_get(col, 0);
+
+                    }
+
+                    grad2 += 0.5 * additionalVariance.unsafe_get(row, row);
+                }
+
+                if (DEBUG) {
+                    System.err.println("\tchild variance = " + NormalSufficientStatistics.toVectorizedString(child.getRawVariance()));
+                    System.err.println("\tquadratic      = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
+                    System.err.println("\tadditional     = " + NormalSufficientStatistics.toVectorizedString(additionalVariance));
+                    System.err.println("delta: " + NormalSufficientStatistics.toVectorizedString(delta));
+                    System.err.println("grad2 = " + grad2);
+                }
+
+                return grad1 + grad2;
 
             }
 
-            grad2 += 0.5 * additionalVariance.unsafe_get(row, row);
-        }
+            private NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics child,
+                                                                      NormalSufficientStatistics parent) {
 
-        if (DEBUG) {
-            System.err.println("\tchild variance = " + NormalSufficientStatistics.toVectorizedString(child.getRawVariance()));
-            System.err.println("\tquadratic      = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
-            System.err.println("\tadditional     = " + NormalSufficientStatistics.toVectorizedString(additionalVariance));
-            System.err.println("delta: " + NormalSufficientStatistics.toVectorizedString(delta));
-            System.err.println("grad2 = " + grad2);
-        }
+                DenseMatrix64F totalP = new DenseMatrix64F(dim, dim);
+                CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
 
-        return grad1 + grad2;
+                DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
+                safeInvert(totalP, totalV, false);
+
+                DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
+                safeWeightedAverage(
+                        new WrappedVector.Raw(child.getRawMean().getData(), 0, dim),
+                        child.getRawPrecision(),
+                        new WrappedVector.Raw(parent.getRawMean().getData(), 0, dim),
+                        parent.getRawPrecision(),
+                        new WrappedVector.Raw(mean.getData(), 0, dim),
+                        totalV,
+                        dim);
+
+                return new NormalSufficientStatistics(mean, totalP, totalV);
+            }
+        }
     }
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {

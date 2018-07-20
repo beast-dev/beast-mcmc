@@ -42,6 +42,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id: StructuredCoalescentLikelihood.java,v 1.20 2006/09/11 09:33:01 gerton Exp $
  */
+@Deprecated
 public class StructuredCoalescentLikelihood extends AbstractModelLikelihood {
 
     // PUBLIC STUFF

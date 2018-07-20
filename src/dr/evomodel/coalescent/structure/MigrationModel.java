@@ -35,6 +35,7 @@ import dr.inference.model.Model;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+@Deprecated
 public abstract class MigrationModel extends AbstractModel
 {
 

@@ -59,6 +59,7 @@ public abstract class AbstractFullConditionalDistributionDelegate
         cdi.calculatePreOrderRoot(rootProcessDelegate.getPriorBufferIndex(), likelihoodDelegate.getActiveNodeIndex(rootIndex));
 
         if (DEBUG) {
+            cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(rootIndex), partialRootBuffer);
             System.err.println("Root: " + new WrappedVector.Raw(partialRootBuffer, 0, partialRootBuffer.length));
             System.err.println("");
         }

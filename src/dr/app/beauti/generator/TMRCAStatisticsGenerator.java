@@ -88,71 +88,34 @@ public class TMRCAStatisticsGenerator extends Generator {
         List<Taxa> taxonSets;
         Map<Taxa, Boolean> taxonSetsMono;
 
-        if (options.useStarBEAST) {
-            taxonSets = options.speciesSets;
-            taxonSetsMono = options.speciesSetsMono;
+        taxonSets = options.taxonSets;
+        taxonSetsMono = options.taxonSetsMono;
 
-            writer.writeComment("Species Sets");
-            writer.writeText("");
-            for (Taxa taxa : taxonSets) {
-                writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "tmrca(" + taxa.getId() + ")"),
-//                        new Attribute.Default<Boolean>(TMRCAStatisticParser.STEM, options.taxonSetsIncludeStem.get(taxa)),
-                        }
-                ); // make tmrca(tree.name) eay to read in log for Tracer
-                writer.writeOpenTag(TMRCAStatisticParser.MRCA);
-                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                writer.writeCloseTag(TMRCAStatisticParser.MRCA);
-                writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
-                writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
+        writer.writeComment("Taxon Sets");
+        writer.writeText("");
+        for (Taxa taxa : taxonSets) {
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+            String id = "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")";
+            writeTMRCAStatistic(writer, id, taxa, treeModel, false, options.taxonSetsIncludeStem.get(taxa));
 
-                if (taxonSetsMono.get(taxa)) {
-//                    && treeModel.getPartitionTreePrior().getNodeHeightPrior() != TreePriorType.YULE
-//                    && options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 1) {
-                    writer.writeOpenTag(
-                            MonophylyStatisticParser.MONOPHYLY_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
-                            });
-                    writer.writeOpenTag(MonophylyStatisticParser.MRCA);
-                    writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                    writer.writeCloseTag(MonophylyStatisticParser.MRCA);
-                    writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
-                    writer.writeCloseTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC);
-                }
+            if (treeModel.hasTipCalibrations()) {
+                id = "age(" + treeModel.getPrefix() + taxa.getId() + ")";
+                writeTMRCAStatistic(writer, id, taxa, treeModel, true, options.taxonSetsIncludeStem.get(taxa));
             }
 
-        } else {
-            taxonSets = options.taxonSets;
-            taxonSetsMono = options.taxonSetsMono;
-
-            writer.writeComment("Taxon Sets");
-            writer.writeText("");
-            for (Taxa taxa : taxonSets) {
-                PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
-                String id = "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")";
-                writeTMRCAStatistic(writer, id, taxa, treeModel, false, options.taxonSetsIncludeStem.get(taxa));
-
-                if (treeModel.hasTipCalibrations()) {
-                    id = "age(" + treeModel.getPrefix() + taxa.getId() + ")";
-                    writeTMRCAStatistic(writer, id, taxa, treeModel, true, options.taxonSetsIncludeStem.get(taxa));
-                }
-
-                if (taxonSetsMono.get(taxa)) {
+            if (taxonSetsMono.get(taxa)) {
 //                    && treeModel.getPartitionTreePrior().getNodeHeightPrior() != TreePriorType.YULE
 //                    && options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 1) {
-                    writer.writeOpenTag(
-                            MonophylyStatisticParser.MONOPHYLY_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
-                            });
-                    writer.writeOpenTag(MonophylyStatisticParser.MRCA);
-                    writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                    writer.writeCloseTag(MonophylyStatisticParser.MRCA);
-                    writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
-                    writer.writeCloseTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC);
-                }
+                writer.writeOpenTag(
+                        MonophylyStatisticParser.MONOPHYLY_STATISTIC,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
+                        });
+                writer.writeOpenTag(MonophylyStatisticParser.MRCA);
+                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+                writer.writeCloseTag(MonophylyStatisticParser.MRCA);
+                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeCloseTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC);
             }
         }
     }

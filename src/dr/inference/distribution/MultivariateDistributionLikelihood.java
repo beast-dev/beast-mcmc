@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  * @author Guy Baele
+ * @author Paul Bastide
  */
 public class MultivariateDistributionLikelihood extends AbstractDistributionLikelihood {
 
@@ -66,6 +67,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String TREE_TRAIT_NORMAL = "treeTraitNormalDistribution";
     public static final String ROOT_VALUE = "rootValue";
     public static final String CONDITION = "conditionOnRoot";
+    public static final String LKJ_PRIOR = "LKJCorrelationPrior";
+    public static final String LKJ_SHAPE = "shapeParameter";
+    public static final String DIMENSION = "dimension";
+    public static final String CHOLESKY = "cholesky";
 
     public static final String DATA = "data";
 
@@ -705,6 +710,83 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public Class getReturnType() {
             return MultivariateDistributionLikelihood.class;
+        }
+    };
+
+    public static XMLObjectParser LKJ_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return LKJ_PRIOR;
+        }
+
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            MultivariateDistributionLikelihood likelihood;
+
+            if (!xo.hasAttribute(DIMENSION)) {
+                throw new XMLParseException("Must specify a shape parameter.");
+            }
+            int dim = xo.getIntegerAttribute(DIMENSION);
+
+            boolean cholesky = xo.getAttribute(CHOLESKY, true);
+
+            if (xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE)) {
+                // Make non-informative settings
+                if (cholesky) {
+                    likelihood = new MultivariateDistributionLikelihood(new LKJCholeskyCorrelationDistribution(dim));
+                } else {
+                    likelihood = new MultivariateDistributionLikelihood(new LKJCorrelationDistribution(dim));
+                }
+            } else {
+                if (!xo.hasAttribute(LKJ_SHAPE)) {
+                    throw new XMLParseException("Must specify a shape parameter.");
+                }
+
+                double shape = xo.getDoubleAttribute(LKJ_SHAPE);
+
+                if (cholesky) {
+                    likelihood
+                            = new MultivariateDistributionLikelihood(new LKJCholeskyCorrelationDistribution(dim, shape));
+                } else {
+                    likelihood
+                            = new MultivariateDistributionLikelihood(new LKJCorrelationDistribution(dim, shape));
+                }
+
+            }
+
+            XMLObject cxo = xo.getChild(DATA);
+            for (int j = 0; j < cxo.getChildCount(); j++) {
+                if (cxo.getChild(j) instanceof Parameter) {
+                    likelihood.addData((Parameter) cxo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
+                    AttributeRule.newDoubleRule(LKJ_SHAPE, true),
+                    new ElementRule(DATA,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}
+                    )
+            };
+        }
+
+        public String getParserDescription() {
+            return "Calculates the likelihood of some data under a LKJ distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
         }
     };
 }

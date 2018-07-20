@@ -29,6 +29,7 @@ import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 
 public class TransformedParameter extends Parameter.Abstract implements VariableListener {
@@ -72,12 +73,36 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         }
     }
 
+    protected double[] transform(double values[]) {
+        if (inverse) {
+            return transform.inverse(values, 0, values.length);
+        } else {
+            return transform.transform(values, 0, values.length);
+        }
+    }
+
     private double inverse(double value) {
         return inverse ? transform.transform(value) : transform.inverse(value);
     }
 
+    protected double[] inverse(double values[]) {
+        if (inverse) {
+            return transform.transform(values, 0, values.length);
+        } else {
+            return transform.inverse(values, 0, values.length);
+        }
+    }
+
     public double getParameterValue(int dim) {
         return transform(parameter.getParameterValue(dim));
+    }
+
+    public double getParameterUntransformedValue(int dim) {
+        return parameter.getParameterValue(dim);
+    }
+
+    public double[] getParameterUntransformedValues() {
+        return parameter.getParameterValues();
     }
 
     public void setParameterValue(int dim, double value) {
@@ -150,8 +175,19 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         fireParameterChangedEvent(index, type);
     }
 
-    private final Parameter parameter;
-    private final Transform transform;
-    private final boolean inverse;
+    public double diffLogJacobian(double[] oldValues, double[] newValues) {
+        // Takes **untransformed** values
+        if (inverse) {
+            return -transform.getLogJacobian(oldValues, 0, oldValues.length)
+                    + transform.getLogJacobian(newValues, 0, newValues.length);
+        } else {
+            return transform.getLogJacobian(oldValues, 0, oldValues.length)
+                    - transform.getLogJacobian(newValues, 0, newValues.length);
+        }
+    }
+
+    protected final Parameter parameter;
+    protected final Transform transform;
+    protected final boolean inverse;
     private Bounds<Double> transformedBounds = null;
 }

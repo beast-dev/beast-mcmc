@@ -1,4 +1,4 @@
-                    BEAST v1.10.0 2002-2017
+                    BEAST v1.10.0 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,13 +17,16 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 24th August 2017
+Last updated: a.rambaut@ed.ac.uk - 10th June 2018
 All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
 
 ================================================================================
 
-Version 1.10.0 VEME2017 pre-release 24th August 2017
-
+Version 1.10.0  released 10th June 2018
+	
+	This is a major new release with too many features to enumerate here.
+	See http://beast.community/ for more details.
+	
 ================================================================================
 
 Version 1.8.4 released 17th June 2016

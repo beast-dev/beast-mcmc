@@ -1,7 +1,7 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -772,7 +772,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
-                            transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            //transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            transformationSums[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
                                 System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }

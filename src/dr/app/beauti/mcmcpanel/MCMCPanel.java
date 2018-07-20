@@ -26,7 +26,6 @@
 package dr.app.beauti.mcmcpanel;
 
 
-import dr.app.beagle.tools.Partition;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MLEDialog;
@@ -35,7 +34,6 @@ import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodE
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
@@ -77,7 +75,7 @@ public class MCMCPanel extends BeautiPanel {
     private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
 
     JTextArea logFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".log");
-    JTextArea treeFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + "." + STARBEASTOptions.TREE_FILE_NAME);
+    JTextArea treeFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".trees");
 //    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
 
 //    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
@@ -427,17 +425,10 @@ public class MCMCPanel extends BeautiPanel {
                 options.substTreeFileName.add(treeFileName);
             }
         }
-
-        if (options.useStarBEAST) {
-            treeFileName = options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME;
-            if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
-            options.treeFileName.add(treeFileName);
-            //TODO: species sub tree
-        }
     }
 
     private String getTreeFileName(String treeName) {
-        return options.fileNameStem + "." + treeName + STARBEASTOptions.TREE_FILE_NAME;
+        return options.fileNameStem + "." + treeName + "trees";
     }
 
     private String displayTreeList(List<String> treeList) {
@@ -547,7 +538,7 @@ public class MCMCPanel extends BeautiPanel {
 //            fileNameStemField.setText(fileNameStem);
 //            fileNameStemField.setEnabled(false);
             logFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".log");
-            treeFileNameField.setText(DEFAULT_FILE_NAME_STEM + "." + STARBEASTOptions.TREE_FILE_NAME);
+            treeFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".trees");
 //            mapTreeLogCheck.setEnabled(false);
 //            mapTreeFileNameField.setEnabled(false);
 //            mapTreeFileNameField.setText("untitled");

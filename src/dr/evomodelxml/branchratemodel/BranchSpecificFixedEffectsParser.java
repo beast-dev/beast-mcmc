@@ -25,18 +25,23 @@
 
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
-import dr.evomodel.branchratemodel.*;
+import dr.evolution.util.Taxon;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
+import dr.evomodel.branchratemodel.ContinuousBranchValueProvider;
+import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
-import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.ALLOCATION;
-import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.CATEGORY;
-import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.parseCladeCategories;
+import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.*;
 
 /**
  * @author Marc A. Suchard
@@ -46,6 +51,7 @@ import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.parseCladeCa
 public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
     private static final String FIXED_EFFECTS = "fixedEffects";
+    private static final String INCLUDE_INTERCEPT = "includeIntercept";
 
     public String getParserName() {
         return FIXED_EFFECTS;
@@ -57,21 +63,50 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         Parameter coefficients = (Parameter) xo.getChild(Parameter.class);
 
+        boolean includeIntercept = xo.getAttribute(INCLUDE_INTERCEPT, true);
+
         CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
                 new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, allocationParameter);
 
-            parseCladeCategories(xo, cladeModel);
+        parseCladeCategories(xo, cladeModel);
 
-            List<CountableBranchCategoryProvider> categories = new ArrayList<CountableBranchCategoryProvider>();
-            categories.add(cladeModel);
+        List<CountableBranchCategoryProvider> categories = new ArrayList<CountableBranchCategoryProvider>();
+        categories.add(cladeModel);
 
-            List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
+        List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
 
-            return new BranchSpecificFixedEffects.Default(
-                    xo.getId(),
-                    categories, values,
-                    coefficients
+        BranchSpecificFixedEffects.Default fixedEffects = new BranchSpecificFixedEffects.Default(
+                xo.getId(),
+                categories, values,
+                coefficients,
+                includeIntercept
         );
+
+        double[][] designMatrix = fixedEffects.getDesignMatrix(treeModel);
+
+        Logger.getLogger("dr.evomodel").info("Using a fixed effects model with initial design matrix:\n"
+                + annotateDesignMatrix(designMatrix, treeModel));
+
+        return fixedEffects;
+    }
+
+    private String annotateDesignMatrix(double[][] matrix, Tree tree) {
+        StringBuilder sb = new StringBuilder();
+
+        int offset = 0;
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            NodeRef node = tree.getNode(i);
+            if (node != tree.getRoot()) {
+                String row = new WrappedVector.Raw(matrix[offset]).toString();
+                Taxon taxon = tree.getNodeTaxon(tree.getNode(i));
+                String name = (taxon != null) ? taxon.getId() : "";
+                sb.append(row).append(" : ").append(name).append("\n");
+
+                ++offset;
+            }
+        }
+
+        return sb.toString();
     }
 
     //************************************************************************
@@ -91,6 +126,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(INCLUDE_INTERCEPT, true),
             new ElementRule(TreeModel.class),
             new ElementRule(Parameter.class),
             new ElementRule(LocalClockModelParser.CLADE,

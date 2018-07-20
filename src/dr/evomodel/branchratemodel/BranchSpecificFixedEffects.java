@@ -6,8 +6,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.List;
 
@@ -19,7 +17,7 @@ public interface BranchSpecificFixedEffects {
 
     double getEffect(final Tree tree, final NodeRef node);
 
-    ReadableVector getDesignVector(final Tree tree, final NodeRef node);
+    double[] getDesignVector(final Tree tree, final NodeRef node);
 
     Parameter getFixedEffectsParameter();
 
@@ -28,19 +26,21 @@ public interface BranchSpecificFixedEffects {
         private final Parameter coefficients;
         private final List<CountableBranchCategoryProvider> categoryProviders;
         private final List<ContinuousBranchValueProvider> valueProviders;
-        private final boolean hasIntercept = true;
+        private final boolean hasIntercept;
 
         private final int dim;
 
         public Default(String name,
                        List<CountableBranchCategoryProvider> categoryProviders,
                        List<ContinuousBranchValueProvider> valueProviders,
-                       Parameter coefficients) {
+                       Parameter coefficients,
+                       boolean hasIntercept) {
             super(name);
 
             this.coefficients = coefficients;
             this.categoryProviders = categoryProviders;
             this.valueProviders = valueProviders;
+            this.hasIntercept = hasIntercept;
 
             this.dim = categoryProviders.size() + valueProviders.size() + (hasIntercept ? 1 : 0);
 
@@ -55,18 +55,18 @@ public interface BranchSpecificFixedEffects {
         @Override
         public double getEffect(Tree tree, NodeRef node) {
 
-            ReadableVector design = getDesignVector(tree, node);
+            double[] design = getDesignVector(tree, node);
 
             double sum = 0.0;
-            for (int i = 0; i < design.getDim(); ++i) {
-                sum += design.get(i) * coefficients.getParameterValue(i);
+            for (int i = 0; i < design.length; ++i) {
+                sum += design[i] * coefficients.getParameterValue(i);
             }
 
             return sum;
         }
 
         @Override
-        public ReadableVector getDesignVector(Tree tree, NodeRef node) {
+        public double[] getDesignVector(Tree tree, NodeRef node) {
 
             double[] design = new double[dim];
 
@@ -87,7 +87,7 @@ public interface BranchSpecificFixedEffects {
                 ++offset;
             }
 
-            return new WrappedVector.Raw(design);
+            return design;
         }
 
         private void addIntercept(double[] design) {
@@ -111,6 +111,21 @@ public interface BranchSpecificFixedEffects {
 
         @Override
         protected void acceptState() { }
+
+        public double[][] getDesignMatrix(Tree tree) {
+
+            double[][] matrix = new double[tree.getNodeCount() - 1][];
+
+            int offset = 0;
+            for (int i = 0; i < tree.getNodeCount(); ++i) {
+                NodeRef node = tree.getNode(i);
+                if (node != tree.getRoot()) {
+                    matrix[offset] = getDesignVector(tree, node);
+                    ++offset;
+                }
+            }
+            return matrix;
+        }
 
         private void addModels(List list) {
             for (Object entry : list) {

@@ -19,8 +19,10 @@ public class ScaleGradient extends HyperParameterBranchRateGradient {
     }
 
     @Override
-    double getDifferential(Tree tree, NodeRef node) {
+    double[] getDifferential(Tree tree, NodeRef node) {
         double rate = branchRateModel.getBranchRate(tree, node);
-        return locationScaleTransform.expScaleDifferential(rate); // TODO Move function below into here?
+        return new double[]{
+                locationScaleTransform.expScaleDifferential(rate) // TODO Move function below into here?
+        };
     }
 }

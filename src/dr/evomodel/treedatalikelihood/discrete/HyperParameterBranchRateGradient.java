@@ -50,18 +50,20 @@ public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBran
     protected HyperParameterBranchRateGradient(String traitName,
                                              TreeDataLikelihood treeDataLikelihood,
                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                             Parameter locationScaleParameter,
+                                             Parameter parameter,
                                              boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate, locationScaleParameter, useHessian);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, parameter, useHessian);
+
         if (!(branchRateModel.getTransform() instanceof ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal)) {
             throw new IllegalArgumentException("Must provide a LocationScaleLogNormal transform.");
         }
+
         locationScaleTransform = (ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal) branchRateModel.getTransform();
     }
 
     @Override
-    public double[] getGradientLogDensity() {
+    public double[] getGradientLogDensity() {   // TODO Why so much code duplication with function this overrides?
 
         double[] result = new double[rateParameter.getDimension()];
 
@@ -81,7 +83,7 @@ public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBran
             for (int i = 0; i < tree.getNodeCount(); ++i) {
                 final NodeRef node = tree.getNode(i);
                 if (!tree.isRoot(node)) {
-                    final double differential = getDifferential(tree, node);
+                    final double differential = getDifferential(tree, node)[0];
                     final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
 //                    if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
 //                        System.err.println("Check Gradient calculation please.");
@@ -100,6 +102,6 @@ public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBran
         return result;
     }
 
-    abstract double getDifferential(Tree tree, NodeRef node);
+    abstract double[] getDifferential(Tree tree, NodeRef node);
 
 }

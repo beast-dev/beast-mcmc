@@ -408,7 +408,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             @Override
             protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-                if (variable == location || variable == scale) {
+                if (variable == location.getFixedEffectsParameter() || variable == scale) {
                     transformKnown = false;
                     fireModelChanged();
                 } else {

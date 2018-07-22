@@ -323,6 +323,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
 
                 return rate / multiplier;
+
+                // TODO Does not depend on this class; move back into calling function
             }
 
             public double expScaleDifferential(double rate) {
@@ -331,6 +333,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                     setupTransform();
                     transformKnown = true;
                 }
+
+                // TODO Can out out of this class (I think), if we provide both transform() and inverse() here.
 
                 double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
                 double tmp = (Math.log(rate / multiplier) - transformMu)/(transformSigma * transformSigma) - 1.0;

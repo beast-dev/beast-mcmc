@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -41,16 +42,17 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  */
 
-public class LocationScaleGradient extends DiscreteTraitBranchRateGradient
+public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBranchRateGradient
         implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
-    private final ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal locationScaleTransform;
+    protected final ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal locationScaleTransform;
 
-    public LocationScaleGradient(String traitName,
-                                 TreeDataLikelihood treeDataLikelihood,
-                                 BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                 Parameter locationScaleParameter,
-                                 boolean useHessian) {
+    protected HyperParameterBranchRateGradient(String traitName,
+                                             TreeDataLikelihood treeDataLikelihood,
+                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                             Parameter locationScaleParameter,
+                                             boolean useHessian) {
+
         super(traitName, treeDataLikelihood, likelihoodDelegate, locationScaleParameter, useHessian);
         if (!(branchRateModel.getTransform() instanceof ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal)) {
             throw new IllegalArgumentException("Must provide a LocationScaleLogNormal transform.");
@@ -79,8 +81,7 @@ public class LocationScaleGradient extends DiscreteTraitBranchRateGradient
             for (int i = 0; i < tree.getNodeCount(); ++i) {
                 final NodeRef node = tree.getNode(i);
                 if (!tree.isRoot(node)) {
-                    final double rate = branchRateModel.getBranchRate(tree, node);
-                    final double differential = locationScaleTransform.expLocationScaleDifferential(parameter, rate);
+                    final double differential = getDifferential(tree, node);
                     final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
 //                    if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
 //                        System.err.println("Check Gradient calculation please.");
@@ -98,5 +99,7 @@ public class LocationScaleGradient extends DiscreteTraitBranchRateGradient
 
         return result;
     }
+
+    abstract double getDifferential(Tree tree, NodeRef node);
 
 }

@@ -32,7 +32,9 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.discrete.LocationScaleGradient;
+import dr.evomodel.treedatalikelihood.discrete.HyperParameterBranchRateGradient;
+import dr.evomodel.treedatalikelihood.discrete.LocationGradient;
+import dr.evomodel.treedatalikelihood.discrete.ScaleGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -42,16 +44,21 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "locationScaleGradient";
+    private static final String LOCATION = "location";
+    private static final String SCALE = "scale";
+
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    public static final String USE_HESSIAN = "useHessian";
+    private static final String USE_HESSIAN = "useHessian";
 
     public String getParserName(){ return NAME; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
+
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        final Parameter locationScaleParameter = (Parameter) xo.getChild(Parameter.class);
+//        final Parameter locationScaleParameter = (Parameter) xo.getChild(Parameter.class);
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
         if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
@@ -65,8 +72,20 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-                return new LocationScaleGradient(traitName, treeDataLikelihood, beagleData, locationScaleParameter, useHessian);
 
+                if (xo.hasChildNamed(LOCATION)) {
+
+                    Parameter location = (Parameter) xo.getElementFirstChild(LOCATION);
+                    return new LocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);
+
+                } else if (xo.hasChildNamed(SCALE)) {
+
+                    Parameter scale = (Parameter) xo.getElementFirstChild(SCALE);
+                    return new ScaleGradient(traitName, treeDataLikelihood, beagleData, scale, useHessian);
+
+                } else {
+                    throw new XMLParseException("Poorly formed");
+                }
             } else {
                 throw new XMLParseException("Unknown likelihood delegate type");
             }
@@ -84,6 +103,14 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
             new ElementRule(TreeDataLikelihood.class),
+            new XORRule(
+                    new ElementRule(LOCATION, new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class),
+                    }),
+                    new ElementRule(SCALE, new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class),
+                    })
+            ),
             new ElementRule(Parameter.class),
     };
 
@@ -94,6 +121,6 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return LocationScaleGradient.class;
+        return HyperParameterBranchRateGradient.class;
     }
 }

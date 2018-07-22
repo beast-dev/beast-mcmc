@@ -304,17 +304,17 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 this.transformKnown = false;
             }
 
-            public double expLocationScaleDifferential(Parameter parameter, double rate) {
-                if (parameter == location) {
-                    return expLocationDifferential(rate);
-                } else if (parameter == scale) {
-                    return expScaleDifferential(rate);
-                } else {
-                    throw new IllegalArgumentException("Must be location or scale parameter.");
-                }
-            }
+//            public double expLocationScaleDifferential(Parameter parameter, double rate) {
+//                if (parameter == location) {
+//                    return expLocationDifferential(rate);
+//                } else if (parameter == scale) {
+//                    return expScaleDifferential(rate);
+//                } else {
+//                    throw new IllegalArgumentException("Must be location or scale parameter.");
+//                }
+//            }
 
-            private double expLocationDifferential(double rate) {
+            public double expLocationDifferential(double rate) {
                 if (!transformKnown) {
                     setupTransform();
                     transformKnown = true;
@@ -325,7 +325,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 return rate / multiplier;
             }
 
-            private double expScaleDifferential(double rate) {
+            public double expScaleDifferential(double rate) {
 
                 if (!transformKnown) {
                     setupTransform();
@@ -341,22 +341,13 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             @Override
             public double differential(double raw) {
 
-                if (!transformKnown) {
-                    setupTransform();
-                    transformKnown = true;
-                }
-
                 double rate = transform(raw);
+
                 return raw > 0.0 ? (rate * transformSigma) / (raw * baseMeasureSigma) : Double.POSITIVE_INFINITY;
             }
 
             @Override
             public double secondDifferential(double raw) {
-
-                if (!transformKnown) {
-                    setupTransform();
-                    transformKnown = true;
-                }
 
                 double rate = transform(raw);
 

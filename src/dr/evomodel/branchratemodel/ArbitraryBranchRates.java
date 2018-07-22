@@ -139,7 +139,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
     }
 
     public static BranchRateTransform make(boolean reciprocal, boolean exp,
-                                    Parameter location,
+                                    BranchSpecificFixedEffects location,
                                     Parameter scale) {
         final BranchRateTransform transform;
 
@@ -154,7 +154,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         } else {
             if (location != null || scale != null) {
                 transform = new BranchRateTransform.LocationScaleLogNormal(
-                        ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, location, scale);
+                        ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
+                        (BranchSpecificFixedEffects.None) location, scale);
             } else {
                 transform = new BranchRateTransform.None();
             }
@@ -269,7 +270,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         
         class LocationScaleLogNormal extends AbstractModel implements BranchRateTransform  {
 
-            private final Parameter location;
+            private final BranchSpecificFixedEffects.None location;
             private final Parameter scale;
 
             private final double baseMeasureMu;
@@ -280,11 +281,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             private boolean transformKnown;
 
-            LocationScaleLogNormal(String name, Parameter location, Parameter scale) {
+            LocationScaleLogNormal(String name, BranchSpecificFixedEffects.None location, Parameter scale) {
                 this(name, location, scale, getMuPhi(1.0), getSigmaPhi(1.0));
             }
 
-            LocationScaleLogNormal(String name, Parameter location, Parameter scale,
+            LocationScaleLogNormal(String name, BranchSpecificFixedEffects.None location, Parameter scale,
                                    double baseMeasureMu, double baseMeasureSigma) {
 
                 super(name);
@@ -296,7 +297,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 this.scale = scale;
 
                 if (location != null) {
-                    addVariable(location);
+                    addVariable(location.getFixedEffectsParameter());
                 }
 
                 addVariable(scale);
@@ -320,7 +321,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                     transformKnown = true;
                 }
 
-                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
+                double multiplier = (location != null) ? location.getEffect(null, null) : 1.0;
 
                 return rate / multiplier;
 
@@ -336,7 +337,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
                 // TODO Can out out of this class (I think), if we provide both transform() and inverse() here.
 
-                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
+                double multiplier = (location != null) ? location.getEffect(null, null) : 1.0;
                 double tmp = (Math.log(rate / multiplier) - transformMu)/(transformSigma * transformSigma) - 1.0;
 
                 return tmp * rate * scale.getParameterValue(0) / (1.0 + scale.getParameterValue(0) * scale.getParameterValue(0));
@@ -381,7 +382,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 double rate = logNormalTransform(raw, baseMeasureMu, baseMeasureSigma, transformMu, transformSigma);
 
                 if (location != null) {
-                    rate *= location.getParameterValue(0);
+                    rate *= location.getEffect(null, null);
                 }
 
                 return rate;

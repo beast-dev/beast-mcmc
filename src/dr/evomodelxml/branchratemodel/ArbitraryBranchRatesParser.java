@@ -64,13 +64,13 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
         boolean centerAtOne = xo.getAttribute(CENTER_AT_ONE, true);
         boolean exp = xo.getAttribute(EXP, false);
 
-        Parameter locationParameter = null;
+        BranchSpecificFixedEffects locationParameter = null;
         if (xo.hasChildNamed(LOCATION)) {
             Object locationObject = xo.getElementFirstChild(LOCATION);
             if ( locationObject instanceof BranchSpecificFixedEffects) {
-                locationParameter = ((BranchSpecificFixedEffects) locationObject).getFixedEffectsParameter();
+                locationParameter = (BranchSpecificFixedEffects) locationObject;
             } else {
-                locationParameter = (Parameter) locationObject;
+                locationParameter = new BranchSpecificFixedEffects.None((Parameter) locationObject);
             }
         }
 

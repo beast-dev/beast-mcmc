@@ -2,11 +2,12 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,7 +22,56 @@ public interface BranchSpecificFixedEffects {
 
     Parameter getFixedEffectsParameter();
 
-    class Default extends AbstractModel implements BranchSpecificFixedEffects {
+    class None extends AbstractModel implements BranchSpecificFixedEffects {
+
+        private final Parameter location;
+        private final static double[] design = new double[] { 1.0 };
+
+        public None(Parameter location) {
+            super("No effects");
+            this.location = location;
+
+            addVariable(location);
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+            // Do nothing
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            if (variable == location) {
+                fireModelChanged();
+            }
+        }
+
+        @Override
+        protected void storeState() { }
+
+        @Override
+        protected void restoreState() { }
+
+        @Override
+        protected void acceptState() { }
+
+        @Override
+        public double getEffect(Tree tree, NodeRef node) {
+            return location.getParameterValue(0);
+        }
+
+        @Override
+        public double[] getDesignVector(Tree tree, NodeRef node) {
+            return design;
+        }
+
+        @Override
+        public Parameter getFixedEffectsParameter() {
+            return location;
+        }
+    }
+
+    class Default extends AbstractModel implements BranchSpecificFixedEffects, Citable {
 
         private final Parameter coefficients;
         private final List<CountableBranchCategoryProvider> categoryProviders;
@@ -78,7 +128,9 @@ public interface BranchSpecificFixedEffects {
 
             for (CountableBranchCategoryProvider categoryProvider : categoryProviders) {
                 int category = categoryProvider.getBranchCategory(tree, node);
-                design[category + offset] = 1.0;
+                if (category != 0) {
+                    design[(category - 1) + offset] = 1.0;
+                }
             }
             offset += categoryProviders.size();
 
@@ -134,5 +186,29 @@ public interface BranchSpecificFixedEffects {
                 }
             }
         }
+
+        @Override
+        public Citation.Category getCategory() {
+            return Citation.Category.MOLECULAR_CLOCK;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Location-scale relaxed clock";
+        }
+
+        @Override
+        public List<Citation> getCitations() {
+            return Collections.singletonList(CITATION);
+        }
+
+        public static Citation CITATION = new Citation(
+                new Author[]{
+                        new Author("X", "Ji"),
+                        new Author("P", "Lemey"),
+                        new Author("MA", "Suchard")
+                },
+                Citation.Status.IN_PREPARATION
+        );
     }
 }

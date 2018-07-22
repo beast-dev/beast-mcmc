@@ -148,7 +148,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
                 assert (statisticsForNode.size() == nTraits);
 
                 final double rate = branchRateModel.getBranchRate(tree, node);
-                final double differential = branchRateModel.getBranchRateDifferential(rate);
+                final double differential = branchRateModel.getBranchRateDifferential(tree, node);
                 final double scaling = differential / rate;
 
                 double gradient = 0.0;

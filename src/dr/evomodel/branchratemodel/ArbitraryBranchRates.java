@@ -89,8 +89,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         rates.setNodeValue(tree, node, value);
     }
 
-    public double getBranchRateDifferential(double rate) {
-        return transform.differential(rate);
+    public double getBranchRateDifferential(Tree tree, NodeRef node) {
+        double raw = rates.getNodeValue(tree, node);
+        return transform.differential(raw);
     }
 
     public BranchRateTransform getTransform() {
@@ -161,15 +162,16 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         return transform;
     }
 
-    public double getBranchRateSecondDifferential(double rate) {
-        return transform.secondDifferential(rate);
+    public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        double raw = rates.getNodeValue(tree, node);
+        return transform.secondDifferential(raw);
     }
 
     public interface BranchRateTransform {
 
-        double differential(double rate);
+        double differential(double raw);
 
-        double secondDifferential(double rate);
+        double secondDifferential(double raw);
 
         double transform(double raw);
 
@@ -199,12 +201,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class None extends Base {
 
             @Override
-            public double differential(double rate) {
+            public double differential(double raw) {
                 return 1.0;
             }
 
             @Override
-            public double secondDifferential(double rate) {
+            public double secondDifferential(double raw) {
                 return 0.0;
             }
 
@@ -217,13 +219,13 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class Reciprocal extends Base {
 
             @Override
-            public double differential(double rate) {
-                return -rate * rate;
+            public double differential(double raw) {
+                return -1.0 / (raw * raw);
             }
 
             @Override
-            public double secondDifferential(double rate) {
-                return 2.0 * rate * rate * rate;
+            public double secondDifferential(double raw) {
+                return 2.0 / (raw * raw * raw);
             }
 
             @Override
@@ -235,13 +237,13 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class Exponentiate implements BranchRateTransform {
 
             @Override
-            public double differential(double rate) {
-                return rate;
+            public double differential(double raw) {
+                return transform(raw);
             }
 
             @Override
-            public double secondDifferential(double rate) {
-                return rate;
+            public double secondDifferential(double raw) {
+                return transform(raw);
             }
 
             @Override
@@ -337,36 +339,32 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
-            public double differential(double rate) {
+            public double differential(double raw) {
 
                 if (!transformKnown) {
                     setupTransform();
                     transformKnown = true;
                 }
-                
-                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
-                double raw = logNormalTransform(rate / multiplier,
-                        transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
 
+                double rate = transform(raw);
                 return raw > 0.0 ? (rate * transformSigma) / (raw * baseMeasureSigma) : Double.POSITIVE_INFINITY;
             }
 
             @Override
-            public double secondDifferential(double rate) {
+            public double secondDifferential(double raw) {
 
                 if (!transformKnown) {
                     setupTransform();
                     transformKnown = true;
                 }
 
-                double multiplier = (location != null) ? location.getParameterValue(0) : 1.0;
-                double raw = logNormalTransform(rate / multiplier,
-                        transformMu, transformSigma, baseMeasureMu, baseMeasureSigma);
+                double rate = transform(raw);
 
                 if (raw > 0.0) {
-                    return (rate * transformSigma) / (raw * raw * baseMeasureSigma) * (transformSigma / baseMeasureSigma - 1.0);
-                }else{
-                    if (transformSigma > baseMeasureSigma){
+                    return (rate * transformSigma) / (raw * raw * baseMeasureSigma)
+                            * (transformSigma / baseMeasureSigma - 1.0);
+                } else {
+                    if (transformSigma > baseMeasureSigma) {
                         return Double.POSITIVE_INFINITY;
                     } else if (transformSigma < baseMeasureSigma) {
                         return Double.NEGATIVE_INFINITY;

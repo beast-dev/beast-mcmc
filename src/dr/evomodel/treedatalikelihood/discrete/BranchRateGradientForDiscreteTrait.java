@@ -66,9 +66,8 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
-                final double rate = branchRateModel.getBranchRate(tree, node);
-                final double differential = branchRateModel.getBranchRateDifferential(rate);
-                final double secondDifferential = branchRateModel.getBranchRateSecondDifferential(rate);
+                final double differential = branchRateModel.getBranchRateDifferential(tree, node);
+                final double secondDifferential = branchRateModel.getBranchRateSecondDifferential(tree, node);
                 final double branchLength = tree.getBranchLength(node);
                 result[destinationIndex] =  branchLength *
                         (gradient[v] * secondDifferential + diagonalHessian[v] * differential * differential * branchLength);
@@ -92,8 +91,7 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
-                final double rate = branchRateModel.getBranchRate(tree, node);
-                final double differential = branchRateModel.getBranchRateDifferential(rate);
+                final double differential = branchRateModel.getBranchRateDifferential(tree, node);
                 final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
                 if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
                     System.err.println("Check Gradient calculation please.");

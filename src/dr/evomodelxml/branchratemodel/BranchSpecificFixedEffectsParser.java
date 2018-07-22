@@ -59,14 +59,15 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter allocationParameter = (Parameter) xo.getElementFirstChild(ALLOCATION);
+//        Parameter allocationParameter = (Parameter) xo.getElementFirstChild(ALLOCATION);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         Parameter coefficients = (Parameter) xo.getChild(Parameter.class);
 
         boolean includeIntercept = xo.getAttribute(INCLUDE_INTERCEPT, true);
 
         CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
-                new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, allocationParameter);
+                new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel,
+                        new Parameter.Default(treeModel.getNodeCount() -1));
 
         parseCladeCategories(xo, cladeModel);
 
@@ -99,8 +100,8 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
             if (node != tree.getRoot()) {
                 String row = new WrappedVector.Raw(matrix[offset]).toString();
                 Taxon taxon = tree.getNodeTaxon(tree.getNode(i));
-                String name = (taxon != null) ? taxon.getId() : "";
-                sb.append(row).append(" : ").append(name).append("\n");
+                String name = (taxon != null) ? taxon.getId() : "(not external)";
+                sb.append("\t").append(row).append(" : ").append(name).append("\n");
 
                 ++offset;
             }

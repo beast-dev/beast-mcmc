@@ -270,7 +270,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         
         class LocationScaleLogNormal extends AbstractModel implements BranchRateTransform  {
 
-            private final BranchSpecificFixedEffects.None location;
+            private final BranchSpecificFixedEffects location;
             private final Parameter scale;
 
             private final double baseMeasureMu;
@@ -285,7 +285,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 this(name, location, scale, getMuPhi(1.0), getSigmaPhi(1.0));
             }
 
-            LocationScaleLogNormal(String name, BranchSpecificFixedEffects.None location, Parameter scale,
+            LocationScaleLogNormal(String name, BranchSpecificFixedEffects location, Parameter scale,
                                    double baseMeasureMu, double baseMeasureSigma) {
 
                 super(name);
@@ -296,11 +296,13 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 this.location = location;
                 this.scale = scale;
 
-                if (location != null) {
-                    addVariable(location.getFixedEffectsParameter());
+                if (location != null && location instanceof Model) {
+                    addModel((Model) location);
                 }
 
-                addVariable(scale);
+                if (scale != null) {
+                    addVariable(scale);
+                }
 
                 this.transformKnown = false;
             }
@@ -404,11 +406,18 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
-            protected void handleModelChangedEvent(Model model, Object object, int index) { }
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+                if (model == location) {
+                    transformKnown = false;
+                    fireModelChanged();
+                } else {
+                    throw new RuntimeException("Unknown model");
+                }
+            }
 
             @Override
             protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-                if (variable == location.getFixedEffectsParameter() || variable == scale) {
+                if (variable == scale) {
                     transformKnown = false;
                     fireModelChanged();
                 } else {

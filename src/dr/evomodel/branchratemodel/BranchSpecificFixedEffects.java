@@ -84,17 +84,18 @@ public interface BranchSpecificFixedEffects {
 
         @Override
         public double getEffect(Tree tree, NodeRef node) {
-            return 0; // TODO transform first
+            double untransformedEffect = effects.getEffect(tree, node);
+            return transform.inverse(untransformedEffect);
         }
 
         @Override
         public double[] getDesignVector(Tree tree, NodeRef node) {
-            return new double[0]; // TODO
+            return effects.getDesignVector(tree, node);
         }
 
         @Override
         public Parameter getFixedEffectsParameter() {
-            return null; // TODO
+            return effects.getFixedEffectsParameter();
         }
     }
 

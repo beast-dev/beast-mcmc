@@ -35,6 +35,7 @@ import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.Transform;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -76,6 +77,9 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
         List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
 
+        Transform transform = (Transform)
+                xo.getChild(Transform.class);
+
         BranchSpecificFixedEffects.Default fixedEffects = new BranchSpecificFixedEffects.Default(
                 xo.getId(),
                 categories, values,
@@ -88,7 +92,14 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("Using a fixed effects model with initial design matrix:\n"
                 + annotateDesignMatrix(designMatrix, treeModel));
 
-        return fixedEffects;
+        if (transform != null) {
+            return new BranchSpecificFixedEffects.Transformed(
+                    fixedEffects,
+                    transform
+            );
+        } else {
+            return fixedEffects;
+        }
     }
 
     private String annotateDesignMatrix(double[][] matrix, Tree tree) {

@@ -15,6 +15,7 @@ import org.ejml.ops.CommonOps;
 import java.util.Arrays;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
+import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
 
 /**
  * @author Marc A. Suchard
@@ -42,6 +43,30 @@ public class MissingOps {
                                               final int dim) {
         double[] buffer = new double[dim * dim];
         return wrapDiagonal(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapSpherical(final double[] source, final int offset,
+                                               final int dim) {
+        double[] buffer = new double[dim * dim];
+        return wrapSpherical(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapSpherical(final double[] source, final int offset,
+                                               final int dim,
+                                               final double[] buffer) {
+        fillSpherical(source, offset, dim, buffer);
+        DenseMatrix64F res = DenseMatrix64F.wrap(dim, dim, buffer);
+        CommonOps.transpose(res); // Column major.
+        return res;
+    }
+
+    private static void fillSpherical(final double[] source, final int offset,
+                               final int dim, final double[] buffer) {
+        for (int i = 0; i < dim; i++) {
+            System.arraycopy(source, offset + i * (dim - 1),
+                    buffer, i * dim, dim - 1);
+            buffer[(i + 1) * dim - 1] = projection(source, offset + i * (dim - 1), dim - 1);
+        }
     }
 
     public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,

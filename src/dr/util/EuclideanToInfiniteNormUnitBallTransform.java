@@ -100,11 +100,23 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     }
 
     public static double squaredNorm(double[] x) {
+        return squaredNorm(x, 0, x.length);
+    }
+
+    public static double squaredNorm(double[] x, int offset, int length) {
         double norm = 0.0;
-        for (double xi : x) {
-            norm += xi * xi;
+        for (int i = 0; i < length; i++) {
+            norm += x[offset + i] * x[offset + i];
         }
         return norm;
+    }
+
+    public static double projection(final double[] x) {
+        return projection(x, 0, x.length);
+    }
+
+    public static double projection(final double[] x, final int offset, final int length) {
+        return Math.sqrt(1 - squaredNorm(x, offset, length));
     }
 
     @Override

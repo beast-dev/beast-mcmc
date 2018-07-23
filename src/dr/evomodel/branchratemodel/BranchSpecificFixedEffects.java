@@ -6,6 +6,7 @@ import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.Transform;
 
 import java.util.Collections;
 import java.util.List;
@@ -68,6 +69,32 @@ public interface BranchSpecificFixedEffects {
         @Override
         public Parameter getFixedEffectsParameter() {
             return location;
+        }
+    }
+
+    class Transformed implements BranchSpecificFixedEffects {
+
+        private final BranchSpecificFixedEffects effects;
+        private final Transform transform;
+
+        public Transformed(BranchSpecificFixedEffects effects, Transform transform) {
+            this.effects = effects;
+            this.transform = transform;
+        }
+
+        @Override
+        public double getEffect(Tree tree, NodeRef node) {
+            return 0; // TODO transform first
+        }
+
+        @Override
+        public double[] getDesignVector(Tree tree, NodeRef node) {
+            return new double[0]; // TODO
+        }
+
+        @Override
+        public Parameter getFixedEffectsParameter() {
+            return null; // TODO
         }
     }
 

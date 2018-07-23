@@ -174,7 +174,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
         double secondDifferential(double raw);
 
-        double transform(double raw, Tree tree, NodeRef node);
+        double transform(double raw, Tree tree, NodeRef node);  // TODO tree and node are probably unnecessary if done differently
 
         double center();
 

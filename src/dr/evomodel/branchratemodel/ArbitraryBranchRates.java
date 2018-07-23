@@ -103,7 +103,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision
 
-        return transform.transform(rates.getNodeValue(tree, node));
+        return transform.transform(rates.getNodeValue(tree, node), tree, node);
     }
 
     public int getParameterIndexFromNode(final NodeRef node) {
@@ -155,7 +155,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             if (location != null || scale != null) {
                 transform = new BranchRateTransform.LocationScaleLogNormal(
                         ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
-                        (BranchSpecificFixedEffects.None) location, scale);
+                        location, scale);
             } else {
                 transform = new BranchRateTransform.None();
             }
@@ -174,7 +174,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
         double secondDifferential(double raw);
 
-        double transform(double raw);
+        double transform(double raw, Tree tree, NodeRef node);
 
         double center();
 
@@ -212,7 +212,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
-            public double transform(double raw) {
+            public double transform(double raw, Tree tree, NodeRef node) {
                 return raw;
             }
         }
@@ -230,7 +230,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
-            public double transform(double raw) {
+            public double transform(double raw, Tree tree, NodeRef node) {
                 return 1.0 / raw;
             }
         }
@@ -239,16 +239,16 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             @Override
             public double differential(double raw) {
-                return transform(raw);
+                return transform(raw, null, null);
             }
 
             @Override
             public double secondDifferential(double raw) {
-                return transform(raw);
+                return transform(raw, null, null);
             }
 
             @Override
-            public double transform(double raw) {
+            public double transform(double raw, Tree tree, NodeRef node) {
                 return Math.exp(raw);
             }
 
@@ -281,7 +281,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             private boolean transformKnown;
 
-            LocationScaleLogNormal(String name, BranchSpecificFixedEffects.None location, Parameter scale) {
+            LocationScaleLogNormal(String name, BranchSpecificFixedEffects location, Parameter scale) {
                 this(name, location, scale, getMuPhi(1.0), getSigmaPhi(1.0));
             }
 
@@ -317,20 +317,23 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 //                }
 //            }
 
-            public double expLocationDifferential(double rate) {
+            public double expLocationDifferential(double rate, Tree tree, NodeRef node) {
                 if (!transformKnown) {
                     setupTransform();
                     transformKnown = true;
                 }
 
-                double multiplier = (location != null) ? location.getEffect(null, null) : 1.0;
+                double multiplier = (location != null) ? location.getEffect(tree, node) : 1.0;
 
                 return rate / multiplier;
+            }
 
+            public double expLocationDifferential(double rate) {
+                return expLocationDifferential(rate, null, null);
                 // TODO Does not depend on this class; move back into calling function
             }
 
-            public double expScaleDifferential(double rate) {
+            public double expScaleDifferential(double rate, Tree tree, NodeRef node) {
 
                 if (!transformKnown) {
                     setupTransform();
@@ -339,10 +342,15 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
                 // TODO Can out out of this class (I think), if we provide both transform() and inverse() here.
 
-                double multiplier = (location != null) ? location.getEffect(null, null) : 1.0;
+                double multiplier = (location != null) ? location.getEffect(tree, node) : 1.0;
                 double tmp = (Math.log(rate / multiplier) - transformMu)/(transformSigma * transformSigma) - 1.0;
 
                 return tmp * rate * scale.getParameterValue(0) / (1.0 + scale.getParameterValue(0) * scale.getParameterValue(0));
+
+            }
+
+            public double expScaleDifferential(double rate) {
+                return expScaleDifferential(rate, null, null);
             }
 
             @Override
@@ -372,9 +380,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 }
             }
 
+            public double transform(double raw) {
+                return transform(raw, null, null);
+            }
 
             @Override
-            public double transform(double raw) {
+            public double transform(double raw, Tree tree, NodeRef node) {
 
                 if (!transformKnown) {
                     setupTransform();
@@ -384,7 +395,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 double rate = logNormalTransform(raw, baseMeasureMu, baseMeasureSigma, transformMu, transformSigma);
 
                 if (location != null) {
-                    rate *= location.getEffect(null, null);
+                    rate *= location.getEffect(tree, node);
                 }
 
                 return rate;

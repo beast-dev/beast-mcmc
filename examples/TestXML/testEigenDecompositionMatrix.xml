@@ -4,13 +4,6 @@
 
 <beast>
 
-    <!-- <matrixParameter id="attenuation.vectors"> -->
-    <!--     <parameter id="attVec.col1" value="0.5 0.5 0.5 0.5"/> -->
-    <!--     <parameter id="attVec.col2" value="0.8 0.4 0.4 0.1"/> -->
-    <!--     <parameter id="attVec.col3" value="0.4 0.8 0.1 0.4"/> -->
-    <!--     <parameter id="attVec.col4" value="0.5 0.5 0.5 0.5"/> -->
-    <!-- </matrixParameter> -->
-
     <parameter id="attenuation.values" value="0.1 0.2 0.3 0.4" />
 
     <operators id="operators.randomWalk.attVals">
@@ -70,9 +63,6 @@
 			<object idref="mcmc.randomWalk.attVals"/>
 		</property>
 	</report>
-
-</beast>
-
 <!--
 # Read log 
 dat <- read_log(file = "testEigenDecompositionMatrix_randomWalk_attVals.log", burning = 0)
@@ -122,3 +112,106 @@ for (i in 1:(dim-1)) {
   }
 }
 -->
+
+    <matrixParameter id="attenuation.vectors">
+        <parameter id="attVec.col1" value="0.5 0.5 0.5"/>
+        <parameter id="attVec.col2" value="0.8 0.4 0.4"/>
+        <parameter id="attVec.col3" value="0.4 0.8 0.1"/>
+        <parameter id="attVec.col4" value="0.5 0.5 0.5"/>
+    </matrixParameter>
+
+    <sphericalBetaPrior id="prior.attVecs" shapeParameter="2.0">
+        <data>
+            <matrixParameter idref="attenuation.vectors"/>
+        </data>
+    </sphericalBetaPrior>
+
+    <operators id="operators.randomWalk.attVecs">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col1"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col2"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col3"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col4"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+    </operators>
+
+	<mcmc id="mcmc.randomWalk.attVecs" chainLength="100000000" autoOptimize="true">
+        <posterior id="posterior.randomWalk.attVecs">
+        	<dummyLikelihood id="likelihood.randomWalk.attVecs">
+                <parameter idref="attenuation.vectors"/>
+            </dummyLikelihood>
+
+            <prior id="prior.randomWalk.attVecs">
+                <sphericalBetaPrior idref="prior.attVecs"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.randomWalk.attVecs"/>
+
+		<log logEvery="100">
+			<column label="posterior.randomWalk.attVecs" dp="4" width="12">
+				<likelihood idref="likelihood.randomWalk.attVecs"/>
+                <prior idref="prior.randomWalk.attVecs"/>
+			</column>
+			<column label="Eigen Vectors" dp="4" width="12">
+                <parameter idref="attenuation.vectors"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testEigenDecompositionMatrix_randomWalk_attVecs.log">
+            <parameter idref="attenuation.vectors"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.randomWalk.attVecs"/>
+		</property>
+	</report>
+
+<!--
+dat <- read_log(file = "testEigenDecompositionMatrix_randomWalk_attVecs.log", burning = 0)
+
+# Get observed moments
+means <- get_mean(dat)
+vars <- get_var(dat)
+covs <- get_covar(dat)
+
+# Get theoretical moments
+dim <- 3
+beta <- 2.0
+length <- dim * (dim + 1)
+
+mu <- 0
+sigma2 <- 1 / (dim + 2 * beta)
+
+# Tests
+for (i in 1:length) {
+  print(pull(means, i))
+  stopifnot(all.equal(pull(means, i), mu, tol = 0.001))
+}
+
+for (i in 1:length) {
+  print(pull(vars, i))
+  stopifnot(all.equal(pull(vars, i), sigma2, tol = 0.005))
+}
+
+for (i in 1:(length-1)) {
+  for(j in (i+1):length) {
+    print(covs[i, j])
+    stopifnot(all.equal(covs[i, j], 0, tol = 0.001))
+  }
+}
+-->
+
+</beast>
+

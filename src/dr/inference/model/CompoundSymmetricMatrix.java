@@ -43,18 +43,14 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
     private final boolean isCholesky;
 
     public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
-        super(diagonals, offDiagonal, getTransformation(diagonals, isCholesky), true);
+        super(diagonals, offDiagonal, getTransformation(diagonals.getDimension(), isCholesky), true);
         assert asCorrelation || !isCholesky; // cholesky only allowed when used as correlation.
         this.asCorrelation = asCorrelation;
         this.isCholesky = isCholesky;
     }
 
-    private static Transform.MultivariableTransform getTransformation(Parameter diagonals, Boolean isCholesky) {
-        if (isCholesky) {
-            return new CorrelationToCholesky(diagonals.getDimension());
-        } else {
-            return new Transform.NoTransformMultivariable();
-        }
+    private static Transform.MultivariableTransform getTransformation(int dim, Boolean isCholesky) {
+        return isCholesky ? new CorrelationToCholesky(dim) : new Transform.NoTransformMultivariable();
     }
 
     @Override

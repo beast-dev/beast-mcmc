@@ -72,6 +72,8 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String LKJ_SHAPE = "shapeParameter";
     public static final String DIMENSION = "dimension";
     public static final String CHOLESKY = "cholesky";
+    public static final String SPHERICAL_BETA_PRIOR = "sphericalBetaPrior";
+    public static final String SPHERICAL_BETA_SHAPE = "shapeParameter";
 
     public static final String DATA = "data";
 
@@ -824,6 +826,80 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public String getParserDescription() {
             return "Calculates the likelihood of some data under a LKJ distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+    public static XMLObjectParser SPHERICAL_BETA_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return SPHERICAL_BETA_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            MultivariateDistributionLikelihood likelihood = null;
+
+            // Shape parameter
+            double shape = 1.0;
+            if (!(xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE))) {
+                if (!xo.hasAttribute(SPHERICAL_BETA_SHAPE)) {
+                    throw new XMLParseException("Must specify a shape parameter.");
+                }
+                shape = xo.getDoubleAttribute(SPHERICAL_BETA_SHAPE);
+            }
+
+            // Parse Data
+            XMLObject cxo = xo.getChild(DATA);
+            if (cxo != null) {
+                for (int j = 0; j < cxo.getChildCount(); j++) {
+                    if (cxo.getChild(j) instanceof Parameter) {
+                        Parameter data = (Parameter) cxo.getChild(j);
+                        if (data instanceof MatrixParameter) {
+                            MatrixParameter matrix = (MatrixParameter) data;
+                            int dim = matrix.getColumnDimension();
+                            if (matrix.getRowDimension() != (dim - 1)) {
+                                throw new XMLParseException(
+                                        "The Matricial Spherical Beta distribution can only be applied to a matrix" +
+                                                " with P columns each of dimension P-1.");
+                            }
+                            likelihood = new MultivariateDistributionLikelihood(new SphericalBetaDistribution(dim - 1, shape));
+                            for (int i = 0; i < dim; i++) {
+                                likelihood.addData(matrix.getParameter(i));
+                            }
+                        } else {
+                            int dim = data.getDimension();
+                            likelihood = new MultivariateDistributionLikelihood(new SphericalBetaDistribution(dim, shape));
+                            likelihood.addData(data);
+                        }
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    }
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
+                    AttributeRule.newDoubleRule(SPHERICAL_BETA_SHAPE, true),
+                    new ElementRule(DATA,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}
+                    )
+            };
+        }
+
+        public String getParserDescription() {
+            return "Calculates the likelihood of some data under a spherical beta distribution.";
         }
 
         public Class getReturnType() {

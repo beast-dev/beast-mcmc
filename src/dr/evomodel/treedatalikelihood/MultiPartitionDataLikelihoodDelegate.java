@@ -737,6 +737,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 if (categoryRates == null) {
                     // If this returns null then there was a numerical error calculating the category rates
                     // (probably a very small alpha) so reject the move.
+
+                    // mark model updates as completed before returning
+                    updateSubstitutionModels(false);
+                    updateSiteRateModels(false);
+
                     return Double.NEGATIVE_INFINITY;
                 }
 

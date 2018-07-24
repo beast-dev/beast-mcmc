@@ -72,20 +72,22 @@ public interface BranchSpecificFixedEffects {
         }
     }
 
-    class Transformed implements BranchSpecificFixedEffects {
+    class Transformed extends AbstractModel implements BranchSpecificFixedEffects {
 
         private final BranchSpecificFixedEffects effects;
         private final Transform transform;
 
         public Transformed(BranchSpecificFixedEffects effects, Transform transform) {
+            super("With transform");
             this.effects = effects;
             this.transform = transform;
+            addModel((Model) effects);
         }
 
         @Override
         public double getEffect(Tree tree, NodeRef node) {
-            double untransformedEffect = effects.getEffect(tree, node);
-            return transform.inverse(untransformedEffect);
+            double transformedEffect = effects.getEffect(tree, node);
+            return transform.inverse(transformedEffect);
         }
 
         @Override
@@ -96,6 +98,33 @@ public interface BranchSpecificFixedEffects {
         @Override
         public Parameter getFixedEffectsParameter() {
             return effects.getFixedEffectsParameter();
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+            fireModelChanged();
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            if (variable == effects.getFixedEffectsParameter()) {
+                fireModelChanged();
+            }
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
         }
     }
 
@@ -128,6 +157,7 @@ public interface BranchSpecificFixedEffects {
 
             addModels(categoryProviders);
             addModels(valueProviders);
+            addVariable(coefficients);
         }
 
         @Override
@@ -181,7 +211,11 @@ public interface BranchSpecificFixedEffects {
         protected void handleModelChangedEvent(Model model, Object object, int index) { }
 
         @Override
-        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            if (variable == getFixedEffectsParameter()) {
+                fireModelChanged();
+            }
+        }
 
         @Override
         protected void storeState() { }

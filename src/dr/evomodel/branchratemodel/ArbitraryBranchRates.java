@@ -83,6 +83,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         this.rateParameter = rateParameter;
 
         addModel(rates);
+        if (transform instanceof Model) {
+            addModel((Model) transform);
+        }
     }
 
     public void setBranchRate(Tree tree, NodeRef node, double value) {

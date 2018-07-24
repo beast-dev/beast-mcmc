@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -498,7 +498,7 @@ public class BeastMain {
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
 
         // if any beagle flag is specified then use beagle...
-        boolean useBeagle = !arguments.hasOption("beagle_off");
+        //final boolean useBeagle = true;
 
         if (arguments.hasOption("beagle_CPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
@@ -672,7 +672,7 @@ public class BeastMain {
             dialog.setAllowOverwrite(allowOverwrite);
             dialog.setSeed(seed);
 
-            dialog.setUseBeagle(useBeagle);
+            //dialog.setUseBeagle(useBeagle);
 
             if (BeagleFlag.PROCESSOR_GPU.isSet(beagleFlags)) {
                 dialog.setPreferBeagleGPU();
@@ -695,28 +695,25 @@ public class BeastMain {
             seed = dialog.getSeed();
             threadCount = dialog.getThreadPoolSize();
 
-            useBeagle = dialog.useBeagle();
-            if (useBeagle) {
-                beagleShowInfo = dialog.showBeagleInfo();
-                if (dialog.preferBeagleCPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
-                }
-                if (dialog.preferBeagleSSE()) {
-                    beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
-                } else {
-                    beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
-                }
-                if (dialog.preferBeagleGPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
-                }
-                if (dialog.preferBeagleDouble()) {
-                    beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-                }
-                if (dialog.preferBeagleSingle()) {
-                    beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
-                }
-                System.setProperty("beagle.scaling", dialog.scalingScheme());
+            beagleShowInfo = dialog.showBeagleInfo();
+            if (dialog.preferBeagleCPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
+            if (dialog.preferBeagleSSE()) {
+                beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+            } else {
+                beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+            if (dialog.preferBeagleGPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+            }
+            if (dialog.preferBeagleDouble()) {
+                beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+            }
+            if (dialog.preferBeagleSingle()) {
+                beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+            }
+            System.setProperty("beagle.scaling", dialog.scalingScheme());
 
             inputFile = dialog.getInputFile();
             if (!beagleShowInfo && inputFile == null) {
@@ -726,13 +723,11 @@ public class BeastMain {
 
         }
 
-        if (useBeagle) {
-            BeagleInfo.printVersionInformation();
+        BeagleInfo.printVersionInformation();
 
-            if (BeagleInfo.getVersion().startsWith("1.")) {
-                System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                        "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
-            }
+        if (BeagleInfo.getVersion().startsWith("1.")) {
+            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
+                    "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
         }
 
         if (beagleShowInfo) {
@@ -789,9 +784,7 @@ public class BeastMain {
             System.setProperty("log.allow.overwrite", "true");
         }
 
-        if (useBeagle) {
-            additionalParsers.add("beagle");
-        }
+        additionalParsers.add("beagle");
 
         if (beagleFlags != 0) {
             System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));

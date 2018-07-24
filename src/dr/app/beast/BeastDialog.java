@@ -201,7 +201,8 @@ public class BeastDialog {
             }
         });
 
-        beagleCheckBox.setSelected(false);
+        beagleCheckBox.setSelected(true);
+        beagleCheckBox.setEnabled(false);
         beagleResourceCombo.setSelectedItem("CPU");
     }
 
@@ -240,10 +241,10 @@ public class BeastDialog {
         overwriteCheckBox.setSelected(allowOverwrite);
     }
 
-    public void setUseBeagle(boolean useBeagle) {
+    /*public void setUseBeagle(boolean useBeagle) {
          beagleCheckBox.setSelected(useBeagle);
          beagleCheckBox.setEnabled(false);
-    }
+    }*/
 
     public boolean preferBeagleGPU() {
         return beagleResourceCombo.getSelectedItem().equals("GPU");

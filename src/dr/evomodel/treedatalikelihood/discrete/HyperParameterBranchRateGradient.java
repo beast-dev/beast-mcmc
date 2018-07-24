@@ -63,44 +63,50 @@ public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBran
     }
 
     @Override
-    public double[] getGradientLogDensity() {   // TODO Why so much code duplication with function this overrides?
-
-        double[] result = new double[rateParameter.getDimension()];
-
-        //Do single call to traitProvider with node == null (get full tree)
-        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
-
-        Parameter parameter;
-        for (int j = 0; j < rateParameter.getDimension(); ++j) {
-            if (rateParameter.getDimension() > 1) {
-                parameter = ((CompoundParameter) rateParameter).getParameter(j);
-            } else {
-                parameter = rateParameter;
-            }
-
-            int v = 0;
-            double sumOverNodeGradient = 0.0;
-            for (int i = 0; i < tree.getNodeCount(); ++i) {
-                final NodeRef node = tree.getNode(i);
-                if (!tree.isRoot(node)) {
-                    final double differential = getDifferential(tree, node)[0];
-                    final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
-//                    if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-//                        System.err.println("Check Gradient calculation please.");
-//                    }
-                    sumOverNodeGradient += nodeResult;
-                    v++;
-                }
-            }
-            result[j] = sumOverNodeGradient;
-        }
-
-        if (COUNT_TOTAL_OPERATIONS) {
-            ++getGradientLogDensityCount;
-        }
-
-        return result;
+    protected double getChainGradient(Tree tree, NodeRef node) {
+        final double differential = getDifferential(tree, node)[0];
+        return differential * tree.getBranchLength(node);
     }
+
+//    @Override
+//    public double[] getGradientLogDensity() {   // TODO Why so much code duplication with function this overrides?
+//
+//        double[] result = new double[rateParameter.getDimension()];
+//
+//        //Do single call to traitProvider with node == null (get full tree)
+//        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
+//
+//        Parameter parameter;
+//        for (int j = 0; j < rateParameter.getDimension(); ++j) {
+//            if (rateParameter.getDimension() > 1) {
+//                parameter = ((CompoundParameter) rateParameter).getParameter(j);
+//            } else {
+//                parameter = rateParameter;
+//            }
+//
+//            int v = 0;
+//            double sumOverNodeGradient = 0.0;
+//            for (int i = 0; i < tree.getNodeCount(); ++i) {
+//                final NodeRef node = tree.getNode(i);
+//                if (!tree.isRoot(node)) {
+//                    final double differential = getDifferential(tree, node)[0];
+//                    final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
+////                    if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
+////                        System.err.println("Check Gradient calculation please.");
+////                    }
+//                    sumOverNodeGradient += nodeResult;
+//                    v++;
+//                }
+//            }
+//            result[j] = sumOverNodeGradient;
+//        }
+//
+//        if (COUNT_TOTAL_OPERATIONS) {
+//            ++getGradientLogDensityCount;
+//        }
+//
+//        return result;
+//    }
 
     abstract double[] getDifferential(Tree tree, NodeRef node);
 

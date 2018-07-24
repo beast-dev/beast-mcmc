@@ -121,7 +121,6 @@ public class DiscreteTraitBranchRateGradient
     }
 
     public double[] getDiagonalHessianLogDensity() {
-//        throw new RuntimeException("DiagonalHessian not permitted for this class, exiting...");
 
         double[] result = new double[rateParameter.getDimension()];
 
@@ -159,7 +158,7 @@ public class DiscreteTraitBranchRateGradient
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
-                final double nodeResult = gradient[v] * tree.getBranchLength(node);
+                final double nodeResult = gradient[v] * getChainGradient(tree, node);
 //                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
 //                    System.err.println("Check Gradient calculation please.");
 //                }
@@ -173,6 +172,10 @@ public class DiscreteTraitBranchRateGradient
         }
 
         return result;
+    }
+
+    protected double getChainGradient(Tree tree, NodeRef node) {
+        return tree.getBranchLength(node);
     }
 
     protected int getParameterIndexFromNode(NodeRef node) {

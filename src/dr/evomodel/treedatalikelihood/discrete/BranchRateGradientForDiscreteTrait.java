@@ -53,6 +53,12 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     }
 
     @Override
+    protected double getChainGradient(Tree tree, NodeRef node) {
+        final double differential = branchRateModel.getBranchRateDifferential(tree, node);
+        return differential * tree.getBranchLength(node);
+    }
+
+    @Override
     public double[] getDiagonalHessianLogDensity() {
 
         double[] result = new double[rateParameter.getDimension()];
@@ -78,34 +84,34 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         return result;
     }
 
-    @Override
-    public double[] getGradientLogDensity() {
-
-        double[] result = new double[rateParameter.getDimension()];
-
-        //Do single call to traitProvider with node == null (get full tree)
-        double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
-
-        int v =0;
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            final NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                final int destinationIndex = getParameterIndexFromNode(node);
-                final double differential = branchRateModel.getBranchRateDifferential(tree, node);
-                final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
-                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-                    System.err.println("Check Gradient calculation please.");
-                }
-                result[destinationIndex] = nodeResult;
-                v++;
-            }
-        }
-
-        if (COUNT_TOTAL_OPERATIONS) {
-            ++getGradientLogDensityCount;
-        }
-
-        return result;
-    }
+//    @Override
+//    public double[] getGradientLogDensity() {
+//
+//        double[] result = new double[rateParameter.getDimension()];
+//
+//        //Do single call to traitProvider with node == null (get full tree)
+//        double[] gradient =  (double[]) treeTraitProvider.getTrait(tree, null);
+//
+//        int v =0;
+//        for (int i = 0; i < tree.getNodeCount(); ++i) {
+//            final NodeRef node = tree.getNode(i);
+//            if (!tree.isRoot(node)) {
+//                final int destinationIndex = getParameterIndexFromNode(node);
+//                final double differential = branchRateModel.getBranchRateDifferential(tree, node);
+//                final double nodeResult = gradient[v] * differential * tree.getBranchLength(node);
+//                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
+//                    System.err.println("Check Gradient calculation please.");
+//                }
+//                result[destinationIndex] = nodeResult;
+//                v++;
+//            }
+//        }
+//
+//        if (COUNT_TOTAL_OPERATIONS) {
+//            ++getGradientLogDensityCount;
+//        }
+//
+//        return result;
+//    }
 
 }

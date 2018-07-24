@@ -68,6 +68,31 @@ public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBran
         return differential * tree.getBranchLength(node);
     }
 
+    protected double getHyperParameterGradientLogDensity(Parameter parameter) {
+        double result = 0.0;
+        double[] nodeGradients = super.getGradientLogDensity();
+        for (double nodeGradient : nodeGradients) {
+            result += nodeGradient;
+        }
+        return result;
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+        double[] result = new double[rateParameter.getDimension()];
+
+        Parameter parameter;
+        for (int j = 0; j < rateParameter.getDimension(); ++j) {
+            if (rateParameter.getDimension() > 1) {
+                parameter = ((CompoundParameter) rateParameter).getParameter(j);
+            } else {
+                parameter = rateParameter;
+            }
+            result[j] = getHyperParameterGradientLogDensity(parameter);
+        }
+        return result;
+    }
+
 //    @Override
 //    public double[] getGradientLogDensity() {   // TODO Why so much code duplication with function this overrides?
 //

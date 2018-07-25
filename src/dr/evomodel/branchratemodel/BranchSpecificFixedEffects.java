@@ -63,7 +63,7 @@ public interface BranchSpecificFixedEffects {
 
         @Override
         public double[] getDesignVector(Tree tree, NodeRef node) {
-            return design;
+            return design.clone();
         }
 
         @Override

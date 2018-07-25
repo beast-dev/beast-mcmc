@@ -63,32 +63,19 @@ public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBran
     }
 
     @Override
-    protected double getChainGradient(Tree tree, NodeRef node) {
-        final double differential = getDifferential(tree, node)[0];
-        return differential * tree.getBranchLength(node);
-    }
-
-    protected double getHyperParameterGradientLogDensity(Parameter parameter) {
-        double result = 0.0;
-        double[] nodeGradients = super.getGradientLogDensity();
-        for (double nodeGradient : nodeGradients) {
-            result += nodeGradient;
-        }
-        return result;
-    }
-
-    @Override
     public double[] getGradientLogDensity() {
         double[] result = new double[rateParameter.getDimension()];
-
-        Parameter parameter;
-        for (int j = 0; j < rateParameter.getDimension(); ++j) {
-            if (rateParameter.getDimension() > 1) {
-                parameter = ((CompoundParameter) rateParameter).getParameter(j);
-            } else {
-                parameter = rateParameter;
+        double[] nodeGradients = super.getGradientLogDensity();
+        int v = 0;
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            final NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                double[] hyperChainGradient = getDifferential(tree, node);
+                for (int j = 0; j < result.length; j++) {
+                    result[j] += nodeGradients[v] * hyperChainGradient[j];
+                }
+                v++;
             }
-            result[j] = getHyperParameterGradientLogDensity(parameter);
         }
         return result;
     }

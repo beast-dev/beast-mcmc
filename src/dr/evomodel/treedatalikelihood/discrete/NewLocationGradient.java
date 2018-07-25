@@ -27,10 +27,14 @@ public class NewLocationGradient extends HyperParameterBranchRateGradient {
     double[] getDifferential(Tree tree, NodeRef node) {
         double rate = branchRateModel.getBranchRate(tree, node);
 
-        double[] design = fixedEffects.getDesignVector(tree, node); // TODO Use
+        double[] result = fixedEffects.getDesignVector(tree, node);
 
-        return new double[] {
-                locationScaleTransform.expLocationDifferential(rate)  // TODO Move function below into here?
-        };
+        final double multiplier = rate / fixedEffects.getEffect(tree, node);
+
+        for (int i = 0; i < result.length; i++) {
+            result[i] *= multiplier;
+        }
+
+        return result;
     }
 }

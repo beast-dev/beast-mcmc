@@ -105,12 +105,14 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
             new ElementRule(TreeDataLikelihood.class),
 
-            new ElementRule(LOCATION, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class),
-            }),
-            new ElementRule(SCALE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class),
-            }),
+            new XORRule(
+                new ElementRule(LOCATION, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                }),
+                new ElementRule(SCALE, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                })
+            ),
     };
 
     @Override

@@ -22,7 +22,7 @@ public class LocationGradient extends HyperParameterBranchRateGradient {
     double[] getDifferential(Tree tree, NodeRef node) {
         double rate = branchRateModel.getBranchRate(tree, node);
         return new double[]{
-                locationScaleTransform.expLocationDifferential(rate) // TODO Move function below into here?
+                locationScaleTransform.expLocationDifferential(rate, tree, node) // TODO Move function below into here?
         };
     }
 }

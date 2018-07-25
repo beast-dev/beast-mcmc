@@ -27,13 +27,14 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.HyperParameterBranchRateGradient;
-import dr.evomodel.treedatalikelihood.discrete.LocationGradient;
+import dr.evomodel.treedatalikelihood.discrete.NewLocationGradient;
 import dr.evomodel.treedatalikelihood.discrete.ScaleGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
@@ -74,9 +75,16 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
 
                 if (xo.hasChildNamed(LOCATION)) {
+                    Object locationObject = xo.getElementFirstChild(LOCATION);
+                    BranchSpecificFixedEffects location = null;
 
-                    Parameter location = (Parameter) xo.getElementFirstChild(LOCATION);
-                    return new LocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);
+                    if (locationObject instanceof Parameter) {
+                        location = new BranchSpecificFixedEffects.None((Parameter) xo.getElementFirstChild(LOCATION));
+                    } else if (locationObject instanceof BranchSpecificFixedEffects) {
+                        location = (BranchSpecificFixedEffects) locationObject;
+                    }
+
+                    return new NewLocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);
 
                 } else if (xo.hasChildNamed(SCALE)) {
 
@@ -107,7 +115,10 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
             new XORRule(
                 new ElementRule(LOCATION, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class),
+                        new XORRule(
+                                new ElementRule(BranchSpecificFixedEffects.class),
+                                new ElementRule(Parameter.class)
+                        )
                 }),
                 new ElementRule(SCALE, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class),

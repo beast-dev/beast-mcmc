@@ -122,7 +122,7 @@ public class DiscreteTraitBranchRateGradient
 
     public double[] getDiagonalHessianLogDensity() {
 
-        double[] result = new double[rateParameter.getDimension()];
+        double[] result = new double[tree.getNodeCount() - 1];
 
         //Do single call to traitProvider with node == null (get full tree)
         double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait("Hessian").getTrait(tree, null);
@@ -148,7 +148,7 @@ public class DiscreteTraitBranchRateGradient
 
     public double[] getGradientLogDensity() {
 
-        double[] result = new double[rateParameter.getDimension()];
+        double[] result = new double[tree.getNodeCount() - 1];
 
         //Do single call to traitProvider with node == null (get full tree)
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);

@@ -7,6 +7,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
@@ -326,8 +327,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{0.1, 100.0, 50.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -398,8 +399,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{1.0, 100.0, 100.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -468,8 +469,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -543,8 +544,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -621,12 +622,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 10.5, 100.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         DiffusionProcessDelegate diffusionProcessDelegateDiagonal
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParamDiagonal);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParamDiagonal));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -667,8 +668,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -730,8 +731,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -946,8 +947,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 50.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -1006,8 +1007,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{1.5, 20.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -1068,8 +1069,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -1134,8 +1135,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -1202,12 +1203,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 1.5}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         DiffusionProcessDelegate diffusionProcessDelegateDiagonal
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParamDiagonal);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParamDiagonal));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(

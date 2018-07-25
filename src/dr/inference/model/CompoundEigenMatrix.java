@@ -83,9 +83,26 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
         return diagonalParameter.getParameterValues();
     }
 
+    public double[] getEigenVectors() {
+        DenseMatrix64F baseMatrix = wrapSpherical(offDiagonalParameter.getParameterValues(), 0, dim);
+        return baseMatrix.getData();
+    }
+
     @Override
     public String getReport() {
         return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
+    }
+
+    @Override
+    public void fireParameterChangedEvent() {
+        compositionKnown = false;
+        super.fireParameterChangedEvent();
+    }
+
+    @Override
+    public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
+        compositionKnown = false;
+        super.fireParameterChangedEvent(index, type);
     }
 
     //************************************************************************

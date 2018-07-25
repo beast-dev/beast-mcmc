@@ -64,7 +64,7 @@ public class CompoundEigenMatrixTest {
                 for (int i = 0; i < dim; i++) {
                     norm = 0.0;
                     sign = 1.0;
-                    for (int j = 0; j < dim ; j++) {
+                    for (int j = 0; j < dim; j++) {
                         norm += V.get(j, i) * V.get(j, i);
                     }
                     norm = Math.sqrt(norm);

@@ -173,27 +173,37 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                if (diffusionProcessDelegate instanceof DiagonalOrnsteinUhlenbeckDiffusionModelDelegate) {
-                    base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
-                            precisionType,
-                            numTraits,
-                            dimTrait,
-                            partialBufferCount,
-                            matrixBufferCount
-                    );
-                } else {
-                    if (diffusionProcessDelegate instanceof OrnsteinUhlenbeckDiffusionModelDelegate) {
+                if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                    if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
+                        base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
+                                precisionType,
+                                numTraits,
+                                dimTrait,
+                                partialBufferCount,
+                                matrixBufferCount
+                        );
+                    } else {
                         base = new SafeMultivariateActualizedWithDriftIntegrator(
                                 precisionType,
                                 numTraits,
                                 dimTrait,
                                 partialBufferCount,
                                 matrixBufferCount,
-                                ((OrnsteinUhlenbeckDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                                ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                        );
+                    }
+                } else {
+                    if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
+                        base = new SafeMultivariateWithDriftIntegrator(
+                                precisionType,
+                                numTraits,
+                                dimTrait,
+                                partialBufferCount,
+                                matrixBufferCount
                         );
                     } else {
-                        if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
-                            base = new SafeMultivariateWithDriftIntegrator(
+                        if (allowSingular) {
+                            base = new SafeMultivariateIntegrator(
                                     precisionType,
                                     numTraits,
                                     dimTrait,
@@ -201,23 +211,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                     matrixBufferCount
                             );
                         } else {
-                            if (allowSingular) {
-                                base = new SafeMultivariateIntegrator(
-                                        precisionType,
-                                        numTraits,
-                                        dimTrait,
-                                        partialBufferCount,
-                                        matrixBufferCount
-                                );
-                            } else {
-                                base = new MultivariateIntegrator(
-                                        precisionType,
-                                        numTraits,
-                                        dimTrait,
-                                        partialBufferCount,
-                                        matrixBufferCount
-                                );
-                            }
+                            base = new MultivariateIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount
+                            );
                         }
                     }
                 }

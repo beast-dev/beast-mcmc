@@ -214,7 +214,7 @@ public class DiscreteTraitBranchRateGradient
 
     protected boolean valuesAreSufficientlyLarge(double[] vector) {
         for (double x : vector) {
-            if (x < SQRT_EPSILON * 1.2) {
+            if (Math.abs(x) < SQRT_EPSILON * 1.2) {
                 return false;
             }
         }

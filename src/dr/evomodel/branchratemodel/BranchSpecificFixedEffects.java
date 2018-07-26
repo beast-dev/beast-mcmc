@@ -23,16 +23,25 @@ public interface BranchSpecificFixedEffects {
 
     Parameter getFixedEffectsParameter();
 
-    default double[] getDifferential(double rate, final Tree tree, final NodeRef node) {
-        double[] result = getDesignVector(tree, node);
-        final double multiplier = rate / getEffect(tree, node);
-        for (int i = 0; i < result.length; i++) {
-            result[i] *= multiplier;
+    double[] getDifferential(double rate, final Tree tree, final NodeRef node);
+
+    abstract class Base extends AbstractModel implements BranchSpecificFixedEffects {
+
+        public Base(String name) {
+            super("Base");
         }
-        return result;
+
+        public double[] getDifferential(double rate, final Tree tree, final NodeRef node) {
+            double[] result = getDesignVector(tree, node);
+            final double multiplier = rate / getEffect(tree, node);
+            for (int i = 0; i < result.length; i++) {
+                result[i] *= multiplier;
+            }
+            return result;
+        }
     }
 
-    class None extends AbstractModel implements BranchSpecificFixedEffects {
+    class None extends Base implements BranchSpecificFixedEffects {
 
         private final Parameter location;
         private final static double[] design = new double[] { 1.0 };
@@ -81,7 +90,7 @@ public interface BranchSpecificFixedEffects {
         }
     }
 
-    class Transformed extends AbstractModel implements BranchSpecificFixedEffects {
+    class Transformed extends Base implements BranchSpecificFixedEffects {
 
         private final BranchSpecificFixedEffects effects;
         private final Transform transform;
@@ -95,7 +104,7 @@ public interface BranchSpecificFixedEffects {
 
         @Override
         public double[] getDifferential(double rate, final Tree tree, final NodeRef node) {
-            double[] result = BranchSpecificFixedEffects.super.getDifferential(rate, tree, node);
+            double[] result = super.getDifferential(rate, tree, node);
             final double multiplier = transform.gradient(getEffect(tree, node));
             for (int i = 0; i < result.length; i++) {
                 result[i] *= multiplier;
@@ -147,7 +156,7 @@ public interface BranchSpecificFixedEffects {
         }
     }
 
-    class Default extends AbstractModel implements BranchSpecificFixedEffects, Citable {
+    class Default extends Base implements BranchSpecificFixedEffects, Citable {
 
         private final Parameter coefficients;
         private final List<CountableBranchCategoryProvider> categoryProviders;

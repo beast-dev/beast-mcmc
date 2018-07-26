@@ -23,6 +23,15 @@ public interface BranchSpecificFixedEffects {
 
     Parameter getFixedEffectsParameter();
 
+    default double[] getDifferential(double rate, final Tree tree, final NodeRef node) {
+        double[] result = getDesignVector(tree, node);
+        final double multiplier = rate / getEffect(tree, node);
+        for (int i = 0; i < result.length; i++) {
+            result[i] *= multiplier;
+        }
+        return result;
+    }
+
     class None extends AbstractModel implements BranchSpecificFixedEffects {
 
         private final Parameter location;
@@ -83,6 +92,16 @@ public interface BranchSpecificFixedEffects {
             this.transform = transform;
             addModel((Model) effects);
         }
+
+        @Override
+        public double[] getDifferential(double rate, final Tree tree, final NodeRef node) {
+            double[] result = BranchSpecificFixedEffects.super.getDifferential(rate, tree, node);
+            final double multiplier = transform.gradient(getEffect(tree, node));
+            for (int i = 0; i < result.length; i++) {
+                result[i] *= multiplier;
+            }
+            return result;
+         }
 
         @Override
         public double getEffect(Tree tree, NodeRef node) {

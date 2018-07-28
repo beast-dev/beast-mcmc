@@ -25,6 +25,8 @@ public interface BranchSpecificFixedEffects {
 
     double[] getDifferential(double rate, final Tree tree, final NodeRef node);
 
+    int getDimension();
+
     abstract class Base extends AbstractModel implements BranchSpecificFixedEffects {
 
         public Base(String name) {
@@ -88,6 +90,11 @@ public interface BranchSpecificFixedEffects {
         public Parameter getFixedEffectsParameter() {
             return location;
         }
+
+        @Override
+        public int getDimension() {
+            return 1;
+        }
     }
 
     class Transformed extends Base implements BranchSpecificFixedEffects {
@@ -111,6 +118,11 @@ public interface BranchSpecificFixedEffects {
             }
             return result;
          }
+
+        @Override
+        public int getDimension() {
+            return effects.getDimension();
+        }
 
         @Override
         public double getEffect(Tree tree, NodeRef node) {
@@ -234,6 +246,11 @@ public interface BranchSpecificFixedEffects {
 
         @Override
         public Parameter getFixedEffectsParameter() { return coefficients; }
+
+        @Override
+        public int getDimension() {
+            return dim;
+        }
 
         @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) { }

@@ -9,6 +9,7 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated
 public class LocationGradient extends HyperParameterBranchRateGradient {
 
     public LocationGradient(String traitName, TreeDataLikelihood treeDataLikelihood,
@@ -24,5 +25,10 @@ public class LocationGradient extends HyperParameterBranchRateGradient {
         return new double[]{
                 locationScaleTransform.expLocationDifferential(rate, tree, node) // TODO Move function below into here?
         };
+    }
+
+    @Override
+    double[] getSecondDifferential(Tree tree, NodeRef node) {
+        return new double[1];
     }
 }

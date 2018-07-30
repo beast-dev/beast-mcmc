@@ -126,14 +126,16 @@ public class DiscreteTraitBranchRateGradient
 
         //Do single call to traitProvider with node == null (get full tree)
         double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait("Hessian").getTrait(tree, null);
+        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
         int v = 0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
-                final double branchLength = tree.getBranchLength(node);
-                result[destinationIndex] = branchLength * diagonalHessian[v] * branchLength;
+                final double chainGradient = getChainGradient(tree, node);
+                final double chainSecondDerivative = getChainSecondDerivative(tree, node);
+                result[destinationIndex] = diagonalHessian[v] * chainGradient * chainGradient + gradient[v] * chainSecondDerivative;
                 v++;
             }
         }
@@ -175,7 +177,11 @@ public class DiscreteTraitBranchRateGradient
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
-        return tree.getBranchLength(node);
+        return tree.getBranchLength(node) / branchRateModel.getBranchRate(tree, node);
+    }
+
+    protected double getChainSecondDerivative(Tree tree, NodeRef node) {
+        return 0.0;
     }
 
     protected int getParameterIndexFromNode(NodeRef node) {

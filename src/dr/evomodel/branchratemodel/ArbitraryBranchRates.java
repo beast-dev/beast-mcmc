@@ -348,7 +348,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 double multiplier = (location != null) ? location.getEffect(tree, node) : 1.0;
                 double tmp = (Math.log(rate / multiplier) - transformMu)/(transformSigma * transformSigma) - 1.0;
 
-                return tmp * rate * scale.getParameterValue(0) / (1.0 + scale.getParameterValue(0) * scale.getParameterValue(0));
+                return tmp * rate * rate * scale.getParameterValue(0) / (1.0 + scale.getParameterValue(0) * scale.getParameterValue(0));
 
             }
 

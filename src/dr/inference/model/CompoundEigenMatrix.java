@@ -41,6 +41,8 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
 
     private final DenseMatrix64F transformedMatrix;
 
+    private final double[] savedTransformedMatrix;
+
     private boolean compositionKnown = false;
 
     private final DenseMatrix64F temp;
@@ -51,6 +53,7 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
         temp = new DenseMatrix64F(dim, dim);
         transformedMatrix = new DenseMatrix64F(dim, dim);
         computeTransformedMatrix();
+        savedTransformedMatrix = new double[dim * dim];
     }
 
     private void computeTransformedMatrix() {
@@ -67,8 +70,31 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
 
     @Override
     public double getParameterValue(int row, int col) {
+        return getParameterValueUnsafe(row, col);
+    }
+
+//    private double getParameterValueSafe(int row, int col) {
+//        computeTransformedMatrix();
+//        return transformedMatrix.get(row, col);
+//    }
+
+    private double getParameterValueUnsafe(int row, int col) {
         if (!compositionKnown) computeTransformedMatrix();
         return transformedMatrix.get(row, col);
+    }
+
+    @Override
+    public double[] getAttributeValue() {
+        compositionKnown = false;
+        double[] stats = new double[dim * dim];
+        int index = 0;
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                stats[index] = getParameterValueUnsafe(i, j);
+                index++;
+            }
+        }
+        return stats;
     }
 
     public double[] updateGradientDiagonal(double[] vecX) {
@@ -103,6 +129,23 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
     public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
         compositionKnown = false;
         super.fireParameterChangedEvent(index, type);
+    }
+
+    protected void storeValues() {
+        super.storeValues();
+        System.arraycopy(transformedMatrix.getData(), 0, savedTransformedMatrix, 0, dim * dim);
+
+    }
+
+    protected void restoreValues() {
+        super.restoreValues();
+        transformedMatrix.setData(savedTransformedMatrix);
+    }
+
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        compositionKnown = false;
+        super.variableChangedEvent(variable, index, type);
+
     }
 
     //************************************************************************

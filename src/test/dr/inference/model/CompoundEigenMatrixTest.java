@@ -136,7 +136,22 @@ public class CompoundEigenMatrixTest {
         }
     };
 
-    Instance[] all = {test0, test1, test2, test3};
+    Instance test4 = new Instance.Basic() {
+        public int getDimTrait() {
+            return 4;
+        }
+
+        public double[] getSelectionStrength() {
+            return new double[]{
+                      5.635055,  0.84322690,  2.200631,  1.6066434,
+                     -2.123113, -0.07568064, -0.879367, -0.7606432,
+                     -3.900102, -0.54334995, -1.397044, -1.1259163,
+                    -11.481042, -1.89373481, -4.613851, -3.1623302
+            };
+        }
+    };
+
+    Instance[] all = {test0, test1, test2, test3, test4};
 
     @Test
     public void CompundEigenMatrix() throws Exception {
@@ -145,14 +160,23 @@ public class CompoundEigenMatrixTest {
             Parameter alphaEig = test.getEigenValuesStrengthOfSelection();
             MatrixParameter alphaRot = test.getEigenVectorsStrengthOfSelection();
 
-            double[] alphaComp = (new CompoundEigenMatrix(alphaEig, alphaRot)).getParameterValues();
+            CompoundEigenMatrix alphaComp = new CompoundEigenMatrix(alphaEig, alphaRot);
+
+            double[] alphaCompo = alphaComp.getParameterValues();
+
+            double[] alphaCompoAttibute = alphaComp.getAttributeValue();
 
             double[] alphaExpected = test.getSelectionStrength();
 
-            assertEquals(alphaComp.length, alphaExpected.length, 1e-6);
-            for (int i = 0; i < alphaComp.length; ++i) {
+            assertEquals(alphaCompo.length, alphaExpected.length, 1e-6);
+            for (int i = 0; i < alphaCompo.length; ++i) {
                 assertEquals("alpha " + i,
-                        alphaComp[i], alphaExpected[i], 1e-6);
+                        alphaCompo[i], alphaExpected[i], 1e-6);
+            }
+
+            for (int i = 0; i < alphaCompo.length; ++i) {
+                assertEquals("alpha " + i,
+                        alphaCompo[i], alphaCompoAttibute[i], 1e-6);
             }
         }
     }

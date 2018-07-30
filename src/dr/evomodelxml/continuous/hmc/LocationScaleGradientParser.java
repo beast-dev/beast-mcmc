@@ -82,6 +82,8 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                         location = new BranchSpecificFixedEffects.None((Parameter) xo.getElementFirstChild(LOCATION));
                     } else if (locationObject instanceof BranchSpecificFixedEffects) {
                         location = (BranchSpecificFixedEffects) locationObject;
+                    } else {
+                        throw new XMLParseException("Poorly formed");
                     }
 
                     return new NewLocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);

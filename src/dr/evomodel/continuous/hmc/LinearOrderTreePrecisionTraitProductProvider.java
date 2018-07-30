@@ -7,10 +7,7 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.ReadableMatrix;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -188,26 +185,55 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         }
         return getRoughLowerBoundforTravelTime();
     }
+
+    @Override
+    public double getTimeScaleEigen() {
+
+        double maxEigenValue;
+        double minEigenValue;
+
+        maxEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
+        minEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, true);
+
+        System.err.println("max eigen = " + maxEigenValue + "min eigen = " + minEigenValue + "condition number = " + maxEigenValue / minEigenValue);
+        return 0.0;
+    }
+
+    public double getTimeScale(double y) {
+
+        if (roughTimeGuess > 0.0) { // TODO Super bad, some delegate for re-use with other Providers
+            return roughTimeGuess;
+        }
+        return getRoughLowerBoundforTravelTime();
+    }
     
     private double getMaxEigenvalueAsTravelTime() {
 
         // TODO Lots of bad magic numbers
-        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01)
-                *  maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01);
+        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01, false)
+                *  maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
     }
 
-    private static double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err) {
+    private static double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err, boolean inverseflag) {
 
-        double[] y0 = new double[matrix.length];
+        double[][] matrixForUse;
+
+        if (inverseflag) {
+            matrixForUse = (new SymmetricMatrix(matrix)).inverse().toComponents();
+        } else {
+            matrixForUse = (new SymmetricMatrix(matrix)).toComponents();
+        }
+
+        double[] y0 = new double[matrixForUse.length];
         ReadableVector diff;
         double maxEigenvalue = 10.0; // TODO Bad magic number
  
-        for (int i = 0; i < matrix.length; ++i) {
+        for (int i = 0; i < matrixForUse.length; ++i) {
             y0[i] = MathUtils.nextDouble();
         }
         WrappedVector y = new WrappedVector.Raw(y0);
 
-        final ReadableMatrix mat = new WrappedMatrix.ArrayOfArray(matrix);
+        final ReadableMatrix mat = new WrappedMatrix.ArrayOfArray(matrixForUse);
 
         for (int i = 0; i < numIterations; ++i) {
 
@@ -221,7 +247,13 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
                 break;
             }
         }
-        return maxEigenvalue;
+
+        if (inverseflag) {
+            return 1.0 / maxEigenvalue;
+        } else {
+            return maxEigenvalue;
+        }
+
     }
 
     private double getRoughLowerBoundforTravelTime() {

@@ -104,6 +104,11 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
         return parameterAsMatrix;
     }
 
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return true;
+    }
+
     public boolean isCholesky() {
         return isCholesky;
     }

@@ -63,7 +63,7 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
 
         isDiagonal = strengthOfSelectionMatrixParameter instanceof DiagonalMatrix;
         isDecomposed = strengthOfSelectionMatrixParameter instanceof CompoundEigenMatrix;
-        isSymmetric = MissingOps.isSymmetric(strengthOfSelectionMatrixParameter);
+        isSymmetric = strengthOfSelectionMatrixParameter.isConstrainedSymmetric();
 
         calculateSelectionInfo();
         addVariable(strengthOfSelectionMatrixParameter);

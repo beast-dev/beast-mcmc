@@ -78,21 +78,6 @@ public class MissingOps {
         return DenseMatrix64F.wrap(dim, dim, buffer);
     }
 
-    public static boolean isSymmetric(MatrixParameterInterface matrixParam) {
-        int dimMat = matrixParam.getRowDimension();
-        if (dimMat != matrixParam.getColumnDimension()) {
-            return false;
-        }
-        for (int i = 0; i < dimMat - 1; i++) {
-            for (int j = i + 1; j < dimMat; j++) {
-                if (matrixParam.getParameterValue(i, j) != matrixParam.getParameterValue(j, i)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     public static DenseMatrix64F copy(ReadableMatrix source) {
         final int len = source.getDim();
         double[] buffer = new double[len];

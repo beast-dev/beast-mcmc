@@ -75,7 +75,7 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     }
 
     private void calculateSelectionInfo() {
-        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
+//        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
         if (!isDiagonal && !isDecomposed) {
             this.eigenDecompositionStrengthOfSelection = decomposeStrenghtOfSelection();
         }
@@ -183,12 +183,12 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     }
 
     protected void storeState() {
-        savedStrengthOfSelectionMatrix = strengthOfSelectionMatrix;
+//        savedStrengthOfSelectionMatrix = strengthOfSelectionMatrix;
         storedVariableChanged = variableChanged;
     }
 
     protected void restoreState() {
-        strengthOfSelectionMatrix = savedStrengthOfSelectionMatrix;
+//        strengthOfSelectionMatrix = savedStrengthOfSelectionMatrix;
         variableChanged = storedVariableChanged;
     }
 
@@ -262,8 +262,8 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     // **************************************************************
 
     private MatrixParameterInterface strengthOfSelectionMatrixParameter;
-    private double[][] strengthOfSelectionMatrix;
-    private double[][] savedStrengthOfSelectionMatrix;
+//    private double[][] strengthOfSelectionMatrix;
+//    private double[][] savedStrengthOfSelectionMatrix;
     private EigenDecomposition eigenDecompositionStrengthOfSelection = null;
 
     private boolean isDiagonal;

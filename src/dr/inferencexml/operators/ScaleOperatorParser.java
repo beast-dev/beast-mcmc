@@ -68,11 +68,21 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         Bounds<Double> bounds = parameter.getBounds();
         for (int dim = 0; dim < parameter.getDimension(); dim++) {
-            if (bounds.getLowerLimit(dim) < 0.0) {
-                throw new XMLParseException("Scale operator can only be used on parameters with a lower bound of zero (" + parameter.getId() + ")");
-            }
-            if (!ignoreBounds && !Double.isInfinite(bounds.getUpperLimit(dim))) {
-                throw new XMLParseException("Scale operator can't be used on parameters with a finite upper bound (use a RandomWalk) (" + parameter.getId() + ")");
+
+            if(parameter.getParameterValue(dim) < 0.0){
+                if (bounds.getUpperLimit(dim) > 0.0) {
+                    throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
+                }
+                if (!ignoreBounds && !Double.isInfinite(bounds.getLowerLimit(dim))) {
+                    throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
+                }
+            } else {
+                if (bounds.getLowerLimit(dim) < 0.0) {
+                    throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
+                }
+                if (!ignoreBounds && !Double.isInfinite(bounds.getUpperLimit(dim))) {
+                    throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
+                }
             }
         }
 

@@ -177,7 +177,7 @@ public class DiscreteTraitBranchRateGradient
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
-        return tree.getBranchLength(node) / branchRateModel.getBranchRate(tree, node);
+        return tree.getBranchLength(node);
     }
 
     protected double getChainSecondDerivative(Tree tree, NodeRef node) {

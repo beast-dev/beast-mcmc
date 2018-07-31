@@ -81,6 +81,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 //        this.grandNumeratorIncrementUpperBound = new double[patternCount];
 
         this.gradient = new double[tree.getNodeCount() - 1];
+        this.patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
 
     }
 
@@ -91,7 +92,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
         beagle.updatePrePartials(operations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
 
-        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+//        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
         getPatternGradientHessian(tree, patternGradient, null);
         final double[] patternWeights = patternList.getPatternWeights();
         sumOverPatterns(tree, patternWeights, patternGradient, gradient);
@@ -238,9 +239,9 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     private double[] getHessian(Tree tree, NodeRef node) {
         //update all preOrder partials first
         simulationProcess.cacheSimulatedTraits(node);
-        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
+//        double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
         double[] patternDiagonalHessian = new double[patternCount * (tree.getNodeCount() - 1)];
-        getPatternGradientHessian(tree, patternGradient, patternDiagonalHessian);
+        getPatternGradientHessian(tree, patternGradient, patternDiagonalHessian);  //TODO: cache?
         final double[] patternWeights = patternList.getPatternWeights();
         double[] patternDiagonalLogHessian = new double[patternGradient.length];
         double[] diagonalLogHessian = new double[tree.getNodeCount() - 1];
@@ -503,6 +504,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 //    private final double[] grandNumeratorIncrementUpperBound;
 
     private final double[] gradient;
+    private final double[] patternGradient;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private long simulateCount = 0;

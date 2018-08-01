@@ -21,8 +21,12 @@ public class ScaleGradient extends HyperParameterBranchRateGradient {
     @Override
     double[] getDifferential(Tree tree, NodeRef node) {
         double rate = branchRateModel.getBranchRate(tree, node);
-        return new double[]{
-                locationScaleTransform.expScaleDifferential(rate, tree, node) // TODO Move function below into here?
-        };
+
+        // TODO Can out out of this class (I think), if we provide both transform() and inverse() here.
+
+        double tmp = (Math.log(rate / locationScaleTransform.getLocation(tree, node)) - locationScaleTransform.getTransformMu())
+                /(locationScaleTransform.getTransformSigma() * locationScaleTransform.getTransformSigma()) - 1.0;
+
+        return new double[] {tmp * rate * locationScaleTransform.getScale(tree, node) / (1.0 + locationScaleTransform.getScale(tree, node) * locationScaleTransform.getScale(tree, node))};
     }
 }

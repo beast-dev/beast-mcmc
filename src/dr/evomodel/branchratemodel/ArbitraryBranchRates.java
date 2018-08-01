@@ -320,6 +320,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 //                }
 //            }
 
+            @Deprecated
             public double expLocationDifferential(double rate, Tree tree, NodeRef node) {
                 if (!transformKnown) {
                     setupTransform();
@@ -331,11 +332,13 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 return rate / multiplier;
             }
 
+            @Deprecated
             public double expLocationDifferential(double rate) {
                 return expLocationDifferential(rate, null, null);
                 // TODO Does not depend on this class; move back into calling function
             }
 
+            @Deprecated
             public double expScaleDifferential(double rate, Tree tree, NodeRef node) {
 
                 if (!transformKnown) {
@@ -352,6 +355,23 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             }
 
+            public double getTransformMu() {
+                return transformMu;
+            }
+
+            public double getTransformSigma() {
+                return transformSigma;
+            }
+
+            public double getLocation(Tree tree, NodeRef node) {
+                return (location != null) ? location.getEffect(tree, node) : 1.0;
+            }
+
+            public double getScale(Tree tree, NodeRef node) {
+                return scale.getParameterValue(0);
+            }
+
+            @Deprecated
             public double expScaleDifferential(double rate) {
                 return expScaleDifferential(rate, null, null);
             }

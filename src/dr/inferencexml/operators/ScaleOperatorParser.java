@@ -67,22 +67,42 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
 
         final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         Bounds<Double> bounds = parameter.getBounds();
+
+        Boolean negativeSpace = null;
+
         for (int dim = 0; dim < parameter.getDimension(); dim++) {
 
-            if(parameter.getParameterValue(dim) < 0.0){
+            if (parameter.getParameterValue(dim) < 0.0) {
+                // the parameter is in negative space
+
+                if (negativeSpace != null && !negativeSpace) {
+                    throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
+                }
+
+                negativeSpace = true;
+
                 if (bounds.getUpperLimit(dim) > 0.0) {
                     throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
                 }
                 if (!ignoreBounds && !Double.isInfinite(bounds.getLowerLimit(dim))) {
                     throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
                 }
-            } else {
+            } else if (parameter.getParameterValue(dim) > 0.0) {
+                if (negativeSpace != null && negativeSpace) {
+                    throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
+                }
+
+                negativeSpace = false;
+
                 if (bounds.getLowerLimit(dim) < 0.0) {
                     throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
                 }
                 if (!ignoreBounds && !Double.isInfinite(bounds.getUpperLimit(dim))) {
                     throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
                 }
+            } else {
+                // disallow zero starting values
+                throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
             }
         }
 

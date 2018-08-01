@@ -33,8 +33,8 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
 
 /**
@@ -81,55 +81,12 @@ public abstract class HyperParameterBranchRateGradient extends DiscreteTraitBran
     }
 
     @Override
-//    public double[] getDiagonalHessianLogDensity() {  // TODO: fix it
-//        double[] result = new double[rateParameter.getDimension()];
-//        double[] nodeGradients = super.getGradientLogDensity();
-//        double[] nodeDiagonalHessian = super.getDiagonalHessianLogDensity();
-//        int v = 0;
-//        for (int i = 0; i < tree.getNodeCount(); ++i) {
-//            final NodeRef node = tree.getNode(i);
-//            if (!tree.isRoot(node)) {
-//                double[] hyperChainGradient = getDifferential(tree, node);
-//                double[] hyperChainDiagonalHessian = getSecondDifferential(tree, node);
-//                for (int j = 0; j < result.length; j++) {
-//                    result[j] += nodeGradients[v] * hyperChainDiagonalHessian[j] + nodeDiagonalHessian[v] * hyperChainGradient[j] * hyperChainGradient[j];
-////                    result[j] += nodeGradients[v] * hyperChainGradient[j];
-//                }
-//                v++;
-//            }
-//        }
-//        return result;
-//    }
-
     public double[] getDiagonalHessianLogDensity() {
-
-        double[] result = new double[rateParameter.getDimension()];
-
-        //Do single call to traitProvider with node == null (get full tree)
-        double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait("Hessian").getTrait(tree, null);
-        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
-
-        int v = 0;
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            final NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                final double chainGradient = getChainGradient(tree, node);
-                double[] hyperChainGradient = getDifferential(tree, node);
-                double[] hyperChainDiagonalHessian = getSecondDifferential(tree, node);
-                for (int j = 0; j < result.length; j++) {
-                    final double jointGradient = chainGradient * hyperChainGradient[j];
-                    result[j] += diagonalHessian[v] * jointGradient * jointGradient + gradient[v] * chainGradient * hyperChainDiagonalHessian[j];
-                }
-                v++;
-            }
-        }
-
-        return result;
+        // cannot avoid calculating full hessian in this case, use numerical method for now
+        // TODO: maybe add Hessian into BEAGLE ?
+        return NumericalDerivative.diagonalHessian(numeric1, rateParameter.getParameterValues());
     }
 
 
     abstract double[] getDifferential(Tree tree, NodeRef node);
-
-    abstract double[] getSecondDifferential(Tree tree, NodeRef node);
-
 }

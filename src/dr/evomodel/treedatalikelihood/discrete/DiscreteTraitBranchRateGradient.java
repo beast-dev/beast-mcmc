@@ -190,7 +190,7 @@ public class DiscreteTraitBranchRateGradient
 
 //    private static final boolean DEBUG = true;
 
-    private MultivariateFunction numeric1 = new MultivariateFunction() {
+    protected MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override
         public double evaluate(double[] argument) {
 

@@ -40,7 +40,6 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrapSpherical;
 public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
 
     private final DenseMatrix64F transformedMatrix;
-    private final boolean isSymmetric;
 
     private final double[] savedTransformedMatrix;
 
@@ -49,18 +48,12 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
     private final DenseMatrix64F temp;
 
     public CompoundEigenMatrix(Parameter eigenValues, MatrixParameter eigenVectors) {
-        this(eigenValues, eigenVectors, false);
-    }
-
-    public CompoundEigenMatrix(Parameter eigenValues, MatrixParameter eigenVectors, boolean isSymmetric) {
         super(eigenValues, eigenVectors);
         // Matrices
         temp = new DenseMatrix64F(dim, dim);
         transformedMatrix = new DenseMatrix64F(dim, dim);
         computeTransformedMatrix();
         savedTransformedMatrix = new double[dim * dim];
-        // Constraint
-        this.isSymmetric = isSymmetric;
     }
 
     private void computeTransformedMatrix() {
@@ -128,7 +121,7 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
 
     @Override
     public boolean isConstrainedSymmetric() {
-        return isSymmetric;
+        return false;
     }
 
     @Override
@@ -167,7 +160,6 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
     public static final String NAME = "compoundEigenMatrix";
     private static final String EIGEN_VALUES = "eigenValues";
     private static final String EIGEN_VECTORS = "eigenVectors";
-    private static final String IS_SYMMETRIC = "constrainedSymmetric";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -179,14 +171,12 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
 
             Parameter eigenValues = (Parameter) xo.getElementFirstChild(EIGEN_VALUES);
             MatrixParameter eigenVectors = (MatrixParameter) xo.getElementFirstChild(EIGEN_VECTORS);
-            boolean isSymmetric = xo.getAttribute(IS_SYMMETRIC, false);
-            //TODO: check that provided matrix is indeed symmetric
 
             if (eigenVectors.getDimension() != (eigenValues.getDimension() * (eigenValues.getDimension() - 1))) {
                 throw new XMLParseException("Invalid parameter dimensions in `" + xo.getId() + "'");
             }
 
-            return new CompoundEigenMatrix(eigenValues, eigenVectors, isSymmetric);
+            return new CompoundEigenMatrix(eigenValues, eigenVectors);
         }
 
         //************************************************************************
@@ -203,8 +193,7 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(EIGEN_VALUES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(EIGEN_VECTORS, new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
-                AttributeRule.newBooleanRule(IS_SYMMETRIC, true)
+                new ElementRule(EIGEN_VECTORS, new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)})
         };
 
         public Class getReturnType() {

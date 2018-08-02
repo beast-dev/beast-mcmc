@@ -43,9 +43,9 @@ import org.ejml.ops.EigenOps;
 
 public class MultivariateElasticModel extends AbstractModel implements TreeAttributeProvider {
 
-    public static final String ELASTIC_PROCESS = "multivariateElasticModel";
+    private static final String ELASTIC_PROCESS = "multivariateElasticModel";
     //    public static final String ELASTIC_CONSTANT = "strengthOfSelectionMatrix";
-    public static final String ELASTIC_TREE_ATTRIBUTE = "strengthOfSelection";
+    private static final String ELASTIC_TREE_ATTRIBUTE = "strengthOfSelection";
 
     public static final double LOG2PI = Math.log(2 * Math.PI);
 
@@ -61,8 +61,14 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
         dim = strengthOfSelectionMatrixParameter.getRowDimension();
         assert dim == strengthOfSelectionMatrixParameter.getColumnDimension() : "Strength of Selection matrix should be square.";
 
-        isDiagonal = strengthOfSelectionMatrixParameter instanceof DiagonalMatrix;
-        isDecomposed = strengthOfSelectionMatrixParameter instanceof CompoundEigenMatrix;
+        if (strengthOfSelectionMatrixParameter instanceof DiagonalMatrix) {
+            this.parametrization = Parametrization.AS_DIAGONAL;
+        } else if (strengthOfSelectionMatrixParameter instanceof CompoundEigenMatrix) {
+            this.parametrization = Parametrization.AS_DECOMPOSED;
+        } else {
+            this.parametrization = Parametrization.GENERAL;
+        }
+
         isSymmetric = strengthOfSelectionMatrixParameter.isConstrainedSymmetric();
 
         calculateSelectionInfo();
@@ -76,16 +82,7 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
 
     private void calculateSelectionInfo() {
 //        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
-        if (!isDiagonal && !isDecomposed) {
-            this.eigenDecompositionStrengthOfSelection = decomposeStrenghtOfSelection();
-        }
-    }
-
-    private EigenDecomposition decomposeStrenghtOfSelection() {
-        DenseMatrix64F A = MissingOps.wrap(strengthOfSelectionMatrixParameter);
-        EigenDecomposition eigA = DecompositionFactory.eig(dim, true, isSymmetric);
-        if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
-        return eigA;
+        this.eigenDecompositionStrengthOfSelection = parametrization.decomposeStrenghtOfSelection(strengthOfSelectionMatrixParameter, dim, isSymmetric);
     }
 
     public MatrixParameterInterface getStrengthOfSelectionMatrixParameter() {
@@ -114,13 +111,7 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     public double[] getEigenValuesStrengthOfSelection() {
         if (strengthOfSelectionMatrixParameter != null) {
             checkVariableChanged();
-            if (isDiagonal) {
-                return ((DiagonalMatrix) strengthOfSelectionMatrixParameter).getDiagonalParameter().getParameterValues();
-            }
-            if (isDecomposed) {
-                return ((CompoundEigenMatrix) strengthOfSelectionMatrixParameter).getEigenValues();
-            }
-            return eigenValuesMatrix();
+            return parametrization.eigenValuesMatrix(strengthOfSelectionMatrixParameter, eigenDecompositionStrengthOfSelection, dim);
         }
         return null;
     }
@@ -128,32 +119,9 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     public double[] getEigenVectorsStrengthOfSelection() {
         if (strengthOfSelectionMatrixParameter != null) {
             checkVariableChanged();
-            if (isDiagonal) {
-                return null;
-            }
-            if (isDecomposed) {
-                return ((CompoundEigenMatrix) strengthOfSelectionMatrixParameter).getEigenVectors();
-            }
-            return eigenVectorsMatrix();
+            return parametrization.eigenVectorsMatrix(strengthOfSelectionMatrixParameter, eigenDecompositionStrengthOfSelection);
         }
         return null;
-    }
-
-    private double[] eigenValuesMatrix() {
-        assert eigenDecompositionStrengthOfSelection != null : "The eigen decomposition should already be computed at this point.";
-        double[] eigA = new double[dim];
-        for (int p = 0; p < dim; ++p) {
-            Complex64F ev = eigenDecompositionStrengthOfSelection.getEigenvalue(p);
-            assert ev.isReal() : "Selection strength A should only have real eigenvalues.";
-            assert ev.real > 0 : "Selection strength A should only have positive real eigenvalues.";
-            eigA[p] = ev.real;
-        }
-        return eigA;
-    }
-
-    private double[] eigenVectorsMatrix() {
-        assert eigenDecompositionStrengthOfSelection != null : "The eigen decomposition should already be computed at this point.";
-        return EigenOps.createMatrixV(eigenDecompositionStrengthOfSelection).getData();
     }
 
     private void checkVariableChanged() {
@@ -164,11 +132,75 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     }
 
     public boolean isDiagonal() {
-        return isDiagonal;
+        return parametrization == Parametrization.AS_DIAGONAL;
     }
 
     public boolean isSymmetric() {
         return isSymmetric;
+    }
+
+    // *****************************************************************
+    // Parametrization
+    // *****************************************************************
+    enum Parametrization {
+        AS_DIAGONAL {
+            @Override
+            public EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric) {
+                return null;
+            }
+            @Override
+            public double[] eigenValuesMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA, int dim) {
+                return ((DiagonalMatrix) AParam).getDiagonalParameter().getParameterValues();
+            }
+            @Override
+            public double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA) {
+                return null;
+            }
+        },
+        AS_DECOMPOSED {
+            @Override
+            public EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric) {
+                return null;
+            }
+            @Override
+            public double[] eigenValuesMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA, int dim) {
+                return ((CompoundEigenMatrix) AParam).getEigenValues();
+            }
+            @Override
+            public double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA) {
+                return ((CompoundEigenMatrix) AParam).getEigenVectors();
+            }
+        },
+        GENERAL {
+            @Override
+            public EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric) {
+                DenseMatrix64F A = MissingOps.wrap(AParam);
+                EigenDecomposition eigA = DecompositionFactory.eig(dim, true, isSymmetric);
+                if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
+                return eigA;
+            }
+            @Override
+            public double[] eigenValuesMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA, int dim) {
+                assert eigDecompA != null : "The eigen decomposition should already be computed at this point.";
+                double[] eigA = new double[dim];
+                for (int p = 0; p < dim; ++p) {
+                    Complex64F ev = eigDecompA.getEigenvalue(p);
+                    assert ev.isReal() : "Selection strength A should only have real eigenvalues.";
+                    assert ev.real > 0 : "Selection strength A should only have positive real eigenvalues.";
+                    eigA[p] = ev.real;
+                }
+                return eigA;
+            }
+            @Override
+            public double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA) {
+                assert eigDecompA != null : "The eigen decomposition should already be computed at this point.";
+                return EigenOps.createMatrixV(eigDecompA).getData();
+            }
+        };
+
+        abstract EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric);
+        abstract double[] eigenValuesMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA, int dim);
+        abstract double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA);
     }
 
     // *****************************************************************
@@ -184,11 +216,13 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
 
     protected void storeState() {
 //        savedStrengthOfSelectionMatrix = strengthOfSelectionMatrix;
+        savedEigenDecompositionStrengthOfSelection = eigenDecompositionStrengthOfSelection;
         storedVariableChanged = variableChanged;
     }
 
     protected void restoreState() {
 //        strengthOfSelectionMatrix = savedStrengthOfSelectionMatrix;
+        eigenDecompositionStrengthOfSelection = savedEigenDecompositionStrengthOfSelection;
         variableChanged = storedVariableChanged;
     }
 
@@ -265,9 +299,9 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
 //    private double[][] strengthOfSelectionMatrix;
 //    private double[][] savedStrengthOfSelectionMatrix;
     private EigenDecomposition eigenDecompositionStrengthOfSelection = null;
+    private EigenDecomposition savedEigenDecompositionStrengthOfSelection = null;
 
-    private boolean isDiagonal;
-    private boolean isDecomposed;
+    private Parametrization parametrization;
     private boolean isSymmetric;
 
     private int dim;

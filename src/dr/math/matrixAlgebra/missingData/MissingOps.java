@@ -7,10 +7,12 @@ import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
 import org.ejml.alg.dense.misc.UnrolledInverseFromMinor;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
 import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;
+import org.ejml.ops.SingularOps;
 
 import java.util.Arrays;
 
@@ -303,28 +305,33 @@ public class MissingOps {
         if (finiteCount == 0) {
             result = new InversionResult(NOT_OBSERVED, 0, 0);
         } else {
-            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
-            solver.setA(source);
+//            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
+//            solver.setA(source);
+//
+//            SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+//            double[] values = svd.getSingularValues();
+//
+//            if (values == null) {
+//                throw new RuntimeException("Unable to perform SVD");
+//            }
 
-            SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+            SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(source.getNumRows(), source.getNumCols(), false, false, false);
+            if (!svd.decompose(source)) throw new RuntimeException("SVD decomposition failed");
             double[] values = svd.getSingularValues();
 
-
-            if (values == null) {
-                throw new RuntimeException("Unable to perform SVD");
-            }
+            double eps = SingularOps.singularThreshold(svd);
 
             int dim = 0;
             double det = 1;
             for (int i = 0; i < values.length; ++i) {
                 final double lambda = values[i];
-                if (lambda != 0.0) {
+                if (lambda > 100000 * eps) {
                     det *= lambda;
                     ++dim;
                 }
             }
 
-            if (invert) {
+            if (!invert) {
                 det = 1.0 / det;
             }
 
@@ -373,19 +380,25 @@ public class MissingOps {
             double det = 1;
 
             if (getDeterminant) {
-                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+//                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+//                double[] values = svd.getSingularValues();
+
+                SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
+                if (!svd.decompose(A)) throw new RuntimeException("SVD decomposition failed");
                 double[] values = svd.getSingularValues();
+
+                double eps = SingularOps.singularThreshold(svd);
 
                 for (int i = 0; i < values.length; ++i) {
                     final double lambda = values[i];
-                    if (lambda != 0.0) {
+                    if (lambda > 100000 * eps) {
                         det *= lambda;
                         ++dim;
                     }
                 }
             }
 
-            result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, 1 / det);
+            result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, det);
         }
 
         return result;

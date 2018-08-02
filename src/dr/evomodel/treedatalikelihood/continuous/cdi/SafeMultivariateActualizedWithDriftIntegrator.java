@@ -89,12 +89,11 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         // Transform back in original space
         final int offset = dimTrait * dimTrait * precisionIndex;
-        DenseMatrix64F stationaryVariance = wrap(stationaryVariances, offset, dimTrait, dimTrait);
         transformMatrixBack(stationaryVariances, offset, alphaRot, 0);
 
         if (DEBUG) {
             System.err.println("At precision index: " + precisionIndex);
-            System.err.println("stationary variance: " + stationaryVariance);
+            System.err.println("stationary variance: " + wrap(stationaryVariances, offset, dimTrait, dimTrait));
         }
     }
 

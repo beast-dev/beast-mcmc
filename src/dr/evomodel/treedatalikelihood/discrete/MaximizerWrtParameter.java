@@ -26,7 +26,6 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -65,7 +64,7 @@ public class MaximizerWrtParameter implements Reportable {
         int numberIterations;
         boolean startAtCurrentState;
         boolean printToScreen;
-        
+
         public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen) {
             this.numberIterations = numberIterations;
             this.startAtCurrentState = startAtCurrentState;
@@ -187,11 +186,11 @@ public class MaximizerWrtParameter implements Reportable {
                 double[] result = gradient.getGradientLogDensity();
 
                 if (transform != null) {
-//                    double[] differential = transform.gradient(argument, 0, argument.length);
-//                    for (int i = 0; i < result.length; ++i) {
-//                        result[i] *= differential[i];
-//                    }
-                    result = transform.updateGradientInverse(result, argument, 0, argument.length);
+                    double[] differential = transform.gradient(argument, 0, argument.length);
+                    for (int i = 0; i < result.length; ++i) {
+                        result[i] *= differential[i];
+                    }
+//                    result = transform.updateGradientInverse(result, argument, 0, argument.length);
 
                 }
                 for (int i = 0; i < result.length; ++i) {

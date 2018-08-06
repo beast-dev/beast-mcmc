@@ -50,6 +50,11 @@ public class CubicOrderTreePrecisionTraitProductProvider extends TreePrecisionTr
         return Math.sqrt(max);
     }
 
+    @Override
+    public double getTimeScaleEigen() {
+        return 0;
+    }
+
     private double[][] getTreeTraitPrecision() {
 
         if (!DO_CACHE) {

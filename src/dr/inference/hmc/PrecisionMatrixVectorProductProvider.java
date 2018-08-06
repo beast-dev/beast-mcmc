@@ -40,6 +40,8 @@ public interface PrecisionMatrixVectorProductProvider {
 
     double getTimeScale();
 
+    double getTimeScaleEigen();
+
     class Generic implements PrecisionMatrixVectorProductProvider {
 
         private final MatrixParameterInterface matrix;
@@ -91,6 +93,11 @@ public interface PrecisionMatrixVectorProductProvider {
             }
 
             return Math.sqrt(max);
+        }
+
+        @Override
+        public double getTimeScaleEigen() {
+            return 0;
         }
     }
 }

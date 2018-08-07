@@ -191,7 +191,7 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
             return gradient;
         } else {
             CorrelationToCholesky transform = new CorrelationToCholesky(dim);
-            double[] updatedGradient = transform.updateGradient(gradient,
+            double[] updatedGradient = transform.updateGradientUnWeightedLogDensity(gradient,
                     ((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues(),
                     0, gradient.length);
             return updatedGradient;

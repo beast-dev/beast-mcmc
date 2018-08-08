@@ -319,7 +319,7 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.10.1pre20180801"/>
+    <property name="version" value="1.10.1"/>
     <property name="jvm_version" value="1.6+"/>
 
     <property name="version_number" value="1.10.1"/>

@@ -298,10 +298,10 @@ public interface Transform {
         }
 
         public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            // Transform Gradient
+            double[] updatedGradient = updateGradientUnWeightedLogDensity(gradient, value, from, to);
             // values = untransformed (R)
             double[] transformedValues = transform(value, 0, value.length);
-            // Transform Inverse
-            double[] updatedGradient = updateGradientUnWeightedLogDensity(gradient, transformedValues, from, to);
             // gradient of log jacobian of the inverse
             double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
             // Add gradient log jacobian

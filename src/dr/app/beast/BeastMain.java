@@ -339,7 +339,6 @@ public class BeastMain {
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
 
-                        new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),

@@ -23,8 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.trace;
+package dr.evomodel.trace;
 
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceException;
 import dr.inferencexml.trace.MarginalLikelihoodAnalysisParser;
 import dr.math.EmpiricalBayesPoissonSmoother;
 import dr.stats.DiscreteStatistics;

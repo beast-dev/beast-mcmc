@@ -320,7 +320,7 @@
     <property name="version" value="1.9"/>
      -->
     <property name="version" value="1.10.1"/>
-    <property name="jvm_version" value="1.6+"/>
+    <property name="jvm_version" value="1.7+"/>
 
     <property name="version_number" value="1.10.1"/>
     <property name="copyright" value="Copyright 2002-2018"/>

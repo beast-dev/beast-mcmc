@@ -298,10 +298,10 @@ public interface Transform {
         }
 
         public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-            // Transform Gradient
-            double[] updatedGradient = updateGradientUnWeightedLogDensity(gradient, value, from, to);
             // values = untransformed (R)
             double[] transformedValues = transform(value, 0, value.length);
+            // Transform Inverse
+            double[] updatedGradient = updateGradientUnWeightedLogDensity(gradient, transformedValues, from, to);
             // gradient of log jacobian of the inverse
             double[] gradientLogJacobianInverse = getGradientLogJacobianInverse(transformedValues);
             // Add gradient log jacobian
@@ -320,10 +320,9 @@ public interface Transform {
         }
 
         public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
-            // value = untransformed (R)
             // takes transformed values
             // Jacobian of inverse (transpose)
-            double[][] jacobianInverse = computeJacobianMatrixInverse(transform(value, 0, value.length));
+            double[][] jacobianInverse = computeJacobianMatrixInverse(value);
             // Matrix multiplication (upper triangular)
             double[] updatedGradient = new double[gradient.length];
             for (int i = 0; i < gradient.length; i++) {
@@ -926,8 +925,8 @@ public interface Transform {
         @Override
         public double[] updateGradientUnWeightedLogDensity(double gradient[], double[] value, int from, int to) {
             return outer.updateGradientUnWeightedLogDensity(
-                    inner.updateGradientUnWeightedLogDensity(gradient, value, from, to),
-                    transform(value, from, to), from, to);
+                    inner.updateGradientUnWeightedLogDensity(gradient, outer.inverse(value, from, to), from, to),
+                    value, from, to);
         }
 
         @Override

@@ -154,6 +154,15 @@ public class TreeTraitLogger implements Loggable, Reportable {
         INTERNAL {
             int begin(Tree tree) { return tree.getExternalNodeCount(); }
             int end(Tree tree) { return tree.getNodeCount(); }
+        },
+        ROOT {
+            int begin(Tree tree) {
+
+                assert (tree.getNode(tree.getRoot().getNumber()) == tree.getRoot());
+
+                return tree.getRoot().getNumber();
+            }
+            int end(Tree tree) { return tree.getRoot().getNumber() + 1; }
         };
 
         abstract int begin(Tree tree);
@@ -164,7 +173,9 @@ public class TreeTraitLogger implements Loggable, Reportable {
              if (lower.compareTo("external") == 0) {
                  return EXTERNAL;
              } else if (lower.compareTo("internal") == 0) {
-                return INTERNAL;
+                 return INTERNAL;
+             } else if (lower.compareTo("root") == 0) {
+                 return ROOT;
             } else {
                  return ALL;
             }

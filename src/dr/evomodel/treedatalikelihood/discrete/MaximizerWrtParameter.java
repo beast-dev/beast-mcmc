@@ -187,7 +187,7 @@ public class MaximizerWrtParameter implements Reportable {
 
                 if (transform != null) {
 
-                    result = transform.updateGradientInverseUnWeightedLogDensity(result, argument, 0, argument.length);
+                    result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
 
                 }
                 for (int i = 0; i < result.length; ++i) {

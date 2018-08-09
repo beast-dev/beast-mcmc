@@ -170,7 +170,7 @@ public interface Transform {
         }
 
         public double updateGradientLogDensity(double gradient, double value) {
-            // value : untransformed.
+            // value : untransformed. TODO:use updateGradientUnWeightedLogDensity()
             return updateGradientInverseUnWeightedLogDensity(gradient, transform(value)) + getGradientLogJacobianInverse(transform(value));
         }
 

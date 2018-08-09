@@ -188,7 +188,7 @@ public interface Transform {
 
         public double updateGradientInverseUnWeightedLogDensity(double gradient, double value) {
             // value is transformed
-            return gradient * gradient(value);
+            return gradient * gradientInverse(value);
         }
 
         public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {

@@ -661,7 +661,7 @@ public interface Transform {
 
         @Override
         public double gradient(double value) {
-            return 1.0 / (1.0 - value) / (1.0 + value);
+            return 1.0 - Math.pow(value, 2);
         }
 
         public String getTransformName() {
@@ -1093,12 +1093,12 @@ public interface Transform {
 
         @Override
         public double[] gradient(double[] values, int from, int to) {
-            return inner.gradientInverse(values, from, to);
+            throw new RuntimeException("Not yet implemented.");
         }
 
         @Override
         public double[] gradientInverse(double[] values, int from, int to) {
-            return inner.gradient(values, from, to);
+            throw new RuntimeException("Not yet implemented.");
         }
 
         @Override

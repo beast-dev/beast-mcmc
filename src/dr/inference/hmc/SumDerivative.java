@@ -65,7 +65,12 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
                 if (!Arrays.equals(grad.getParameter().getParameterValues(), parameter.getParameterValues())){
                     throw new RuntimeException("Unequal parameter values");
                 }
-                likelihoodList.add(grad.getLikelihood());
+                for (Likelihood likelihood : grad.getLikelihood().getLikelihoodSet()) {
+                    if (!(likelihoodList.contains(likelihood))) {
+                        likelihoodList.add(likelihood);
+                    }
+                }
+//                likelihoodList.add(grad.getLikelihood());
             }
             likelihood = new CompoundLikelihood(likelihoodList);
         }

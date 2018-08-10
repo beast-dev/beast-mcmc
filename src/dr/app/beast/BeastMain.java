@@ -375,6 +375,13 @@ public class BeastMain {
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
+            arguments.addOption("beagle_auto",
+                "BEAGLE: automatically select fastest resource for analysis",
+                "beagle_info");
+        };
+
         int argumentCount = 0;
 
         StringBuilder commandLine = new StringBuilder();
@@ -499,6 +506,9 @@ public class BeastMain {
         // if any beagle flag is specified then use beagle...
         //final boolean useBeagle = true;
 
+        if (arguments.hasOption("beagle_auto")) {
+            System.setProperty("beagle.resource.auto", Boolean.TRUE.toString());
+        }
         if (arguments.hasOption("beagle_CPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
         }

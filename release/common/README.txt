@@ -133,6 +133,7 @@ BEAST arguments:
      -beagle         "Use BEAGLE library if available (default on)"
      -beagle_off     "Don't use BEAGLE library"
      -beagle_info          "BEAGLE: show information on available resources"
+     -beagle_auto          "BEAGLE: automatically select fastest resource for analysis"
      -beagle_order         "BEAGLE: set order of resource use"
      -beagle_instances     "BEAGLE: divide site patterns amongst instances"
      -beagle_CPU           "BEAGLE: use CPU instance"

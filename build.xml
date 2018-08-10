@@ -469,9 +469,6 @@
         <copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
         <!-- <copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/> -->
-        <copy todir="${Linux_package_dir}/lib">
-            <fileset dir="${Linux_dir}/lib"/>
-        </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 

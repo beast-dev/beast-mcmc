@@ -101,11 +101,6 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
         throw new RuntimeException("Not relevant for the LKJ transform.");
     }
 
-    @Override
-    public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
     public String getTransformName() {
         return "LKJCholeskyTransform";
     }

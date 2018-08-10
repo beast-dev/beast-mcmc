@@ -82,11 +82,6 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
         throw new RuntimeException("Not relevant for the correlation to Cholesky transform.");
     }
 
-    @Override
-    public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
     public String getTransformName() {
         return "CorrelationToCholeskyTransform";
     }

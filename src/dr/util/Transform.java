@@ -354,6 +354,12 @@ public interface Transform {
             return updatedGradient;
         }
 
+        @Override
+        public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+            // takes untransformed value TODO: more efficient way ?
+            return updateGradientInverseUnWeightedLogDensity(gradient, transform(value, from, to), from, to);
+        }
+
         abstract protected double[] getGradientLogJacobianInverse(double[] values); // transformed value
 
         abstract public double[][] computeJacobianMatrixInverse(double[] values); // transformed values
@@ -956,7 +962,9 @@ public interface Transform {
 
         @Override
         public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("Not yet implemented");
+            return outer.updateGradientUnWeightedLogDensity(
+                    inner.updateGradientUnWeightedLogDensity(gradient, value, from, to),
+                    inner.transform(value, from, to), from, to);
         }
 
         @Override

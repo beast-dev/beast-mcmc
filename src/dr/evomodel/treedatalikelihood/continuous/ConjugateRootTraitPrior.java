@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -42,17 +43,31 @@ public class ConjugateRootTraitPrior {
 
 
     private static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
+    private static final String PRIOR_PRECISION = AbstractMultivariateTraitLikelihood.PRIOR_PRECISION;
 
     private final double[] mean;
     private final double pseudoObservations;
+    private final double[] precision;
 
     private ConjugateRootTraitPrior(double[] mean, double pseudoObservations) {
         this.mean = mean;
         this.pseudoObservations = pseudoObservations;
+        precision = null;
     }
 
-    public double[] getMean() { return mean; }
-    public double getPseudoObservations() { return pseudoObservations; }
+    private ConjugateRootTraitPrior(double[] mean, double pseudoObservations, double[] precision) {
+        this.mean = mean;
+        this.pseudoObservations = pseudoObservations;
+        this.precision = precision;
+    }
+
+    public double[] getMean() {
+        return mean;
+    }
+
+    public double getPseudoObservations() {
+        return pseudoObservations;
+    }
 
     public static ConjugateRootTraitPrior parseConjugateRootTraitPrior(XMLObject xo,
                                                                        final int dim) throws XMLParseException {
@@ -63,12 +78,18 @@ public class ConjugateRootTraitPrior {
                 .getChild(Parameter.class);
 
         if (meanParameter.getDimension() != dim) {
-            throw new XMLParseException("Root prior mean dimension ("  + meanParameter.getDimension() +
+            throw new XMLParseException("Root prior mean dimension (" + meanParameter.getDimension() +
                     ") does not match trait diffusion dimension (" + dim + ")");
         }
 
         Parameter sampleSizeParameter = (Parameter) cxo.getChild(PRIOR_SAMPLE_SIZE).getChild(Parameter.class);
-
+        Parameter precision = (Parameter) cxo.getChild(PRIOR_PRECISION).getChild(Parameter.class);
+        MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
+                cxo.getChild(PRIOR_PRECISION).getChild(MatrixParameterInterface.class);
+        if (precision != null) {
+            return new ConjugateRootTraitPrior(meanParameter.getParameterValues(),
+                    sampleSizeParameter.getParameterValue(0), precision.getParameterValues());
+        }
         return new ConjugateRootTraitPrior(meanParameter.getParameterValues(),
                 sampleSizeParameter.getParameterValue(0));
     }
@@ -86,5 +107,12 @@ public class ConjugateRootTraitPrior {
         }
         this.mean = mean;
         this.pseudoObservations = pseudoObservations;
+        this.precision = new double[0];
+    }
+
+    public class ConjugateRootTraitPriorWithPrecision extends ConjugateRootTraitPrior {
+        public ConjugateRootTraitPriorWithPrecision(double[] mean, double pseudoObservations, boolean test) {
+            super(mean, pseudoObservations, test);
+        }
     }
 }

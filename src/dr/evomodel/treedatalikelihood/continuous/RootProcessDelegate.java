@@ -27,12 +27,16 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Marc A. Suchard
  * @version $Id$
  */
-public interface RootProcessDelegate {
+public interface RootProcessDelegate extends Model {
 
     int getExtraPartialBufferCount();
 
@@ -49,7 +53,7 @@ public interface RootProcessDelegate {
 
 //    int getDegreesOfFreedom();
 
-    abstract class Abstract implements RootProcessDelegate {
+    abstract class Abstract extends AbstractModel implements RootProcessDelegate {
 
         protected final ConjugateRootTraitPrior prior;
         private final PrecisionType precisionType;
@@ -61,6 +65,9 @@ public interface RootProcessDelegate {
         public Abstract(final ConjugateRootTraitPrior prior,
                         final PrecisionType precisionType, int numTraits,
                         int partialBufferCount, int matrixBufferCount) {
+
+            super("RootProcessDelegate");
+
             this.prior = prior;
             this.precisionType = precisionType;
             this.numTraits = numTraits;
@@ -109,6 +116,29 @@ public interface RootProcessDelegate {
             }
 
             cdi.setPostOrderPartial(priorBufferIndex, partial);
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+            if (model == prior) {
+                fireModelChanged(object);
+            } else {
+                throw new IllegalArgumentException("Unknown submodel");
+            }
+        }
+
+        @Override
+        protected void storeState() { }
+
+        @Override
+        protected void restoreState() { }
+
+        @Override
+        protected void acceptState() { }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            throw new IllegalArgumentException("No subvariables");
         }
     }
 

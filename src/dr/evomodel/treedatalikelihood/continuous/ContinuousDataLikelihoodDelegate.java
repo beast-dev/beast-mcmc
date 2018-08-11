@@ -149,6 +149,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         rootProcessDelegate = new RootProcessDelegate.FullyConjugate(rootPrior, precisionType, numTraits,
                 partialBufferCount, matrixBufferCount);
 
+        addModel(rootProcessDelegate);
+
         partialBufferCount += rootProcessDelegate.getExtraPartialBufferCount();
         matrixBufferCount += rootProcessDelegate.getExtraMatrixBufferCount();
 
@@ -796,6 +798,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             }
 
         } else if (model instanceof BranchRateModel) {
+            fireModelChanged();
+        } else if (model == rootProcessDelegate) {
+            rootProcessDelegate.setRootPartial(cdi); // TODO Make lazy
             fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");

@@ -27,8 +27,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -39,34 +38,29 @@ import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.C
 /**
  * @author Marc A. Suchard
  */
-public class ConjugateRootTraitPrior {
-
+public class ConjugateRootTraitPrior extends AbstractModel {
 
     private static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
-    private static final String PRIOR_PRECISION = AbstractMultivariateTraitLikelihood.PRIOR_PRECISION;
 
-    private final double[] mean;
-    private final double pseudoObservations;
-    private final double[] precision;
+    private final Parameter mean;
+    private final Parameter pseudoObservations;
 
-    private ConjugateRootTraitPrior(double[] mean, double pseudoObservations) {
+    private ConjugateRootTraitPrior(Parameter mean,
+                                    Parameter pseudoObservations) {
+        super("ConjugateRootTraitPrior");
         this.mean = mean;
         this.pseudoObservations = pseudoObservations;
-        precision = null;
-    }
 
-    private ConjugateRootTraitPrior(double[] mean, double pseudoObservations, double[] precision) {
-        this.mean = mean;
-        this.pseudoObservations = pseudoObservations;
-        this.precision = precision;
+        addVariable(mean);
+        addVariable(pseudoObservations);
     }
 
     public double[] getMean() {
-        return mean;
+        return mean.getParameterValues();
     }
 
     public double getPseudoObservations() {
-        return pseudoObservations;
+        return pseudoObservations.getParameterValue(0);
     }
 
     public static ConjugateRootTraitPrior parseConjugateRootTraitPrior(XMLObject xo,
@@ -83,15 +77,8 @@ public class ConjugateRootTraitPrior {
         }
 
         Parameter sampleSizeParameter = (Parameter) cxo.getChild(PRIOR_SAMPLE_SIZE).getChild(Parameter.class);
-        Parameter precision = (Parameter) cxo.getChild(PRIOR_PRECISION).getChild(Parameter.class);
-        MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
-                cxo.getChild(PRIOR_PRECISION).getChild(MatrixParameterInterface.class);
-        if (precision != null) {
-            return new ConjugateRootTraitPrior(meanParameter.getParameterValues(),
-                    sampleSizeParameter.getParameterValue(0), precision.getParameterValues());
-        }
-        return new ConjugateRootTraitPrior(meanParameter.getParameterValues(),
-                sampleSizeParameter.getParameterValue(0));
+
+        return new ConjugateRootTraitPrior(meanParameter, sampleSizeParameter);
     }
 
     public static final XMLSyntaxRule[] rules = {
@@ -101,18 +88,23 @@ public class ConjugateRootTraitPrior {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
     };
 
-    public ConjugateRootTraitPrior(double[] mean, double pseudoObservations, boolean test) {
-        if (!test) {
-            throw new RuntimeException("This constructor should only be called in a testing environement.");
-        }
-        this.mean = mean;
-        this.pseudoObservations = pseudoObservations;
-        this.precision = new double[0];
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        throw new IllegalArgumentException("No submodels");
     }
 
-    public class ConjugateRootTraitPriorWithPrecision extends ConjugateRootTraitPrior {
-        public ConjugateRootTraitPriorWithPrecision(double[] mean, double pseudoObservations, boolean test) {
-            super(mean, pseudoObservations, test);
-        }
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        fireModelChanged(variable);
     }
+
+    @Override
+    protected void storeState() { }
+
+    @Override
+    protected void restoreState() { }
+
+    @Override
+    protected void acceptState() { }
 }

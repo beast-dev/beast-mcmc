@@ -143,6 +143,11 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
     }
 
     @Override
+    public boolean isConstrainedSymmetric() {
+        return false;
+    }
+
+    @Override
     public void setParameterValue(int index, double a) {
         throw new RuntimeException("Do not set entries directly");
     }

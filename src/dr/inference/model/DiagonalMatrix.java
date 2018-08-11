@@ -222,4 +222,9 @@ public class DiagonalMatrix extends MatrixParameter
         return diagonalParameter.getDimension();
     }
 
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return true;
+    }
+
 }

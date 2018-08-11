@@ -98,7 +98,12 @@ public class BranchConditionalDistributionDelegate extends
         List<BranchSufficientStatistics> statistics = new ArrayList<BranchSufficientStatistics>();
 
         cdi.getPostOrderPartial(nodeNumber, childPartial);
-        cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
+        if (tree.isRoot(node)){
+            cdi.getRootMatrices(likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(),
+                    branchPrecision, branchDisplacement, branchActualization);
+        } else {
+            cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
+        }
         cdi.getPreOrderPartial(nodeNumber, parentPartial);
 
 
@@ -109,11 +114,11 @@ public class BranchConditionalDistributionDelegate extends
                 NodeRef tNode = tree.getNode(n);
                 int nodeIndex = likelihoodDelegate.getActiveNodeIndex(tNode.getNumber());
                 int branchIndex = likelihoodDelegate.getActiveMatrixIndex(tNode.getNumber());
-                addOneNode(statistics, childPartial, parentPartial, branchPrecision, branchDisplacement,
+                addOneNode(statistics, childPartial, parentPartial, branchPrecision, branchDisplacement, branchActualization,
                         nodeIndex, branchIndex);
             }
         } else {
-            addOneNode(statistics, childPartial, parentPartial, branchPrecision, branchDisplacement, 0, 0);
+            addOneNode(statistics, childPartial, parentPartial, branchPrecision, branchDisplacement, branchActualization,0, 0);
         }
 
         return statistics;
@@ -122,6 +127,7 @@ public class BranchConditionalDistributionDelegate extends
     private void addOneNode(List<BranchSufficientStatistics> statistics,
                             double[] childPartial, double[] parentPartial,
                             double[] branchPrecision, double[] branchDisplacement,
+                            double[] branchActualization,
                             int nodeIndex, int branchIndex) {
         if (numTraits > 1) throw new IllegalArgumentException("Not yet implemented");
 
@@ -130,8 +136,8 @@ public class BranchConditionalDistributionDelegate extends
                     new BranchSufficientStatistics(
                             new NormalSufficientStatistics(childPartial, nodeIndex, dimTrait,
                                     Pd, likelihoodDelegate.getPrecisionType()),
-                            new NormalSufficientStatistics(branchDisplacement, branchPrecision, branchIndex, dimTrait,
-                                    Pd, likelihoodDelegate.getPrecisionType()),
+                            new MatrixSufficientStatistics(branchDisplacement, branchPrecision, branchActualization,
+                                    branchIndex, dimTrait, Pd, likelihoodDelegate.getPrecisionType()),
                             new NormalSufficientStatistics(parentPartial, nodeIndex, dimTrait,
                                     Pd, likelihoodDelegate.getPrecisionType())
                     ));

@@ -54,10 +54,8 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient {
     }
 
     @Override
-    double[] getGradientParameter(double[] gradient,
-                                  double[] vecP, double[] vecV,
-                                  double[] diagQ, double[] vecC) {
-        return getGradientDiagonal(gradient, vecP, vecV, diagQ, vecC);
+    double[] getGradientParameter(double[] gradient) {
+        return getGradientDiagonal(gradient);
     }
 
     MultivariateFunction getNumeric() {

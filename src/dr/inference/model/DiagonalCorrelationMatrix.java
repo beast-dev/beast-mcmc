@@ -185,6 +185,11 @@ public class DiagonalCorrelationMatrix extends CompoundParameter implements Matr
     }
 
     @Override
+    public boolean isConstrainedSymmetric() {
+        return true;
+    }
+
+    @Override
     public void setParameterValue(int index, double a) {
         throw new RuntimeException("Do not set entries of a DiagonalCorrelationMatrix directly");
     }

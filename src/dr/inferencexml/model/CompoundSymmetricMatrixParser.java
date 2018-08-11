@@ -76,7 +76,8 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(OFF_DIAGONAL,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            AttributeRule.newBooleanRule(AS_CORRELATION, true)
+            AttributeRule.newBooleanRule(AS_CORRELATION, true),
+            AttributeRule.newBooleanRule(IS_CHOLESKY, true)
     };
 
     public Class getReturnType() {

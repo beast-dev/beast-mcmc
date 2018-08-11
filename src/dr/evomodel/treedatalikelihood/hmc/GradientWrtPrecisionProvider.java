@@ -25,7 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
-import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 
@@ -40,16 +41,16 @@ public interface GradientWrtPrecisionProvider {
 
     ConjugateWishartStatisticsProvider getWishartStatistic();
 
-    BranchRateGradient getBranchRateGradient();
+    BranchSpecificGradient getBranchSpecificGradient();
 
-    abstract class AbstractGradientWrtPrecisionProvider implements GradientWrtPrecisionProvider{
+    abstract class AbstractGradientWrtPrecisionProvider implements GradientWrtPrecisionProvider {
         int dim;
 
         public ConjugateWishartStatisticsProvider getWishartStatistic() {
             return null;
         }
 
-        public BranchRateGradient getBranchRateGradient() {
+        public BranchSpecificGradient getBranchSpecificGradient() {
             return null;
         }
     }
@@ -93,22 +94,23 @@ public interface GradientWrtPrecisionProvider {
         }
     }
 
-    class BranchRateGradientWrtPrecisionProvider extends AbstractGradientWrtPrecisionProvider {
+    class BranchSpecificGradientWrtPrecisionProvider extends AbstractGradientWrtPrecisionProvider {
 
-        private final BranchRateGradient branchRateGradient;
+        private final BranchSpecificGradient branchSpecificGradient;
 
-        public BranchRateGradientWrtPrecisionProvider(BranchRateGradient branchRateGradient) {
-            this.branchRateGradient = branchRateGradient;
-            this.dim = branchRateGradient.getDimension();
+        public BranchSpecificGradientWrtPrecisionProvider(BranchSpecificGradient branchSpecificGradient) {
+            this.branchSpecificGradient = branchSpecificGradient;
+            this.dim = ((TreeDataLikelihood) branchSpecificGradient.getLikelihood()).getDataLikelihoodDelegate().getTraitDim();
         }
 
         public double[] getGradientWrtPrecision(double[] vecV) {
-            throw new RuntimeException("Not yet implemented");
+            double[] gradient = branchSpecificGradient.getGradientLogDensity();
+            return gradient;
         }
 
         @Override
-        public BranchRateGradient getBranchRateGradient() {
-            return branchRateGradient;
+        public BranchSpecificGradient getBranchSpecificGradient() {
+            return branchSpecificGradient;
         }
     }
 

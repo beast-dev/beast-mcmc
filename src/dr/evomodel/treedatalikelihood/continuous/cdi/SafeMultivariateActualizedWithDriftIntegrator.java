@@ -16,10 +16,13 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
     public SafeMultivariateActualizedWithDriftIntegrator(PrecisionType precisionType,
                                                          int numTraits, int dimTrait, int bufferCount,
-                                                         int diffusionCount) {
+                                                         int diffusionCount,
+                                                         boolean isActualizationSymmetric) {
         super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
 
         allocateStorage();
+
+        this.isActualizationSymmetric = isActualizationSymmetric;
 
         System.err.println("Trying SafeMultivariateActualizedWithDriftIntegrator");
     }
@@ -71,6 +74,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         matrixQdiPip = new DenseMatrix64F(dimTrait, dimTrait);
         matrixQdjPjp = new DenseMatrix64F(dimTrait, dimTrait);
+
+        matrixNiacc = new DenseMatrix64F(dimTrait, 1);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -84,12 +89,11 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         // Transform back in original space
         final int offset = dimTrait * dimTrait * precisionIndex;
-        DenseMatrix64F stationaryVariance = wrap(stationaryVariances, offset, dimTrait, dimTrait);
         transformMatrixBack(stationaryVariances, offset, alphaRot, 0);
 
         if (DEBUG) {
             System.err.println("At precision index: " + precisionIndex);
-            System.err.println("stationary variance: " + stationaryVariance);
+            System.err.println("stationary variance: " + wrap(stationaryVariances, offset, dimTrait, dimTrait));
         }
     }
 
@@ -104,16 +108,24 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         scaleInv(transVar, 0, scales, stationaryVariances, offset, matrixSize);
     }
 
-//    private void transformMatrix(DenseMatrix64F matrix, DenseMatrix64F rotation) {
-//        DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
-//        CommonOps.invert(rotation); // Warning: side effect on rotation matrix.
-//        CommonOps.mult(rotation, matrix, tmp);
-//        CommonOps.multTransB(tmp, rotation, matrix);
-//    }
-
     private void transformMatrix(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        if (isActualizationSymmetric) {
+            transformMatrixSymmetric(matrix, rotation);
+        } else {
+            transformMatrixGeneral(matrix, rotation);
+        }
+    }
+
+    private void transformMatrixGeneral(DenseMatrix64F matrix, DenseMatrix64F rotation) {
         DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
-        CommonOps.multTransA(rotation, matrix, tmp); // TODO: this is a specialized version for symmetric A (see above general version)
+        CommonOps.invert(rotation); // Warning: side effect on rotation matrix.
+        CommonOps.mult(rotation, matrix, tmp);
+        CommonOps.multTransB(tmp, rotation, matrix);
+    }
+
+    private void transformMatrixSymmetric(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.multTransA(rotation, matrix, tmp);
         CommonOps.mult(tmp, rotation, matrix);
     }
 
@@ -125,18 +137,33 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         unwrap(matrix, matrixDouble, matrixOffset);
     }
 
-    private void transformDiagonalMatrixBack(double[] diagonalMatrix, double[] matrixDestination, int matrixOffset,
-                                             double[] rotationDouble, int rotationOffset) {
-        DenseMatrix64F matrix = wrapDiagonal(diagonalMatrix, matrixOffset, dimTrait);
-        DenseMatrix64F rotation = wrap(rotationDouble, rotationOffset, dimTrait, dimTrait);
-        transformMatrixBack(matrix, rotation);
-        unwrap(matrix, matrixDestination, matrixOffset);
-    }
-
     private void transformMatrixBack(DenseMatrix64F matrix, DenseMatrix64F rotation) {
         DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
         CommonOps.multTransB(matrix, rotation, tmp);
         CommonOps.mult(rotation, tmp, matrix);
+    }
+
+    private void transformDiagonalMatrixBack(double[] diagonalMatrix, double[] matrixDestination, int matrixOffset,
+                                             double[] rotationDouble, int rotationOffset) {
+        DenseMatrix64F matrix = wrapDiagonal(diagonalMatrix, matrixOffset, dimTrait);
+        DenseMatrix64F rotation = wrap(rotationDouble, rotationOffset, dimTrait, dimTrait);
+        transformMatrixBase(matrix, rotation);
+        unwrap(matrix, matrixDestination, matrixOffset);
+    }
+
+    private void transformMatrixBase(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        if (isActualizationSymmetric) {
+            transformMatrixBack(matrix, rotation);
+        } else {
+            transformMatrixBaseGeneral(matrix, rotation);
+        }
+    }
+
+    private void transformMatrixBaseGeneral(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.mult(rotation, matrix, tmp);
+        CommonOps.invert(rotation); // Warning: side effect on rotation matrix.
+        CommonOps.mult(tmp, rotation, matrix);
     }
 
     @Override
@@ -159,7 +186,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         DenseMatrix64F variance = wrap(stationaryVariances, sourceOffset, dimTrait, dimTrait);
         DenseMatrix64F temp = new DenseMatrix64F(dimTrait, dimTrait);
 
-        CommonOps.multTransA(variance, actualization, temp);
+        CommonOps.multTransB(variance, actualization, temp);
         CommonOps.multAdd(-1.0, actualization, temp, variance);
 
         unwrap(variance, variances, destinationOffset);
@@ -185,15 +212,42 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     /// Tree-traversal functions
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public void updatePreOrderPartial(
-            final int kBuffer, // parent
-            final int iBuffer, // node
-            final int iMatrix,
-            final int jBuffer, // sibling
-            final int jMatrix) {
+//    @Override
+//    public void updatePreOrderPartial(
+//            final int kBuffer, // parent
+//            final int iBuffer, // node
+//            final int iMatrix,
+//            final int jBuffer, // sibling
+//            final int jMatrix) {
+//
+//        throw new RuntimeException("Not yet implemented");
+//    }
 
-        throw new RuntimeException("Not yet implemented");
+    @Override
+    void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int jmo, int jdo) {
+        final DenseMatrix64F Qdj = wrap(actualizations, jmo, dimTrait, dimTrait);
+        scalePrecision(Qdj, Pjp, QjPjp, Pjp);
+    }
+
+    @Override
+    void actualizeVariance(DenseMatrix64F Vip, int ibo, int imo, int ido) {
+        final DenseMatrix64F Qdi = wrap(actualizations, imo, dimTrait, dimTrait);
+        final DenseMatrix64F QiVip = matrixQdiPip;
+        scaleVariance(Qdi, Vip, QiVip, Vip);
+    }
+
+    @Override
+    void scaleAndDriftMean(int ibo, int imo, int ido) {
+        final DenseMatrix64F Qdi = wrap(actualizations, imo, dimTrait, dimTrait);
+        final DenseMatrix64F ni = wrap(preOrderPartials, ibo, dimTrait, 1);
+        final DenseMatrix64F niacc = matrixNiacc;
+        CommonOps.mult(Qdi, ni, niacc);
+        unwrap(niacc, preOrderPartials, ibo);
+
+        for (int g = 0; g < dimTrait; ++g) {
+            preOrderPartials[ibo + g] += displacements[ido + g];
+        }
+
     }
 
     @Override
@@ -204,15 +258,13 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         final DenseMatrix64F Qdj = wrap(actualizations, jmo, dimTrait, dimTrait);
 
         final DenseMatrix64F QdiPip = matrixQdiPip;
-        CommonOps.multTransA(Qdi, Pip, QdiPip);
-
-        final DenseMatrix64F QdjPjp = matrixQdjPjp;
-        CommonOps.multTransA(Qdj, Pjp, QdjPjp);
-
         final DenseMatrix64F QdiPipQdi = matrix0;
+        scalePrecision(Qdi, Pip, QdiPip, QdiPipQdi);
+
         final DenseMatrix64F QdjPjpQdj = matrix1;
-        CommonOps.mult(QdiPip, Qdi, QdiPipQdi);
-        CommonOps.mult(QdjPjp, Qdj, QdjPjpQdj);
+        final DenseMatrix64F QdjPjp = matrixQdjPjp;
+        scalePrecision(Qdj, Pjp, QdjPjp, QdjPjpQdj);
+
         CommonOps.add(QdiPipQdi, QdjPjpQdj, Pk);
 
         if (DEBUG) {
@@ -223,6 +275,18 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
             System.err.println("\tQdjPjp: " + QdjPjp);
             System.err.println("\tQdjPjpQdj: " + QdjPjpQdj);
         }
+    }
+
+    private void scalePrecision(DenseMatrix64F Q, DenseMatrix64F P,
+                                DenseMatrix64F QtP, DenseMatrix64F QtPQ) {
+        CommonOps.multTransA(Q, P, QtP);
+        CommonOps.mult(QtP, Q, QtPQ);
+    }
+
+    private void scaleVariance(DenseMatrix64F Q, DenseMatrix64F P,
+                               DenseMatrix64F QtP, DenseMatrix64F QtPQ) {
+        CommonOps.mult(Q, P, QtP);
+        CommonOps.multTransB(QtP, Q, QtPQ);
     }
 
     @Override
@@ -236,4 +300,6 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     private double[] actualizations;
     private DenseMatrix64F matrixQdiPip;
     private DenseMatrix64F matrixQdjPjp;
+    private DenseMatrix64F matrixNiacc;
+    private final boolean isActualizationSymmetric;
 }

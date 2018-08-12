@@ -25,17 +25,30 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.evomodel.branchmodel.BranchSpecificBranchModel;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tree.TreeModel;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class BranchSpecificSubstitutionModel extends BranchSpecificBranchModel {
+public interface BranchSpecificSubstitutionModel{
 
-    public BranchSpecificSubstitutionModel(TreeModel treeModel, SubstitutionModel rootSubstitutionModel) {
-        super(treeModel, rootSubstitutionModel);
+    SubstitutionModel getSubstitutionModel(final Tree tree, final NodeRef node);
+
+    class None implements BranchSpecificSubstitutionModel {
+
+        private final SubstitutionModel substitutionModel;
+
+        public None(SubstitutionModel substitutionModel) {
+            this.substitutionModel = substitutionModel;
+        }
+
+        @Override
+        public SubstitutionModel getSubstitutionModel(Tree tree, NodeRef node) {
+            return substitutionModel;
+        }
     }
+
 }

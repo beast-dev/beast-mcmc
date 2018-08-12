@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.AbstractModel;
@@ -45,20 +46,20 @@ public interface RootProcessDelegate extends Model {
     void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike,
                                     boolean incrementOuterProducts);
 
-    void setRootPartial(ContinuousDiffusionIntegrator cdi);
-
     double getPseudoObservations();
 
     int getPriorBufferIndex();
-
-//    int getDegreesOfFreedom();
 
     abstract class Abstract extends AbstractModel implements RootProcessDelegate {
 
         protected final ConjugateRootTraitPrior prior;
         private final PrecisionType precisionType;
-        private final int priorBufferIndex;
         private final int numTraits;
+
+        private final int priorBufferIndexOffset;
+        private final BufferIndexHelper priorBufferIndex;
+
+        private boolean updatePrior;
 
         public abstract double getPseudoObservations();
 
@@ -72,15 +73,16 @@ public interface RootProcessDelegate extends Model {
             this.precisionType = precisionType;
             this.numTraits = numTraits;
 
-            this.priorBufferIndex = partialBufferCount;
+            this.priorBufferIndexOffset = partialBufferCount;
+            priorBufferIndex = new BufferIndexHelper(1, 0);
 
             addModel(prior);
+
+            updatePrior = true;
         }
 
         @Override
-        public int getExtraPartialBufferCount() {
-            return 2; // TODO Why does 1 not work?
-        }
+        public int getExtraPartialBufferCount() { return 2; }
 
         @Override
         public int getExtraMatrixBufferCount() {
@@ -88,16 +90,21 @@ public interface RootProcessDelegate extends Model {
         }
 
         @Override
-        public int getPriorBufferIndex() { return priorBufferIndex; } // TODO Handle double-buffer of prior buffer here
+        public int getPriorBufferIndex() { return priorBufferIndexOffset + priorBufferIndex.getOffsetIndex(0); }
 
         @Override
         public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
                                                final double[] logLike, boolean incrementOuterProducts) {
-            cdi.calculateRootLogLikelihood(rootBufferIndex, priorBufferIndex, logLike, incrementOuterProducts);
+
+            if (updatePrior) {
+                setRootPartial(cdi);
+                updatePrior = false;
+            }
+
+            cdi.calculateRootLogLikelihood(rootBufferIndex, getPriorBufferIndex(), logLike, incrementOuterProducts);
         }
 
-        @Override
-        public void setRootPartial(ContinuousDiffusionIntegrator cdi) {
+        private void setRootPartial(ContinuousDiffusionIntegrator cdi) {
             double[] mean = prior.getMean();
             final int dimTrait = mean.length;
 
@@ -113,17 +120,17 @@ public interface RootProcessDelegate extends Model {
                     precisionType.fillPrecisionInPartials(partial, offset, i, precision, dimTrait);
                 }
 
-//                partial[offset + dimTrait] = getPseudoObservations();
                 offset += length;
             }
 
-            cdi.setPostOrderPartial(priorBufferIndex, partial);
+            priorBufferIndex.flipOffset(0);
+            cdi.setPostOrderPartial(getPriorBufferIndex(), partial);
         }
 
         @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) {
             if (model == prior) {
-                // TODO Handle double-buffer of prior buffer here
+                updatePrior = true;
                 fireModelChanged(object);
             } else {
                 throw new IllegalArgumentException("Unknown submodel");
@@ -132,12 +139,12 @@ public interface RootProcessDelegate extends Model {
 
         @Override
         protected void storeState() {
-            // TODO Handle double-buffer of prior buffer here
+            priorBufferIndex.storeState();
         }
 
         @Override
         protected void restoreState() {
-            // TODO Handle double-buffer of prior buffer here
+            priorBufferIndex.restoreState();
         }
 
         @Override
@@ -160,14 +167,11 @@ public interface RootProcessDelegate extends Model {
         public double getPseudoObservations() {
             return Double.POSITIVE_INFINITY;
         }
-
-//        @Override
-//        public int getDegreesOfFreedom() { return 0; }
     }
 
     class FullyConjugate extends Abstract {
 
-        public FullyConjugate(ConjugateRootTraitPrior prior, PrecisionType precisionType,
+        FullyConjugate(ConjugateRootTraitPrior prior, PrecisionType precisionType,
                               int numTraits, int partialBufferCount, int matrixBufferCount) {
             super(prior, precisionType, numTraits, partialBufferCount, matrixBufferCount);
         }
@@ -176,8 +180,5 @@ public interface RootProcessDelegate extends Model {
         public double getPseudoObservations() {
             return prior.getPseudoObservations();
         }
-
-//        @Override
-//        public int getDegreesOfFreedom() { return 1; }
     }
 }

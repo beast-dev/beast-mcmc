@@ -273,7 +273,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             setAllTipData(dataModel.bufferTips());
 
-            updateRootModel = true;
             updateDiffusionModel = true;
 
         } catch (TaxonList.MissingTaxonException mte) {
@@ -758,11 +757,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         double[] logLikelihoods = new double[numTraits];
 
-        if (true || updateRootModel) { // TODO Make lazy
-            rootProcessDelegate.setRootPartial(cdi);  // TOOD Handle double-buffering of root prior inside rootProcessDelegate
-            updateRootModel = false;
-        }
-
         rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
                 logLikelihoods, computeWishartStatistics);
 
@@ -807,7 +801,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     @Override
     public void makeDirty() {
-        updateRootModel = true;
         updateDiffusionModel = true;
         fireModelChanged(); // Signal simulation processes
     }
@@ -832,7 +825,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         } else if (model instanceof BranchRateModel) {
             fireModelChanged();
         } else if (model == rootProcessDelegate) {
-            updateRootModel = true;
             fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");
@@ -913,8 +905,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final ContinuousDiffusionIntegrator cdi;
 
     private boolean updateDiffusionModel;
-
-    private boolean updateRootModel;
 
     private final Deque<Integer> updateTipData = new ArrayDeque<Integer>();
 

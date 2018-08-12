@@ -84,7 +84,7 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
-        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
+//        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
 
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",

@@ -93,7 +93,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
-        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
+//        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
 
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
@@ -111,7 +111,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         diffusionModelFactor = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameterFactor);
 
         // Root prior
-        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
+//        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
 
         // Error model
         Parameter factorPrecisionParameters = new Parameter.Default("factorPrecision", new double[]{1.0, 5.0, 0.5});

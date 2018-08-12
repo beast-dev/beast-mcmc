@@ -27,27 +27,60 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.BranchModel.Mapping;
 import dr.evomodel.substmodel.SubstitutionModel;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public interface BranchSpecificSubstitutionModel{
+public interface BranchSpecificSubstitutionModel {
 
     SubstitutionModel getSubstitutionModel(final Tree tree, final NodeRef node);
 
-    class None implements BranchSpecificSubstitutionModel {
+    SubstitutionModel getRootSubstitutionModel();
+
+    List<SubstitutionModel> getSubstitutionModelList();
+
+    Mapping getBranchModelMapping(final NodeRef branch);
+
+    abstract class Base implements BranchSpecificSubstitutionModel {
+        protected List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
+
+        @Override
+        public List<SubstitutionModel> getSubstitutionModelList() {
+            return substitutionModelList;
+        }
+    }
+
+    class None extends Base implements BranchSpecificSubstitutionModel {
 
         private final SubstitutionModel substitutionModel;
 
         public None(SubstitutionModel substitutionModel) {
             this.substitutionModel = substitutionModel;
+            substitutionModelList.add(this.substitutionModel);
         }
 
         @Override
         public SubstitutionModel getSubstitutionModel(Tree tree, NodeRef node) {
             return substitutionModel;
+        }
+
+        @Override
+        public SubstitutionModel getRootSubstitutionModel() {
+            return substitutionModel;
+        }
+
+        @Override
+        public Mapping getBranchModelMapping(NodeRef branch) {
+            return BranchModel.DEFAULT;
         }
     }
 

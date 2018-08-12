@@ -23,31 +23,51 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.branchratemodel;
+package dr.evomodelxml.branchmodel;
 
+import dr.evomodel.branchmodel.BranchSpecificRateBranchModel;
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchSpecificSubstitutionModel;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.tree.TreeModel;
+import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class BranchSpecificSubstitutionRateModelParser extends AbstractXMLObjectParser {
+public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser {
 
-    public static final String BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL="branchSpecificSubstitutionRateModel";
+    public static final String BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL="branchSpecificRateBranchModel";
+    private static final String SINGLE_RATE="single_rate_subsitution_model";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        int a = 0;
-        return null;
+        Logger.getLogger("dr.evomodel").info("\nUsing branch-specific rate branch model.");
+
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getAttribute("arbitraryBranchRates", null);
+
+
+        BranchSpecificSubstitutionModel branchSubstitutionModels = null;
+        if (branchRates == null) {
+            branchSubstitutionModels = new BranchSpecificSubstitutionModel.None(substitutionModel);
+        }
+
+        BranchSpecificRateBranchModel rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, branchSubstitutionModels);
+        return rateBranchModel;
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
+        return new XMLSyntaxRule[]{
+                new ElementRule(SubstitutionModel.class, "The substitution model throughout the tree."),
+                new ElementRule(TreeModel.class, "The tree."),
+                new ElementRule("rateRule", ArbitraryBranchRates.class, "Branch-specific rates.", true)
+        };
     }
 
     @Override

@@ -73,6 +73,8 @@ public interface RootProcessDelegate extends Model {
             this.numTraits = numTraits;
 
             this.priorBufferIndex = partialBufferCount;
+
+            addModel(prior);
         }
 
         @Override
@@ -86,7 +88,7 @@ public interface RootProcessDelegate extends Model {
         }
 
         @Override
-        public int getPriorBufferIndex() { return priorBufferIndex; }
+        public int getPriorBufferIndex() { return priorBufferIndex; } // TODO Handle double-buffer of prior buffer here
 
         @Override
         public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
@@ -121,6 +123,7 @@ public interface RootProcessDelegate extends Model {
         @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) {
             if (model == prior) {
+                // TODO Handle double-buffer of prior buffer here
                 fireModelChanged(object);
             } else {
                 throw new IllegalArgumentException("Unknown submodel");
@@ -128,10 +131,14 @@ public interface RootProcessDelegate extends Model {
         }
 
         @Override
-        protected void storeState() { }
+        protected void storeState() {
+            // TODO Handle double-buffer of prior buffer here
+        }
 
         @Override
-        protected void restoreState() { }
+        protected void restoreState() {
+            // TODO Handle double-buffer of prior buffer here
+        }
 
         @Override
         protected void acceptState() { }

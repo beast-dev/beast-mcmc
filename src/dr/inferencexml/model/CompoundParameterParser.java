@@ -25,7 +25,6 @@
 
 package dr.inferencexml.model;
 
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -44,18 +43,8 @@ public class CompoundParameterParser extends AbstractXMLObjectParser {
 
         CompoundParameter compoundParameter = new CompoundParameter((String) null);
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        if (treeModel != null) {
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            final int numBranches = treeModel.getNodeCount() - 1;
-            for (int i = 0; i < numBranches; i++) {
-                compoundParameter.addParameter(new Parameter.Default((String) null, parameter.getParameterValue(0),
-                        parameter.getBounds().getLowerLimit(0), parameter.getBounds().getUpperLimit(0)));
-            }
-        } else {
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                compoundParameter.addParameter((Parameter) xo.getChild(i));
-            }
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            compoundParameter.addParameter((Parameter) xo.getChild(i));
         }
 
         return compoundParameter;
@@ -76,7 +65,6 @@ public class CompoundParameterParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules;{
         rules = new XMLSyntaxRule[]{
                 new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-                new ElementRule(TreeModel.class, true)
         };
     }
 

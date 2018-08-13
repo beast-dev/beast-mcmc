@@ -47,8 +47,10 @@ public class CompoundParameterParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         if (treeModel != null) {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            for (int i = 0; i < treeModel.getNodeCount() - 1; i++) {
-                compoundParameter.addParameter(new Parameter.Default(parameter.getParameterValue(0)));
+            final int numBranches = treeModel.getNodeCount() - 1;
+            for (int i = 0; i < numBranches; i++) {
+                compoundParameter.addParameter(new Parameter.Default((String) null, parameter.getParameterValue(0),
+                        parameter.getBounds().getLowerLimit(0), parameter.getBounds().getUpperLimit(0)));
             }
         } else {
             for (int i = 0; i < xo.getChildCount(); i++) {

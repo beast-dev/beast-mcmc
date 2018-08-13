@@ -35,7 +35,7 @@ import dr.xml.*;
  * @author Xiang Ji
  */
 public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectParser {
-    public static final String TREE_SPECIFIC_COMPOUND_PARAMETER = "branchSpecificCompoundParameter";
+    public static final String BRANCH_SPECIFIC_COMPOUND_PARAMETER = "branchSpecificCompoundParameter";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -55,8 +55,8 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-                new ElementRule(TreeModel.class, true)
+                new ElementRule(Parameter.class),
+                new ElementRule(TreeModel.class)
         };
     }
 
@@ -72,6 +72,6 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
 
     @Override
     public String getParserName() {
-        return TREE_SPECIFIC_COMPOUND_PARAMETER;
+        return BRANCH_SPECIFIC_COMPOUND_PARAMETER;
     }
 }

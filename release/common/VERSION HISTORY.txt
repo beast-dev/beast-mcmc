@@ -1,4 +1,4 @@
-                    BEAST v1.10.0 2002-2018
+                    BEAST v1.10.1 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,8 +17,16 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 10th June 2018
+Last updated: a.rambaut@ed.ac.uk - 8th August 2018
 All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
+
+================================================================================
+
+Version 1.10.1  released 8th August 2018
+
+	Bug Fixes:
+	    Issue 1003: Issue with the new parameterization of GTR in BEAUti
+	    Issue 1007: Mac versions not running with Java 10
 
 ================================================================================
 

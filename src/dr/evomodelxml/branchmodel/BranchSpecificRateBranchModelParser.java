@@ -27,7 +27,7 @@ package dr.evomodelxml.branchmodel;
 
 import dr.evomodel.branchmodel.BranchSpecificRateBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.BranchSpecificSubstitutionModel;
+import dr.evomodel.branchratemodel.BranchSpecificRateSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
@@ -57,10 +57,10 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
         ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
 
-        BranchSpecificSubstitutionModel branchSubstitutionModels = null;
+        BranchSpecificRateSubstitutionModel branchSubstitutionModels = null;
         BranchSpecificRateBranchModel rateBranchModel = null;
         if (branchRates == null || branchRates.getRateParameter().getDimension() == 1) {
-            branchSubstitutionModels = new BranchSpecificSubstitutionModel.None(substitutionModel);
+            branchSubstitutionModels = new BranchSpecificRateSubstitutionModel.None(substitutionModel);
             rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, branchSubstitutionModels);
         } else{
             final int numBranch = tree.getNodeCount() - 1;
@@ -76,7 +76,7 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
                     v++;
                 }
             }
-            branchSubstitutionModels = new BranchSpecificSubstitutionModel.Default(branchRates, substitutionModelList, tree);
+            branchSubstitutionModels = new BranchSpecificRateSubstitutionModel.Default(branchRates, substitutionModelList, tree);
             rateBranchModel = new BranchSpecificRateBranchModel(BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL, branchSubstitutionModels);
         }
 
@@ -99,7 +99,7 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
     @Override
     public Class getReturnType() {
-        return BranchSpecificSubstitutionModel.class;
+        return BranchSpecificRateSubstitutionModel.class;
     }
 
     @Override

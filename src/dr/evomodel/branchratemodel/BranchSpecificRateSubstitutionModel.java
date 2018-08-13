@@ -39,7 +39,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public interface BranchSpecificSubstitutionModel {
+public interface BranchSpecificRateSubstitutionModel {
 
     SubstitutionModel getSubstitutionModel(final Tree tree, final NodeRef node);
 
@@ -49,7 +49,7 @@ public interface BranchSpecificSubstitutionModel {
 
     Mapping getBranchModelMapping(final NodeRef node);
 
-    abstract class Base implements BranchSpecificSubstitutionModel {
+    abstract class Base implements BranchSpecificRateSubstitutionModel {
         protected List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
 
         @Override
@@ -58,7 +58,7 @@ public interface BranchSpecificSubstitutionModel {
         }
     }
 
-    class None extends Base implements BranchSpecificSubstitutionModel {
+    class None extends Base implements BranchSpecificRateSubstitutionModel {
 
         private final SubstitutionModel substitutionModel;
 
@@ -83,7 +83,7 @@ public interface BranchSpecificSubstitutionModel {
         }
     }
 
-    class Default extends Base implements BranchSpecificSubstitutionModel {
+    class Default extends Base implements BranchSpecificRateSubstitutionModel {
 
         private final ArbitraryBranchRates branchRates;
         private final List<SubstitutionModel> substitutionModelList;

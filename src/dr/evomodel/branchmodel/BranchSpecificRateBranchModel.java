@@ -26,7 +26,7 @@
 package dr.evomodel.branchmodel;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.branchratemodel.BranchSpecificRateSubstitutionModel;
+import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.AbstractModel;
@@ -42,27 +42,27 @@ import java.util.List;
  */
 public class BranchSpecificRateBranchModel extends AbstractModel implements BranchModel {
 
-    private final BranchSpecificRateSubstitutionModel substitutionModel;
+    private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
 
-    public BranchSpecificRateBranchModel(String name, BranchSpecificRateSubstitutionModel substitutionModel) {
+    public BranchSpecificRateBranchModel(String name, BranchSpecificSubstitutionModelProvider substitutionModelProvider) {
         super(name);
-        this.substitutionModel = substitutionModel;
+        this.substitutionModelProvider = substitutionModelProvider;
     }
 
 
     @Override
     public Mapping getBranchModelMapping(NodeRef branch) {
-        return substitutionModel.getBranchModelMapping(branch);
+        return substitutionModelProvider.getBranchModelMapping(branch);
     }
 
     @Override
     public List<SubstitutionModel> getSubstitutionModels() {
-        return substitutionModel.getSubstitutionModelList();
+        return substitutionModelProvider.getSubstitutionModelList();
     }
 
     @Override
     public SubstitutionModel getRootSubstitutionModel() {
-        return substitutionModel.getRootSubstitutionModel();
+        return substitutionModelProvider.getRootSubstitutionModel();
     }
 
     @Override

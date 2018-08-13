@@ -27,7 +27,7 @@ package dr.evomodelxml.branchmodel;
 
 import dr.evomodel.branchmodel.BranchSpecificRateBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.BranchSpecificRateSubstitutionModel;
+import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
@@ -57,11 +57,11 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
         ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
 
-        BranchSpecificRateSubstitutionModel branchSubstitutionModels = null;
+        BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
         BranchSpecificRateBranchModel rateBranchModel = null;
         if (branchRates == null || branchRates.getRateParameter().getDimension() == 1) {
-            branchSubstitutionModels = new BranchSpecificRateSubstitutionModel.None(substitutionModel);
-            rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, branchSubstitutionModels);
+            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
+            rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, substitutionModelProvider);
         } else{
             final int numBranch = tree.getNodeCount() - 1;
             if (!(branchRates.getRateParameter().getDimension() == numBranch && branchRates.getRateParameter() instanceof CompoundParameter)) {
@@ -76,8 +76,8 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
                     v++;
                 }
             }
-            branchSubstitutionModels = new BranchSpecificRateSubstitutionModel.Default(branchRates, substitutionModelList, tree);
-            rateBranchModel = new BranchSpecificRateBranchModel(BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL, branchSubstitutionModels);
+            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default(branchRates, substitutionModelList, tree);
+            rateBranchModel = new BranchSpecificRateBranchModel(BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL, substitutionModelProvider);
         }
 
         return rateBranchModel;
@@ -99,7 +99,7 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
     @Override
     public Class getReturnType() {
-        return BranchSpecificRateSubstitutionModel.class;
+        return BranchSpecificSubstitutionModelProvider.class;
     }
 
     @Override

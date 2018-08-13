@@ -23,13 +23,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.branchratemodel;
+package dr.evomodel.substmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchModel.Mapping;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.tree.TreeModel;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public interface BranchSpecificRateSubstitutionModel {
+public interface BranchSpecificSubstitutionModelProvider {
 
     SubstitutionModel getSubstitutionModel(final Tree tree, final NodeRef node);
 
@@ -49,7 +49,7 @@ public interface BranchSpecificRateSubstitutionModel {
 
     Mapping getBranchModelMapping(final NodeRef node);
 
-    abstract class Base implements BranchSpecificRateSubstitutionModel {
+    abstract class Base implements BranchSpecificSubstitutionModelProvider {
         protected List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
 
         @Override
@@ -58,7 +58,7 @@ public interface BranchSpecificRateSubstitutionModel {
         }
     }
 
-    class None extends Base implements BranchSpecificRateSubstitutionModel {
+    class None extends Base implements BranchSpecificSubstitutionModelProvider {
 
         private final SubstitutionModel substitutionModel;
 
@@ -83,7 +83,7 @@ public interface BranchSpecificRateSubstitutionModel {
         }
     }
 
-    class Default extends Base implements BranchSpecificRateSubstitutionModel {
+    class Default extends Base implements BranchSpecificSubstitutionModelProvider {
 
         private final ArbitraryBranchRates branchRates;
         private final List<SubstitutionModel> substitutionModelList;

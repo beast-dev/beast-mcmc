@@ -28,8 +28,8 @@ package dr.evomodelxml.branchmodel;
 import dr.evomodel.branchmodel.BranchSpecificRateBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
+import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.xml.*;
@@ -46,7 +46,6 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
     public static final String BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL="branchSpecificRateBranchModel";
     private static final String SINGLE_RATE="single_rate_subsitution_model";
-    private static final String BRANCH_SPECIFIC_RATE="branch_specific_rate_subsitution_model";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -54,6 +53,9 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        if (!(substitutionModel instanceof ParameterReplaceableSubstitutionModel)) {
+            throw new RuntimeException("The substitution model is not parameter replaceable!");
+        }
         ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
 
@@ -72,7 +74,8 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
             int v = 0;
             for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
                 if (!tree.isRoot(tree.getNode(nodeNum))) {
-                    substitutionModelList.add(new HKY(((CompoundParameter) branchRates.getRateParameter()).getParameter(v), substitutionModel.getFrequencyModel()));
+                    substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(((CompoundParameter) branchRates.getRateParameter()).getParameter(v)));
+//                            new HKY(((CompoundParameter) branchRates.getRateParameter()).getParameter(v), substitutionModel.getFrequencyModel()));
                     v++;
                 }
             }

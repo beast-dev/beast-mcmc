@@ -28,6 +28,7 @@ package dr.evomodel.substmodel.nucleotide;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
@@ -47,7 +48,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class HKY extends BaseSubstitutionModel implements Citable {
+public class HKY extends BaseSubstitutionModel implements Citable, ParameterReplaceableSubstitutionModel {
 
     private Parameter kappaParameter = null;
 
@@ -294,5 +295,14 @@ public class HKY extends BaseSubstitutionModel implements Citable {
         oldHKY.getTransitionProbabilities(time,probs);
         System.out.println("old probs = "+new Vector(probs));
 
+    }
+
+    /**
+     * Generate a replicate of itself with new kappaParamter.
+     * @param parameter
+     */
+    @Override
+    public HKY replaceParameter(Parameter parameter) {
+        return new HKY(parameter, freqModel);
     }
 }

@@ -107,7 +107,7 @@ public interface BranchSpecificRateSubstitutionModel {
         }
 
         @Override
-        public Mapping getBranchModelMapping(NodeRef node) {
+        public Mapping getBranchModelMapping(final NodeRef node) {
             return new BranchModel.Mapping() {
                 public int[] getOrder() {return new int[] {branchRates.getParameterIndexFromNode(node)};}
 

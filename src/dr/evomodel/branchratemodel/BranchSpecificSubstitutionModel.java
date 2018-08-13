@@ -30,11 +30,10 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchModel.Mapping;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.tree.TreeModel;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Marc A. Suchard
@@ -48,7 +47,7 @@ public interface BranchSpecificSubstitutionModel {
 
     List<SubstitutionModel> getSubstitutionModelList();
 
-    Mapping getBranchModelMapping(final NodeRef branch);
+    Mapping getBranchModelMapping(final NodeRef node);
 
     abstract class Base implements BranchSpecificSubstitutionModel {
         protected List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
@@ -79,8 +78,44 @@ public interface BranchSpecificSubstitutionModel {
         }
 
         @Override
-        public Mapping getBranchModelMapping(NodeRef branch) {
+        public Mapping getBranchModelMapping(NodeRef node) {
             return BranchModel.DEFAULT;
+        }
+    }
+
+    class Default extends Base implements BranchSpecificSubstitutionModel {
+
+        private final ArbitraryBranchRates branchRates;
+        private final List<SubstitutionModel> substitutionModelList;
+        private final TreeModel tree;
+
+        public Default(ArbitraryBranchRates branchRates, List<SubstitutionModel> substitutionModelList,
+                       TreeModel tree) {
+            this.branchRates = branchRates;
+            this.substitutionModelList = substitutionModelList;
+            this.tree = tree;
+        }
+
+        @Override
+        public SubstitutionModel getSubstitutionModel(Tree tree, NodeRef node) {
+            return substitutionModelList.get(branchRates.getParameterIndexFromNode(node));
+        }
+
+        @Override
+        public SubstitutionModel getRootSubstitutionModel() {
+            return substitutionModelList.get(branchRates.getParameterIndexFromNode(tree.getRoot()));
+        }
+
+        @Override
+        public Mapping getBranchModelMapping(NodeRef node) {
+            return new BranchModel.Mapping() {
+                public int[] getOrder() {return new int[] {branchRates.getParameterIndexFromNode(node)};}
+
+                @Override
+                public double[] getWeights() {
+                    return new double[] {1.0};
+                }
+            };
         }
     }
 

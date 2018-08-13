@@ -29,9 +29,13 @@ import dr.evomodel.branchmodel.BranchSpecificRateBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchSpecificSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.CompoundParameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -42,6 +46,7 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
     public static final String BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL="branchSpecificRateBranchModel";
     private static final String SINGLE_RATE="single_rate_subsitution_model";
+    private static final String BRANCH_SPECIFIC_RATE="branch_specific_rate_subsitution_model";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -49,15 +54,32 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-        ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getAttribute("arbitraryBranchRates", null);
+        ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
 
         BranchSpecificSubstitutionModel branchSubstitutionModels = null;
-        if (branchRates == null) {
+        BranchSpecificRateBranchModel rateBranchModel = null;
+        if (branchRates == null || branchRates.getRateParameter().getDimension() == 1) {
             branchSubstitutionModels = new BranchSpecificSubstitutionModel.None(substitutionModel);
+            rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, branchSubstitutionModels);
+        } else{
+            final int numBranch = tree.getNodeCount() - 1;
+            if (!(branchRates.getRateParameter().getDimension() == numBranch && branchRates.getRateParameter() instanceof CompoundParameter)) {
+                throw new RuntimeException("rateParameter miss-specified.");
+            }
+            //TODO: more generic SubstitutionModel construction
+            List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
+            int v = 0;
+            for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
+                if (!tree.isRoot(tree.getNode(nodeNum))) {
+                    substitutionModelList.add(new HKY(((CompoundParameter) branchRates.getRateParameter()).getParameter(v), substitutionModel.getFrequencyModel()));
+                    v++;
+                }
+            }
+            branchSubstitutionModels = new BranchSpecificSubstitutionModel.Default(branchRates, substitutionModelList, tree);
+            rateBranchModel = new BranchSpecificRateBranchModel(BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL, branchSubstitutionModels);
         }
 
-        BranchSpecificRateBranchModel rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, branchSubstitutionModels);
         return rateBranchModel;
     }
 

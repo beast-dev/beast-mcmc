@@ -32,7 +32,9 @@ import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
+import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -324,8 +326,8 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
         if (parameter == kappaParameter) {
             EigenDecomposition eigenDecomposition = getEigenDecomposition();
             double[] eigenValues = eigenDecomposition.getEigenValues();
-            double[] eigenVectors = eigenDecomposition.getEigenVectors();
-            double[] inverseEigenVectors = eigenDecomposition.getInverseEigenVectors();
+            WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
+            WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
 
             double[] pi = freqModel.getFrequencies();
 
@@ -339,59 +341,59 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
             Arrays.fill(rates, 0.0);
             rates[1] = rates[4] = 1.0 / normalization;
 
-            double[][] differentialMassMatrix = new double[stateCount][stateCount];
-            setupQMatrix(rates, pi, differentialMassMatrix);
-            makeValid(differentialMassMatrix, stateCount);
+            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
+            setupQMatrix(rates, pi, differentialMassMatrix.getArrays());
+            makeValid(differentialMassMatrix.getArrays(), stateCount);
 
             final double tmpMultiplier = normalizationGradient / normalization;
 
             for (int i = 0; i < stateCount; i++) {
                 for (int j = 0; j < stateCount; j++) {
-                    differentialMassMatrix[i][j] = differentialMassMatrix[i][j] - Q[i * stateCount + j] * tmpMultiplier;
+                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * tmpMultiplier);
                 }
             }
 
-            differentialMassMatrix = getTripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors);
+            getTripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors);
 
             for (int i = 0; i < stateCount; i++) {
                 for (int j = 0; j < stateCount; j++) {
                     if (i == j || eigenValues[i] == eigenValues[j]) {
-                        differentialMassMatrix[i][j] *= time;
+                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
                     } else {
-                        differentialMassMatrix[i][j] *= (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]);
+                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
                     }
                 }
             }
 
-            differentialMassMatrix = getTripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors);
+            getTripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors);
 
-            return differentialMassMatrix;
+            return differentialMassMatrix.getArrays();
 
         } else {
             throw new RuntimeException("Not yet implemented");
         }
     }
 
-    private double[][] getTripleMatrixMultiplication(double[] leftMatrix, double[][] middleMatrix, double[] rightMatrix) {
+    private void getTripleMatrixMultiplication(ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
+
         double[][] tmpMatrix = new double[stateCount][stateCount];
 
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {
                 for (int k = 0; k < stateCount; k++) {
-                    tmpMatrix[i][j] += middleMatrix[i][k] * rightMatrix[k * stateCount + j];
+                    tmpMatrix[i][j] += middleMatrix.get(i, k) * rightMatrix.get(k, j);
                 }
             }
         }
 
         for (int i = 0; i < stateCount; i++) {
-            Arrays.fill(middleMatrix[i], 0.0);
             for (int j = 0; j < stateCount; j++) {
+                double sumProduct = 0.0;
                 for (int k = 0; k < stateCount; k++) {
-                    middleMatrix[i][j] += leftMatrix[i * stateCount + k] * tmpMatrix[k][j];
+                    sumProduct += leftMatrix.get(i, k) * tmpMatrix[k][j];
                 }
+                middleMatrix.set(i, j, sumProduct);
             }
         }
-
-        return middleMatrix;
     }
 }

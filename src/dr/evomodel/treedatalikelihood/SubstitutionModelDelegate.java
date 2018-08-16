@@ -235,6 +235,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     ed.getInverseEigenVectors(),
                     ed.getEigenValues());
 
+            // TODO Why is this here?  Are these matrices only needed right before `beagle.calculateEdgeDerivative()` is called?
             if (cacheQMatrices) {
                 final int stateCount = substitutionModel.getDataType().getStateCount();
                 double[] infinitesimalMatrix = new double[stateCount * stateCount];

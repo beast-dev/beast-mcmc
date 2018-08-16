@@ -74,7 +74,9 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
             int v = 0;
             for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
                 if (!tree.isRoot(tree.getNode(nodeNum))) {
-                    substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(((CompoundParameter) branchRates.getRateParameter()).getParameter(v)));
+                    substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
+                            ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(),
+                            ((CompoundParameter) branchRates.getRateParameter()).getParameter(v)));
 //                            new HKY(((CompoundParameter) branchRates.getRateParameter()).getParameter(v), substitutionModel.getFrequencyModel()));
                     v++;
                 }

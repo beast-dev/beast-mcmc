@@ -32,5 +32,10 @@ import dr.inference.model.Parameter;
  * @author Xiang Ji
  */
 public interface ParameterReplaceableSubstitutionModel extends SubstitutionModel {
-    SubstitutionModel replaceParameter(Parameter parameter);
+
+    Parameter getReplaceableParameter();
+
+    SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter);
+
+    double[][] getDifferentialMassMatrix(double time, Parameter parameter);
 }

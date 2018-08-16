@@ -39,6 +39,7 @@ import dr.util.Citation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 
 /**
@@ -297,12 +298,100 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
     }
 
+    @Override
+    public Parameter getReplaceableParameter() {
+        return kappaParameter;
+    }
+
     /**
      * Generate a replicate of itself with new kappaParamter.
-     * @param parameter
+     * @param oldParameter
+     * @param newParameter
      */
     @Override
-    public HKY replaceParameter(Parameter parameter) {
-        return new HKY(parameter, freqModel);
+    public HKY replaceParameter(Parameter oldParameter, Parameter newParameter) {
+        if (oldParameter == kappaParameter) {
+            return new HKY(newParameter, freqModel);
+        } else if (oldParameter == freqModel.getFrequencyParameter()) {
+            return new HKY(kappaParameter, new FrequencyModel(freqModel.getDataType(), newParameter));
+        } else {
+            throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
+        }
+    }
+
+    @Override
+    public double[][] getDifferentialMassMatrix(double time, Parameter parameter) {
+        if (parameter == kappaParameter) {
+            EigenDecomposition eigenDecomposition = getEigenDecomposition();
+            double[] eigenValues = eigenDecomposition.getEigenValues();
+            double[] eigenVectors = eigenDecomposition.getEigenVectors();
+            double[] inverseEigenVectors = eigenDecomposition.getInverseEigenVectors();
+
+            double[] pi = freqModel.getFrequencies();
+
+            final double normalization = setupMatrix();
+            final double[] Q = new double[stateCount * stateCount];
+            getInfinitesimalMatrix(Q);
+            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
+            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
+
+            final double[] rates = new double[6];
+            Arrays.fill(rates, 0.0);
+            rates[1] = rates[4] = 1.0 / normalization;
+
+            double[][] differentialMassMatrix = new double[stateCount][stateCount];
+            setupQMatrix(rates, pi, differentialMassMatrix);
+            makeValid(differentialMassMatrix, stateCount);
+
+            final double tmpMultiplier = normalizationGradient / normalization;
+
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    differentialMassMatrix[i][j] = differentialMassMatrix[i][j] - Q[i * stateCount + j] * tmpMultiplier;
+                }
+            }
+
+            differentialMassMatrix = getTripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors);
+
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    if (i == j || eigenValues[i] == eigenValues[j]) {
+                        differentialMassMatrix[i][j] *= time;
+                    } else {
+                        differentialMassMatrix[i][j] *= (1.0 - Math.exp(eigenValues[j] - eigenValues[i])) / (eigenValues[i] - eigenValues[j]);
+                    }
+                }
+            }
+
+            differentialMassMatrix = getTripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors);
+
+            return differentialMassMatrix;
+
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
+    private double[][] getTripleMatrixMultiplication(double[] leftMatrix, double[][] middleMatrix, double[] rightMatrix) {
+        double[][] tmpMatrix = new double[stateCount][stateCount];
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                for (int k = 0; k < stateCount; k++) {
+                    tmpMatrix[i][j] += middleMatrix[i][k] * rightMatrix[k * stateCount + j];
+                }
+            }
+        }
+
+        for (int i = 0; i < stateCount; i++) {
+            Arrays.fill(middleMatrix[i], 0.0);
+            for (int j = 0; j < stateCount; j++) {
+                for (int k = 0; k < stateCount; k++) {
+                    middleMatrix[i][j] += leftMatrix[i * stateCount + k] * tmpMatrix[k][j];
+                }
+            }
+        }
+
+        return middleMatrix;
     }
 }

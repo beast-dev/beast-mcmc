@@ -358,7 +358,7 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
                     if (i == j || eigenValues[i] == eigenValues[j]) {
                         differentialMassMatrix[i][j] *= time;
                     } else {
-                        differentialMassMatrix[i][j] *= (1.0 - Math.exp(eigenValues[j] - eigenValues[i])) / (eigenValues[i] - eigenValues[j]);
+                        differentialMassMatrix[i][j] *= (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]);
                     }
                 }
             }

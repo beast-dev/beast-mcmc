@@ -109,16 +109,6 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         return likelihood;
     }
 
-    @Override
-    public Parameter getParameter() {
-        return compoundSymmetricMatrix;
-    }
-
-    @Override
-    public int getDimension() {
-        return getParameter().getDimension();
-    }
-
     int getDimensionCorrelation() {
         return dim * (dim - 1) / 2;
     }

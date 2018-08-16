@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
@@ -43,6 +44,11 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
                                         MatrixParameterInterface parameter) {
 
         super(gradientWrtPrecisionProvider, likelihood, parameter);
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return compoundSymmetricMatrix.getOffDiagonalParameter();
     }
 
 

@@ -48,11 +48,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
     private final double randomStepCountFraction;
     final NormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
+    private final double[] mask;
+    
+    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                                         Parameter parameter, Transform transform,
+                                         double stepSize, int nSteps, double drawVariance, double randomStepCountFraction) {
+        this(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, drawVariance, randomStepCountFraction,
+                null);
+    }
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
-                                         double stepSize, int nSteps, double drawVariance,
-                                         double randomStepCountFraction) {
+                                         double stepSize, int nSteps, double drawVariance, double randomStepCountFraction,
+                                         Parameter maskParameter) {
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
@@ -66,6 +74,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
                 new LeapFrogEngine.WithTransform(parameter, transform, getDefaultInstabilityHandler()) :
                 new LeapFrogEngine.Default(parameter, getDefaultInstabilityHandler()));
 
+        this.mask = buildMask(maskParameter);
     }
 
     @Override
@@ -96,6 +105,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         return momentum;
     }
 
+    private static double[] buildMask(Parameter maskParameter) {
+
+        if (maskParameter == null) return null;
+
+        double[] mask = new double[maskParameter.getDimension()];
+
+        for (int i = 0; i < mask.length; ++i) {
+            mask[i] = (maskParameter.getParameterValue(i) == 0.0) ? 0.0 : 1.0;
+        }
+
+        return mask;
+    }
+
     @Override
     public double doOperation() {
         try {
@@ -110,6 +132,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         if (gradientProvider instanceof PathGradient) {
             ((PathGradient) gradientProvider).setPathParameter(beta);
         }
+    }
+
+    private double[] mask(double[] vector) {
+
+        assert (mask == null || mask.length == vector.length);
+
+        if (mask != null) {
+            for (int i = 0; i < vector.length; ++i) {
+                vector[i] *= mask[i];
+            }
+        }
+
+        return vector;
     }
 
     private long count = 0;
@@ -140,14 +175,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
 
         final double sigmaSquared = drawDistribution.getSD() * drawDistribution.getSD();
 
-        final double[] momentum = drawInitialMomentum(drawDistribution, dim);
+        final double[] momentum = mask(drawInitialMomentum(drawDistribution, dim));
         final double[] position = leapFrogEngine.getInitialPosition();
 
         final double prop = getScaledDotProduct(momentum, sigmaSquared) +
                 leapFrogEngine.getParameterLogJacobian();
 
         leapFrogEngine.updateMomentum(position, momentum,
-                gradientProvider.getGradientLogDensity(), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
 
         int nStepsThisLeap = getNumberOfSteps();
 
@@ -157,12 +192,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
 
             if (i < (nStepsThisLeap - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum,
-                        gradientProvider.getGradientLogDensity(), stepSize);
+                        mask(gradientProvider.getGradientLogDensity()), stepSize);
             }
         }
 
         leapFrogEngine.updateMomentum(position, momentum,
-                gradientProvider.getGradientLogDensity(), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
 
         final double res = getScaledDotProduct(momentum, sigmaSquared) +
                 leapFrogEngine.getParameterLogJacobian();

@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
@@ -43,6 +44,11 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
                                         MatrixParameterInterface parameter) {
 
         super(gradientWrtPrecisionProvider, likelihood, parameter);
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return compoundSymmetricMatrix.getOffDiagonalParameter();
     }
 
 
@@ -63,6 +69,7 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
                 }
 
                 likelihood.makeDirty();
+                System.err.println("likelihood in numeric:" + likelihood.getLogLikelihood());
                 return likelihood.getLogLikelihood();
             }
 
@@ -99,10 +106,8 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
     }
 
     @Override
-    double[] getGradientParameter(double[] gradient,
-                                  double[] vecP, double[] vecV,
-                                  double[] diagQ, double[] vecC) {
-        return getGradientCorrelation(gradient, vecP, vecV, diagQ);
+    double[] getGradientParameter(double[] gradient) {
+        return getGradientCorrelation(gradient);
     }
 
 }

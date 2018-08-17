@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
@@ -54,10 +55,13 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient {
     }
 
     @Override
-    double[] getGradientParameter(double[] gradient,
-                                  double[] vecP, double[] vecV,
-                                  double[] diagQ, double[] vecC) {
-        return getGradientDiagonal(gradient, vecP, vecV, diagQ, vecC);
+    public Parameter getParameter() {
+        return compoundSymmetricMatrix.getDiagonalParameter();
+    }
+
+    @Override
+    double[] getGradientParameter(double[] gradient) {
+        return getGradientDiagonal(gradient);
     }
 
     MultivariateFunction getNumeric() {

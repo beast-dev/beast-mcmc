@@ -31,7 +31,6 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
@@ -102,10 +101,10 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
         final int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-
-        if (likelihoodDelegate.getIntegrator() instanceof SafeMultivariateWithDriftIntegrator) {
-            throw new RuntimeException("Not yet implemented with drift");
-        }
+//
+//        if (likelihoodDelegate.getIntegrator() instanceof SafeMultivariateWithDriftIntegrator) {
+//            throw new RuntimeException("Not yet implemented with drift");
+//        }
 
         branchProvider = new ContinuousTraitGradientForBranch.Default(dim);
 
@@ -184,7 +183,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
 
             public Default(int dim) {
                 this.dim = dim;
-                
+
                 matrix0 = new DenseMatrix64F(dim, dim);
                 matrix1 = new DenseMatrix64F(dim, dim);
                 vector0 = new DenseMatrix64F(dim, 1);
@@ -238,7 +237,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
                 DenseMatrix64F delta = vector0;
                 for (int row = 0; row < dim; ++row) {
                     delta.unsafe_set(row, 0,
-                            jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row) // TODO Correct for drift
+                            jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row)
                     );
                 }
 
@@ -256,6 +255,10 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
                 }
 
                 if (DEBUG) {
+                    System.err.println("\tjoint mean = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawMean()));
+                    System.err.println("\tparent mean = " + NormalSufficientStatistics.toVectorizedString(parent.getRawMean()));
+                    System.err.println("\tchild mean = " + NormalSufficientStatistics.toVectorizedString(child.getRawMean()));
+                    System.err.println("\tjoint variance = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawVariance()));
                     System.err.println("\tchild variance = " + NormalSufficientStatistics.toVectorizedString(child.getRawVariance()));
                     System.err.println("\tquadratic      = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
                     System.err.println("\tadditional     = " + NormalSufficientStatistics.toVectorizedString(additionalVariance));
@@ -263,7 +266,28 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
                     System.err.println("grad2 = " + grad2);
                 }
 
-                return grad1 + grad2;
+                // W.r.t. drift
+                // TODO: Fix delegate to (possibly) un-link drift from arbitrary rate
+                DenseMatrix64F Di = new DenseMatrix64F(dim, 1);
+                CommonOps.scale(differentialScaling, branch.getRawMean(), Di);
+
+                double grad3 = 0.0;
+                for (int row = 0; row < dim; ++row) {
+                    for (int col = 0; col < dim; ++col) {
+
+                        grad3 += delta.unsafe_get(row, 0)
+                                * Qi.unsafe_get(row, col)
+                                * Di.unsafe_get(col, 0);
+
+                    }
+                }
+
+                if (DEBUG) {
+                    System.err.println("\tDi     = " + NormalSufficientStatistics.toVectorizedString(branch.getRawMean()));
+                    System.err.println("grad3 = " + grad3);
+                }
+
+                return grad1 + grad2 + grad3;
 
             }
 
@@ -333,7 +357,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
         sb.append("\n");
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         sb.append("\n");
-        
+
         return sb.toString();
     }
 

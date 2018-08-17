@@ -7,12 +7,14 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
+import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -31,6 +33,9 @@ import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
 
 public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert {
 
+    private int dimTrait;
+    private int nTips;
+
     private MultivariateDiffusionModel diffusionModel;
     private ContinuousTraitPartialsProvider dataModel;
     private ConjugateRootTraitPrior rootPrior;
@@ -48,6 +53,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
     public void setUp() throws Exception {
         super.setUp();
 
+        dimTrait = 3;
+
         format.setMaximumFractionDigits(5);
 
         // Tree
@@ -55,6 +62,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         treeModel = createPrimateTreeModel();
 
         // Data
+        nTips = 6;
         Parameter[] dataTraits = new Parameter[6];
         dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
         dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
@@ -74,7 +82,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         //// Standard Model //// ***************************************************************************************
 
         // Diffusion
-        Parameter[] precisionParameters = new Parameter[3];
+        Parameter[] precisionParameters = new Parameter[dimTrait];
         precisionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1, 0.2});
         precisionParameters[1] = new Parameter.Default(new double[]{0.1, 2.0, 0.0});
         precisionParameters[2] = new Parameter.Default(new double[]{0.2, 0.0, 3.0});
@@ -85,13 +93,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
-        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
+//        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
 
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
                 missingIndices, true,
-                3, precisionType);
+                dimTrait, precisionType);
 
         //// Factor Model //// *****************************************************************************************
         // Diffusion
@@ -103,7 +111,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         diffusionModelFactor = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameterFactor);
 
         // Root prior
-        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
+//        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
 
         // Error model
         Parameter factorPrecisionParameters = new Parameter.Default("factorPrecision", new double[]{1.0, 5.0, 0.5});
@@ -165,6 +173,18 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         String expectedTraits = "{-1.0,2.0,0.0,0.458075216795976,2.650535598209761,3.4693334367360538,0.5,2.6420628558588306,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsBM", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
 
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
+
     }
 
     public void testLikelihoodDrift() {
@@ -214,6 +234,18 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,0.5457621072639128,3.2866283471879574,3.2939596558001853,0.5,1.0742799493604238,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsBMDrift", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodDriftRelaxed() {
@@ -268,6 +300,18 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,2.8439488761546428,10.866053719140929,3.467579698926694,0.5,12.00021465975793,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsBMDriftRelaxed", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodDiagonalOU() {
@@ -283,8 +327,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{0.1, 100.0, 50.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -322,6 +366,18 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,1.0369622398437415,2.065450266793184,0.6174755164694558,0.5,2.0829935706195615,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsDiagonalOU", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodDiagonalOURelaxed() {
@@ -343,8 +399,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{1.0, 100.0, 100.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -382,6 +438,18 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         String expectedTraits = "{-1.0,2.0,0.0,1.8118034244410623,0.6837595819961084,-1.0607909328094163,0.5,3.8623525502275142,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsDiagonalOURelaxed", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullOU() {
@@ -401,8 +469,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -438,8 +506,20 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{-1.0,2.0,0.0,1.0427958776637958,2.060317467842191,0.5916377446549422,0.5,2.072498288954417,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
+        String expectedTraits = "{-1.0,2.0,0.0,1.042795877663792,2.060317467842193,0.5916377446549436,0.5,2.07249828895442,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsFullOU", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullOURelaxed() {
@@ -464,8 +544,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -501,8 +581,20 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{-1.0,2.0,0.0,1.6349449153945848,2.867671853831362,-1.06534124185145,0.5,3.366188378600915,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
+        String expectedTraits = "{-1.0,2.0,0.0,1.6349449153945943,2.8676718538313635,-1.0653412418514505,0.5,3.3661883786009166,5.5,2.0,5.0,-8.0,11.0,1.0,-1.5,1.0,2.5,4.0}";
         assertEquals("traitsFullOURelaxed", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullAndDiagonalOU() {
@@ -530,12 +622,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 10.5, 100.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         DiffusionProcessDelegate diffusionProcessDelegateDiagonal
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel,
-                optimalTraitsModels, strengthOfSelectionMatrixParamDiagonal);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParamDiagonal));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -557,6 +649,127 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         assertEquals("likelihoodFullDiagonalOU",
                 format.format(dataLikelihood.getLogLikelihood()),
                 format.format(dataLikelihoodDiagonal.getLogLikelihood()));
+    }
+
+    public void testLikelihoodFullNonSymmetricOU() {
+        System.out.println("\nTest Likelihood using Full Non symmetric OU:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[3];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.0, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 100.0, 0.1});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{10.0, 0.1, 50.5});
+        MatrixParameter strengthOfSelectionMatrixParam
+                = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+
+        assertEquals("likelihoodFullNonSymmetricOU",
+                format.format(logDatumLikelihood),
+                format.format(dataLikelihood.getLogLikelihood()));
+
+        System.out.println("likelihoodFullNonSymmetricOU: " + format.format(logDatumLikelihood));
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
+    }
+
+    public void testLikelihoodFullOUNonSymmetricRelaxed() {
+        System.out.println("\nTest Likelihood using Full Non symmetric OU Relaxed:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
+                new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
+                transform, false));
+        optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
+                new Parameter.Default("rate.2", new double[]{0, -1, 2, -3, 4, -5, 6, -7, 8, -9}),
+                transform, false));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[3];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.0, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 100.0, 0.1});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{10.0, 0.1, 50.5});
+        MatrixParameter strengthOfSelectionMatrixParam
+                = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+
+        assertEquals("likelihoodFullNonSymmetricOURelaxed",
+                format.format(logDatumLikelihood),
+                format.format(dataLikelihood.getLogLikelihood()));
+
+        System.out.println("likelihoodFullNonSymmetricOURelaxed: " + format.format(logDatumLikelihood));
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
     }
 
     //// Factor Model //// *********************************************************************************************
@@ -734,8 +947,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 50.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -794,8 +1007,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         DiagonalMatrix strengthOfSelectionMatrixParam = new DiagonalMatrix(new Parameter.Default(new double[]{1.5, 20.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -856,8 +1069,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -899,7 +1112,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{0.4889263054598221,1.8661431255221095,0.418452091077759,1.9784574437115363,0.5589398189015325,1.8942177991552118,0.9699471556784255,2.0423474270630155,0.3288819110219144,1.9759942582707215,0.8081782260054756,2.0382998496818923}";
+        String expectedTraits = "{0.48892630545982296,1.8661431255221093,0.4184520910777599,1.978457443711536,0.5589398189015333,1.8942177991552116,0.9699471556784263,2.042347427063015,0.32888191102191516,1.9759942582707204,0.8081782260054757,2.0382998496818927}";
         assertEquals("traitsFullOUFactor", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
     }
 
@@ -921,8 +1134,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -964,7 +1177,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        String expectedTraits = "{0.6074917696668025,1.4240248941610953,0.5818653246406656,1.5452377789936966,0.7248840308905068,1.4623057820376761,1.0961030597302799,1.6036947179866612,0.4428093776772083,1.5374906898020693,0.9206989847358957,1.6011019734876792}";
+        String expectedTraits = "{0.6074917696668024,1.4240248941610947,0.5818653246406652,1.545237778993696,0.7248840308905065,1.4623057820376757,1.0961030597302794,1.603694717986661,0.4428093776772082,1.5374906898020684,0.9206989847358957,1.6011019734876784}";
         assertEquals("traitsFullOURelaxedFactor", treeTrait[0].getTraitString(treeModel, null), expectedTraits);
     }
 
@@ -989,12 +1202,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 = new DiagonalMatrix(new Parameter.Default(new double[]{0.5, 1.5}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
-                = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParam);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         DiffusionProcessDelegate diffusionProcessDelegateDiagonal
-                = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModelFactor,
-                optimalTraitsModels, strengthOfSelectionMatrixParamDiagonal);
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParamDiagonal));
 
         // Rates
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
@@ -1030,5 +1243,50 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         assertEquals("likelihoodFullDiagonalOUFactor",
                 format.format(likelihoodFactorData + likelihoodFactorDiffusion),
                 format.format(likelihoodFactorDataDiagonal + likelihoodFactorDiffusionDiagonal));
+    }
+
+    private double[] parseVector(String s, String sep) {
+        String[] vectorString = s.split(sep);
+        double[] gradient = new double[vectorString.length];
+        for (int i = 0; i < gradient.length; i++) {
+            gradient[i] = Double.parseDouble(vectorString[i]);
+        }
+        return gradient;
+    }
+
+    private void testCMeans(String s, String name, double[] partials) {
+        int offset = 0;
+        int indBeg = 0;
+        for (int tip = 0; tip < nTips; tip++) {
+            indBeg = s.indexOf(name, indBeg + 1) + name.length() + 4;
+            int indEnd = s.indexOf("]", indBeg);
+            double[] vector = parseVector(s.substring(indBeg, indEnd), ",");
+            for (int i = 0; i < vector.length; i++) {
+//                System.out.println("cMean Mat: " + vector[i]);
+//                System.out.println("cMean preorder: " + partials[offset + i]);
+                assertEquals("cMean " + tip + "; " + i,
+                        format.format(partials[offset + i]),
+                        format.format(vector[i]));
+            }
+            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+        }
+    }
+
+    private void testCVariances(String s, String name, double[] partials) {
+        int offset = 0;
+        int indBeg = 0;
+        for (int tip = 0; tip < nTips; tip++) {
+            indBeg = s.indexOf(name, indBeg + 1) + name.length() + 3;
+            int indEnd = s.indexOf("]", indBeg);
+            double[] vector = parseVector(s.substring(indBeg, indEnd - 2), "\\s+|\\}\\n\\{ ");
+            for (int i = 0; i < vector.length; i++) {
+//                System.out.println("cMean Mat: " + vector[i]);
+//                System.out.println("cMean preorder: " + partials[offset + dimTrait + dimTrait * dimTrait + i]);
+                assertEquals("cVar " + tip + "; " + i,
+                        format.format(partials[offset + dimTrait + dimTrait * dimTrait + i]),
+                        format.format(vector[i]));
+            }
+            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+        }
     }
 }

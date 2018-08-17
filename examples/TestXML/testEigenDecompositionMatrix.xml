@@ -1,0 +1,217 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testMCMC.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the MCMC engine -->
+
+<beast>
+
+    <parameter id="attenuation.values" value="0.1 0.2 0.3 0.4" />
+
+    <operators id="operators.randomWalk.attVals">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attenuation.values"/>
+            <transform type="positiveOrdered"/>
+        </randomWalkOperator>
+    </operators>
+
+    <multivariateNormalPrior id="prior.attVals">
+        <meanParameter>
+            <parameter value="0.0 1.0 -1.0 0.5"/>
+        </meanParameter>
+        <precisionParameter>
+            <matrixParameter>
+                <parameter value="1.0 0.0 0.0 0.0"/>
+                <parameter value="0.0 1.5 0.5 0.6"/>
+                <parameter value="0.0 0.5 2.0 0.7"/>
+                <parameter value="0.0 0.6 0.7 5.0"/>
+            </matrixParameter>
+        </precisionParameter>
+        <data>
+            <parameter idref="attenuation.values"/>
+        </data>
+        <transform type="positiveOrdered"/>
+    </multivariateNormalPrior>
+
+	<mcmc id="mcmc.randomWalk.attVals" chainLength="100000000" autoOptimize="true">
+        <posterior id="posterior.randomWalk.attVals">
+        	<dummyLikelihood id="likelihood.randomWalk.attVals">
+                <parameter idref="attenuation.values"/>
+            </dummyLikelihood>
+
+            <prior id="prior.randomWalk.attVals">
+                <multivariateNormalPrior idref="prior.attVals"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.randomWalk.attVals"/>
+
+		<log logEvery="100">
+			<column label="posterior.randomWalk.attVals" dp="4" width="12">
+				<likelihood idref="likelihood.randomWalk.attVals"/>
+                <prior idref="prior.randomWalk.attVals"/>
+			</column>
+			<column label="Eigen Values" dp="4" width="12">
+                <parameter idref="attenuation.values"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testEigenDecompositionMatrix_randomWalk_attVals.log">
+            <parameter idref="attenuation.values"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.randomWalk.attVals"/>
+		</property>
+	</report>
+<!--
+# Read log 
+dat <- read_log(file = "testEigenDecompositionMatrix_randomWalk_attVals.log", burning = 0)
+
+# Transform back to a normal
+transform_normal <- function(x) {
+  x <- as.vector(as.matrix(x))
+  z <- log(c(x[2], diff(x[-1])))
+  z <- c(x[1], z)
+  return(z)
+}
+
+dat <- as.tibble(t(apply(dat, 1, transform_normal)))
+colnames(dat)[1] <- "state"
+
+# Get observed moments
+means <- get_mean(dat)
+vars <- get_var(dat)
+covs <- get_covar(dat)
+
+# Get theoretical moments
+dim <- 4
+mu <- c(0, 1, -1, 0.5)
+sigma2 <- c(1, 1.5, 2, 5)
+cova <- matrix(c(1, 0, 0, 0,
+                 0, 1, 0.5, 0.6,
+                 0, 0.5, 1, 0.7,
+                 0, 0.6, 0.7, 1), dim)
+diag(cova) <- sigma2
+cova <- solve(cova)
+sigma2 <- diag(cova)
+
+for (i in 1:dim) {
+  print(pull(means, i))
+  stopifnot(all.equal(pull(means, i), mu[i], tol = 0.003))
+}
+
+for (i in 1:dim) {
+  print(pull(vars, i))
+  stopifnot(all.equal(pull(vars, i), sigma2[i], tol = 0.007))
+}
+
+for (i in 1:(dim-1)) {
+  for(j in (i+1):dim) {
+    print(covs[i, j])
+    stopifnot(all.equal(covs[i, j], cova[i,j], tol = 0.008))
+  }
+}
+-->
+
+    <matrixParameter id="attenuation.vectors">
+        <parameter id="attVec.col1" value="0.5 0.5 0.5"/>
+        <parameter id="attVec.col2" value="0.8 0.4 0.4"/>
+        <parameter id="attVec.col3" value="0.4 0.8 0.1"/>
+        <parameter id="attVec.col4" value="0.5 0.5 0.5"/>
+    </matrixParameter>
+
+    <sphericalBetaPrior id="prior.attVecs" shapeParameter="2.0">
+        <data>
+            <matrixParameter idref="attenuation.vectors"/>
+        </data>
+    </sphericalBetaPrior>
+
+    <operators id="operators.randomWalk.attVecs">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col1"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col2"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col3"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="attVec.col4"/>
+            <sphericalTransform dim="3"/>
+        </randomWalkOperator>
+    </operators>
+
+	<mcmc id="mcmc.randomWalk.attVecs" chainLength="100000000" autoOptimize="true">
+        <posterior id="posterior.randomWalk.attVecs">
+        	<dummyLikelihood id="likelihood.randomWalk.attVecs">
+                <parameter idref="attenuation.vectors"/>
+            </dummyLikelihood>
+
+            <prior id="prior.randomWalk.attVecs">
+                <sphericalBetaPrior idref="prior.attVecs"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.randomWalk.attVecs"/>
+
+		<log logEvery="100">
+			<column label="posterior.randomWalk.attVecs" dp="4" width="12">
+				<likelihood idref="likelihood.randomWalk.attVecs"/>
+                <prior idref="prior.randomWalk.attVecs"/>
+			</column>
+			<column label="Eigen Vectors" dp="4" width="12">
+                <parameter idref="attenuation.vectors"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testEigenDecompositionMatrix_randomWalk_attVecs.log">
+            <parameter idref="attenuation.vectors"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.randomWalk.attVecs"/>
+		</property>
+	</report>
+
+<!--
+dat <- read_log(file = "testEigenDecompositionMatrix_randomWalk_attVecs.log", burning = 0)
+
+# Get observed moments
+means <- get_mean(dat)
+vars <- get_var(dat)
+covs <- get_covar(dat)
+
+# Get theoretical moments
+dim <- 3
+beta <- 2.0
+length <- dim * (dim + 1)
+
+mu <- 0
+sigma2 <- 1 / (dim + 2 * beta)
+
+# Tests
+for (i in 1:length) {
+  print(pull(means, i))
+  stopifnot(all.equal(pull(means, i), mu, tol = 0.001))
+}
+
+for (i in 1:length) {
+  print(pull(vars, i))
+  stopifnot(all.equal(pull(vars, i), sigma2, tol = 0.005))
+}
+
+for (i in 1:(length-1)) {
+  for(j in (i+1):length) {
+    print(covs[i, j])
+    stopifnot(all.equal(covs[i, j], 0, tol = 0.001))
+  }
+}
+-->
+
+</beast>
+

@@ -106,10 +106,15 @@
     <!-- ************************************************** -->
     <!-- Correlation -->
 
-    <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation">
-        <wishartStatistics  traitName="simTrait">
-            <traitDataLikelihood idref="bmLikelihood"/>
-        </wishartStatistics>
+    <!-- <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation" traitName="simTrait"> -->
+    <!--     <wishartStatistics  traitName="simTrait"> -->
+    <!--         <traitDataLikelihood idref="bmLikelihood"/> -->
+    <!--     </wishartStatistics> -->
+    <!--     <traitDataLikelihood idref="bmLikelihood"/> -->
+    <!--     <compoundSymmetricMatrix idref="precisionMatrix"/> -->
+    <!-- </precisionGradient> -->
+
+    <precisionGradient id="precisionCorrelationGradientPreOrder" parameter="precisionCorrelation" traitName="simTrait">
         <traitDataLikelihood idref="bmLikelihood"/>
         <compoundSymmetricMatrix idref="precisionMatrix"/>
     </precisionGradient>
@@ -123,7 +128,7 @@
 	<operators id="bmOperators.correlation.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
  			drawVariance="1.0">
- 			<gradient idref="precisionCorrelationGradient"/>
+ 			<gradient idref="precisionCorrelationGradientPreOrder"/>
 			<parameter idref="precision.correlation"/>
             <LKJTransform dimension = "4"/>
  		</hamiltonianMonteCarloOperator>
@@ -262,10 +267,15 @@ Count: 1131
     <!-- ************************************************** -->
     <!-- Diagonal -->
 
-    <precisionGradient id="precisionDiagonalGradient" parameter="precisionDiagonal">
-        <wishartStatistics  traitName="simTrait">
-            <traitDataLikelihood idref="bmLikelihood"/>
-        </wishartStatistics>
+    <!-- <precisionGradient id="precisionDiagonalGradient" parameter="precisionDiagonal" traitName="simTrait"> -->
+    <!--     <wishartStatistics  traitName="simTrait"> -->
+    <!--         <traitDataLikelihood idref="bmLikelihood"/> -->
+    <!--     </wishartStatistics> -->
+    <!--     <traitDataLikelihood idref="bmLikelihood"/> -->
+    <!--     <compoundSymmetricMatrix idref="precisionMatrix"/> -->
+    <!-- </precisionGradient> -->
+
+    <precisionGradient id="precisionDiagonalGradientPreOrder" parameter="precisionDiagonal" traitName="simTrait">
         <traitDataLikelihood idref="bmLikelihood"/>
         <compoundSymmetricMatrix idref="precisionMatrix"/>
     </precisionGradient>
@@ -277,7 +287,7 @@ Count: 1131
 	<operators id="bmOperators.diagonal.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
  			drawVariance="1.0">
- 			<gradient idref="precisionDiagonalGradient"/>
+ 			<gradient idref="precisionDiagonalGradientPreOrder"/>
             <parameter idref="precision.diagonal"/>
  		</hamiltonianMonteCarloOperator>
 	</operators>

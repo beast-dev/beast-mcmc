@@ -34,7 +34,6 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.inference.operators.PathDependent;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
 /**
@@ -49,20 +48,24 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
     final LeapFrogEngine leapFrogEngine;
     final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
+    private final double[] mask;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
                                          double stepSize, int nSteps,
                                          double randomStepCountFraction) {
-        this(mode, weight, gradientProvider, parameter, transform,
-                new Options(stepSize, nSteps, randomStepCountFraction, 0, 0), MassPreconditioner.Type.NONE
+        this(mode, weight, gradientProvider,
+                parameter, transform, null,
+                new Options(stepSize, nSteps, randomStepCountFraction, 0, 0),
+                MassPreconditioner.Type.NONE
         );
     }
 
     public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                         Parameter parameter, Transform transform,
+                                         Parameter parameter, Transform transform, Parameter maskParameter,
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
+
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
@@ -80,6 +83,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
                 new LeapFrogEngine.Default(parameter,
                         getDefaultInstabilityHandler(), preconditioning));
 
+        this.mask = buildMask(maskParameter);
     }
 
     @Override
@@ -97,6 +101,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
                 && (((getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
                 && (getCount() > runtimeOptions.preconditioningDelay))
                 || (getCount() == runtimeOptions.preconditioningDelay)));
+    }
+
+    private static double[] buildMask(Parameter maskParameter) {
+
+        if (maskParameter == null) return null;
+
+        double[] mask = new double[maskParameter.getDimension()];
+
+        for (int i = 0; i < mask.length; ++i) {
+            mask[i] = (maskParameter.getParameterValue(i) == 0.0) ? 0.0 : 1.0;
+        }
+
+        return mask;
     }
 
     @Override
@@ -118,6 +135,32 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         if (gradientProvider instanceof PathGradient) {
             ((PathGradient) gradientProvider).setPathParameter(beta);
         }
+    }
+
+    private double[] mask(double[] vector) {
+
+        assert (mask == null || mask.length == vector.length);
+
+        if (mask != null) {
+            for (int i = 0; i < vector.length; ++i) {
+                vector[i] *= mask[i];
+            }
+        }
+
+        return vector;
+    }
+
+    private WrappedVector mask(WrappedVector vector) {
+
+        assert (mask == null || mask.length == vector.getDim());
+
+        if (mask != null) {
+            for (int i = 0;i < vector.getDim(); ++i) {
+                vector.set(i, vector.get(i) * mask[i]);
+            }
+        }
+
+        return vector;
     }
 
     private long count = 0;
@@ -174,13 +217,13 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         }
 
         final double[] position = leapFrogEngine.getInitialPosition();
-        final WrappedVector momentum = preconditioning.drawInitialMomentum();
+        final WrappedVector momentum = mask(preconditioning.drawInitialMomentum());
 
         final double prop = getKineticEnergy(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
 
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                gradientProvider.getGradientLogDensity(), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
 
         int nStepsThisLeap = getNumberOfSteps();
 
@@ -190,12 +233,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
 
             if (i < (nStepsThisLeap - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                        gradientProvider.getGradientLogDensity(), stepSize);
+                        mask(gradientProvider.getGradientLogDensity()), stepSize);
             }
         }
 
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                gradientProvider.getGradientLogDensity(), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
 
         final double res = getKineticEnergy(momentum) +
                 leapFrogEngine.getParameterLogJacobian();

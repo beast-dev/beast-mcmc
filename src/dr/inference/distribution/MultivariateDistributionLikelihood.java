@@ -119,7 +119,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                                               Transform[] transforms,
                                               Transform.MultivariateTransform multivariateTransform) {
         super(new DefaultModel(name));
-        assert (multivariateTransform != null && transforms != null)
+        assert !(multivariateTransform != null && transforms != null)
                 : "Transform[] and MultivatiateTransform cannot be simulataneously specified.";
         this.distribution = (multivariateTransform == null) ? distribution
                 : new TransformedMultivariateDistribution(distribution, multivariateTransform);;

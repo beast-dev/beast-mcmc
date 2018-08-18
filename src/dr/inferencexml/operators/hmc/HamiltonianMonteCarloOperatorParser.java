@@ -54,6 +54,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
+    private final static String MASK = "mask";
 
     @Override
     public String getParserName() {
@@ -109,15 +110,27 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
+        Parameter mask = null;
+        if (xo.hasChildNamed(MASK)) {
+            mask = (Parameter) xo.getElementFirstChild(MASK);
+
+            if (mask.getDimension() != derivative.getDimension()) {
+                throw new XMLParseException("Mask (" + mask.getDimension()
+                        + ") must be the same dimension as the gradient (" + derivative.getDimension() + ")");
+            }
+        }
+
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction, preconditioningUpdateFrequency, preconditioningDelay
         );
 
         if (runMode == 0) {
-            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform, null,
+            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative,
+                    parameter, transform, mask,
                     runtimeOptions, preconditioningType);
         } else {
-            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
+            return new NoUTurnOperator(coercionMode, weight, derivative,
+                    parameter,transform, mask,
                     stepSize, nSteps);
         }
     }
@@ -139,6 +152,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             new ElementRule(Parameter.class),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
+            new ElementRule(MASK, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class),
+
+            }, true),
     };
 
     @Override

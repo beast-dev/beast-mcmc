@@ -51,11 +51,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
     private final double[] mask;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                         Parameter parameter, Transform transform,
+                                         Parameter parameter, Transform transform, Parameter mask,
                                          double stepSize, int nSteps,
                                          double randomStepCountFraction) {
         this(mode, weight, gradientProvider,
-                parameter, transform, null,
+                parameter, transform, mask,
                 new Options(stepSize, nSteps, randomStepCountFraction, 0, 0),
                 MassPreconditioner.Type.NONE
         );
@@ -137,7 +137,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         }
     }
 
-    private double[] mask(double[] vector) {
+    double[] mask(double[] vector) {
 
         assert (mask == null || mask.length == vector.length);
 
@@ -150,7 +150,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         return vector;
     }
 
-    private WrappedVector mask(WrappedVector vector) {
+    WrappedVector mask(WrappedVector vector) {
 
         assert (mask == null || mask.length == vector.getDim());
 

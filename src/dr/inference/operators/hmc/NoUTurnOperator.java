@@ -63,8 +63,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     private final Options options = new Options();
 
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                           Parameter parameter, Transform transform, double stepSize, int nSteps) {
-        super(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, 0.0);
+                           Parameter parameter, Transform transform, Parameter mask,
+                           double stepSize, int nSteps) {
+        super(mode, weight, gradientProvider, parameter, transform, mask,
+                stepSize, nSteps, 0.0);
     }
 
     @Override
@@ -133,7 +135,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
 //        final double[][] mass = massProvider.getMass();
-        final WrappedVector initialMomentum = preconditioning.drawInitialMomentum();
+        final WrappedVector initialMomentum = mask(preconditioning.drawInitialMomentum());
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
@@ -255,10 +257,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                         final WrappedVector momentum,
                         final double stepSize) throws NumericInstabilityException {
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                gradientProvider.getGradientLogDensity(), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
         leapFrogEngine.updatePosition(position, momentum, stepSize);
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                gradientProvider.getGradientLogDensity(), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
     }
 
     private StepSize findReasonableStepSize(double[] initialPosition) {

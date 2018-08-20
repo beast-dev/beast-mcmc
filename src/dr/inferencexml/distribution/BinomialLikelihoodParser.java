@@ -77,9 +77,10 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
             trialsParam = new Parameter.Default(1.0);
         }
         
-        if (trialsParam.getDimension() <= 1) {
-            trialsParam.setDimension(countsParam.getDimension());
-        }
+//        if (trialsParam.getDimension()  <= 1) {
+//            trialsParam.setDimension(countsParam.getDimension());
+//        }
+
         if (trialsParam.getDimension() != countsParam.getDimension()) {
             throw new XMLParseException("Trials dimension (" + trialsParam.getDimension()
                     + ") must equal counts dimension (" + countsParam.getDimension() + ")");

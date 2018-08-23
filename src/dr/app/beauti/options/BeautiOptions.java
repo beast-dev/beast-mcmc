@@ -61,7 +61,7 @@ public class BeautiOptions extends ModelOptions {
     private static final boolean NEW_GTR_PARAMETERIZATION = true;
 
     // Makes sets the initial state of PartitionClockModel.continuousQuantile
-    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = true;
+    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = false;
 
     // Uses a logit transformed random walk on pInv parameters
     private static final boolean LOGIT_PINV_KERNEL = true;

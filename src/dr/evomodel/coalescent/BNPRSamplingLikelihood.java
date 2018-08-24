@@ -9,17 +9,22 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.BNPRSamplingLikelihoodParser;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.RombergIntegrator;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by mkarcher on 3/9/17.
  */
-public class BNPRSamplingLikelihood extends AbstractModelLikelihood {
+public class BNPRSamplingLikelihood extends AbstractModelLikelihood implements Citable {
     private boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
     private double logLikelihood;
@@ -367,6 +372,33 @@ public class BNPRSamplingLikelihood extends AbstractModelLikelihood {
     public String toString() {
         return Double.toString(logLikelihood);
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.PRIOR_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian non-parametric preferential sampling";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("MD", "Karcher"),
+                    new Author("MA", "Suchard"),
+                    new Author("G", "Dudas"),
+                    new Author( "T", "Bedford"),
+                    new Author("VN","Minin")
+            },
+//            "Estimating effective population size changes from preferentially sampled genetic sequences",
+            Citation.Status.IN_PREPARATION
+    );
 
     private class PowerFunctional implements UnivariateRealFunction {
         private double power;

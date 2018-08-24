@@ -25,7 +25,6 @@
 
 package dr.inference.mcmc;
 
-import com.sun.tools.javac.util.Options;
 import dr.inference.loggers.Logger;
 import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;

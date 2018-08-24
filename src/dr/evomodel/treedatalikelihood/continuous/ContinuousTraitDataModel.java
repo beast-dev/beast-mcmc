@@ -25,7 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import com.sun.tools.corba.se.idl.constExpr.Positive;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 

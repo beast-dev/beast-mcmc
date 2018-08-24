@@ -871,9 +871,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
             return currentLike;
         }
-    }
-
-
+        
     class SkygridCovariateHelper extends SkygridHelper {
 
         public SkygridCovariateHelper() {
